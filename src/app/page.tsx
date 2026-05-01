@@ -22,7 +22,7 @@ export default function HomePage() {
           <div style={{ width: 40, height: 40, background: '#1a56db', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ color: '#fff', fontSize: 20 }}>📞</span>
           </div>
-          <span style={{ fontWeight: 900, fontSize: 28, color: '#fff', letterSpacing: '-0.5px' }}>RingoCo</span>
+          <span style={{ fontWeight: 900, fontSize: 28, color: '#fff', letterSpacing: '-0.5px' }}>BellAveGo</span>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <Link href="/sign-in" style={{ padding: '10px 22px', border: '1.5px solid rgba(255,255,255,0.25)', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 500 }}>Sign in</Link>
@@ -40,7 +40,7 @@ export default function HomePage() {
         <h1 style={{ fontSize: 'clamp(52px, 8vw, 100px)', fontWeight: 900, lineHeight: 0.95, letterSpacing: '-3px', color: '#fff', margin: '0 0 12px', maxWidth: 900 }}>You missed a call.</h1>
         <h1 style={{ fontSize: 'clamp(52px, 8vw, 100px)', fontWeight: 900, lineHeight: 0.95, letterSpacing: '-3px', color: '#1a56db', margin: '0 0 40px', maxWidth: 900 }}>That was $400.</h1>
         <p style={{ fontSize: 20, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, marginBottom: 52, maxWidth: 500 }}>
-          RingoCo answers every call 24/7, books the job, and texts your customer — while you work.
+          BellAveGo answers every call 24/7, books the job, and texts your customer — while you work.
         </p>
         <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 40 }}>
           <button onClick={handleCheckout} style={{ padding: '18px 40px', background: '#1a56db', color: '#fff', fontWeight: 900, fontSize: 17, borderRadius: 12, border: 'none', cursor: 'pointer', boxShadow: '0 4px 28px rgba(26,86,219,0.5)' }}>
@@ -72,7 +72,7 @@ export default function HomePage() {
           <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 16, marginBottom: 56 }}>Set up in 15 minutes. Works while you sleep.</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
             {[
-              { step: '01', icon: '📞', title: 'Customer calls you', desc: "RingoCo picks up in 2 rings, 24/7 — even when you're on a job, driving, or asleep." },
+              { step: '01', icon: '📞', title: 'Customer calls you', desc: "BellAveGo answers in 2 rings, 24/7 — even when you're on a job, driving, or asleep." },
               { step: '02', icon: '🤖', title: 'AI handles everything', desc: 'Collects their name, address, and job details. Books them into your calendar automatically.' },
               { step: '03', icon: '💬', title: 'Everyone gets notified', desc: 'Customer gets a confirmation text. You get a job alert. Invoice sent when work is done.' },
             ].map((s) => (
@@ -118,7 +118,7 @@ export default function HomePage() {
               <span style={{ color: '#1a56db' }}>We handle the call.</span>
             </h2>
             <p style={{ color: '#888', fontSize: 17, maxWidth: 460, margin: '0 auto' }}>
-              While you&apos;re working, RingoCo answers, books the job, and texts the customer — all in seconds.
+              While you&apos;re working, BellAveGo answers, books the job, and texts the customer — all in seconds.
             </p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 40 }}>
@@ -139,7 +139,7 @@ export default function HomePage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
             {[
-              { icon: '📞', title: 'RingoCo answers', desc: 'Every call, every time — 2 rings, 24/7' },
+              { icon: '📞', title: 'BellAveGo answers', desc: 'Every call, every time — 24/7' },
               { icon: '📅', title: 'Job gets booked', desc: 'Added to your schedule instantly' },
               { icon: '💬', title: 'Customer texted', desc: 'Confirmation + reminder, automatic' },
             ].map(s => (
@@ -158,7 +158,7 @@ export default function HomePage() {
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
             <h2 style={{ fontSize: 40, fontWeight: 900, marginBottom: 10, letterSpacing: '-1px', color: '#0a0a0a' }}>Everything runs itself.</h2>
-            <p style={{ color: '#888', fontSize: 16 }}>From first call to getting paid — RingoCo handles it.</p>
+            <p style={{ color: '#888', fontSize: 16 }}>From first call to getting paid — BellAveGo handles it.</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
             {[
@@ -214,7 +214,7 @@ export default function HomePage() {
         <div style={{ background: '#0a0a0a', borderRadius: 20, padding: '52px 44px', maxWidth: 440, margin: '0 auto', boxShadow: '0 24px 80px rgba(0,0,0,0.18)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: 3, marginBottom: 4 }}>
             <span style={{ fontSize: 26, fontWeight: 900, color: 'rgba(255,255,255,0.4)', marginTop: 16 }}>$</span>
-            <span style={{ fontSize: 90, fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-3px' }}>99</span>
+            <span style={{ fontSize: 90, fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-3px' }}>97</span>
           </div>
           <p style={{ color: 'rgba(255,255,255,0.35)', marginBottom: 36, fontSize: 14 }}>per month · no contracts</p>
           <div style={{ textAlign: 'left', marginBottom: 36 }}>
@@ -250,7 +250,7 @@ export default function HomePage() {
 
       {/* FOOTER */}
       <footer style={{ textAlign: 'center', padding: '28px 40px', background: '#0d1117' }}>
-        <p style={{ margin: 0, fontSize: 12, color: '#444' }}>RingoCo · Built for home service businesses · $99/mo · No contracts · Cancel anytime</p>
+        <p style={{ margin: 0, fontSize: 12, color: '#444' }}>BellAveGo · Built for home service businesses · $97/mo · No contracts · Cancel anytime</p>
       </footer>
 
     </main>
