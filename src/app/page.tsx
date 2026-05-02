@@ -19,7 +19,7 @@ export default function HomePage() {
       {/* NAV */}
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 48px', height: 72, background: '#fff', borderBottom: '1px solid #E2E8F0', position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Image src="/logo.png" alt="BellAveGo" width={160} height={52} style={{ objectFit: 'contain' }} />
+          <Image src="/logo.png" alt="BellAveGo" width={200} height={66} style={{ objectFit: 'contain' }} />
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <Link href="/sign-in" style={{ padding: '10px 22px', border: '1.5px solid #E2E8F0', borderRadius: 8, textDecoration: 'none', color: '#64748B', fontSize: 14, fontWeight: 500 }}>Sign in</Link>
@@ -28,8 +28,14 @@ export default function HomePage() {
       </nav>
 
       {/* HERO */}
-      <section style={{ background: 'linear-gradient(135deg, #0B1F3A 0%, #1e3a6e 100%)', paddingTop: 140, paddingBottom: 80, paddingLeft: 48, paddingRight: 48, textAlign: 'center' }}>
-        <div style={{ maxWidth: 800, margin: '0 auto' }}>
+      <section style={{ background: 'linear-gradient(135deg, #0B1F3A 0%, #1e3a6e 100%)', paddingTop: 140, paddingBottom: 80, paddingLeft: 48, paddingRight: 48, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+
+        {/* Boat watermark */}
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none', opacity: 0.06, zIndex: 0 }}>
+          <Image src="/logo2.png" alt="" width={700} height={700} style={{ objectFit: 'contain' }} />
+        </div>
+
+        <div style={{ maxWidth: 800, margin: '0 auto', position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 20, padding: '8px 16px', marginBottom: 32 }}>
             <span style={{ width: 8, height: 8, background: '#22C55E', borderRadius: '50%', display: 'inline-block' }} />
             <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: 500 }}>AI answering calls right now</span>
@@ -53,7 +59,7 @@ export default function HomePage() {
         </div>
 
         {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, marginTop: 64, maxWidth: 680, width: '100%', margin: '64px auto 0', background: 'rgba(255,255,255,0.06)', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, maxWidth: 680, width: '100%', margin: '64px auto 0', background: 'rgba(255,255,255,0.06)', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', position: 'relative', zIndex: 1 }}>
           {[
             { num: '62%', label: "of callers won't leave a voicemail" },
             { num: '$54K', label: 'in potential yearly revenue lost from missed calls' },
@@ -65,7 +71,7 @@ export default function HomePage() {
             </div>
           ))}
         </div>
-        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 12, textAlign: 'center' }}>Based on common small business call-answering benchmarks and missed-call revenue estimates.</p>
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 12, textAlign: 'center', position: 'relative', zIndex: 1 }}>Based on common small business call-answering benchmarks and missed-call revenue estimates.</p>
       </section>
 
       {/* DEMO SECTION */}
@@ -291,8 +297,12 @@ export default function HomePage() {
       </section>
 
       {/* FOOTER */}
-      <footer style={{ textAlign: 'center', padding: '28px 40px', background: '#0B1F3A' }}>
-        <p style={{ margin: 0, fontSize: 12, color: '#475569' }}>BellAveGo · Built for home service businesses · $97/mo · No contracts · Cancel anytime</p>
+      <footer style={{ padding: '48px 40px', background: '#0B1F3A', textAlign: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          <Image src="/logo.png" alt="BellAveGo" width={220} height={72} style={{ objectFit: 'contain' }} />
+          <p style={{ margin: 0, fontSize: 14, color: '#94A3B8', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#475569' }}>Built for home service businesses · $97/mo · No contracts · Cancel anytime</p>
+        </div>
       </footer>
 
     </main>
