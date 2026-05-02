@@ -14,81 +14,81 @@ export default function HomePage() {
   }
 
   return (
-    <main style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", background: '#fff', color: '#0a0a0a', minHeight: '100vh', overflowX: 'hidden' }}>
+    <main style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", background: '#fff', color: '#0F172A', minHeight: '100vh', overflowX: 'hidden' }}>
 
       {/* NAV */}
-      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 48px', height: 72, background: '#fff', borderBottom: '1px solid #f0f0f0', position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100 }}>
+      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 48px', height: 72, background: '#fff', borderBottom: '1px solid #E2E8F0', position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 40, height: 40, background: '#1a56db', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 40, height: 40, background: '#2563EB', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ color: '#fff', fontSize: 20 }}>📞</span>
           </div>
-          <span style={{ fontWeight: 900, fontSize: 24, color: '#0a0a0a', letterSpacing: '-0.5px' }}>BellAveGo</span>
+          <span style={{ fontWeight: 900, fontSize: 24, color: '#0F172A', letterSpacing: '-0.5px' }}>BellAveGo</span>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <Link href="/sign-in" style={{ padding: '10px 22px', border: '1.5px solid #e0e0e0', borderRadius: 8, textDecoration: 'none', color: '#444', fontSize: 14, fontWeight: 500 }}>Sign in</Link>
-          <button onClick={handleCheckout} style={{ padding: '10px 22px', background: '#1a56db', borderRadius: 8, border: 'none', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 14px rgba(26,86,219,0.3)', cursor: 'pointer' }}>Start Free Trial</button>
+          <Link href="/sign-in" style={{ padding: '10px 22px', border: '1.5px solid #E2E8F0', borderRadius: 8, textDecoration: 'none', color: '#64748B', fontSize: 14, fontWeight: 500 }}>Sign in</Link>
+          <button onClick={handleCheckout} style={{ padding: '10px 22px', background: '#22C55E', borderRadius: 8, border: 'none', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 14px rgba(34,197,94,0.3)', cursor: 'pointer' }}>Start Free Trial</button>
         </div>
       </nav>
 
       {/* HERO */}
-      <section style={{ background: 'linear-gradient(135deg, #0f1c3f 0%, #1a56db 100%)', paddingTop: 140, paddingBottom: 80, paddingLeft: 48, paddingRight: 48, textAlign: 'center' }}>
+      <section style={{ background: 'linear-gradient(135deg, #0B1F3A 0%, #1e3a6e 100%)', paddingTop: 140, paddingBottom: 80, paddingLeft: 48, paddingRight: 48, textAlign: 'center' }}>
         <div style={{ maxWidth: 800, margin: '0 auto' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 20, padding: '8px 16px', marginBottom: 32 }}>
-            <span style={{ width: 8, height: 8, background: '#22c55e', borderRadius: '50%', display: 'inline-block' }} />
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 20, padding: '8px 16px', marginBottom: 32 }}>
+            <span style={{ width: 8, height: 8, background: '#22C55E', borderRadius: '50%', display: 'inline-block' }} />
             <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: 500 }}>AI answering calls right now</span>
           </div>
           <h1 style={{ fontSize: 'clamp(40px, 6vw, 72px)', fontWeight: 900, lineHeight: 1.1, letterSpacing: '-2px', color: '#fff', margin: '0 0 24px' }}>
             Stop losing jobs to<br />
-            <span style={{ color: '#fbbf24' }}>missed calls.</span>
+            <span style={{ color: '#22C55E' }}>missed calls.</span>
           </h1>
-          <p style={{ fontSize: 20, color: 'rgba(255,255,255,0.8)', lineHeight: 1.7, marginBottom: 40, maxWidth: 560, margin: '0 auto 40px' }}>
+          <p style={{ fontSize: 20, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, marginBottom: 40, maxWidth: 560, margin: '0 auto 40px' }}>
             BellAveGo answers calls 24/7, books jobs, and texts customers automatically — so you can focus on the work, not the phone.
           </p>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 20 }}>
-            <button onClick={handleCheckout} style={{ padding: '18px 40px', background: '#fbbf24', color: '#0a0a0a', fontWeight: 900, fontSize: 17, borderRadius: 12, border: 'none', cursor: 'pointer', boxShadow: '0 4px 28px rgba(251,191,36,0.4)' }}>
+            <button onClick={handleCheckout} style={{ padding: '18px 40px', background: '#22C55E', color: '#fff', fontWeight: 900, fontSize: 17, borderRadius: 12, border: 'none', cursor: 'pointer', boxShadow: '0 4px 28px rgba(34,197,94,0.35)' }}>
               Start Free Trial — 14 Days →
             </button>
-            <a href="tel:+17623713351" style={{ padding: '18px 28px', background: 'rgba(255,255,255,0.15)', color: '#fff', fontWeight: 700, fontSize: 17, borderRadius: 12, textDecoration: 'none', border: '1.5px solid rgba(255,255,255,0.3)' }}>
+            <a href="tel:+17623713351" style={{ padding: '18px 28px', background: 'rgba(255,255,255,0.08)', color: '#fff', fontWeight: 700, fontSize: 17, borderRadius: 12, textDecoration: 'none', border: '1.5px solid rgba(255,255,255,0.2)' }}>
               📞 Call the AI Demo
             </a>
           </div>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 16 }}>No credit card required · Setup in 15 minutes · Cancel anytime</p>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 16 }}>No credit card required · Setup in 15 minutes · Cancel anytime</p>
         </div>
 
         {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, marginTop: 64, maxWidth: 680, width: '100%', margin: '64px auto 0', background: 'rgba(255,255,255,0.08)', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, marginTop: 64, maxWidth: 680, width: '100%', margin: '64px auto 0', background: 'rgba(255,255,255,0.06)', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
           {[
             { num: '62%', label: "of callers won't leave a voicemail" },
             { num: '$54K', label: 'in potential yearly revenue lost from missed calls' },
             { num: '1 in 3', label: 'calls can go unanswered at small businesses' },
           ].map((s, i) => (
-            <div key={s.label} style={{ padding: '28px 20px', textAlign: 'center', borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
-              <p style={{ fontSize: 34, fontWeight: 900, color: '#fbbf24', margin: '0 0 6px', letterSpacing: '-1px' }}>{s.num}</p>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.5 }}>{s.label}</p>
+            <div key={s.label} style={{ padding: '28px 20px', textAlign: 'center', borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+              <p style={{ fontSize: 34, fontWeight: 900, color: '#22C55E', margin: '0 0 6px', letterSpacing: '-1px' }}>{s.num}</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.5 }}>{s.label}</p>
             </div>
           ))}
         </div>
-        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 12, textAlign: 'center' }}>Based on common small business call-answering benchmarks and missed-call revenue estimates.</p>
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 12, textAlign: 'center' }}>Based on common small business call-answering benchmarks and missed-call revenue estimates.</p>
       </section>
 
       {/* DEMO SECTION */}
-      <section style={{ padding: '72px 48px', background: '#f8faff', borderBottom: '1px solid #e8f0fe', textAlign: 'center' }}>
+      <section style={{ padding: '72px 48px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', textAlign: 'center' }}>
         <div style={{ maxWidth: 600, margin: '0 auto' }}>
-          <p style={{ fontSize: 13, fontWeight: 700, color: '#1a56db', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Try it live</p>
-          <h2 style={{ fontSize: 36, fontWeight: 900, color: '#0a0a0a', letterSpacing: '-1px', marginBottom: 16 }}>Call the AI before your customers do.</h2>
-          <p style={{ color: '#666', fontSize: 17, lineHeight: 1.7, marginBottom: 36 }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: '#2563EB', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Try it live</p>
+          <h2 style={{ fontSize: 36, fontWeight: 900, color: '#0F172A', letterSpacing: '-1px', marginBottom: 16 }}>Call the AI before your customers do.</h2>
+          <p style={{ color: '#64748B', fontSize: 17, lineHeight: 1.7, marginBottom: 36 }}>
             Hear exactly how BellAveGo handles a real customer call. It collects the name, service needed, address, and preferred time — then sends a confirmation text.
           </p>
-          <a href="tel:+17623713351" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '18px 40px', background: '#1a56db', color: '#fff', fontWeight: 900, fontSize: 17, borderRadius: 12, textDecoration: 'none', boxShadow: '0 4px 20px rgba(26,86,219,0.3)' }}>
+          <a href="tel:+17623713351" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '18px 40px', background: '#2563EB', color: '#fff', fontWeight: 900, fontSize: 17, borderRadius: 12, textDecoration: 'none', boxShadow: '0 4px 20px rgba(37,99,235,0.25)' }}>
             📞 Call the AI Demo
           </a>
-          <p style={{ color: '#aaa', fontSize: 13, marginTop: 14 }}>+1 (762) 371-3351 · Free to call · Picks up within 15 seconds</p>
+          <p style={{ color: '#94A3B8', fontSize: 13, marginTop: 14 }}>+1 (762) 371-3351 · Free to call · Picks up within 15 seconds</p>
         </div>
       </section>
 
       {/* INDUSTRIES */}
-      <section style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '32px 0 0' }}>
-        <p style={{ textAlign: 'center', fontWeight: 700, fontSize: 13, color: '#888', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 20 }}>Built for home service businesses</p>
+      <section style={{ background: '#fff', borderBottom: '1px solid #E2E8F0', padding: '32px 0 0' }}>
+        <p style={{ textAlign: 'center', fontWeight: 700, fontSize: 13, color: '#64748B', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 20 }}>Built for home service businesses</p>
         <div style={{ overflow: 'hidden' }}>
           <div style={{ display: 'flex', width: 'max-content', animation: 'scroll 25s linear infinite', paddingBottom: 28 }}>
             <style>{`@keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}</style>
@@ -100,9 +100,9 @@ export default function HomePage() {
                   { icon: '🏠', label: 'Roofing' }, { icon: '🔧', label: 'Appliance Repair' }, { icon: '🚗', label: 'Auto Detailing' },
                   { icon: '🐾', label: 'Pet Services' }, { icon: '💧', label: 'Pool & Spa' }, { icon: '🪟', label: 'Window Cleaning' },
                 ].map(s => (
-                  <div key={s.label + repeat} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 28px', borderRight: '1px solid #f0f0f0', whiteSpace: 'nowrap' }}>
+                  <div key={s.label + repeat} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 28px', borderRight: '1px solid #E2E8F0', whiteSpace: 'nowrap' }}>
                     <span style={{ fontSize: 18 }}>{s.icon}</span>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: '#444' }}>{s.label}</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#475569' }}>{s.label}</span>
                   </div>
                 ))}
               </div>
@@ -112,59 +112,59 @@ export default function HomePage() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section style={{ padding: '80px 48px', background: '#fff', borderBottom: '1px solid #f0f0f0' }}>
+      <section style={{ padding: '80px 48px', background: '#fff', borderBottom: '1px solid #E2E8F0' }}>
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 56 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#1a56db', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>How it works</p>
-            <h2 style={{ fontSize: 40, fontWeight: 900, color: '#0a0a0a', letterSpacing: '-1px', marginBottom: 12 }}>From missed call to booked job in seconds.</h2>
-            <p style={{ color: '#888', fontSize: 16 }}>Set up in 15 minutes. Works around the clock.</p>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#2563EB', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>How it works</p>
+            <h2 style={{ fontSize: 40, fontWeight: 900, color: '#0F172A', letterSpacing: '-1px', marginBottom: 12 }}>From missed call to booked job in seconds.</h2>
+            <p style={{ color: '#64748B', fontSize: 16 }}>Set up in 15 minutes. Works around the clock.</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
             {[
-              { step: '1', icon: '📞', title: 'Customer calls', desc: "BellAveGo answers before voicemail after 3-4 rings — even when you're on a job, driving, or asleep.", color: '#eff6ff' },
-              { step: '2', icon: '🤖', title: 'AI collects details', desc: 'Name, service needed, address, timing, and job notes — all captured automatically.', color: '#f0fdf4' },
-              { step: '3', icon: '📅', title: 'Job gets booked', desc: 'The appointment is added to your calendar and the customer gets a confirmation text.', color: '#fefce8' },
-              { step: '4', icon: '🔔', title: 'You get notified', desc: 'You receive the call summary, customer details, and next steps instantly.', color: '#fdf4ff' },
+              { step: '1', icon: '📞', title: 'Customer calls', desc: "BellAveGo answers before voicemail after 3-4 rings — even when you're on a job, driving, or asleep.", bg: '#EFF6FF' },
+              { step: '2', icon: '🤖', title: 'AI collects details', desc: 'Name, service needed, address, timing, and job notes — all captured automatically.', bg: '#F0FDF4' },
+              { step: '3', icon: '📅', title: 'Job gets booked', desc: 'The appointment is added to your calendar and the customer gets a confirmation text.', bg: '#F0FDF4' },
+              { step: '4', icon: '🔔', title: 'You get notified', desc: 'You receive the call summary, customer details, and next steps instantly.', bg: '#EFF6FF' },
             ].map((s) => (
-              <div key={s.step} style={{ background: s.color, borderRadius: 16, padding: '28px 22px', border: '1px solid rgba(0,0,0,0.06)' }}>
-                <div style={{ width: 32, height: 32, background: '#1a56db', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+              <div key={s.step} style={{ background: s.bg, borderRadius: 16, padding: '28px 22px', border: '1px solid #E2E8F0' }}>
+                <div style={{ width: 32, height: 32, background: '#2563EB', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
                   <span style={{ color: '#fff', fontSize: 14, fontWeight: 900 }}>{s.step}</span>
                 </div>
                 <div style={{ fontSize: 32, marginBottom: 12 }}>{s.icon}</div>
-                <p style={{ fontWeight: 800, fontSize: 16, color: '#0a0a0a', marginBottom: 8 }}>{s.title}</p>
-                <p style={{ color: '#666', fontSize: 13, lineHeight: 1.7, margin: 0 }}>{s.desc}</p>
+                <p style={{ fontWeight: 800, fontSize: 16, color: '#0F172A', marginBottom: 8 }}>{s.title}</p>
+                <p style={{ color: '#64748B', fontSize: 13, lineHeight: 1.7, margin: 0 }}>{s.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* STORY SECTION */}
-      <section style={{ padding: '80px 48px', background: '#f8faff', borderBottom: '1px solid #e8f0fe' }}>
+      {/* STORY */}
+      <section style={{ padding: '80px 48px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#1a56db', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Built for the job site</p>
-            <h2 style={{ fontSize: 44, fontWeight: 900, letterSpacing: '-1px', color: '#0a0a0a', marginBottom: 12 }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#2563EB', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Built for the job site</p>
+            <h2 style={{ fontSize: 44, fontWeight: 900, letterSpacing: '-1px', color: '#0F172A', marginBottom: 12 }}>
               You stay on the job.<br />
-              <span style={{ color: '#1a56db' }}>BellAveGo handles the front desk.</span>
+              <span style={{ color: '#2563EB' }}>BellAveGo handles the front desk.</span>
             </h2>
-            <p style={{ color: '#666', fontSize: 17, maxWidth: 500, margin: '0 auto' }}>
+            <p style={{ color: '#64748B', fontSize: 17, maxWidth: 500, margin: '0 auto' }}>
               While you&apos;re working, driving, or finishing a job, BellAveGo answers the call, books the appointment, and texts the customer.
             </p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 40 }}>
-            <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+            <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.12)' }}>
               <Image src="/electrician.png" alt="Contractor on the job" width={600} height={420} style={{ width: '100%', height: 360, objectFit: 'cover', display: 'block' }} />
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)', padding: '40px 28px 24px' }}>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(11,31,58,0.9) 0%, transparent 100%)', padding: '40px 28px 24px' }}>
                 <p style={{ color: '#fff', fontWeight: 700, fontSize: 16, margin: 0 }}>📍 Contractor can&apos;t answer</p>
-                <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, margin: '6px 0 0' }}>Phone rings while you&apos;re on the job.</p>
+                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, margin: '6px 0 0' }}>Phone rings while you&apos;re on the job.</p>
               </div>
             </div>
-            <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+            <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.12)' }}>
               <Image src="/customer.png" alt="Customer getting confirmation" width={600} height={420} style={{ width: '100%', height: 360, objectFit: 'cover', display: 'block' }} />
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)', padding: '40px 28px 24px' }}>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(11,31,58,0.9) 0%, transparent 100%)', padding: '40px 28px 24px' }}>
                 <p style={{ color: '#fff', fontWeight: 700, fontSize: 16, margin: 0 }}>💬 Customer gets handled instantly</p>
-                <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, margin: '6px 0 0' }}>Booked, confirmed, and reminded automatically.</p>
+                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, margin: '6px 0 0' }}>Booked, confirmed, and reminded automatically.</p>
               </div>
             </div>
           </div>
@@ -174,10 +174,10 @@ export default function HomePage() {
               { icon: '📅', title: 'Job gets booked', desc: 'Added to your schedule instantly' },
               { icon: '💬', title: 'Customer texted', desc: 'Confirmation + reminder, automatic' },
             ].map(s => (
-              <div key={s.title} style={{ background: '#fff', border: '1px solid #e8f0fe', borderRadius: 14, padding: '28px 24px', textAlign: 'center', boxShadow: '0 2px 12px rgba(26,86,219,0.06)' }}>
+              <div key={s.title} style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 14, padding: '28px 24px', textAlign: 'center', boxShadow: '0 2px 12px rgba(37,99,235,0.05)' }}>
                 <div style={{ fontSize: 40, marginBottom: 14 }}>{s.icon}</div>
-                <p style={{ fontWeight: 800, fontSize: 16, marginBottom: 6, color: '#0a0a0a' }}>{s.title}</p>
-                <p style={{ color: '#888', fontSize: 14, lineHeight: 1.6, margin: 0 }}>{s.desc}</p>
+                <p style={{ fontWeight: 800, fontSize: 16, marginBottom: 6, color: '#0F172A' }}>{s.title}</p>
+                <p style={{ color: '#64748B', fontSize: 14, lineHeight: 1.6, margin: 0 }}>{s.desc}</p>
               </div>
             ))}
           </div>
@@ -185,12 +185,12 @@ export default function HomePage() {
       </section>
 
       {/* FEATURES */}
-      <section style={{ padding: '80px 48px', background: '#fff', borderBottom: '1px solid #f0f0f0' }}>
+      <section style={{ padding: '80px 48px', background: '#fff', borderBottom: '1px solid #E2E8F0' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#1a56db', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Everything included</p>
-            <h2 style={{ fontSize: 40, fontWeight: 900, marginBottom: 10, letterSpacing: '-1px', color: '#0a0a0a' }}>Everything your front desk would do, without hiring one.</h2>
-            <p style={{ color: '#888', fontSize: 16, maxWidth: 520, margin: '0 auto' }}>Calls, texts, bookings, reminders, invoices, reviews, and revenue tracking in one simple system.</p>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#2563EB', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Everything included</p>
+            <h2 style={{ fontSize: 40, fontWeight: 900, marginBottom: 10, letterSpacing: '-1px', color: '#0F172A' }}>Everything your front desk would do, without hiring one.</h2>
+            <p style={{ color: '#64748B', fontSize: 16, maxWidth: 520, margin: '0 auto' }}>Calls, texts, bookings, reminders, invoices, reviews, and revenue tracking in one simple system.</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
             {[
@@ -203,10 +203,10 @@ export default function HomePage() {
               { icon: '📊', title: 'Revenue dashboard', desc: 'See calls, booked jobs, and revenue in one place.' },
               { icon: '👥', title: 'Team access', desc: 'Let up to 5 team members stay in the loop.' },
             ].map(f => (
-              <div key={f.title} style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: 14, padding: '24px 20px', transition: 'box-shadow 0.2s' }}>
+              <div key={f.title} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: '24px 20px' }}>
                 <div style={{ fontSize: 32, marginBottom: 12 }}>{f.icon}</div>
-                <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: '#0a0a0a' }}>{f.title}</p>
-                <p style={{ color: '#888', fontSize: 13, lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
+                <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: '#0F172A' }}>{f.title}</p>
+                <p style={{ color: '#64748B', fontSize: 13, lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
               </div>
             ))}
           </div>
@@ -214,10 +214,10 @@ export default function HomePage() {
       </section>
 
       {/* TRUST */}
-      <section style={{ padding: '80px 48px', background: '#f8faff', borderBottom: '1px solid #e8f0fe' }}>
+      <section style={{ padding: '80px 48px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <h2 style={{ fontSize: 36, fontWeight: 900, marginBottom: 8, letterSpacing: '-1px', color: '#0a0a0a' }}>Built for real service businesses, not tech teams.</h2>
+            <h2 style={{ fontSize: 36, fontWeight: 900, marginBottom: 8, letterSpacing: '-1px', color: '#0F172A' }}>Built for real service businesses, not tech teams.</h2>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
             {[
@@ -226,10 +226,10 @@ export default function HomePage() {
               { icon: '📊', title: 'Owner-friendly dashboard', desc: 'See calls, jobs, customers, and revenue without spreadsheets.' },
               { icon: '🔓', title: 'Cancel anytime', desc: 'No long-term contracts. Try it, test it, keep it only if it helps.' },
             ].map(t => (
-              <div key={t.title} style={{ background: '#fff', border: '1px solid #e8f0fe', borderRadius: 16, padding: '28px 24px', textAlign: 'center', boxShadow: '0 2px 12px rgba(26,86,219,0.06)' }}>
+              <div key={t.title} style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '28px 24px', textAlign: 'center', boxShadow: '0 2px 12px rgba(37,99,235,0.04)' }}>
                 <div style={{ fontSize: 36, marginBottom: 14 }}>{t.icon}</div>
-                <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 8, color: '#0a0a0a' }}>{t.title}</p>
-                <p style={{ color: '#888', fontSize: 13, lineHeight: 1.6, margin: 0 }}>{t.desc}</p>
+                <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 8, color: '#0F172A' }}>{t.title}</p>
+                <p style={{ color: '#64748B', fontSize: 13, lineHeight: 1.6, margin: 0 }}>{t.desc}</p>
               </div>
             ))}
           </div>
@@ -237,16 +237,16 @@ export default function HomePage() {
       </section>
 
       {/* PRICING */}
-      <section style={{ padding: '80px 48px', background: '#fff', borderBottom: '1px solid #f0f0f0', textAlign: 'center' }}>
-        <p style={{ fontSize: 13, fontWeight: 700, color: '#1a56db', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Simple pricing</p>
-        <h2 style={{ fontSize: 44, fontWeight: 900, marginBottom: 8, letterSpacing: '-1.5px', color: '#0a0a0a' }}>One price. Everything included.</h2>
-        <p style={{ color: '#888', fontSize: 16, marginBottom: 52 }}>Your first booked job can pay for the entire month.</p>
-        <div style={{ background: 'linear-gradient(135deg, #0f1c3f 0%, #1a56db 100%)', borderRadius: 24, padding: '52px 44px', maxWidth: 460, margin: '0 auto', boxShadow: '0 24px 80px rgba(26,86,219,0.25)' }}>
+      <section style={{ padding: '80px 48px', background: '#fff', borderBottom: '1px solid #E2E8F0', textAlign: 'center' }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: '#2563EB', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Simple pricing</p>
+        <h2 style={{ fontSize: 44, fontWeight: 900, marginBottom: 8, letterSpacing: '-1.5px', color: '#0F172A' }}>One price. Everything included.</h2>
+        <p style={{ color: '#64748B', fontSize: 16, marginBottom: 52 }}>Your first booked job can pay for the entire month.</p>
+        <div style={{ background: 'linear-gradient(135deg, #0B1F3A 0%, #1e3a6e 100%)', borderRadius: 24, padding: '52px 44px', maxWidth: 460, margin: '0 auto', boxShadow: '0 24px 80px rgba(11,31,58,0.25)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: 3, marginBottom: 4 }}>
-            <span style={{ fontSize: 26, fontWeight: 900, color: 'rgba(255,255,255,0.5)', marginTop: 16 }}>$</span>
+            <span style={{ fontSize: 26, fontWeight: 900, color: 'rgba(255,255,255,0.4)', marginTop: 16 }}>$</span>
             <span style={{ fontSize: 90, fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-3px' }}>97</span>
           </div>
-          <p style={{ color: 'rgba(255,255,255,0.5)', marginBottom: 36, fontSize: 14 }}>per month · no contracts</p>
+          <p style={{ color: 'rgba(255,255,255,0.4)', marginBottom: 36, fontSize: 14 }}>per month · no contracts</p>
           <div style={{ textAlign: 'left', marginBottom: 36 }}>
             {[
               'AI receptionist 24/7',
@@ -259,43 +259,43 @@ export default function HomePage() {
               'Revenue dashboard',
               'Up to 5 team members',
             ].map(f => (
-              <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <div style={{ width: 20, height: 20, background: '#fbbf24', borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <span style={{ color: '#0a0a0a', fontSize: 11, fontWeight: 900 }}>✓</span>
+              <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                <div style={{ width: 20, height: 20, background: '#22C55E', borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ color: '#fff', fontSize: 11, fontWeight: 900 }}>✓</span>
                 </div>
                 <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)' }}>{f}</span>
               </div>
             ))}
           </div>
-          <button onClick={handleCheckout} style={{ display: 'block', width: '100%', padding: '18px', textAlign: 'center', background: '#fbbf24', borderRadius: 10, border: 'none', color: '#0a0a0a', fontWeight: 900, fontSize: 16, cursor: 'pointer' }}>
+          <button onClick={handleCheckout} style={{ display: 'block', width: '100%', padding: '18px', textAlign: 'center', background: '#22C55E', borderRadius: 10, border: 'none', color: '#fff', fontWeight: 900, fontSize: 16, cursor: 'pointer', boxShadow: '0 4px 20px rgba(34,197,94,0.35)' }}>
             Start Free Trial — 14 Days →
           </button>
-          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, marginTop: 14 }}>Cancel before trial ends to avoid billing.</p>
+          <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, marginTop: 14 }}>Cancel before trial ends to avoid billing.</p>
         </div>
       </section>
 
       {/* FINAL CTA */}
-      <section style={{ padding: '100px 48px', background: 'linear-gradient(135deg, #0f1c3f 0%, #1a56db 100%)', textAlign: 'center' }}>
+      <section style={{ padding: '100px 48px', background: 'linear-gradient(135deg, #0B1F3A 0%, #1e3a6e 100%)', textAlign: 'center' }}>
         <h2 style={{ fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 900, marginBottom: 16, color: '#fff', letterSpacing: '-1.5px', lineHeight: 1.1 }}>
           Stop letting missed calls<br />become missed jobs.
         </h2>
-        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 17, maxWidth: 480, margin: '0 auto 44px', lineHeight: 1.8 }}>
+        <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 17, maxWidth: 480, margin: '0 auto 44px', lineHeight: 1.8 }}>
           Set up BellAveGo in 15 minutes and let the AI answer, book, and text your next customer.
         </p>
         <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button onClick={handleCheckout} style={{ padding: '18px 48px', background: '#fbbf24', borderRadius: 12, border: 'none', color: '#0a0a0a', fontWeight: 900, fontSize: 17, cursor: 'pointer' }}>
+          <button onClick={handleCheckout} style={{ padding: '18px 48px', background: '#22C55E', borderRadius: 12, border: 'none', color: '#fff', fontWeight: 900, fontSize: 17, cursor: 'pointer', boxShadow: '0 4px 24px rgba(34,197,94,0.35)' }}>
             Start Free Trial — 14 Days →
           </button>
-          <a href="tel:+17623713351" style={{ padding: '18px 32px', background: 'rgba(255,255,255,0.12)', borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.25)', color: '#fff', fontWeight: 700, fontSize: 17, textDecoration: 'none' }}>
+          <a href="tel:+17623713351" style={{ padding: '18px 32px', background: 'rgba(255,255,255,0.08)', borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, fontSize: 17, textDecoration: 'none' }}>
             📞 Call the AI Demo
           </a>
         </div>
-        <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, marginTop: 20 }}>No credit card. No contract. No BS.</p>
+        <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, marginTop: 20 }}>No credit card. No contract. No BS.</p>
       </section>
 
       {/* FOOTER */}
-      <footer style={{ textAlign: 'center', padding: '28px 40px', background: '#0d1117' }}>
-        <p style={{ margin: 0, fontSize: 12, color: '#555' }}>BellAveGo · Built for home service businesses · $97/mo · No contracts · Cancel anytime</p>
+      <footer style={{ textAlign: 'center', padding: '28px 40px', background: '#0B1F3A' }}>
+        <p style={{ margin: 0, fontSize: 12, color: '#475569' }}>BellAveGo · Built for home service businesses · $97/mo · No contracts · Cancel anytime</p>
       </footer>
 
     </main>
