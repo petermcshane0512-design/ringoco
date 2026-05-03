@@ -14,27 +14,26 @@ export default function HomePage() {
   }
 
   return (
-    <main style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", background: '#fff', color: '#0F172A', minHeight: '100vh', overflowX: 'hidden' }}>
+    <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#fff', color: '#0F172A', minHeight: '100vh', overflowX: 'hidden' }}>
 
       {/* NAV */}
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 48px', height: 72, background: '#fff', borderBottom: '1px solid #E2E8F0', position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100 }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Image src="/logo.png" alt="BellAveGo" width={200} height={66} style={{ objectFit: 'contain' }} />
-        </div>
+        <Image src="/logo.png" alt="BellAveGo" width={200} height={66} style={{ objectFit: 'contain' }} />
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <Link href="/sign-in" style={{ padding: '10px 22px', border: '1.5px solid #E2E8F0', borderRadius: 8, textDecoration: 'none', color: '#64748B', fontSize: 14, fontWeight: 500 }}>Sign in</Link>
-          <button onClick={handleCheckout} style={{ padding: '10px 22px', background: '#22C55E', borderRadius: 8, border: 'none', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 14px rgba(34,197,94,0.3)', cursor: 'pointer' }}>Start Free Trial</button>
+          <Link href="/sign-in" style={{ padding: '10px 22px', border: '1.5px solid #E2E8F0', borderRadius: 8, textDecoration: 'none', color: '#64748B', fontSize: 14, fontWeight: 500 }}>
+            Sign in
+          </Link>
+          <Link href="/sign-up" style={{ padding: '10px 22px', background: '#22C55E', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 14px rgba(34,197,94,0.3)' }}>
+            Start Free Trial
+          </Link>
         </div>
       </nav>
 
       {/* HERO */}
       <section style={{ background: 'linear-gradient(135deg, #0B1F3A 0%, #1e3a6e 100%)', paddingTop: 140, paddingBottom: 80, paddingLeft: 48, paddingRight: 48, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-
-        {/* Boat watermark */}
         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none', opacity: 0.06, zIndex: 0 }}>
           <Image src="/logo2.png" alt="" width={700} height={700} style={{ objectFit: 'contain' }} />
         </div>
-
         <div style={{ maxWidth: 800, margin: '0 auto', position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 20, padding: '8px 16px', marginBottom: 32 }}>
             <span style={{ width: 8, height: 8, background: '#22C55E', borderRadius: '50%', display: 'inline-block' }} />
@@ -44,13 +43,13 @@ export default function HomePage() {
             Stop losing jobs to<br />
             <span style={{ color: '#22C55E' }}>missed calls.</span>
           </h1>
-          <p style={{ fontSize: 20, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, marginBottom: 40, maxWidth: 560, margin: '0 auto 40px' }}>
+          <p style={{ fontSize: 20, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, maxWidth: 560, margin: '0 auto 40px' }}>
             BellAveGo answers calls 24/7, books jobs, and texts customers automatically — so you can focus on the work, not the phone.
           </p>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 20 }}>
-            <button onClick={handleCheckout} style={{ padding: '18px 40px', background: '#22C55E', color: '#fff', fontWeight: 900, fontSize: 17, borderRadius: 12, border: 'none', cursor: 'pointer', boxShadow: '0 4px 28px rgba(34,197,94,0.35)' }}>
+            <Link href="/sign-up" style={{ padding: '18px 40px', background: '#22C55E', color: '#fff', fontWeight: 900, fontSize: 17, borderRadius: 12, textDecoration: 'none', boxShadow: '0 4px 28px rgba(34,197,94,0.35)' }}>
               Start Free Trial — 14 Days →
-            </button>
+            </Link>
             <a href="tel:+17623713351" style={{ padding: '18px 28px', background: 'rgba(255,255,255,0.08)', color: '#fff', fontWeight: 700, fontSize: 17, borderRadius: 12, textDecoration: 'none', border: '1.5px solid rgba(255,255,255,0.2)' }}>
               📞 Call the AI Demo
             </a>
@@ -63,7 +62,7 @@ export default function HomePage() {
           {[
             { num: '62%', label: "of callers won't leave a voicemail" },
             { num: '$54K', label: 'in potential yearly revenue lost from missed calls' },
-            { num: '1 in 3', label: 'calls can go unanswered at small businesses' },
+            { num: '1 in 3', label: 'calls go unanswered at small businesses' },
           ].map((s, i) => (
             <div key={s.label} style={{ padding: '28px 20px', textAlign: 'center', borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
               <p style={{ fontSize: 34, fontWeight: 900, color: '#22C55E', margin: '0 0 6px', letterSpacing: '-1px' }}>{s.num}</p>
@@ -74,7 +73,7 @@ export default function HomePage() {
         <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 12, textAlign: 'center', position: 'relative', zIndex: 1 }}>Based on common small business call-answering benchmarks and missed-call revenue estimates.</p>
       </section>
 
-      {/* DEMO SECTION */}
+      {/* DEMO */}
       <section style={{ padding: '72px 48px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', textAlign: 'center' }}>
         <div style={{ maxWidth: 600, margin: '0 auto' }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: '#2563EB', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Try it live</p>
@@ -124,11 +123,11 @@ export default function HomePage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
             {[
-              { step: '1', icon: '📞', title: 'Customer calls', desc: "BellAveGo answers before voicemail after 3-4 rings — even when you're on a job, driving, or asleep.", bg: '#EFF6FF' },
+              { step: '1', icon: '📞', title: 'Customer calls', desc: "BellAveGo answers before voicemail after 3–4 rings — even when you're on a job, driving, or asleep.", bg: '#EFF6FF' },
               { step: '2', icon: '🤖', title: 'AI collects details', desc: 'Name, service needed, address, timing, and job notes — all captured automatically.', bg: '#F0FDF4' },
               { step: '3', icon: '📅', title: 'Job gets booked', desc: 'The appointment is added to your calendar and the customer gets a confirmation text.', bg: '#F0FDF4' },
               { step: '4', icon: '🔔', title: 'You get notified', desc: 'You receive the call summary, customer details, and next steps instantly.', bg: '#EFF6FF' },
-            ].map((s) => (
+            ].map(s => (
               <div key={s.step} style={{ background: s.bg, borderRadius: 16, padding: '28px 22px', border: '1px solid #E2E8F0' }}>
                 <div style={{ width: 32, height: 32, background: '#2563EB', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
                   <span style={{ color: '#fff', fontSize: 14, fontWeight: 900 }}>{s.step}</span>
@@ -193,7 +192,7 @@ export default function HomePage() {
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: '#2563EB', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Everything included</p>
             <h2 style={{ fontSize: 40, fontWeight: 900, marginBottom: 10, letterSpacing: '-1px', color: '#0F172A' }}>Everything your front desk would do, without hiring one.</h2>
-            <p style={{ color: '#64748B', fontSize: 16, maxWidth: 520, margin: '0 auto' }}>Calls, texts, bookings, reminders, invoices, reviews, and revenue tracking in one simple system.</p>
+            <p style={{ color: '#64748B', fontSize: 16, maxWidth: 520, margin: '0 auto' }}>Calls, texts, bookings, reminders, invoices, and revenue tracking in one simple system.</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
             {[
@@ -243,7 +242,7 @@ export default function HomePage() {
       <section style={{ padding: '80px 48px', background: '#fff', borderBottom: '1px solid #E2E8F0', textAlign: 'center' }}>
         <p style={{ fontSize: 13, fontWeight: 700, color: '#2563EB', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Simple pricing</p>
         <h2 style={{ fontSize: 44, fontWeight: 900, marginBottom: 8, letterSpacing: '-1.5px', color: '#0F172A' }}>One price. Everything included.</h2>
-        <p style={{ color: '#64748B', fontSize: 16, marginBottom: 52 }}>Your first booked job can pay for the entire month.</p>
+        <p style={{ color: '#64748B', fontSize: 16, marginBottom: 52 }}>Your first booked job pays for the whole month.</p>
         <div style={{ background: 'linear-gradient(135deg, #0B1F3A 0%, #1e3a6e 100%)', borderRadius: 24, padding: '52px 44px', maxWidth: 460, margin: '0 auto', boxShadow: '0 24px 80px rgba(11,31,58,0.25)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: 3, marginBottom: 4 }}>
             <span style={{ fontSize: 26, fontWeight: 900, color: 'rgba(255,255,255,0.4)', marginTop: 16 }}>$</span>
@@ -270,9 +269,9 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-          <button onClick={handleCheckout} style={{ display: 'block', width: '100%', padding: '18px', textAlign: 'center', background: '#22C55E', borderRadius: 10, border: 'none', color: '#fff', fontWeight: 900, fontSize: 16, cursor: 'pointer', boxShadow: '0 4px 20px rgba(34,197,94,0.35)' }}>
+          <Link href="/sign-up" style={{ display: 'block', width: '100%', padding: '18px', textAlign: 'center', background: '#22C55E', borderRadius: 10, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 16, boxShadow: '0 4px 20px rgba(34,197,94,0.35)' }}>
             Start Free Trial — 14 Days →
-          </button>
+          </Link>
           <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, marginTop: 14 }}>Cancel before trial ends to avoid billing.</p>
         </div>
       </section>
@@ -286,9 +285,9 @@ export default function HomePage() {
           Set up BellAveGo in 15 minutes and let the AI answer, book, and text your next customer.
         </p>
         <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button onClick={handleCheckout} style={{ padding: '18px 48px', background: '#22C55E', borderRadius: 12, border: 'none', color: '#fff', fontWeight: 900, fontSize: 17, cursor: 'pointer', boxShadow: '0 4px 24px rgba(34,197,94,0.35)' }}>
+          <Link href="/sign-up" style={{ padding: '18px 48px', background: '#22C55E', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 17, boxShadow: '0 4px 24px rgba(34,197,94,0.35)' }}>
             Start Free Trial — 14 Days →
-          </button>
+          </Link>
           <a href="tel:+17623713351" style={{ padding: '18px 32px', background: 'rgba(255,255,255,0.08)', borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, fontSize: 17, textDecoration: 'none' }}>
             📞 Call the AI Demo
           </a>
