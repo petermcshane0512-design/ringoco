@@ -1,20 +1,10 @@
 'use client'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth, SignOutButton } from '@clerk/nextjs'
 
 export default function HomePage() {
   const { isSignedIn } = useAuth()
-
-  const handleCheckout = async () => {
-    const res = await fetch('/api/stripe/checkout', { method: 'POST' })
-    const data = await res.json()
-    if (data.url) {
-      window.location.href = data.url
-    } else if (res.status === 401) {
-      window.location.href = '/sign-up'
-    }
-  }
 
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#fff', color: '#0F172A', minHeight: '100vh', overflowX: 'hidden' }}>
@@ -24,9 +14,16 @@ export default function HomePage() {
         <Image src="/logo.png" alt="BellAveGo" width={200} height={66} style={{ objectFit: 'contain' }} />
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           {isSignedIn ? (
-            <Link href="/dashboard" style={{ padding: '10px 22px', background: '#22C55E', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 14px rgba(34,197,94,0.3)' }}>
-              Go to Dashboard →
-            </Link>
+            <>
+              <SignOutButton redirectUrl="/">
+                <button style={{ padding: '8px 16px', border: '1.5px solid #E2E8F0', borderRadius: 8, background: 'transparent', color: '#94A3B8', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
+                  Sign out
+                </button>
+              </SignOutButton>
+              <Link href="/dashboard" style={{ padding: '10px 22px', background: '#22C55E', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 14px rgba(34,197,94,0.3)' }}>
+                Go to Dashboard →
+              </Link>
+            </>
           ) : (
             <>
               <Link href="/sign-in" style={{ padding: '10px 22px', border: '1.5px solid #E2E8F0', borderRadius: 8, textDecoration: 'none', color: '#64748B', fontSize: 14, fontWeight: 500 }}>
@@ -57,21 +54,44 @@ export default function HomePage() {
           <p style={{ fontSize: 20, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, maxWidth: 560, margin: '0 auto 40px' }}>
             BellAveGo answers calls 24/7, books jobs, and texts customers automatically — so you can focus on the work, not the phone.
           </p>
-          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 20 }}>
-            {isSignedIn ? (
-              <Link href="/dashboard" style={{ padding: '18px 40px', background: '#22C55E', color: '#fff', fontWeight: 900, fontSize: 17, borderRadius: 12, textDecoration: 'none', boxShadow: '0 4px 28px rgba(34,197,94,0.35)' }}>
-                Go to Dashboard →
+
+          {isSignedIn ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+              <Link href="/dashboard" style={{
+                padding: '24px 72px',
+                background: '#22C55E',
+                color: '#fff',
+                fontWeight: 900,
+                fontSize: 24,
+                borderRadius: 16,
+                textDecoration: 'none',
+                boxShadow: '0 8px 48px rgba(34,197,94,0.5)',
+                letterSpacing: '-0.3px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 10,
+              }}>
+                ⚡ Open Your Dashboard
               </Link>
-            ) : (
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, margin: 0 }}>
+                Your AI receptionist is ready — start capturing calls and booking jobs
+              </p>
+              <a href="tel:+17623713351" style={{ padding: '14px 28px', background: 'rgba(255,255,255,0.08)', color: '#fff', fontWeight: 700, fontSize: 15, borderRadius: 12, textDecoration: 'none', border: '1.5px solid rgba(255,255,255,0.2)' }}>
+                📞 Call the AI Demo
+              </a>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 20 }}>
               <Link href="/sign-up" style={{ padding: '18px 40px', background: '#22C55E', color: '#fff', fontWeight: 900, fontSize: 17, borderRadius: 12, textDecoration: 'none', boxShadow: '0 4px 28px rgba(34,197,94,0.35)' }}>
                 Start Free Trial — 14 Days →
               </Link>
-            )}
-            <a href="tel:+17623713351" style={{ padding: '18px 28px', background: 'rgba(255,255,255,0.08)', color: '#fff', fontWeight: 700, fontSize: 17, borderRadius: 12, textDecoration: 'none', border: '1.5px solid rgba(255,255,255,0.2)' }}>
-              📞 Call the AI Demo
-            </a>
-          </div>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 16 }}>No credit card required · Setup in 15 minutes · Cancel anytime</p>
+              <a href="tel:+17623713351" style={{ padding: '18px 28px', background: 'rgba(255,255,255,0.08)', color: '#fff', fontWeight: 700, fontSize: 17, borderRadius: 12, textDecoration: 'none', border: '1.5px solid rgba(255,255,255,0.2)' }}>
+                📞 Call the AI Demo
+              </a>
+            </div>
+          )}
+
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 8 }}>No credit card required · Setup in 15 minutes · Cancel anytime</p>
         </div>
 
         {/* Stats */}
@@ -304,7 +324,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
           {isSignedIn ? (
             <Link href="/dashboard" style={{ padding: '18px 48px', background: '#22C55E', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 17, boxShadow: '0 4px 24px rgba(34,197,94,0.35)' }}>
-              Go to Dashboard →
+              Open Your Dashboard →
             </Link>
           ) : (
             <Link href="/sign-up" style={{ padding: '18px 48px', background: '#22C55E', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 17, boxShadow: '0 4px 24px rgba(34,197,94,0.35)' }}>
