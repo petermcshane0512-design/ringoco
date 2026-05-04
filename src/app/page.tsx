@@ -1,8 +1,11 @@
 'use client'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useAuth } from '@clerk/nextjs'
 
 export default function HomePage() {
+  const { isSignedIn } = useAuth()
+
   const handleCheckout = async () => {
     const res = await fetch('/api/stripe/checkout', { method: 'POST' })
     const data = await res.json()
@@ -20,12 +23,20 @@ export default function HomePage() {
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 48px', height: 72, background: '#fff', borderBottom: '1px solid #E2E8F0', position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100 }}>
         <Image src="/logo.png" alt="BellAveGo" width={200} height={66} style={{ objectFit: 'contain' }} />
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <Link href="/sign-in" style={{ padding: '10px 22px', border: '1.5px solid #E2E8F0', borderRadius: 8, textDecoration: 'none', color: '#64748B', fontSize: 14, fontWeight: 500 }}>
-            Sign in
-          </Link>
-          <Link href="/sign-up" style={{ padding: '10px 22px', background: '#22C55E', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 14px rgba(34,197,94,0.3)' }}>
-            Start Free Trial
-          </Link>
+          {isSignedIn ? (
+            <Link href="/dashboard" style={{ padding: '10px 22px', background: '#22C55E', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 14px rgba(34,197,94,0.3)' }}>
+              Go to Dashboard →
+            </Link>
+          ) : (
+            <>
+              <Link href="/sign-in" style={{ padding: '10px 22px', border: '1.5px solid #E2E8F0', borderRadius: 8, textDecoration: 'none', color: '#64748B', fontSize: 14, fontWeight: 500 }}>
+                Sign in
+              </Link>
+              <Link href="/sign-up" style={{ padding: '10px 22px', background: '#22C55E', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 14px rgba(34,197,94,0.3)' }}>
+                Start Free Trial
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 
@@ -47,9 +58,15 @@ export default function HomePage() {
             BellAveGo answers calls 24/7, books jobs, and texts customers automatically — so you can focus on the work, not the phone.
           </p>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 20 }}>
-            <Link href="/sign-up" style={{ padding: '18px 40px', background: '#22C55E', color: '#fff', fontWeight: 900, fontSize: 17, borderRadius: 12, textDecoration: 'none', boxShadow: '0 4px 28px rgba(34,197,94,0.35)' }}>
-              Start Free Trial — 14 Days →
-            </Link>
+            {isSignedIn ? (
+              <Link href="/dashboard" style={{ padding: '18px 40px', background: '#22C55E', color: '#fff', fontWeight: 900, fontSize: 17, borderRadius: 12, textDecoration: 'none', boxShadow: '0 4px 28px rgba(34,197,94,0.35)' }}>
+                Go to Dashboard →
+              </Link>
+            ) : (
+              <Link href="/sign-up" style={{ padding: '18px 40px', background: '#22C55E', color: '#fff', fontWeight: 900, fontSize: 17, borderRadius: 12, textDecoration: 'none', boxShadow: '0 4px 28px rgba(34,197,94,0.35)' }}>
+                Start Free Trial — 14 Days →
+              </Link>
+            )}
             <a href="tel:+17623713351" style={{ padding: '18px 28px', background: 'rgba(255,255,255,0.08)', color: '#fff', fontWeight: 700, fontSize: 17, borderRadius: 12, textDecoration: 'none', border: '1.5px solid rgba(255,255,255,0.2)' }}>
               📞 Call the AI Demo
             </a>
@@ -285,9 +302,15 @@ export default function HomePage() {
           Set up BellAveGo in 15 minutes and let the AI answer, book, and text your next customer.
         </p>
         <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link href="/sign-up" style={{ padding: '18px 48px', background: '#22C55E', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 17, boxShadow: '0 4px 24px rgba(34,197,94,0.35)' }}>
-            Start Free Trial — 14 Days →
-          </Link>
+          {isSignedIn ? (
+            <Link href="/dashboard" style={{ padding: '18px 48px', background: '#22C55E', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 17, boxShadow: '0 4px 24px rgba(34,197,94,0.35)' }}>
+              Go to Dashboard →
+            </Link>
+          ) : (
+            <Link href="/sign-up" style={{ padding: '18px 48px', background: '#22C55E', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 17, boxShadow: '0 4px 24px rgba(34,197,94,0.35)' }}>
+              Start Free Trial — 14 Days →
+            </Link>
+          )}
           <a href="tel:+17623713351" style={{ padding: '18px 32px', background: 'rgba(255,255,255,0.08)', borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, fontSize: 17, textDecoration: 'none' }}>
             📞 Call the AI Demo
           </a>
