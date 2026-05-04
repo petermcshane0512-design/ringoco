@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { UserButton } from '@clerk/nextjs'
 
 const nav = [
   { label: 'Overview', href: '/dashboard' },
@@ -25,9 +26,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {n.label}
           </Link>
         ))}
+        <div style={{ marginTop: 'auto', paddingTop: 24, borderTop: '1px solid #1e293b', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <UserButton afterSignOutUrl="/" />
+          <span style={{ color: '#64748b', fontSize: 13 }}>Account</span>
+        </div>
       </aside>
-      <main style={{ flex: 1, background: '#f8fafc', padding: 32 }}>
-        {children}
+      <main style={{ flex: 1, background: '#f8fafc' }}>
+        <div style={{ borderBottom: '1px solid #e2e8f0', padding: '14px 32px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>
+            {nav.find(n => path === n.href || path.startsWith(n.href + '/'))?.label ?? 'Dashboard'}
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <a href="https://bellavego.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#2563eb', textDecoration: 'none', fontWeight: 500 }}>
+              bellavego.com ↗
+            </a>
+            <UserButton afterSignOutUrl="/" />
+          </div>
+        </div>
+        <div style={{ padding: 32 }}>
+          {children}
+        </div>
       </main>
     </div>
   )
