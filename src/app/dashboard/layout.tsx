@@ -40,7 +40,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <a href="https://bellavego.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#2563eb', textDecoration: 'none', fontWeight: 500 }}>
               bellavego.com ↗
             </a>
-            <UserButton afterSignOutUrl="/" />
+            <UserButton />
           </div>
         </div>
         <div style={{ padding: 32 }}>
