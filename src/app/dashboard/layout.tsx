@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </Link>
         ))}
         <div style={{ marginTop: 'auto', paddingTop: 24, borderTop: '1px solid #1e293b', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <UserButton afterSignOutUrl="/" />
+          <UserButton />
           <span style={{ color: '#64748b', fontSize: 13 }}>Account</span>
         </div>
       </aside>
