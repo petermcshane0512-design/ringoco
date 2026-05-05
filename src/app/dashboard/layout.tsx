@@ -2,15 +2,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
+import Image from 'next/image'
 
 const nav = [
   { label: 'Command Center', href: '/dashboard' },
-  { label: 'Jobs', href: '/dashboard/jobs' },
-  { label: 'Customers', href: '/dashboard/customers' },
   { label: 'AI Receptionist', href: '/dashboard/receptionist', dot: true },
-  { label: 'Scheduling', href: '/dashboard/scheduling' },
   { label: 'Invoicing', href: '/dashboard/invoicing' },
-  { label: 'Settings', href: '/dashboard/settings' },
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -20,34 +17,66 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <aside style={{ width: 220, background: '#060E1C', borderRight: '1px solid #0F2040', display: 'flex', flexDirection: 'column', padding: '20px 14px', flexShrink: 0 }}>
 
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '4px 8px 20px', borderBottom: '1px solid #0F2040', marginBottom: 16 }}>
-          <div style={{ width: 30, height: 30, background: 'linear-gradient(135deg,#0EA5E9,#0284C7)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#F1F5F9', letterSpacing: '-0.3px' }}>BellAveGo</div>
-            <div style={{ fontSize: 10, color: '#334155', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Pro · $97/mo</div>
-          </div>
+        <div style={{ padding: '4px 8px 20px', borderBottom: '1px solid #0F2040', marginBottom: 16 }}>
+          <Image
+            src="/logo.png"
+            alt="BellAveGo"
+            width={140}
+            height={40}
+            style={{ objectFit: 'contain', width: 'auto', height: 36 }}
+            priority
+          />
         </div>
 
-        {/* Nav */}
+        {/* Main nav */}
         <div style={{ fontSize: 10, fontWeight: 600, color: '#334155', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0 8px', marginBottom: 6 }}>Workspace</div>
-        {nav.filter(n => n.href !== '/dashboard/settings').map(n => (
-          <Link key={n.href} href={n.href} style={{
-            display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px',
-            borderRadius: 8, textDecoration: 'none', fontSize: 13, marginBottom: 2,
-            background: path === n.href ? '#0C1F3D' : 'transparent',
-            color: path === n.href ? '#38BDF8' : '#64748B',
-            fontWeight: path === n.href ? 500 : 400,
-          }}>
-            {n.label}
-            {n.dot && (
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', marginLeft: 'auto' }} />
-            )}
-          </Link>
-        ))}
+
+        {/* Command Center */}
+        <Link href="/dashboard" style={{
+          display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px',
+          borderRadius: 8, textDecoration: 'none', fontSize: 13, marginBottom: 2,
+          background: path === '/dashboard' ? '#0C1F3D' : 'transparent',
+          color: path === '/dashboard' ? '#38BDF8' : '#64748B',
+          fontWeight: path === '/dashboard' ? 500 : 400,
+        }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+          Command Center
+        </Link>
+
+        {/* AI Receptionist */}
+        <Link href="/dashboard/receptionist" style={{
+          display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px',
+          borderRadius: 8, textDecoration: 'none', fontSize: 13, marginBottom: 2,
+          background: path === '/dashboard/receptionist' ? '#0C1F3D' : 'transparent',
+          color: path === '/dashboard/receptionist' ? '#38BDF8' : '#64748B',
+          fontWeight: path === '/dashboard/receptionist' ? 500 : 400,
+        }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+          </svg>
+          AI Receptionist
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', marginLeft: 'auto' }} />
+        </Link>
+
+        {/* Invoicing */}
+        <Link href="/dashboard/invoicing" style={{
+          display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px',
+          borderRadius: 8, textDecoration: 'none', fontSize: 13, marginBottom: 2,
+          background: path === '/dashboard/invoicing' ? '#0C1F3D' : 'transparent',
+          color: path === '/dashboard/invoicing' ? '#38BDF8' : '#64748B',
+          fontWeight: path === '/dashboard/invoicing' ? 500 : 400,
+        }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+          </svg>
+          Invoicing
+        </Link>
 
         {/* Account section */}
         <div style={{ fontSize: 10, fontWeight: 600, color: '#334155', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0 8px', margin: '16px 0 6px' }}>Account</div>
@@ -59,7 +88,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           fontWeight: path === '/dashboard/settings' ? 500 : 400,
         }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/>
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M20 21a8 8 0 10-16 0"/>
           </svg>
           Settings
         </Link>
