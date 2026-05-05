@@ -93,7 +93,11 @@ export default function InvoicingPage() {
     padding: "14px 18px",
     borderBottom: "1px solid #0F2040",
   };
-  const cardTitle: React.CSSProperties = { fontSize: 13, fontWeight: 600, color: "#CBD5E1" };
+  const cardTitle: React.CSSProperties = {
+    fontSize: 13,
+    fontWeight: 600,
+    color: "#CBD5E1",
+  };
   const cardBody: React.CSSProperties = { padding: 18 };
   const label: React.CSSProperties = {
     display: "block",
@@ -135,7 +139,6 @@ export default function InvoicingPage() {
   return (
     <div style={{ padding: "24px 28px 60px", color: "#E2E8F0", fontFamily: "system-ui, -apple-system, sans-serif" }}>
 
-      {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <div style={{ fontSize: 10, fontWeight: 600, color: "#334155", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>Billing</div>
         <h1 style={{ fontSize: 22, fontWeight: 700, color: "#F1F5F9", letterSpacing: "-0.5px", marginBottom: 4 }}>Invoicing</h1>
@@ -144,7 +147,6 @@ export default function InvoicingPage() {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
 
-        {/* Send Invoice form */}
         <div style={card}>
           <div style={cardHead}>
             <div>
@@ -264,14 +266,13 @@ export default function InvoicingPage() {
           </div>
         </div>
 
-        {/* Stats */}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {[
-            { label: "Total invoiced", value: `$${invoices.reduce((s, i) => s + (i.amount || 0), 0).toLocaleString()}`, sub: "All time", color: "#4ADE80", bg: "#051A0D", border: "#14532D" },
-            { label: "Paid", value: String(invoices.filter(i => i.status === "paid").length), sub: "Completed payments", color: "#38BDF8", bg: "#071530", border: "#0C4A6E" },
-            { label: "Pending", value: String(invoices.filter(i => i.status === "sent").length), sub: "Awaiting payment", color: "#F59E0B", bg: "#1C1200", border: "#713F12" },
+            { label: "Total invoiced", value: `$${invoices.reduce((s, i) => s + (i.amount || 0), 0).toLocaleString()}`, sub: "All time", color: "#4ADE80" },
+            { label: "Paid", value: String(invoices.filter(i => i.status === "paid").length), sub: "Completed payments", color: "#38BDF8" },
+            { label: "Pending", value: String(invoices.filter(i => i.status === "sent").length), sub: "Awaiting payment", color: "#F59E0B" },
           ].map((s) => (
-            <div key={s.label} style={{ background: "#060E1C", border: `1px solid #0F2040`, borderRadius: 12, padding: "18px 20px", position: "relative", overflow: "hidden" }}>
+            <div key={s.label} style={{ background: "#060E1C", border: "1px solid #0F2040", borderRadius: 12, padding: "18px 20px", position: "relative", overflow: "hidden" }}>
               <div style={{ fontSize: 10, fontWeight: 600, color: "#334155", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>{s.label}</div>
               <div style={{ fontSize: 28, fontWeight: 700, color: "#F1F5F9", letterSpacing: -1, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{s.value}</div>
               <div style={{ fontSize: 11, marginTop: 6, color: "#475569" }}>{s.sub}</div>
@@ -281,7 +282,6 @@ export default function InvoicingPage() {
         </div>
       </div>
 
-      {/* Invoice list */}
       <div style={card}>
         <div style={cardHead}>
           <div>
