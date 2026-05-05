@@ -53,26 +53,22 @@ export default function InvoicingPage() {
       return;
     }
     if (!form.customer_email && !form.customer_phone) {
-      setError("Please enter an email or phone number to send the invoice.");
+      setError("Please enter an email or phone number.");
       return;
     }
     setError("");
     setSending(true);
-
     const res = await fetch("/api/invoices/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
-
     const data = await res.json();
     setSending(false);
-
     if (!res.ok) {
       setError(data.error || "Something went wrong.");
       return;
     }
-
     setSent(true);
     setForm({ customer_name: "", customer_email: "", customer_phone: "", service_type: "", amount: "" });
     setTimeout(() => setSent(false), 4000);
@@ -93,11 +89,7 @@ export default function InvoicingPage() {
     padding: "14px 18px",
     borderBottom: "1px solid #0F2040",
   };
-  const cardTitle: React.CSSProperties = {
-    fontSize: 13,
-    fontWeight: 600,
-    color: "#CBD5E1",
-  };
+  const cardTitle: React.CSSProperties = { fontSize: 13, fontWeight: 600, color: "#CBD5E1" };
   const cardBody: React.CSSProperties = { padding: 18 };
   const label: React.CSSProperties = {
     display: "block",
@@ -240,43 +232,32 @@ export default function InvoicingPage() {
                 gap: 8,
               }}
             >
-              {sending ? "Sending..." : (
-                <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <line x1="22" y1="2" x2="11" y2="13"/>
-                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                  </svg>
-                  Send Invoice
-                </>
-              )}
+              {sending ? "Sending..." : "Send Invoice"}
             </button>
 
             {sent && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: "#4ADE80", marginTop: 10, justifyContent: "center" }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
                 Invoice sent successfully
               </div>
             )}
 
             <p style={{ fontSize: 11, color: "#334155", textAlign: "center", marginTop: 10, lineHeight: 1.5 }}>
-              A Stripe payment link is created and sent to the customer via text or email. You get paid directly to your Stripe account.
+              A Stripe payment link is created and sent to the customer via text or email.
             </p>
           </div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {[
-            { label: "Total invoiced", value: `$${invoices.reduce((s, i) => s + (i.amount || 0), 0).toLocaleString()}`, sub: "All time", color: "#4ADE80" },
+            { label: "Total invoiced", value: "$" + invoices.reduce((s, i) => s + (i.amount || 0), 0).toLocaleString(), sub: "All time", color: "#4ADE80" },
             { label: "Paid", value: String(invoices.filter(i => i.status === "paid").length), sub: "Completed payments", color: "#38BDF8" },
             { label: "Pending", value: String(invoices.filter(i => i.status === "sent").length), sub: "Awaiting payment", color: "#F59E0B" },
           ].map((s) => (
             <div key={s.label} style={{ background: "#060E1C", border: "1px solid #0F2040", borderRadius: 12, padding: "18px 20px", position: "relative", overflow: "hidden" }}>
               <div style={{ fontSize: 10, fontWeight: 600, color: "#334155", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>{s.label}</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: "#F1F5F9", letterSpacing: -1, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{s.value}</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: "#F1F5F9", letterSpacing: -1, lineHeight: 1 }}>{s.value}</div>
               <div style={{ fontSize: 11, marginTop: 6, color: "#475569" }}>{s.sub}</div>
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,${s.color},${s.color}00)` }} />
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg," + s.color + "," + s.color + "00)" }} />
             </div>
           ))}
         </div>
@@ -297,24 +278,21 @@ export default function InvoicingPage() {
             <div style={{ padding: "32px", textAlign: "center", fontSize: 13, color: "#475569" }}>Loading...</div>
           ) : invoices.length === 0 ? (
             <div style={{ textAlign: "center", padding: "40px 20px" }}>
-              <div style={{ width: 38, height: 38, background: "#0A1828", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" strokeWidth="1.8">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                </svg>
-              </div>
               <div style={{ fontSize: 13, fontWeight: 500, color: "#475569", marginBottom: 4 }}>No invoices yet</div>
               <div style={{ fontSize: 12, color: "#334155" }}>Send your first invoice using the form above.</div>
             </div>
           ) : (
             invoices.map((inv, i) => (
-              <div key={inv.id} style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
-                padding: "14px 18px",
-                borderBottom: i < invoices.length - 1 ? "1px solid #0A1828" : "none",
-              }}>
+              <div
+                key={inv.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 14,
+                  padding: "14px 18px",
+                  borderBottom: i < invoices.length - 1 ? "1px solid #0A1828" : "none",
+                }}
+              >
                 <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#0C1F3D", border: "1px solid #1E3A5F", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 13, fontWeight: 700, color: "#38BDF8" }}>
                   {(inv.customer_name || "?")[0].toUpperCase()}
                 </div>
@@ -324,16 +302,16 @@ export default function InvoicingPage() {
                 </div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "#F1F5F9", flexShrink: 0 }}>${inv.amount}</div>
                 <span style={statusStyle(inv.status)}>{inv.status}</span>
-                {inv.stripe_url && (
+                {inv.stripe_url ? (
                   
                     href={inv.stripe_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ fontSize: 11, fontWeight: 600, color: "#38BDF8", background: "#071530", border: "1px solid #0C4A6E", padding: "4px 10px", borderRadius: 6, textDecoration: "none", flexShrink: 0 }}
                   >
-                    View →
+                    View
                   </a>
-                )}
+                ) : null}
                 <div style={{ fontSize: 11, color: "#334155", flexShrink: 0 }}>
                   {new Date(inv.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                 </div>
