@@ -303,7 +303,7 @@ export default function InvoicingPage() {
                 <div style={{ fontSize: 15, fontWeight: 700, color: "#F1F5F9", flexShrink: 0 }}>${inv.amount}</div>
                 <span style={statusStyle(inv.status)}>{inv.status}</span>
                 {inv.stripe_url ? (
-                  
+                  <a
                     href={inv.stripe_url}
                     target="_blank"
                     rel="noopener noreferrer"
