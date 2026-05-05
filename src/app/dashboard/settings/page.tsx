@@ -1,16 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 export default function SettingsPage() {
-  const { user } = useUser();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -23,36 +15,34 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
-    if (!user) return;
     (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-      if (data) {
-        setForm({
-          business_name: data.business_name || "",
-          owner_phone: data.owner_phone || "",
-          services: data.services || "",
-          service_area: data.service_area || "",
-          ai_tone: data.ai_tone || "friendly",
-        });
+      const res = await fetch('/api/profile')
+      if (res.ok) {
+        const data = await res.json()
+        if (data && !data.error) {
+          setForm({
+            business_name: data.business_name || "",
+            owner_phone: data.owner_phone || "",
+            services: data.services || "",
+            service_area: data.service_area || "",
+            ai_tone: data.ai_tone || "friendly",
+          })
+        }
       }
-      setLoading(false);
-    })();
-  }, [user]);
+      setLoading(false)
+    })()
+  }, [])
 
   async function handleSave() {
-    if (!user) return;
-    setSaving(true);
-    await supabase.from("profiles").upsert(
-      { user_id: user.id, ...form },
-      { onConflict: "user_id" }
-    );
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setSaving(true)
+    await fetch('/api/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    })
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 3000)
   }
 
   const card: React.CSSProperties = {
