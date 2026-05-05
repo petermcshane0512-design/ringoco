@@ -11,7 +11,7 @@ export default function HomePage() {
 
       {/* NAV */}
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 48px', height: 72, background: '#fff', borderBottom: '1px solid #E2E8F0', position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100 }}>
-        <Image src="/logo.png" alt="BellAveGo" width={200} height={66} style={{ objectFit: 'contain' }} />
+        <Image src="/logo.png" alt="BellAveGo" width={380} height={120} style={{ objectFit: 'contain' }} />
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           {isSignedIn ? (
             <>
