@@ -30,7 +30,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             src="/logo3.png"
             alt="RingoCo"
             className="logo-glow"
-            style={{ height: 52, width: 'auto', objectFit: 'contain' }}
+            style={{ height: 92, width: 'auto', objectFit: 'contain' }}
           />
         </div>
 
