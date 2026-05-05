@@ -2,7 +2,6 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
-import Image from 'next/image'
 
 const nav = [
   { label: 'Command Center', href: '/dashboard' },
@@ -17,14 +16,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <aside style={{ width: 220, background: '#060E1C', borderRight: '1px solid #0F2040', display: 'flex', flexDirection: 'column', padding: '20px 14px', flexShrink: 0 }}>
 
         {/* Logo */}
-        <div style={{ padding: '4px 8px 20px', borderBottom: '1px solid #0F2040', marginBottom: 16 }}>
-          <Image
-            src="/logo.png"
-            alt="BellAveGo"
-            width={140}
-            height={40}
-            style={{ objectFit: 'contain', width: 'auto', height: 36 }}
-            priority
+        <div style={{ padding: '8px 4px 20px', borderBottom: '1px solid #0F2040', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <style>{`
+            @keyframes greenGlow {
+              0%, 100% { filter: drop-shadow(0 0 6px #22C55E) drop-shadow(0 0 12px #22C55E); }
+              50% { filter: drop-shadow(0 0 16px #4ADE80) drop-shadow(0 0 32px #22C55E) drop-shadow(0 0 48px #16A34A); }
+            }
+            .logo-glow {
+              animation: greenGlow 2.5s ease-in-out infinite;
+            }
+          `}</style>
+          <img
+            src="/logo3.png"
+            alt="RingoCo"
+            className="logo-glow"
+            style={{ height: 52, width: 'auto', objectFit: 'contain' }}
           />
         </div>
 
