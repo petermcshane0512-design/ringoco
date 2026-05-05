@@ -341,7 +341,7 @@ export default function HomePage() {
       {/* FOOTER */}
       <footer style={{ padding: '48px 40px', background: '#0B1F3A', textAlign: 'center' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-          <Image src="/logo.png" alt="BellAveGo" width={220} height={72} style={{ objectFit: 'contain' }} />
+          <Image src="/logo.png" alt="BellAveGo" width={320} height={110} style={{ objectFit: 'contain' }} />
           <p style={{ margin: 0, fontSize: 14, color: '#94A3B8', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
           <p style={{ margin: 0, fontSize: 12, color: '#475569' }}>Built for home service businesses · $97/mo · No contracts · Cancel anytime</p>
         </div>
