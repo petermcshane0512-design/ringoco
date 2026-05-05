@@ -4,49 +4,97 @@ import { usePathname } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
 
 const nav = [
-  { label: 'Overview', href: '/dashboard' },
+  { label: 'Command Center', href: '/dashboard' },
   { label: 'Jobs', href: '/dashboard/jobs' },
   { label: 'Customers', href: '/dashboard/customers' },
-  { label: 'AI Receptionist', href: '/dashboard/receptionist' },
+  { label: 'AI Receptionist', href: '/dashboard/receptionist', dot: true },
   { label: 'Scheduling', href: '/dashboard/scheduling' },
+  { label: 'Invoicing', href: '/dashboard/invoicing' },
+  { label: 'Settings', href: '/dashboard/settings' },
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const path = usePathname()
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'system-ui, sans-serif' }}>
-      <aside style={{ width: 220, background: '#0f172a', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
-        <p style={{ color: '#fff', fontWeight: 700, fontSize: 18, marginBottom: 24, padding: '0 8px' }}>BellAveGo</p>
-        {nav.map(n => (
-          <Link key={n.href} href={n.href} style={{
-            padding: '10px 12px', borderRadius: 8, textDecoration: 'none', fontSize: 14,
-            background: path === n.href ? '#1e293b' : 'transparent',
-            color: path === n.href ? '#fff' : '#94a3b8',
-          }}>
-            {n.label}
-          </Link>
-        ))}
-        <div style={{ marginTop: 'auto', paddingTop: 24, borderTop: '1px solid #1e293b', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <UserButton />
-          <span style={{ color: '#64748b', fontSize: 13 }}>Account</span>
-        </div>
-      </aside>
-      <main style={{ flex: 1, background: '#f8fafc' }}>
-        <div style={{ borderBottom: '1px solid #e2e8f0', padding: '14px 32px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>
-            {nav.find(n => path === n.href || path.startsWith(n.href + '/'))?.label ?? 'Dashboard'}
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <a href="https://bellavego.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#2563eb', textDecoration: 'none', fontWeight: 500 }}>
-              bellavego.com ↗
-            </a>
-            <UserButton />
+    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', background: '#07101F' }}>
+      <aside style={{ width: 220, background: '#060E1C', borderRight: '1px solid #0F2040', display: 'flex', flexDirection: 'column', padding: '20px 14px', flexShrink: 0 }}>
+
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '4px 8px 20px', borderBottom: '1px solid #0F2040', marginBottom: 16 }}>
+          <div style={{ width: 30, height: 30, background: 'linear-gradient(135deg,#0EA5E9,#0284C7)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#F1F5F9', letterSpacing: '-0.3px' }}>BellAveGo</div>
+            <div style={{ fontSize: 10, color: '#334155', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Pro · $97/mo</div>
           </div>
         </div>
-        <div style={{ padding: 32 }}>
-          {children}
+
+        {/* Nav */}
+        <div style={{ fontSize: 10, fontWeight: 600, color: '#334155', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0 8px', marginBottom: 6 }}>Workspace</div>
+        {nav.filter(n => n.href !== '/dashboard/settings').map(n => (
+          <Link key={n.href} href={n.href} style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px',
+            borderRadius: 8, textDecoration: 'none', fontSize: 13, marginBottom: 2,
+            background: path === n.href ? '#0C1F3D' : 'transparent',
+            color: path === n.href ? '#38BDF8' : '#64748B',
+            fontWeight: path === n.href ? 500 : 400,
+          }}>
+            {n.label}
+            {n.dot && (
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', marginLeft: 'auto' }} />
+            )}
+          </Link>
+        ))}
+
+        {/* Account section */}
+        <div style={{ fontSize: 10, fontWeight: 600, color: '#334155', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0 8px', margin: '16px 0 6px' }}>Account</div>
+        <Link href="/dashboard/settings" style={{
+          display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px',
+          borderRadius: 8, textDecoration: 'none', fontSize: 13, marginBottom: 2,
+          background: path === '/dashboard/settings' ? '#0C1F3D' : 'transparent',
+          color: path === '/dashboard/settings' ? '#38BDF8' : '#64748B',
+          fontWeight: path === '/dashboard/settings' ? 500 : 400,
+        }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/>
+          </svg>
+          Settings
+        </Link>
+
+        {/* Footer */}
+        <div style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid #0F2040' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 8 }}>
+            <UserButton />
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 500, color: '#94A3B8' }}>Account</div>
+              <div style={{ fontSize: 10, color: '#334155' }}>Owner</div>
+            </div>
+          </div>
         </div>
-      </main>
+
+      </aside>
+
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        {/* Topbar */}
+        <div style={{ height: 52, background: '#060E1C', borderBottom: '1px solid #0F2040', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px', flexShrink: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#E2E8F0' }}>
+            {nav.find(n => path === n.href || path.startsWith(n.href + '/'))?.label ?? 'Dashboard'}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#0C1F10', border: '1px solid #166534', padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 500, color: '#86EFAC' }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E' }} />
+              AI Online · (762) 371-3351
+            </div>
+          </div>
+        </div>
+
+        <main style={{ flex: 1, background: '#07101F', overflowY: 'auto' }}>
+          {children}
+        </main>
+      </div>
     </div>
   )
 }

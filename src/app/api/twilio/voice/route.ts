@@ -20,6 +20,28 @@ export async function POST(req: NextRequest) {
   const callSid = formData.get('CallSid') as string
   const callerPhone = formData.get('From') as string
   const speechResult = formData.get('SpeechResult') as string
+  const calledNumber = formData.get('To') as string
+
+  // Look up which contractor owns this Twilio number
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('twilio_number', calledNumber)
+    .single()
+
+  // Fall back to defaults if no profile found yet
+  const businessName = profile?.business_name || 'the business'
+  const ownerPhone = profile?.owner_phone || '+17737109565'
+  const services = profile?.services || 'HVAC, plumbing, and electrical'
+  const serviceArea = profile?.service_area || 'the local area'
+  const aiTone = profile?.ai_tone || 'friendly'
+
+  const toneInstruction =
+    aiTone === 'professional'
+      ? 'Use a polished, formal tone.'
+      : aiTone === 'concise'
+      ? 'Be extremely brief and direct. No small talk.'
+      : 'Be warm and conversational.'
 
   const VoiceResponse = (await import('twilio')).twiml.VoiceResponse
   const twiml = new VoiceResponse()
@@ -34,7 +56,7 @@ export async function POST(req: NextRequest) {
     })
     gather.say(
       { voice: 'Polly.Joanna' },
-      "Hi, thanks for calling. I'm the virtual assistant. How can I help you today?"
+      `Hi, thanks for calling ${businessName}. I'm the virtual assistant. How can I help you today?`
     )
     return new NextResponse(twiml.toString(), {
       headers: { 'Content-Type': 'text/xml' },
@@ -50,16 +72,21 @@ export async function POST(req: NextRequest) {
   const response = await client.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 300,
-    system: `You are a friendly phone receptionist for a home service business. Your job is to:
-1. Get the caller's name
-2. Get their callback number
-3. Find out what service they need (HVAC, plumbing, electrical, etc)
-4. Get their address
-5. Ask for their preferred day and time
-6. Tell them: "Perfect, I've got all your details. The owner will review your request and text you a confirmation within the hour."
+    system: `You are a phone receptionist for ${businessName}, a home service business.
+${toneInstruction}
+Services offered: ${services}.
+Service area: ${serviceArea}.
 
-Keep responses under 40 words. You are speaking out loud.
-When you have all 5 pieces of info — end with: BOOKING_COMPLETE: name=[name], phone=[phone], service=[service], address=[address], time=[time]
+Your job is to collect:
+1. The caller's name
+2. Their callback number
+3. What service they need
+4. Their address
+5. Their preferred day and time
+
+Keep responses under 40 words. You are speaking out loud on the phone.
+When you have all 5 pieces of info — end your message with:
+BOOKING_COMPLETE: name=[name], phone=[phone], service=[service], address=[address], time=[time]
 Do not say BOOKING_COMPLETE out loud.
 Do NOT tell the customer they are booked or confirmed. Only say the owner will confirm shortly.`,
     messages: history,
@@ -74,9 +101,9 @@ Do NOT tell the customer they are booked or confirmed. Only say the owner will c
   if (bookingMatch) {
     const [, name, phone, service, address, time] = bookingMatch
 
-    // Save job as pending_approval
+    // Save job — link to the profile's user_id if we found one
     const { data: job, error } = await supabase.from('jobs').insert({
-      user_id: 'system',
+      user_id: profile?.user_id || 'system',
       customer_name: name,
       customer_phone: phone || callerPhone,
       job_type: service,
@@ -88,24 +115,22 @@ Do NOT tell the customer they are booked or confirmed. Only say the owner will c
 
     if (error) console.error('Supabase error:', error)
 
-    const jobId = job?.id
-
-    // SMS to contractor with approve/decline instructions
+    // SMS to the real owner cell — not hardcoded
     try {
       await twilioClient.messages.create({
         body: `🔔 New job request via BellAveGo!\n\n👤 Customer: ${name}\n📞 Phone: ${phone || callerPhone}\n🔧 Service: ${service}\n📍 Address: ${address}\n🕐 Requested time: ${time}\n\nReply YES to confirm or NO to decline.\nOr call the customer back at ${phone || callerPhone}.\n\nView at bellavego.com/dashboard`,
-        from: process.env.TWILIO_PHONE_NUMBER!,
-        to: '+17737109565',
+        from: calledNumber || process.env.TWILIO_PHONE_NUMBER!,
+        to: ownerPhone,
       })
     } catch (smsError) {
       console.error('SMS error:', smsError)
     }
 
-    // Text the customer letting them know we received their request
+    // SMS to the customer
     try {
       await twilioClient.messages.create({
-        body: `Hi ${name}, thanks for reaching out! We've received your request for ${service} at ${address} for ${time}. The owner will confirm your appointment shortly. We'll text you to confirm. - BellAveGo`,
-        from: process.env.TWILIO_PHONE_NUMBER!,
+        body: `Hi ${name}, thanks for reaching out to ${businessName}! We've received your request for ${service} at ${address} for ${time}. The owner will confirm your appointment shortly. - ${businessName}`,
+        from: calledNumber || process.env.TWILIO_PHONE_NUMBER!,
         to: phone || callerPhone,
       })
     } catch (smsError) {
