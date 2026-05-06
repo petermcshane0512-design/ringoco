@@ -38,7 +38,7 @@ export default function HomePage() {
       </nav>
 
       {/* HERO */}
-      <section style={{ background: 'linear-gradient(160deg, #E8F7F2 0%, #F5FCF8 55%, #EAF5F0 100%)', paddingTop: 116, paddingBottom: 28, paddingLeft: 48, paddingRight: 48, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+      <section style={{ background: 'linear-gradient(160deg, #E8F7F2 0%, #F5FCF8 55%, #EAF5F0 100%)', paddingTop: 98, paddingBottom: 20, paddingLeft: 48, paddingRight: 48, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         {/* Aqua wave blobs */}
         <div style={{ position: 'absolute', bottom: -30, left: -80, width: 420, height: 260, background: 'radial-gradient(ellipse at 40% 60%, rgba(32,178,170,0.22) 0%, transparent 65%)', borderRadius: '58% 42% 34% 66% / 56% 32% 68% 44%', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: 20, left: 120, width: 300, height: 180, background: 'radial-gradient(ellipse at 50% 50%, rgba(32,178,170,0.13) 0%, transparent 70%)', borderRadius: '42% 58% 68% 32% / 38% 54% 46% 62%', pointerEvents: 'none' }} />
@@ -46,44 +46,44 @@ export default function HomePage() {
         <div style={{ position: 'absolute', top: 90, right: -30, width: 220, height: 220, background: 'radial-gradient(ellipse, rgba(32,178,170,0.09) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', top: 60, left: -40, width: 180, height: 180, background: 'radial-gradient(ellipse, rgba(32,178,170,0.07) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
 
-        <div style={{ maxWidth: 780, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+        <div style={{ maxWidth: 820, margin: '0 auto', position: 'relative', zIndex: 1 }}>
           {/* Badge */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(32,178,170,0.1)', border: '1px solid rgba(32,178,170,0.28)', borderRadius: 20, padding: '7px 16px', marginBottom: 28 }}>
-            <span style={{ width: 7, height: 7, background: '#20B2AA', borderRadius: '50%', display: 'inline-block' }} />
-            <span style={{ color: '#0B1F3A', fontSize: 13, fontWeight: 500 }}>AI answering calls right now</span>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(32,178,170,0.1)', border: '1px solid rgba(32,178,170,0.28)', borderRadius: 20, padding: '6px 14px', marginBottom: 16 }}>
+            <span style={{ width: 6, height: 6, background: '#20B2AA', borderRadius: '50%', display: 'inline-block' }} />
+            <span style={{ color: '#0B1F3A', fontSize: 12, fontWeight: 500, letterSpacing: '0.02em' }}>AI answering calls right now</span>
           </div>
 
-          <h1 style={{ fontSize: 'clamp(38px, 5.5vw, 66px)', fontWeight: 900, lineHeight: 1.1, letterSpacing: '-2px', color: '#0B1F3A', margin: '0 0 20px' }}>
+          <h1 style={{ fontSize: 'clamp(64px, 7vw, 110px)', fontWeight: 900, lineHeight: 0.9, letterSpacing: '-0.04em', color: '#0B1F3A', margin: '0 0 18px' }}>
             Stop losing jobs to<br />
             <span style={{ color: '#20B2AA' }}>missed calls.</span>
           </h1>
 
-          <p style={{ fontSize: 18, color: '#3D5A62', lineHeight: 1.75, maxWidth: 520, margin: '0 auto 36px' }}>
+          <p style={{ fontSize: 20, color: '#3D5A62', lineHeight: 1.35, maxWidth: 580, margin: '0 auto 24px' }}>
             BellAveGo answers calls 24/7, books jobs, and texts customers automatically — so you can focus on the work, not the phone.
           </p>
 
           {isSignedIn ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, marginBottom: 20 }}>
-              <Link href="/dashboard" style={{ padding: '16px 60px', background: '#22C55E', color: '#fff', fontWeight: 900, fontSize: 19, borderRadius: 12, textDecoration: 'none', boxShadow: '0 6px 32px rgba(34,197,94,0.35)', letterSpacing: '-0.3px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <Link href="/dashboard" style={{ padding: '14px 52px', background: '#22C55E', color: '#fff', fontWeight: 900, fontSize: 17, borderRadius: 11, textDecoration: 'none', boxShadow: '0 6px 28px rgba(34,197,94,0.35)', letterSpacing: '-0.02em' }}>
                 Open Dashboard
               </Link>
-              <p style={{ color: '#5A7A82', fontSize: 13, margin: 0 }}>Your AI receptionist is ready — start capturing calls and booking jobs</p>
-              <a href="tel:+17623713351" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 26px', background: '#fff', color: '#0B1F3A', fontWeight: 700, fontSize: 15, borderRadius: 10, textDecoration: 'none', border: '1.5px solid #C8DDD6', boxShadow: '0 2px 10px rgba(11,31,58,0.07)' }}>
+              <p style={{ color: '#5A7A82', fontSize: 12, margin: 0 }}>Your AI receptionist is ready — start capturing calls and booking jobs</p>
+              <a href="tel:+17623713351" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 22px', background: '#fff', color: '#0B1F3A', fontWeight: 700, fontSize: 14, borderRadius: 10, textDecoration: 'none', border: '1.5px solid #C8DDD6', boxShadow: '0 2px 8px rgba(11,31,58,0.07)' }}>
                 📞 Call the AI Demo
               </a>
             </div>
           ) : (
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 20 }}>
-              <Link href="/sign-up" style={{ padding: '16px 40px', background: '#22C55E', color: '#fff', fontWeight: 900, fontSize: 16, borderRadius: 12, textDecoration: 'none', boxShadow: '0 4px 22px rgba(34,197,94,0.35)' }}>
+            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
+              <Link href="/sign-up" style={{ padding: '14px 36px', background: '#22C55E', color: '#fff', fontWeight: 900, fontSize: 15, borderRadius: 11, textDecoration: 'none', boxShadow: '0 4px 20px rgba(34,197,94,0.35)' }}>
                 Start Free Trial — 14 Days →
               </Link>
-              <a href="tel:+17623713351" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '16px 28px', background: '#fff', color: '#0B1F3A', fontWeight: 700, fontSize: 16, borderRadius: 12, textDecoration: 'none', border: '1.5px solid #C8DDD6', boxShadow: '0 2px 10px rgba(11,31,58,0.07)' }}>
+              <a href="tel:+17623713351" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '14px 24px', background: '#fff', color: '#0B1F3A', fontWeight: 700, fontSize: 15, borderRadius: 11, textDecoration: 'none', border: '1.5px solid #C8DDD6', boxShadow: '0 2px 8px rgba(11,31,58,0.07)' }}>
                 📞 Call the AI Demo
               </a>
             </div>
           )}
 
-          <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 8 }}>No credit card required · Setup in 15 minutes · Cancel anytime</p>
+          <p style={{ fontSize: 12, color: '#7AAAB2', marginTop: 4 }}>No credit card required · Setup in 15 minutes · Cancel anytime</p>
         </div>
       </section>
 
