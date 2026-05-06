@@ -125,43 +125,84 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* PILLARS */}
-      <section style={{ padding: '60px 48px', background: '#fff', borderBottom: '1px solid #E2E8F0' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <Image src="/Workflow 0.png" alt="3 Core Pillars - One Powerful Platform" width={1200} height={600} style={{ width: '100%', height: 'auto', borderRadius: 16 }} priority />
+      {/* PILLARS VISUAL SECTION */}
+      <section style={{ padding: '48px 32px', background: '#fff', borderBottom: '1px solid #E2E8F0' }}>
+        <style>{`
+          .pvs-pillars-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+          }
+          .pvs-pillar { flex: 1; max-width: 350px; min-width: 0; }
+          .pvs-arrow {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: #20B2AA;
+            line-height: 1;
+            width: 44px;
+          }
+          .pvs-arrow-down { display: none; }
+          @media (max-width: 720px) {
+            .pvs-pillars-row { flex-direction: column; align-items: center; gap: 0; }
+            .pvs-pillar { max-width: 320px; width: 100%; }
+            .pvs-arrow { width: auto; padding: 6px 0; font-size: 32px; }
+            .pvs-arrow-right { display: none; }
+            .pvs-arrow-down { display: inline; }
+          }
+          @media (max-width: 960px) and (min-width: 721px) {
+            .pvs-pillar { max-width: 260px; }
+            .pvs-arrow { font-size: 32px; width: 36px; }
+          }
+        `}</style>
+
+        {/* Banner image */}
+        <div style={{ maxWidth: 1100, margin: '0 auto 32px', textAlign: 'center' }}>
+          <Image
+            src="/Workflow 0.png"
+            alt="3 Core Pillars — One Powerful Platform"
+            width={1100}
+            height={290}
+            style={{ width: '100%', maxHeight: 290, objectFit: 'contain', borderRadius: 12 }}
+            priority
+          />
         </div>
-      </section>
 
-      {/* WORKFLOW IMAGES */}
-      <section style={{ padding: '80px 48px', background: '#fff', borderBottom: '1px solid #E2E8F0' }}>
-        <div style={{ maxWidth: '100%', margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, marginBottom: 60 }}>
-            {/* Image 1 */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <Image src="/workflow 1.png" alt="AI Answering & Booking" width={400} height={500} style={{ width: '100%', height: 'auto', borderRadius: 12 }} />
+        {/* Three pillar images with arrows */}
+        <div style={{ maxWidth: 1160, margin: '0 auto' }}>
+          <div className="pvs-pillars-row">
+            <div className="pvs-pillar">
+              <Image src="/workflow 1.png" alt="AI Answering & Booking" width={350} height={590} style={{ width: '100%', maxHeight: 590, objectFit: 'contain', borderRadius: 12 }} />
             </div>
-
-            {/* Arrow 1 */}
-            <div style={{ fontSize: 40, color: '#94A3B8', flexShrink: 0 }}>→</div>
-
-            {/* Image 2 */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <Image src="/workflow2.png" alt="Consulting Reports" width={400} height={500} style={{ width: '100%', height: 'auto', borderRadius: 12 }} />
+            <div className="pvs-arrow">
+              <span className="pvs-arrow-right">→</span>
+              <span className="pvs-arrow-down">↓</span>
             </div>
-
-            {/* Arrow 2 */}
-            <div style={{ fontSize: 40, color: '#94A3B8', flexShrink: 0 }}>→</div>
-
-            {/* Image 3 */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <Image src="/workflow 3.png" alt="Invoicing & Payments" width={400} height={500} style={{ width: '100%', height: 'auto', borderRadius: 12 }} />
+            <div className="pvs-pillar">
+              <Image src="/workflow2.png" alt="Smart Consulting Reports" width={350} height={590} style={{ width: '100%', maxHeight: 590, objectFit: 'contain', borderRadius: 12 }} />
+            </div>
+            <div className="pvs-arrow">
+              <span className="pvs-arrow-right">→</span>
+              <span className="pvs-arrow-down">↓</span>
+            </div>
+            <div className="pvs-pillar">
+              <Image src="/workflow 3.png" alt="Invoicing & Payments" width={350} height={590} style={{ width: '100%', maxHeight: 590, objectFit: 'contain', borderRadius: 12 }} />
             </div>
           </div>
+        </div>
 
-          {/* Image 4 - Full Width Below */}
-          <div style={{ width: '100%' }}>
-            <Image src="/workflow 4.png" alt="Workflow Final Step" width={1200} height={300} style={{ width: '100%', height: 'auto', borderRadius: 12 }} />
-          </div>
+        {/* Workflow 4 — thin horizontal strip */}
+        <div style={{ maxWidth: 1200, margin: '32px auto 0', textAlign: 'center' }}>
+          <Image
+            src="/workflow 4.png"
+            alt="Complete Workflow"
+            width={1200}
+            height={210}
+            style={{ width: '100%', maxHeight: 210, objectFit: 'contain', borderRadius: 12 }}
+          />
         </div>
       </section>
 
