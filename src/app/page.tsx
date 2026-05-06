@@ -144,11 +144,11 @@ export default function HomePage() {
         </div>
 
         {/* SINGLE FULL IMAGE */}
-        <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 2, paddingTop: 24, paddingBottom: 8 }}>
+        <div style={{ maxWidth: 1340, margin: '0 auto', position: 'relative', zIndex: 2, paddingTop: 24, paddingBottom: 8 }}>
           <Image
             src="/Workflow 0.png"
             alt="BellAveGo — 3 Core Pillars, One Powerful Platform"
-            width={1100}
+            width={1340}
             height={700}
             style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 18, filter: 'drop-shadow(0 12px 40px rgba(7,27,58,0.13))' }}
             priority
