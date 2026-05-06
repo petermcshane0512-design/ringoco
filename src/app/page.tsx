@@ -21,7 +21,7 @@ export default function HomePage() {
                 </button>
               </SignOutButton>
               <Link href="/dashboard" style={{ padding: '10px 22px', background: '#22C55E', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 14px rgba(34,197,94,0.3)' }}>
-                Go to Dashboard →
+                Open Dashboard
               </Link>
             </>
           ) : (
@@ -71,7 +71,7 @@ export default function HomePage() {
                 alignItems: 'center',
                 gap: 10,
               }}>
-                ⚡ Open Your Dashboard
+                Open Dashboard
               </Link>
               <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, margin: 0 }}>
                 Your AI receptionist is ready — start capturing calls and booking jobs
@@ -122,6 +122,50 @@ export default function HomePage() {
             📞 Call the AI Demo
           </a>
           <p style={{ color: '#94A3B8', fontSize: 13, marginTop: 14 }}>+1 (762) 371-3351 · Free to call · Picks up within 15 seconds</p>
+        </div>
+      </section>
+
+      {/* PILLARS */}
+      <section style={{ padding: '72px 48px', background: '#fff', borderBottom: '1px solid #E2E8F0' }}>
+        <div style={{ maxWidth: 980, margin: '0 auto', textAlign: 'center', marginBottom: 40 }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: '#2563EB', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>The three pillars</p>
+          <h2 style={{ fontSize: 40, fontWeight: 900, color: '#0F172A', marginBottom: 14, letterSpacing: '-1px' }}>AI answering, business reporting, and faster payments.</h2>
+          <p style={{ fontSize: 17, color: '#64748B', maxWidth: 680, margin: '0 auto' }}>
+            BellAveGo is built around the three things every home service business needs: answer calls reliably, understand performance, and collect payment quickly.
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, maxWidth: 1000, margin: '0 auto' }}>
+          {[
+            {
+              title: 'AI answering & booking',
+              description: 'Never miss another job. BellAveGo answers every call and books appointments automatically.',
+              bullets: ['24/7 call answering', 'Customer details captured', 'Appointments scheduled automatically', 'Confirmation + reminder texts'],
+            },
+            {
+              title: 'Consulting reports',
+              description: 'Track missed calls, booked jobs, revenue opportunities, and easy next steps for growth.',
+              bullets: ['Missed call insights', 'Job booking trends', 'Revenue opportunity score', 'Actionable business guidance'],
+            },
+            {
+              title: 'Invoicing & payments',
+              description: 'Send invoices by text or email and let customers pay online in one click.',
+              bullets: ['Quick invoice creation', 'Text/email payment links', 'Paid, pending, overdue tracking', 'Stripe-powered checkout'],
+            },
+          ].map((pillar) => (
+            <div key={pillar.title} style={{ background: '#F8FAFC', borderRadius: 18, padding: 28, border: '1px solid #E2E8F0' }}>
+              <h3 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', marginBottom: 14 }}>{pillar.title}</h3>
+              <p style={{ color: '#475569', fontSize: 15, lineHeight: 1.8, marginBottom: 20 }}>{pillar.description}</p>
+              <div style={{ display: 'grid', gap: 12 }}>
+                {pillar.bullets.map((bullet) => (
+                  <div key={bullet} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    <span style={{ width: 8, height: 8, background: '#22C55E', borderRadius: '50%', marginTop: 6 }} />
+                    <p style={{ margin: 0, fontSize: 14, color: '#475569', lineHeight: 1.7 }}>{bullet}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
