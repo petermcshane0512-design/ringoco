@@ -38,7 +38,7 @@ export default function HomePage() {
       </nav>
 
       {/* HERO */}
-      <section style={{ background: 'linear-gradient(160deg, #E8F7F2 0%, #F5FCF8 55%, #EAF5F0 100%)', paddingTop: 116, paddingBottom: 44, paddingLeft: 48, paddingRight: 48, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+      <section style={{ background: 'linear-gradient(160deg, #E8F7F2 0%, #F5FCF8 55%, #EAF5F0 100%)', paddingTop: 116, paddingBottom: 28, paddingLeft: 48, paddingRight: 48, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         {/* Aqua wave blobs */}
         <div style={{ position: 'absolute', bottom: -30, left: -80, width: 420, height: 260, background: 'radial-gradient(ellipse at 40% 60%, rgba(32,178,170,0.22) 0%, transparent 65%)', borderRadius: '58% 42% 34% 66% / 56% 32% 68% 44%', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: 20, left: 120, width: 300, height: 180, background: 'radial-gradient(ellipse at 50% 50%, rgba(32,178,170,0.13) 0%, transparent 70%)', borderRadius: '42% 58% 68% 32% / 38% 54% 46% 62%', pointerEvents: 'none' }} />
@@ -88,141 +88,126 @@ export default function HomePage() {
       </section>
 
       {/* 3-PILLARS VISUAL SYSTEM */}
-      <section style={{ padding: '6px 20px 28px', background: '#F2F9F5' }}>
+      <section style={{
+        background: 'linear-gradient(180deg, #E6F6F1 0%, #D2EEE9 38%, #BEE5E0 68%, #B0DFDA 100%)',
+        padding: '0 24px 40px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+
         <style>{`
-          .pvs-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            position: relative;
-            z-index: 2;
-          }
-          .pvs-pillar { flex: 1; max-width: 340px; min-width: 0; }
-          .pvs-arrow {
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 26px;
-            color: #FF6F4F;
-            width: 28px;
-            font-weight: 800;
-            line-height: 1;
-          }
-          .pvs-arrow-down { display: none; }
-          @media (max-width: 680px) {
-            .pvs-row { flex-direction: column; align-items: center; gap: 0; }
-            .pvs-pillar { max-width: 280px; width: 100%; }
-            .pvs-arrow { width: auto; padding: 2px 0; font-size: 22px; }
-            .pvs-arrow-right { display: none; }
-            .pvs-arrow-down { display: inline; }
-          }
-          @media (max-width: 900px) and (min-width: 681px) {
-            .pvs-pillar { max-width: 230px; }
-            .pvs-arrow { font-size: 20px; width: 22px; }
-          }
           @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+          @media (max-width: 720px) {
+            .pvs-cards { flex-direction: column !important; align-items: center !important; gap: 0 !important; }
+            .pvs-card { flex: none !important; width: 280px !important; transform: none !important; }
+            .pvs-arrow-h { display: none !important; }
+            .pvs-arrow-v { display: flex !important; }
+          }
         `}</style>
 
-        <div style={{
-          maxWidth: 1100,
-          margin: '0 auto',
-          borderRadius: 20,
-          border: '1px solid #B8E4DE',
-          boxShadow: '0 10px 44px rgba(7,27,58,0.10)',
-          overflow: 'hidden',
-          position: 'relative',
-          background: 'linear-gradient(168deg, #FFFDF7 0%, #EDF9F6 50%, #D8F2EE 100%)',
-          padding: '14px 14px 10px',
-        }}>
+        {/* BG: soft white glow centred behind cards */}
+        <div style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%,-50%)', width: 860, height: 460, background: 'radial-gradient(ellipse, rgba(255,255,255,0.44) 0%, transparent 60%)', pointerEvents: 'none', zIndex: 0 }} />
 
-          {/* BG: wave SVG across bottom */}
-          <svg style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', pointerEvents: 'none', zIndex: 0, display: 'block' }} viewBox="0 0 1100 70" preserveAspectRatio="none" height="70">
-            <path d="M0,42 C180,14 360,58 540,42 C720,26 900,56 1100,40 L1100,70 L0,70 Z" fill="rgba(24,175,168,0.13)" />
-            <path d="M0,56 C220,30 440,68 660,54 C820,44 980,64 1100,56 L1100,70 L0,70 Z" fill="rgba(24,175,168,0.08)" />
+        {/* BG: wave SVG layer 1 — mid */}
+        <svg style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', pointerEvents: 'none', zIndex: 0, display: 'block' }} viewBox="0 0 1440 100" preserveAspectRatio="none" height="100">
+          <path d="M0,55 C300,15 600,78 900,50 C1100,32 1280,62 1440,46 L1440,100 L0,100 Z" fill="rgba(24,175,168,0.18)" />
+          <path d="M0,70 C340,38 680,82 1020,65 C1200,55 1360,72 1440,68 L1440,100 L0,100 Z" fill="rgba(24,175,168,0.10)" />
+          <path d="M0,84 C400,62 800,90 1200,78 C1320,73 1400,84 1440,84 L1440,100 L0,100 Z" fill="rgba(24,175,168,0.07)" />
+        </svg>
+
+        {/* BG: palm leaf — top right */}
+        <div style={{ position: 'absolute', top: -6, right: 52, pointerEvents: 'none', opacity: 0.40, zIndex: 0 }}>
+          <svg width="88" height="130" viewBox="0 0 88 130" fill="none">
+            <path d="M44 124 C44 124 16 84 24 50 C30 28 44 16 44 16 C44 16 58 28 64 50 C72 84 44 124 44 124Z" fill="rgba(24,175,168,0.36)" />
+            <path d="M44 124 C44 124 6 94 12 58 C17 36 32 24 44 16 C36 38 30 66 44 124Z" fill="rgba(24,175,168,0.20)" />
+            <path d="M44 124 C44 124 82 94 76 58 C71 36 56 24 44 16 C52 38 58 66 44 124Z" fill="rgba(24,175,168,0.15)" />
+            <line x1="44" y1="16" x2="44" y2="124" stroke="rgba(24,175,168,0.28)" strokeWidth="1.2" />
           </svg>
+        </div>
 
-          {/* BG: dot grid — top-left corner */}
-          <div style={{ position: 'absolute', top: 12, left: 12, opacity: 0.38, pointerEvents: 'none', zIndex: 0 }}>
-            {[0,1,2,3].map(r => (
-              <div key={r} style={{ display: 'flex', gap: 7, marginBottom: 7 }}>
-                {[0,1,2,3].map(c => (
-                  <div key={c} style={{ width: 3, height: 3, borderRadius: '50%', background: '#18AFA8' }} />
-                ))}
-              </div>
-            ))}
-          </div>
+        {/* BG: palm leaf — bottom left (inverted) */}
+        <div style={{ position: 'absolute', bottom: -4, left: 48, pointerEvents: 'none', opacity: 0.30, zIndex: 0, transform: 'rotate(175deg)' }}>
+          <svg width="68" height="102" viewBox="0 0 68 102" fill="none">
+            <path d="M34 98 C34 98 12 66 18 40 C22 24 34 14 34 14 C34 14 46 24 50 40 C56 66 34 98 34 98Z" fill="rgba(24,175,168,0.34)" />
+            <path d="M34 98 C34 98 6 74 10 48 C14 30 26 20 34 14 C27 34 22 58 34 98Z" fill="rgba(24,175,168,0.18)" />
+            <line x1="34" y1="14" x2="34" y2="98" stroke="rgba(24,175,168,0.24)" strokeWidth="1" />
+          </svg>
+        </div>
 
-          {/* BG: dot grid — bottom-right corner */}
-          <div style={{ position: 'absolute', bottom: 10, right: 12, opacity: 0.25, pointerEvents: 'none', zIndex: 0 }}>
-            {[0,1,2,3].map(r => (
-              <div key={r} style={{ display: 'flex', gap: 7, marginBottom: 7 }}>
-                {[0,1,2,3].map(c => (
-                  <div key={c} style={{ width: 3, height: 3, borderRadius: '50%', background: '#18AFA8' }} />
-                ))}
-              </div>
-            ))}
-          </div>
+        {/* BG: dot grid — top left */}
+        <div style={{ position: 'absolute', top: 18, left: 22, opacity: 0.28, pointerEvents: 'none', zIndex: 0 }}>
+          {[0,1,2,3,4].map(r => (
+            <div key={r} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              {[0,1,2,3,4].map(c => <div key={c} style={{ width: 3, height: 3, borderRadius: '50%', background: '#18AFA8' }} />)}
+            </div>
+          ))}
+        </div>
 
-          {/* BG: palm leaf — top-right */}
-          <div style={{ position: 'absolute', top: 8, right: 40, pointerEvents: 'none', opacity: 0.42, zIndex: 0 }}>
-            <svg width="52" height="66" viewBox="0 0 52 66" fill="none">
-              <path d="M26 62 C26 62 10 42 14 24 C17 12 26 5 26 5 C26 5 35 12 38 24 C42 42 26 62 26 62Z" fill="rgba(24,175,168,0.32)" />
-              <path d="M26 62 C26 62 4 46 8 28 C11 16 20 10 26 5 C20 22 17 40 26 62Z" fill="rgba(24,175,168,0.18)" />
-              <path d="M26 62 C26 62 48 46 44 28 C41 16 32 10 26 5 C32 22 35 40 26 62Z" fill="rgba(24,175,168,0.14)" />
-              <line x1="26" y1="5" x2="26" y2="62" stroke="rgba(24,175,168,0.28)" strokeWidth="1" />
-            </svg>
-          </div>
+        {/* BG: dot grid — bottom right */}
+        <div style={{ position: 'absolute', bottom: 18, right: 22, opacity: 0.20, pointerEvents: 'none', zIndex: 0 }}>
+          {[0,1,2,3].map(r => (
+            <div key={r} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              {[0,1,2,3].map(c => <div key={c} style={{ width: 3, height: 3, borderRadius: '50%', background: '#18AFA8' }} />)}
+            </div>
+          ))}
+        </div>
 
-          {/* Content */}
-          <div style={{ position: 'relative', zIndex: 2 }}>
+        {/* COMPOSITION */}
+        <div style={{ maxWidth: 1060, margin: '0 auto', position: 'relative', zIndex: 2, paddingTop: 22 }}>
 
-            {/* Banner */}
-            <div style={{ textAlign: 'center', marginBottom: 6 }}>
+          {/* Banner — compact glass label */}
+          <div style={{ textAlign: 'center', marginBottom: 12 }}>
+            <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.68)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderRadius: 12, padding: '5px 14px', boxShadow: '0 4px 16px rgba(7,27,58,0.09)', border: '1px solid rgba(255,255,255,0.82)' }}>
               <Image
                 src="/Workflow 0.png"
                 alt="3 Core Pillars — One Powerful Platform"
-                width={1072}
-                height={128}
-                style={{ width: '100%', maxHeight: 128, objectFit: 'contain' }}
+                width={480}
+                height={64}
+                style={{ width: 'auto', maxWidth: 480, height: 64, objectFit: 'contain', display: 'block' }}
                 priority
               />
             </div>
+          </div>
 
-            {/* Three pillar cards + coral arrows */}
-            <div className="pvs-row">
-              <div className="pvs-pillar">
-                <Image src="/workflow 1.png" alt="AI Receptionist" width={340} height={330} style={{ width: '100%', maxHeight: 330, objectFit: 'contain', display: 'block' }} />
-              </div>
-              <div className="pvs-arrow">
-                <span className="pvs-arrow-right">→</span>
-                <span className="pvs-arrow-down">↓</span>
-              </div>
-              <div className="pvs-pillar">
-                <Image src="/workflow2.png" alt="Invoicing" width={340} height={330} style={{ width: '100%', maxHeight: 330, objectFit: 'contain', display: 'block' }} />
-              </div>
-              <div className="pvs-arrow">
-                <span className="pvs-arrow-right">→</span>
-                <span className="pvs-arrow-down">↓</span>
-              </div>
-              <div className="pvs-pillar">
-                <Image src="/workflow 3.png" alt="BellAveGo Consulting" width={340} height={330} style={{ width: '100%', maxHeight: 330, objectFit: 'contain', display: 'block' }} />
-              </div>
+          {/* Three pillar cards — asymmetric stagger */}
+          <div className="pvs-cards" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+
+            {/* Left card — lower */}
+            <div className="pvs-card" style={{ flex: 1, maxWidth: 318, minWidth: 0, transform: 'translateY(14px)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 10px 38px rgba(7,27,58,0.14)', background: 'rgba(255,255,255,0.96)' }}>
+              <Image src="/workflow 1.png" alt="AI Receptionist" width={318} height={256} style={{ width: '100%', height: 256, objectFit: 'contain', display: 'block' }} />
             </div>
 
-            {/* Workflow strip */}
-            <div style={{ textAlign: 'center', marginTop: 4 }}>
-              <Image
-                src="/workflow 4.png"
-                alt="Complete Workflow"
-                width={1072}
-                height={92}
-                style={{ width: '100%', maxHeight: 92, objectFit: 'contain', display: 'block', margin: '0 auto' }}
-              />
+            {/* Arrow 1 */}
+            <div className="pvs-arrow-h" style={{ flexShrink: 0, width: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FF6F4F', fontSize: 22, fontWeight: 800, lineHeight: 1 }}>→</div>
+            <div className="pvs-arrow-v" style={{ display: 'none', color: '#FF6F4F', fontSize: 22, padding: '6px 0' }}>↓</div>
+
+            {/* Center card — elevated, stronger shadow */}
+            <div className="pvs-card" style={{ flex: 1, maxWidth: 318, minWidth: 0, transform: 'translateY(-10px)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 18px 52px rgba(7,27,58,0.20)', background: '#fff', position: 'relative', zIndex: 3 }}>
+              <Image src="/workflow2.png" alt="Invoicing" width={318} height={256} style={{ width: '100%', height: 256, objectFit: 'contain', display: 'block' }} />
+            </div>
+
+            {/* Arrow 2 */}
+            <div className="pvs-arrow-h" style={{ flexShrink: 0, width: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FF6F4F', fontSize: 22, fontWeight: 800, lineHeight: 1 }}>→</div>
+            <div className="pvs-arrow-v" style={{ display: 'none', color: '#FF6F4F', fontSize: 22, padding: '6px 0' }}>↓</div>
+
+            {/* Right card — lower */}
+            <div className="pvs-card" style={{ flex: 1, maxWidth: 318, minWidth: 0, transform: 'translateY(14px)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 10px 38px rgba(7,27,58,0.14)', background: 'rgba(255,255,255,0.96)' }}>
+              <Image src="/workflow 3.png" alt="BellAveGo Consulting" width={318} height={256} style={{ width: '100%', height: 256, objectFit: 'contain', display: 'block' }} />
             </div>
 
           </div>
+
+          {/* Workflow strip — glass, embedded under cards */}
+          <div style={{ margin: '32px auto 0', maxWidth: 940, background: 'rgba(255,255,255,0.66)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', borderRadius: 12, padding: '5px', boxShadow: '0 6px 24px rgba(7,27,58,0.10)', border: '1px solid rgba(255,255,255,0.80)' }}>
+            <Image
+              src="/workflow 4.png"
+              alt="Complete Workflow"
+              width={930}
+              height={80}
+              style={{ width: '100%', height: 80, objectFit: 'contain', display: 'block', borderRadius: 8 }}
+            />
+          </div>
+
         </div>
       </section>
 
