@@ -157,6 +157,34 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* WORKFLOW IMAGES */}
+      <section style={{ padding: '80px 48px', background: '#fff', borderBottom: '1px solid #E2E8F0' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
+            {/* Image 1 */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <Image src="/workflow1.png" alt="AI Answering & Booking" width={300} height={400} style={{ width: '100%', height: 'auto', borderRadius: 12 }} />
+            </div>
+
+            {/* Arrow 1 */}
+            <div style={{ fontSize: 40, color: '#94A3B8', flexShrink: 0 }}>→</div>
+
+            {/* Image 2 */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <Image src="/workflow2.png" alt="Consulting Reports" width={300} height={400} style={{ width: '100%', height: 'auto', borderRadius: 12 }} />
+            </div>
+
+            {/* Arrow 2 */}
+            <div style={{ fontSize: 40, color: '#94A3B8', flexShrink: 0 }}>→</div>
+
+            {/* Image 3 */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <Image src="/workflow 3.png" alt="Invoicing & Payments" width={300} height={400} style={{ width: '100%', height: 'auto', borderRadius: 12 }} />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* STORY */}
       <section style={{ padding: '80px 48px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
