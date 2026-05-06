@@ -194,13 +194,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 3 CORE PILLARS */}
-      <section style={{ padding: '60px 48px', background: 'linear-gradient(135deg, #0B1F3A 0%, #1e3a6e 100%)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-        <div style={{ maxWidth: 1300, margin: '0 auto' }}>
-          <Image src="/process-flow.png" alt="3 Core Pillars - BellAveGo Platform" width={1200} height={600} style={{ width: '100%', height: 'auto', borderRadius: 16 }} priority />
-        </div>
-      </section>
-
       {/* STORY */}
       <section style={{ padding: '80px 48px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
