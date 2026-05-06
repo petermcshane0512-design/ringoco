@@ -116,8 +116,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         {/* Topbar */}
         <div style={{ height: 52, background: '#060E1C', borderBottom: '1px solid #0F2040', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px', flexShrink: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#E2E8F0' }}>
-            {nav.find(n => path === n.href || path.startsWith(n.href + '/'))?.label ?? 'Dashboard'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Link href="/" style={{ padding: '8px 14px', borderRadius: 10, border: '1px solid #0F2040', background: '#0B1626', color: '#E2E8F0', textDecoration: 'none', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>
+              ← Back to home
+            </Link>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#E2E8F0' }}>
+              {nav.find(n => path === n.href || path.startsWith(n.href + '/'))?.label ?? 'Dashboard'}
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#0C1F10', border: '1px solid #166534', padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 500, color: '#86EFAC' }}>

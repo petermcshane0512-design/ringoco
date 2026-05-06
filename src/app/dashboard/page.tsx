@@ -134,9 +134,14 @@ export default function DashboardPage() {
     <div style={{ padding: "24px 28px 60px", color: "#E2E8F0", fontFamily: "system-ui, -apple-system, sans-serif" }}>
 
       {/* Header */}
-      <div style={{ marginBottom: 22 }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: "#F1F5F9", letterSpacing: -0.3 }}>Command Center</div>
-        <div style={{ fontSize: 12, color: "#334155", marginTop: 3 }}>Live job requests, schedule, and business overview</div>
+      <div style={{ marginBottom: 22, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: "#F1F5F9", letterSpacing: -0.3 }}>Command Center</div>
+          <div style={{ fontSize: 12, color: "#334155", marginTop: 3 }}>Live job requests, schedule, and business overview</div>
+        </div>
+        <Link href="/" style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid #0F2040", background: "#0B1626", color: "#E2E8F0", textDecoration: "none", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>
+          ← Back to home
+        </Link>
       </div>
 
       {/* Metrics */}
