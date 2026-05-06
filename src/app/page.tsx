@@ -160,7 +160,7 @@ export default function HomePage() {
       {/* WORKFLOW IMAGES */}
       <section style={{ padding: '80px 48px', background: '#fff', borderBottom: '1px solid #E2E8F0' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, marginBottom: 40 }}>
             {/* Image 1 */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <Image src="/workflow1.png" alt="AI Answering & Booking" width={300} height={400} style={{ width: '100%', height: 'auto', borderRadius: 12 }} />
@@ -181,6 +181,11 @@ export default function HomePage() {
             <div style={{ flex: 1, minWidth: 0 }}>
               <Image src="/workflow 3.png" alt="Invoicing & Payments" width={300} height={400} style={{ width: '100%', height: 'auto', borderRadius: 12 }} />
             </div>
+          </div>
+
+          {/* Image 4 - Full Width Below */}
+          <div style={{ maxWidth: 400, margin: '0 auto' }}>
+            <Image src="/workflow 4.png" alt="Workflow Final Step" width={400} height={400} style={{ width: '100%', height: 'auto', borderRadius: 12 }} />
           </div>
         </div>
       </section>
