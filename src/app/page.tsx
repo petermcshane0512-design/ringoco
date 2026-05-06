@@ -194,30 +194,115 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
-      <section style={{ padding: '80px 48px', background: '#fff', borderBottom: '1px solid #E2E8F0' }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 56 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#2563EB', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>How it works</p>
-            <h2 style={{ fontSize: 40, fontWeight: 900, color: '#0F172A', letterSpacing: '-1px', marginBottom: 12 }}>From missed call to booked job in seconds.</h2>
-            <p style={{ color: '#64748B', fontSize: 16 }}>Set up in 15 minutes. Works around the clock.</p>
+      {/* 3 CORE PILLARS */}
+      <section style={{ padding: '80px 48px', background: 'linear-gradient(135deg, #0B1F3A 0%, #1e3a6e 100%)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: 60 }}>
+            <h2 style={{ fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 900, lineHeight: 1.1, letterSpacing: '-1px', color: '#fff', margin: '0 0 16px' }}>
+              3 Core Pillars. <span style={{ color: '#22C55E' }}>One Powerful Platform.</span>
+            </h2>
+            <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.6 }}>
+              AI answers calls. Finds opportunities. Gets you paid.
+            </p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
+
+          {/* 3 Pillars */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 28, marginBottom: 64 }}>
             {[
-              { step: '1', icon: '📞', title: 'Customer calls', desc: "BellAveGo answers before voicemail after 3–4 rings — even when you're on a job, driving, or asleep.", bg: '#EFF6FF' },
-              { step: '2', icon: '🤖', title: 'AI collects details', desc: 'Name, service needed, address, timing, and job notes — all captured automatically.', bg: '#F0FDF4' },
-              { step: '3', icon: '📅', title: 'Job gets booked', desc: 'The appointment is added to your calendar and the customer gets a confirmation text.', bg: '#F0FDF4' },
-              { step: '4', icon: '🔔', title: 'You get notified', desc: 'You receive the call summary, customer details, and next steps instantly.', bg: '#EFF6FF' },
-            ].map(s => (
-              <div key={s.step} style={{ background: s.bg, borderRadius: 16, padding: '28px 22px', border: '1px solid #E2E8F0' }}>
-                <div style={{ width: 32, height: 32, background: '#2563EB', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                  <span style={{ color: '#fff', fontSize: 14, fontWeight: 900 }}>{s.step}</span>
+              {
+                num: '1',
+                title: 'AI RECEPTIONIST',
+                subtitle: 'Answers missed calls 24/7 and sends you a text summary instantly.',
+                icon: '☎️',
+                features: ['AI Answers 24/7', 'AI Summarizes Call', 'Proposes Appointment', 'You Decide', 'AI Prospect Agent'],
+                color: '#86EFAC'
+              },
+              {
+                num: '2',
+                title: 'BELLAVEGO CONSULTING',
+                subtitle: 'You upload quarterly reports. We turn data into growth.',
+                icon: '📊',
+                features: ['Market Scanning', 'Competitor Insights', 'Actionable Advice', 'Premium Reports', 'Create Invoice'],
+                color: '#A78BFA'
+              },
+              {
+                num: '3',
+                title: 'INVOICING',
+                subtitle: 'Invoice customers instantly via SMS or email.',
+                icon: '💵',
+                features: ['Quick Invoice Creation', 'Send via SMS', 'Online Payment Link', 'Stripe Integration', 'Track Payments'],
+                color: '#60A5FA'
+              },
+            ].map((pillar) => (
+              <div key={pillar.num} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 32, backdropFilter: 'blur(10px)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                  <div style={{ width: 40, height: 40, background: pillar.color, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 900, color: '#000' }}>
+                    {pillar.num}
+                  </div>
+                  <span style={{ fontSize: 24 }}>{pillar.icon}</span>
                 </div>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>{s.icon}</div>
-                <p style={{ fontWeight: 800, fontSize: 16, color: '#0F172A', marginBottom: 8 }}>{s.title}</p>
-                <p style={{ color: '#64748B', fontSize: 13, lineHeight: 1.7, margin: 0 }}>{s.desc}</p>
+                <h3 style={{ fontSize: 18, fontWeight: 900, color: '#fff', margin: '0 0 8px' }}>{pillar.title}</h3>
+                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', margin: '0 0 20px', lineHeight: 1.6 }}>{pillar.subtitle}</p>
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {pillar.features.map((feature) => (
+                    <div key={feature} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>
+                      <span style={{ width: 6, height: 6, background: pillar.color, borderRadius: '50%' }} />
+                      {feature}
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
+          </div>
+
+          {/* Feature Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginBottom: 60 }}>
+            {[
+              { icon: '🎯', label: 'Market Scanning' },
+              { icon: '👥', label: 'Competitor Insights' },
+              { icon: '📈', label: 'Actionable Advice' },
+              { icon: '📋', label: 'Premium Reports' },
+              { icon: '💰', label: 'Create Invoice' },
+              { icon: '📱', label: 'Send via SMS' },
+              { icon: '🔗', label: 'Online Payment Link' },
+              { icon: '💳', label: 'Stripe Integration' },
+              { icon: '✅', label: 'Track Payments' },
+            ].map((feature) => (
+              <div key={feature.label} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 16, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <span style={{ fontSize: 28 }}>{feature.icon}</span>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', margin: 0, fontWeight: 600 }}>{feature.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Workflow */}
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: 40 }}>
+            <h3 style={{ fontSize: 20, fontWeight: 900, color: '#fff', textAlign: 'center', marginBottom: 40, letterSpacing: '1px', textTransform: 'uppercase' }}>The BellAveGo Workflow</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 12 }}>
+              {[
+                { num: '1', label: 'Customer Calls' },
+                { num: '2', label: 'AI Answers' },
+                { num: '3', label: 'AI Summarizes' },
+                { num: '4', label: 'Proposes Appt.' },
+                { num: '5', label: 'You Approve' },
+                { num: '6', label: 'Job Scheduled' },
+                { num: '7', label: 'Invoice Sent' },
+                { num: '8', label: 'Payment Tracked' },
+                { num: '9', label: 'Grow & Repeat' },
+              ].map((step, idx) => (
+                <div key={step.num} style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
+                  <div style={{ background: '#22C55E', borderRadius: 10, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, color: '#000', fontSize: 14, flexShrink: 0 }}>
+                    {step.num}
+                  </div>
+                  {idx < 8 && <span style={{ fontSize: 20, color: 'rgba(255,255,255,0.4)' }}>→</span>}
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 600, textAlign: 'center', margin: 0 }}>{step.label}</p>
+                </div>
+              ))}
+            </div>
+            <p style={{ textAlign: 'center', fontSize: 14, color: 'rgba(255,255,255,0.6)', marginTop: 24, margin: '24px 0 0' }}>
+              <span style={{ color: '#22C55E', fontWeight: 900 }}>More Calls. More Jobs. More Revenue.</span> BellAveGo helps you grow your business while you focus on the work that matters.
+            </p>
           </div>
         </div>
       </section>
