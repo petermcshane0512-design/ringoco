@@ -158,6 +158,13 @@ export default function HomePage() {
             </div>
           </div>
 
+          {/* Image 4 - Full Width Below */}
+          <div style={{ width: '100%' }}>
+            <Image src="/workflow 4.png" alt="Workflow Final Step" width={1200} height={300} style={{ width: '100%', height: 'auto', borderRadius: 12 }} />
+          </div>
+        </div>
+      </section>
+
       {/* INDUSTRIES */}
       <section style={{ background: '#fff', borderBottom: '1px solid #E2E8F0', padding: '32px 0 0' }}>
         <p style={{ textAlign: 'center', fontWeight: 700, fontSize: 13, color: '#64748B', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 20 }}>Built for home service businesses</p>
