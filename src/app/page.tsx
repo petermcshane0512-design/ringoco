@@ -102,6 +102,16 @@ export default function HomePage() {
             text-decoration: none;
             color: #fff;
           }
+          .lp-card-wrap {
+            transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.24s ease;
+            position: relative;
+            z-index: 1;
+          }
+          .lp-card-wrap:hover {
+            transform: scale(1.07);
+            filter: drop-shadow(0 6px 22px rgba(10,168,159,0.52)) drop-shadow(0 0 12px rgba(255,255,255,0.45));
+            z-index: 10;
+          }
         `}</style>
         <div style={{ position: 'relative', width: '100%', lineHeight: 0 }}>
           <Image
@@ -121,6 +131,42 @@ export default function HomePage() {
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
           </Link>
+
+          {/* Notification cards — right side */}
+          <div style={{
+            position: 'absolute',
+            top: '3%',
+            right: '2%',
+            width: '26%',
+            height: '92%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'stretch',
+            justifyContent: 'space-between',
+            pointerEvents: 'none',
+          }}>
+            {[
+              { src: '/lp1.png', alt: 'Missed call notification', w: 440, h: 100 },
+              { src: '/lp2.png', alt: 'BellAveGo answered in 12s', w: 440, h: 90 },
+              { src: '/lp3.png', alt: 'AI text summary', w: 440, h: 140 },
+              { src: '/lp4.png', alt: 'Potential revenue', w: 440, h: 100 },
+            ].reduce<React.ReactNode[]>((acc, card, i, arr) => {
+              acc.push(
+                <div key={card.src} className="lp-card-wrap" style={{ pointerEvents: 'auto' }}>
+                  <Image src={card.src} alt={card.alt} width={card.w} height={card.h}
+                    style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 12 }} />
+                </div>
+              )
+              if (i < arr.length - 1) acc.push(
+                <div key={`arrow-${i}`} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0AA89F" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.75 }}>
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </div>
+              )
+              return acc
+            }, [])}
+          </div>
         </div>
       </section>
 
