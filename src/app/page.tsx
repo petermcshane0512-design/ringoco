@@ -63,6 +63,7 @@ export default function HomePage() {
       {/* HERO */}
       <section style={{ paddingTop: 72, position: 'relative' }}>
         <style>{`
+          @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
           @keyframes ctaGlow {
             0%, 100% { box-shadow: 0 4px 18px rgba(34,197,94,0.42), 0 0 30px rgba(34,197,94,0.24); }
             50%       { box-shadow: 0 6px 32px rgba(34,197,94,0.65), 0 0 56px rgba(34,197,94,0.42); }
@@ -186,78 +187,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 3-PILLARS VISUAL SYSTEM */}
-      <section style={{
-        background: 'linear-gradient(180deg, #E6F6F1 0%, #D2EEE9 38%, #BEE5E0 68%, #B0DFDA 100%)',
-        padding: '0 24px 40px',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-
-        <style>{`@keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}</style>
-
-        {/* BG: soft white glow */}
-        <div style={{ position: 'absolute', top: '45%', left: '50%', transform: 'translate(-50%,-50%)', width: 900, height: 500, background: 'radial-gradient(ellipse, rgba(255,255,255,0.38) 0%, transparent 60%)', pointerEvents: 'none', zIndex: 0 }} />
-
-        {/* BG: wave SVG at bottom */}
-        <svg style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', pointerEvents: 'none', zIndex: 0, display: 'block' }} viewBox="0 0 1440 90" preserveAspectRatio="none" height="90">
-          <path d="M0,50 C300,12 600,72 900,46 C1100,28 1300,58 1440,42 L1440,90 L0,90 Z" fill="rgba(24,175,168,0.16)" />
-          <path d="M0,68 C360,36 720,78 1080,62 C1260,54 1380,70 1440,66 L1440,90 L0,90 Z" fill="rgba(24,175,168,0.09)" />
-        </svg>
-
-        {/* BG: palm leaf — top right */}
-        <div style={{ position: 'absolute', top: -6, right: 52, pointerEvents: 'none', opacity: 0.38, zIndex: 0 }}>
-          <svg width="88" height="130" viewBox="0 0 88 130" fill="none">
-            <path d="M44 124 C44 124 16 84 24 50 C30 28 44 16 44 16 C44 16 58 28 64 50 C72 84 44 124 44 124Z" fill="rgba(24,175,168,0.34)" />
-            <path d="M44 124 C44 124 6 94 12 58 C17 36 32 24 44 16 C36 38 30 66 44 124Z" fill="rgba(24,175,168,0.18)" />
-            <path d="M44 124 C44 124 82 94 76 58 C71 36 56 24 44 16 C52 38 58 66 44 124Z" fill="rgba(24,175,168,0.13)" />
-            <line x1="44" y1="16" x2="44" y2="124" stroke="rgba(24,175,168,0.26)" strokeWidth="1.2" />
-          </svg>
-        </div>
-
-        {/* BG: palm leaf — bottom left */}
-        <div style={{ position: 'absolute', bottom: -4, left: 48, pointerEvents: 'none', opacity: 0.26, zIndex: 0, transform: 'rotate(175deg)' }}>
-          <svg width="68" height="102" viewBox="0 0 68 102" fill="none">
-            <path d="M34 98 C34 98 12 66 18 40 C22 24 34 14 34 14 C34 14 46 24 50 40 C56 66 34 98 34 98Z" fill="rgba(24,175,168,0.32)" />
-            <path d="M34 98 C34 98 6 74 10 48 C14 30 26 20 34 14 C27 34 22 58 34 98Z" fill="rgba(24,175,168,0.16)" />
-            <line x1="34" y1="14" x2="34" y2="98" stroke="rgba(24,175,168,0.22)" strokeWidth="1" />
-          </svg>
-        </div>
-
-        {/* BG: dot grid — top left */}
-        <div style={{ position: 'absolute', top: 18, left: 22, opacity: 0.26, pointerEvents: 'none', zIndex: 0 }}>
-          {[0,1,2,3,4].map(r => (
-            <div key={r} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-              {[0,1,2,3,4].map(c => <div key={c} style={{ width: 3, height: 3, borderRadius: '50%', background: '#18AFA8' }} />)}
-            </div>
-          ))}
-        </div>
-
-        {/* BG: dot grid — bottom right */}
-        <div style={{ position: 'absolute', bottom: 18, right: 22, opacity: 0.18, pointerEvents: 'none', zIndex: 0 }}>
-          {[0,1,2,3].map(r => (
-            <div key={r} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-              {[0,1,2,3].map(c => <div key={c} style={{ width: 3, height: 3, borderRadius: '50%', background: '#18AFA8' }} />)}
-            </div>
-          ))}
-        </div>
-
-        {/* SINGLE FULL IMAGE */}
-        <div style={{ maxWidth: 1340, margin: '0 auto', position: 'relative', zIndex: 2, paddingTop: 24, paddingBottom: 8 }}>
-          <Image
-            src="/Workflow 0.png"
-            alt="BellAveGo — 3 Core Pillars, One Powerful Platform"
-            width={1340}
-            height={700}
-            style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 18, filter: 'drop-shadow(0 12px 40px rgba(7,27,58,0.13))' }}
-            priority
-          />
-        </div>
-
-      </section>
-
-      {/* DASHBOARD PREVIEW — non-signed-in only */}
-      {!isSignedIn && <div id="lp-preview"><DashboardPreview /></div>}
+      {/* DASHBOARD PREVIEW */}
+      <div id="lp-preview"><DashboardPreview /></div>
 
       {/* INDUSTRIES */}
       <section style={{ background: '#F2F9F5', borderBottom: '1px solid #D4E6DC', padding: '28px 0 0' }}>
