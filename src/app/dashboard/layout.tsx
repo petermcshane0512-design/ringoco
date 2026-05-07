@@ -22,14 +22,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <aside style={{ width: 220, background: '#ffffff', borderRight: '1px solid rgba(10,168,159,0.14)', display: 'flex', flexDirection: 'column', padding: '20px 14px', flexShrink: 0, boxShadow: '2px 0 16px rgba(10,168,159,0.06)' }}>
 
         {/* Logo */}
-        <div style={{ padding: '8px 4px 20px', borderBottom: '1px solid rgba(10,168,159,0.12)', marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ padding: '10px 0 20px', borderBottom: '1px solid rgba(10,168,159,0.12)', marginBottom: 18 }}>
           <Link href="/" style={{ display: 'block', textDecoration: 'none' }}>
             <Image
               src="/logo.png"
               alt="BellAveGo"
-              width={160}
-              height={52}
-              style={{ objectFit: 'contain', filter: 'brightness(1.05) drop-shadow(0 2px 10px rgba(10,168,159,0.28))' }}
+              width={320}
+              height={104}
+              style={{ objectFit: 'contain', width: '100%', height: 'auto', filter: 'brightness(1.05) drop-shadow(0 2px 10px rgba(10,168,159,0.28))' }}
             />
           </Link>
         </div>
