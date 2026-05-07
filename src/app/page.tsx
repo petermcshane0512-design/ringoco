@@ -52,7 +52,7 @@ export default function HomePage() {
               <Link href="/sign-in" style={{ padding: '10px 22px', border: '1.5px solid #DCE9E2', borderRadius: 8, textDecoration: 'none', color: '#4A6670', fontSize: 14, fontWeight: 500 }}>
                 Sign in
               </Link>
-              <Link href="/sign-up" style={{ padding: '10px 22px', background: '#22C55E', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 14px rgba(34,197,94,0.28)' }}>
+              <Link href="/sign-up" className="cta-pulse" style={{ padding: '10px 22px', background: '#22C55E', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800 }}>
                 Start Free Trial
               </Link>
             </>
@@ -63,6 +63,21 @@ export default function HomePage() {
       {/* HERO */}
       <section style={{ paddingTop: 72, position: 'relative' }}>
         <style>{`
+          @keyframes ctaGlow {
+            0%, 100% { box-shadow: 0 4px 18px rgba(34,197,94,0.42), 0 0 30px rgba(34,197,94,0.24); }
+            50%       { box-shadow: 0 4px 28px rgba(34,197,94,0.6), 0 0 48px rgba(34,197,94,0.37); }
+          }
+          .cta-pulse {
+            animation: ctaGlow 2.5s ease-in-out infinite;
+            transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.28s ease;
+            will-change: transform, box-shadow;
+          }
+          .cta-pulse:hover {
+            animation-play-state: paused;
+            transform: scale(1.06) translateY(-3px) !important;
+            box-shadow: 0 8px 38px rgba(34,197,94,0.66), 0 0 62px rgba(34,197,94,0.48) !important;
+            filter: brightness(1.1) !important;
+          }
           .lp-btn {
             position: absolute;
             display: block;
@@ -70,19 +85,14 @@ export default function HomePage() {
             border: none;
             background: transparent;
             cursor: pointer;
-            transition: transform 0.17s ease, box-shadow 0.17s ease, background 0.17s ease;
             text-decoration: none;
             padding: 0;
+            animation: ctaGlow 2.5s ease-in-out infinite;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
           }
           .lp-trial:hover, .lp-trial:active {
-            transform: scale(1.08);
-            background: rgba(34,197,94,0.15) !important;
-            box-shadow: 0 0 0 3px rgba(34,197,94,0.45), 0 0 36px rgba(34,197,94,0.5);
-          }
-          .lp-demo:hover, .lp-demo:active {
-            transform: scale(1.08);
-            background: rgba(10,168,159,0.12) !important;
-            box-shadow: 0 0 0 3px rgba(10,168,159,0.4), 0 0 30px rgba(10,168,159,0.4);
+            transform: scale(1.05) !important;
+            box-shadow: 0 0 0 3px rgba(34,197,94,0.45), 0 0 52px rgba(34,197,94,0.58) !important;
           }
         `}</style>
         <div style={{ position: 'relative', width: '100%', lineHeight: 0 }}>
@@ -98,11 +108,6 @@ export default function HomePage() {
             href={isSignedIn ? '/dashboard' : '/sign-up'}
             className="lp-btn lp-trial"
             style={{ left: '7.6%', top: '68%', width: '14%', height: '15%' }}
-          />
-          <button
-            className="lp-btn lp-demo"
-            onClick={() => document.getElementById('lp-preview')?.scrollIntoView({ behavior: 'smooth' })}
-            style={{ left: '23.2%', top: '68%', width: '15.5%', height: '15%' }}
           />
         </div>
       </section>
@@ -280,7 +285,7 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-          <Link href="/sign-up" style={{ display: 'block', width: '100%', padding: '17px', textAlign: 'center', background: '#22C55E', borderRadius: 10, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 15, boxShadow: '0 4px 20px rgba(34,197,94,0.35)' }}>
+          <Link href="/sign-up" className="cta-pulse" style={{ display: 'block', width: '100%', padding: '17px', textAlign: 'center', background: '#22C55E', borderRadius: 10, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 15 }}>
             Start Free Trial — 14 Days →
           </Link>
           <p style={{ color: 'rgba(255,255,255,0.22)', fontSize: 12, marginTop: 12 }}>Cancel before trial ends to avoid billing.</p>
@@ -301,7 +306,7 @@ export default function HomePage() {
               Open Your Dashboard →
             </Link>
           ) : (
-            <Link href="/sign-up" style={{ padding: '16px 46px', background: '#22C55E', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 16, boxShadow: '0 4px 22px rgba(34,197,94,0.35)' }}>
+            <Link href="/sign-up" className="cta-pulse" style={{ padding: '16px 46px', background: '#22C55E', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 16 }}>
               Start Free Trial — 14 Days →
             </Link>
           )}
