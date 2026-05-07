@@ -65,7 +65,7 @@ export default function HomePage() {
         <style>{`
           @keyframes ctaGlow {
             0%, 100% { box-shadow: 0 4px 18px rgba(34,197,94,0.42), 0 0 30px rgba(34,197,94,0.24); }
-            50%       { box-shadow: 0 4px 28px rgba(34,197,94,0.6), 0 0 48px rgba(34,197,94,0.37); }
+            50%       { box-shadow: 0 6px 32px rgba(34,197,94,0.65), 0 0 56px rgba(34,197,94,0.42); }
           }
           .cta-pulse {
             animation: ctaGlow 2.5s ease-in-out infinite;
@@ -75,24 +75,32 @@ export default function HomePage() {
           .cta-pulse:hover {
             animation-play-state: paused;
             transform: scale(1.06) translateY(-3px) !important;
-            box-shadow: 0 8px 38px rgba(34,197,94,0.66), 0 0 62px rgba(34,197,94,0.48) !important;
-            filter: brightness(1.1) !important;
+            box-shadow: 0 10px 44px rgba(34,197,94,0.72), 0 0 70px rgba(34,197,94,0.52) !important;
+            filter: brightness(1.12) !important;
           }
-          .lp-btn {
+          .lp-hero-cta {
             position: absolute;
-            display: block;
+            left: 1.8%;
+            top: 58%;
+            width: 21%;
+            height: 14%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #22C55E 0%, #15A34A 100%);
             border-radius: 10px;
-            border: none;
-            background: transparent;
-            cursor: pointer;
             text-decoration: none;
-            padding: 0;
-            animation: ctaGlow 2.5s ease-in-out infinite;
-            transition: transform 0.18s ease, box-shadow 0.18s ease;
+            color: #fff;
+            font-weight: 800;
+            font-size: clamp(10px, 1.15vw, 16px);
+            letter-spacing: -0.2px;
+            border: none;
+            cursor: pointer;
+            gap: 6px;
           }
-          .lp-trial:hover, .lp-trial:active {
-            transform: scale(1.05) !important;
-            box-shadow: 0 0 0 3px rgba(34,197,94,0.45), 0 0 52px rgba(34,197,94,0.58) !important;
+          .lp-hero-cta:hover {
+            text-decoration: none;
+            color: #fff;
           }
         `}</style>
         <div style={{ position: 'relative', width: '100%', lineHeight: 0 }}>
@@ -106,9 +114,13 @@ export default function HomePage() {
           />
           <Link
             href={isSignedIn ? '/dashboard' : '/sign-up'}
-            className="lp-btn lp-trial"
-            style={{ left: '7.6%', top: '68%', width: '14%', height: '15%' }}
-          />
+            className="cta-pulse lp-hero-cta"
+          >
+            Start Free Trial
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </Link>
         </div>
       </section>
 
