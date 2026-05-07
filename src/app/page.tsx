@@ -43,8 +43,8 @@ export default function HomePage() {
                   Sign out
                 </button>
               </SignOutButton>
-              <Link href="/dashboard" style={{ padding: '10px 22px', background: '#22C55E', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800, boxShadow: '0 4px 14px rgba(34,197,94,0.28)' }}>
-                Open Dashboard
+              <Link href="/dashboard" className="dash-pulse" style={{ padding: '10px 22px', background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800 }}>
+                Dashboard
               </Link>
             </>
           ) : (
@@ -111,6 +111,21 @@ export default function HomePage() {
             transform: scale(1.07);
             filter: drop-shadow(0 6px 22px rgba(10,168,159,0.52)) drop-shadow(0 0 12px rgba(255,255,255,0.45));
             z-index: 10;
+          }
+          @keyframes dashGlow {
+            0%, 100% { box-shadow: 0 4px 16px rgba(10,168,159,0.45), 0 0 28px rgba(10,168,159,0.28); }
+            50%       { box-shadow: 0 4px 26px rgba(10,168,159,0.68), 0 0 48px rgba(10,168,159,0.42); }
+          }
+          .dash-pulse {
+            animation: dashGlow 2.5s ease-in-out infinite;
+            transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.28s ease;
+            will-change: transform, box-shadow;
+          }
+          .dash-pulse:hover {
+            animation-play-state: paused;
+            transform: scale(1.06) translateY(-2px) !important;
+            box-shadow: 0 8px 36px rgba(10,168,159,0.75), 0 0 60px rgba(10,168,159,0.5) !important;
+            filter: brightness(1.12) !important;
           }
         `}</style>
         <div style={{ position: 'relative', width: '100%', lineHeight: 0 }}>
