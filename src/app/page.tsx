@@ -190,6 +190,30 @@ export default function HomePage() {
       {/* DASHBOARD PREVIEW */}
       <div id="lp-preview"><DashboardPreview /></div>
 
+      {/* CONSULTING PREVIEW */}
+      <section style={{ background: 'linear-gradient(180deg, #EBF7F3 0%, #F5FCFA 100%)', padding: '72px 48px 80px', borderBottom: '1px solid #D4E6DC' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#0AA89F', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Included in your plan</p>
+            <h2 style={{ fontSize: 36, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-1px', marginBottom: 12 }}>
+              5 expert consulting reports a year.
+            </h2>
+            <p style={{ fontSize: 16, color: '#4A7A80', maxWidth: 520, margin: '0 auto' }}>
+              AI-powered market research and local intelligence — delivered as a polished PDF — to help your business grow faster.
+            </p>
+          </div>
+          <div style={{ borderRadius: 20, overflow: 'hidden', boxShadow: '0 20px 60px rgba(7,27,58,0.12)', border: '1px solid rgba(10,168,159,0.14)' }}>
+            <Image
+              src="/Consulting1.png"
+              alt="BellAveGo Consulting Report"
+              width={1400}
+              height={900}
+              style={{ width: '100%', height: 'auto', display: 'block' }}
+            />
+          </div>
+        </div>
+      </section>
+
       {/* INDUSTRIES */}
       <section style={{ background: '#F2F9F5', borderBottom: '1px solid #D4E6DC', padding: '28px 0 0' }}>
         <p style={{ textAlign: 'center', fontWeight: 700, fontSize: 13, color: '#5A8A92', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 18 }}>Built for home service businesses</p>
