@@ -61,114 +61,49 @@ export default function HomePage() {
       </nav>
 
       {/* HERO */}
-      <section style={{ paddingTop: 72, background: '#fff' }}>
+      <section style={{ paddingTop: 72, position: 'relative' }}>
         <style>{`
-          .h-trial {
-            transition: transform 0.17s ease, box-shadow 0.17s ease;
-            display: inline-flex; align-items: center;
+          .lp-btn {
+            position: absolute;
+            display: block;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            transition: transform 0.17s ease, box-shadow 0.17s ease, background 0.17s ease;
+            text-decoration: none;
+            padding: 0;
           }
-          .h-trial:hover, .h-trial:active {
-            transform: scale(1.07);
-            box-shadow: 0 0 0 4px rgba(34,197,94,0.38), 0 10px 38px rgba(34,197,94,0.52) !important;
+          .lp-trial:hover, .lp-trial:active {
+            transform: scale(1.08);
+            background: rgba(34,197,94,0.15) !important;
+            box-shadow: 0 0 0 3px rgba(34,197,94,0.45), 0 0 36px rgba(34,197,94,0.5);
           }
-          .h-demo {
-            transition: transform 0.17s ease;
-          }
-          .h-demo:hover, .h-demo:active {
-            transform: scale(1.06);
-          }
-          .h-demo:hover .h-play {
-            box-shadow: 0 0 0 5px rgba(11,31,58,0.12), 0 6px 22px rgba(11,31,58,0.18);
-          }
-          .h-card {
-            transition: transform 0.22s ease, box-shadow 0.22s ease;
-            border-radius: 14px;
-          }
-          .h-card:hover {
-            transform: scale(1.038) translateY(-3px);
-            box-shadow: 0 0 0 2px rgba(10,168,159,0.42), 0 16px 50px rgba(10,168,159,0.24) !important;
+          .lp-demo:hover, .lp-demo:active {
+            transform: scale(1.08);
+            background: rgba(10,168,159,0.12) !important;
+            box-shadow: 0 0 0 3px rgba(10,168,159,0.4), 0 0 30px rgba(10,168,159,0.4);
           }
         `}</style>
-
-        <div style={{ position: 'relative', width: '100%', height: '27vw', maxHeight: 410, minHeight: 290, overflow: 'hidden' }}>
-
-          {/* Beach image — right portion visible, compressed height */}
+        <div style={{ position: 'relative', width: '100%', lineHeight: 0 }}>
           <Image
             src="/Landing Page 1.png"
-            alt="BellAveGo"
-            fill
-            sizes="100vw"
-            style={{ objectFit: 'cover', objectPosition: 'top center' }}
+            alt="BellAveGo — Stop losing jobs to missed calls"
+            width={1440}
+            height={480}
+            style={{ width: '100%', height: 'auto', display: 'block' }}
             priority
           />
-
-          {/* Left white wash — covers image text so HTML content takes over */}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(255,255,255,1) 0%, rgba(255,255,255,0.97) 30%, rgba(255,255,255,0.68) 46%, rgba(255,255,255,0.08) 58%, transparent 65%)' }} />
-
-          {/* Right edge — blur + fade to white */}
-          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '9%', background: 'linear-gradient(to right, transparent 0%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0.92) 100%)', backdropFilter: 'blur(5px)' }} />
-
-          {/* Top breathe */}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '16%', background: 'linear-gradient(to bottom, rgba(255,255,255,0.55), transparent)' }} />
-
-          {/* Bottom breathe — hides checkmark row in image */}
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '22%', background: 'linear-gradient(to top, rgba(255,255,255,0.85), transparent)' }} />
-
-          {/* ── LEFT HTML CONTENT ── */}
-          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '50%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 3% 0 6.5%', zIndex: 4 }}>
-
-            {/* Problem badge */}
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 'clamp(10px, 1.2vw, 18px)', width: 'fit-content' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 'clamp(14px,1.3vw,20px)', height: 'clamp(14px,1.3vw,20px)', borderRadius: '50%', background: '#0B1F3A', color: '#fff', fontSize: 'clamp(7px,0.6vw,10px)', fontWeight: 900, flexShrink: 0 }}>1</span>
-              <span style={{ fontSize: 'clamp(8px,0.7vw,10px)', fontWeight: 700, color: '#0AA89F', letterSpacing: '0.13em', textTransform: 'uppercase' }}>The Problem</span>
-            </div>
-
-            {/* Headline — more negative space */}
-            <h1 style={{ fontSize: 'clamp(22px,3.1vw,48px)', fontWeight: 900, color: '#0B1F3A', lineHeight: 1.06, letterSpacing: '-0.03em', margin: '0 0 clamp(10px,1.1vw,16px)', maxWidth: '92%' }}>
-              You&apos;re not answering<br />your phone.
-            </h1>
-
-            {/* Subtext */}
-            <p style={{ fontSize: 'clamp(10px,0.92vw,14px)', color: '#3D5A62', lineHeight: 1.6, maxWidth: 360, margin: '0 0 clamp(12px,1.4vw,22px)' }}>
-              BellAveGo&apos;s AI receptionist answers every call, books jobs, and keeps your business growing — automatically.
-            </p>
-
-            {/* CTA buttons */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px,1.1vw,16px)', marginBottom: 'clamp(10px,1.1vw,16px)', flexWrap: 'wrap' }}>
-              <Link
-                href={isSignedIn ? '/dashboard' : '/sign-up'}
-                className="h-trial"
-                style={{ padding: 'clamp(7px,0.7vw,11px) clamp(14px,1.5vw,24px)', background: '#22C55E', borderRadius: 9, color: '#fff', fontWeight: 800, fontSize: 'clamp(10px,0.95vw,14px)', textDecoration: 'none', boxShadow: '0 4px 18px rgba(34,197,94,0.38)', letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}
-              >
-                Start Free Trial
-              </Link>
-              <button
-                className="h-demo"
-                onClick={() => document.getElementById('lp-preview')?.scrollIntoView({ behavior: 'smooth' })}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', color: '#0B1F3A', fontWeight: 700, fontSize: 'clamp(10px,0.92vw,14px)', padding: 0, fontFamily: 'inherit', whiteSpace: 'nowrap' }}
-              >
-                <span className="h-play" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 'clamp(20px,1.7vw,26px)', height: 'clamp(20px,1.7vw,26px)', borderRadius: '50%', background: '#0B1F3A', color: '#fff', fontSize: 9, flexShrink: 0, transition: 'box-shadow 0.17s ease' }}>▶</span>
-                See how it works
-              </button>
-            </div>
-
-            {/* Checkmarks — compact */}
-            <div style={{ display: 'flex', gap: 'clamp(8px,1.2vw,18px)', flexWrap: 'wrap' }}>
-              {['Setup in 15 minutes', 'No credit card', 'Cancel anytime'].map(item => (
-                <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'clamp(8px,0.68vw,10px)', color: '#4A7A80', fontWeight: 500 }}>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="3.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ── CARD HOVER OVERLAYS ── */}
-          {/* Transparent areas over the image's 4 right-side cards — glow on hover */}
-          <div className="h-card" style={{ position: 'absolute', left: '53%', top: '10%', width: '20%', height: '25%', cursor: 'default' }} />
-          <div className="h-card" style={{ position: 'absolute', left: '60%', top: '38%', width: '26%', height: '20%', cursor: 'default' }} />
-          <div className="h-card" style={{ position: 'absolute', left: '51%', top: '56%', width: '38%', height: '32%', cursor: 'default' }} />
-          <div className="h-card" style={{ position: 'absolute', left: '52%', top: '76%', width: '20%', height: '18%', cursor: 'default' }} />
+          <Link
+            href={isSignedIn ? '/dashboard' : '/sign-up'}
+            className="lp-btn lp-trial"
+            style={{ left: '7.6%', top: '68%', width: '14%', height: '15%' }}
+          />
+          <button
+            className="lp-btn lp-demo"
+            onClick={() => document.getElementById('lp-preview')?.scrollIntoView({ behavior: 'smooth' })}
+            style={{ left: '23.2%', top: '68%', width: '15.5%', height: '15%' }}
+          />
         </div>
       </section>
 
