@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth, SignOutButton } from '@clerk/nextjs'
@@ -6,15 +7,34 @@ import DashboardPreview from '@/components/DashboardPreview'
 
 export default function HomePage() {
   const { isSignedIn } = useAuth()
+  const [logoHovered, setLogoHovered] = useState(false)
 
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#F2F9F5', color: '#0B1F3A', minHeight: '100vh', overflowX: 'hidden' }}>
 
       {/* NAV */}
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 48px', height: 72, background: '#fff', borderBottom: '1px solid #DCE9E2', position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100 }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-          <Image src="/logo.png" alt="BellAveGo" width={665} height={210} style={{ objectFit: 'contain' }} />
-        </Link>
+        <a
+          href="/"
+          onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+          onMouseEnter={() => setLogoHovered(true)}
+          onMouseLeave={() => setLogoHovered(false)}
+          style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', cursor: 'pointer' }}
+        >
+          <Image
+            src="/logo.png"
+            alt="BellAveGo"
+            width={665}
+            height={210}
+            style={{
+              objectFit: 'contain',
+              marginTop: 10,
+              transform: logoHovered ? 'scale(1.08)' : 'scale(1)',
+              filter: logoHovered ? 'drop-shadow(0 0 14px rgba(24,175,168,0.55))' : 'none',
+              transition: 'transform 0.25s ease, filter 0.25s ease',
+            }}
+          />
+        </a>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           {isSignedIn ? (
             <>
