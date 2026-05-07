@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useAuth } from '@clerk/nextjs'
 
 const JOBS = [
   { name: 'Marcus T.', type: 'HVAC Repair', status: 'scheduled', time: 'Today 8:00 AM' },
@@ -15,6 +16,7 @@ const REPORTS = [
 ]
 
 export default function DashboardPreview() {
+  const { isSignedIn } = useAuth()
   const [stats, setStats] = useState({ calls: 38, jobs: 14, revenue: 12480, saved: 22 })
   const [bumped, setBumped] = useState<string | null>(null)
   const [floatEl, setFloatEl] = useState<{ key: string; text: string } | null>(null)
@@ -77,7 +79,7 @@ export default function DashboardPreview() {
   ]
 
   return (
-    <section ref={sectionRef} style={{ background: 'linear-gradient(160deg, #F5FCFA 0%, #E8F7F3 45%, #F0FAF7 100%)', padding: '88px 24px 72px', position: 'relative', overflow: 'hidden' }}>
+    <section ref={sectionRef} style={{ background: 'linear-gradient(160deg, #F5FCFA 0%, #E8F7F3 45%, #F0FAF7 100%)', padding: `88px 24px ${isSignedIn ? '40px' : '72px'}`, position: 'relative', overflow: 'hidden' }}>
       <style>{`
         @keyframes dpFloatUp { 0%{opacity:1;transform:translateY(0) scale(1);} 100%{opacity:0;transform:translateY(-20px) scale(0.8);} }
         @keyframes dpBounce { 0%,100%{transform:scale(1);} 45%{transform:scale(1.12);} }
@@ -359,18 +361,22 @@ export default function DashboardPreview() {
         </div>
       </div>
 
-      {/* CTAs */}
-      <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 20, position: 'relative', zIndex: 2 }}>
-        <Link href="/sign-up" style={{ padding: '14px 36px', background: 'linear-gradient(135deg, #22C55E, #16A34A)', color: '#fff', fontWeight: 900, fontSize: 15, borderRadius: 11, textDecoration: 'none', boxShadow: '0 4px 22px rgba(34,197,94,0.38)', letterSpacing: '-0.01em' }}>
-          Start Free Trial — 14 Days →
-        </Link>
-        <Link href="/sign-in" style={{ padding: '14px 28px', background: '#ffffff', color: '#0B1F3A', fontWeight: 700, fontSize: 15, borderRadius: 11, border: '1px solid rgba(10,168,159,0.22)', textDecoration: 'none', boxShadow: '0 2px 12px rgba(7,27,58,0.07)' }}>
-          Sign In to Dashboard
-        </Link>
-      </div>
-      <p style={{ textAlign: 'center', color: '#7AAAB2', fontSize: 13, margin: 0, position: 'relative', zIndex: 2 }}>
-        Built for service businesses doing $100k–$4M in annual revenue.
-      </p>
+      {/* CTAs — hidden when signed in */}
+      {!isSignedIn && (
+        <>
+          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 20, position: 'relative', zIndex: 2 }}>
+            <Link href="/sign-up" style={{ padding: '14px 36px', background: 'linear-gradient(135deg, #22C55E, #16A34A)', color: '#fff', fontWeight: 900, fontSize: 15, borderRadius: 11, textDecoration: 'none', boxShadow: '0 4px 22px rgba(34,197,94,0.38)', letterSpacing: '-0.01em' }}>
+              Start Free Trial — 14 Days →
+            </Link>
+            <Link href="/sign-in" style={{ padding: '14px 28px', background: '#ffffff', color: '#0B1F3A', fontWeight: 700, fontSize: 15, borderRadius: 11, border: '1px solid rgba(10,168,159,0.22)', textDecoration: 'none', boxShadow: '0 2px 12px rgba(7,27,58,0.07)' }}>
+              Sign In to Dashboard
+            </Link>
+          </div>
+          <p style={{ textAlign: 'center', color: '#7AAAB2', fontSize: 13, margin: 0, position: 'relative', zIndex: 2 }}>
+            Built for service businesses doing $100k–$4M in annual revenue.
+          </p>
+        </>
+      )}
     </section>
   )
 }
