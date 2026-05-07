@@ -146,10 +146,10 @@ export default function HomePage() {
             pointerEvents: 'none',
           }}>
             {[
-              { src: '/lp1.png', alt: 'Missed call notification', w: 440, h: 100 },
-              { src: '/lp2.png', alt: 'BellAveGo answered in 12s', w: 440, h: 90 },
-              { src: '/lp3.png', alt: 'AI text summary', w: 440, h: 140 },
-              { src: '/lp4.png', alt: 'Potential revenue', w: 440, h: 100 },
+              { src: '/LP1.png', alt: 'Missed call notification', w: 440, h: 100 },
+              { src: '/LP2.png', alt: 'BellAveGo answered in 12s', w: 440, h: 90 },
+              { src: '/LP3.png', alt: 'AI text summary', w: 440, h: 140 },
+              { src: '/LP4.png', alt: 'Potential revenue', w: 440, h: 100 },
             ].reduce<React.ReactNode[]>((acc, card, i, arr) => {
               acc.push(
                 <div key={card.src} className="lp-card-wrap" style={{ pointerEvents: 'auto' }}>
