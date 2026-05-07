@@ -61,52 +61,51 @@ export default function HomePage() {
       </nav>
 
       {/* HERO */}
-      <section style={{ background: 'linear-gradient(160deg, #E8F7F2 0%, #F5FCF8 55%, #EAF5F0 100%)', paddingTop: 98, paddingBottom: 20, paddingLeft: 48, paddingRight: 48, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        {/* Aqua wave blobs */}
-        <div style={{ position: 'absolute', bottom: -30, left: -80, width: 420, height: 260, background: 'radial-gradient(ellipse at 40% 60%, rgba(32,178,170,0.22) 0%, transparent 65%)', borderRadius: '58% 42% 34% 66% / 56% 32% 68% 44%', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: 20, left: 120, width: 300, height: 180, background: 'radial-gradient(ellipse at 50% 50%, rgba(32,178,170,0.13) 0%, transparent 70%)', borderRadius: '42% 58% 68% 32% / 38% 54% 46% 62%', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: -10, right: -20, width: 320, height: 220, background: 'radial-gradient(ellipse at 55% 45%, rgba(20,195,185,0.16) 0%, transparent 65%)', borderRadius: '52% 48% 42% 58% / 36% 62% 38% 64%', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: 90, right: -30, width: 220, height: 220, background: 'radial-gradient(ellipse, rgba(32,178,170,0.09) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: 60, left: -40, width: 180, height: 180, background: 'radial-gradient(ellipse, rgba(32,178,170,0.07) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
-
-        <div style={{ maxWidth: 820, margin: '0 auto', position: 'relative', zIndex: 1 }}>
-          {/* Badge */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(32,178,170,0.1)', border: '1px solid rgba(32,178,170,0.28)', borderRadius: 20, padding: '6px 14px', marginBottom: 16 }}>
-            <span style={{ width: 6, height: 6, background: '#20B2AA', borderRadius: '50%', display: 'inline-block' }} />
-            <span style={{ color: '#0B1F3A', fontSize: 12, fontWeight: 500, letterSpacing: '0.02em' }}>AI answering calls right now</span>
-          </div>
-
-          <h1 style={{ fontSize: 'clamp(64px, 7vw, 110px)', fontWeight: 900, lineHeight: 0.9, letterSpacing: '-0.04em', color: '#0B1F3A', margin: '0 0 18px' }}>
-            Stop losing jobs to<br />
-            <span style={{ color: '#20B2AA' }}>missed calls.</span>
-          </h1>
-
-          <p style={{ fontSize: 20, color: '#3D5A62', lineHeight: 1.35, maxWidth: 580, margin: '0 auto 24px' }}>
-            BellAveGo answers calls 24/7, books jobs, and texts customers automatically — so you can focus on the work, not the phone.
-          </p>
-
-          {isSignedIn ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-              <Link href="/dashboard" style={{ padding: '14px 52px', background: '#22C55E', color: '#fff', fontWeight: 900, fontSize: 17, borderRadius: 11, textDecoration: 'none', boxShadow: '0 6px 28px rgba(34,197,94,0.35)', letterSpacing: '-0.02em' }}>
-                Open Dashboard
-              </Link>
-              <p style={{ color: '#5A7A82', fontSize: 12, margin: 0 }}>Your AI receptionist is ready — start capturing calls and booking jobs</p>
-              <a href="tel:+17623713351" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 22px', background: '#fff', color: '#0B1F3A', fontWeight: 700, fontSize: 14, borderRadius: 10, textDecoration: 'none', border: '1.5px solid #C8DDD6', boxShadow: '0 2px 8px rgba(11,31,58,0.07)' }}>
-                📞 Call the AI Demo
-              </a>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
-              <Link href="/sign-up" style={{ padding: '14px 36px', background: '#22C55E', color: '#fff', fontWeight: 900, fontSize: 15, borderRadius: 11, textDecoration: 'none', boxShadow: '0 4px 20px rgba(34,197,94,0.35)' }}>
-                Start Free Trial — 14 Days →
-              </Link>
-              <a href="tel:+17623713351" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '14px 24px', background: '#fff', color: '#0B1F3A', fontWeight: 700, fontSize: 15, borderRadius: 11, textDecoration: 'none', border: '1.5px solid #C8DDD6', boxShadow: '0 2px 8px rgba(11,31,58,0.07)' }}>
-                📞 Call the AI Demo
-              </a>
-            </div>
-          )}
-
-          <p style={{ fontSize: 12, color: '#7AAAB2', marginTop: 4 }}>No credit card required · Setup in 15 minutes · Cancel anytime</p>
+      <section style={{ paddingTop: 72, position: 'relative' }}>
+        <style>{`
+          .lp-btn {
+            position: absolute;
+            display: block;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+            text-decoration: none;
+            padding: 0;
+          }
+          .lp-trial:hover, .lp-trial:active {
+            transform: scale(1.07);
+            background: rgba(34,197,94,0.18) !important;
+            box-shadow: 0 0 0 3px rgba(34,197,94,0.5), 0 0 32px rgba(34,197,94,0.55);
+          }
+          .lp-demo:hover, .lp-demo:active {
+            transform: scale(1.07);
+            background: rgba(10,168,159,0.14) !important;
+            box-shadow: 0 0 0 3px rgba(10,168,159,0.45), 0 0 28px rgba(10,168,159,0.45);
+          }
+        `}</style>
+        <div style={{ position: 'relative', width: '100%', lineHeight: 0 }}>
+          <Image
+            src="/Landing Page 1.png"
+            alt="BellAveGo — Stop losing jobs to missed calls"
+            width={1440}
+            height={480}
+            style={{ width: '100%', height: 'auto', display: 'block' }}
+            priority
+          />
+          {/* Start Free Trial button overlay */}
+          <Link
+            href={isSignedIn ? '/dashboard' : '/sign-up'}
+            className="lp-btn lp-trial"
+            style={{ left: '7.6%', top: '68%', width: '14%', height: '15%' }}
+          />
+          {/* See how it works button overlay */}
+          <button
+            className="lp-btn lp-demo"
+            onClick={() => document.getElementById('lp-preview')?.scrollIntoView({ behavior: 'smooth' })}
+            style={{ left: '23.2%', top: '68%', width: '15.5%', height: '15%' }}
+          />
         </div>
       </section>
 
@@ -181,7 +180,7 @@ export default function HomePage() {
       </section>
 
       {/* DASHBOARD PREVIEW — non-signed-in only */}
-      {!isSignedIn && <DashboardPreview />}
+      {!isSignedIn && <div id="lp-preview"><DashboardPreview /></div>}
 
       {/* INDUSTRIES */}
       <section style={{ background: '#F2F9F5', borderBottom: '1px solid #D4E6DC', padding: '28px 0 0' }}>
