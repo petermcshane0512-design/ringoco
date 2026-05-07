@@ -83,22 +83,24 @@ export default function SignInPage() {
         initial={{ opacity: 0, x: -16 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
-        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1 }}
+        style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', paddingTop: '14%', position: 'relative', zIndex: 1 }}
       >
         <motion.a
           href="/"
-          whileHover={{ scale: 1.04 }}
+          whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.22 }}
-          style={{ textDecoration: 'none', display: 'block' }}
+          style={{ textDecoration: 'none', display: 'block', width: '88%', maxWidth: 860 }}
         >
           <Image
             src="/logo.png"
             alt="BellAveGo"
-            width={520}
-            height={168}
+            width={860}
+            height={278}
             style={{
               objectFit: 'contain',
-              filter: 'brightness(1.05) drop-shadow(0 8px 32px rgba(10,168,159,0.3))',
+              width: '100%',
+              height: 'auto',
+              filter: 'brightness(1.05) drop-shadow(0 10px 40px rgba(10,168,159,0.32))',
             }}
           />
         </motion.a>
