@@ -358,9 +358,15 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-          <Link href="/sign-up" className="cta-pulse" style={{ display: 'block', width: '100%', padding: '17px', textAlign: 'center', background: '#22C55E', borderRadius: 10, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 15 }}>
-            Start Free Trial — 14 Days →
-          </Link>
+          {isSignedIn ? (
+            <Link href="/dashboard" className="dash-pulse" style={{ display: 'block', width: '100%', padding: '17px', textAlign: 'center', background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', borderRadius: 10, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 15 }}>
+              Dashboard →
+            </Link>
+          ) : (
+            <Link href="/sign-up" className="cta-pulse" style={{ display: 'block', width: '100%', padding: '17px', textAlign: 'center', background: '#22C55E', borderRadius: 10, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 15 }}>
+              Start Free Trial — 14 Days →
+            </Link>
+          )}
           <p style={{ color: 'rgba(255,255,255,0.22)', fontSize: 12, marginTop: 12 }}>Cancel before trial ends to avoid billing.</p>
         </div>
       </section>
@@ -375,8 +381,8 @@ export default function HomePage() {
         </p>
         <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
           {isSignedIn ? (
-            <Link href="/dashboard" style={{ padding: '16px 46px', background: '#22C55E', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 16, boxShadow: '0 4px 22px rgba(34,197,94,0.35)' }}>
-              Open Your Dashboard →
+            <Link href="/dashboard" className="dash-pulse" style={{ padding: '16px 46px', background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 16 }}>
+              Dashboard →
             </Link>
           ) : (
             <Link href="/sign-up" className="cta-pulse" style={{ padding: '16px 46px', background: '#22C55E', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 16 }}>
