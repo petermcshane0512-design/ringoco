@@ -265,21 +265,21 @@ export default function HomePage() {
           <p style={{ color: 'rgba(255,255,255,0.38)', marginBottom: 32, fontSize: 14 }}>per month · no contracts</p>
           <div style={{ textAlign: 'left', marginBottom: 32 }}>
             {[
-              'AI receptionist 24/7',
-              'Missed call + after-hours answering',
-              'Auto job booking + calendar',
-              'SMS confirmations + reminders',
-              'Customer database',
-              'Invoicing + same-day payments',
-              'Google review requests',
-              'Revenue dashboard',
-              'Up to 5 team members',
+              { text: 'Custom AI receptionist built for your business', highlight: false },
+              { text: 'AI answers missed calls after 12 seconds', highlight: false },
+              { text: '24/7 call summaries + scheduling', highlight: false },
+              { text: 'SMS confirmations, reminders + follow-ups', highlight: false },
+              { text: 'Invoicing + same-day payment collection', highlight: false },
+              { text: '5 BELLAVEGO CONSULTING REPORTS A YEAR', highlight: true },
+              { text: 'Revenue dashboard + business insights', highlight: false },
+              { text: 'Customer database + call history', highlight: false },
+              { text: 'Google review request automation', highlight: false },
             ].map(f => (
-              <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 0', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                <div style={{ width: 19, height: 19, background: '#22C55E', borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div key={f.text} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 0', borderBottom: '1px solid rgba(255,255,255,0.07)', background: f.highlight ? 'rgba(24,175,168,0.08)' : 'transparent', marginLeft: f.highlight ? -8 : 0, marginRight: f.highlight ? -8 : 0, paddingLeft: f.highlight ? 8 : 0, paddingRight: f.highlight ? 8 : 0, borderRadius: f.highlight ? 6 : 0 }}>
+                <div style={{ width: 19, height: 19, background: f.highlight ? '#18AFA8' : '#22C55E', borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <span style={{ color: '#fff', fontSize: 10, fontWeight: 900 }}>✓</span>
                 </div>
-                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)' }}>{f}</span>
+                <span style={{ fontSize: 14, color: f.highlight ? '#18AFA8' : 'rgba(255,255,255,0.8)', fontWeight: f.highlight ? 700 : 400, letterSpacing: f.highlight ? '0.02em' : 'normal' }}>{f.text}</span>
               </div>
             ))}
           </div>
