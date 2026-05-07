@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth, SignOutButton } from '@clerk/nextjs'
+import DashboardPreview from '@/components/DashboardPreview'
 
 export default function HomePage() {
   const { isSignedIn } = useAuth()
@@ -156,6 +157,9 @@ export default function HomePage() {
         </div>
 
       </section>
+
+      {/* DASHBOARD PREVIEW — non-signed-in only */}
+      {!isSignedIn && <DashboardPreview />}
 
       {/* INDUSTRIES */}
       <section style={{ background: '#F2F9F5', borderBottom: '1px solid #D4E6DC', padding: '28px 0 0' }}>
