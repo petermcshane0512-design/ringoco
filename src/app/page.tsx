@@ -80,10 +80,10 @@ export default function HomePage() {
           }
           .lp-hero-cta {
             position: absolute;
-            left: 1.8%;
-            top: 58%;
-            width: 21%;
-            height: 14%;
+            left: 4%;
+            top: 60%;
+            width: 15%;
+            height: 11%;
             display: flex;
             align-items: center;
             justify-content: center;
