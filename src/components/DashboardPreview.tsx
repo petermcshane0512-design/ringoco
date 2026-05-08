@@ -17,6 +17,7 @@ const REPORTS = [
 
 export default function DashboardPreview() {
   const { isSignedIn } = useAuth()
+  const [hoveredNav, setHoveredNav] = useState<string | null>(null)
   const [stats, setStats] = useState({ calls: 38, jobs: 14, revenue: 12480, saved: 22 })
   const [bumped, setBumped] = useState<string | null>(null)
   const [floatEl, setFloatEl] = useState<{ key: string; text: string } | null>(null)
@@ -150,25 +151,43 @@ export default function DashboardPreview() {
             <div style={{ fontSize: 7.5, fontWeight: 700, color: '#7AAAB2', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0 5px', marginBottom: 4 }}>Workspace</div>
 
             {[
-              { label: 'Command Center', active: true },
-              { label: 'AI Receptionist', dot: true },
-              { label: 'Invoicing' },
-            ].map(({ label, active, dot }) => (
-              <div key={label} style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px',
-                borderRadius: 7, marginBottom: 1, fontSize: 10,
-                background: active ? 'rgba(10,168,159,0.1)' : 'transparent',
-                borderLeft: `2.5px solid ${active ? '#0AA89F' : 'transparent'}`,
-                color: active ? '#0AA89F' : '#4A7A80',
-                fontWeight: active ? 700 : 500,
-              }}>
-                {label}
-                {dot && <div style={{ marginLeft: 'auto', width: 5, height: 5, borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 5px rgba(34,197,94,0.5)', animation: 'dpDot 2s infinite' }} />}
-              </div>
-            ))}
+              { label: 'Command Center', active: true,    href: '/dashboard' },
+              { label: 'AI Receptionist', dot: true,      href: '/dashboard/receptionist' },
+              { label: 'Invoicing',                       href: '/dashboard/invoicing' },
+            ].map(({ label, active, dot, href }) => {
+              const dest = isSignedIn ? href : '/sign-up'
+              const hovered = hoveredNav === label
+              return (
+                <Link key={label} href={dest} style={{
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px',
+                  borderRadius: 7, marginBottom: 1, fontSize: 10, textDecoration: 'none',
+                  background: active ? 'rgba(10,168,159,0.1)' : hovered ? 'rgba(10,168,159,0.06)' : 'transparent',
+                  borderLeft: `2.5px solid ${active ? '#0AA89F' : 'transparent'}`,
+                  color: active ? '#0AA89F' : hovered ? '#0AA89F' : '#4A7A80',
+                  fontWeight: active ? 700 : hovered ? 600 : 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                  onMouseEnter={() => setHoveredNav(label)}
+                  onMouseLeave={() => setHoveredNav(null)}
+                >
+                  {label}
+                  {dot && <div style={{ marginLeft: 'auto', width: 5, height: 5, borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 5px rgba(34,197,94,0.5)', animation: 'dpDot 2s infinite' }} />}
+                </Link>
+              )
+            })}
 
             <div style={{ fontSize: 7.5, fontWeight: 700, color: '#7AAAB2', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0 5px', margin: '10px 0 4px' }}>Account</div>
-            <div style={{ padding: '6px 8px', borderRadius: 7, fontSize: 10, color: '#4A7A80', fontWeight: 500 }}>Settings</div>
+            <Link href={isSignedIn ? '/dashboard/settings' : '/sign-up'} style={{
+              display: 'block', padding: '6px 8px', borderRadius: 7, fontSize: 10, textDecoration: 'none',
+              color: hoveredNav === 'Settings' ? '#0AA89F' : '#4A7A80',
+              fontWeight: hoveredNav === 'Settings' ? 600 : 500,
+              background: hoveredNav === 'Settings' ? 'rgba(10,168,159,0.06)' : 'transparent',
+              cursor: 'pointer', transition: 'all 0.15s ease',
+            }}
+              onMouseEnter={() => setHoveredNav('Settings')}
+              onMouseLeave={() => setHoveredNav(null)}
+            >Settings</Link>
 
             <div style={{ marginTop: 'auto', paddingTop: 10, borderTop: '1px solid rgba(10,168,159,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 5px' }}>
