@@ -9,7 +9,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost')
     ? process.env.NEXT_PUBLIC_APP_URL
-    : 'https://bellavego.com'
+    : 'https://www.bellavego.com'
 
 type Tier = 'solo' | 'growth' | 'scale' | 'multiloc'
 type Interval = 'monthly' | 'annual'

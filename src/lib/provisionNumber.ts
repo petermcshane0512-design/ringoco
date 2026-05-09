@@ -14,7 +14,7 @@ const supabase = createClient(
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost')
     ? process.env.NEXT_PUBLIC_APP_URL
-    : 'https://bellavego.com'
+    : 'https://www.bellavego.com'
 
 function extractAreaCode(phone: string | null | undefined): string | undefined {
   if (!phone) return undefined
