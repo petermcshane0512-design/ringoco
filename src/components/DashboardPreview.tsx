@@ -17,6 +17,7 @@ const REPORTS = [
 
 export default function DashboardPreview() {
   const { isSignedIn } = useAuth()
+  const [activeTab, setActiveTab] = useState('Command Center')
   const [hoveredNav, setHoveredNav] = useState<string | null>(null)
   const [stats, setStats] = useState({ calls: 38, jobs: 14, revenue: 12480, saved: 22 })
   const [bumped, setBumped] = useState<string | null>(null)
@@ -130,8 +131,8 @@ export default function DashboardPreview() {
         {/* Browser topbar */}
         <div style={{ height: 46, background: '#ffffff', borderBottom: '1px solid rgba(10,168,159,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px', flexShrink: 0, boxShadow: '0 1px 8px rgba(10,168,159,0.04)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-            <div style={{ padding: '4px 10px', borderRadius: 7, border: '1px solid rgba(10,168,159,0.18)', background: '#F5FCFA', color: '#0B1F3A', fontSize: 9.5, fontWeight: 700 }}>← Back to home</div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#0B1F3A' }}>Command Center</div>
+            <div onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ padding: '4px 10px', borderRadius: 7, border: '1px solid rgba(10,168,159,0.18)', background: '#F5FCFA', color: '#0B1F3A', fontSize: 9.5, fontWeight: 700, cursor: 'pointer', userSelect: 'none' }}>← Back to home</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#0B1F3A' }}>{activeTab}</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '4px 11px', borderRadius: 16, fontSize: 9.5, fontWeight: 600, color: '#059669' }}>
             <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 5px rgba(34,197,94,0.5)', animation: 'dpDot 2s infinite' }} />
@@ -151,43 +152,43 @@ export default function DashboardPreview() {
             <div style={{ fontSize: 7.5, fontWeight: 700, color: '#7AAAB2', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0 5px', marginBottom: 4 }}>Workspace</div>
 
             {[
-              { label: 'Command Center', active: true,    href: '/dashboard' },
-              { label: 'AI Receptionist', dot: true,      href: '/dashboard/receptionist' },
-              { label: 'Invoicing',                       href: '/dashboard/invoicing' },
-            ].map(({ label, active, dot, href }) => {
-              const dest = isSignedIn ? href : '/sign-up'
+              { label: 'Command Center', dot: false },
+              { label: 'AI Receptionist', dot: true },
+              { label: 'Invoicing', dot: false },
+            ].map(({ label, dot }) => {
+              const active = activeTab === label
               const hovered = hoveredNav === label
               return (
-                <Link key={label} href={dest} style={{
+                <div key={label} onClick={() => setActiveTab(label)} style={{
                   display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px',
-                  borderRadius: 7, marginBottom: 1, fontSize: 10, textDecoration: 'none',
+                  borderRadius: 7, marginBottom: 1, fontSize: 10, cursor: 'pointer',
                   background: active ? 'rgba(10,168,159,0.1)' : hovered ? 'rgba(10,168,159,0.06)' : 'transparent',
                   borderLeft: `2.5px solid ${active ? '#0AA89F' : 'transparent'}`,
                   color: active ? '#0AA89F' : hovered ? '#0AA89F' : '#4A7A80',
                   fontWeight: active ? 700 : hovered ? 600 : 500,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
+                  transition: 'all 0.15s ease', userSelect: 'none',
                 }}
                   onMouseEnter={() => setHoveredNav(label)}
                   onMouseLeave={() => setHoveredNav(null)}
                 >
                   {label}
                   {dot && <div style={{ marginLeft: 'auto', width: 5, height: 5, borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 5px rgba(34,197,94,0.5)', animation: 'dpDot 2s infinite' }} />}
-                </Link>
+                </div>
               )
             })}
 
             <div style={{ fontSize: 7.5, fontWeight: 700, color: '#7AAAB2', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0 5px', margin: '10px 0 4px' }}>Account</div>
-            <Link href={isSignedIn ? '/dashboard/settings' : '/sign-up'} style={{
-              display: 'block', padding: '6px 8px', borderRadius: 7, fontSize: 10, textDecoration: 'none',
-              color: hoveredNav === 'Settings' ? '#0AA89F' : '#4A7A80',
-              fontWeight: hoveredNav === 'Settings' ? 600 : 500,
-              background: hoveredNav === 'Settings' ? 'rgba(10,168,159,0.06)' : 'transparent',
-              cursor: 'pointer', transition: 'all 0.15s ease',
+            <div onClick={() => setActiveTab('Settings')} style={{
+              padding: '6px 8px', borderRadius: 7, fontSize: 10, cursor: 'pointer',
+              color: activeTab === 'Settings' ? '#0AA89F' : hoveredNav === 'Settings' ? '#0AA89F' : '#4A7A80',
+              fontWeight: activeTab === 'Settings' ? 700 : hoveredNav === 'Settings' ? 600 : 500,
+              background: activeTab === 'Settings' ? 'rgba(10,168,159,0.1)' : hoveredNav === 'Settings' ? 'rgba(10,168,159,0.06)' : 'transparent',
+              borderLeft: `2.5px solid ${activeTab === 'Settings' ? '#0AA89F' : 'transparent'}`,
+              transition: 'all 0.15s ease', userSelect: 'none',
             }}
               onMouseEnter={() => setHoveredNav('Settings')}
               onMouseLeave={() => setHoveredNav(null)}
-            >Settings</Link>
+            >Settings</div>
 
             <div style={{ marginTop: 'auto', paddingTop: 10, borderTop: '1px solid rgba(10,168,159,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 5px' }}>
@@ -198,7 +199,176 @@ export default function DashboardPreview() {
           </aside>
 
           {/* ── Main content ── */}
-          <div style={{ flex: 1, padding: '13px 14px', overflowX: 'hidden', minWidth: 0, background: 'linear-gradient(145deg, #F5FCFA 0%, #EBF7F3 50%, #F0FAF7 100%)' }}>
+          <div style={{ flex: 1, padding: '13px 14px', overflowX: 'hidden', minWidth: 0, background: 'linear-gradient(145deg, #F5FCFA 0%, #EBF7F3 50%, #F0FAF7 100%)', overflowY: 'auto' }}>
+
+          {/* ══ AI RECEPTIONIST TAB ══ */}
+          {activeTab === 'AI Receptionist' && (
+            <div>
+              <div style={{ background: 'linear-gradient(135deg, rgba(10,168,159,0.08), rgba(10,168,159,0.04))', border: '1px solid rgba(10,168,159,0.18)', borderRadius: 11, padding: '11px 14px', marginBottom: 11, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22C55E', animation: 'dpDot 2s infinite' }} />
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#0B1F3A' }}>AI Receptionist — Online</div>
+                    <div style={{ fontSize: 8.5, color: '#7AAAB2', marginTop: 1 }}>Answering calls 24/7 · (762) 371-3351</div>
+                  </div>
+                </div>
+                <span style={{ fontSize: 8, fontWeight: 700, padding: '3px 10px', borderRadius: 10, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' }}>Active</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 9, marginBottom: 11 }}>
+                {[
+                  { label: 'Calls Today', value: stats.calls, accent: '#0AA89F', key: 'calls' },
+                  { label: 'Jobs Booked', value: stats.jobs, accent: '#22C55E', key: 'jobs' },
+                  { label: 'Calls Saved', value: stats.saved, accent: '#8B5CF6', key: 'saved' },
+                ].map(s => (
+                  <div key={s.label} style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 10, padding: '10px 12px', position: 'relative', overflow: 'hidden', boxShadow: bumped === s.key ? `0 0 0 2px ${s.accent}55` : '0 2px 8px rgba(7,27,58,0.05)', transition: 'box-shadow 0.3s' }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2.5, background: s.accent, borderRadius: '10px 10px 0 0' }} />
+                    <div style={{ fontSize: 8, fontWeight: 700, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>{s.label}</div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: '#0B1F3A', lineHeight: 1, animation: bumped === s.key ? 'dpBounce 0.38s ease' : 'none' }}>{s.value}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, padding: '11px 13px', marginBottom: 9, boxShadow: '0 2px 8px rgba(7,27,58,0.05)' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 9 }}>Recent Calls</div>
+                {[
+                  { name: 'Mike R.', type: 'HVAC Repair', time: '2m ago', status: 'booked' },
+                  { name: 'Sarah L.', type: 'Plumbing Issue', time: '18m ago', status: 'booked' },
+                  { name: 'James W.', type: 'AC Not Cooling', time: '1h ago', status: 'saved' },
+                  { name: 'Ana K.', type: 'Electrical Check', time: '2h ago', status: 'booked' },
+                ].map((c, i, arr) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: i < arr.length - 1 ? '1px solid rgba(10,168,159,0.08)' : 'none' }}>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: c.status === 'booked' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)', border: `1px solid ${c.status === 'booked' ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, flexShrink: 0 }}>{c.status === 'booked' ? '📅' : '📞'}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: '#0B1F3A' }}>{c.name} · {c.type}</div>
+                      <div style={{ fontSize: 8, color: '#7AAAB2' }}>{c.time}</div>
+                    </div>
+                    <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 7px', borderRadius: 8, flexShrink: 0, ...(c.status === 'booked' ? { background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' } : { background: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A' }) }}>{c.status === 'booked' ? 'Booked' : 'Saved'}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, padding: '11px 13px', boxShadow: '0 2px 8px rgba(7,27,58,0.05)' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 9 }}>AI Configuration</div>
+                {[
+                  { label: 'Answer after', value: '12 seconds' },
+                  { label: 'Tone', value: 'Professional & Friendly' },
+                  { label: 'SMS job summaries', value: 'Enabled' },
+                  { label: 'Auto-booking', value: 'Enabled' },
+                ].map((s, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 0', borderBottom: i < 3 ? '1px solid rgba(10,168,159,0.08)' : 'none' }}>
+                    <div style={{ fontSize: 9.5, color: '#4A7A80' }}>{s.label}</div>
+                    <div style={{ fontSize: 9.5, fontWeight: 700, color: '#0AA89F' }}>{s.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ══ INVOICING TAB ══ */}
+          {activeTab === 'Invoicing' && (
+            <div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 9, marginBottom: 11 }}>
+                {[
+                  { label: 'Total Invoiced', value: `$${stats.revenue.toLocaleString()}`, accent: '#F59E0B', key: 'revenue' },
+                  { label: 'Paid', value: String(stats.jobs), accent: '#22C55E', key: 'jobs' },
+                  { label: 'Pending', value: '3', accent: '#0AA89F', key: '' },
+                ].map(s => (
+                  <div key={s.label} style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 10, padding: '10px 12px', position: 'relative', overflow: 'hidden', boxShadow: s.key && bumped === s.key ? `0 0 0 2px ${s.accent}55` : '0 2px 8px rgba(7,27,58,0.05)', transition: 'box-shadow 0.3s' }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2.5, background: s.accent, borderRadius: '10px 10px 0 0' }} />
+                    <div style={{ fontSize: 8, fontWeight: 700, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>{s.label}</div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: '#0B1F3A', lineHeight: 1, animation: s.key && bumped === s.key ? 'dpBounce 0.38s ease' : 'none' }}>{s.value}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, padding: '11px 13px', marginBottom: 9, boxShadow: '0 2px 8px rgba(7,27,58,0.05)' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 10 }}>New Invoice</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                  {[{ label: 'Customer', value: 'John Smith' }, { label: 'Amount', value: '$350.00' }].map(f => (
+                    <div key={f.label}>
+                      <div style={{ fontSize: 8, fontWeight: 700, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>{f.label}</div>
+                      <div style={{ padding: '6px 8px', borderRadius: 7, border: '1px solid rgba(10,168,159,0.2)', background: '#F5FDFB', fontSize: 9.5, color: '#0B1F3A' }}>{f.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: 8, fontWeight: 700, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Service</div>
+                  <div style={{ padding: '6px 8px', borderRadius: 7, border: '1px solid rgba(10,168,159,0.2)', background: '#F5FDFB', fontSize: 9.5, color: '#0B1F3A' }}>AC tune-up + refrigerant recharge</div>
+                </div>
+                <div style={{ padding: '7px 12px', borderRadius: 8, background: 'linear-gradient(135deg, #22C55E, #16A34A)', color: '#fff', fontSize: 10, fontWeight: 700, textAlign: 'center', boxShadow: '0 2px 10px rgba(34,197,94,0.3)', cursor: 'default' }}>Send Invoice →</div>
+              </div>
+              <div style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, padding: '11px 13px', boxShadow: '0 2px 8px rgba(7,27,58,0.05)' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 9 }}>Recent Invoices</div>
+                {[
+                  { name: 'Marcus T.', service: 'HVAC Repair', amount: '$485', status: 'paid' },
+                  { name: 'Sarah L.', service: 'Plumbing Fix', amount: '$320', status: 'paid' },
+                  { name: 'Diane R.', service: 'Electrical', amount: '$210', status: 'sent' },
+                  { name: 'Kevin S.', service: 'AC Tune-up', amount: '$150', status: 'sent' },
+                ].map((inv, i, arr) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: i < arr.length - 1 ? '1px solid rgba(10,168,159,0.08)' : 'none' }}>
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(10,168,159,0.1)', border: '1px solid rgba(10,168,159,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 800, color: '#0AA89F', flexShrink: 0 }}>{inv.name[0]}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 9.5, fontWeight: 600, color: '#0B1F3A' }}>{inv.name} · {inv.service}</div>
+                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#0B1F3A' }}>{inv.amount}</div>
+                    <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 7px', borderRadius: 8, flexShrink: 0, ...(inv.status === 'paid' ? { background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' } : { background: 'rgba(10,168,159,0.08)', color: '#0AA89F', border: '1px solid rgba(10,168,159,0.22)' }) }}>{inv.status}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ══ SETTINGS TAB ══ */}
+          {activeTab === 'Settings' && (
+            <div>
+              <div style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, padding: '11px 13px', marginBottom: 9, boxShadow: '0 2px 8px rgba(7,27,58,0.05)' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 10 }}>Business Profile</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {[
+                    { label: 'Business name', value: 'Smith HVAC & Services' },
+                    { label: 'Business type', value: 'HVAC' },
+                    { label: 'Phone number', value: '(762) 371-3351' },
+                    { label: 'Business hours', value: '8 AM – 6 PM' },
+                  ].map(f => (
+                    <div key={f.label}>
+                      <div style={{ fontSize: 8, fontWeight: 700, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>{f.label}</div>
+                      <div style={{ padding: '6px 8px', borderRadius: 7, border: '1px solid rgba(10,168,159,0.2)', background: '#F5FDFB', fontSize: 9.5, color: '#0B1F3A' }}>{f.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, padding: '11px 13px', marginBottom: 9, boxShadow: '0 2px 8px rgba(7,27,58,0.05)' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 9 }}>AI Receptionist Settings</div>
+                {[
+                  { label: 'Answer after', value: '12 seconds', toggle: false },
+                  { label: 'SMS job summaries', on: true, toggle: true },
+                  { label: 'Auto-book appointments', on: true, toggle: true },
+                  { label: 'Invoice on completion', on: true, toggle: true },
+                  { label: 'Google review requests', on: false, toggle: true },
+                ].map((s, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0', borderBottom: i < 4 ? '1px solid rgba(10,168,159,0.08)' : 'none' }}>
+                    <div style={{ fontSize: 9.5, color: '#4A7A80' }}>{s.label}</div>
+                    {s.toggle ? (
+                      <div style={{ width: 28, height: 15, borderRadius: 8, background: s.on ? '#22C55E' : '#D1D5DB', position: 'relative', flexShrink: 0 }}>
+                        <div style={{ position: 'absolute', top: 2, left: s.on ? 15 : 2, width: 11, height: 11, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 9.5, fontWeight: 700, color: '#0AA89F' }}>{s.value}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div style={{ background: 'linear-gradient(135deg, rgba(10,168,159,0.06), rgba(10,168,159,0.1))', border: '1px solid rgba(10,168,159,0.18)', borderRadius: 11, padding: '12px 13px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 2 }}>14-Day Free Trial Active</div>
+                    <div style={{ fontSize: 8.5, color: '#4A7A80' }}>Add payment method to continue after trial</div>
+                  </div>
+                  <span style={{ fontSize: 8, fontWeight: 700, padding: '3px 9px', borderRadius: 10, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', flexShrink: 0 }}>Trial</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══ COMMAND CENTER TAB (default) ══ */}
+          {activeTab === 'Command Center' && <div>
 
             {/* Stat cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 9, marginBottom: 11 }}>
@@ -325,9 +495,8 @@ export default function DashboardPreview() {
                   {[
                     { label: 'Send an invoice', icon: '💳' },
                     { label: 'View settings', icon: '⚙️' },
-                    { label: 'Go to dashboard', icon: '→' },
                   ].map((a, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 0', borderBottom: i < 2 ? '1px solid rgba(10,168,159,0.08)' : 'none' }}>
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 0', borderBottom: i < 1 ? '1px solid rgba(10,168,159,0.08)' : 'none' }}>
                       <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(10,168,159,0.08)', border: '1px solid rgba(10,168,159,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, flexShrink: 0 }}>
                         {a.icon}
                       </div>

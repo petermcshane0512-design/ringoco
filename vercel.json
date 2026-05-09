@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/crons/prompt-improvement",
+      "schedule": "0 8 * * *"
+    }
+  ]
+}

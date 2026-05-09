@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth, SignOutButton } from '@clerk/nextjs'
@@ -8,6 +8,96 @@ import DashboardPreview from '@/components/DashboardPreview'
 export default function HomePage() {
   const { isSignedIn } = useAuth()
   const [logoHovered, setLogoHovered] = useState(false)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    let animId: number
+    let t = 0
+
+    const resize = () => {
+      canvas.width = canvas.offsetWidth
+      canvas.height = canvas.offsetHeight
+    }
+
+    const wave = (yFrac: number, amp: number, period: number, spd: number, color: string, alpha: number) => {
+      const W = canvas.width, H = canvas.height
+      ctx.beginPath()
+      for (let x = 0; x <= W + 4; x += 3) {
+        const y = H * yFrac
+          + Math.sin((x / period) + t * spd) * amp
+          + Math.sin((x / (period * 0.58)) + t * spd * 1.45) * amp * 0.38
+        if (x === 0) ctx.moveTo(x, y)
+        else ctx.lineTo(x, y)
+      }
+      ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath()
+      ctx.fillStyle = color; ctx.globalAlpha = alpha; ctx.fill(); ctx.globalAlpha = 1
+    }
+
+    const draw = () => {
+      const W = canvas.width, H = canvas.height
+      t += 0.007
+
+      // Sky — deep navy to warm sunset at horizon
+      const sky = ctx.createLinearGradient(0, 0, 0, H * 0.67)
+      sky.addColorStop(0,    '#060f1d')
+      sky.addColorStop(0.42, '#0b1e35')
+      sky.addColorStop(0.78, '#5c1f0e')
+      sky.addColorStop(1,    '#d45a10')
+      ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H)
+
+      // Sun glow at horizon
+      const sx = W * 0.38, sy = H * 0.67
+      const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, W * 0.26)
+      glow.addColorStop(0,   'rgba(255,195,55,0.30)')
+      glow.addColorStop(0.4, 'rgba(240,100,15,0.12)')
+      glow.addColorStop(1,   'rgba(0,0,0,0)')
+      ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H)
+
+      // Stars — blink gently
+      const starSeeds = [[.04,.07],[.11,.14],[.17,.04],[.24,.17],[.54,.05],[.62,.11],[.69,.03],[.77,.18],[.84,.07],[.91,.13],[.07,.27],[.47,.21],[.33,.09],[.58,.24],[.73,.12]]
+      starSeeds.forEach(([sx2, sy2]) => {
+        const b = 0.35 + 0.65 * Math.abs(Math.sin(t * 1.3 + sx2 * 28))
+        ctx.globalAlpha = b * 0.85
+        ctx.fillStyle = '#fff'
+        ctx.beginPath()
+        ctx.arc(sx2 * W, sy2 * H * 0.67, 1.3, 0, Math.PI * 2)
+        ctx.fill()
+      })
+      ctx.globalAlpha = 1
+
+      // Ocean base
+      const ocean = ctx.createLinearGradient(0, H * 0.66, 0, H)
+      ocean.addColorStop(0, '#0c3a56'); ocean.addColorStop(0.5, '#082840'); ocean.addColorStop(1, '#03192b')
+      ctx.fillStyle = ocean; ctx.fillRect(0, H * 0.66, W, H)
+
+      // Sun reflection strip on water
+      ctx.save()
+      ctx.beginPath(); ctx.rect(W * 0.24, H * 0.66, W * 0.27, H); ctx.clip()
+      const refl = ctx.createLinearGradient(0, H * 0.66, 0, H)
+      refl.addColorStop(0, 'rgba(255,160,40,0.20)'); refl.addColorStop(1, 'rgba(255,110,15,0.03)')
+      ctx.fillStyle = refl; ctx.fillRect(0, H * 0.66, W, H); ctx.restore()
+
+      // Wave layers — back to front
+      wave(0.775, 10, 210, 0.85, '#0a5078', 0.82)
+      wave(0.820, 12, 260, 0.68, '#0d6592', 0.72)
+      wave(0.860, 14, 175, 1.05, '#1478a8', 0.62)
+      wave(0.900,  8, 135, 1.55, '#2292c4', 0.48)
+      // foam highlights on crest
+      wave(0.770, 10, 210, 0.85, 'rgba(255,255,255,0.07)', 1)
+      wave(0.855, 14, 175, 1.05, 'rgba(255,255,255,0.06)', 1)
+
+      animId = requestAnimationFrame(draw)
+    }
+
+    resize()
+    window.addEventListener('resize', resize)
+    draw()
+    return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', resize) }
+  }, [])
 
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#F2F9F5', color: '#0B1F3A', minHeight: '100vh', overflowX: 'hidden' }}>
@@ -130,14 +220,21 @@ export default function HomePage() {
           }
         `}</style>
         <div style={{ position: 'relative', width: '100%', lineHeight: 0 }}>
-          <Image
-            src="/Landing Page 1.png"
-            alt="BellAveGo — Stop losing jobs to missed calls"
-            width={1440}
-            height={480}
-            style={{ width: '100%', height: 'auto', display: 'block' }}
-            priority
-          />
+          {/* Animated beach hero — replaces static Landing Page 1.png */}
+          <div style={{ position: 'relative', width: '100%', aspectRatio: '1440/480', overflow: 'hidden' }}>
+            <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
+            <div style={{ position: 'absolute', top: '12%', left: '4%', width: '46%', zIndex: 2 }}>
+              <p style={{ fontSize: 'clamp(9px, 0.85vw, 13px)', fontWeight: 700, color: 'rgba(255,185,55,0.92)', letterSpacing: '2.5px', textTransform: 'uppercase', marginBottom: '4%', margin: '0 0 4% 0' }}>
+                AI Receptionist · 24/7
+              </p>
+              <h1 style={{ fontSize: 'clamp(17px, 2.9vw, 48px)', fontWeight: 900, color: '#FFFFFF', lineHeight: 1.1, letterSpacing: '-0.03em', margin: '0 0 3% 0', textShadow: '0 2px 28px rgba(0,0,0,0.65)' }}>
+                Stop losing jobs<br />to missed calls.
+              </h1>
+              <p style={{ fontSize: 'clamp(9px, 0.9vw, 14px)', color: 'rgba(255,255,255,0.58)', lineHeight: 1.65, margin: 0 }}>
+                BellAveGo answers when you can't, books the job,<br />and texts your customer — automatically.
+              </p>
+            </div>
+          </div>
           <Link
             href={isSignedIn ? '/dashboard' : '/sign-up'}
             className={`lp-hero-cta ${isSignedIn ? 'dash-pulse' : 'cta-pulse'}`}
