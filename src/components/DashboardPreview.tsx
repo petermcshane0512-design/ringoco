@@ -106,7 +106,7 @@ export default function DashboardPreview() {
           <span style={{ color: '#0AA89F' }}>Business Runs On</span>
         </h2>
         <p style={{ color: '#4A7A80', fontSize: 16, maxWidth: 520, margin: '0 auto' }}>
-          AI-powered answering, booking, invoicing, and revenue tracking — all in one operating system.
+          AI-powered answering, booking, invoicing, and revenue tracking -- all in one operating system.
         </p>
       </div>
 
@@ -131,17 +131,17 @@ export default function DashboardPreview() {
         {/* Browser topbar */}
         <div style={{ height: 46, background: '#ffffff', borderBottom: '1px solid rgba(10,168,159,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px', flexShrink: 0, boxShadow: '0 1px 8px rgba(10,168,159,0.04)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-            <div onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ padding: '4px 10px', borderRadius: 7, border: '1px solid rgba(10,168,159,0.18)', background: '#F5FCFA', color: '#0B1F3A', fontSize: 9.5, fontWeight: 700, cursor: 'pointer', userSelect: 'none' }}>← Back to home</div>
+            <div onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ padding: '4px 10px', borderRadius: 7, border: '1px solid rgba(10,168,159,0.18)', background: '#F5FCFA', color: '#0B1F3A', fontSize: 9.5, fontWeight: 700, cursor: 'pointer', userSelect: 'none' }}>{'<-'} Back to home</div>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#0B1F3A' }}>{activeTab}</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '4px 11px', borderRadius: 16, fontSize: 9.5, fontWeight: 600, color: '#059669' }}>
             <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 5px rgba(34,197,94,0.5)', animation: 'dpDot 2s infinite' }} />
-            AI Online · (762) 371-3351
+            AI Online . (762) 371-3351
           </div>
         </div>
 
         <div style={{ display: 'flex', minHeight: 488 }}>
-          {/* ── Sidebar ── */}
+          {/* -- Sidebar -- */}
           <aside style={{ width: 158, flexShrink: 0, background: '#ffffff', borderRight: '1px solid rgba(10,168,159,0.14)', display: 'flex', flexDirection: 'column', padding: '13px 10px' }}>
             {/* Logo */}
             <div style={{ padding: '2px 4px 12px', borderBottom: '1px solid rgba(10,168,159,0.1)', marginBottom: 10, textAlign: 'center' }}>
@@ -193,23 +193,23 @@ export default function DashboardPreview() {
             <div style={{ marginTop: 'auto', paddingTop: 10, borderTop: '1px solid rgba(10,168,159,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 5px' }}>
                 <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 5px rgba(34,197,94,0.5)', animation: 'dpDot 2s infinite' }} />
-                <span style={{ fontSize: 8, color: '#059669', fontWeight: 700 }}>AI Online · 24/7</span>
+                <span style={{ fontSize: 8, color: '#059669', fontWeight: 700 }}>AI Online . 24/7</span>
               </div>
             </div>
           </aside>
 
-          {/* ── Main content ── */}
+          {/* -- Main content -- */}
           <div style={{ flex: 1, padding: '13px 14px', overflowX: 'hidden', minWidth: 0, background: 'linear-gradient(145deg, #F5FCFA 0%, #EBF7F3 50%, #F0FAF7 100%)', overflowY: 'auto' }}>
 
-          {/* ══ AI RECEPTIONIST TAB ══ */}
+          {/* == AI RECEPTIONIST TAB == */}
           {activeTab === 'AI Receptionist' && (
             <div>
               <div style={{ background: 'linear-gradient(135deg, rgba(10,168,159,0.08), rgba(10,168,159,0.04))', border: '1px solid rgba(10,168,159,0.18)', borderRadius: 11, padding: '11px 14px', marginBottom: 11, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22C55E', animation: 'dpDot 2s infinite' }} />
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#0B1F3A' }}>AI Receptionist — Online</div>
-                    <div style={{ fontSize: 8.5, color: '#7AAAB2', marginTop: 1 }}>Answering calls 24/7 · (762) 371-3351</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#0B1F3A' }}>AI Receptionist -- Online</div>
+                    <div style={{ fontSize: 8.5, color: '#7AAAB2', marginTop: 1 }}>Answering calls 24/7 . (762) 371-3351</div>
                   </div>
                 </div>
                 <span style={{ fontSize: 8, fontWeight: 700, padding: '3px 10px', borderRadius: 10, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' }}>Active</span>
@@ -236,9 +236,9 @@ export default function DashboardPreview() {
                   { name: 'Ana K.', type: 'Electrical Check', time: '2h ago', status: 'booked' },
                 ].map((c, i, arr) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: i < arr.length - 1 ? '1px solid rgba(10,168,159,0.08)' : 'none' }}>
-                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: c.status === 'booked' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)', border: c.status === 'booked' ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, flexShrink: 0 }}>{c.status === 'booked' ? '📅' : '📞'}</div>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: c.status === 'booked' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)', border: c.status === 'booked' ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, flexShrink: 0 }}>{c.status === 'booked' ? 'Cal' : 'Tel'}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 10, fontWeight: 600, color: '#0B1F3A' }}>{c.name} · {c.type}</div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: '#0B1F3A' }}>{c.name} . {c.type}</div>
                       <div style={{ fontSize: 8, color: '#7AAAB2' }}>{c.time}</div>
                     </div>
                     <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 7px', borderRadius: 8, flexShrink: 0, ...(c.status === 'booked' ? { background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' } : { background: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A' }) }}>{c.status === 'booked' ? 'Booked' : 'Saved'}</span>
@@ -262,7 +262,7 @@ export default function DashboardPreview() {
             </div>
           )}
 
-          {/* ══ INVOICING TAB ══ */}
+          {/* == INVOICING TAB == */}
           {activeTab === 'Invoicing' && (
             <div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 9, marginBottom: 11 }}>
@@ -292,7 +292,7 @@ export default function DashboardPreview() {
                   <div style={{ fontSize: 8, fontWeight: 700, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Service</div>
                   <div style={{ padding: '6px 8px', borderRadius: 7, border: '1px solid rgba(10,168,159,0.2)', background: '#F5FDFB', fontSize: 9.5, color: '#0B1F3A' }}>AC tune-up + refrigerant recharge</div>
                 </div>
-                <div style={{ padding: '7px 12px', borderRadius: 8, background: 'linear-gradient(135deg, #22C55E, #16A34A)', color: '#fff', fontSize: 10, fontWeight: 700, textAlign: 'center', boxShadow: '0 2px 10px rgba(34,197,94,0.3)', cursor: 'default' }}>Send Invoice →</div>
+                <div style={{ padding: '7px 12px', borderRadius: 8, background: 'linear-gradient(135deg, #22C55E, #16A34A)', color: '#fff', fontSize: 10, fontWeight: 700, textAlign: 'center', boxShadow: '0 2px 10px rgba(34,197,94,0.3)', cursor: 'default' }}>Send Invoice {'->'}</div>
               </div>
               <div style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, padding: '11px 13px', boxShadow: '0 2px 8px rgba(7,27,58,0.05)' }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 9 }}>Recent Invoices</div>
@@ -305,7 +305,7 @@ export default function DashboardPreview() {
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: i < arr.length - 1 ? '1px solid rgba(10,168,159,0.08)' : 'none' }}>
                     <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(10,168,159,0.1)', border: '1px solid rgba(10,168,159,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 800, color: '#0AA89F', flexShrink: 0 }}>{inv.name[0]}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 9.5, fontWeight: 600, color: '#0B1F3A' }}>{inv.name} · {inv.service}</div>
+                      <div style={{ fontSize: 9.5, fontWeight: 600, color: '#0B1F3A' }}>{inv.name} . {inv.service}</div>
                     </div>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#0B1F3A' }}>{inv.amount}</div>
                     <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 7px', borderRadius: 8, flexShrink: 0, ...(inv.status === 'paid' ? { background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' } : { background: 'rgba(10,168,159,0.08)', color: '#0AA89F', border: '1px solid rgba(10,168,159,0.22)' }) }}>{inv.status}</span>
@@ -315,7 +315,7 @@ export default function DashboardPreview() {
             </div>
           )}
 
-          {/* ══ SETTINGS TAB ══ */}
+          {/* == SETTINGS TAB == */}
           {activeTab === 'Settings' && (
             <div>
               <div style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, padding: '11px 13px', marginBottom: 9, boxShadow: '0 2px 8px rgba(7,27,58,0.05)' }}>
@@ -325,7 +325,7 @@ export default function DashboardPreview() {
                     { label: 'Business name', value: 'Smith HVAC & Services' },
                     { label: 'Business type', value: 'HVAC' },
                     { label: 'Phone number', value: '(762) 371-3351' },
-                    { label: 'Business hours', value: '8 AM – 6 PM' },
+                    { label: 'Business hours', value: '8 AM - 6 PM' },
                   ].map(f => (
                     <div key={f.label}>
                       <div style={{ fontSize: 8, fontWeight: 700, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>{f.label}</div>
@@ -367,7 +367,7 @@ export default function DashboardPreview() {
             </div>
           )}
 
-          {/* ══ COMMAND CENTER TAB (default) ══ */}
+          {/* == COMMAND CENTER TAB (default) == */}
           {activeTab === 'Command Center' && <div>
 
             {/* Stat cards */}
@@ -430,7 +430,7 @@ export default function DashboardPreview() {
                   <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 9, padding: '10px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
                       <div>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: '#0B1F3A', marginBottom: 2 }}>Lighting Repair — 9240 South Hoyne Ave</div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#0B1F3A', marginBottom: 2 }}>Lighting Repair -- 9240 South Hoyne Ave</div>
                         <div style={{ fontSize: 9.5, color: '#4A7A80' }}>Customer requested tomorrow around 3:00 PM</div>
                       </div>
                       <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 7px', borderRadius: 10, background: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A', whiteSpace: 'nowrap', flexShrink: 0 }}>Pending</span>
@@ -451,7 +451,7 @@ export default function DashboardPreview() {
                         {j.name[0]}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 10, fontWeight: 600, color: '#0B1F3A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.name} · {j.type}</div>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: '#0B1F3A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.name} . {j.type}</div>
                         <div style={{ fontSize: 8, color: '#7AAAB2' }}>{j.time}</div>
                       </div>
                       <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 7px', borderRadius: 8, flexShrink: 0, ...(j.status === 'scheduled' ? { background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' } : { background: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A' }) }}>
@@ -493,8 +493,8 @@ export default function DashboardPreview() {
                 <div style={{ background: '#ffffff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, padding: '11px 12px', boxShadow: '0 2px 10px rgba(7,27,58,0.05)' }}>
                   <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 9 }}>Quick Actions</div>
                   {[
-                    { label: 'Send an invoice', icon: '💳' },
-                    { label: 'View settings', icon: '⚙️' },
+                    { label: 'Send an invoice', icon: 'Pay' },
+                    { label: 'View settings', icon: 'Cfg' },
                   ].map((a, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 0', borderBottom: i < 1 ? '1px solid rgba(10,168,159,0.08)' : 'none' }}>
                       <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(10,168,159,0.08)', border: '1px solid rgba(10,168,159,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, flexShrink: 0 }}>
@@ -517,7 +517,7 @@ export default function DashboardPreview() {
                 {/* Banner */}
                 <div style={{ flex: '0 0 auto', background: 'linear-gradient(135deg, rgba(10,168,159,0.07), rgba(10,168,159,0.12))', border: '1px solid rgba(10,168,159,0.18)', borderRadius: 8, padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 230 }}>
                   <div style={{ width: 26, height: 26, borderRadius: 6, background: 'linear-gradient(135deg, #0AA89F, #0D8F87)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <span style={{ fontSize: 12 }}>📚</span>
+                    <span style={{ fontSize: 12 }}>Rep</span>
                   </div>
                   <div>
                     <div style={{ fontSize: 8.5, fontWeight: 700, color: '#0B1F3A', lineHeight: 1.3 }}>Your personal growth advisor</div>
@@ -537,7 +537,7 @@ export default function DashboardPreview() {
                   ))}
                   <div style={{ marginTop: 6, padding: '5px 8px', background: 'rgba(10,168,159,0.05)', borderRadius: 7, border: '1px solid rgba(10,168,159,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                      <div style={{ fontSize: 8.5, fontWeight: 600, color: '#4A7A80' }}>Next report · Q2 2026</div>
+                      <div style={{ fontSize: 8.5, fontWeight: 600, color: '#4A7A80' }}>Next report . Q2 2026</div>
                       <div style={{ fontSize: 7.5, color: '#7AAAB2' }}>Due July 1, 2026</div>
                     </div>
                     <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 6px', borderRadius: 8, background: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A' }}>Upcoming</span>
@@ -545,23 +545,24 @@ export default function DashboardPreview() {
                 </div>
               </div>
             </div>
+          </div>}
           </div>
         </div>
       </div>
 
-      {/* CTAs — hidden when signed in */}
+      {/* CTAs -- hidden when signed in */}
       {!isSignedIn && (
         <>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 20, position: 'relative', zIndex: 2 }}>
             <Link href="/sign-up" style={{ padding: '14px 36px', background: 'linear-gradient(135deg, #22C55E, #16A34A)', color: '#fff', fontWeight: 900, fontSize: 15, borderRadius: 11, textDecoration: 'none', boxShadow: '0 4px 22px rgba(34,197,94,0.38)', letterSpacing: '-0.01em' }}>
-              Start Free Trial — 14 Days →
+              Start Free Trial -- 14 Days {'->'}
             </Link>
             <Link href="/sign-in" style={{ padding: '14px 28px', background: '#ffffff', color: '#0B1F3A', fontWeight: 700, fontSize: 15, borderRadius: 11, border: '1px solid rgba(10,168,159,0.22)', textDecoration: 'none', boxShadow: '0 2px 12px rgba(7,27,58,0.07)' }}>
               Sign In to Dashboard
             </Link>
           </div>
           <p style={{ textAlign: 'center', color: '#7AAAB2', fontSize: 13, margin: 0, position: 'relative', zIndex: 2 }}>
-            Built for service businesses doing $100k–$4M in annual revenue.
+            Built for service businesses doing $100k-$4M in annual revenue.
           </p>
         </>
       )}

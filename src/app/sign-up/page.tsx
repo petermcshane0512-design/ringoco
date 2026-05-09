@@ -182,7 +182,7 @@ export default function SignUpPage() {
       >
         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 320, height: 320, background: 'radial-gradient(ellipse, rgba(24,175,168,0.11) 0%, transparent 65%)', pointerEvents: 'none' }} />
         <div style={{ width: '100%', position: 'relative', zIndex: 1 }}>
-          <SignUp afterSignUpUrl="/onboarding" appearance={clerkAppearance} />
+          <SignUp forceRedirectUrl="/onboarding" appearance={clerkAppearance} />
         </div>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.65 }}
