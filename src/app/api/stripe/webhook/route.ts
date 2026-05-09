@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { provisionNumberForUser } from '@/lib/provisionNumber'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const supabase = createClient(
@@ -66,6 +67,18 @@ export async function POST(req: NextRequest) {
     }).eq('user_id', userId)
 
     console.log(`Subscription activated for user ${userId}: ${planTier}`)
+
+    // Provision a Twilio number now that they're paid. Idempotent.
+    try {
+      const provision = await provisionNumberForUser(userId)
+      if (provision.ok) {
+        console.log(`Provisioned ${provision.phoneNumber} for ${userId} (reused=${provision.reused})`)
+      } else {
+        console.error(`Provisioning failed for ${userId}: ${provision.error}`)
+      }
+    } catch (e) {
+      console.error(`Provisioning threw for ${userId}:`, e)
+    }
   }
 
   if (event.type === 'customer.subscription.deleted') {
