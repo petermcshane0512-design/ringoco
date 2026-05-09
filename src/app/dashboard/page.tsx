@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -48,12 +49,19 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [provisionLoading, setProvisionLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => { fetchAll(); }, []);
 
   async function fetchAll() {
     const profileRes = await fetch("/api/profile").then((r) => r.json()).catch(() => null);
-    setProfile(profileRes && !profileRes.error ? profileRes : null);
+    const p = profileRes && !profileRes.error ? profileRes : null;
+    setProfile(p);
+    // Send fresh signups (no profile yet, or onboarding not complete) to /onboarding
+    if (!p || !p.onboarding_complete) {
+      router.replace("/onboarding");
+      return;
+    }
 
     const [
       { data: jobData },
@@ -446,6 +454,11 @@ export default function DashboardPage() {
               <Link href="/dashboard/receptionist" style={{ width: "100%", marginTop: 16, background: "linear-gradient(135deg, #0AA89F, #18AFA8)", color: "#fff", fontSize: 12, fontWeight: 700, padding: "11px", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, textDecoration: "none", boxShadow: "0 4px 14px rgba(10,168,159,0.25)" }}>
                 Configure Receptionist →
               </Link>
+              {profile?.is_active && profile?.twilio_number && (
+                <Link href="/dashboard/forwarding" style={{ width: "100%", marginTop: 8, background: "#fff", border: "1.5px solid rgba(10,168,159,0.25)", color: "#0AA89F", fontSize: 12, fontWeight: 700, padding: "10px", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, textDecoration: "none" }}>
+                  Setup call forwarding →
+                </Link>
+              )}
             </div>
           </div>
 
