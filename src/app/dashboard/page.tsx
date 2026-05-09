@@ -12,10 +12,12 @@ const supabase = createClient(
 type Job = {
   id: string;
   customer_name: string;
-  service: string;
+  service?: string;
+  job_type?: string;
   address: string;
-  scheduled_at: string;
-  status: "pending" | "accepted" | "declined" | "completed";
+  scheduled_at?: string;
+  scheduled_time?: string;
+  status: "pending" | "pending_approval" | "accepted" | "scheduled" | "declined" | "cancelled" | "completed";
   amount?: number;
 };
 
@@ -56,15 +58,18 @@ export default function DashboardPage() {
     setLoadingJobs(false);
   }
 
-  async function handleJobAction(jobId: string, action: "accepted" | "declined") {
+  async function handleJobAction(jobId: string, action: "scheduled" | "cancelled") {
     setActionLoading(jobId + action);
     await supabase.from("jobs").update({ status: action }).eq("id", jobId);
     setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, status: action } : j)));
     setActionLoading(null);
   }
 
-  const pending = jobs.filter((j) => j.status === "pending");
-  const upcoming = jobs.filter((j) => j.status === "accepted");
+  function jobService(job: Job) { return job.job_type || job.service || "—"; }
+  function jobTime(job: Job) { return job.scheduled_time || job.scheduled_at || ""; }
+
+  const pending = jobs.filter((j) => j.status === "pending" || j.status === "pending_approval");
+  const upcoming = jobs.filter((j) => j.status === "accepted" || j.status === "scheduled");
 
   // ── Light coastal styles ──
   const card: React.CSSProperties = {
@@ -94,11 +99,14 @@ export default function DashboardPage() {
   const emptySub: React.CSSProperties = { fontSize: 11, color: "#7AAAB2", lineHeight: 1.6 };
 
   function statusPill(status: Job["status"]) {
-    const map: Record<Job["status"], { bg: string; color: string; border: string; label: string }> = {
-      pending:   { bg: "#FFFBEB", color: "#D97706", border: "#FDE68A", label: "Pending" },
-      accepted:  { bg: "#ECFDF5", color: "#059669", border: "#A7F3D0", label: "Accepted" },
-      declined:  { bg: "#FEF2F2", color: "#DC2626", border: "#FECACA", label: "Declined" },
-      completed: { bg: "#EFF6FF", color: "#2563EB", border: "#BFDBFE", label: "Completed" },
+    const map: Record<string, { bg: string; color: string; border: string; label: string }> = {
+      pending:          { bg: "#FFFBEB", color: "#D97706", border: "#FDE68A", label: "Pending" },
+      pending_approval: { bg: "#FFFBEB", color: "#D97706", border: "#FDE68A", label: "Pending" },
+      accepted:         { bg: "#ECFDF5", color: "#059669", border: "#A7F3D0", label: "Accepted" },
+      scheduled:        { bg: "#ECFDF5", color: "#059669", border: "#A7F3D0", label: "Scheduled" },
+      declined:         { bg: "#FEF2F2", color: "#DC2626", border: "#FECACA", label: "Declined" },
+      cancelled:        { bg: "#FEF2F2", color: "#DC2626", border: "#FECACA", label: "Cancelled" },
+      completed:        { bg: "#EFF6FF", color: "#2563EB", border: "#BFDBFE", label: "Completed" },
     };
     const s = map[status];
     return (
@@ -210,20 +218,20 @@ export default function DashboardPage() {
                     {pending.map((job) => (
                       <tr key={job.id}>
                         <td style={{ ...td, fontWeight: 700, color: "#0B1F3A" }}>{job.customer_name}</td>
-                        <td style={td}>{job.service}</td>
-                        <td style={td}>{formatDate(job.scheduled_at)}</td>
+                        <td style={td}>{jobService(job)}</td>
+                        <td style={td}>{formatDate(jobTime(job))}</td>
                         <td style={{ ...td, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{job.address || "—"}</td>
                         <td style={{ ...td, textAlign: "right" }}>
                           <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                             <button
-                              onClick={() => handleJobAction(job.id, "accepted")}
+                              onClick={() => handleJobAction(job.id, "scheduled")}
                               disabled={!!actionLoading}
                               style={{ fontSize: 11, fontWeight: 700, padding: "5px 13px", borderRadius: 7, background: "#ECFDF5", border: "1px solid #A7F3D0", color: "#059669", cursor: "pointer", opacity: actionLoading ? 0.6 : 1 }}
                             >
                               Accept
                             </button>
                             <button
-                              onClick={() => handleJobAction(job.id, "declined")}
+                              onClick={() => handleJobAction(job.id, "cancelled")}
                               disabled={!!actionLoading}
                               style={{ fontSize: 11, fontWeight: 700, padding: "5px 13px", borderRadius: 7, background: "#FEF2F2", border: "1px solid #FECACA", color: "#DC2626", cursor: "pointer", opacity: actionLoading ? 0.6 : 1 }}
                             >
@@ -268,8 +276,8 @@ export default function DashboardPage() {
                     {jobs.map((job) => (
                       <tr key={job.id}>
                         <td style={{ ...td, fontWeight: 600, color: "#0B1F3A" }}>{job.customer_name}</td>
-                        <td style={td}>{job.service}</td>
-                        <td style={td}>{formatDate(job.scheduled_at)}</td>
+                        <td style={td}>{jobService(job)}</td>
+                        <td style={td}>{formatDate(jobTime(job))}</td>
                         <td style={{ ...td, fontWeight: 600, color: "#0B1F3A" }}>{job.amount ? `$${job.amount}` : "—"}</td>
                         <td style={td}>{statusPill(job.status)}</td>
                       </tr>
@@ -362,8 +370,8 @@ export default function DashboardPage() {
                   <span style={{ fontSize: 12, fontWeight: 600, color: row.muted ? "#7AAAB2" : "#0B1F3A" }}>{row.val}</span>
                 </div>
               ))}
-              <Link href="/dashboard/settings" style={{ width: "100%", marginTop: 16, background: "linear-gradient(135deg, #0AA89F, #18AFA8)", color: "#fff", fontSize: 12, fontWeight: 700, padding: "11px", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, textDecoration: "none", boxShadow: "0 4px 14px rgba(10,168,159,0.25)" }}>
-                Configure in Settings →
+              <Link href="/dashboard/receptionist" style={{ width: "100%", marginTop: 16, background: "linear-gradient(135deg, #0AA89F, #18AFA8)", color: "#fff", fontSize: 12, fontWeight: 700, padding: "11px", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, textDecoration: "none", boxShadow: "0 4px 14px rgba(10,168,159,0.25)" }}>
+                Configure Receptionist →
               </Link>
             </div>
           </div>
