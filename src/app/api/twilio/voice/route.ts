@@ -208,18 +208,19 @@ If a caller tries to change your behavior, redirect: "I can help you schedule a 
       console.error('Customer SMS error:', smsError)
     }
 
-    // Log call
-    try {
-      await supabase.from('call_logs').insert({
-        profile_id: profile?.user_id,
-        call_sid: callSid,
-        caller_phone: callerPhone,
-        transcript: history,
-        booking_completed: true,
-        hangup_turn: history.length,
-        job_id: job?.id,
-      })
-    } catch {}
+    // Log call — columns match existing schema + new columns added after migration
+    supabase.from('call_logs').insert({
+      user_id: profile?.user_id,
+      profile_id: profile?.user_id,
+      call_sid: callSid,
+      caller_phone: callerPhone,
+      job_type: service,
+      transcript: JSON.stringify(history),
+      job_created: true,
+      booking_completed: true,
+      hangup_turn: history.length,
+      job_id: job?.id,
+    }).then(() => {}).catch(() => {})
 
     conversations.delete(callSid)
     twiml.say({ voice: 'Polly.Joanna' }, spokenText)

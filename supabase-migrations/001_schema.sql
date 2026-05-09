@@ -1,74 +1,72 @@
 -- BellAveGo Schema Migration 001
--- Run this in Supabase SQL Editor: https://supabase.com/dashboard/project/_/sql
+-- Run in Supabase SQL Editor: https://supabase.com/dashboard/project/calbttbufyrqiblnncsm/sql
 
--- ── Add columns to profiles ──────────────────────────────────────────────────
+-- ── profiles: add billing + onboarding columns ────────────────────────────────
 ALTER TABLE profiles
   ADD COLUMN IF NOT EXISTS stripe_subscription_id text,
   ADD COLUMN IF NOT EXISTS stripe_metered_item_id text,
   ADD COLUMN IF NOT EXISTS plan_tier text DEFAULT 'starter',
   ADD COLUMN IF NOT EXISTS is_active boolean DEFAULT false,
-  ADD COLUMN IF NOT EXISTS stripe_customer_id text;
+  ADD COLUMN IF NOT EXISTS stripe_customer_id text,
+  ADD COLUMN IF NOT EXISTS business_type text,
+  ADD COLUMN IF NOT EXISTS revenue_range text,
+  ADD COLUMN IF NOT EXISTS team_size text,
+  ADD COLUMN IF NOT EXISTS hours_open text,
+  ADD COLUMN IF NOT EXISTS hours_close text,
+  ADD COLUMN IF NOT EXISTS onboarding_complete boolean DEFAULT false;
 
--- ── call_logs ────────────────────────────────────────────────────────────────
--- Every call handled by the AI. Replaces in-memory Map.
-CREATE TABLE IF NOT EXISTS call_logs (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  profile_id uuid REFERENCES profiles(id),
-  call_sid text UNIQUE NOT NULL,
-  caller_phone text,
-  called_number text,
-  duration_seconds integer,
-  transcript jsonb DEFAULT '[]',
-  booking_completed boolean DEFAULT false,
-  job_id uuid REFERENCES jobs(id),
-  hangup_turn integer,
-  created_at timestamptz DEFAULT now()
-);
+-- ── call_logs: add new columns to existing table ──────────────────────────────
+ALTER TABLE call_logs
+  ADD COLUMN IF NOT EXISTS profile_id text,
+  ADD COLUMN IF NOT EXISTS call_sid text,
+  ADD COLUMN IF NOT EXISTS booking_completed boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS hangup_turn integer,
+  ADD COLUMN IF NOT EXISTS job_id uuid;
 
-CREATE INDEX IF NOT EXISTS call_logs_profile_id_idx ON call_logs(profile_id);
-CREATE INDEX IF NOT EXISTS call_logs_created_at_idx ON call_logs(created_at DESC);
+-- ── jobs: add scheduled_time column ──────────────────────────────────────────
+ALTER TABLE jobs
+  ADD COLUMN IF NOT EXISTS scheduled_time text;
 
--- ── usage_events ─────────────────────────────────────────────────────────────
--- Per-call billing events. Reported to Stripe metered billing.
-CREATE TABLE IF NOT EXISTS usage_events (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  profile_id uuid REFERENCES profiles(id),
-  call_sid text,
-  duration_seconds integer,
-  stripe_reported boolean DEFAULT false,
-  created_at timestamptz DEFAULT now()
-);
+-- ── invoices: add user_id ─────────────────────────────────────────────────────
+ALTER TABLE invoices
+  ADD COLUMN IF NOT EXISTS user_id text;
 
-CREATE INDEX IF NOT EXISTS usage_events_profile_id_idx ON usage_events(profile_id);
-CREATE INDEX IF NOT EXISTS usage_events_stripe_reported_idx ON usage_events(stripe_reported);
-
--- ── prompt_suggestions ───────────────────────────────────────────────────────
--- AI-generated suggestions for improving per-contractor system prompts.
--- Reviewed weekly, applied manually.
+-- ── prompt_suggestions ────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS prompt_suggestions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  profile_id uuid REFERENCES profiles(id),
+  profile_id text,
   suggestion text NOT NULL,
   based_on_call_count integer,
   applied boolean DEFAULT false,
   created_at timestamptz DEFAULT now()
 );
 
--- ── diagnostics ──────────────────────────────────────────────────────────────
--- Business diagnostic run on signup. Month-0 baseline for ROI tracking.
+-- ── diagnostics ───────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS diagnostics (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  profile_id uuid REFERENCES profiles(id),
-  review_count integer,
-  estimated_monthly_calls integer,
-  estimated_missed_calls integer,
-  estimated_missed_revenue_monthly numeric(10,2),
-  avg_job_value_used numeric(10,2),
+  profile_id text,
+  business_name text,
+  google_rating numeric(3,1),
+  google_review_count integer,
+  has_website boolean,
+  estimated_missed_calls_per_month integer,
+  estimated_monthly_roi integer,
+  ai_summary text,
+  raw_places_data jsonb,
   created_at timestamptz DEFAULT now()
 );
 
--- ── outreach_leads ───────────────────────────────────────────────────────────
--- Leads pushed to Instantly campaigns.
+-- ── usage_events ──────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS usage_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  profile_id text,
+  call_sid text,
+  duration_seconds integer,
+  stripe_reported boolean DEFAULT false,
+  created_at timestamptz DEFAULT now()
+);
+
+-- ── outreach_leads ────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS outreach_leads (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email text UNIQUE NOT NULL,
@@ -83,14 +81,10 @@ CREATE TABLE IF NOT EXISTS outreach_leads (
   updated_at timestamptz DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS outreach_leads_status_idx ON outreach_leads(status);
-CREATE INDEX IF NOT EXISTS outreach_leads_email_idx ON outreach_leads(email);
-
--- ── outreach_replies ─────────────────────────────────────────────────────────
--- Classified replies from Instantly campaigns.
+-- ── outreach_replies ──────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS outreach_replies (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  lead_email text REFERENCES outreach_leads(email),
+  lead_email text,
   campaign_id text,
   reply_body text,
   classification text,
@@ -98,8 +92,7 @@ CREATE TABLE IF NOT EXISTS outreach_replies (
   received_at timestamptz DEFAULT now()
 );
 
--- ── outreach_objections ──────────────────────────────────────────────────────
--- Objection training data extracted from replies.
+-- ── outreach_objections ───────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS outreach_objections (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   objection_type text,
@@ -110,12 +103,7 @@ CREATE TABLE IF NOT EXISTS outreach_objections (
   received_at timestamptz DEFAULT now()
 );
 
--- ── Add user_id to invoices (if not already present) ────────────────────────
-ALTER TABLE invoices
-  ADD COLUMN IF NOT EXISTS user_id text;
-
--- ── agent_runs ───────────────────────────────────────────────────────────────
--- Log of autonomous agent executions for monitoring.
+-- ── agent_runs ────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS agent_runs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   agent text NOT NULL,

@@ -22,12 +22,11 @@ export async function GET(req: NextRequest) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  // Get all failed calls from yesterday
+  // Get all failed calls from yesterday — handles both old schema (job_created) and new (booking_completed)
   const { data: failedCalls } = await supabase
     .from('call_logs')
-    .select('profile_id, transcript, hangup_turn, caller_phone')
-    .eq('booking_completed', false)
-    .lt('hangup_turn', 5)
+    .select('profile_id, user_id, transcript, hangup_turn, caller_phone, job_created, booking_completed')
+    .or('job_created.eq.false,booking_completed.eq.false')
     .gte('created_at', yesterday.toISOString())
     .lt('created_at', today.toISOString())
 
@@ -35,10 +34,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ message: 'No failed calls yesterday', suggestions: 0 })
   }
 
-  // Group by profile_id
+  // Group by profile_id (new column) or user_id (existing column)
   const byProfile: Record<string, typeof failedCalls> = {}
   for (const call of failedCalls) {
-    if (!call.profile_id) continue
+    const pid = (call as any).profile_id || (call as any).user_id
+    if (!pid) continue
+    ;(call as any).profile_id = pid
+    if (!byProfile[pid]) byProfile[pid] = []
     if (!byProfile[call.profile_id]) byProfile[call.profile_id] = []
     byProfile[call.profile_id].push(call)
   }
@@ -49,8 +51,10 @@ export async function GET(req: NextRequest) {
     if (calls.length === 0) continue
 
     const transcriptSummaries = calls.slice(0, 5).map((c, i) => {
-      const turns = (c.transcript as any[]) || []
-      return `Call ${i + 1} (hung up at turn ${c.hangup_turn}):\n${turns.map((t: any) => `${t.role}: ${t.content}`).join('\n')}`
+      let turns: any[] = []
+      try { turns = typeof c.transcript === 'string' ? JSON.parse(c.transcript) : (c.transcript as any[]) || [] } catch {}
+      const turnNum = (c as any).hangup_turn || turns.length
+      return `Call ${i + 1} (hung up at turn ${turnNum}):\n${turns.map((t: any) => `${t.role}: ${t.content}`).join('\n')}`
     }).join('\n\n---\n\n')
 
     try {

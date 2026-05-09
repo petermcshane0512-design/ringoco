@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(sort -k6,7)",
+      "Bash(npx tsc *)",
+      "PowerShell(npx tsc --noEmit 2>&1)",
+      "Bash(git commit *)",
+      "Bash(npm install *)",
+      "Bash(Get-ChildItem -Path 'C:\\\\Users\\\\peter\\\\ringoco\\\\src\\\\app\\\\dashboard' -Recurse -Filter '*.tsx')",
+      "Bash(Select-Object FullName)",
+      "PowerShell(git add src/app/dashboard/layout.tsx src/app/dashboard/page.tsx src/app/dashboard/receptionist/page.tsx src/app/dashboard/invoicing/page.tsx src/app/dashboard/settings/page.tsx)",
+      "PowerShell(git push)",
+      "PowerShell(git add src/components/DashboardPreview.tsx)",
+      "PowerShell(git add src/app/dashboard/layout.tsx)",
+      "PowerShell(git add src/app/page.tsx)",
+      "PowerShell(git add \"public/Landing Page 1.png\")",
+      "Bash(ls -la \"C:\\\\Users\\\\peter\\\\ringoco\\\\\" | grep -i middleware)",
+      "Read(//c/Users/peter/**)"
+    ]
+  }
+}

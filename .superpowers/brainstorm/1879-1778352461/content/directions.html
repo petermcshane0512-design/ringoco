@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BellAveGo — 3 Directions</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0a; font-family: system-ui, sans-serif; color: #fff; padding: 32px 24px; }
+  h1 { text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 6px; color: #fff; }
+  .subtitle { text-align: center; color: #666; font-size: 14px; margin-bottom: 32px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1400px; margin: 0 auto; }
+  .variant { border-radius: 12px; overflow: hidden; border: 2px solid transparent; cursor: pointer; transition: border-color 0.2s, transform 0.2s; }
+  .variant:hover { transform: translateY(-4px); }
+  .variant.selected { border-color: #22C55E; }
+  .variant-label { padding: 14px 16px; font-size: 13px; font-weight: 700; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; }
+  .tag { font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: 20px; }
+
+  /* ---- VARIANT A: TRUSTED PRO (dark navy) ---- */
+  .a-hero { background: linear-gradient(160deg, #0B1F3A 0%, #0d2647 60%, #0B1F3A 100%); padding: 0; position: relative; overflow: hidden; }
+  .a-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 70% 50%, rgba(10,168,159,0.12) 0%, transparent 65%); }
+  .a-nav { display: flex; justify-content: space-between; align-items: center; padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.07); position: relative; z-index: 2; }
+  .a-logo { font-size: 16px; font-weight: 900; color: #fff; letter-spacing: -0.5px; }
+  .a-logo span { color: #0AA89F; }
+  .a-nav-cta { background: #22C55E; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 14px; border-radius: 6px; }
+  .a-body { padding: 36px 24px 28px; position: relative; z-index: 2; }
+  .a-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(10,168,159,0.15); border: 1px solid rgba(10,168,159,0.3); color: #0AA89F; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; padding: 5px 12px; border-radius: 20px; margin-bottom: 18px; text-transform: uppercase; }
+  .a-badge::before { content: '●'; font-size: 7px; color: #22C55E; }
+  .a-h1 { font-size: 28px; font-weight: 900; line-height: 1.15; letter-spacing: -1px; color: #fff; margin-bottom: 12px; }
+  .a-h1 em { color: #0AA89F; font-style: normal; }
+  .a-sub { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.65; margin-bottom: 22px; max-width: 360px; }
+  .a-btns { display: flex; gap: 10px; margin-bottom: 28px; }
+  .a-btn-primary { background: #22C55E; color: #fff; font-size: 12px; font-weight: 800; padding: 11px 20px; border-radius: 7px; }
+  .a-btn-secondary { border: 1px solid rgba(255,255,255,0.18); color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 600; padding: 11px 20px; border-radius: 7px; }
+  .a-phone { display: flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(255,255,255,0.35); }
+  .a-phone strong { color: rgba(255,255,255,0.6); }
+  .a-call-widget { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09); border-radius: 10px; padding: 14px 16px; }
+  .a-call-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .a-call-status { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #22C55E; font-weight: 700; }
+  .a-call-status::before { content: '●'; font-size: 8px; }
+  .a-call-time { font-size: 10px; color: rgba(255,255,255,0.3); }
+  .a-msg { display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-start; }
+  .a-msg-label { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; padding-top: 1px; flex-shrink: 0; }
+  .a-msg-label.caller { color: #94A3B8; }
+  .a-msg-label.ai { color: #0AA89F; }
+  .a-msg-text { font-size: 11px; line-height: 1.5; color: rgba(255,255,255,0.75); background: rgba(255,255,255,0.05); padding: 6px 10px; border-radius: 6px; }
+  .a-booked { margin-top: 10px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); border-radius: 7px; padding: 8px 12px; display: flex; align-items: center; gap: 8px; }
+  .a-booked-icon { font-size: 14px; }
+  .a-booked-text { font-size: 10px; color: #86EFAC; font-weight: 600; }
+
+  /* ---- VARIANT B: THE MATH (white, ROI-first) ---- */
+  .b-hero { background: #fff; }
+  .b-nav { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid #E5E7EB; }
+  .b-logo { font-size: 16px; font-weight: 900; color: #0B1F3A; letter-spacing: -0.5px; }
+  .b-logo span { color: #0AA89F; }
+  .b-nav-cta { background: #0B1F3A; color: #fff; font-size: 11px; font-weight: 700; padding: 7px 14px; border-radius: 6px; }
+  .b-body { padding: 32px 24px; }
+  .b-pain { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 14px 16px; margin-bottom: 20px; }
+  .b-pain-label { font-size: 10px; font-weight: 700; color: #DC2626; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .b-pain-stat { font-size: 22px; font-weight: 900; color: #0B1F3A; letter-spacing: -1px; line-height: 1; margin-bottom: 4px; }
+  .b-pain-sub { font-size: 11px; color: #6B7280; }
+  .b-h1 { font-size: 24px; font-weight: 900; color: #0B1F3A; letter-spacing: -0.8px; line-height: 1.2; margin-bottom: 8px; }
+  .b-h1 em { color: #22C55E; font-style: normal; }
+  .b-sub { font-size: 12px; color: #6B7280; line-height: 1.6; margin-bottom: 18px; }
+  .b-math { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+  .b-math-item { background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 10px 12px; text-align: center; }
+  .b-math-num { font-size: 18px; font-weight: 900; color: #0B1F3A; letter-spacing: -0.5px; }
+  .b-math-label { font-size: 9px; color: #9CA3AF; font-weight: 600; margin-top: 2px; }
+  .b-math-divider { display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 900; color: #D1D5DB; }
+  .b-btn { display: block; width: 100%; background: #22C55E; color: #fff; font-size: 13px; font-weight: 800; padding: 13px; border-radius: 8px; text-align: center; margin-bottom: 8px; }
+  .b-trust { display: flex; align-items: center; justify-content: center; gap: 16px; padding-top: 8px; border-top: 1px solid #F3F4F6; }
+  .b-trust-item { font-size: 10px; color: #9CA3AF; display: flex; align-items: center; gap: 4px; }
+  .b-trust-item::before { content: '✓'; color: #22C55E; font-weight: 700; }
+
+  /* ---- VARIANT C: HOMETOWN (warm, contractor vibes) ---- */
+  .c-hero { background: #1C1917; }
+  .c-nav { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; }
+  .c-logo { font-size: 16px; font-weight: 900; color: #fff; letter-spacing: -0.5px; }
+  .c-logo span { color: #F59E0B; }
+  .c-nav-right { display: flex; align-items: center; gap: 10px; }
+  .c-phone { font-size: 11px; color: rgba(255,255,255,0.5); }
+  .c-phone strong { color: #F59E0B; }
+  .c-nav-cta { background: #F59E0B; color: #1C1917; font-size: 11px; font-weight: 800; padding: 7px 14px; border-radius: 6px; }
+  .c-body { padding: 32px 24px 24px; }
+  .c-eyebrow { font-size: 11px; font-weight: 700; color: #F59E0B; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+  .c-h1 { font-size: 30px; font-weight: 900; color: #fff; line-height: 1.15; letter-spacing: -1px; margin-bottom: 10px; }
+  .c-h1 span { color: #F59E0B; }
+  .c-sub { font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.65; margin-bottom: 20px; }
+  .c-scenario { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; }
+  .c-scenario-title { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.4); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+  .c-step { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .c-step:last-child { border-bottom: none; }
+  .c-step-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+  .c-step-icon.red { background: rgba(239,68,68,0.15); }
+  .c-step-icon.yellow { background: rgba(245,158,11,0.15); }
+  .c-step-icon.green { background: rgba(34,197,94,0.15); }
+  .c-step-text { flex: 1; }
+  .c-step-main { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.8); }
+  .c-step-detail { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 1px; }
+  .c-btns { display: flex; gap: 10px; }
+  .c-btn-primary { flex: 1; background: #F59E0B; color: #1C1917; font-size: 12px; font-weight: 800; padding: 12px; border-radius: 7px; text-align: center; }
+  .c-btn-secondary { border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); font-size: 11px; font-weight: 600; padding: 12px 16px; border-radius: 7px; }
+
+  .variant-a .variant-label { background: #0B1F3A; }
+  .variant-b .variant-label { background: #F8FAFC; color: #0B1F3A; border-top: 1px solid #E5E7EB; }
+  .variant-c .variant-label { background: #1C1917; }
+
+  .selection-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #111; border-top: 1px solid #222; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+  .selection-bar p { font-size: 13px; color: #666; }
+  .selection-bar p span { color: #22C55E; font-weight: 700; }
+  body { padding-bottom: 80px; }
+</style>
+</head>
+<body>
+<h1>BellAveGo — 3 Homepage Directions</h1>
+<p class="subtitle">Click a direction to select it. Each is a completely different bet on what converts your customer.</p>
+
+<div class="grid">
+
+  <!-- VARIANT A: TRUSTED PRO -->
+  <div class="variant variant-a" data-choice="a" onclick="select(this)">
+    <div class="a-hero">
+      <div class="a-nav">
+        <div class="a-logo">Bell<span>Ave</span>Go</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:11px;color:rgba(255,255,255,0.4);">Sign in</span>
+          <span class="a-nav-cta">Start Free Trial</span>
+        </div>
+      </div>
+      <div class="a-body">
+        <div class="a-badge">AI Receptionist · Live 24/7</div>
+        <div class="a-h1">Your calls get answered.<br><em>Every single one.</em></div>
+        <div class="a-sub">BellAveGo picks up when you can't, books the job, texts the customer, and sends you a summary. Built for HVAC, plumbing, and electrical contractors.</div>
+        <div class="a-btns">
+          <span class="a-btn-primary">Start Free — 14 Days</span>
+          <span class="a-btn-secondary">📞 Call the AI Demo</span>
+        </div>
+        <div class="a-phone">📞 <strong>(762) 371-3351</strong> — call to hear the AI live</div>
+        <br>
+        <div class="a-call-widget">
+          <div class="a-call-header">
+            <div class="a-call-status">BellAveGo answered · 10:47 PM</div>
+            <div class="a-call-time">2m 14s</div>
+          </div>
+          <div class="a-msg"><span class="a-msg-label caller">CALLER</span><span class="a-msg-text">"Hi, my AC just stopped working, it's 90 degrees in here"</span></div>
+          <div class="a-msg"><span class="a-msg-label ai">AI</span><span class="a-msg-text">"I'm so sorry to hear that. I can get Mike out to you today. What's your address?"</span></div>
+          <div class="a-msg"><span class="a-msg-label caller">CALLER</span><span class="a-msg-text">"123 Oak Street"</span></div>
+          <div class="a-msg"><span class="a-msg-label ai">AI</span><span class="a-msg-text">"Perfect — I'm booking you for 3pm today. You'll get a text confirmation in a minute."</span></div>
+          <div class="a-booked"><span class="a-booked-icon">✅</span><span class="a-booked-text">Job booked · Text sent to customer · Mike notified</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="variant-label">
+      <span>A — Trusted Pro</span>
+      <span class="tag" style="background:rgba(10,168,159,0.2);color:#0AA89F;">Dark navy · Live call demo</span>
+    </div>
+  </div>
+
+  <!-- VARIANT B: THE MATH -->
+  <div class="variant variant-b" data-choice="b" onclick="select(this)">
+    <div class="b-hero">
+      <div class="b-nav">
+        <div class="b-logo">Bell<span>Ave</span>Go</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:11px;color:#6B7280;">Sign in</span>
+          <span class="b-nav-cta">Start Free Trial</span>
+        </div>
+      </div>
+      <div class="b-body">
+        <div class="b-pain">
+          <div class="b-pain-label">⚠ What you lost this week</div>
+          <div class="b-pain-stat">$2,400</div>
+          <div class="b-pain-sub">3 missed calls × $800 avg job value — gone to a competitor</div>
+        </div>
+        <div class="b-h1">Stop the leak.<br><em>$147/mo fixes it.</em></div>
+        <div class="b-sub">BellAveGo answers every call you miss, books the job, and texts your customer — automatically. Your first booked job pays for the year.</div>
+        <div class="b-math">
+          <div class="b-math-item">
+            <div class="b-math-num">$800</div>
+            <div class="b-math-label">avg job value</div>
+          </div>
+          <div class="b-math-divider">vs</div>
+          <div class="b-math-item">
+            <div class="b-math-num">$147</div>
+            <div class="b-math-label">per month</div>
+          </div>
+        </div>
+        <div class="b-btn">Get 1 missed call back → Start Free Trial</div>
+        <div class="b-trust">
+          <span class="b-trust-item">No contracts</span>
+          <span class="b-trust-item">14-day free trial</span>
+          <span class="b-trust-item">Setup in 15 min</span>
+        </div>
+      </div>
+    </div>
+    <div class="variant-label">
+      <span>B — The Math</span>
+      <span class="tag" style="background:#DCFCE7;color:#15803D;">White · ROI-first · No fluff</span>
+    </div>
+  </div>
+
+  <!-- VARIANT C: HOMETOWN -->
+  <div class="variant variant-c" data-choice="c" onclick="select(this)">
+    <div class="c-hero">
+      <div class="c-nav">
+        <div class="c-logo">Bell<span>Ave</span>Go</div>
+        <div class="c-nav-right">
+          <span class="c-phone">📞 <strong>(762) 371-3351</strong></span>
+          <span class="c-nav-cta">Free Trial</span>
+        </div>
+      </div>
+      <div class="c-body">
+        <div class="c-eyebrow">Built for contractors, by contractors</div>
+        <div class="c-h1">It's 9pm.<br>Your phone rings.<br><span>You can't answer.</span></div>
+        <div class="c-sub">That job is gone. Unless BellAveGo picks up. Our AI answers like a real receptionist, books the job, and texts your customer — while you finish the job you're on.</div>
+        <div class="c-scenario">
+          <div class="c-scenario-title">What happens tonight</div>
+          <div class="c-step">
+            <div class="c-step-icon red">📵</div>
+            <div class="c-step-text">
+              <div class="c-step-main">You miss the call — you're on a job</div>
+              <div class="c-step-detail">9:14 PM · Unknown number</div>
+            </div>
+          </div>
+          <div class="c-step">
+            <div class="c-step-icon yellow">🤖</div>
+            <div class="c-step-text">
+              <div class="c-step-main">BellAveGo answers in 12 seconds</div>
+              <div class="c-step-detail">Collects name, address, problem, timing</div>
+            </div>
+          </div>
+          <div class="c-step">
+            <div class="c-step-icon green">✅</div>
+            <div class="c-step-text">
+              <div class="c-step-main">Job booked. Customer texted.</div>
+              <div class="c-step-detail">You wake up to a new $800 job tomorrow</div>
+            </div>
+          </div>
+        </div>
+        <div class="c-btns">
+          <span class="c-btn-primary">Start Free — 14 Days</span>
+          <span class="c-btn-secondary">📞 Hear the AI</span>
+        </div>
+      </div>
+    </div>
+    <div class="variant-label">
+      <span>C — Hometown</span>
+      <span class="tag" style="background:rgba(245,158,11,0.2);color:#F59E0B;">Dark warm · Story-driven</span>
+    </div>
+  </div>
+
+</div>
+
+<div class="selection-bar">
+  <p id="sel-text">Click a direction above to select it</p>
+  <div style="font-size:12px;color:#444;">Tell me your pick in the terminal →</div>
+</div>
+
+<script>
+let selected = null;
+function select(el) {
+  document.querySelectorAll('.variant').forEach(v => v.classList.remove('selected'));
+  el.classList.add('selected');
+  selected = el.dataset.choice;
+  const names = { a: 'A — Trusted Pro (dark navy)', b: 'B — The Math (white, ROI-first)', c: 'C — Hometown (dark warm)' };
+  document.getElementById('sel-text').innerHTML = 'Selected: <span>' + names[selected] + '</span>';
+}
+</script>
+</body>
+</html>
