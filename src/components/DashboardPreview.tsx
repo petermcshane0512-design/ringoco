@@ -81,7 +81,7 @@ export default function DashboardPreview() {
   ]
 
   return (
-    <section ref={sectionRef} style={{ background: 'linear-gradient(160deg, #F5FCFA 0%, #E8F7F3 45%, #F0FAF7 100%)', padding: `88px 24px ${isSignedIn ? '40px' : '72px'}`, position: 'relative', overflow: 'hidden' }}>
+    <section ref={sectionRef} style={{ background: 'linear-gradient(160deg, #F5FCFA 0%, #E8F7F3 45%, #F0FAF7 100%)', padding: isSignedIn ? '88px 24px 40px' : '88px 24px 72px', position: 'relative', overflow: 'hidden' }}>
       <style>{`
         @keyframes dpFloatUp { 0%{opacity:1;transform:translateY(0) scale(1);} 100%{opacity:0;transform:translateY(-20px) scale(0.8);} }
         @keyframes dpBounce { 0%,100%{transform:scale(1);} 45%{transform:scale(1.12);} }
@@ -118,7 +118,7 @@ export default function DashboardPreview() {
         style={{
           maxWidth: 1040, margin: '0 auto 52px',
           position: 'relative', zIndex: 2,
-          transform: `perspective(1600px) rotateX(${tilt.x + (visible ? 0 : 8)}deg) rotateY(${tilt.y}deg) translateY(${visible ? 0 : 28}px)`,
+          transform: 'perspective(1600px) rotateX(' + (tilt.x + (visible ? 0 : 8)) + 'deg) rotateY(' + tilt.y + 'deg) translateY(' + (visible ? 0 : 28) + 'px)',
           opacity: visible ? 1 : 0,
           transition: 'opacity 0.7s ease, transform 0.7s cubic-bezier(0.34,1,0.64,1)',
           borderRadius: 18,
@@ -163,7 +163,7 @@ export default function DashboardPreview() {
                   display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px',
                   borderRadius: 7, marginBottom: 1, fontSize: 10, cursor: 'pointer',
                   background: active ? 'rgba(10,168,159,0.1)' : hovered ? 'rgba(10,168,159,0.06)' : 'transparent',
-                  borderLeft: `2.5px solid ${active ? '#0AA89F' : 'transparent'}`,
+                  borderLeft: active ? '2.5px solid #0AA89F' : '2.5px solid transparent',
                   color: active ? '#0AA89F' : hovered ? '#0AA89F' : '#4A7A80',
                   fontWeight: active ? 700 : hovered ? 600 : 500,
                   transition: 'all 0.15s ease', userSelect: 'none',
@@ -183,7 +183,7 @@ export default function DashboardPreview() {
               color: activeTab === 'Settings' ? '#0AA89F' : hoveredNav === 'Settings' ? '#0AA89F' : '#4A7A80',
               fontWeight: activeTab === 'Settings' ? 700 : hoveredNav === 'Settings' ? 600 : 500,
               background: activeTab === 'Settings' ? 'rgba(10,168,159,0.1)' : hoveredNav === 'Settings' ? 'rgba(10,168,159,0.06)' : 'transparent',
-              borderLeft: `2.5px solid ${activeTab === 'Settings' ? '#0AA89F' : 'transparent'}`,
+              borderLeft: activeTab === 'Settings' ? '2.5px solid #0AA89F' : '2.5px solid transparent',
               transition: 'all 0.15s ease', userSelect: 'none',
             }}
               onMouseEnter={() => setHoveredNav('Settings')}
@@ -220,7 +220,7 @@ export default function DashboardPreview() {
                   { label: 'Jobs Booked', value: stats.jobs, accent: '#22C55E', key: 'jobs' },
                   { label: 'Calls Saved', value: stats.saved, accent: '#8B5CF6', key: 'saved' },
                 ].map(s => (
-                  <div key={s.label} style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 10, padding: '10px 12px', position: 'relative', overflow: 'hidden', boxShadow: bumped === s.key ? `0 0 0 2px ${s.accent}55` : '0 2px 8px rgba(7,27,58,0.05)', transition: 'box-shadow 0.3s' }}>
+                  <div key={s.label} style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 10, padding: '10px 12px', position: 'relative', overflow: 'hidden', boxShadow: bumped === s.key ? '0 0 0 2px ' + s.accent + '55' : '0 2px 8px rgba(7,27,58,0.05)', transition: 'box-shadow 0.3s' }}>
                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2.5, background: s.accent, borderRadius: '10px 10px 0 0' }} />
                     <div style={{ fontSize: 8, fontWeight: 700, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>{s.label}</div>
                     <div style={{ fontSize: 20, fontWeight: 800, color: '#0B1F3A', lineHeight: 1, animation: bumped === s.key ? 'dpBounce 0.38s ease' : 'none' }}>{s.value}</div>
@@ -236,7 +236,7 @@ export default function DashboardPreview() {
                   { name: 'Ana K.', type: 'Electrical Check', time: '2h ago', status: 'booked' },
                 ].map((c, i, arr) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: i < arr.length - 1 ? '1px solid rgba(10,168,159,0.08)' : 'none' }}>
-                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: c.status === 'booked' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)', border: `1px solid ${c.status === 'booked' ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, flexShrink: 0 }}>{c.status === 'booked' ? '📅' : '📞'}</div>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: c.status === 'booked' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)', border: c.status === 'booked' ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, flexShrink: 0 }}>{c.status === 'booked' ? '📅' : '📞'}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 10, fontWeight: 600, color: '#0B1F3A' }}>{c.name} · {c.type}</div>
                       <div style={{ fontSize: 8, color: '#7AAAB2' }}>{c.time}</div>
@@ -271,7 +271,7 @@ export default function DashboardPreview() {
                   { label: 'Paid', value: String(stats.jobs), accent: '#22C55E', key: 'jobs' },
                   { label: 'Pending', value: '3', accent: '#0AA89F', key: '' },
                 ].map(s => (
-                  <div key={s.label} style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 10, padding: '10px 12px', position: 'relative', overflow: 'hidden', boxShadow: s.key && bumped === s.key ? `0 0 0 2px ${s.accent}55` : '0 2px 8px rgba(7,27,58,0.05)', transition: 'box-shadow 0.3s' }}>
+                  <div key={s.label} style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 10, padding: '10px 12px', position: 'relative', overflow: 'hidden', boxShadow: (s.key && bumped === s.key) ? '0 0 0 2px ' + s.accent + '55' : '0 2px 8px rgba(7,27,58,0.05)', transition: 'box-shadow 0.3s' }}>
                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2.5, background: s.accent, borderRadius: '10px 10px 0 0' }} />
                     <div style={{ fontSize: 8, fontWeight: 700, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>{s.label}</div>
                     <div style={{ fontSize: 18, fontWeight: 800, color: '#0B1F3A', lineHeight: 1, animation: s.key && bumped === s.key ? 'dpBounce 0.38s ease' : 'none' }}>{s.value}</div>
@@ -381,7 +381,7 @@ export default function DashboardPreview() {
                   position: 'relative',
                   overflow: 'visible',
                   boxShadow: bumped === s.key
-                    ? `0 0 0 2px ${s.accent}55, 0 4px 18px ${s.accent}28`
+                    ? '0 0 0 2px ' + s.accent + '55, 0 4px 18px ' + s.accent + '28'
                     : '0 2px 10px rgba(7,27,58,0.05)',
                   transition: 'box-shadow 0.3s ease',
                 }}>

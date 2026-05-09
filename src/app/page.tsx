@@ -382,46 +382,61 @@ export default function HomePage() {
 
       {/* PRICING */}
       <section style={{ padding: '72px 48px', background: '#F2F9F5', borderBottom: '1px solid #D4E6DC', textAlign: 'center' }}>
-        <p style={{ fontSize: 13, fontWeight: 700, color: '#20B2AA', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Simple pricing</p>
-        <h2 style={{ fontSize: 42, fontWeight: 900, marginBottom: 8, letterSpacing: '-1.5px', color: '#0B1F3A' }}>One price. Everything included.</h2>
+        <p style={{ fontSize: 13, fontWeight: 700, color: '#20B2AA', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Pricing</p>
+        <h2 style={{ fontSize: 42, fontWeight: 900, marginBottom: 8, letterSpacing: '-1.5px', color: '#0B1F3A' }}>Pay for what you use.</h2>
         <p style={{ color: '#4A6670', fontSize: 16, marginBottom: 48 }}>Your first booked job pays for the whole month.</p>
-        <div style={{ background: 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)', borderRadius: 24, padding: '48px 42px', maxWidth: 450, margin: '0 auto', boxShadow: '0 24px 80px rgba(11,31,58,0.22)' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: 3, marginBottom: 4 }}>
-            <span style={{ fontSize: 24, fontWeight: 900, color: 'rgba(255,255,255,0.35)', marginTop: 16 }}>$</span>
-            <span style={{ fontSize: 88, fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-3px' }}>147</span>
-          </div>
-          <p style={{ color: 'rgba(255,255,255,0.38)', marginBottom: 32, fontSize: 14 }}>per month · no contracts</p>
-          <div style={{ textAlign: 'left', marginBottom: 32 }}>
-            {[
-              { text: 'Custom AI receptionist built for your business', highlight: false },
-              { text: 'AI answers missed calls after 12 seconds', highlight: false },
-              { text: '24/7 call summaries + scheduling', highlight: false },
-              { text: 'SMS confirmations, reminders + follow-ups', highlight: false },
-              { text: 'Invoicing + same-day payment collection', highlight: false },
-              { text: '5 BELLAVEGO CONSULTING REPORTS A YEAR', highlight: true },
-              { text: 'Revenue dashboard + business insights', highlight: false },
-              { text: 'Customer database + call history', highlight: false },
-              { text: 'Google review request automation', highlight: false },
-            ].map(f => (
-              <div key={f.text} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 0', borderBottom: '1px solid rgba(255,255,255,0.07)', background: f.highlight ? 'rgba(24,175,168,0.08)' : 'transparent', marginLeft: f.highlight ? -8 : 0, marginRight: f.highlight ? -8 : 0, paddingLeft: f.highlight ? 8 : 0, paddingRight: f.highlight ? 8 : 0, borderRadius: f.highlight ? 6 : 0 }}>
-                <div style={{ width: 19, height: 19, background: f.highlight ? '#18AFA8' : '#22C55E', borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <span style={{ color: '#fff', fontSize: 10, fontWeight: 900 }}>✓</span>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20, maxWidth: 960, margin: '0 auto 20px' }}>
+          {[
+            { name: 'Starter', price: 49, calls: 200, desc: 'Perfect for solo contractors getting started.', popular: false },
+            { name: 'Growth', price: 89, calls: 600, desc: 'For busy contractors who never miss a call.', popular: true },
+            { name: 'Scale', price: 149, calls: 1500, desc: 'Multi-tech teams running at full capacity.', popular: false },
+          ].map(plan => (
+            <div key={plan.name} style={{
+              background: plan.popular ? 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)' : '#fff',
+              borderRadius: 20,
+              padding: '36px 28px',
+              border: plan.popular ? 'none' : '1px solid rgba(10,168,159,0.18)',
+              boxShadow: plan.popular ? '0 24px 60px rgba(11,31,58,0.26)' : '0 2px 16px rgba(7,27,58,0.06)',
+              position: 'relative',
+              textAlign: 'left',
+            }}>
+              {plan.popular && (
+                <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#22C55E', color: '#fff', fontSize: 10, fontWeight: 800, padding: '4px 14px', borderRadius: 20, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+                  Most Popular
                 </div>
-                <span style={{ fontSize: 14, color: f.highlight ? '#18AFA8' : 'rgba(255,255,255,0.8)', fontWeight: f.highlight ? 700 : 400, letterSpacing: f.highlight ? '0.02em' : 'normal' }}>{f.text}</span>
+              )}
+              <div style={{ fontSize: 14, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.5)' : '#7AAAB2', marginBottom: 8 }}>{plan.name}</div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 2, marginBottom: 4 }}>
+                <span style={{ fontSize: 20, fontWeight: 900, color: plan.popular ? 'rgba(255,255,255,0.5)' : '#4A7A80', marginTop: 10 }}>$</span>
+                <span style={{ fontSize: 56, fontWeight: 900, color: plan.popular ? '#fff' : '#0B1F3A', lineHeight: 1, letterSpacing: '-2px' }}>{plan.price}</span>
               </div>
-            ))}
-          </div>
-          {isSignedIn ? (
-            <Link href="/dashboard" className="dash-pulse" style={{ display: 'block', width: '100%', padding: '17px', textAlign: 'center', background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', borderRadius: 10, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 15 }}>
-              Dashboard →
-            </Link>
-          ) : (
-            <Link href="/sign-up" className="cta-pulse" style={{ display: 'block', width: '100%', padding: '17px', textAlign: 'center', background: '#22C55E', borderRadius: 10, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 15 }}>
-              Start Free Trial — 14 Days →
-            </Link>
-          )}
-          <p style={{ color: 'rgba(255,255,255,0.22)', fontSize: 12, marginTop: 12 }}>Cancel before trial ends to avoid billing.</p>
+              <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.38)' : '#7AAAB2', marginBottom: 6 }}>per month · no contracts</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: plan.popular ? '#18AFA8' : '#0AA89F', marginBottom: 16 }}>{plan.calls.toLocaleString()} calls included</div>
+              <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.6)' : '#4A7A80', marginBottom: 24, lineHeight: 1.6 }}>{plan.desc}</div>
+              <div style={{ marginBottom: 24 }}>
+                {['AI answers every missed call', 'Job booking + SMS confirmation', 'Revenue intelligence reports', 'Customer database', 'Invoice + payment collection'].map(f => (
+                  <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: `1px solid ${plan.popular ? 'rgba(255,255,255,0.07)' : 'rgba(10,168,159,0.08)'}` }}>
+                    <div style={{ width: 17, height: 17, background: plan.popular ? '#18AFA8' : '#22C55E', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ color: '#fff', fontSize: 9, fontWeight: 900 }}>✓</span>
+                    </div>
+                    <span style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.78)' : '#0B1F3A' }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+              {isSignedIn ? (
+                <Link href="/dashboard" style={{ display: 'block', textAlign: 'center', padding: '13px', background: plan.popular ? 'linear-gradient(135deg,#0AA89F,#0D8F87)' : 'rgba(10,168,159,0.08)', borderRadius: 10, textDecoration: 'none', color: plan.popular ? '#fff' : '#0AA89F', fontWeight: 800, fontSize: 14, border: plan.popular ? 'none' : '1px solid rgba(10,168,159,0.2)' }}>
+                  Dashboard →
+                </Link>
+              ) : (
+                <Link href="/sign-up" style={{ display: 'block', textAlign: 'center', padding: '13px', background: plan.popular ? '#22C55E' : 'rgba(10,168,159,0.08)', borderRadius: 10, textDecoration: 'none', color: plan.popular ? '#fff' : '#0AA89F', fontWeight: 800, fontSize: 14, border: plan.popular ? 'none' : '1px solid rgba(10,168,159,0.2)' }}>
+                  Start Free Trial →
+                </Link>
+              )}
+            </div>
+          ))}
         </div>
+        <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 8 }}>All plans include a 14-day free trial. Cancel anytime.</p>
       </section>
 
       {/* FINAL CTA */}
@@ -454,7 +469,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <Image src="/logo.png" alt="BellAveGo" width={300} height={100} style={{ objectFit: 'contain' }} />
           <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
-          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>Built for home service businesses · $147/mo · No contracts · Cancel anytime</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>Built for home service businesses · From $49/mo · No contracts · Cancel anytime</p>
         </div>
       </footer>
 
