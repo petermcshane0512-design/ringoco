@@ -198,111 +198,264 @@ export default function HomePage() {
             animation: pulseDot 1.6s ease-in-out infinite;
           }
         `}</style>
-        <div style={{ position: 'relative', width: '100%', lineHeight: 0 }}>
-          <div style={{ position: 'relative', width: '100%', aspectRatio: '1440/480', overflow: 'hidden' }}>
-            <HeroShowcase />
+        <div className="hero-wrap">
+          <style>{`
+            .hero-wrap {
+              position: relative;
+              width: 100%;
+              min-height: 640px;
+              background:
+                radial-gradient(1100px 600px at 78% 35%, rgba(10,168,159,0.30), transparent 65%),
+                radial-gradient(900px 700px at 12% 80%, rgba(94,234,212,0.18), transparent 70%),
+                linear-gradient(150deg, #050E1F 0%, #0B1F3A 45%, #0A2E45 100%);
+              overflow: hidden;
+              line-height: normal;
+            }
+            .hero-wrap::before {
+              content: '';
+              position: absolute; inset: 0;
+              background-image:
+                linear-gradient(rgba(94,234,212,0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(94,234,212,0.045) 1px, transparent 1px);
+              background-size: 56px 56px;
+              mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 60%, transparent 100%);
+              -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 60%, transparent 100%);
+              pointer-events: none;
+            }
+            .hero-wrap::after {
+              content: '';
+              position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+              background: linear-gradient(90deg, transparent, rgba(94,234,212,0.45), transparent);
+              pointer-events: none;
+            }
+            .hero-blob {
+              position: absolute;
+              width: 520px; height: 520px;
+              border-radius: 50%;
+              filter: blur(110px);
+              pointer-events: none;
+              opacity: 0.55;
+            }
+            .hero-blob.b1 {
+              top: -120px; right: 20%;
+              background: radial-gradient(circle, #0AA89F 0%, transparent 70%);
+              animation: hsBlobDrift 12s ease-in-out infinite alternate;
+            }
+            .hero-blob.b2 {
+              bottom: -160px; left: -80px;
+              width: 600px; height: 600px;
+              background: radial-gradient(circle, #5EEAD4 0%, transparent 70%);
+              opacity: 0.32;
+              animation: hsBlobDrift 14s ease-in-out infinite alternate-reverse;
+            }
+            @keyframes hsBlobDrift {
+              0%   { transform: translate(0, 0) scale(1); }
+              100% { transform: translate(40px, -30px) scale(1.08); }
+            }
 
-            {/* Left vignette — darkens sky/foam so white text reads cleanly */}
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(4,18,42,0.78) 0%, rgba(4,18,42,0.55) 30%, rgba(4,18,42,0.20) 55%, rgba(4,18,42,0) 75%)', zIndex: 1, pointerEvents: 'none' }} />
+            .hero-grid {
+              position: relative;
+              z-index: 2;
+              max-width: 1340px;
+              margin: 0 auto;
+              padding: 64px 48px 72px;
+              display: grid;
+              grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+              gap: 36px;
+              align-items: center;
+            }
 
-            {/* Headline column */}
-            <div style={{ position: 'absolute', top: '18%', left: '4%', width: '44%', zIndex: 2, lineHeight: 1.2 }}>
-              <p style={{ fontSize: 'clamp(10px, 0.85vw, 13px)', fontWeight: 700, color: 'rgba(255,196,76,0.95)', letterSpacing: '2.5px', textTransform: 'uppercase', margin: '0 0 clamp(10px, 1.4vw, 20px) 0' }}>
-                AI Receptionist · 24/7
-              </p>
-              <h1 style={{ fontSize: 'clamp(20px, 3.0vw, 50px)', fontWeight: 900, color: '#5EEAD4', lineHeight: 1.05, letterSpacing: '-0.03em', margin: '0 0 clamp(12px, 1.8vw, 26px) 0', textShadow: '0 2px 30px rgba(0,0,0,0.85), 0 0 28px rgba(10,168,159,0.55)' }}>
-                Stop losing jobs<br />to missed calls.
+            .hero-eyebrow {
+              display: inline-flex; align-items: center; gap: 8px;
+              padding: 6px 13px;
+              border-radius: 100px;
+              border: 1px solid rgba(94,234,212,0.28);
+              background: rgba(94,234,212,0.08);
+              color: #5EEAD4;
+              font-size: 11.5px;
+              font-weight: 700;
+              letter-spacing: 0.16em;
+              text-transform: uppercase;
+              margin-bottom: 20px;
+            }
+            .hero-eyebrow::before {
+              content: ''; width: 6px; height: 6px; border-radius: 50%;
+              background: #22C55E;
+              box-shadow: 0 0 8px rgba(34,197,94,0.7);
+              animation: heroBlink 1.6s infinite;
+            }
+
+            .hero-h1 {
+              font-size: clamp(34px, 4.4vw, 64px);
+              font-weight: 900;
+              line-height: 1.02;
+              letter-spacing: -0.035em;
+              margin: 0 0 18px;
+              color: #fff;
+            }
+            .hero-h1 .accent {
+              background: linear-gradient(135deg, #5EEAD4 0%, #2DD4BF 50%, #0AA89F 100%);
+              -webkit-background-clip: text;
+              background-clip: text;
+              color: transparent;
+              filter: drop-shadow(0 0 28px rgba(94,234,212,0.35));
+            }
+            .hero-sub {
+              font-size: clamp(15px, 1.15vw, 18px);
+              line-height: 1.6;
+              color: rgba(255,255,255,0.72);
+              margin: 0 0 30px;
+              max-width: 520px;
+            }
+
+            .hero-actions {
+              display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+              margin-bottom: 32px;
+            }
+            .hero-cta-primary {
+              display: inline-flex; align-items: center; gap: 10px;
+              padding: 16px 28px;
+              border-radius: 12px;
+              background: linear-gradient(135deg, #0AA89F 0%, #0D8F87 60%, #086F69 100%);
+              color: #fff; font-weight: 800; font-size: 15px;
+              text-decoration: none;
+              border: 1px solid rgba(94,234,212,0.4);
+              box-shadow:
+                0 12px 36px rgba(10,168,159,0.45),
+                0 0 0 1px rgba(94,234,212,0.2),
+                inset 0 1px 0 rgba(255,255,255,0.18);
+              position: relative; overflow: hidden;
+              transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s, filter 0.22s;
+            }
+            .hero-cta-primary::before {
+              content: '';
+              position: absolute; inset: 0;
+              background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.32) 50%, transparent 70%);
+              background-size: 220% 100%;
+              animation: heroShimmer 3.2s linear infinite;
+              pointer-events: none;
+            }
+            .hero-cta-primary:hover {
+              transform: translateY(-2px) scale(1.03);
+              box-shadow: 0 18px 50px rgba(10,168,159,0.6), 0 0 0 1px rgba(94,234,212,0.35), inset 0 1px 0 rgba(255,255,255,0.18);
+              filter: brightness(1.08);
+            }
+            .hero-cta-primary .arrow { transition: transform 0.22s ease; }
+            .hero-cta-primary:hover .arrow { transform: translateX(4px); }
+
+            .hero-cta-secondary {
+              display: inline-flex; align-items: center; gap: 8px;
+              padding: 16px 22px;
+              border-radius: 12px;
+              border: 1px solid rgba(255,255,255,0.18);
+              background: rgba(255,255,255,0.04);
+              color: rgba(255,255,255,0.92); font-weight: 700; font-size: 14px;
+              text-decoration: none;
+              transition: background 0.2s, border-color 0.2s, transform 0.2s;
+            }
+            .hero-cta-secondary:hover {
+              background: rgba(94,234,212,0.10);
+              border-color: rgba(94,234,212,0.4);
+              transform: translateY(-1px);
+            }
+
+            .hero-trust {
+              display: flex; gap: 28px; flex-wrap: wrap;
+              padding-top: 22px;
+              border-top: 1px solid rgba(255,255,255,0.10);
+              max-width: 540px;
+            }
+            .hero-trust-item { display: flex; flex-direction: column; gap: 2px; }
+            .hero-trust-num {
+              font-size: 22px; font-weight: 900;
+              color: #5EEAD4;
+              line-height: 1;
+              letter-spacing: -0.5px;
+              font-variant-numeric: tabular-nums;
+            }
+            .hero-trust-lab {
+              font-size: 11px; font-weight: 600;
+              color: rgba(255,255,255,0.55);
+              letter-spacing: 0.04em;
+            }
+
+            .hero-stage {
+              position: relative;
+              height: 520px;
+              min-width: 0;
+            }
+
+            @keyframes heroShimmer {
+              0%   { background-position: -180% 0; }
+              100% { background-position: 180% 0; }
+            }
+            @keyframes heroBlink {
+              0%, 100% { opacity: 1; }
+              50%      { opacity: 0.45; }
+            }
+
+            @media (max-width: 1024px) {
+              .hero-grid { grid-template-columns: 1fr; gap: 48px; padding: 56px 28px; }
+              .hero-stage { height: 440px; }
+            }
+            @media (max-width: 640px) {
+              .hero-stage { height: 380px; }
+              .hero-trust { gap: 18px; }
+              .hero-trust-num { font-size: 18px; }
+            }
+          `}</style>
+
+          <div className="hero-blob b1" />
+          <div className="hero-blob b2" />
+
+          <div className="hero-grid">
+            <div>
+              <div className="hero-eyebrow">AI Receptionist · 24/7</div>
+              <h1 className="hero-h1">
+                Stop losing jobs<br />
+                <span className="accent">to missed calls.</span>
               </h1>
-              <p style={{ fontSize: 'clamp(11px, 1.0vw, 16px)', color: 'rgba(255,255,255,0.78)', lineHeight: 1.55, margin: '0 0 clamp(16px, 2.2vw, 28px) 0', textShadow: '0 1px 8px rgba(0,0,0,0.55)' }}>
-                BellAveGo answers when you can&apos;t, books the job,<br />and texts your customer — automatically.
+              <p className="hero-sub">
+                BellAveGo answers when you can&apos;t, books the job, and texts your customer — automatically. Built for contractors who&apos;d rather be on the job site than at a desk.
               </p>
-              <Link href={isSignedIn ? '/dashboard' : '/sign-up'} className="hero-cta">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                </svg>
-                {isSignedIn ? 'Open Dashboard' : 'Get started'}
-                <svg className="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              </Link>
+
+              <div className="hero-actions">
+                <Link href={isSignedIn ? '/dashboard' : '/sign-up'} className="hero-cta-primary">
+                  {isSignedIn ? 'Open Dashboard' : 'Start Free Trial'}
+                  <svg className="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                </Link>
+                <a href="tel:+17623713351" className="hero-cta-secondary">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                  </svg>
+                  Call the AI Demo
+                </a>
+              </div>
+
+              <div className="hero-trust">
+                <div className="hero-trust-item">
+                  <span className="hero-trust-num">12s</span>
+                  <span className="hero-trust-lab">Avg answer time</span>
+                </div>
+                <div className="hero-trust-item">
+                  <span className="hero-trust-num">24/7</span>
+                  <span className="hero-trust-lab">Always on</span>
+                </div>
+                <div className="hero-trust-item">
+                  <span className="hero-trust-num">$49</span>
+                  <span className="hero-trust-lab">Starting / month</span>
+                </div>
+                <div className="hero-trust-item">
+                  <span className="hero-trust-num">14‑day</span>
+                  <span className="hero-trust-lab">Free trial</span>
+                </div>
+              </div>
             </div>
 
-            {/* Notification stack — right side */}
-            <div style={{ position: 'absolute', top: '5%', right: '2.5%', width: '28%', height: '90%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', zIndex: 2 }}>
-
-              <div className="notif-card" style={{ animationDelay: '0.1s' }}>
-                <div className="notif-icon" style={{ background: 'linear-gradient(135deg,#EF4444,#B91C1C)' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                    <line x1="23" y1="1" x2="17" y2="7"/><line x1="17" y1="1" x2="23" y2="7"/>
-                  </svg>
-                </div>
-                <div className="notif-body">
-                  <p className="notif-title"><span className="pulse-dot"></span>Missed call</p>
-                  <p className="notif-sub">Customer · (612) 555‑0142</p>
-                </div>
-                <span className="notif-time">now</span>
-              </div>
-
-              <div className="notif-arrow">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.4))' }}>
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </div>
-
-              <div className="notif-card" style={{ animationDelay: '0.35s' }}>
-                <div className="notif-icon" style={{ background: 'linear-gradient(135deg,#0AA89F,#0D8F87)' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                </div>
-                <div className="notif-body">
-                  <p className="notif-title">BellAveGo answered</p>
-                  <p className="notif-sub">12 seconds · transcribed live</p>
-                </div>
-                <span className="notif-time">12s</span>
-              </div>
-
-              <div className="notif-arrow">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.4))' }}>
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </div>
-
-              <div className="notif-card" style={{ animationDelay: '0.6s' }}>
-                <div className="notif-icon" style={{ background: 'linear-gradient(135deg,#3B82F6,#1E40AF)' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
-                </div>
-                <div className="notif-body">
-                  <p className="notif-title">Job booked: HVAC tune‑up</p>
-                  <p className="notif-sub">Tomorrow · 10:00 AM · Confirmed by SMS</p>
-                </div>
-                <span className="notif-time">1m</span>
-              </div>
-
-              <div className="notif-arrow">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.4))' }}>
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </div>
-
-              <div className="notif-card" style={{ animationDelay: '0.85s' }}>
-                <div className="notif-icon" style={{ background: 'linear-gradient(135deg,#22C55E,#15803D)' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-                    <polyline points="17 6 23 6 23 12"/>
-                  </svg>
-                </div>
-                <div className="notif-body">
-                  <p className="notif-title">+$487 added to pipeline</p>
-                  <p className="notif-sub">Average ticket value · auto‑logged</p>
-                </div>
-                <span className="notif-time">2m</span>
-              </div>
-
+            <div className="hero-stage">
+              <HeroShowcase />
             </div>
           </div>
         </div>
