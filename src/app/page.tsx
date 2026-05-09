@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth, SignOutButton } from '@clerk/nextjs'
 import DashboardPreview from '@/components/DashboardPreview'
-import LiveBeachHero from '@/components/LiveBeachHero'
+import HeroShowcase from '@/components/HeroShowcase'
 
 export default function HomePage() {
   const { isSignedIn } = useAuth()
@@ -187,7 +187,7 @@ export default function HomePage() {
             color: #fff;
           }
           .notif-body { flex: 1; min-width: 0; }
-          .notif-title { font-weight: 800; font-size: 13px; color: #0B1F3A; letter-spacing: -0.2px; line-height: 1.25; margin: 0 0 3px; }
+          .notif-title { font-weight: 800; font-size: 13px; color: #0AA89F; letter-spacing: -0.2px; line-height: 1.25; margin: 0 0 3px; }
           .notif-sub   { font-size: 11.5px; color: #4A6670; line-height: 1.4; margin: 0; }
           .notif-time  { font-size: 10.5px; color: #7AAAB2; font-weight: 600; flex-shrink: 0; padding-top: 2px; }
           .notif-arrow { display: flex; justify-content: center; align-items: center; height: 14px; flex-shrink: 0; }
@@ -200,7 +200,7 @@ export default function HomePage() {
         `}</style>
         <div style={{ position: 'relative', width: '100%', lineHeight: 0 }}>
           <div style={{ position: 'relative', width: '100%', aspectRatio: '1440/480', overflow: 'hidden' }}>
-            <LiveBeachHero />
+            <HeroShowcase />
 
             {/* Left vignette — darkens sky/foam so white text reads cleanly */}
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(4,18,42,0.78) 0%, rgba(4,18,42,0.55) 30%, rgba(4,18,42,0.20) 55%, rgba(4,18,42,0) 75%)', zIndex: 1, pointerEvents: 'none' }} />
@@ -210,7 +210,7 @@ export default function HomePage() {
               <p style={{ fontSize: 'clamp(10px, 0.85vw, 13px)', fontWeight: 700, color: 'rgba(255,196,76,0.95)', letterSpacing: '2.5px', textTransform: 'uppercase', margin: '0 0 clamp(10px, 1.4vw, 20px) 0' }}>
                 AI Receptionist · 24/7
               </p>
-              <h1 style={{ fontSize: 'clamp(20px, 3.0vw, 50px)', fontWeight: 900, color: '#FFFFFF', lineHeight: 1.05, letterSpacing: '-0.03em', margin: '0 0 clamp(12px, 1.8vw, 26px) 0', textShadow: '0 2px 28px rgba(0,0,0,0.65)' }}>
+              <h1 style={{ fontSize: 'clamp(20px, 3.0vw, 50px)', fontWeight: 900, color: '#5EEAD4', lineHeight: 1.05, letterSpacing: '-0.03em', margin: '0 0 clamp(12px, 1.8vw, 26px) 0', textShadow: '0 2px 30px rgba(0,0,0,0.85), 0 0 28px rgba(10,168,159,0.55)' }}>
                 Stop losing jobs<br />to missed calls.
               </h1>
               <p style={{ fontSize: 'clamp(11px, 1.0vw, 16px)', color: 'rgba(255,255,255,0.78)', lineHeight: 1.55, margin: '0 0 clamp(16px, 2.2vw, 28px) 0', textShadow: '0 1px 8px rgba(0,0,0,0.55)' }}>
@@ -485,7 +485,7 @@ export default function HomePage() {
               Get started →
             </Link>
           )}
-          <a href="tel:+17623713351" style={{ padding: '16px 30px', background: 'rgba(255,255,255,0.08)', borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.18)', color: '#fff', fontWeight: 700, fontSize: 16, textDecoration: 'none' }}>
+          <a href="tel:+16514677829" style={{ padding: '16px 30px', background: 'rgba(255,255,255,0.08)', borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.18)', color: '#fff', fontWeight: 700, fontSize: 16, textDecoration: 'none' }} title="Call (651) 467-7829 — live AI demo">
             📞 Call the AI Demo
           </a>
         </div>
