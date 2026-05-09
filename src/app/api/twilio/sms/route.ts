@@ -13,21 +13,54 @@ const twilioClient = twilio(
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData()
-  const body = (formData.get('Body') as string)?.trim().toUpperCase()
-  const from = formData.get('From') as string
+  const params: Record<string, string> = {}
+  formData.forEach((value, key) => { params[key] = value as string })
 
-  // Only process replies from the contractor's number
-  if (from !== '+17737109565') {
+  // Validate request is genuinely from Twilio
+  const twilioSignature = req.headers.get('x-twilio-signature') || ''
+  const proto = req.headers.get('x-forwarded-proto') || 'https'
+  const host = req.headers.get('host') || ''
+  const url = `${proto}://${host}/api/twilio/sms`
+  const isValid = twilio.validateRequest(
+    process.env.TWILIO_AUTH_TOKEN!,
+    twilioSignature,
+    url,
+    params
+  )
+  if (!isValid) {
+    return new NextResponse('Forbidden', { status: 403 })
+  }
+
+  const body = params['Body']?.trim().toUpperCase()
+  const from = params['From']
+  const to = params['To'] // contractor's Twilio number that received the SMS
+
+  // Look up contractor by the Twilio number that received the message
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('twilio_number', to)
+    .single()
+
+  if (!profile) {
     return new NextResponse('<?xml version="1.0"?><Response></Response>', {
       headers: { 'Content-Type': 'text/xml' },
     })
   }
 
-  // Get the most recent pending_approval job
+  // Only process replies from this contractor's registered phone
+  if (from !== profile.owner_phone) {
+    return new NextResponse('<?xml version="1.0"?><Response></Response>', {
+      headers: { 'Content-Type': 'text/xml' },
+    })
+  }
+
+  // Get most recent pending job for THIS contractor only
   const { data: job } = await supabase
     .from('jobs')
     .select('*')
     .eq('status', 'pending_approval')
+    .eq('user_id', profile.user_id)
     .order('created_at', { ascending: false })
     .limit(1)
     .single()
@@ -35,54 +68,43 @@ export async function POST(req: NextRequest) {
   if (!job) {
     await twilioClient.messages.create({
       body: 'No pending job requests found.',
-      from: process.env.TWILIO_PHONE_NUMBER!,
-      to: '+17737109565',
+      from: to,
+      to: profile.owner_phone,
     })
     return new NextResponse('<?xml version="1.0"?><Response></Response>', {
       headers: { 'Content-Type': 'text/xml' },
     })
   }
 
+  const businessName = profile.business_name || 'BellAveGo'
+
   if (body === 'YES') {
-    // Update job to scheduled
-    await supabase
-      .from('jobs')
-      .update({ status: 'scheduled' })
-      .eq('id', job.id)
+    await supabase.from('jobs').update({ status: 'scheduled' }).eq('id', job.id)
 
-    // Text the customer confirmation
     await twilioClient.messages.create({
-      body: `Hi ${job.customer_name}! Your appointment for ${job.job_type} at ${job.address} on ${job.scheduled_time} is confirmed! We look forward to seeing you. - BellAveGo`,
-      from: process.env.TWILIO_PHONE_NUMBER!,
+      body: `Hi ${job.customer_name}! Your appointment for ${job.job_type} at ${job.address} on ${job.scheduled_time} is confirmed. We look forward to seeing you. - ${businessName}`,
+      from: to,
       to: job.customer_phone,
     })
 
-    // Confirm back to contractor
     await twilioClient.messages.create({
-      body: `✅ Job confirmed! Customer ${job.customer_name} has been texted their confirmation.`,
-      from: process.env.TWILIO_PHONE_NUMBER!,
-      to: '+17737109565',
+      body: `✅ Confirmed! ${job.customer_name} has been texted their confirmation.`,
+      from: to,
+      to: profile.owner_phone,
     })
-
   } else if (body === 'NO') {
-    // Update job to cancelled
-    await supabase
-      .from('jobs')
-      .update({ status: 'cancelled' })
-      .eq('id', job.id)
+    await supabase.from('jobs').update({ status: 'cancelled' }).eq('id', job.id)
 
-    // Text the customer that we need to reschedule
     await twilioClient.messages.create({
-      body: `Hi ${job.customer_name}, unfortunately we're not available at ${job.scheduled_time}. Please call us back at ${process.env.TWILIO_PHONE_NUMBER} to find a better time. Sorry for the inconvenience! - BellAveGo`,
-      from: process.env.TWILIO_PHONE_NUMBER!,
+      body: `Hi ${job.customer_name}, unfortunately we're not available at ${job.scheduled_time}. Please call us back to find a better time. - ${businessName}`,
+      from: to,
       to: job.customer_phone,
     })
 
-    // Confirm back to contractor
     await twilioClient.messages.create({
-      body: `❌ Job declined. Customer ${job.customer_name} has been notified to call back and reschedule.`,
-      from: process.env.TWILIO_PHONE_NUMBER!,
-      to: '+17737109565',
+      body: `❌ Declined. ${job.customer_name} has been notified to call back and reschedule.`,
+      from: to,
+      to: profile.owner_phone,
     })
   }
 
