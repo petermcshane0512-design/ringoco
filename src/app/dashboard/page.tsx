@@ -29,16 +29,32 @@ type Report = {
   file_url?: string;
 };
 
+type Profile = {
+  user_id: string;
+  business_name?: string;
+  owner_phone?: string;
+  twilio_number?: string;
+  is_active?: boolean;
+  plan_tier?: string;
+  onboarding_complete?: boolean;
+};
+
 export default function DashboardPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [counts, setCounts] = useState({ jobs: 0, customers: 0, revenue: 0, leads: 0 });
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [provisionLoading, setProvisionLoading] = useState(false);
 
   useEffect(() => { fetchAll(); }, []);
 
   async function fetchAll() {
+    const profileRes = await fetch("/api/profile").then((r) => r.json()).catch(() => null);
+    setProfile(profileRes && !profileRes.error ? profileRes : null);
+
     const [
       { data: jobData },
       { count: jobCount },
@@ -56,6 +72,27 @@ export default function DashboardPage() {
     setReports((reportData as Report[]) || []);
     setCounts({ jobs: jobCount || 0, customers: customerCount || 0, revenue, leads: 0 });
     setLoadingJobs(false);
+  }
+
+  async function startCheckout() {
+    setCheckoutLoading(true);
+    try {
+      const res = await fetch("/api/stripe/checkout", { method: "POST" }).then((r) => r.json());
+      if (res.url) window.location.href = res.url;
+    } finally {
+      setCheckoutLoading(false);
+    }
+  }
+
+  async function retryProvision() {
+    setProvisionLoading(true);
+    try {
+      const res = await fetch("/api/twilio/provision", { method: "POST" }).then((r) => r.json());
+      if (res.ok) await fetchAll();
+      else alert(`Provisioning failed: ${res.error || "unknown"}`);
+    } finally {
+      setProvisionLoading(false);
+    }
   }
 
   async function handleJobAction(jobId: string, action: "scheduled" | "cancelled") {
@@ -158,6 +195,36 @@ export default function DashboardPage() {
           <div style={{ fontSize: 13, color: "#7AAAB2", marginTop: 3 }}>Live job requests, schedule, and business overview</div>
         </div>
       </div>
+
+      {/* Activation banner */}
+      {profile && !profile.is_active && (
+        <div style={{ marginBottom: 22, padding: "18px 22px", background: "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)", border: "1px solid #FDE68A", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: "#92400E" }}>Activate your AI receptionist</div>
+            <div style={{ fontSize: 12, color: "#78350F", marginTop: 4, lineHeight: 1.5 }}>
+              Subscribe to get your dedicated number, 24/7 call answering, and SMS booking flow. We'll auto-provision your Twilio number after checkout.
+            </div>
+          </div>
+          <button onClick={startCheckout} disabled={checkoutLoading} style={{ padding: "11px 22px", borderRadius: 10, border: "none", fontSize: 13, fontWeight: 800, cursor: checkoutLoading ? "wait" : "pointer", background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)", color: "#fff", boxShadow: "0 4px 14px rgba(34,197,94,0.32)", whiteSpace: "nowrap" }}>
+            {checkoutLoading ? "Loading…" : "Subscribe & activate →"}
+          </button>
+        </div>
+      )}
+
+      {/* Number-pending banner */}
+      {profile?.is_active && !profile.twilio_number && (
+        <div style={{ marginBottom: 22, padding: "16px 22px", background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: "#1E40AF" }}>Number not provisioned yet</div>
+            <div style={{ fontSize: 12, color: "#1E3A8A", marginTop: 3 }}>
+              Subscription active but no Twilio number assigned. Click to retry.
+            </div>
+          </div>
+          <button onClick={retryProvision} disabled={provisionLoading} style={{ padding: "9px 18px", borderRadius: 10, border: "none", fontSize: 12, fontWeight: 800, cursor: provisionLoading ? "wait" : "pointer", background: "#2563EB", color: "#fff" }}>
+            {provisionLoading ? "Provisioning…" : "Provision number"}
+          </button>
+        </div>
+      )}
 
       {/* Metric cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 24 }}>
@@ -350,10 +417,16 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <div style={cardTitle}>AI Receptionist</div>
-                  <div style={{ fontSize: 10, color: "#7AAAB2", marginTop: 2 }}>24/7 · (762) 371-3351</div>
+                  <div style={{ fontSize: 10, color: "#7AAAB2", marginTop: 2 }}>
+                    24/7 · {profile?.twilio_number || "Not provisioned"}
+                  </div>
                 </div>
               </div>
-              <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20, background: "#FEF2F2", color: "#DC2626", border: "1px solid #FECACA" }}>Offline</span>
+              {profile?.is_active && profile?.twilio_number ? (
+                <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20, background: "#ECFDF5", color: "#059669", border: "1px solid #A7F3D0" }}>Live</span>
+              ) : (
+                <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20, background: "#FEF2F2", color: "#DC2626", border: "1px solid #FECACA" }}>Offline</span>
+              )}
             </div>
             <div style={cardBody}>
               {[
