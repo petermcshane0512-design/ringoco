@@ -1,103 +1,14 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth, SignOutButton } from '@clerk/nextjs'
 import DashboardPreview from '@/components/DashboardPreview'
+import LiveBeachHero from '@/components/LiveBeachHero'
 
 export default function HomePage() {
   const { isSignedIn } = useAuth()
   const [logoHovered, setLogoHovered] = useState(false)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    let animId: number
-    let t = 0
-
-    const resize = () => {
-      canvas.width = canvas.offsetWidth
-      canvas.height = canvas.offsetHeight
-    }
-
-    const wave = (yFrac: number, amp: number, period: number, spd: number, color: string, alpha: number) => {
-      const W = canvas.width, H = canvas.height
-      ctx.beginPath()
-      for (let x = 0; x <= W + 4; x += 3) {
-        const y = H * yFrac
-          + Math.sin((x / period) + t * spd) * amp
-          + Math.sin((x / (period * 0.58)) + t * spd * 1.45) * amp * 0.38
-        if (x === 0) ctx.moveTo(x, y)
-        else ctx.lineTo(x, y)
-      }
-      ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath()
-      ctx.fillStyle = color; ctx.globalAlpha = alpha; ctx.fill(); ctx.globalAlpha = 1
-    }
-
-    const draw = () => {
-      const W = canvas.width, H = canvas.height
-      t += 0.007
-
-      // Sky — deep navy to warm sunset at horizon
-      const sky = ctx.createLinearGradient(0, 0, 0, H * 0.67)
-      sky.addColorStop(0,    '#060f1d')
-      sky.addColorStop(0.42, '#0b1e35')
-      sky.addColorStop(0.78, '#5c1f0e')
-      sky.addColorStop(1,    '#d45a10')
-      ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H)
-
-      // Sun glow at horizon
-      const sx = W * 0.38, sy = H * 0.67
-      const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, W * 0.26)
-      glow.addColorStop(0,   'rgba(255,195,55,0.30)')
-      glow.addColorStop(0.4, 'rgba(240,100,15,0.12)')
-      glow.addColorStop(1,   'rgba(0,0,0,0)')
-      ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H)
-
-      // Stars — blink gently
-      const starSeeds = [[.04,.07],[.11,.14],[.17,.04],[.24,.17],[.54,.05],[.62,.11],[.69,.03],[.77,.18],[.84,.07],[.91,.13],[.07,.27],[.47,.21],[.33,.09],[.58,.24],[.73,.12]]
-      starSeeds.forEach(([sx2, sy2]) => {
-        const b = 0.35 + 0.65 * Math.abs(Math.sin(t * 1.3 + sx2 * 28))
-        ctx.globalAlpha = b * 0.85
-        ctx.fillStyle = '#fff'
-        ctx.beginPath()
-        ctx.arc(sx2 * W, sy2 * H * 0.67, 1.3, 0, Math.PI * 2)
-        ctx.fill()
-      })
-      ctx.globalAlpha = 1
-
-      // Ocean base
-      const ocean = ctx.createLinearGradient(0, H * 0.66, 0, H)
-      ocean.addColorStop(0, '#0c3a56'); ocean.addColorStop(0.5, '#082840'); ocean.addColorStop(1, '#03192b')
-      ctx.fillStyle = ocean; ctx.fillRect(0, H * 0.66, W, H)
-
-      // Sun reflection strip on water
-      ctx.save()
-      ctx.beginPath(); ctx.rect(W * 0.24, H * 0.66, W * 0.27, H); ctx.clip()
-      const refl = ctx.createLinearGradient(0, H * 0.66, 0, H)
-      refl.addColorStop(0, 'rgba(255,160,40,0.20)'); refl.addColorStop(1, 'rgba(255,110,15,0.03)')
-      ctx.fillStyle = refl; ctx.fillRect(0, H * 0.66, W, H); ctx.restore()
-
-      // Wave layers — back to front
-      wave(0.775, 10, 210, 0.85, '#0a5078', 0.82)
-      wave(0.820, 12, 260, 0.68, '#0d6592', 0.72)
-      wave(0.860, 14, 175, 1.05, '#1478a8', 0.62)
-      wave(0.900,  8, 135, 1.55, '#2292c4', 0.48)
-      // foam highlights on crest
-      wave(0.770, 10, 210, 0.85, 'rgba(255,255,255,0.07)', 1)
-      wave(0.855, 14, 175, 1.05, 'rgba(255,255,255,0.06)', 1)
-
-      animId = requestAnimationFrame(draw)
-    }
-
-    resize()
-    window.addEventListener('resize', resize)
-    draw()
-    return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', resize) }
-  }, [])
 
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#F2F9F5', color: '#0B1F3A', minHeight: '100vh', overflowX: 'hidden' }}>
@@ -143,7 +54,7 @@ export default function HomePage() {
                 Sign in
               </Link>
               <Link href="/sign-up" className="cta-pulse" style={{ padding: '10px 22px', background: '#22C55E', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800 }}>
-                Start Free Trial
+                Get started
               </Link>
             </>
           )}
@@ -156,130 +67,243 @@ export default function HomePage() {
           @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
           @keyframes ctaGlow {
             0%, 100% { box-shadow: 0 4px 18px rgba(34,197,94,0.42), 0 0 30px rgba(34,197,94,0.24); }
-            50%       { box-shadow: 0 6px 32px rgba(34,197,94,0.65), 0 0 56px rgba(34,197,94,0.42); }
+            50%      { box-shadow: 0 6px 32px rgba(34,197,94,0.65), 0 0 56px rgba(34,197,94,0.42); }
           }
-          .cta-pulse {
-            animation: ctaGlow 2.5s ease-in-out infinite;
-            transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.28s ease;
-            will-change: transform, box-shadow;
-          }
-          .cta-pulse:hover {
-            animation-play-state: paused;
-            transform: scale(1.06) translateY(-3px) !important;
-            box-shadow: 0 10px 44px rgba(34,197,94,0.72), 0 0 70px rgba(34,197,94,0.52) !important;
-            filter: brightness(1.12) !important;
-          }
-          .lp-hero-cta {
-            position: absolute;
-            left: 4%;
-            top: 60%;
-            width: 15%;
-            height: 11%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #22C55E 0%, #15A34A 100%);
-            border-radius: 10px;
-            text-decoration: none;
-            color: #fff;
-            font-weight: 800;
-            font-size: clamp(10px, 1.15vw, 16px);
-            letter-spacing: -0.2px;
-            border: none;
-            cursor: pointer;
-            gap: 6px;
-          }
-          .lp-hero-cta:hover {
-            text-decoration: none;
-            color: #fff;
-          }
-          .lp-card-wrap {
-            transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.24s ease;
-            position: relative;
-            z-index: 1;
-          }
-          .lp-card-wrap:hover {
-            transform: scale(1.07);
-            filter: drop-shadow(0 6px 22px rgba(10,168,159,0.52)) drop-shadow(0 0 12px rgba(255,255,255,0.45));
-            z-index: 10;
-          }
+          .cta-pulse { animation: ctaGlow 2.5s ease-in-out infinite; transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1), filter 0.28s ease; }
+          .cta-pulse:hover { animation-play-state: paused; transform: scale(1.06) translateY(-3px); box-shadow: 0 10px 44px rgba(34,197,94,0.72), 0 0 70px rgba(34,197,94,0.52); filter: brightness(1.12); }
           @keyframes dashGlow {
             0%, 100% { box-shadow: 0 4px 16px rgba(10,168,159,0.45), 0 0 28px rgba(10,168,159,0.28); }
-            50%       { box-shadow: 0 4px 26px rgba(10,168,159,0.68), 0 0 48px rgba(10,168,159,0.42); }
+            50%      { box-shadow: 0 4px 26px rgba(10,168,159,0.68), 0 0 48px rgba(10,168,159,0.42); }
           }
-          .dash-pulse {
-            animation: dashGlow 2.5s ease-in-out infinite;
-            transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.28s ease;
-            will-change: transform, box-shadow;
+          .dash-pulse { animation: dashGlow 2.5s ease-in-out infinite; transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1), filter 0.28s ease; }
+          .dash-pulse:hover { animation-play-state: paused; transform: scale(1.06) translateY(-2px); box-shadow: 0 8px 36px rgba(10,168,159,0.75), 0 0 60px rgba(10,168,159,0.5); filter: brightness(1.12); }
+          @keyframes heroCtaGlow {
+            0%, 100% { box-shadow: 0 8px 28px rgba(16,185,129,0.45), 0 0 0 0 rgba(34,197,94,0.55), inset 0 1px 0 rgba(255,255,255,0.32); }
+            50%      { box-shadow: 0 14px 44px rgba(16,185,129,0.65), 0 0 0 8px rgba(34,197,94,0), inset 0 1px 0 rgba(255,255,255,0.32); }
           }
-          .dash-pulse:hover {
-            animation-play-state: paused;
-            transform: scale(1.06) translateY(-2px) !important;
-            box-shadow: 0 8px 36px rgba(10,168,159,0.75), 0 0 60px rgba(10,168,159,0.5) !important;
-            filter: brightness(1.12) !important;
+          @keyframes pulseDot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50%      { transform: scale(1.6); opacity: 0.45; }
+          }
+          @keyframes cardIn {
+            0%   { opacity: 0; transform: translateX(28px) scale(0.96); }
+            100% { opacity: 1; transform: translateX(0) scale(1); }
+          }
+          @keyframes shimmer {
+            0%   { background-position: -180% 0; }
+            100% { background-position: 180% 0; }
+          }
+          .hero-cta {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 26px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #22C55E 0%, #16A34A 60%, #15803D 100%);
+            color: #fff;
+            font-weight: 800;
+            font-size: clamp(13px, 1.05vw, 16px);
+            letter-spacing: -0.2px;
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.18);
+            cursor: pointer;
+            overflow: hidden;
+            animation: heroCtaGlow 2.6s ease-in-out infinite;
+            transition: transform 0.24s cubic-bezier(0.34,1.56,0.64,1), filter 0.24s ease;
+          }
+          .hero-cta::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.32) 50%, transparent 70%);
+            background-size: 220% 100%;
+            animation: shimmer 3.4s linear infinite;
+            pointer-events: none;
+          }
+          .hero-cta:hover {
+            transform: translateY(-2px) scale(1.04);
+            filter: brightness(1.10);
+          }
+          .hero-cta .arrow {
+            transition: transform 0.24s ease;
+          }
+          .hero-cta:hover .arrow { transform: translateX(4px); }
+
+          .nav-cta {
+            position: relative;
+            padding: 10px 22px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #22C55E 0%, #15A34A 100%);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 800;
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.16);
+            box-shadow: 0 4px 18px rgba(34,197,94,0.42);
+            transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s ease, filter 0.22s ease;
+          }
+          .nav-cta:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 8px 30px rgba(34,197,94,0.6); filter: brightness(1.08); }
+
+          .nav-dash {
+            position: relative;
+            padding: 10px 22px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 800;
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.16);
+            box-shadow: 0 4px 16px rgba(10,168,159,0.45);
+            transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s ease, filter 0.22s ease;
+          }
+          .nav-dash:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 8px 30px rgba(10,168,159,0.65); filter: brightness(1.08); }
+
+          .notif-card {
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 14px 13px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.94);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255,255,255,0.6);
+            box-shadow: 0 10px 32px rgba(11,31,58,0.22), 0 2px 6px rgba(11,31,58,0.10), inset 0 1px 0 rgba(255,255,255,0.7);
+            opacity: 0;
+            animation: cardIn 0.55s cubic-bezier(0.22,1,0.36,1) forwards;
+            transition: transform 0.22s ease, box-shadow 0.22s ease;
+          }
+          .notif-card:hover {
+            transform: translateY(-2px) scale(1.015);
+            box-shadow: 0 18px 44px rgba(11,31,58,0.28), 0 4px 10px rgba(11,31,58,0.12), inset 0 1px 0 rgba(255,255,255,0.7);
+          }
+          .notif-icon {
+            flex-shrink: 0;
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff;
+          }
+          .notif-body { flex: 1; min-width: 0; }
+          .notif-title { font-weight: 800; font-size: 13px; color: #0B1F3A; letter-spacing: -0.2px; line-height: 1.25; margin: 0 0 3px; }
+          .notif-sub   { font-size: 11.5px; color: #4A6670; line-height: 1.4; margin: 0; }
+          .notif-time  { font-size: 10.5px; color: #7AAAB2; font-weight: 600; flex-shrink: 0; padding-top: 2px; }
+          .notif-arrow { display: flex; justify-content: center; align-items: center; height: 14px; flex-shrink: 0; }
+          .pulse-dot {
+            display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+            background: #EF4444; margin-right: 6px;
+            box-shadow: 0 0 0 0 rgba(239,68,68,0.6);
+            animation: pulseDot 1.6s ease-in-out infinite;
           }
         `}</style>
         <div style={{ position: 'relative', width: '100%', lineHeight: 0 }}>
-          {/* Animated beach hero — replaces static Landing Page 1.png */}
           <div style={{ position: 'relative', width: '100%', aspectRatio: '1440/480', overflow: 'hidden' }}>
-            <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
-            <div style={{ position: 'absolute', top: '12%', left: '4%', width: '46%', zIndex: 2 }}>
-              <p style={{ fontSize: 'clamp(9px, 0.85vw, 13px)', fontWeight: 700, color: 'rgba(255,185,55,0.92)', letterSpacing: '2.5px', textTransform: 'uppercase', marginBottom: '4%', margin: '0 0 4% 0' }}>
+            <LiveBeachHero />
+
+            {/* Left vignette — darkens sky/foam so white text reads cleanly */}
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(4,18,42,0.78) 0%, rgba(4,18,42,0.55) 30%, rgba(4,18,42,0.20) 55%, rgba(4,18,42,0) 75%)', zIndex: 1, pointerEvents: 'none' }} />
+
+            {/* Headline column */}
+            <div style={{ position: 'absolute', top: '18%', left: '4%', width: '44%', zIndex: 2, lineHeight: 1.2 }}>
+              <p style={{ fontSize: 'clamp(10px, 0.85vw, 13px)', fontWeight: 700, color: 'rgba(255,196,76,0.95)', letterSpacing: '2.5px', textTransform: 'uppercase', margin: '0 0 clamp(10px, 1.4vw, 20px) 0' }}>
                 AI Receptionist · 24/7
               </p>
-              <h1 style={{ fontSize: 'clamp(17px, 2.9vw, 48px)', fontWeight: 900, color: '#FFFFFF', lineHeight: 1.1, letterSpacing: '-0.03em', margin: '0 0 3% 0', textShadow: '0 2px 28px rgba(0,0,0,0.65)' }}>
+              <h1 style={{ fontSize: 'clamp(20px, 3.0vw, 50px)', fontWeight: 900, color: '#FFFFFF', lineHeight: 1.05, letterSpacing: '-0.03em', margin: '0 0 clamp(12px, 1.8vw, 26px) 0', textShadow: '0 2px 28px rgba(0,0,0,0.65)' }}>
                 Stop losing jobs<br />to missed calls.
               </h1>
-              <p style={{ fontSize: 'clamp(9px, 0.9vw, 14px)', color: 'rgba(255,255,255,0.58)', lineHeight: 1.65, margin: 0 }}>
-                BellAveGo answers when you can't, books the job,<br />and texts your customer — automatically.
+              <p style={{ fontSize: 'clamp(11px, 1.0vw, 16px)', color: 'rgba(255,255,255,0.78)', lineHeight: 1.55, margin: '0 0 clamp(16px, 2.2vw, 28px) 0', textShadow: '0 1px 8px rgba(0,0,0,0.55)' }}>
+                BellAveGo answers when you can&apos;t, books the job,<br />and texts your customer — automatically.
               </p>
+              <Link href={isSignedIn ? '/dashboard' : '/sign-up'} className="hero-cta">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                </svg>
+                {isSignedIn ? 'Open Dashboard' : 'Get started'}
+                <svg className="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </Link>
             </div>
-          </div>
-          <Link
-            href={isSignedIn ? '/dashboard' : '/sign-up'}
-            className={`lp-hero-cta ${isSignedIn ? 'dash-pulse' : 'cta-pulse'}`}
-            style={isSignedIn ? { background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)' } : undefined}
-          >
-            {isSignedIn ? 'Dashboard' : 'Start Free Trial'}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-          </Link>
 
-          {/* Notification cards — right side */}
-          <div style={{
-            position: 'absolute',
-            top: '3%',
-            right: '2%',
-            width: '26%',
-            height: '92%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'stretch',
-            justifyContent: 'space-between',
-            pointerEvents: 'none',
-          }}>
-            {[
-              { src: '/LP1.png', alt: 'Missed call notification', w: 440, h: 100 },
-              { src: '/LP2.png', alt: 'BellAveGo answered in 12s', w: 440, h: 90 },
-              { src: '/LP3.png', alt: 'AI text summary', w: 440, h: 140 },
-              { src: '/LP4.png', alt: 'Potential revenue', w: 440, h: 100 },
-            ].reduce<React.ReactNode[]>((acc, card, i, arr) => {
-              acc.push(
-                <div key={card.src} className="lp-card-wrap" style={{ pointerEvents: 'auto' }}>
-                  <Image src={card.src} alt={card.alt} width={card.w} height={card.h}
-                    style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 12 }} />
-                </div>
-              )
-              if (i < arr.length - 1) acc.push(
-                <div key={`arrow-${i}`} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0AA89F" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.75 }}>
-                    <polyline points="6 9 12 15 18 9"/>
+            {/* Notification stack — right side */}
+            <div style={{ position: 'absolute', top: '5%', right: '2.5%', width: '28%', height: '90%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', zIndex: 2 }}>
+
+              <div className="notif-card" style={{ animationDelay: '0.1s' }}>
+                <div className="notif-icon" style={{ background: 'linear-gradient(135deg,#EF4444,#B91C1C)' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    <line x1="23" y1="1" x2="17" y2="7"/><line x1="17" y1="1" x2="23" y2="7"/>
                   </svg>
                 </div>
-              )
-              return acc
-            }, [])}
+                <div className="notif-body">
+                  <p className="notif-title"><span className="pulse-dot"></span>Missed call</p>
+                  <p className="notif-sub">Customer · (612) 555‑0142</p>
+                </div>
+                <span className="notif-time">now</span>
+              </div>
+
+              <div className="notif-arrow">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.4))' }}>
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </div>
+
+              <div className="notif-card" style={{ animationDelay: '0.35s' }}>
+                <div className="notif-icon" style={{ background: 'linear-gradient(135deg,#0AA89F,#0D8F87)' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <div className="notif-body">
+                  <p className="notif-title">BellAveGo answered</p>
+                  <p className="notif-sub">12 seconds · transcribed live</p>
+                </div>
+                <span className="notif-time">12s</span>
+              </div>
+
+              <div className="notif-arrow">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.4))' }}>
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </div>
+
+              <div className="notif-card" style={{ animationDelay: '0.6s' }}>
+                <div className="notif-icon" style={{ background: 'linear-gradient(135deg,#3B82F6,#1E40AF)' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                </div>
+                <div className="notif-body">
+                  <p className="notif-title">Job booked: HVAC tune‑up</p>
+                  <p className="notif-sub">Tomorrow · 10:00 AM · Confirmed by SMS</p>
+                </div>
+                <span className="notif-time">1m</span>
+              </div>
+
+              <div className="notif-arrow">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.4))' }}>
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </div>
+
+              <div className="notif-card" style={{ animationDelay: '0.85s' }}>
+                <div className="notif-icon" style={{ background: 'linear-gradient(135deg,#22C55E,#15803D)' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                    <polyline points="17 6 23 6 23 12"/>
+                  </svg>
+                </div>
+                <div className="notif-body">
+                  <p className="notif-title">+$487 added to pipeline</p>
+                  <p className="notif-sub">Average ticket value · auto‑logged</p>
+                </div>
+                <span className="notif-time">2m</span>
+              </div>
+
+            </div>
           </div>
         </div>
       </section>
@@ -388,9 +412,9 @@ export default function HomePage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20, maxWidth: 960, margin: '0 auto 20px' }}>
           {[
-            { name: 'Starter', price: 49, calls: 200, desc: 'Perfect for solo contractors getting started.', popular: false },
-            { name: 'Growth', price: 89, calls: 600, desc: 'For busy contractors who never miss a call.', popular: true },
-            { name: 'Scale', price: 149, calls: 1500, desc: 'Multi-tech teams running at full capacity.', popular: false },
+            { name: 'Solo', price: 147, setup: 197, calls: 150, desc: 'Solo contractors under $100K revenue.', popular: false },
+            { name: 'Growth', price: 297, setup: 497, calls: 500, desc: '2–10 employees. $100K–$500K revenue.', popular: true },
+            { name: 'Scale', price: 597, setup: 997, calls: 1500, desc: '10+ employees. Established shops.', popular: false },
           ].map(plan => (
             <div key={plan.name} style={{
               background: plan.popular ? 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)' : '#fff',
@@ -411,11 +435,12 @@ export default function HomePage() {
                 <span style={{ fontSize: 20, fontWeight: 900, color: plan.popular ? 'rgba(255,255,255,0.5)' : '#4A7A80', marginTop: 10 }}>$</span>
                 <span style={{ fontSize: 56, fontWeight: 900, color: plan.popular ? '#fff' : '#0B1F3A', lineHeight: 1, letterSpacing: '-2px' }}>{plan.price}</span>
               </div>
-              <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.38)' : '#7AAAB2', marginBottom: 6 }}>per month · no contracts</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: plan.popular ? '#18AFA8' : '#0AA89F', marginBottom: 16 }}>{plan.calls.toLocaleString()} calls included</div>
+              <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.38)' : '#7AAAB2', marginBottom: 6 }}>per month · cancel anytime</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>+ ${plan.setup} one-time onboarding</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: plan.popular ? '#18AFA8' : '#0AA89F', marginBottom: 16 }}>{plan.calls.toLocaleString()} calls / month</div>
               <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.6)' : '#4A7A80', marginBottom: 24, lineHeight: 1.6 }}>{plan.desc}</div>
               <div style={{ marginBottom: 24 }}>
-                {['AI answers every missed call', 'Job booking + SMS confirmation', 'Revenue intelligence reports', 'Customer database', 'Invoice + payment collection'].map(f => (
+                {['AI answers every missed call 24/7', 'Job booking + SMS confirmation', 'Quarterly AI consulting reports', 'Local market intelligence', '30-day money-back guarantee'].map(f => (
                   <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: `1px solid ${plan.popular ? 'rgba(255,255,255,0.07)' : 'rgba(10,168,159,0.08)'}` }}>
                     <div style={{ width: 17, height: 17, background: plan.popular ? '#18AFA8' : '#22C55E', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <span style={{ color: '#fff', fontSize: 9, fontWeight: 900 }}>✓</span>
@@ -430,13 +455,16 @@ export default function HomePage() {
                 </Link>
               ) : (
                 <Link href="/sign-up" style={{ display: 'block', textAlign: 'center', padding: '13px', background: plan.popular ? '#22C55E' : 'rgba(10,168,159,0.08)', borderRadius: 10, textDecoration: 'none', color: plan.popular ? '#fff' : '#0AA89F', fontWeight: 800, fontSize: 14, border: plan.popular ? 'none' : '1px solid rgba(10,168,159,0.2)' }}>
-                  Start Free Trial →
+                  Get started →
                 </Link>
               )}
             </div>
           ))}
         </div>
-        <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 8 }}>All plans include a 14-day free trial. Cancel anytime.</p>
+        <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 16, lineHeight: 1.6 }}>
+          30-day money-back guarantee · Cancel anytime · Pay annually, get 12 months for the price of 10.<br />
+          Multi-location? <a href="mailto:peter@bellavego.com" style={{ color: '#0AA89F', fontWeight: 700, textDecoration: 'none' }}>Contact us</a> for franchise + 3+ location pricing.
+        </p>
       </section>
 
       {/* FINAL CTA */}
@@ -454,7 +482,7 @@ export default function HomePage() {
             </Link>
           ) : (
             <Link href="/sign-up" className="cta-pulse" style={{ padding: '16px 46px', background: '#22C55E', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 16 }}>
-              Start Free Trial — 14 Days →
+              Get started →
             </Link>
           )}
           <a href="tel:+17623713351" style={{ padding: '16px 30px', background: 'rgba(255,255,255,0.08)', borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.18)', color: '#fff', fontWeight: 700, fontSize: 16, textDecoration: 'none' }}>
@@ -469,7 +497,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <Image src="/logo.png" alt="BellAveGo" width={300} height={100} style={{ objectFit: 'contain' }} />
           <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
-          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>Built for home service businesses · From $49/mo · No contracts · Cancel anytime</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>Built for home service businesses · From $147/mo · 30-day money-back · Cancel anytime</p>
         </div>
       </footer>
 

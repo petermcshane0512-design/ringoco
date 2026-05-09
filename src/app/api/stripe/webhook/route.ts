@@ -10,9 +10,14 @@ const supabase = createClient(
 )
 
 const PRICE_TO_TIER: Record<string, { tier: string; calls: number }> = {
-  [process.env.STRIPE_PRICE_STARTER || '']: { tier: 'starter', calls: 200 },
-  [process.env.STRIPE_PRICE_GROWTH || '']: { tier: 'growth', calls: 600 },
-  [process.env.STRIPE_PRICE_SCALE || '']: { tier: 'scale', calls: 1500 },
+  [process.env.STRIPE_PRICE_SOLO_MONTHLY || '']: { tier: 'solo', calls: 150 },
+  [process.env.STRIPE_PRICE_SOLO_ANNUAL || '']: { tier: 'solo', calls: 150 },
+  [process.env.STRIPE_PRICE_GROWTH_MONTHLY || '']: { tier: 'growth', calls: 500 },
+  [process.env.STRIPE_PRICE_GROWTH_ANNUAL || '']: { tier: 'growth', calls: 500 },
+  [process.env.STRIPE_PRICE_SCALE_MONTHLY || '']: { tier: 'scale', calls: 1500 },
+  [process.env.STRIPE_PRICE_SCALE_ANNUAL || '']: { tier: 'scale', calls: 1500 },
+  [process.env.STRIPE_PRICE_MULTILOC_MONTHLY || '']: { tier: 'multiloc', calls: 5000 },
+  [process.env.STRIPE_PRICE_MULTILOC_ANNUAL || '']: { tier: 'multiloc', calls: 5000 },
 }
 
 export async function POST(req: NextRequest) {

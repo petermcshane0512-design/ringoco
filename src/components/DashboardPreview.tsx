@@ -11,7 +11,7 @@ const JOBS = [
 ]
 
 const REPORTS = [
-  { title: 'Free Trial Report', date: 'March 1, 2026' },
+  { title: 'Welcome AI Consulting Report', date: 'March 1, 2026' },
   { title: 'Q1 2026 Growth Report', date: 'April 1, 2026' },
 ]
 
@@ -358,10 +358,10 @@ export default function DashboardPreview() {
               <div style={{ background: 'linear-gradient(135deg, rgba(10,168,159,0.06), rgba(10,168,159,0.1))', border: '1px solid rgba(10,168,159,0.18)', borderRadius: 11, padding: '12px 13px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 2 }}>14-Day Free Trial Active</div>
-                    <div style={{ fontSize: 8.5, color: '#4A7A80' }}>Add payment method to continue after trial</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 2 }}>Subscription · Growth Plan</div>
+                    <div style={{ fontSize: 8.5, color: '#4A7A80' }}>30-day money-back guarantee</div>
                   </div>
-                  <span style={{ fontSize: 8, fontWeight: 700, padding: '3px 9px', borderRadius: 10, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', flexShrink: 0 }}>Trial</span>
+                  <span style={{ fontSize: 8, fontWeight: 700, padding: '3px 9px', borderRadius: 10, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', flexShrink: 0 }}>Active</span>
                 </div>
               </div>
             </div>
@@ -555,7 +555,7 @@ export default function DashboardPreview() {
         <>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 20, position: 'relative', zIndex: 2 }}>
             <Link href="/sign-up" style={{ padding: '14px 36px', background: 'linear-gradient(135deg, #22C55E, #16A34A)', color: '#fff', fontWeight: 900, fontSize: 15, borderRadius: 11, textDecoration: 'none', boxShadow: '0 4px 22px rgba(34,197,94,0.38)', letterSpacing: '-0.01em' }}>
-              Start Free Trial -- 14 Days {'->'}
+              Get started {'->'}
             </Link>
             <Link href="/sign-in" style={{ padding: '14px 28px', background: '#ffffff', color: '#0B1F3A', fontWeight: 700, fontSize: 15, borderRadius: 11, border: '1px solid rgba(10,168,159,0.22)', textDecoration: 'none', boxShadow: '0 2px 12px rgba(7,27,58,0.07)' }}>
               Sign In to Dashboard

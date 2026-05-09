@@ -109,7 +109,7 @@ export default function SignUpPage() {
           style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.26)', borderRadius: 20, padding: '5px 12px', marginBottom: 16, width: 'fit-content' }}>
           <motion.div animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1.6, repeat: Infinity }}
             style={{ width: 5, height: 5, borderRadius: '50%', background: '#22C55E' }} />
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#15803D', letterSpacing: '0.08em', textTransform: 'uppercase' }}>14-Day Free Trial · No Credit Card</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#15803D', letterSpacing: '0.08em', textTransform: 'uppercase' }}>30-Day Money-Back Guarantee</span>
         </motion.div>
 
         {/* Headline */}
