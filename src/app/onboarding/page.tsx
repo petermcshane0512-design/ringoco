@@ -117,7 +117,7 @@ export default function OnboardingPage() {
         body: JSON.stringify({
           business_name: form.businessName,
           business_type: form.businessType,
-          phone: form.phone,
+          owner_phone: form.phone,
           revenue_range: form.revenueRange,
           team_size: form.teamSize,
           services: form.services.join(', '),
@@ -127,6 +127,17 @@ export default function OnboardingPage() {
         }),
       })
       await user?.update({ unsafeMetadata: { onboardingComplete: true } })
+      // Fire diagnostic in background — don't block redirect
+      fetch('/api/diagnostics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessName: form.businessName,
+          phone: form.phone,
+          businessType: form.businessType,
+          revenueRange: form.revenueRange,
+        }),
+      }).catch(() => {})
     } catch {
       // continue to dashboard even if save fails
     }
