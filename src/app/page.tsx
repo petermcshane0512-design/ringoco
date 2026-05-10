@@ -545,19 +545,44 @@ export default function HomePage() {
             flex-shrink: 0;
           }
           .pdf-thumb:hover { transform: rotate(0deg) scale(1.06); }
+          @keyframes pdfThumbDrift {
+            0%   { transform: scale(1.04) translate(0, 0); }
+            50%  { transform: scale(1.10) translate(-2px, -1px); }
+            100% { transform: scale(1.04) translate(0, 0); }
+          }
+          @keyframes pdfFoamShimmer {
+            0%, 100% { opacity: 0.55; transform: translateX(-2%) scaleY(1); }
+            50%      { opacity: 0.85; transform: translateX(2%) scaleY(1.15); }
+          }
           .pdf-thumb-photo {
             position: absolute; inset: 0;
             width: 100%; height: 100%;
             object-fit: cover; object-position: center;
             display: block;
+            animation: pdfThumbDrift 14s ease-in-out infinite;
+            will-change: transform;
+          }
+          /* Live foam line where water meets sand — subtle horizontal shimmer */
+          .pdf-thumb-foam {
+            position: absolute; left: -4%; right: -4%;
+            top: 78%;
+            height: 6px;
+            background:
+              radial-gradient(ellipse 35% 100% at 20% 50%, rgba(255,255,255,0.85), transparent 70%),
+              radial-gradient(ellipse 30% 100% at 60% 50%, rgba(255,255,255,0.65), transparent 70%),
+              radial-gradient(ellipse 35% 100% at 88% 50%, rgba(255,255,255,0.75), transparent 70%);
+            mix-blend-mode: screen;
+            animation: pdfFoamShimmer 5.5s ease-in-out infinite;
+            pointer-events: none;
+            filter: blur(1.5px);
           }
           /* Top + bottom darkening for text legibility */
           .pdf-thumb-shade {
             position: absolute; inset: 0;
             background:
               linear-gradient(180deg,
-                rgba(7,22,42,0.78) 0%,
-                rgba(7,22,42,0.42) 26%,
+                rgba(7,22,42,0.72) 0%,
+                rgba(7,22,42,0.36) 26%,
                 rgba(7,22,42,0.0) 48%,
                 rgba(7,22,42,0.0) 68%,
                 rgba(7,22,42,0.55) 100%
@@ -669,13 +694,14 @@ export default function HomePage() {
             <div className="pdf-thumb">
               <span className="pdf-thumb-pin">PDF</span>
               <Image
-                src="/hero-beach.jpg"
+                src="/sunset-beach.jpg"
                 alt=""
-                width={1440}
-                height={480}
+                width={2400}
+                height={1350}
                 className="pdf-thumb-photo"
                 aria-hidden="true"
               />
+              <div className="pdf-thumb-foam" />
               <div className="pdf-thumb-shade" />
               <div className="pdf-thumb-content">
                 <span className="pdf-thumb-logo-wrap">
