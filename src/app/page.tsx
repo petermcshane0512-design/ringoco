@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -412,7 +412,7 @@ export default function HomePage() {
           <div className="hero-blob b1" />
           <div className="hero-blob b2" />
 
-          {/* Brand callback — subtle wave silhouette at bottom (echoes logo) */}
+          {/* Brand callback â€” subtle wave silhouette at bottom (echoes logo) */}
           <svg
             viewBox="0 0 1440 90"
             preserveAspectRatio="none"
@@ -438,13 +438,13 @@ export default function HomePage() {
 
           <div className="hero-grid">
             <div>
-              <div className="hero-eyebrow">AI Office Manager · For Home Service Pros</div>
+              <div className="hero-eyebrow">The Best AI Implementation for Teams of 1-15</div>
               <h1 className="hero-h1">
                 Replace the $60K/yr office manager<br />
                 <span className="accent">you can&apos;t afford to hire.</span>
               </h1>
               <p className="hero-sub">
-                BellAveGo answers your calls, hunts down quotes, collects past-due invoices, and replies to reviews — all running in the background while you&apos;re on the truck. <strong>$497/month. No setup fee. First month free.</strong>
+                BellAveGo answers your calls, hunts down quotes, collects past-due invoices, and replies to reviews â€” all running in the background while you&apos;re on the truck. <strong>$497/month. No setup fee. First month free.</strong>
               </p>
 
               <div className="hero-actions">
@@ -476,8 +476,8 @@ export default function HomePage() {
                   <span className="hero-trust-lab">Starting / month</span>
                 </div>
                 <div className="hero-trust-item">
-                  <span className="hero-trust-num">30‑day</span>
-                  <span className="hero-trust-lab">Money‑back</span>
+                  <span className="hero-trust-num">30â€‘day</span>
+                  <span className="hero-trust-lab">Moneyâ€‘back</span>
                 </div>
               </div>
             </div>
@@ -493,19 +493,135 @@ export default function HomePage() {
       <div id="lp-preview"><DashboardPreview /></div>
 
       {/* CONSULTING PREVIEW */}
-      <section style={{ background: 'linear-gradient(180deg, #EBF7F3 0%, #F5FCFA 100%)', padding: '72px 48px 80px', borderBottom: '1px solid #D4E6DC' }}>
+      <section style={{ background: 'linear-gradient(180deg, #EBF7F3 0%, #F5FCFA 100%)', padding: '72px 48px 80px', borderBottom: '1px solid #D4E6DC', position: 'relative', overflow: 'hidden' }}>
+        <style>{`
+          @keyframes pdfFloat {
+            0%, 100% { transform: rotate(6deg) translateY(0); }
+            50%      { transform: rotate(6deg) translateY(-6px); }
+          }
+          @keyframes pdfBadgePulse {
+            0%, 100% { box-shadow: 0 8px 24px rgba(10,168,159,0.32), 0 0 0 0 rgba(94,234,212,0.4); }
+            50%      { box-shadow: 0 12px 32px rgba(10,168,159,0.5), 0 0 0 8px rgba(94,234,212,0); }
+          }
+          .pdf-float {
+            position: absolute;
+            top: 64px;
+            right: 48px;
+            display: flex; align-items: center; gap: 14px;
+            z-index: 5;
+            text-decoration: none;
+          }
+          .pdf-thumb {
+            width: 92px; height: 116px;
+            border-radius: 8px;
+            background: linear-gradient(160deg, #fff 0%, #F5FCFA 100%);
+            border: 1px solid rgba(10,168,159,0.22);
+            box-shadow: 0 14px 32px rgba(11,31,58,0.18), 0 4px 10px rgba(11,31,58,0.08);
+            position: relative;
+            overflow: hidden;
+            animation: pdfFloat 4.2s ease-in-out infinite;
+            transition: transform 0.24s ease;
+            flex-shrink: 0;
+          }
+          .pdf-thumb:hover { transform: rotate(0deg) scale(1.06); }
+          .pdf-thumb-head {
+            height: 24px;
+            background: linear-gradient(135deg, #0B1F3A, #163356);
+            display: flex; align-items: center; padding: 0 7px; gap: 4px;
+          }
+          .pdf-thumb-dot { width: 4px; height: 4px; border-radius: 50%; background: #5EEAD4; }
+          .pdf-thumb-stripe {
+            height: 5px;
+            background: linear-gradient(90deg, #5EEAD4 0%, #0AA89F 100%);
+          }
+          .pdf-thumb-body { padding: 8px 8px 6px; display: flex; flex-direction: column; gap: 4px; }
+          .pdf-thumb-line {
+            height: 4px; border-radius: 2px;
+            background: rgba(11,31,58,0.10);
+          }
+          .pdf-thumb-line.lg { height: 6px; background: rgba(11,31,58,0.18); }
+          .pdf-thumb-pin {
+            position: absolute;
+            top: -7px; right: -7px;
+            background: linear-gradient(135deg, #22C55E, #15803D);
+            color: #fff;
+            font-size: 8.5px; font-weight: 800;
+            padding: 3px 7px; border-radius: 99px;
+            letter-spacing: 0.04em;
+            box-shadow: 0 4px 12px rgba(34,197,94,0.42);
+          }
+          .pdf-cta {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 11px 18px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #0AA89F, #0D8F87);
+            color: #fff;
+            font-weight: 800; font-size: 13px;
+            letter-spacing: -0.2px;
+            border: 1px solid rgba(94,234,212,0.4);
+            animation: pdfBadgePulse 2.4s ease-in-out infinite;
+            transition: transform 0.22s ease, filter 0.22s ease;
+            white-space: nowrap;
+          }
+          .pdf-cta:hover { transform: translateY(-2px) scale(1.04); filter: brightness(1.10); }
+          .pdf-cta-arrow { transition: transform 0.22s ease; }
+          .pdf-float:hover .pdf-cta-arrow { transform: translateX(3px); }
+          .pdf-cta-stack { display: flex; flex-direction: column; gap: 4px; }
+          .pdf-cta-tag {
+            font-size: 10px; font-weight: 700; color: #0AA89F;
+            letter-spacing: 0.14em; text-transform: uppercase;
+          }
+          @media (max-width: 880px) {
+            .pdf-float { display: none; }
+          }
+        `}</style>
+
+        <Link href="/sample-report" className="pdf-float" aria-label="View a sample BellAveGo consulting report">
+          <div className="pdf-thumb">
+            <span className="pdf-thumb-pin">PDF</span>
+            <div className="pdf-thumb-head">
+              <span className="pdf-thumb-dot" />
+              <span className="pdf-thumb-dot" style={{ background: 'rgba(94,234,212,0.45)' }} />
+              <span className="pdf-thumb-dot" style={{ background: 'rgba(94,234,212,0.25)' }} />
+            </div>
+            <div className="pdf-thumb-stripe" />
+            <div className="pdf-thumb-body">
+              <div className="pdf-thumb-line lg" style={{ width: '78%' }} />
+              <div className="pdf-thumb-line" style={{ width: '92%' }} />
+              <div className="pdf-thumb-line" style={{ width: '85%' }} />
+              <div className="pdf-thumb-line" style={{ width: '60%' }} />
+              <div style={{ display: 'flex', gap: 3, marginTop: 4 }}>
+                <div style={{ flex: 1, height: 14, borderRadius: 3, background: 'rgba(10,168,159,0.18)' }} />
+                <div style={{ flex: 1, height: 14, borderRadius: 3, background: 'rgba(34,197,94,0.18)' }} />
+                <div style={{ flex: 1, height: 14, borderRadius: 3, background: 'rgba(245,158,11,0.18)' }} />
+              </div>
+              <div className="pdf-thumb-line" style={{ width: '70%', marginTop: 3 }} />
+              <div className="pdf-thumb-line" style={{ width: '50%' }} />
+            </div>
+          </div>
+          <div className="pdf-cta-stack">
+            <span className="pdf-cta-tag">BellAveGo Â· PDF</span>
+            <span className="pdf-cta">
+              View a report
+              <svg className="pdf-cta-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </span>
+          </div>
+        </Link>
+
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 36 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#0AA89F', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Quarterly consulting · Included on Growth+</p>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#0AA89F', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Quarterly consulting Â· Included on Growth+</p>
             <h2 style={{ fontSize: 'clamp(28px, 3.8vw, 42px)', fontWeight: 900, color: '#0B1F3A', letterSpacing: '-1px', marginBottom: 12, lineHeight: 1.1 }}>
-              A real consulting report —<br /><span style={{ color: '#0AA89F' }}>built from your data, every quarter.</span>
+              A real consulting report â€”<br /><span style={{ color: '#0AA89F' }}>built from your data, every quarter.</span>
             </h2>
             <p style={{ fontSize: 16, color: '#4A7A80', maxWidth: 580, margin: '0 auto', lineHeight: 1.6 }}>
-              Most AI receptionists answer your phone. BellAveGo also pulls your dashboard, your service area&apos;s census + Google Places data, and ships you a polished consulting report — quarterly on Growth, monthly on Multi-location.
+              Most AI receptionists answer your phone. BellAveGo also pulls your dashboard, your service area&apos;s census + Google Places data, and ships you a polished consulting report â€” quarterly on Growth, monthly on Multi-location.
             </p>
           </div>
 
-          {/* What's inside — 3-up feature row */}
+          {/* What's inside â€” 3-up feature row */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}>
             {[
               {
@@ -516,7 +632,7 @@ export default function HomePage() {
                   </svg>
                 ),
                 title: 'Top 3 revenue gaps',
-                desc: 'AI scans your call data and spots the 3 highest-leverage moves. With dollars. e.g. "Saturday 10am–2pm gap = +$5,200/mo at your close rates."',
+                desc: 'AI scans your call data and spots the 3 highest-leverage moves. With dollars. e.g. "Saturday 10amâ€“2pm gap = +$5,200/mo at your close rates."',
               },
               {
                 icon: (
@@ -536,7 +652,7 @@ export default function HomePage() {
                   </svg>
                 ),
                 title: '90-day action plan',
-                desc: '5 prioritized moves — ranked by impact ÷ effort, with timelines. Not generic advice. Specific to your data, your trade, your zip.',
+                desc: '5 prioritized moves â€” ranked by impact Ã· effort, with timelines. Not generic advice. Specific to your data, your trade, your zip.',
               },
             ].map(f => (
               <div key={f.title} style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.16)', borderRadius: 14, padding: '20px 22px', boxShadow: '0 2px 14px rgba(10,168,159,0.06)' }}>
@@ -564,11 +680,11 @@ export default function HomePage() {
           `}</style>
 
           <div className="cons-grid">
-            {/* LEFT — report image with overlay CTA */}
+            {/* LEFT â€” report image with overlay CTA */}
             <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', boxShadow: '0 24px 70px rgba(7,27,58,0.18)', border: '1px solid rgba(10,168,159,0.18)', minHeight: 420 }}>
               <Image
                 src="/Consulting1.png"
-                alt="BellAveGo Consulting Report — sample"
+                alt="BellAveGo Consulting Report â€” sample"
                 width={1400}
                 height={900}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
@@ -577,7 +693,7 @@ export default function HomePage() {
               <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                 <div style={{ color: '#fff' }}>
                   <div style={{ fontSize: 10.5, fontWeight: 700, color: '#5EEAD4', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 3 }}>Sample report</div>
-                  <div style={{ fontSize: 15.5, fontWeight: 800, letterSpacing: '-0.3px' }}>Q1 2026 · Mike&apos;s HVAC · Minneapolis</div>
+                  <div style={{ fontSize: 15.5, fontWeight: 800, letterSpacing: '-0.3px' }}>Q1 2026 Â· Mike&apos;s HVAC Â· Minneapolis</div>
                 </div>
                 <Link href="/sample-report" style={{
                   display: 'inline-flex', alignItems: 'center', gap: 7,
@@ -594,7 +710,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* RIGHT — live preview cards from the actual report */}
+            {/* RIGHT â€” live preview cards from the actual report */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
 
               {/* Card 1: Top opportunity */}
@@ -607,8 +723,8 @@ export default function HomePage() {
                 animationDelay: '0.05s',
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <span style={{ fontSize: 10, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.12em', textTransform: 'uppercase' }}>§4 · Top opportunity</span>
-                  <span style={{ fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 99, background: 'rgba(34,197,94,0.14)', color: '#15803D', letterSpacing: '0.04em', textTransform: 'uppercase' }}>● High confidence</span>
+                  <span style={{ fontSize: 10, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Â§4 Â· Top opportunity</span>
+                  <span style={{ fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 99, background: 'rgba(34,197,94,0.14)', color: '#15803D', letterSpacing: '0.04em', textTransform: 'uppercase' }}>â— High confidence</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
                   <span style={{ fontSize: 26, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.5px', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>+${SAMPLE_REPORT.opportunities[0].monthlyValue.toLocaleString()}</span>
@@ -628,7 +744,7 @@ export default function HomePage() {
                 animationDelay: '0.20s',
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <span style={{ fontSize: 10, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.12em', textTransform: 'uppercase' }}>§5 · Service area pinpoints</span>
+                  <span style={{ fontSize: 10, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Â§5 Â· Service area pinpoints</span>
                   <span style={{ fontSize: 10, fontWeight: 600, color: '#7AAAB2' }}>{SAMPLE_REPORT.meta.serviceArea.length} ZIPs</span>
                 </div>
                 <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', aspectRatio: '21/9', background: '#fff' }}>
@@ -684,7 +800,7 @@ export default function HomePage() {
                 animationDelay: '0.35s',
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <span style={{ fontSize: 10, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.12em', textTransform: 'uppercase' }}>§6 · Outreach targets</span>
+                  <span style={{ fontSize: 10, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Â§6 Â· Outreach targets</span>
                   <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 99, background: 'rgba(11,31,58,0.06)', color: '#4A6670', letterSpacing: '0.04em', textTransform: 'uppercase' }}>TCPA-safe</span>
                 </div>
                 {SAMPLE_REPORT.outreachTargets.slice(0, 2).map((t, i) => (
@@ -706,7 +822,7 @@ export default function HomePage() {
                   </div>
                 ))}
                 <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px dashed rgba(10,168,159,0.18)', fontSize: 11, color: '#7AAAB2', textAlign: 'center', fontWeight: 600 }}>
-                  + {SAMPLE_REPORT.outreachTargets.length - 2} more in the full report →
+                  + {SAMPLE_REPORT.outreachTargets.length - 2} more in the full report â†’
                 </div>
               </div>
             </div>
@@ -729,7 +845,7 @@ export default function HomePage() {
               </div>
             </div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontWeight: 600 }}>
-              Powered by Claude Sonnet · Census ACS · Google Places
+              Powered by Claude Sonnet Â· Census ACS Â· Google Places
             </div>
           </div>
         </div>
@@ -743,10 +859,10 @@ export default function HomePage() {
             {[...Array(2)].map((_, repeat) => (
               <div key={repeat} style={{ display: 'flex' }}>
                 {[
-                  { icon: '❄️', label: 'HVAC' }, { icon: '🪠', label: 'Plumbing' }, { icon: '⚡', label: 'Electrical' },
-                  { icon: '🧹', label: 'Cleaning' }, { icon: '🌿', label: 'Landscaping' }, { icon: '🔨', label: 'Handyman' },
-                  { icon: '🏠', label: 'Roofing' }, { icon: '🔧', label: 'Appliance Repair' }, { icon: '🚗', label: 'Auto Detailing' },
-                  { icon: '🐾', label: 'Pet Services' }, { icon: '💧', label: 'Pool & Spa' }, { icon: '🪟', label: 'Window Cleaning' },
+                  { icon: 'â„ï¸', label: 'HVAC' }, { icon: 'ðŸª ', label: 'Plumbing' }, { icon: 'âš¡', label: 'Electrical' },
+                  { icon: 'ðŸ§¹', label: 'Cleaning' }, { icon: 'ðŸŒ¿', label: 'Landscaping' }, { icon: 'ðŸ”¨', label: 'Handyman' },
+                  { icon: 'ðŸ ', label: 'Roofing' }, { icon: 'ðŸ”§', label: 'Appliance Repair' }, { icon: 'ðŸš—', label: 'Auto Detailing' },
+                  { icon: 'ðŸ¾', label: 'Pet Services' }, { icon: 'ðŸ’§', label: 'Pool & Spa' }, { icon: 'ðŸªŸ', label: 'Window Cleaning' },
                 ].map(s => (
                   <div key={s.label + repeat} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 28px', borderRight: '1px solid #D4E6DC', whiteSpace: 'nowrap' }}>
                     <span style={{ fontSize: 18 }}>{s.icon}</span>
@@ -776,23 +892,23 @@ export default function HomePage() {
             <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', boxShadow: '0 16px 50px rgba(11,31,58,0.13)' }}>
               <Image src="/customer.png" alt="Contractor on the job" width={600} height={420} style={{ width: '100%', height: 340, objectFit: 'cover', display: 'block' }} />
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(11,31,58,0.88) 0%, transparent 100%)', padding: '36px 26px 22px' }}>
-                <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, margin: 0 }}>💬 Customer gets handled instantly</p>
+                <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, margin: 0 }}>ðŸ’¬ Customer gets handled instantly</p>
                 <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, margin: '5px 0 0' }}>Booked, confirmed, and reminded automatically.</p>
               </div>
             </div>
             <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', boxShadow: '0 16px 50px rgba(11,31,58,0.13)' }}>
               <Image src="/electrician.png" alt="Customer getting confirmation" width={600} height={420} style={{ width: '100%', height: 340, objectFit: 'cover', display: 'block' }} />
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(11,31,58,0.88) 0%, transparent 100%)', padding: '36px 26px 22px' }}>
-                <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, margin: 0 }}>📍 Contractor can&apos;t answer</p>
+                <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, margin: 0 }}>ðŸ“ Contractor can&apos;t answer</p>
                 <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, margin: '5px 0 0' }}>Phone rings while you&apos;re on the job.</p>
               </div>
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 18 }}>
             {[
-              { icon: '📞', title: 'BellAveGo answers', desc: 'Every call, every time — 24/7' },
-              { icon: '📅', title: 'Job gets booked', desc: 'Added to your schedule instantly' },
-              { icon: '💬', title: 'Customer texted', desc: 'Confirmation + reminder, automatic' },
+              { icon: 'ðŸ“ž', title: 'BellAveGo answers', desc: 'Every call, every time â€” 24/7' },
+              { icon: 'ðŸ“…', title: 'Job gets booked', desc: 'Added to your schedule instantly' },
+              { icon: 'ðŸ’¬', title: 'Customer texted', desc: 'Confirmation + reminder, automatic' },
             ].map(s => (
               <div key={s.title} style={{ background: '#fff', border: '1px solid #D4E6DC', borderRadius: 14, padding: '26px 22px', textAlign: 'center', boxShadow: '0 2px 14px rgba(32,178,170,0.07)' }}>
                 <div style={{ fontSize: 36, marginBottom: 12 }}>{s.icon}</div>
@@ -814,20 +930,20 @@ export default function HomePage() {
           {[
             {
               name: 'Receptionist', price: 179, tier: 'receptionist', calls: 'Up to 500',
-              desc: 'AI captures every call. You close it in one tap — confirm, invoice, call back, or just acknowledge.',
-              features: ['24/7 AI call answering', 'Captures name · phone · service · address · preferred time', 'Instant text summary to your phone', 'One-tap actions on every call', 'Emergency routing to your cell', 'Live dashboard + transcripts + recordings', '3 quarterly intelligence reports/year'],
+              desc: 'AI captures every call. You close it in one tap â€” confirm, invoice, call back, or just acknowledge.',
+              features: ['24/7 AI call answering', 'Captures name Â· phone Â· service Â· address Â· preferred time', 'Instant text summary to your phone', 'One-tap actions on every call', 'Emergency routing to your cell', 'Live dashboard + transcripts + recordings', '3 quarterly intelligence reports/year'],
               popular: false, customCta: false,
             },
             {
               name: 'AI Office Manager', price: 497, tier: 'officemgr', calls: 'Unlimited',
-              desc: 'Replace the $60K/yr office manager you can’t afford to hire. Calls + quote follow-up + collections + reviews.',
+              desc: 'Replace the $60K/yr office manager you canâ€™t afford to hire. Calls + quote follow-up + collections + reviews.',
               features: ['Everything in Receptionist, plus:', 'Unlimited calls', 'AI Quote Hunter (auto follow-ups day 2/7/14)', 'AI Collections (nightly past-due chase)', 'AI Reviews (drafts replies for one-tap approval)', 'Smart suggestions on call summaries', 'Jobber / HousecallPro / ServiceTitan integration', '6 bi-monthly intelligence reports/year'],
               popular: true, customCta: false,
             },
             {
               name: 'Concierge', price: 997, tier: 'concierge', calls: 'Unlimited',
               desc: 'Everything autonomous. Multi-location ready. White-glove onboarding. We run the back office for you.',
-              features: ['Everything in AI Office Manager, plus:', 'Auto-confirm mode (when you trust it)', 'Multi-location support (up to 5 numbers)', 'Custom AI prompt tuning', 'AI Photo Estimator · Financing Closer · Recruiter (Q3 2026)', 'White-glove onboarding (we wire up your CRM)', 'Priority support — 24h SLA, dedicated Slack', 'API access for custom integrations', '12 monthly intelligence reports/year'],
+              features: ['Everything in AI Office Manager, plus:', 'Auto-confirm mode (when you trust it)', 'Multi-location support (up to 5 numbers)', 'Custom AI prompt tuning', 'AI Photo Estimator Â· Financing Closer Â· Recruiter (Q3 2026)', 'White-glove onboarding (we wire up your CRM)', 'Priority support â€” 24h SLA, dedicated Slack', 'API access for custom integrations', '12 monthly intelligence reports/year'],
               popular: false, customCta: false,
             },
           ].map(plan => (
@@ -856,8 +972,8 @@ export default function HomePage() {
                   </>
                 )}
               </div>
-              <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.38)' : '#7AAAB2', marginBottom: 6 }}>{plan.customCta ? 'pricing per location' : 'per month · cancel anytime'}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>{plan.customCta ? 'White-glove onboarding included' : (plan.setupBadge || 'No setup fee · No contracts')}</div>
+              <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.38)' : '#7AAAB2', marginBottom: 6 }}>{plan.customCta ? 'pricing per location' : 'per month Â· cancel anytime'}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>No setup fee Â· No contracts Â· First month free</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: plan.popular ? '#18AFA8' : '#0AA89F', marginBottom: 16 }}>{plan.calls} calls</div>
               <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.6)' : '#4A7A80', marginBottom: 24, lineHeight: 1.6 }}>{plan.desc}</div>
               <div style={{ marginBottom: 24 }}>
@@ -867,7 +983,7 @@ export default function HomePage() {
                     <div key={f + idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '6px 0', borderBottom: idx === (plan.features!.length - 1) ? 'none' : `1px solid ${plan.popular ? 'rgba(255,255,255,0.07)' : 'rgba(10,168,159,0.08)'}` }}>
                       {!isHeader && (
                         <div style={{ width: 16, height: 16, background: plan.popular ? '#18AFA8' : '#22C55E', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
-                          <span style={{ color: '#fff', fontSize: 9, fontWeight: 900 }}>✓</span>
+                          <span style={{ color: '#fff', fontSize: 9, fontWeight: 900 }}>âœ“</span>
                         </div>
                       )}
                       <span style={{ fontSize: 12, color: isHeader ? (plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2') : (plan.popular ? 'rgba(255,255,255,0.82)' : '#0B1F3A'), fontWeight: isHeader ? 700 : 500, fontStyle: isHeader ? 'italic' : 'normal', lineHeight: 1.4 }}>{f}</span>
@@ -877,19 +993,19 @@ export default function HomePage() {
               </div>
               {isSignedIn ? (
                 <Link href={`/pricing?tier=${plan.tier}&autocheckout=1`} style={{ display: 'block', textAlign: 'center', padding: '13px', background: plan.popular ? '#22C55E' : 'linear-gradient(135deg,#0AA89F,#0D8F87)', borderRadius: 10, textDecoration: 'none', color: '#fff', fontWeight: 800, fontSize: 14, border: 'none' }}>
-                  Start Free Month →
+                  Start Free Month â†’
                 </Link>
               ) : (
                 <Link href={`/pricing?tier=${plan.tier}`} style={{ display: 'block', textAlign: 'center', padding: '13px', background: plan.popular ? '#22C55E' : 'rgba(10,168,159,0.08)', borderRadius: 10, textDecoration: 'none', color: plan.popular ? '#fff' : '#0AA89F', fontWeight: 800, fontSize: 14, border: plan.popular ? 'none' : '1px solid rgba(10,168,159,0.2)' }}>
-                  Get started →
+                  Get started â†’
                 </Link>
               )}
             </div>
           ))}
         </div>
         <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 16, lineHeight: 1.6 }}>
-          $0 setup · Month-to-month · First month free · 17% off annual.<br />
-          <span style={{ fontWeight: 700, color: '#0AA89F' }}>Typical $1M HVAC shop sees $18K/mo lift from the 4-AI bundle</span> — 37x return on $497.<br />
+          $0 setup Â· Month-to-month Â· First month free Â· 17% off annual.<br />
+          <span style={{ fontWeight: 700, color: '#0AA89F' }}>Typical $1M HVAC shop sees $18K/mo lift from the 4-AI bundle</span> â€” 37x return on $497.<br />
           90-day money-back if we don&apos;t add at least 5 booked jobs.
         </p>
       </section>
@@ -905,15 +1021,15 @@ export default function HomePage() {
         <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
           {isSignedIn ? (
             <Link href="/dashboard" className="dash-pulse" style={{ padding: '16px 46px', background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 16 }}>
-              Dashboard →
+              Dashboard â†’
             </Link>
           ) : (
-            <Link href="/sign-up" className="cta-pulse" style={{ padding: '16px 46px', background: '#22C55E', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 16 }}>
-              Get started →
+            <Link href="/pricing" className="cta-pulse" style={{ padding: '16px 46px', background: '#22C55E', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 16 }}>
+              Get started â†’
             </Link>
           )}
-          <a href="tel:+16514677829" style={{ padding: '16px 30px', background: 'rgba(255,255,255,0.08)', borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.18)', color: '#fff', fontWeight: 700, fontSize: 16, textDecoration: 'none' }} title="Call (651) 467-7829 — live AI demo">
-            📞 Call the AI Demo
+          <a href="tel:+16514677829" style={{ padding: '16px 30px', background: 'rgba(255,255,255,0.08)', borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.18)', color: '#fff', fontWeight: 700, fontSize: 16, textDecoration: 'none' }} title="Call (651) 467-7829 â€” live AI demo">
+            ðŸ“ž Call the AI Demo
           </a>
         </div>
         <p style={{ color: 'rgba(255,255,255,0.28)', fontSize: 13, marginTop: 18 }}>No credit card. No contract. No BS.</p>
@@ -924,7 +1040,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <Image src="/logo.png" alt="BellAveGo" width={300} height={100} style={{ objectFit: 'contain' }} />
           <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
-          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>AI Office Manager for home service pros · From $179/mo · First month free · 90-day guarantee</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>AI Office Manager for home service pros Â· From $179/mo Â· First month free Â· 90-day guarantee</p>
         </div>
       </footer>
 
