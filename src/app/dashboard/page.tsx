@@ -213,9 +213,9 @@ export default function DashboardPage() {
       {/* Activation banner */}
       {profile && !profile.is_active && (() => {
         const TIERS = {
-          foundation: { label: "Foundation", monthly: 129, annual: 1290, setup: 0,   sub: "AI receptionist + dashboard. The basics, done right." },
-          growth:     { label: "Growth",     monthly: 279, annual: 2790, setup: 0,   sub: "+ Quarterly consulting reports + Reviews automation + Spanish" },
-          premium:    { label: "Premium",    monthly: 499, annual: 4990, setup: 497, sub: "+ Custom AI voice + Monthly call w/ founder + ServiceTitan integration" },
+          foundation: { label: "Foundation", monthly: 129, annual: 1290, setup: 0,   sub: "10 AI bookings/mo · Welcome report · Dashboard" },
+          growth:     { label: "Growth",     monthly: 279, annual: 2790, setup: 0,   sub: "Unlimited bookings · Quarterly reports · Reviews automation" },
+          premium:    { label: "Premium",    monthly: 499, annual: 4990, setup: 497, sub: "Monthly reports · Custom voice · Founder calls · Integrations" },
         } as const;
         const cur = TIERS[tier];
         const subToday = interval === "monthly" ? cur.monthly : cur.annual;

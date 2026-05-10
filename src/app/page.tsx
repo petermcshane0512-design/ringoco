@@ -589,9 +589,24 @@ export default function HomePage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20, maxWidth: 960, margin: '0 auto 20px' }}>
           {[
-            { name: 'Foundation', price: 129, calls: 'Unlimited', desc: 'AI receptionist, SMS booking, dashboard, welcome consulting report.', popular: false, customCta: false },
-            { name: 'Growth', price: 279, calls: 'Unlimited', desc: '+ Quarterly AI consulting reports, Google Reviews automation, Spanish, calendar sync.', popular: true, customCta: false },
-            { name: 'Premium', price: 499, calls: 'Unlimited', desc: '+ Custom AI voice, monthly 1-on-1 with founder, ServiceTitan integration. $497 setup.', popular: false, customCta: false },
+            {
+              name: 'Foundation', price: 129, calls: '10 bookings / month',
+              desc: 'Try BellAveGo with low risk. Caps at 10 AI-booked appointments per month — beyond that, calls route to voicemail.',
+              features: ['AI answers every missed call 24/7', 'SMS booking + customer confirmations', 'Welcome AI consulting report', 'Live dashboard & call logs', '30-day money-back guarantee'],
+              popular: false, customCta: false,
+            },
+            {
+              name: 'Growth', price: 279, calls: 'Unlimited',
+              desc: 'For growing shops. Unlimited bookings + the AI consulting layer that makes you smarter every quarter.',
+              features: ['Everything in Foundation, plus:', 'Quarterly AI consulting reports + market intel', 'Auto Google Reviews requests post-job', 'Spanish-language receptionist mode', 'Calendar sync (Google Cal)', 'Customer confirmation webview (cuts no-shows 25%)'],
+              popular: true, customCta: false,
+            },
+            {
+              name: 'Premium', price: 499, calls: 'Unlimited',
+              desc: 'Built to 2x your annual revenue. AI in every part of your business, plus founder-level access.',
+              features: ['Everything in Growth, plus:', 'Monthly consulting reports (12/yr)', 'Live local market opportunity dashboard', 'Custom AI voice (ElevenLabs cloning)', 'Auto-rebooking AI for maintenance customers', '3-tier estimate generator (good/better/best)', 'Dynamic pricing recommendations', 'Monthly 1-on-1 with founder Peter', 'ServiceTitan / Housecall Pro integration', 'Priority support (2-hour SLA)'],
+              popular: false, customCta: false, setupBadge: '+ $497 onboarding',
+            },
           ].map(plan => (
             <div key={plan.name} style={{
               background: plan.popular ? 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)' : '#fff',
@@ -619,18 +634,23 @@ export default function HomePage() {
                 )}
               </div>
               <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.38)' : '#7AAAB2', marginBottom: 6 }}>{plan.customCta ? 'pricing per location' : 'per month · cancel anytime'}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>{plan.customCta ? 'White-glove onboarding included' : 'No setup fee · No contracts'}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>{plan.customCta ? 'White-glove onboarding included' : (plan.setupBadge || 'No setup fee · No contracts')}</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: plan.popular ? '#18AFA8' : '#0AA89F', marginBottom: 16 }}>{plan.calls} calls</div>
               <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.6)' : '#4A7A80', marginBottom: 24, lineHeight: 1.6 }}>{plan.desc}</div>
               <div style={{ marginBottom: 24 }}>
-                {['AI answers every missed call 24/7', 'Job booking + SMS confirmation', 'Quarterly AI consulting reports', 'Local market intelligence', '30-day money-back guarantee'].map(f => (
-                  <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: `1px solid ${plan.popular ? 'rgba(255,255,255,0.07)' : 'rgba(10,168,159,0.08)'}` }}>
-                    <div style={{ width: 17, height: 17, background: plan.popular ? '#18AFA8' : '#22C55E', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <span style={{ color: '#fff', fontSize: 9, fontWeight: 900 }}>✓</span>
+                {(plan.features ?? []).map((f, idx) => {
+                  const isHeader = f.endsWith(':') || f.endsWith('plus:')
+                  return (
+                    <div key={f + idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '6px 0', borderBottom: idx === (plan.features!.length - 1) ? 'none' : `1px solid ${plan.popular ? 'rgba(255,255,255,0.07)' : 'rgba(10,168,159,0.08)'}` }}>
+                      {!isHeader && (
+                        <div style={{ width: 16, height: 16, background: plan.popular ? '#18AFA8' : '#22C55E', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                          <span style={{ color: '#fff', fontSize: 9, fontWeight: 900 }}>✓</span>
+                        </div>
+                      )}
+                      <span style={{ fontSize: 12, color: isHeader ? (plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2') : (plan.popular ? 'rgba(255,255,255,0.82)' : '#0B1F3A'), fontWeight: isHeader ? 700 : 500, fontStyle: isHeader ? 'italic' : 'normal', lineHeight: 1.4 }}>{f}</span>
                     </div>
-                    <span style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.78)' : '#0B1F3A' }}>{f}</span>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
               {isSignedIn ? (
                 <Link href="/dashboard" style={{ display: 'block', textAlign: 'center', padding: '13px', background: plan.popular ? 'linear-gradient(135deg,#0AA89F,#0D8F87)' : 'rgba(10,168,159,0.08)', borderRadius: 10, textDecoration: 'none', color: plan.popular ? '#fff' : '#0AA89F', fontWeight: 800, fontSize: 14, border: plan.popular ? 'none' : '1px solid rgba(10,168,159,0.2)' }}>

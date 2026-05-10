@@ -138,6 +138,31 @@ export async function POST(req: NextRequest) {
   const serviceArea = profile?.service_area || 'the local area'
   const aiTone = profile?.ai_tone || 'friendly'
 
+  // ── Foundation tier: cap at 10 booked appointments per calendar month ──
+  // Demo number is exempt (always full experience for prospects).
+  const profileWithTier = profile as (typeof profile & { plan_tier?: string; user_id?: string }) | null
+  if (!isDemo && profileWithTier?.plan_tier === 'foundation' && profileWithTier?.user_id) {
+    const monthStart = new Date()
+    monthStart.setDate(1)
+    monthStart.setHours(0, 0, 0, 0)
+    const { count } = await supabase
+      .from('jobs')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', profileWithTier.user_id)
+      .neq('status', 'cancelled')
+      .gte('created_at', monthStart.toISOString())
+    if ((count ?? 0) >= 10) {
+      const VR = (await import('twilio')).twiml.VoiceResponse
+      const capTwiml = new VR()
+      capTwiml.say(
+        { voice: 'Polly.Joanna-Neural' },
+        `Hi, thanks for calling ${businessName}. We've handled our priority bookings for the month — please call back next month, or text ${ownerPhone} for anything urgent. Thank you!`
+      )
+      capTwiml.hangup()
+      return new NextResponse(capTwiml.toString(), { headers: { 'Content-Type': 'text/xml' } })
+    }
+  }
+
   const toneInstruction =
     aiTone === 'professional'
       ? 'Use a polished, formal tone.'
