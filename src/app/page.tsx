@@ -506,7 +506,7 @@ export default function HomePage() {
           .consult-img { display: block; width: 100%; height: auto; border-radius: 22px; box-shadow: 0 30px 80px rgba(7,27,58,0.18); border: 1px solid rgba(10,168,159,0.18); }
           .pdf-float-img {
             position: absolute;
-            top: 64px; right: 96px;
+            top: 64px; right: 28px;
             display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
             z-index: 5;
             text-decoration: none;
@@ -533,77 +533,109 @@ export default function HomePage() {
           .pdf-float-img:hover .pdf-cta { transform: translateY(-1px); filter: brightness(1.08); }
           .pdf-float-img:hover .pdf-cta-arrow { transform: translateX(3px); }
           .pdf-thumb {
-            width: 168px; height: 110px;
-            border-radius: 9px;
+            width: 144px; height: 196px;
+            border-radius: 11px;
             background:
-              radial-gradient(380px 200px at 78% 30%, rgba(10,168,159,0.42), transparent 65%),
-              radial-gradient(280px 200px at 12% 90%, rgba(94,234,212,0.22), transparent 70%),
-              linear-gradient(135deg, #050E1F 0%, #0B1F3A 50%, #0A2E45 100%);
-            border: 1px solid rgba(94,234,212,0.30);
-            box-shadow: 0 14px 32px rgba(11,31,58,0.30), 0 4px 10px rgba(11,31,58,0.14);
+              radial-gradient(circle 22px at 76% 36%, rgba(255,250,210,0.95) 0%, rgba(255,210,140,0.65) 30%, rgba(255,180,100,0) 75%),
+              linear-gradient(180deg,
+                #1F2D4F 0%,
+                #4A2D62 12%,
+                #B33C5C 22%,
+                #FF7B47 30%,
+                #FFB17A 38%,
+                #FFE0B5 44%,
+                #6FBFD0 50%,
+                #2E84A0 65%,
+                #4DA8BD 76%,
+                #E8C896 84%,
+                #D2A570 100%
+              );
+            border: 1px solid rgba(94,234,212,0.40);
+            box-shadow: 0 18px 40px rgba(11,31,58,0.32), 0 6px 14px rgba(11,31,58,0.18);
             position: relative;
             overflow: hidden;
-            padding: 9px 10px;
-            display: flex; flex-direction: column; gap: 4px;
+            padding: 11px 12px 10px;
+            display: flex; flex-direction: column; gap: 2px;
             animation: pdfFloat 4.2s ease-in-out infinite;
             transition: transform 0.24s ease;
             flex-shrink: 0;
           }
           .pdf-thumb:hover { transform: rotate(0deg) scale(1.06); }
+          /* Sun glow halo */
           .pdf-thumb::before {
             content: '';
-            position: absolute; inset: 0;
-            background-image:
-              linear-gradient(rgba(94,234,212,0.06) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(94,234,212,0.06) 1px, transparent 1px);
-            background-size: 14px 14px;
-            mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 50%, transparent 100%);
-            -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 50%, transparent 100%);
+            position: absolute;
+            top: 28%; right: 16%;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,235,180,0.55) 0%, rgba(255,180,100,0.18) 40%, transparent 75%);
             pointer-events: none;
+          }
+          /* Foam line at water-sand boundary */
+          .pdf-thumb::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; top: 82%;
+            height: 1.5px;
+            background: rgba(255,255,255,0.65);
+            box-shadow: 0 -1px 3px rgba(255,255,255,0.4);
+            pointer-events: none;
+          }
+          .pdf-thumb-boat {
+            position: absolute;
+            left: 32px; top: 71%;
+            width: 18px; height: 16px;
+            color: rgba(11,31,58,0.85);
+            opacity: 0.75;
+            pointer-events: none;
+            z-index: 1;
           }
           .pdf-thumb-eyebrow {
             display: inline-flex; align-items: center; gap: 4px;
             font-size: 7px; font-weight: 800;
-            color: #5EEAD4;
-            letter-spacing: 0.16em;
+            color: #fff;
+            letter-spacing: 0.18em;
             text-transform: uppercase;
-            position: relative; z-index: 1;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.55);
+            position: relative; z-index: 2;
           }
           .pdf-thumb-eyebrow::before {
             content: ''; width: 4px; height: 4px; border-radius: 50%;
-            background: #22C55E; box-shadow: 0 0 5px rgba(34,197,94,0.7);
+            background: #22C55E; box-shadow: 0 0 6px rgba(34,197,94,0.85);
           }
           .pdf-thumb-business {
             font-size: 11px; font-weight: 800; color: #fff;
-            letter-spacing: -0.3px; line-height: 1.1; margin-top: 1px;
-            position: relative; z-index: 1;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            letter-spacing: -0.3px; line-height: 1.1; margin-top: 2px;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+            position: relative; z-index: 2;
           }
           .pdf-thumb-headline {
-            font-size: 13px; font-weight: 900;
-            background: linear-gradient(135deg, #5EEAD4 0%, #2DD4BF 50%, #0AA89F 100%);
-            -webkit-background-clip: text; background-clip: text; color: transparent;
-            line-height: 1.05; letter-spacing: -0.5px;
-            position: relative; z-index: 1; margin-top: 1px;
+            font-size: 18px; font-weight: 900; color: #fff;
+            line-height: 1.0; letter-spacing: -0.6px; margin-top: 4px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.55), 0 0 18px rgba(255,200,120,0.4);
+            position: relative; z-index: 2;
           }
           .pdf-thumb-sub {
-            font-size: 7.5px; font-weight: 600;
-            color: rgba(255,255,255,0.6);
-            letter-spacing: 0.04em;
-            position: relative; z-index: 1;
+            font-size: 8px; font-weight: 700;
+            color: rgba(255,255,255,0.92);
+            letter-spacing: 0.06em;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            position: relative; z-index: 2;
           }
           .pdf-thumb-meta {
             display: flex; gap: 3px; flex-wrap: wrap;
             margin-top: auto;
-            position: relative; z-index: 1;
+            position: relative; z-index: 2;
           }
           .pdf-thumb-pill {
-            font-size: 6.5px; font-weight: 700;
+            font-size: 6.5px; font-weight: 800;
             padding: 2px 5px; border-radius: 99px;
-            background: rgba(94,234,212,0.10);
-            border: 0.5px solid rgba(94,234,212,0.28);
-            color: rgba(255,255,255,0.78);
+            background: rgba(11,31,58,0.55);
+            border: 0.5px solid rgba(94,234,212,0.42);
+            color: #fff;
             letter-spacing: 0.04em;
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
           }
           .pdf-thumb-pin {
             position: absolute;
@@ -614,17 +646,19 @@ export default function HomePage() {
             padding: 3px 7px; border-radius: 99px;
             letter-spacing: 0.04em;
             box-shadow: 0 4px 12px rgba(34,197,94,0.42);
-            z-index: 2;
+            z-index: 3;
           }
           @media (max-width: 720px) {
             .pdf-float-img { top: 12px; right: 12px; gap: 6px; }
             .pdf-cta-tag { display: none; }
             .pdf-cta { padding: 8px 12px; font-size: 11px; }
-            .pdf-thumb { width: 116px; height: 76px; padding: 6px 7px; }
+            .pdf-thumb { width: 100px; height: 136px; padding: 7px 8px 6px; }
             .pdf-thumb-business { font-size: 9px; }
-            .pdf-thumb-headline { font-size: 10px; }
+            .pdf-thumb-headline { font-size: 14px; }
             .pdf-thumb-eyebrow { font-size: 6px; }
-            .pdf-thumb-sub, .pdf-thumb-pill { display: none; }
+            .pdf-thumb-sub { font-size: 7px; }
+            .pdf-thumb-pill { display: none; }
+            .pdf-thumb-boat { left: 18px; top: 72%; width: 14px; height: 12px; }
           }
         `}</style>
 
@@ -647,12 +681,17 @@ export default function HomePage() {
             <div className="pdf-thumb">
               <span className="pdf-thumb-pin">PDF</span>
               <span className="pdf-thumb-eyebrow">Q1 2026 Report</span>
-              <div className="pdf-thumb-business">Mike&apos;s HVAC &amp; Cooling</div>
-              <div className="pdf-thumb-headline">$4.5K/mo upside</div>
-              <div className="pdf-thumb-sub">in identified opportunities</div>
+              <div className="pdf-thumb-business">Mike&apos;s HVAC</div>
+              <div className="pdf-thumb-headline">$4.5K/mo</div>
+              <div className="pdf-thumb-sub">identified upside</div>
+              {/* Tiny sailboat silhouette on the water — brand callback */}
+              <svg className="pdf-thumb-boat" viewBox="0 0 24 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2 L12 14 L4 14 Z" fill="currentColor" />
+                <path d="M13 5 L13 14 L20 14 Z" fill="currentColor" opacity="0.85" />
+                <path d="M2 16 Q12 19 22 16 L20 19 Q12 21 4 19 Z" fill="currentColor" opacity="0.7" />
+              </svg>
               <div className="pdf-thumb-meta">
                 <span className="pdf-thumb-pill">HVAC</span>
-                <span className="pdf-thumb-pill">4 ZIPs</span>
                 <span className="pdf-thumb-pill">★ 7.4</span>
               </div>
             </div>
