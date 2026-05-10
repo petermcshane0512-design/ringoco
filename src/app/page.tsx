@@ -443,7 +443,7 @@ export default function HomePage() {
                 <span className="accent">you can&apos;t afford to hire.</span>
               </h1>
               <p className="hero-sub">
-                BellAveGo answers your calls, hunts down quotes, collects past-due invoices, and replies to reviews — all running in the background while you&apos;re on the truck. <strong>$497/month + $497 onboarding. 30-day money-back guarantee on subscription.</strong>
+                BellAveGo answers your calls, hunts down quotes, collects past-due invoices, and replies to reviews — all running in the background while you&apos;re on the truck. <strong>$497/month. $0 setup. First month free.</strong>
               </p>
 
               <div className="hero-actions">
@@ -664,23 +664,23 @@ export default function HomePage() {
             <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', boxShadow: '0 16px 50px rgba(11,31,58,0.13)' }}>
               <Image src="/customer.png" alt="Contractor on the job" width={600} height={420} style={{ width: '100%', height: 340, objectFit: 'cover', display: 'block' }} />
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(11,31,58,0.88) 0%, transparent 100%)', padding: '36px 26px 22px' }}>
-                <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, margin: 0 }}>ðŸ’¬ Customer gets handled instantly</p>
+                <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, margin: 0 }}>💬 Customer gets handled instantly</p>
                 <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, margin: '5px 0 0' }}>Booked, confirmed, and reminded automatically.</p>
               </div>
             </div>
             <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', boxShadow: '0 16px 50px rgba(11,31,58,0.13)' }}>
               <Image src="/electrician.png" alt="Customer getting confirmation" width={600} height={420} style={{ width: '100%', height: 340, objectFit: 'cover', display: 'block' }} />
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(11,31,58,0.88) 0%, transparent 100%)', padding: '36px 26px 22px' }}>
-                <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, margin: 0 }}>ðŸ“ Contractor can&apos;t answer</p>
+                <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, margin: 0 }}>📍 Contractor can&apos;t answer</p>
                 <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, margin: '5px 0 0' }}>Phone rings while you&apos;re on the job.</p>
               </div>
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 18 }}>
             {[
-              { icon: 'ðŸ“ž', title: 'BellAveGo answers', desc: 'Every call, every time — 24/7' },
-              { icon: 'ðŸ“…', title: 'Job gets booked', desc: 'Added to your schedule instantly' },
-              { icon: 'ðŸ’¬', title: 'Customer texted', desc: 'Confirmation + reminder, automatic' },
+              { icon: '📞', title: 'BellAveGo answers', desc: 'Every call, every time — 24/7' },
+              { icon: '📅', title: 'Job gets booked', desc: 'Added to your schedule instantly' },
+              { icon: '💬', title: 'Customer texted', desc: 'Confirmation + reminder, automatic' },
             ].map(s => (
               <div key={s.title} style={{ background: '#fff', border: '1px solid #D4E6DC', borderRadius: 14, padding: '26px 22px', textAlign: 'center', boxShadow: '0 2px 14px rgba(32,178,170,0.07)' }}>
                 <div style={{ fontSize: 36, marginBottom: 12 }}>{s.icon}</div>
@@ -745,7 +745,7 @@ export default function HomePage() {
                 )}
               </div>
               <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.38)' : '#7AAAB2', marginBottom: 6 }}>{plan.customCta ? 'pricing per location' : 'per month · cancel anytime'}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>{plan.setup === 0 ? 'No setup fee — cancel anytime' : '+ $' + plan.setup + ' onboarding — 30-day money-back'}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>No setup fee · First month free · Cancel anytime</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: plan.popular ? '#18AFA8' : '#0AA89F', marginBottom: 16 }}>{plan.calls} calls</div>
               <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.6)' : '#4A7A80', marginBottom: 24, lineHeight: 1.6 }}>{plan.desc}</div>
               <div style={{ marginBottom: 24 }}>
@@ -776,9 +776,9 @@ export default function HomePage() {
           ))}
         </div>
         <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 16, lineHeight: 1.6 }}>
-          Month-to-month · 30-day money-back guarantee · 17% off annual.<br />
+          $0 setup · Month-to-month · First month free · 17% off annual.<br />
           <span style={{ fontWeight: 700, color: '#0AA89F' }}>Typical $1M HVAC shop sees $18K/mo lift from the 4-AI bundle</span> — 37x return on $497.<br />
-          Setup fee covers number provisioning, A2P SMS registration, prompt tuning, and integration setup. Non-refundable (real work) but subscription is fully refundable in the first 30 days.
+          90-day money-back if we don&apos;t add at least 5 booked jobs.
         </p>
       </section>
 
@@ -801,7 +801,7 @@ export default function HomePage() {
             </Link>
           )}
           <a href="tel:+16514677829" style={{ padding: '16px 30px', background: 'rgba(255,255,255,0.08)', borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.18)', color: '#fff', fontWeight: 700, fontSize: 16, textDecoration: 'none' }} title="Call (651) 467-7829 — live AI demo">
-            ðŸ“ž Call the AI Demo
+            📞 Call the AI Demo
           </a>
         </div>
         <p style={{ color: 'rgba(255,255,255,0.28)', fontSize: 13, marginTop: 18 }}>No credit card. No contract. No BS.</p>
@@ -812,7 +812,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <Image src="/logo.png" alt="BellAveGo" width={300} height={100} style={{ objectFit: 'contain' }} />
           <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
-          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>The best AI implementation for teams of 1-15 · From $179/mo . 30-day money-back . Cancel anytime</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>The best AI implementation for teams of 1–15 · From $179/mo · 90-day money-back · Cancel anytime</p>
         </div>
       </footer>
 
