@@ -52,7 +52,7 @@ Last week a HVAC shop near {{city}} closed w us. Owner had 4 trucks,
 on the holiday weekend. We caught all 19. Booked 7. ~$2,400 in jobs
 that wouldn't have existed otherwise.
 
-He pays $497/mo. $0 setup. First month free. 90-day money-back if
+He pays $497/mo + $247 onboarding (one-time). 30-day money-back on the subscription if
 BellAveGo doesn't book at least 5 jobs.
 
 Same offer for u if u want to test it. Reply "yes" — I'll get u set up

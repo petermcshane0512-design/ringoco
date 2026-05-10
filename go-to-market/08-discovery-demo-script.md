@@ -127,7 +127,7 @@ If "no" → move to the ask.
 If they raise a concern → see `07-objection-handlers.md`. Handle it. Then trial close again.
 
 ### Step 2 — The ask (say this verbatim)
-> "Cool. So here's what I'd suggest. Let's get u set up today on the AI Office Manager plan — $497/mo, $0 setup, first month free. We'll port ur main number forwarding tonight, ur AI number's live by tomorrow morning. I'll text u personally when it's ready. Card on file but no charge until day 31. And — if we don't book u at least 5 jobs in the first 90 days u wouldn't have otherwise gotten, u get a full refund and u keep all the data we collected. Sound fair?"
+> "Cool. So here's what I'd suggest. Let's get u set up today on the AI Office Manager plan — $497/mo plus a one-time $247 onboarding fee. That onboarding covers ur dedicated AI number, A2P SMS registration, custom prompt tuning, and ur CRM integration. We'll port ur main number forwarding tonight, ur AI number's live by tomorrow morning. I'll text u personally when it's ready. The subscription has a 30-day money-back — if u cancel inside 30 days, full refund on the subscription, u keep all the data. Onboarding fee is non-refundable cuz we already did the work. Sound fair?"
 
 [Stop talking. Whoever speaks first loses.]
 
