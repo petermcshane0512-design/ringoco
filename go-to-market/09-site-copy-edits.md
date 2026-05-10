@@ -28,7 +28,7 @@
   <span className="accent">you can&apos;t afford to hire.</span>
 </h1>
 <p className="hero-sub">
-  BellAveGo answers your calls, hunts down quotes, collects past-due invoices, and replies to reviews — all running in the background while you&apos;re on the truck. $497/month. No setup fee. First month free.
+  BellAveGo answers your calls, hunts down quotes, collects past-due invoices, and replies to reviews — all running in the background while you&apos;re on the truck. $497/month + $497 onboarding. 30-day money-back guarantee on subscription.
 </p>
 ```
 
@@ -88,11 +88,11 @@ Insert this section between hero and existing content. Find a clean place — li
 
 Find the existing pricing section. Replace 3 tiers with:
 
-| Tier | Price | Tagline |
-|---|---|---|
-| Receptionist Only | $179/mo | "Just answer the calls." |
-| **AI Office Manager** ⭐ | **$497/mo** | "Replace the hire." |
-| Concierge | $997/mo | "We run it for you." |
+| Tier | Price | Setup | Tagline |
+|---|---|---|---|
+| Receptionist Only | $179/mo | $0 | "Just answer the calls." |
+| **AI Office Manager** ⭐ | **$497/mo** | **$497** | "Replace the hire." |
+| Concierge | $997/mo | $997 | "We run it for you." |
 
 **Bullets per tier:**
 
@@ -118,7 +118,9 @@ Find the existing pricing section. Replace 3 tiers with:
 - White-glove onboarding (we set up Jobber/HCP/ST integrations)
 - Multi-location ready
 
-**All plans:** $0 setup · Month-to-month · First month free · 17% off annual
+**All plans:** Month-to-month · 30-day money-back · 17% off annual
+
+**Setup fees:** $0 Receptionist · $497 AI Office Manager · $997 Concierge (covers number provisioning, A2P SMS registration, prompt tuning, CRM integration setup — non-refundable, real work)
 
 ---
 
@@ -128,7 +130,7 @@ Add a slim banner just below hero CTA, full-width:
 
 ```tsx
 <div style={{ padding: '14px 24px', background: '#0B1F3A', color: '#fff', textAlign: 'center', fontSize: 14, fontWeight: 600 }}>
-  First month free · Cancel anytime · 90-day money-back if we don&apos;t add 5 booked jobs
+  30-day money-back guarantee · Cancel anytime · We don&apos;t book 5 jobs in 30 days, full subscription refund — keep the data
 </div>
 ```
 

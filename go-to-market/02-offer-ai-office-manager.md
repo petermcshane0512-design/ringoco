@@ -58,7 +58,7 @@ For a $1M/yr HVAC shop:
 | **BellAveGo cost** | $497 |
 | **Idiot Index (in customer's favor)** | **37x** |
 
-> "If we add even one extra job a month for u, we've already paid for ourselves 4x over. Ur first month is free if we don't."
+> "If we add even one extra job a month for u, we've already paid for ourselves 4x over. Don't see 5 booked jobs in 30 days? Full refund on the subscription, and you keep the data."
 
 ## PRICING
 
@@ -68,10 +68,10 @@ For a $1M/yr HVAC shop:
 | **AI Office Manager** ⭐ | $497/mo | All 4 modules + monthly intelligence report |
 | **Concierge** | $997/mo | Everything + dedicated success manager (Peter, for now) + custom prompt + priority support |
 
-**Setup:** $0
+**Setup:** $0 Receptionist · $497 AI Office Manager · $997 Concierge (covers number provisioning, A2P SMS registration, prompt tuning, CRM integration setup — non-refundable, real work)
 **Contract:** Month-to-month, cancel anytime
-**Risk reversal:** First month free OR full refund + we keep the data we collected for u
-**Annual:** 17% off (12 months for the price of 10)
+**Risk reversal:** 30-day money-back guarantee on subscription. Setup fee non-refundable (we already did the work) but if you cancel in 30 days you get every dollar of subscription back AND keep all the data we collected.
+**Annual:** 17% off (12 months for the price of 10) — paid up front, locks in current pricing
 
 ## WHAT IT IS NOT
 
