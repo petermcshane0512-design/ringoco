@@ -49,14 +49,9 @@ export async function POST(req: NextRequest) {
   }
 
   const line_items: { price: string; quantity: number }[] = [{ price: subPriceId, quantity: 1 }]
-  // v4 setup fees: $0 Receptionist · $497 AI Office Manager · $997 Concierge
-  // Setup is non-refundable (real human work: provisioning, A2P, prompt tuning, integrations).
-  // 30-day money-back applies to subscription only.
-  const setupPrice =
-    tier === 'officemgr' ? process.env.STRIPE_PRICE_OFFICEMGR_SETUP :
-    tier === 'concierge' ? process.env.STRIPE_PRICE_CONCIERGE_SETUP :
-    undefined
-  if (setupPrice) line_items.push({ price: setupPrice, quantity: 1 })
+  // v5 (May 10 2026, Option A): $0 setup all tiers, 30-day free trial, 90-day money-back if <5 booked jobs.
+  // Setup labor (provisioning, A2P, prompt tuning, integrations) absorbed as CAC — friction removal > unit econ at $0 ARR.
+  // Setup fee env vars (STRIPE_PRICE_OFFICEMGR_SETUP, STRIPE_PRICE_CONCIERGE_SETUP) intentionally unused — kept in env for revert.
 
   try {
     const session = await stripe.checkout.sessions.create({
@@ -64,7 +59,14 @@ export async function POST(req: NextRequest) {
       mode: 'subscription',
       line_items,
       metadata: { userId, tier, interval },
-      subscription_data: { metadata: { userId, tier, interval } },
+      subscription_data: {
+        metadata: { userId, tier, interval },
+        trial_period_days: 30,                     // first month free — actual Stripe trial, no charge until day 31
+        trial_settings: {
+          end_behavior: { missing_payment_method: 'cancel' },
+        },
+      },
+      payment_method_collection: 'always',         // card required at signup so we can charge on day 31
       success_url: `${APP_URL}/dashboard?success=true`,
       cancel_url: `${APP_URL}`,
     })

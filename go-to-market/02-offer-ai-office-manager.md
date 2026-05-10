@@ -68,10 +68,11 @@ For a $1M/yr HVAC shop:
 | **AI Office Manager** ⭐ | $497/mo | All 4 modules + monthly intelligence report |
 | **Concierge** | $997/mo | Everything + dedicated success manager (Peter, for now) + custom prompt + priority support |
 
-**Setup:** $0 Receptionist · $497 AI Office Manager · $997 Concierge (covers number provisioning, A2P SMS registration, prompt tuning, CRM integration setup — non-refundable, real work)
+**Setup:** $0 ALL TIERS — onboarding labor (number provisioning, A2P SMS registration, prompt tuning, CRM integration setup) absorbed by us as part of the offer
 **Contract:** Month-to-month, cancel anytime
-**Risk reversal:** 30-day money-back guarantee on subscription. Setup fee non-refundable (we already did the work) but if you cancel in 30 days you get every dollar of subscription back AND keep all the data we collected.
-**Annual:** 17% off (12 months for the price of 10) — paid up front, locks in current pricing
+**Trial:** First month FREE — full Stripe trial, card on file, no charge until day 31
+**Risk reversal:** 90-day money-back guarantee. If we don't add at least 5 booked jobs you wouldn't have otherwise gotten in the first 90 days, full refund and you keep all the data we collected.
+**Annual:** 16.67% off (12 months for the price of 10) — paid up front, locks in current pricing. Stacks with first-month-free trial.
 
 ## WHAT IT IS NOT
 

@@ -34,7 +34,7 @@ If they hang up — fine. Move to next. Don't take it personally. We're a number
 [If they say "Rosie" or "answering service" — qualify pain. "What do u wish it did better?"]
 
 ### C) "Tell me more"
-> "Cool. The short version: AI receptionist + quote follow-up + collections + review replies, $497/mo plus a $497 onboarding fee that covers number setup, A2P registration, and prompt tuning. Replaces about 70% of an office manager's job. 30-day money-back if it doesn't book you at least 5 jobs. Want a 30-min demo Wednesday or Thursday?"
+> "Cool. The short version: AI receptionist + quote follow-up + collections + review replies. $497/mo, $0 setup, first month free. We handle ur number, A2P registration, prompt tuning — all included. Replaces about 70% of an office manager's job. 90-day money-back if it doesn't book u at least 5 jobs. Want a 30-min demo Wednesday or Thursday?"
 
 ---
 
