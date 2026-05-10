@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import twilio from 'twilio'
 import { provisionNumberForUser } from '@/lib/provisionNumber'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -74,15 +76,42 @@ export async function POST(req: NextRequest) {
     console.log(`Subscription activated for user ${userId}: ${planTier}`)
 
     // Provision a Twilio number now that they're paid. Idempotent.
+    let provisionedNumber: string | undefined
     try {
       const provision = await provisionNumberForUser(userId)
       if (provision.ok) {
+        provisionedNumber = provision.phoneNumber
         console.log(`Provisioned ${provision.phoneNumber} for ${userId} (reused=${provision.reused})`)
       } else {
         console.error(`Provisioning failed for ${userId}: ${provision.error}`)
       }
     } catch (e) {
       console.error(`Provisioning threw for ${userId}:`, e)
+    }
+
+    // Welcome SMS to the contractor (idempotent — only sends if welcomed_at is null).
+    if (provisionedNumber) {
+      try {
+        const { data: contractor } = await supabase
+          .from('profiles')
+          .select('owner_phone, business_name, welcomed_at')
+          .eq('user_id', userId)
+          .maybeSingle()
+
+        if (contractor?.owner_phone && !contractor.welcomed_at) {
+          await twilioClient.messages.create({
+            body: `Welcome to BellAveGo, ${contractor.business_name || 'partner'}! Your AI receptionist is live at ${provisionedNumber}. Next step: set up call forwarding so missed calls ring through. Walkthrough: https://www.bellavego.com/dashboard/forwarding — Peter`,
+            from: provisionedNumber,
+            to: contractor.owner_phone,
+          })
+          await supabase
+            .from('profiles')
+            .update({ welcomed_at: new Date().toISOString() })
+            .eq('user_id', userId)
+        }
+      } catch (e) {
+        console.error(`Welcome SMS failed for ${userId}:`, e)
+      }
     }
   }
 

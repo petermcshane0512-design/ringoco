@@ -49,6 +49,8 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [provisionLoading, setProvisionLoading] = useState(false);
+  const [tier, setTier] = useState<"solo" | "growth" | "scale">("growth");
+  const [interval, setInterval] = useState<"monthly" | "annual">("monthly");
   const router = useRouter();
 
   useEffect(() => { fetchAll(); }, []);
@@ -85,7 +87,11 @@ export default function DashboardPage() {
   async function startCheckout() {
     setCheckoutLoading(true);
     try {
-      const res = await fetch("/api/stripe/checkout", { method: "POST" }).then((r) => r.json());
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tier, interval, includeSetup: true }),
+      }).then((r) => r.json());
       if (res.url) window.location.href = res.url;
     } finally {
       setCheckoutLoading(false);
@@ -205,19 +211,58 @@ export default function DashboardPage() {
       </div>
 
       {/* Activation banner */}
-      {profile && !profile.is_active && (
-        <div style={{ marginBottom: 22, padding: "18px 22px", background: "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)", border: "1px solid #FDE68A", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: "#92400E" }}>Activate your AI receptionist</div>
-            <div style={{ fontSize: 12, color: "#78350F", marginTop: 4, lineHeight: 1.5 }}>
-              Subscribe to get your dedicated number, 24/7 call answering, and SMS booking flow. We'll auto-provision your Twilio number after checkout.
+      {profile && !profile.is_active && (() => {
+        const TIERS = {
+          solo:   { label: "Solo",   monthly: 147, annual: 1470, setup: 197, calls: 150,  sub: "<$100K rev · 1 person" },
+          growth: { label: "Growth", monthly: 297, annual: 2970, setup: 497, calls: 500,  sub: "2–10 employees · $100–500K" },
+          scale:  { label: "Scale",  monthly: 597, annual: 5970, setup: 997, calls: 1500, sub: "10+ employees · $500K+" },
+        } as const;
+        const cur = TIERS[tier];
+        const monthly = interval === "monthly" ? cur.monthly : Math.round(cur.annual / 12);
+        const totalToday = (interval === "monthly" ? cur.monthly : cur.annual) + cur.setup;
+        return (
+          <div style={{ marginBottom: 22, padding: "20px 22px", background: "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)", border: "1px solid #FDE68A", borderRadius: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "#92400E" }}>Activate your AI receptionist</div>
+                <div style={{ fontSize: 12, color: "#78350F", marginTop: 3, lineHeight: 1.5 }}>
+                  Pick a plan. We auto-provision your Twilio number, register A2P SMS, and tune your prompt after checkout. 30-day money-back.
+                </div>
+              </div>
+              <div style={{ display: "flex", background: "#fff", border: "1px solid #FDE68A", borderRadius: 10, padding: 3, fontSize: 11, fontWeight: 700 }}>
+                {(["monthly", "annual"] as const).map((i) => (
+                  <button key={i} onClick={() => setInterval(i)} style={{ padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer", background: interval === i ? "#92400E" : "transparent", color: interval === i ? "#fff" : "#78350F", textTransform: "capitalize" }}>
+                    {i}{i === "annual" ? " (save 17%)" : ""}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 14 }}>
+              {(Object.keys(TIERS) as Array<keyof typeof TIERS>).map((k) => {
+                const t = TIERS[k];
+                const m = interval === "monthly" ? t.monthly : Math.round(t.annual / 12);
+                const active = tier === k;
+                return (
+                  <button key={k} onClick={() => setTier(k)} style={{ padding: "12px 14px", borderRadius: 10, border: active ? "2px solid #92400E" : "1px solid #FDE68A", background: active ? "#fff" : "rgba(255,255,255,0.5)", textAlign: "left", cursor: "pointer" }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: "#92400E", marginBottom: 2 }}>{t.label}</div>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: "#0B1F3A", letterSpacing: "-0.5px" }}>${m}<span style={{ fontSize: 11, color: "#78350F", fontWeight: 700 }}>/mo</span></div>
+                    <div style={{ fontSize: 10, color: "#78350F", marginTop: 2 }}>+ ${t.setup} setup · {t.calls} calls/mo</div>
+                    <div style={{ fontSize: 10, color: "#A16207", marginTop: 4 }}>{t.sub}</div>
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+              <div style={{ fontSize: 12, color: "#78350F" }}>
+                <span style={{ fontWeight: 700 }}>${totalToday}</span> charged today (${interval === "monthly" ? cur.monthly : cur.annual} {interval} + ${cur.setup} setup). Cancel anytime in 30 days for full subscription refund.
+              </div>
+              <button onClick={startCheckout} disabled={checkoutLoading} style={{ padding: "12px 26px", borderRadius: 10, border: "none", fontSize: 13, fontWeight: 800, cursor: checkoutLoading ? "wait" : "pointer", background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)", color: "#fff", boxShadow: "0 4px 14px rgba(34,197,94,0.32)", whiteSpace: "nowrap" }}>
+                {checkoutLoading ? "Loading…" : `Activate ${cur.label} →`}
+              </button>
             </div>
           </div>
-          <button onClick={startCheckout} disabled={checkoutLoading} style={{ padding: "11px 22px", borderRadius: 10, border: "none", fontSize: 13, fontWeight: 800, cursor: checkoutLoading ? "wait" : "pointer", background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)", color: "#fff", boxShadow: "0 4px 14px rgba(34,197,94,0.32)", whiteSpace: "nowrap" }}>
-            {checkoutLoading ? "Loading…" : "Subscribe & activate →"}
-          </button>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Number-pending banner */}
       {profile?.is_active && !profile.twilio_number && (
