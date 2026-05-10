@@ -678,12 +678,11 @@ export default function HomePage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 18 }}>
             {[
-              { icon: '📞', title: 'BellAveGo answers', desc: 'Every call, every time — 24/7' },
-              { icon: '📅', title: 'Job gets booked', desc: 'Added to your schedule instantly' },
-              { icon: '💬', title: 'Customer texted', desc: 'Confirmation + reminder, automatic' },
+              { title: 'BellAveGo answers', desc: 'Every call, every time — 24/7' },
+              { title: 'Job gets booked', desc: 'Added to your schedule instantly' },
+              { title: 'Customer texted', desc: 'Confirmation + reminder, automatic' },
             ].map(s => (
-              <div key={s.title} style={{ background: '#fff', border: '1px solid #D4E6DC', borderRadius: 14, padding: '26px 22px', textAlign: 'center', boxShadow: '0 2px 14px rgba(32,178,170,0.07)' }}>
-                <div style={{ fontSize: 36, marginBottom: 12 }}>{s.icon}</div>
+              <div key={s.title} style={{ background: '#fff', border: '1px solid #D4E6DC', borderRadius: 14, padding: '24px 22px', textAlign: 'center', boxShadow: '0 2px 14px rgba(32,178,170,0.07)' }}>
                 <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 6, color: '#0B1F3A' }}>{s.title}</p>
                 <p style={{ color: '#4A6670', fontSize: 14, lineHeight: 1.6, margin: 0 }}>{s.desc}</p>
               </div>
