@@ -142,7 +142,7 @@ export default function OnboardingPage() {
       // continue to dashboard even if save fails
     }
     setDone(true)
-    setTimeout(() => router.push('/dashboard'), 7000)
+    setTimeout(() => router.push('/pricing'), 7000)
   }
 
   const inputStyle: React.CSSProperties = {
@@ -307,7 +307,7 @@ export default function OnboardingPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', padding: '10px 16px', maxWidth: 340, margin: '0 auto' }}>
                   <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
                     style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid #0AA89F', borderTopColor: 'transparent' }} />
-                  <span style={{ fontSize: 12, fontWeight: 600, color: '#7AAAB2' }}>Setting up your dashboard…</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: '#7AAAB2' }}>Loading your plan options…</span>
                 </div>
               </motion.div>
             )}
