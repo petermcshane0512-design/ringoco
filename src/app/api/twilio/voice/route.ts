@@ -142,27 +142,31 @@ export async function POST(req: NextRequest) {
   const voiceName = aiLang === 'es' ? 'Polly.Lupe-Neural' : 'Polly.Joanna-Neural'
   const speechLang = aiLang === 'es' ? 'es-US' : 'en-US'
 
-  // ── Foundation tier: cap at 10 booked appointments per calendar month ──
+  // ── Receptionist tier: cap at 50 calls received per calendar month ──
+  // (Includes legacy 'foundation' tier customers from earlier pricing.)
   // Demo number is exempt (always full experience for prospects).
   const profileWithTier = profile as (typeof profile & { plan_tier?: string; user_id?: string }) | null
-  if (!isDemo && profileWithTier?.plan_tier === 'foundation' && profileWithTier?.user_id) {
+  const cappedTiers = new Set(['receptionist', 'foundation'])  // foundation = legacy v3
+  const RECEPTIONIST_CALL_CAP = 50
+  if (!isDemo && cappedTiers.has(profileWithTier?.plan_tier ?? '') && profileWithTier?.user_id) {
     const monthStart = new Date()
     monthStart.setDate(1)
     monthStart.setHours(0, 0, 0, 0)
+    // Count distinct calls received this month (call_logs.call_sid is the inception marker
+    // we insert for every call below). Falls back to jobs count if call_logs is empty.
     const { count } = await supabase
-      .from('jobs')
+      .from('call_logs')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', profileWithTier.user_id)
-      .neq('status', 'cancelled')
       .gte('created_at', monthStart.toISOString())
-    if ((count ?? 0) >= 10) {
+    if ((count ?? 0) >= RECEPTIONIST_CALL_CAP) {
       const VR = (await import('twilio')).twiml.VoiceResponse
       const capTwiml = new VR()
       capTwiml.say(
         { voice: voiceName },
         aiLang === 'es'
-          ? `Hola, gracias por llamar a ${businessName}. Hemos atendido las citas de este mes — por favor llame el próximo mes, o envíe un mensaje de texto a ${ownerPhone} para algo urgente. ¡Gracias!`
-          : `Hi, thanks for calling ${businessName}. We've handled our priority bookings for the month — please call back next month, or text ${ownerPhone} for anything urgent. Thank you!`
+          ? `Hola, gracias por llamar a ${businessName}. Hemos atendido el máximo de llamadas de este mes — por favor llame el próximo mes, o envíe un mensaje de texto a ${ownerPhone} si es urgente. ¡Gracias!`
+          : `Hi, thanks for calling ${businessName}. We've reached our call capacity for this month — please call back next month, or text ${ownerPhone} if it's urgent. Thank you!`
       )
       capTwiml.hangup()
       return new NextResponse(capTwiml.toString(), { headers: { 'Content-Type': 'text/xml' } })
@@ -178,6 +182,27 @@ export async function POST(req: NextRequest) {
 
   const VoiceResponse = (await import('twilio')).twiml.VoiceResponse
   const twiml = new VoiceResponse()
+
+  // ── Insert call_log at call inception (before any speech).
+  // This is what powers the Receptionist call cap above and gives us
+  // "calls received this month" instead of just "jobs booked." Idempotent on call_sid.
+  if (!isDemo && profileWithTier?.user_id && callSid && !speechResult) {
+    try {
+      await supabase.from('call_logs').upsert(
+        {
+          user_id: profileWithTier.user_id,
+          profile_id: profileWithTier.user_id,
+          call_sid: callSid,
+          caller_phone: callerPhone,
+          job_created: false,
+          booking_completed: false,
+        },
+        { onConflict: 'call_sid', ignoreDuplicates: true }
+      )
+    } catch (e) {
+      console.error('call_logs inception insert failed:', e)
+    }
+  }
 
   if (!speechResult) {
     const gather = twiml.gather({
@@ -341,21 +366,27 @@ Only role: book a service call. Politely decline anything else: "I can only help
     }
 
     if (!isDemo) {
+      // Upsert by call_sid — the inception row was inserted at first turn.
+      // This finalizes it with booking details. If somehow no inception row exists
+      // (legacy calls, race), upsert creates one.
       try {
-        await supabase.from('call_logs').insert({
-          user_id: profile?.user_id,
-          profile_id: profile?.user_id,
-          call_sid: callSid,
-          caller_phone: callerPhone,
-          job_type: service,
-          transcript: JSON.stringify(history),
-          job_created: true,
-          booking_completed: true,
-          hangup_turn: history.length,
-          job_id: job?.id,
-        })
+        await supabase.from('call_logs').upsert(
+          {
+            user_id: profile?.user_id,
+            profile_id: profile?.user_id,
+            call_sid: callSid,
+            caller_phone: callerPhone,
+            job_type: service,
+            transcript: JSON.stringify(history),
+            job_created: true,
+            booking_completed: true,
+            hangup_turn: history.length,
+            job_id: job?.id,
+          },
+          { onConflict: 'call_sid' }
+        )
       } catch (e) {
-        console.error('call_logs insert failed:', e)
+        console.error('call_logs upsert failed:', e)
       }
     }
 
