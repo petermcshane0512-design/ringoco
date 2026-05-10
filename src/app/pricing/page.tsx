@@ -14,6 +14,7 @@ type Plan = {
   name: string
   monthly: number
   annual: number
+  setup: number
   tagline: string
   popular: boolean
   features: string[]
@@ -26,6 +27,7 @@ const PLANS: Plan[] = [
     name: 'Receptionist',
     monthly: 179,
     annual: 149,
+    setup: 50,
     tagline: 'AI captures every call. You close it in one tap.',
     popular: false,
     features: [
@@ -45,6 +47,7 @@ const PLANS: Plan[] = [
     name: 'AI Office Manager',
     monthly: 497,
     annual: 414,
+    setup: 247,
     tagline: 'Replace the $60K/yr office manager you can’t afford to hire.',
     popular: true,
     features: [
@@ -64,6 +67,7 @@ const PLANS: Plan[] = [
     name: 'Concierge',
     monthly: 997,
     annual: 831,
+    setup: 497,
     tagline: 'Everything autonomous. We run the back office for you.',
     popular: false,
     features: [
@@ -158,7 +162,7 @@ export default function PricingPage() {
           <span style={{ background: 'linear-gradient(135deg, #5EEAD4 0%, #2DD4BF 50%, #0AA89F 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>You close it in one tap.</span>
         </h1>
         <p style={{ fontSize: 17, color: '#4A6670', maxWidth: 640, margin: '0 auto 28px', lineHeight: 1.6 }}>
-          One subscription replaces voicemail, your office manager, your collections agent, and your reputation manager. Pick a tier. First month free.
+          One subscription replaces voicemail, your office manager, your collections agent, and your reputation manager. Pick a tier. 30-day money-back guarantee.
         </p>
 
         {/* Toggle */}
@@ -251,10 +255,10 @@ export default function PricingPage() {
                     boxShadow: plan.popular ? '0 8px 24px rgba(34,197,94,0.32)' : '0 4px 14px rgba(10,168,159,0.24)',
                   }}
                 >
-                  {isLoading ? 'Loading…' : isSignedIn ? 'Start Free Month →' : 'Get Started →'}
+                  {isLoading ? 'Loading…' : isSignedIn ? `Activate ${plan.name} →` : 'Get Started →'}
                 </button>
                 <p style={{ fontSize: 11, color: plan.popular ? 'rgba(255,255,255,0.45)' : '#7AAAB2', textAlign: 'center', marginTop: 10, marginBottom: 0, fontWeight: 500 }}>
-                  $0 setup · First month free · Cancel anytime
+                  + ${plan.setup} onboarding · 30-day money-back · Cancel anytime
                 </p>
               </div>
             )
@@ -281,7 +285,7 @@ export default function PricingPage() {
         <div style={{ maxWidth: 720, margin: '0 auto' }}>
           <h3 style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', marginBottom: 28, textAlign: 'center' }}>Common questions</h3>
           {[
-            { q: 'What does "first month free" actually mean?', a: 'You enter your card today, we provision your AI receptionist + dedicated number, and you’re not charged until day 31. Cancel anytime in those 30 days, no charge.' },
+            { q: 'What does "30-day money-back guarantee" actually mean?', a: 'You pay your one-time onboarding fee + first month subscription today. We provision your AI receptionist, dedicated number, A2P SMS registration, prompt tuning, and integration setup. If within 30 days you decide it’s not for you, full refund on the subscription — keep all your data. Onboarding fee is non-refundable since the work was already done.' },
             { q: 'Do I have to sign a contract?', a: 'No. All plans are month-to-month. Cancel anytime, your data stays yours.' },
             { q: 'How does the 90-day guarantee work?', a: 'If after 90 days BellAveGo hasn’t added at least 5 booked jobs you wouldn’t have otherwise gotten, we refund you 100% and you keep all the data we collected. We track every booked job, you can audit it anytime.' },
             { q: 'What if I want to switch tiers later?', a: 'Upgrade or downgrade anytime in your dashboard. Pro-rated automatically. Annual prepay can be converted to credit if you upgrade.' },
@@ -297,7 +301,7 @@ export default function PricingPage() {
       </section>
 
       <footer style={{ padding: '36px 40px', background: '#0B1F3A', textAlign: 'center' }}>
-        <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>AI Office Manager for home service pros · From $179/mo · First month free · 90-day guarantee</p>
+        <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>AI Office Manager for home service pros · From $179/mo + $50 setup · 30-day money-back · Cancel anytime</p>
       </footer>
     </main>
   )

@@ -215,9 +215,9 @@ export default function DashboardPage() {
       {/* Activation banner */}
       {profile && !profile.is_active && (() => {
         const TIERS = {
-          receptionist: { label: "Receptionist Only", monthly: 179, annual: 1790, setup: 0, sub: "AI Receptionist · 50 calls/mo cap · 30-day free trial" },
-          officemgr:    { label: "AI Office Manager",  monthly: 497, annual: 4970, setup: 0, sub: "Receptionist + Quote Hunter + Collections + Reviews + monthly intel" },
-          concierge:    { label: "Concierge",          monthly: 997, annual: 9970, setup: 0, sub: "Everything + dedicated success manager (Peter direct) + integrations" },
+          receptionist: { label: "Receptionist Only", monthly: 179, annual: 1790, setup: 50,  sub: "AI Receptionist · 50 calls/mo cap · 30-day money-back" },
+          officemgr:    { label: "AI Office Manager",  monthly: 497, annual: 4970, setup: 247, sub: "Receptionist + Quote Hunter + Collections + Reviews + monthly intel" },
+          concierge:    { label: "Concierge",          monthly: 997, annual: 9970, setup: 497, sub: "Everything + dedicated success manager (Peter direct) + integrations" },
         } as const;
         const cur = TIERS[tier];
         const subToday = interval === "monthly" ? cur.monthly : cur.annual;

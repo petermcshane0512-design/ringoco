@@ -443,7 +443,7 @@ export default function HomePage() {
                 <span className="accent">you can&apos;t afford to hire.</span>
               </h1>
               <p className="hero-sub">
-                BellAveGo answers your calls, hunts down quotes, collects past-due invoices, and replies to reviews — all running in the background while you&apos;re on the truck. <strong>$497/month. $0 setup. First month free.</strong>
+                BellAveGo answers your calls, hunts down quotes, collects past-due invoices, and replies to reviews — all running in the background while you&apos;re on the truck. <strong>$497/month + $247 onboarding. 30-day money-back guarantee.</strong>
               </p>
 
               <div className="hero-actions">
@@ -778,19 +778,19 @@ export default function HomePage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20, maxWidth: 960, margin: '0 auto 20px' }}>
           {[
             {
-              name: 'Receptionist', price: 179, setup: 0, tier: 'receptionist', calls: 'Up to 500',
+              name: 'Receptionist', price: 179, setup: 50, tier: 'receptionist', calls: 'Up to 500',
               desc: 'AI captures every call. You close it in one tap — confirm, invoice, call back, or just acknowledge.',
               features: ['24/7 AI call answering', 'Captures name · phone · service · address · preferred time', 'Instant text summary to your phone', 'One-tap actions on every call', 'Emergency routing to your cell', 'Live dashboard + transcripts + recordings', '3 quarterly intelligence reports/year'],
               popular: false, customCta: false,
             },
             {
-              name: 'AI Office Manager', price: 497, setup: 497, tier: 'officemgr', calls: 'Unlimited',
+              name: 'AI Office Manager', price: 497, setup: 247, tier: 'officemgr', calls: 'Unlimited',
               desc: 'Replace the $60K/yr office manager you can’t afford to hire. Calls + quote follow-up + collections + reviews.',
               features: ['Everything in Receptionist, plus:', 'Unlimited calls', 'AI Quote Hunter (auto follow-ups day 2/7/14)', 'AI Collections (nightly past-due chase)', 'AI Reviews (drafts replies for one-tap approval)', 'Smart suggestions on call summaries', 'Jobber / HousecallPro / ServiceTitan integration', '6 bi-monthly intelligence reports/year'],
               popular: true, customCta: false,
             },
             {
-              name: 'Concierge', price: 997, setup: 997, tier: 'concierge', calls: 'Unlimited',
+              name: 'Concierge', price: 997, setup: 497, tier: 'concierge', calls: 'Unlimited',
               desc: 'Everything autonomous. Multi-location ready. White-glove onboarding. We run the back office for you.',
               features: ['Everything in AI Office Manager, plus:', 'Auto-confirm mode (when you trust it)', 'Multi-location support (up to 5 numbers)', 'Custom AI prompt tuning', 'AI Photo Estimator · Financing Closer · Recruiter (Q3 2026)', 'White-glove onboarding (we wire up your CRM)', 'Priority support — 24h SLA, dedicated Slack', 'API access for custom integrations', '12 monthly intelligence reports/year'],
               popular: false, customCta: false,
@@ -822,7 +822,7 @@ export default function HomePage() {
                 )}
               </div>
               <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.38)' : '#7AAAB2', marginBottom: 6 }}>{plan.customCta ? 'pricing per location' : 'per month · cancel anytime'}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>No setup fee · First month free · Cancel anytime</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>{plan.customCta ? 'White-glove onboarding included' : '+ $' + plan.setup + ' onboarding · 30-day money-back'}</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: plan.popular ? '#18AFA8' : '#0AA89F', marginBottom: 16 }}>{plan.calls} calls</div>
               <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.6)' : '#4A7A80', marginBottom: 24, lineHeight: 1.6 }}>{plan.desc}</div>
               <div style={{ marginBottom: 24 }}>
@@ -853,7 +853,7 @@ export default function HomePage() {
           ))}
         </div>
         <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 16, lineHeight: 1.6 }}>
-          $0 setup · Month-to-month · First month free · 17% off annual.<br />
+          Month-to-month . 30-day money-back . 17% off annual.<br />
           <span style={{ fontWeight: 700, color: '#0AA89F' }}>Typical $1M HVAC shop sees $18K/mo lift from the 4-AI bundle</span> — 37x return on $497.<br />
           90-day money-back if we don&apos;t add at least 5 booked jobs.
         </p>
