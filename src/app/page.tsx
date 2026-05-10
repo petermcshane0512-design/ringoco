@@ -506,53 +506,19 @@ export default function HomePage() {
           .consult-img { display: block; width: 100%; height: auto; border-radius: 22px; box-shadow: 0 30px 80px rgba(7,27,58,0.18); border: 1px solid rgba(10,168,159,0.18); }
           .pdf-float-img {
             position: absolute;
-            top: 28px; right: 28px;
-            display: flex; align-items: center; gap: 14px;
+            top: 64px; right: 96px;
+            display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
             z-index: 5;
             text-decoration: none;
           }
-          .pdf-thumb {
-            width: 92px; height: 116px;
-            border-radius: 8px;
-            background: linear-gradient(160deg, #fff 0%, #F5FCFA 100%);
-            border: 1px solid rgba(10,168,159,0.22);
-            box-shadow: 0 14px 32px rgba(11,31,58,0.22), 0 4px 10px rgba(11,31,58,0.10);
-            position: relative;
-            overflow: hidden;
-            animation: pdfFloat 4.2s ease-in-out infinite;
-            transition: transform 0.24s ease;
-            flex-shrink: 0;
-          }
-          .pdf-thumb:hover { transform: rotate(0deg) scale(1.06); }
-          .pdf-thumb-head {
-            height: 24px;
-            background: linear-gradient(135deg, #0B1F3A, #163356);
-            display: flex; align-items: center; padding: 0 7px; gap: 4px;
-          }
-          .pdf-thumb-dot { width: 4px; height: 4px; border-radius: 50%; background: #5EEAD4; }
-          .pdf-thumb-stripe {
-            height: 5px;
-            background: linear-gradient(90deg, #5EEAD4 0%, #0AA89F 100%);
-          }
-          .pdf-thumb-body { padding: 8px 8px 6px; display: flex; flex-direction: column; gap: 4px; }
-          .pdf-thumb-line {
-            height: 4px; border-radius: 2px;
-            background: rgba(11,31,58,0.10);
-          }
-          .pdf-thumb-line.lg { height: 6px; background: rgba(11,31,58,0.18); }
-          .pdf-thumb-pin {
-            position: absolute;
-            top: -7px; right: -7px;
-            background: linear-gradient(135deg, #22C55E, #15803D);
-            color: #fff;
-            font-size: 8.5px; font-weight: 800;
-            padding: 3px 7px; border-radius: 99px;
-            letter-spacing: 0.04em;
-            box-shadow: 0 4px 12px rgba(34,197,94,0.42);
+          .pdf-cta-tag {
+            font-size: 10px; font-weight: 800; color: #fff;
+            letter-spacing: 0.14em; text-transform: uppercase;
+            text-shadow: 0 1px 6px rgba(0,0,0,0.55);
           }
           .pdf-cta {
             display: inline-flex; align-items: center; gap: 7px;
-            padding: 11px 18px;
+            padding: 10px 16px;
             border-radius: 10px;
             background: linear-gradient(135deg, #0AA89F, #0D8F87);
             color: #fff;
@@ -563,19 +529,39 @@ export default function HomePage() {
             transition: transform 0.22s ease, filter 0.22s ease;
             white-space: nowrap;
           }
-          .pdf-cta:hover { transform: translateY(-2px) scale(1.04); filter: brightness(1.10); }
           .pdf-cta-arrow { transition: transform 0.22s ease; }
+          .pdf-float-img:hover .pdf-cta { transform: translateY(-1px); filter: brightness(1.08); }
           .pdf-float-img:hover .pdf-cta-arrow { transform: translateX(3px); }
-          .pdf-cta-stack { display: flex; flex-direction: column; gap: 4px; }
-          .pdf-cta-tag {
-            font-size: 10px; font-weight: 700; color: #fff;
-            letter-spacing: 0.14em; text-transform: uppercase;
-            text-shadow: 0 1px 6px rgba(0,0,0,0.45);
+          .pdf-thumb {
+            width: 142px; height: 96px;
+            border-radius: 8px;
+            background: #fff;
+            border: 1px solid rgba(10,168,159,0.22);
+            box-shadow: 0 14px 32px rgba(11,31,58,0.22), 0 4px 10px rgba(11,31,58,0.10);
+            position: relative;
+            overflow: hidden;
+            animation: pdfFloat 4.2s ease-in-out infinite;
+            transition: transform 0.24s ease;
+            flex-shrink: 0;
+          }
+          .pdf-thumb:hover { transform: rotate(0deg) scale(1.06); }
+          .pdf-thumb-img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+          .pdf-thumb-pin {
+            position: absolute;
+            top: -7px; right: -7px;
+            background: linear-gradient(135deg, #22C55E, #15803D);
+            color: #fff;
+            font-size: 8.5px; font-weight: 800;
+            padding: 3px 7px; border-radius: 99px;
+            letter-spacing: 0.04em;
+            box-shadow: 0 4px 12px rgba(34,197,94,0.42);
+            z-index: 1;
           }
           @media (max-width: 720px) {
-            .pdf-float-img { top: 12px; right: 12px; gap: 8px; }
-            .pdf-cta-stack { display: none; }
-            .pdf-thumb { width: 64px; height: 80px; }
+            .pdf-float-img { top: 12px; right: 12px; gap: 6px; }
+            .pdf-cta-tag { display: none; }
+            .pdf-cta { padding: 8px 12px; font-size: 11px; }
+            .pdf-thumb { width: 92px; height: 64px; }
           }
         `}</style>
 
@@ -588,36 +574,22 @@ export default function HomePage() {
             className="consult-img"
           />
           <Link href="/sample-report" className="pdf-float-img" aria-label="View a sample BellAveGo consulting report">
+            <span className="pdf-cta-tag">BellAveGo &middot; PDF</span>
+            <span className="pdf-cta">
+              View a report
+              <svg className="pdf-cta-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </span>
             <div className="pdf-thumb">
               <span className="pdf-thumb-pin">PDF</span>
-              <div className="pdf-thumb-head">
-                <span className="pdf-thumb-dot" />
-                <span className="pdf-thumb-dot" style={{ background: 'rgba(94,234,212,0.45)' }} />
-                <span className="pdf-thumb-dot" style={{ background: 'rgba(94,234,212,0.25)' }} />
-              </div>
-              <div className="pdf-thumb-stripe" />
-              <div className="pdf-thumb-body">
-                <div className="pdf-thumb-line lg" style={{ width: '78%' }} />
-                <div className="pdf-thumb-line" style={{ width: '92%' }} />
-                <div className="pdf-thumb-line" style={{ width: '85%' }} />
-                <div className="pdf-thumb-line" style={{ width: '60%' }} />
-                <div style={{ display: 'flex', gap: 3, marginTop: 4 }}>
-                  <div style={{ flex: 1, height: 14, borderRadius: 3, background: 'rgba(10,168,159,0.18)' }} />
-                  <div style={{ flex: 1, height: 14, borderRadius: 3, background: 'rgba(34,197,94,0.18)' }} />
-                  <div style={{ flex: 1, height: 14, borderRadius: 3, background: 'rgba(245,158,11,0.18)' }} />
-                </div>
-                <div className="pdf-thumb-line" style={{ width: '70%', marginTop: 3 }} />
-                <div className="pdf-thumb-line" style={{ width: '50%' }} />
-              </div>
-            </div>
-            <div className="pdf-cta-stack">
-              <span className="pdf-cta-tag">BellAveGo &middot; PDF</span>
-              <span className="pdf-cta">
-                View a report
-                <svg className="pdf-cta-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              </span>
+              <Image
+                src="/Consulting1.png"
+                alt="BellAveGo report preview"
+                width={1400}
+                height={900}
+                className="pdf-thumb-img"
+              />
             </div>
           </Link>
         </div>
