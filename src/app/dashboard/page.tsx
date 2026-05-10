@@ -109,9 +109,11 @@ export default function DashboardPage() {
     }
   }
 
-  async function handleJobAction(jobId: string, action: "scheduled" | "cancelled") {
+  async function handleJobAction(jobId: string, action: "scheduled" | "cancelled" | "completed") {
     setActionLoading(jobId + action);
-    await supabase.from("jobs").update({ status: action }).eq("id", jobId);
+    const update: Record<string, unknown> = { status: action };
+    if (action === "completed") update.completed_at = new Date().toISOString();
+    await supabase.from("jobs").update(update).eq("id", jobId);
     setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, status: action } : j)));
     setActionLoading(null);
   }
@@ -407,7 +409,21 @@ export default function DashboardPage() {
                         <td style={td}>{jobService(job)}</td>
                         <td style={td}>{formatDate(jobTime(job))}</td>
                         <td style={{ ...td, fontWeight: 600, color: "#0B1F3A" }}>{job.amount ? `$${job.amount}` : "—"}</td>
-                        <td style={td}>{statusPill(job.status)}</td>
+                        <td style={td}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            {statusPill(job.status)}
+                            {(job.status === "scheduled" || job.status === "accepted") && (
+                              <button
+                                onClick={() => handleJobAction(job.id, "completed")}
+                                disabled={!!actionLoading}
+                                style={{ fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 6, background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#2563EB", cursor: "pointer", opacity: actionLoading ? 0.6 : 1 }}
+                                title="Mark this job as completed — triggers Google review request to customer (Growth/Premium tiers)"
+                              >
+                                Mark complete
+                              </button>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

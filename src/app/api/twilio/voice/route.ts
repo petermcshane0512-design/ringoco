@@ -137,6 +137,10 @@ export async function POST(req: NextRequest) {
   const services = profile?.services || 'home services'
   const serviceArea = profile?.service_area || 'the local area'
   const aiTone = profile?.ai_tone || 'friendly'
+  const profileWithLang = profile as (typeof profile & { ai_language?: string }) | null
+  const aiLang = (profileWithLang?.ai_language === 'es' ? 'es' : 'en') as 'en' | 'es'
+  const voiceName = aiLang === 'es' ? 'Polly.Lupe-Neural' : 'Polly.Joanna-Neural'
+  const speechLang = aiLang === 'es' ? 'es-US' : 'en-US'
 
   // ── Foundation tier: cap at 10 booked appointments per calendar month ──
   // Demo number is exempt (always full experience for prospects).
@@ -155,8 +159,10 @@ export async function POST(req: NextRequest) {
       const VR = (await import('twilio')).twiml.VoiceResponse
       const capTwiml = new VR()
       capTwiml.say(
-        { voice: 'Polly.Joanna-Neural' },
-        `Hi, thanks for calling ${businessName}. We've handled our priority bookings for the month — please call back next month, or text ${ownerPhone} for anything urgent. Thank you!`
+        { voice: voiceName },
+        aiLang === 'es'
+          ? `Hola, gracias por llamar a ${businessName}. Hemos atendido las citas de este mes — por favor llame el próximo mes, o envíe un mensaje de texto a ${ownerPhone} para algo urgente. ¡Gracias!`
+          : `Hi, thanks for calling ${businessName}. We've handled our priority bookings for the month — please call back next month, or text ${ownerPhone} for anything urgent. Thank you!`
       )
       capTwiml.hangup()
       return new NextResponse(capTwiml.toString(), { headers: { 'Content-Type': 'text/xml' } })
@@ -181,11 +187,13 @@ export async function POST(req: NextRequest) {
       speechTimeout: 'auto',
       speechModel: 'phone_call',
       enhanced: true,
-      language: 'en-US',
+      language: speechLang,
     })
     gather.say(
-      { voice: 'Polly.Joanna-Neural' },
-      `Thanks for calling ${businessName}. What's going on — what can we help you with today?`
+      { voice: voiceName },
+      aiLang === 'es'
+        ? `Hola, gracias por llamar a ${businessName}. Soy la asistente virtual. ¿En qué le puedo ayudar hoy?`
+        : `Thanks for calling ${businessName}. What's going on — what can we help you with today?`
     )
     return new NextResponse(twiml.toString(), {
       headers: { 'Content-Type': 'text/xml' },
@@ -201,11 +209,13 @@ export async function POST(req: NextRequest) {
       speechTimeout: 'auto',
       speechModel: 'phone_call',
       enhanced: true,
-      language: 'en-US',
+      language: speechLang,
     })
     gather.say(
-      { voice: 'Polly.Joanna-Neural' },
-      `I didn't quite catch that. Could you tell me your name and what service you need today?`
+      { voice: voiceName },
+      aiLang === 'es'
+        ? `Disculpe, no le entendí bien. ¿Me puede dar su nombre y qué servicio necesita?`
+        : `I didn't quite catch that. Could you tell me your name and what service you need today?`
     )
     return new NextResponse(twiml.toString(), {
       headers: { 'Content-Type': 'text/xml' },
@@ -220,7 +230,7 @@ export async function POST(req: NextRequest) {
     const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 220,
-      system: `You are the AI phone receptionist for ${businessName} — a real home-service business serving ${serviceArea}. ${toneInstruction}
+      system: `${aiLang === 'es' ? 'Responde SOLO en español (español de México / EE. UU. Hispánico). Usa un tono natural y conversacional.\n\n' : ''}You are the AI phone receptionist for ${businessName} — a real home-service business serving ${serviceArea}. ${toneInstruction}
 
 Services we offer: ${services}.
 
@@ -257,9 +267,9 @@ Only role: book a service call. Politely decline anything else: "I can only help
       speechTimeout: 'auto',
       speechModel: 'phone_call',
       enhanced: true,
-      language: 'en-US',
+      language: speechLang,
     })
-    fallback.say({ voice: 'Polly.Joanna-Neural' }, `Sorry, I'm having a brief issue. Could you say that again?`)
+    fallback.say({ voice: voiceName }, `Sorry, I'm having a brief issue. Could you say that again?`)
     return new NextResponse(twiml.toString(), { headers: { 'Content-Type': 'text/xml' } })
   }
   const bookingMatch = aiText.match(/BOOKING_COMPLETE: name=(.+), phone=(.+), service=(.+), address=(.+), time=(.+)/)
@@ -350,7 +360,7 @@ Only role: book a service call. Politely decline anything else: "I can only help
     }
 
     await clearHistory(callSid)
-    twiml.say({ voice: 'Polly.Joanna-Neural' }, spokenText)
+    twiml.say({ voice: voiceName }, spokenText)
     twiml.hangup()
     return new NextResponse(twiml.toString(), {
       headers: { 'Content-Type': 'text/xml' },
@@ -368,7 +378,7 @@ Only role: book a service call. Politely decline anything else: "I can only help
     enhanced: true,
     language: 'en-US',
   })
-  gather.say({ voice: 'Polly.Joanna-Neural' }, spokenText)
+  gather.say({ voice: voiceName }, spokenText)
 
   return new NextResponse(twiml.toString(), {
     headers: { 'Content-Type': 'text/xml' },
