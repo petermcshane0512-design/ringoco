@@ -1,4 +1,4 @@
-﻿# SITE COPY EDITS â€” Ship Today
+# SITE COPY EDITS â€” Ship Today
 
 **Goal:** Reposition bellavego.com from "AI Receptionist" to "AI Office Manager" by EOD.
 **Files to edit:** `src/app/page.tsx` (hero + bundle section), pricing block.
@@ -90,9 +90,9 @@ Find the existing pricing section. Replace 3 tiers with:
 
 | Tier | Price | Setup | Tagline |
 |---|---|---|---|
-| Receptionist Only | $179/mo | $0 | "Just answer the calls." |
-| **AI Office Manager** â­ | **$497/mo** | **$497** | "Replace the hire." |
-| Concierge | $997/mo | $997 | "We run it for you." |
+| Receptionist Only | $179/mo | $50 | "Just answer the calls." |
+| **AI Office Manager** â­ | **$497/mo** | **$247** | "Replace the hire." |
+| Concierge | $997/mo | $497 | "We run it for you." |
 
 **Bullets per tier:**
 
