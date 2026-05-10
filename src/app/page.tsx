@@ -411,7 +411,7 @@ export default function HomePage() {
           <div className="hero-blob b1" />
           <div className="hero-blob b2" />
 
-          {/* Brand callback â€” subtle wave silhouette at bottom (echoes logo) */}
+          {/* Brand callback — subtle wave silhouette at bottom (echoes logo) */}
           <svg
             viewBox="0 0 1440 90"
             preserveAspectRatio="none"
@@ -443,7 +443,7 @@ export default function HomePage() {
                 <span className="accent">you can&apos;t afford to hire.</span>
               </h1>
               <p className="hero-sub">
-                BellAveGo answers your calls, hunts down quotes, collects past-due invoices, and replies to reviews â€” all running in the background while you&apos;re on the truck. <strong>$497/month + $497 onboarding. 30-day money-back guarantee on subscription.</strong>
+                BellAveGo answers your calls, hunts down quotes, collects past-due invoices, and replies to reviews — all running in the background while you&apos;re on the truck. <strong>$497/month + $497 onboarding. 30-day money-back guarantee on subscription.</strong>
               </p>
 
               <div className="hero-actions">
@@ -475,8 +475,8 @@ export default function HomePage() {
                   <span className="hero-trust-lab">Starting / month</span>
                 </div>
                 <div className="hero-trust-item">
-                  <span className="hero-trust-num">30â€‘day</span>
-                  <span className="hero-trust-lab">Moneyâ€‘back</span>
+                  <span className="hero-trust-num">30‑day</span>
+                  <span className="hero-trust-lab">Money‑back</span>
                 </div>
               </div>
             </div>
@@ -678,7 +678,7 @@ export default function HomePage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 18 }}>
             {[
-              { icon: 'ðŸ“ž', title: 'BellAveGo answers', desc: 'Every call, every time â€” 24/7' },
+              { icon: 'ðŸ“ž', title: 'BellAveGo answers', desc: 'Every call, every time — 24/7' },
               { icon: 'ðŸ“…', title: 'Job gets booked', desc: 'Added to your schedule instantly' },
               { icon: 'ðŸ’¬', title: 'Customer texted', desc: 'Confirmation + reminder, automatic' },
             ].map(s => (
@@ -702,20 +702,20 @@ export default function HomePage() {
           {[
             {
               name: 'Receptionist', price: 179, setup: 0, tier: 'receptionist', calls: 'Up to 500',
-              desc: 'AI captures every call. You close it in one tap â€” confirm, invoice, call back, or just acknowledge.',
-              features: ['24/7 AI call answering', 'Captures name Â· phone Â· service Â· address Â· preferred time', 'Instant text summary to your phone', 'One-tap actions on every call', 'Emergency routing to your cell', 'Live dashboard + transcripts + recordings', '3 quarterly intelligence reports/year'],
+              desc: 'AI captures every call. You close it in one tap — confirm, invoice, call back, or just acknowledge.',
+              features: ['24/7 AI call answering', 'Captures name · phone · service · address · preferred time', 'Instant text summary to your phone', 'One-tap actions on every call', 'Emergency routing to your cell', 'Live dashboard + transcripts + recordings', '3 quarterly intelligence reports/year'],
               popular: false, customCta: false,
             },
             {
               name: 'AI Office Manager', price: 497, setup: 497, tier: 'officemgr', calls: 'Unlimited',
-              desc: 'Replace the $60K/yr office manager you canâ€™t afford to hire. Calls + quote follow-up + collections + reviews.',
+              desc: 'Replace the $60K/yr office manager you can’t afford to hire. Calls + quote follow-up + collections + reviews.',
               features: ['Everything in Receptionist, plus:', 'Unlimited calls', 'AI Quote Hunter (auto follow-ups day 2/7/14)', 'AI Collections (nightly past-due chase)', 'AI Reviews (drafts replies for one-tap approval)', 'Smart suggestions on call summaries', 'Jobber / HousecallPro / ServiceTitan integration', '6 bi-monthly intelligence reports/year'],
               popular: true, customCta: false,
             },
             {
               name: 'Concierge', price: 997, setup: 997, tier: 'concierge', calls: 'Unlimited',
               desc: 'Everything autonomous. Multi-location ready. White-glove onboarding. We run the back office for you.',
-              features: ['Everything in AI Office Manager, plus:', 'Auto-confirm mode (when you trust it)', 'Multi-location support (up to 5 numbers)', 'Custom AI prompt tuning', 'AI Photo Estimator Â· Financing Closer Â· Recruiter (Q3 2026)', 'White-glove onboarding (we wire up your CRM)', 'Priority support â€” 24h SLA, dedicated Slack', 'API access for custom integrations', '12 monthly intelligence reports/year'],
+              features: ['Everything in AI Office Manager, plus:', 'Auto-confirm mode (when you trust it)', 'Multi-location support (up to 5 numbers)', 'Custom AI prompt tuning', 'AI Photo Estimator · Financing Closer · Recruiter (Q3 2026)', 'White-glove onboarding (we wire up your CRM)', 'Priority support — 24h SLA, dedicated Slack', 'API access for custom integrations', '12 monthly intelligence reports/year'],
               popular: false, customCta: false,
             },
           ].map(plan => (
@@ -744,8 +744,8 @@ export default function HomePage() {
                   </>
                 )}
               </div>
-              <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.38)' : '#7AAAB2', marginBottom: 6 }}>{plan.customCta ? 'pricing per location' : 'per month Â· cancel anytime'}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>No setup fee Â· No contracts Â· First month free</div>
+              <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.38)' : '#7AAAB2', marginBottom: 6 }}>{plan.customCta ? 'pricing per location' : 'per month · cancel anytime'}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>{plan.setup === 0 ? 'No setup fee — cancel anytime' : '+ $' + plan.setup + ' onboarding — 30-day money-back'}</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: plan.popular ? '#18AFA8' : '#0AA89F', marginBottom: 16 }}>{plan.calls} calls</div>
               <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.6)' : '#4A7A80', marginBottom: 24, lineHeight: 1.6 }}>{plan.desc}</div>
               <div style={{ marginBottom: 24 }}>
@@ -765,11 +765,11 @@ export default function HomePage() {
               </div>
               {isSignedIn ? (
                 <Link href={`/pricing?tier=${plan.tier}&autocheckout=1`} style={{ display: 'block', textAlign: 'center', padding: '13px', background: plan.popular ? '#22C55E' : 'linear-gradient(135deg,#0AA89F,#0D8F87)', borderRadius: 10, textDecoration: 'none', color: '#fff', fontWeight: 800, fontSize: 14, border: 'none' }}>
-                  Start Free Month â†’
+                  Start Free Month →
                 </Link>
               ) : (
                 <Link href={`/pricing?tier=${plan.tier}`} style={{ display: 'block', textAlign: 'center', padding: '13px', background: plan.popular ? '#22C55E' : 'rgba(10,168,159,0.08)', borderRadius: 10, textDecoration: 'none', color: plan.popular ? '#fff' : '#0AA89F', fontWeight: 800, fontSize: 14, border: plan.popular ? 'none' : '1px solid rgba(10,168,159,0.2)' }}>
-                  Get started â†’
+                  Get started →
                 </Link>
               )}
             </div>
@@ -793,14 +793,14 @@ export default function HomePage() {
         <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
           {isSignedIn ? (
             <Link href="/dashboard" className="dash-pulse" style={{ padding: '16px 46px', background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 16 }}>
-              Dashboard â†’
+              Dashboard →
             </Link>
           ) : (
             <Link href="/pricing" className="cta-pulse" style={{ padding: '16px 46px', background: '#22C55E', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 16 }}>
-              Get started â†’
+              Get started →
             </Link>
           )}
-          <a href="tel:+16514677829" style={{ padding: '16px 30px', background: 'rgba(255,255,255,0.08)', borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.18)', color: '#fff', fontWeight: 700, fontSize: 16, textDecoration: 'none' }} title="Call (651) 467-7829 â€” live AI demo">
+          <a href="tel:+16514677829" style={{ padding: '16px 30px', background: 'rgba(255,255,255,0.08)', borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.18)', color: '#fff', fontWeight: 700, fontSize: 16, textDecoration: 'none' }} title="Call (651) 467-7829 — live AI demo">
             ðŸ“ž Call the AI Demo
           </a>
         </div>

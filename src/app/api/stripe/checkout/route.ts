@@ -49,7 +49,14 @@ export async function POST(req: NextRequest) {
   }
 
   const line_items: { price: string; quantity: number }[] = [{ price: subPriceId, quantity: 1 }]
-  // v4 has $0 setup across all tiers — concierge sells "white-glove onboarding included"
+  // v4 setup fees: $0 Receptionist · $497 AI Office Manager · $997 Concierge
+  // Setup is non-refundable (real human work: provisioning, A2P, prompt tuning, integrations).
+  // 30-day money-back applies to subscription only.
+  const setupPrice =
+    tier === 'officemgr' ? process.env.STRIPE_PRICE_OFFICEMGR_SETUP :
+    tier === 'concierge' ? process.env.STRIPE_PRICE_CONCIERGE_SETUP :
+    undefined
+  if (setupPrice) line_items.push({ price: setupPrice, quantity: 1 })
 
   try {
     const session = await stripe.checkout.sessions.create({
