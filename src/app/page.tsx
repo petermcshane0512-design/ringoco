@@ -5,7 +5,6 @@ import Image from 'next/image'
 import { useAuth, SignOutButton } from '@clerk/nextjs'
 import DashboardPreview from '@/components/DashboardPreview'
 import HeroShowcase from '@/components/HeroShowcase'
-import { SAMPLE_REPORT } from '@/lib/consultingReport'
 
 export default function HomePage() {
   const { isSignedIn } = useAuth()
@@ -444,7 +443,7 @@ export default function HomePage() {
                 <span className="accent">you can&apos;t afford to hire.</span>
               </h1>
               <p className="hero-sub">
-                BellAveGo answers your calls, hunts down quotes, collects past-due invoices, and replies to reviews â€” all running in the background while you&apos;re on the truck. <strong>$497/month. No setup fee. First month free.</strong>
+                BellAveGo answers your calls, hunts down quotes, collects past-due invoices, and replies to reviews â€” all running in the background while you&apos;re on the truck. <strong>$497/month + $497 onboarding. 30-day money-back guarantee on subscription.</strong>
               </p>
 
               <div className="hero-actions">
@@ -493,7 +492,7 @@ export default function HomePage() {
       <div id="lp-preview"><DashboardPreview /></div>
 
       {/* CONSULTING PREVIEW */}
-      <section style={{ background: 'linear-gradient(180deg, #EBF7F3 0%, #F5FCFA 100%)', padding: '72px 48px 80px', borderBottom: '1px solid #D4E6DC', position: 'relative', overflow: 'hidden' }}>
+      <section style={{ background: 'linear-gradient(180deg, #EBF7F3 0%, #F5FCFA 100%)', padding: '64px 32px 72px', borderBottom: '1px solid #D4E6DC' }}>
         <style>{`
           @keyframes pdfFloat {
             0%, 100% { transform: rotate(6deg) translateY(0); }
@@ -503,10 +502,11 @@ export default function HomePage() {
             0%, 100% { box-shadow: 0 8px 24px rgba(10,168,159,0.32), 0 0 0 0 rgba(94,234,212,0.4); }
             50%      { box-shadow: 0 12px 32px rgba(10,168,159,0.5), 0 0 0 8px rgba(94,234,212,0); }
           }
-          .pdf-float {
+          .consult-wrap { position: relative; max-width: 1200px; margin: 0 auto; }
+          .consult-img { display: block; width: 100%; height: auto; border-radius: 22px; box-shadow: 0 30px 80px rgba(7,27,58,0.18); border: 1px solid rgba(10,168,159,0.18); }
+          .pdf-float-img {
             position: absolute;
-            top: 64px;
-            right: 48px;
+            top: 28px; right: 28px;
             display: flex; align-items: center; gap: 14px;
             z-index: 5;
             text-decoration: none;
@@ -516,7 +516,7 @@ export default function HomePage() {
             border-radius: 8px;
             background: linear-gradient(160deg, #fff 0%, #F5FCFA 100%);
             border: 1px solid rgba(10,168,159,0.22);
-            box-shadow: 0 14px 32px rgba(11,31,58,0.18), 0 4px 10px rgba(11,31,58,0.08);
+            box-shadow: 0 14px 32px rgba(11,31,58,0.22), 0 4px 10px rgba(11,31,58,0.10);
             position: relative;
             overflow: hidden;
             animation: pdfFloat 4.2s ease-in-out infinite;
@@ -565,289 +565,61 @@ export default function HomePage() {
           }
           .pdf-cta:hover { transform: translateY(-2px) scale(1.04); filter: brightness(1.10); }
           .pdf-cta-arrow { transition: transform 0.22s ease; }
-          .pdf-float:hover .pdf-cta-arrow { transform: translateX(3px); }
+          .pdf-float-img:hover .pdf-cta-arrow { transform: translateX(3px); }
           .pdf-cta-stack { display: flex; flex-direction: column; gap: 4px; }
           .pdf-cta-tag {
-            font-size: 10px; font-weight: 700; color: #0AA89F;
+            font-size: 10px; font-weight: 700; color: #fff;
             letter-spacing: 0.14em; text-transform: uppercase;
+            text-shadow: 0 1px 6px rgba(0,0,0,0.45);
           }
-          @media (max-width: 880px) {
-            .pdf-float { display: none; }
+          @media (max-width: 720px) {
+            .pdf-float-img { top: 12px; right: 12px; gap: 8px; }
+            .pdf-cta-stack { display: none; }
+            .pdf-thumb { width: 64px; height: 80px; }
           }
         `}</style>
 
-        <Link href="/sample-report" className="pdf-float" aria-label="View a sample BellAveGo consulting report">
-          <div className="pdf-thumb">
-            <span className="pdf-thumb-pin">PDF</span>
-            <div className="pdf-thumb-head">
-              <span className="pdf-thumb-dot" />
-              <span className="pdf-thumb-dot" style={{ background: 'rgba(94,234,212,0.45)' }} />
-              <span className="pdf-thumb-dot" style={{ background: 'rgba(94,234,212,0.25)' }} />
-            </div>
-            <div className="pdf-thumb-stripe" />
-            <div className="pdf-thumb-body">
-              <div className="pdf-thumb-line lg" style={{ width: '78%' }} />
-              <div className="pdf-thumb-line" style={{ width: '92%' }} />
-              <div className="pdf-thumb-line" style={{ width: '85%' }} />
-              <div className="pdf-thumb-line" style={{ width: '60%' }} />
-              <div style={{ display: 'flex', gap: 3, marginTop: 4 }}>
-                <div style={{ flex: 1, height: 14, borderRadius: 3, background: 'rgba(10,168,159,0.18)' }} />
-                <div style={{ flex: 1, height: 14, borderRadius: 3, background: 'rgba(34,197,94,0.18)' }} />
-                <div style={{ flex: 1, height: 14, borderRadius: 3, background: 'rgba(245,158,11,0.18)' }} />
+        <div className="consult-wrap">
+          <Image
+            src="/Consulting1.png"
+            alt="BellAveGo Consulting Report - sample"
+            width={1400}
+            height={900}
+            className="consult-img"
+          />
+          <Link href="/sample-report" className="pdf-float-img" aria-label="View a sample BellAveGo consulting report">
+            <div className="pdf-thumb">
+              <span className="pdf-thumb-pin">PDF</span>
+              <div className="pdf-thumb-head">
+                <span className="pdf-thumb-dot" />
+                <span className="pdf-thumb-dot" style={{ background: 'rgba(94,234,212,0.45)' }} />
+                <span className="pdf-thumb-dot" style={{ background: 'rgba(94,234,212,0.25)' }} />
               </div>
-              <div className="pdf-thumb-line" style={{ width: '70%', marginTop: 3 }} />
-              <div className="pdf-thumb-line" style={{ width: '50%' }} />
-            </div>
-          </div>
-          <div className="pdf-cta-stack">
-            <span className="pdf-cta-tag">BellAveGo Â· PDF</span>
-            <span className="pdf-cta">
-              View a report
-              <svg className="pdf-cta-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-              </svg>
-            </span>
-          </div>
-        </Link>
-
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 36 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#0AA89F', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Quarterly consulting Â· Included on Growth+</p>
-            <h2 style={{ fontSize: 'clamp(28px, 3.8vw, 42px)', fontWeight: 900, color: '#0B1F3A', letterSpacing: '-1px', marginBottom: 12, lineHeight: 1.1 }}>
-              A real consulting report â€”<br /><span style={{ color: '#0AA89F' }}>built from your data, every quarter.</span>
-            </h2>
-            <p style={{ fontSize: 16, color: '#4A7A80', maxWidth: 580, margin: '0 auto', lineHeight: 1.6 }}>
-              Most AI receptionists answer your phone. BellAveGo also pulls your dashboard, your service area&apos;s census + Google Places data, and ships you a polished consulting report â€” quarterly on Growth, monthly on Multi-location.
-            </p>
-          </div>
-
-          {/* What's inside â€” 3-up feature row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}>
-            {[
-              {
-                icon: (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-                    <polyline points="17 6 23 6 23 12"/>
-                  </svg>
-                ),
-                title: 'Top 3 revenue gaps',
-                desc: 'AI scans your call data and spots the 3 highest-leverage moves. With dollars. e.g. "Saturday 10amâ€“2pm gap = +$5,200/mo at your close rates."',
-              },
-              {
-                icon: (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                    <circle cx="12" cy="10" r="3"/>
-                  </svg>
-                ),
-                title: 'Local market scan',
-                desc: 'Homeowners in your ZIPs, median income, home age, HVAC replacement opportunity. Census + Google Places fused with your service area.',
-              },
-              {
-                icon: (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 11l3 3L22 4"/>
-                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-                  </svg>
-                ),
-                title: '90-day action plan',
-                desc: '5 prioritized moves â€” ranked by impact Ã· effort, with timelines. Not generic advice. Specific to your data, your trade, your zip.',
-              },
-            ].map(f => (
-              <div key={f.title} style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.16)', borderRadius: 14, padding: '20px 22px', boxShadow: '0 2px 14px rgba(10,168,159,0.06)' }}>
-                <div style={{ width: 38, height: 38, borderRadius: 10, background: 'linear-gradient(135deg, #0AA89F, #0D8F87)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12, boxShadow: '0 4px 12px rgba(10,168,159,0.32)' }}>
-                  {f.icon}
+              <div className="pdf-thumb-stripe" />
+              <div className="pdf-thumb-body">
+                <div className="pdf-thumb-line lg" style={{ width: '78%' }} />
+                <div className="pdf-thumb-line" style={{ width: '92%' }} />
+                <div className="pdf-thumb-line" style={{ width: '85%' }} />
+                <div className="pdf-thumb-line" style={{ width: '60%' }} />
+                <div style={{ display: 'flex', gap: 3, marginTop: 4 }}>
+                  <div style={{ flex: 1, height: 14, borderRadius: 3, background: 'rgba(10,168,159,0.18)' }} />
+                  <div style={{ flex: 1, height: 14, borderRadius: 3, background: 'rgba(34,197,94,0.18)' }} />
+                  <div style={{ flex: 1, height: 14, borderRadius: 3, background: 'rgba(245,158,11,0.18)' }} />
                 </div>
-                <h3 style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A', margin: '0 0 6px', letterSpacing: '-0.2px' }}>{f.title}</h3>
-                <p style={{ fontSize: 13, color: '#4A7A80', margin: 0, lineHeight: 1.55 }}>{f.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Sample report visual + live preview cards */}
-          <style>{`
-            @keyframes consPreviewIn {
-              0%   { opacity: 0; transform: translateY(14px) scale(0.97); }
-              100% { opacity: 1; transform: translateY(0) scale(1); }
-            }
-            .cons-preview {
-              opacity: 0;
-              animation: consPreviewIn 0.6s cubic-bezier(0.22,1,0.36,1) forwards;
-            }
-            .cons-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
-            @media (max-width: 880px) { .cons-grid { grid-template-columns: 1fr; } }
-          `}</style>
-
-          <div className="cons-grid">
-            {/* LEFT â€” report image with overlay CTA */}
-            <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', boxShadow: '0 24px 70px rgba(7,27,58,0.18)', border: '1px solid rgba(10,168,159,0.18)', minHeight: 420 }}>
-              <Image
-                src="/Consulting1.png"
-                alt="BellAveGo Consulting Report â€” sample"
-                width={1400}
-                height={900}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-              />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 50%, rgba(7,27,58,0.92) 100%)', pointerEvents: 'none' }} />
-              <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-                <div style={{ color: '#fff' }}>
-                  <div style={{ fontSize: 10.5, fontWeight: 700, color: '#5EEAD4', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 3 }}>Sample report</div>
-                  <div style={{ fontSize: 15.5, fontWeight: 800, letterSpacing: '-0.3px' }}>Q1 2026 Â· Mike&apos;s HVAC Â· Minneapolis</div>
-                </div>
-                <Link href="/sample-report" style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 7,
-                  padding: '10px 18px', borderRadius: 9,
-                  background: '#fff', color: '#0AA89F',
-                  fontWeight: 800, fontSize: 13, textDecoration: 'none',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.32)',
-                }}>
-                  View full report
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                  </svg>
-                </Link>
+                <div className="pdf-thumb-line" style={{ width: '70%', marginTop: 3 }} />
+                <div className="pdf-thumb-line" style={{ width: '50%' }} />
               </div>
             </div>
-
-            {/* RIGHT â€” live preview cards from the actual report */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
-
-              {/* Card 1: Top opportunity */}
-              <div className="cons-preview" style={{
-                background: '#fff',
-                borderRadius: 14,
-                padding: '16px 18px',
-                border: '1px solid rgba(10,168,159,0.18)',
-                boxShadow: '0 8px 24px rgba(11,31,58,0.08), 0 2px 6px rgba(11,31,58,0.04)',
-                animationDelay: '0.05s',
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <span style={{ fontSize: 10, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Â§4 Â· Top opportunity</span>
-                  <span style={{ fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 99, background: 'rgba(34,197,94,0.14)', color: '#15803D', letterSpacing: '0.04em', textTransform: 'uppercase' }}>â— High confidence</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 26, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.5px', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>+${SAMPLE_REPORT.opportunities[0].monthlyValue.toLocaleString()}</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: '#7AAAB2', letterSpacing: '0.06em', textTransform: 'uppercase' }}>per month</span>
-                </div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A', marginBottom: 4 }}>{SAMPLE_REPORT.opportunities[0].title}</div>
-                <p style={{ fontSize: 12, color: '#4A6670', margin: 0, lineHeight: 1.5 }}>{SAMPLE_REPORT.opportunities[0].pattern}</p>
-              </div>
-
-              {/* Card 2: Service area mini-map */}
-              <div className="cons-preview" style={{
-                background: 'linear-gradient(160deg, #E8F4EF 0%, #DCEDE6 100%)',
-                borderRadius: 14,
-                padding: 14,
-                border: '1px solid rgba(10,168,159,0.18)',
-                boxShadow: '0 8px 24px rgba(11,31,58,0.08), 0 2px 6px rgba(11,31,58,0.04)',
-                animationDelay: '0.20s',
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <span style={{ fontSize: 10, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Â§5 Â· Service area pinpoints</span>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: '#7AAAB2' }}>{SAMPLE_REPORT.meta.serviceArea.length} ZIPs</span>
-                </div>
-                <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', aspectRatio: '21/9', background: '#fff' }}>
-                  <svg viewBox="0 0 1000 430" preserveAspectRatio="none" style={{ width: '100%', height: '100%', display: 'block' }}>
-                    <defs>
-                      <pattern id="cgrid-home" width="40" height="40" patternUnits="userSpaceOnUse">
-                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(10,168,159,0.10)" strokeWidth="1" />
-                      </pattern>
-                    </defs>
-                    <rect width="1000" height="430" fill="url(#cgrid-home)" />
-                    <ellipse cx="290" cy="170" rx="92" ry="58" fill="rgba(94,234,212,0.55)" />
-                    <g stroke="rgba(11,31,58,0.16)" strokeWidth="3" fill="none" strokeLinecap="round">
-                      <path d="M0,260 C 220,240 340,300 520,260 S 820,200 1000,230" />
-                      <path d="M0,160 C 200,180 360,120 540,150 S 780,100 1000,130" />
-                      <path d="M520,0 C 540,140 480,260 540,430" />
-                      <path d="M820,0 C 840,140 780,260 840,430" />
-                    </g>
-                    {SAMPLE_REPORT.serviceAreaMap.points.map((p, i) => {
-                      const cx = (p.x / 100) * 1000
-                      const cy = (p.y / 100) * 430
-                      const fill = p.kind === 'business' ? '#0AA89F' : p.kind === 'opportunity' ? '#22C55E' : '#94A3B8'
-                      const r = p.kind === 'business' ? 22 : 18
-                      return (
-                        <g key={i}>
-                          <circle cx={cx} cy={cy} r={r + 4} fill={fill} opacity="0.30" />
-                          <circle cx={cx} cy={cy} r={r} fill={fill} stroke="#fff" strokeWidth="2.5" />
-                          <text x={cx} y={cy + 4} textAnchor="middle" fill="#fff" fontSize="13" fontWeight="800">{p.label}</text>
-                        </g>
-                      )
-                    })}
-                  </svg>
-                </div>
-                <div style={{ display: 'flex', gap: 12, marginTop: 8, fontSize: 10.5, color: '#4A6670' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#0AA89F' }} /> You
-                  </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22C55E' }} /> Opportunities
-                  </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#94A3B8' }} /> Competitors
-                  </span>
-                </div>
-              </div>
-
-              {/* Card 3: Outreach target preview */}
-              <div className="cons-preview" style={{
-                background: '#fff',
-                borderRadius: 14,
-                padding: '14px 16px',
-                border: '1px solid rgba(10,168,159,0.18)',
-                boxShadow: '0 8px 24px rgba(11,31,58,0.08), 0 2px 6px rgba(11,31,58,0.04)',
-                animationDelay: '0.35s',
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <span style={{ fontSize: 10, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Â§6 Â· Outreach targets</span>
-                  <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 99, background: 'rgba(11,31,58,0.06)', color: '#4A6670', letterSpacing: '0.04em', textTransform: 'uppercase' }}>TCPA-safe</span>
-                </div>
-                {SAMPLE_REPORT.outreachTargets.slice(0, 2).map((t, i) => (
-                  <div key={t.business} style={{
-                    display: 'flex', alignItems: 'center', gap: 11,
-                    padding: '8px 0',
-                    borderTop: i === 0 ? 'none' : '1px solid rgba(10,168,159,0.10)',
-                  }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #0AA89F, #0D8F87)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 12, fontWeight: 800 }}>
-                      {t.business[0]}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 800, color: '#0B1F3A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.business}</div>
-                      <div style={{ fontSize: 10.5, color: '#7AAAB2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.type}</div>
-                    </div>
-                    <span style={{ fontSize: 11.5, fontWeight: 800, color: '#0AA89F', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                      {t.phone}
-                    </span>
-                  </div>
-                ))}
-                <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px dashed rgba(10,168,159,0.18)', fontSize: 11, color: '#7AAAB2', textAlign: 'center', fontWeight: 600 }}>
-                  + {SAMPLE_REPORT.outreachTargets.length - 2} more in the full report â†’
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* University trust strip */}
-          <div style={{ marginTop: 28, padding: '18px 24px', borderRadius: 14, background: 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, boxShadow: '0 12px 36px rgba(11,31,58,0.18)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #5EEAD4, #0AA89F)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-                  <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+            <div className="pdf-cta-stack">
+              <span className="pdf-cta-tag">BellAveGo &middot; PDF</span>
+              <span className="pdf-cta">
+                View a report
+                <svg className="pdf-cta-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
-              </div>
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 800, color: '#5EEAD4', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 2 }}>Methodology</div>
-                <div style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', letterSpacing: '-0.2px' }}>
-                  Reports formulated by graduates of <span style={{ color: '#5EEAD4' }}>Harvard, Stanford &amp; Fordham</span>.
-                </div>
-              </div>
+              </span>
             </div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontWeight: 600 }}>
-              Powered by Claude Sonnet Â· Census ACS Â· Google Places
-            </div>
-          </div>
+          </Link>
         </div>
       </section>
 
@@ -859,10 +631,10 @@ export default function HomePage() {
             {[...Array(2)].map((_, repeat) => (
               <div key={repeat} style={{ display: 'flex' }}>
                 {[
-                  { icon: 'â„ï¸', label: 'HVAC' }, { icon: 'ðŸª ', label: 'Plumbing' }, { icon: 'âš¡', label: 'Electrical' },
-                  { icon: 'ðŸ§¹', label: 'Cleaning' }, { icon: 'ðŸŒ¿', label: 'Landscaping' }, { icon: 'ðŸ”¨', label: 'Handyman' },
-                  { icon: 'ðŸ ', label: 'Roofing' }, { icon: 'ðŸ”§', label: 'Appliance Repair' }, { icon: 'ðŸš—', label: 'Auto Detailing' },
-                  { icon: 'ðŸ¾', label: 'Pet Services' }, { icon: 'ðŸ’§', label: 'Pool & Spa' }, { icon: 'ðŸªŸ', label: 'Window Cleaning' },
+                  { icon: '❄️', label: 'HVAC' }, { icon: '🪠', label: 'Plumbing' }, { icon: '⚡', label: 'Electrical' },
+                  { icon: '🧹', label: 'Cleaning' }, { icon: '🌿', label: 'Landscaping' }, { icon: '🔨', label: 'Handyman' },
+                  { icon: '🏠', label: 'Roofing' }, { icon: '🔧', label: 'Appliance Repair' }, { icon: '🚗', label: 'Auto Detailing' },
+                  { icon: '🐾', label: 'Pet Services' }, { icon: '💧', label: 'Pool & Spa' }, { icon: '🪟', label: 'Window Cleaning' },
                 ].map(s => (
                   <div key={s.label + repeat} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 28px', borderRight: '1px solid #D4E6DC', whiteSpace: 'nowrap' }}>
                     <span style={{ fontSize: 18 }}>{s.icon}</span>
@@ -929,19 +701,19 @@ export default function HomePage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20, maxWidth: 960, margin: '0 auto 20px' }}>
           {[
             {
-              name: 'Receptionist', price: 179, tier: 'receptionist', calls: 'Up to 500',
+              name: 'Receptionist', price: 179, setup: 0, tier: 'receptionist', calls: 'Up to 500',
               desc: 'AI captures every call. You close it in one tap â€” confirm, invoice, call back, or just acknowledge.',
               features: ['24/7 AI call answering', 'Captures name Â· phone Â· service Â· address Â· preferred time', 'Instant text summary to your phone', 'One-tap actions on every call', 'Emergency routing to your cell', 'Live dashboard + transcripts + recordings', '3 quarterly intelligence reports/year'],
               popular: false, customCta: false,
             },
             {
-              name: 'AI Office Manager', price: 497, tier: 'officemgr', calls: 'Unlimited',
+              name: 'AI Office Manager', price: 497, setup: 497, tier: 'officemgr', calls: 'Unlimited',
               desc: 'Replace the $60K/yr office manager you canâ€™t afford to hire. Calls + quote follow-up + collections + reviews.',
               features: ['Everything in Receptionist, plus:', 'Unlimited calls', 'AI Quote Hunter (auto follow-ups day 2/7/14)', 'AI Collections (nightly past-due chase)', 'AI Reviews (drafts replies for one-tap approval)', 'Smart suggestions on call summaries', 'Jobber / HousecallPro / ServiceTitan integration', '6 bi-monthly intelligence reports/year'],
               popular: true, customCta: false,
             },
             {
-              name: 'Concierge', price: 997, tier: 'concierge', calls: 'Unlimited',
+              name: 'Concierge', price: 997, setup: 997, tier: 'concierge', calls: 'Unlimited',
               desc: 'Everything autonomous. Multi-location ready. White-glove onboarding. We run the back office for you.',
               features: ['Everything in AI Office Manager, plus:', 'Auto-confirm mode (when you trust it)', 'Multi-location support (up to 5 numbers)', 'Custom AI prompt tuning', 'AI Photo Estimator Â· Financing Closer Â· Recruiter (Q3 2026)', 'White-glove onboarding (we wire up your CRM)', 'Priority support â€” 24h SLA, dedicated Slack', 'API access for custom integrations', '12 monthly intelligence reports/year'],
               popular: false, customCta: false,
@@ -1004,9 +776,9 @@ export default function HomePage() {
           ))}
         </div>
         <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 16, lineHeight: 1.6 }}>
-          $0 setup Â· Month-to-month Â· First month free Â· 17% off annual.<br />
-          <span style={{ fontWeight: 700, color: '#0AA89F' }}>Typical $1M HVAC shop sees $18K/mo lift from the 4-AI bundle</span> â€” 37x return on $497.<br />
-          90-day money-back if we don&apos;t add at least 5 booked jobs.
+          Month-to-month · 30-day money-back guarantee · 17% off annual.<br />
+          <span style={{ fontWeight: 700, color: '#0AA89F' }}>Typical $1M HVAC shop sees $18K/mo lift from the 4-AI bundle</span> — 37x return on $497.<br />
+          Setup fee covers number provisioning, A2P SMS registration, prompt tuning, and integration setup. Non-refundable (real work) but subscription is fully refundable in the first 30 days.
         </p>
       </section>
 
@@ -1040,7 +812,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <Image src="/logo.png" alt="BellAveGo" width={300} height={100} style={{ objectFit: 'contain' }} />
           <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
-          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>The best AI implementation for teams of 1-15 · From $179/mo · First month free · 90-day guarantee</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>The best AI implementation for teams of 1-15 · From $179/mo . 30-day money-back . Cancel anytime</p>
         </div>
       </footer>
 
