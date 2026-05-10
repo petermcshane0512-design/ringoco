@@ -589,9 +589,9 @@ export default function HomePage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20, maxWidth: 960, margin: '0 auto 20px' }}>
           {[
-            { name: 'Foundation', price: 79, calls: 'Unlimited', desc: 'Solo contractors under $100K revenue.', popular: false, customCta: false },
-            { name: 'Growth', price: 179, calls: 'Unlimited', desc: 'Growing shops · 2–15 employees · $100K–$500K.', popular: true, customCta: false },
-            { name: 'Multi-location', price: 0, calls: 'Custom', desc: 'Franchises with 3+ locations. Custom pricing.', popular: false, customCta: true },
+            { name: 'Foundation', price: 129, calls: 'Unlimited', desc: 'AI receptionist, SMS booking, dashboard, welcome consulting report.', popular: false, customCta: false },
+            { name: 'Growth', price: 279, calls: 'Unlimited', desc: '+ Quarterly AI consulting reports, Google Reviews automation, Spanish, calendar sync.', popular: true, customCta: false },
+            { name: 'Premium', price: 499, calls: 'Unlimited', desc: '+ Custom AI voice, monthly 1-on-1 with founder, ServiceTitan integration. $497 setup.', popular: false, customCta: false },
           ].map(plan => (
             <div key={plan.name} style={{
               background: plan.popular ? 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)' : '#fff',
@@ -649,8 +649,9 @@ export default function HomePage() {
           ))}
         </div>
         <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 16, lineHeight: 1.6 }}>
-          Unlimited calls · No setup fees · 30-day money-back · Pay annually, get 12 months for the price of 10.<br />
-          <span style={{ fontWeight: 700, color: '#0AA89F' }}>Average customer recovers $4,000+/mo in missed-call revenue</span> — that's 22x ROI on Growth.
+          Unlimited calls · 30-day money-back · Pay annually, get 12 months for the price of 10.<br />
+          <span style={{ fontWeight: 700, color: '#0AA89F' }}>Average customer recovers $4,000+/mo in missed-call revenue</span> — 14x ROI on Growth.<br />
+          Multi-location franchise? <a href="mailto:peter@bellavego.com?subject=Multi-location%20BellAveGo" style={{ color: '#0AA89F', fontWeight: 700, textDecoration: 'none' }}>Contact us</a> for custom pricing.
         </p>
       </section>
 
@@ -684,7 +685,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <Image src="/logo.png" alt="BellAveGo" width={300} height={100} style={{ objectFit: 'contain' }} />
           <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
-          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>Built for home service businesses · From $79/mo · Unlimited calls · 30-day money-back</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>Built for home service businesses · From $129/mo · Unlimited calls · 30-day money-back</p>
         </div>
       </footer>
 

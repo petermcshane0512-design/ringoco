@@ -42,8 +42,9 @@ const input: React.CSSProperties = {
 const row: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }
 
 const TIER_LABELS: Record<string, { label: string; calls: string; price: string }> = {
-  foundation: { label: 'Foundation', calls: 'Unlimited calls', price: '$79/mo' },
-  growth:     { label: 'Growth',     calls: 'Unlimited calls', price: '$179/mo' },
+  foundation: { label: 'Foundation', calls: 'Unlimited calls', price: '$129/mo' },
+  growth:     { label: 'Growth',     calls: 'Unlimited calls', price: '$279/mo' },
+  premium:    { label: 'Premium',    calls: 'Unlimited calls', price: '$499/mo' },
   multiloc:   { label: 'Multi-location', calls: 'Custom', price: 'Custom' },
   cancelled:  { label: 'Cancelled', calls: '—', price: '—' },
   // Legacy tiers (existing customers — keep for back-compat)

@@ -11,7 +11,7 @@ const APP_URL =
     ? process.env.NEXT_PUBLIC_APP_URL
     : 'https://www.bellavego.com'
 
-type Tier = 'foundation' | 'growth'
+type Tier = 'foundation' | 'growth' | 'premium'
 type Interval = 'monthly' | 'annual'
 
 function priceFor(tier: Tier, interval: Interval): string | undefined {
@@ -24,8 +24,18 @@ function priceFor(tier: Tier, interval: Interval): string | undefined {
       monthly: process.env.STRIPE_PRICE_GROWTH_MONTHLY,
       annual: process.env.STRIPE_PRICE_GROWTH_ANNUAL,
     },
+    premium: {
+      monthly: process.env.STRIPE_PRICE_PREMIUM_MONTHLY,
+      annual: process.env.STRIPE_PRICE_PREMIUM_ANNUAL,
+    },
   }
   return map[tier]?.[interval]
+}
+
+function setupPriceFor(tier: Tier): string | undefined {
+  // v3: only Premium has a setup fee (white-glove onboarding).
+  if (tier === 'premium') return process.env.STRIPE_PRICE_PREMIUM_SETUP
+  return undefined
 }
 
 export async function POST(req: NextRequest) {
@@ -37,7 +47,7 @@ export async function POST(req: NextRequest) {
     interval?: Interval
   }
   const tier: Tier = body.tier ?? 'growth'
-  const interval: Interval = body.interval ?? 'monthly'
+  const interval: Interval = body.interval ?? 'annual'  // annual is the default — cashflow
 
   const subPriceId = priceFor(tier, interval) ?? process.env.STRIPE_PRICE_ID
   if (!subPriceId) {
@@ -45,6 +55,8 @@ export async function POST(req: NextRequest) {
   }
 
   const line_items: { price: string; quantity: number }[] = [{ price: subPriceId, quantity: 1 }]
+  const setupId = setupPriceFor(tier)
+  if (setupId) line_items.push({ price: setupId, quantity: 1 })
 
   try {
     const session = await stripe.checkout.sessions.create({
