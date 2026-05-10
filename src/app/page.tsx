@@ -468,7 +468,7 @@ export default function HomePage() {
                   <span className="hero-trust-lab">Always on</span>
                 </div>
                 <div className="hero-trust-item">
-                  <span className="hero-trust-num">$79</span>
+                  <span className="hero-trust-num">$179</span>
                   <span className="hero-trust-lab">Starting / month</span>
                 </div>
                 <div className="hero-trust-item">
