@@ -1,5 +1,22 @@
 export type Confidence = 'high' | 'medium' | 'low'
 
+export type ServiceAreaPoint = {
+  kind: 'business' | 'opportunity' | 'competitor'
+  label: string
+  /** Normalized 0–100 coordinates within the SVG viewport (not real lat/lng) */
+  x: number
+  y: number
+  note?: string
+}
+
+export type OutreachTarget = {
+  business: string
+  type: string
+  address: string
+  phone: string
+  why: string
+}
+
 export type ConsultingReport = {
   meta: {
     businessName: string
@@ -66,6 +83,11 @@ export type ConsultingReport = {
     strengths: string[]
     gaps: string[]
   }
+  serviceAreaMap: {
+    centerLabel: string
+    points: ServiceAreaPoint[]
+  }
+  outreachTargets: OutreachTarget[]
   actionPlan: {
     priority: number
     title: string
@@ -90,51 +112,51 @@ export const SAMPLE_REPORT: ConsultingReport = {
     reportNumber: 'BAG-2026-Q1-00342',
   },
   performance: {
-    callsAnswered: 312,
-    callsAnsweredDelta: 0.24,
-    jobsBooked: 47,
-    jobsBookedDelta: 0.08,
-    revenue: 34200,
-    revenueDelta: 0.11,
-    avgTicket: 728,
-    avgTicketDelta: 0.03,
-    callsSaved: 89,
-    answerRate: 0.78,
+    callsAnswered: 195,
+    callsAnsweredDelta: 0.18,
+    jobsBooked: 38,
+    jobsBookedDelta: 0.27,
+    revenue: 24320,
+    revenueDelta: 0.31,
+    avgTicket: 640,
+    avgTicketDelta: 0.04,
+    callsSaved: 65,
+    answerRate: 0.81,
   },
   bellaveScore: {
-    composite: 7.8,
-    answerRate: 8.4,
-    bookingConversion: 7.1,
+    composite: 7.4,
+    answerRate: 8.1,
+    bookingConversion: 7.0,
     responseTime: 9.2,
-    pricingPower: 6.4,
+    pricingPower: 5.5,
   },
   executiveSummary: [
-    "Mike's HVAC closed Q1 2026 with $34,200 in booked revenue across 47 jobs — an 11% lift over Q4 2025, despite the seasonal lull. Call answer rate climbed to 78%, putting Mike in the top quartile of solo HVAC operators in the Twin Cities metro. The data shows a business operating efficiently within its current capacity, but leaving meaningful revenue on the table in three specific patterns.",
-    "The single largest gap is weekend response. 31 of the 89 missed calls landed Saturday 10 AM – 2 PM, and the booking conversion on those calls (when answered later) is 64% — well above the 41% Q1 weekday average. These are warm leads with cooling-emergency intent, and competitors are catching them. Closing this gap alone is worth an estimated $5,200/month at current close rates and average ticket size.",
-    "Looking forward, the AC tune-up window opens in Minneapolis the third week of April. Last spring, Mike's tune-up volume peaked late and trailed market share — a narrow 4-week window where targeted outreach to the 1,800 single-family homes in his service area with HVAC over 15 years old historically converts at 7–9%. The 90-day action plan in §7 prioritizes both opportunities and a third — a UV-light add-on that's been quietly closing at 38% on existing tune-up customers across the BellAveGo network.",
+    "Mike's HVAC closed Q1 2026 with $24,320 in booked revenue across 38 jobs — a 31% lift over Q4 2025. The boost came almost entirely from the 65 after-hours and weekend calls BellAveGo answered while Mike was on jobsites, calls that historically went to voicemail. At an 81% answer rate and an average ticket of $640, the operating fundamentals are healthy.",
+    "The biggest remaining gap is Saturday late-morning. 8 missed calls per month land between 10 AM and 2 PM Saturdays — when emergency cooling/heating issues spike — and Mike's existing close rate on those calls (when reached later) is 52%. At his average ticket, closing that single window adds an estimated $1,800/month with no additional ad spend.",
+    "Looking forward, the AC tune-up window opens in the Twin Cities the third week of April. Last spring Mike trailed the market by 4 weeks on this campaign. There are 1,847 single-family homes in his service area with HVAC over 15 years old and 71 commercial properties (property managers, restaurants, mid-size retail) that legally accept cold outreach and historically convert at 14–22% on a maintenance contract pitch. The 90-day plan in §8 prioritizes Saturday capture, the tune-up wave, and a UV-light upsell quietly closing at 22% across the BellAveGo network.",
   ],
   opportunities: [
     {
       rank: 1,
-      title: 'Weekend response gap',
-      monthlyValue: 5200,
-      pattern: '31 missed calls Saturday 10 AM – 2 PM. 64% booking rate when reached later vs. 41% weekday baseline. Emergency intent.',
-      action: 'Switch BellAveGo to "high-intent mode" Saturdays — auto-text contractor + offer earliest Sunday slot with $50 off as a hold.',
+      title: 'Saturday 10 AM – 2 PM gap',
+      monthlyValue: 1800,
+      pattern: '8 missed calls/month land in that window. 52% close rate when reached later (vs. 38% weekday). Emergency-cooling intent.',
+      action: 'Switch BellAveGo to "high-intent mode" Saturdays — auto-text Mike when an emergency keyword hits, auto-offer earliest Sunday slot with $40 hold.',
       confidence: 'high',
     },
     {
       rank: 2,
-      title: 'AC tune-up wave (May–Jun)',
-      monthlyValue: 3800,
+      title: 'AC tune-up wave (Apr 13 – Jun 22)',
+      monthlyValue: 1200,
       pattern: '1,847 homes with HVAC > 15 yrs in service zips. Historical tune-up conversion 7–9% with proactive outreach in week 3 of April.',
-      action: 'Run pre-season SMS to last 24-mo customers + targeted postcard to high-age-HVAC homes within 8mi radius.',
+      action: 'Run pre-season SMS to last 24-mo customers + targeted postcard to high-age-HVAC homes within 8 mi radius.',
       confidence: 'high',
     },
     {
       rank: 3,
       title: 'UV light add-on at tune-up',
-      monthlyValue: 2400,
-      pattern: 'BellAveGo network close rate 38% on UV upsell during tune-up appointment. Avg ticket $340. Mike has not run this offer.',
+      monthlyValue: 1500,
+      pattern: 'BellAveGo network close rate 22% on UV upsell during tune-up. Avg ticket $340. Mike has not run this offer.',
       action: 'Add UV-light line item to tune-up estimate template. AI receptionist mentions it on inbound tune-up calls.',
       confidence: 'medium',
     },
@@ -148,11 +170,11 @@ export const SAMPLE_REPORT: ConsultingReport = {
     seasonalSignal: 'AC tune-up window opens week of April 13. Peak demand May 4 – June 22. Heat-pump rebate window through Sep 30.',
   },
   upsells: [
-    { service: 'AC tune-up (pre-season)', demandSignal: '1,847 eligible homes', avgTicket: 189, closeRate: 0.08, monthlyOpportunity: 2790 },
-    { service: 'UV light installation', demandSignal: '38% close on tune-up customers', avgTicket: 340, closeRate: 0.38, monthlyOpportunity: 2420 },
-    { service: 'Smart thermostat install', demandSignal: 'Energy rebate ends Sep 30', avgTicket: 425, closeRate: 0.22, monthlyOpportunity: 1870 },
-    { service: 'Duct cleaning', demandSignal: 'Cross-sell post-repair', avgTicket: 480, closeRate: 0.18, monthlyOpportunity: 1730 },
-    { service: 'Heat-pump quote (replacement)', demandSignal: '24% homes HVAC > 15 yrs', avgTicket: 8200, closeRate: 0.04, monthlyOpportunity: 6560 },
+    { service: 'AC tune-up (pre-season)', demandSignal: '1,847 eligible homes', avgTicket: 189, closeRate: 0.08, monthlyOpportunity: 1190 },
+    { service: 'UV light installation', demandSignal: '22% close on tune-up customers', avgTicket: 340, closeRate: 0.22, monthlyOpportunity: 1500 },
+    { service: 'Smart thermostat install', demandSignal: 'Energy rebate ends Sep 30', avgTicket: 425, closeRate: 0.18, monthlyOpportunity: 1140 },
+    { service: 'Duct cleaning cross-sell', demandSignal: 'Add-on to repair visits', avgTicket: 480, closeRate: 0.16, monthlyOpportunity: 920 },
+    { service: 'Commercial maintenance contract', demandSignal: '71 commercial leads in §6', avgTicket: 2400, closeRate: 0.12, monthlyOpportunity: 2880 },
   ],
   competitive: {
     competitors: [
@@ -179,12 +201,61 @@ export const SAMPLE_REPORT: ConsultingReport = {
       'No after-hours emergency positioning despite weekend intent data',
     ],
   },
+  serviceAreaMap: {
+    centerLabel: 'St. Louis Park · Minneapolis Metro',
+    points: [
+      { kind: 'business', label: 'M', x: 50, y: 52, note: "Mike's HVAC · base of operations" },
+      { kind: 'opportunity', label: '1', x: 32, y: 38, note: 'Cedar Lake — 412 homes, 31% HVAC > 15 yrs' },
+      { kind: 'opportunity', label: '2', x: 68, y: 32, note: 'Golden Valley — 387 homes, 28% HVAC > 15 yrs' },
+      { kind: 'opportunity', label: '3', x: 58, y: 72, note: 'Edina (54%) — 524 homes, 22% HVAC > 15 yrs' },
+      { kind: 'competitor', label: 'C1', x: 26, y: 60, note: 'Northern Air Mechanical · 2.4 mi · ★4.7' },
+      { kind: 'competitor', label: 'C2', x: 78, y: 64, note: 'Bonfe Home Services · 4.1 mi · ★4.6' },
+      { kind: 'competitor', label: 'C3', x: 44, y: 18, note: 'Sabre Heating & Cooling · 3.8 mi · ★4.5' },
+    ],
+  },
+  outreachTargets: [
+    {
+      business: 'Park Place Property Management',
+      type: 'Multi-family property mgmt',
+      address: '5050 Excelsior Blvd, St. Louis Park',
+      phone: '(952) 555‑0142',
+      why: 'Manages 14 buildings (~340 units) within 4 mi. No current HVAC service contract on file with permit office.',
+    },
+    {
+      business: 'Knollwood Mall Operations',
+      type: 'Retail / commercial',
+      address: '8332 Hwy 7, St. Louis Park',
+      phone: '(952) 555‑0337',
+      why: 'Mid-size retail center with 22 rooftop units. Last permitted HVAC work 2018 — replacement window likely.',
+    },
+    {
+      business: 'The Block Apartments',
+      type: 'Multi-family (200+ units)',
+      address: '6900 Wayzata Blvd, St. Louis Park',
+      phone: '(763) 555‑0290',
+      why: 'New build 2019. Out-of-warranty Q3 2026. Strong fit for preventive maintenance contract.',
+    },
+    {
+      business: 'Crave Restaurant Group',
+      type: 'Restaurant chain (3 locations in area)',
+      address: '4949 Excelsior Blvd, St. Louis Park',
+      phone: '(952) 555‑0418',
+      why: 'Restaurant kitchens = 24/7 cooling needs. Currently using out-of-area contractor based on permit data.',
+    },
+    {
+      business: 'RE/MAX Results — West Metro',
+      type: 'Real estate brokerage (referral source)',
+      address: '5402 Parkdale Dr, St. Louis Park',
+      phone: '(952) 555‑0561',
+      why: '38 agents. Pre-listing HVAC inspections + post-close service — high-LTV referral pipeline. No current preferred vendor.',
+    },
+  ],
   actionPlan: [
     {
       priority: 1,
       title: 'Activate Saturday emergency mode',
-      rationale: 'Largest revenue gap. Existing customers + emergency intent already coming in via missed calls.',
-      expectedImpact: '+$5,200/mo within 30 days',
+      rationale: 'Largest revenue gap. Existing customers + emergency intent already coming in via missed Sat calls.',
+      expectedImpact: '+$1,800/mo within 30 days',
       timeline: 'Implement this week',
       effort: 'low',
     },
@@ -192,32 +263,32 @@ export const SAMPLE_REPORT: ConsultingReport = {
       priority: 2,
       title: 'Pre-season tune-up outreach',
       rationale: 'AC tune-up window opens April 13. Last year you trailed market by 4 weeks on this campaign.',
-      expectedImpact: '+$2,790/mo April–June',
+      expectedImpact: '+$1,200/mo April–June',
       timeline: 'Launch April 13',
       effort: 'low',
     },
     {
       priority: 3,
       title: 'Add UV light to tune-up flow',
-      rationale: 'BellAveGo network close rate is 38%. Each tune-up appointment is a $340 upsell opportunity at 38% conversion.',
-      expectedImpact: '+$2,420/mo once active',
+      rationale: 'BellAveGo network close rate is 22%. Each tune-up is a $340 upsell at modest effort.',
+      expectedImpact: '+$1,500/mo once active',
       timeline: 'Live by April 20',
       effort: 'low',
     },
     {
       priority: 4,
-      title: 'Review-volume campaign',
-      rationale: 'You out-rate every competitor but lose new-customer searches on volume. 200 reviews would close the gap.',
-      expectedImpact: '+12–18% inbound new-customer calls',
-      timeline: '90 days to first 100 reviews',
+      title: 'Work the 5 commercial outreach targets in §6',
+      rationale: 'Commercial maintenance contracts are 4–6× the LTV of one-off residential and legal to cold-call. The 5 listed have weak or no current vendor relationships.',
+      expectedImpact: 'One contract = ~$2,400/mo recurring',
+      timeline: '2 calls/week × 3 weeks',
       effort: 'medium',
     },
     {
       priority: 5,
-      title: 'Heat-pump replacement quote engine',
-      rationale: '24% of homes in your area have HVAC over 15 years old. Even at 4% close rate, a single sale is $8,200.',
-      expectedImpact: '+$6,560/mo at network-avg conversion',
-      timeline: 'Set up by May 15',
+      title: 'Review-volume campaign',
+      rationale: 'You out-rate every competitor but lose new-customer searches on volume. 200 reviews would close the gap.',
+      expectedImpact: '+12–18% inbound new-customer calls',
+      timeline: '90 days to first 100 reviews',
       effort: 'medium',
     },
   ],
