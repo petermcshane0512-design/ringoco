@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       line_items,
       metadata: { userId, tier, interval },
       subscription_data: { metadata: { userId, tier, interval } },
-      success_url: `${APP_URL}/dashboard?success=true`,
+      success_url: `${APP_URL}/dashboard/setup?welcome=1`,
       cancel_url: `${APP_URL}`,
     })
 

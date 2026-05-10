@@ -64,6 +64,11 @@ export default function DashboardPage() {
       router.replace("/onboarding");
       return;
     }
+    // Active customers who haven't finished post-checkout setup → wizard
+    if (p.is_active && !p.setup_complete) {
+      router.replace("/dashboard/setup");
+      return;
+    }
 
     const [
       { data: jobData },
