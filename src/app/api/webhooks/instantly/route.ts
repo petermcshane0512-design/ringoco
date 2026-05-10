@@ -1,0 +1,164 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import twilio from 'twilio'
+import Anthropic from '@anthropic-ai/sdk'
+import { verifyInstantlyWebhook } from '@/lib/instantly'
+import type { ReplyClassification } from '@/lib/leadTypes'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+)
+const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
+const anthropic = new Anthropic()
+
+const PETER_PHONE = process.env.FALLBACK_OWNER_PHONE ?? '+17737109565'
+
+/**
+ * Instantly reply webhook handler.
+ *
+ * POST /api/webhooks/instantly
+ *
+ * Receives all Instantly events. We care about replies — every other event
+ * (sent / opened / clicked / bounced) gets logged but doesn't trigger action.
+ *
+ * On `reply_received`:
+ *   1. Classify reply via Claude Haiku (positive / objection / wrong_person / unsubscribe / auto_reply / spam)
+ *   2. Insert into outreach_replies
+ *   3. Update outreach_leads.status
+ *   4. If positive: SMS Peter immediately (target reply window: < 60 min)
+ */
+export async function POST(req: NextRequest) {
+  const rawBody = await req.text()
+
+  const valid = await verifyInstantlyWebhook(rawBody, req.headers.get('x-instantly-signature'))
+  if (!valid) {
+    return NextResponse.json({ error: 'invalid signature' }, { status: 401 })
+  }
+
+  let event: InstantlyWebhookEvent
+  try {
+    event = JSON.parse(rawBody) as InstantlyWebhookEvent
+  } catch {
+    return NextResponse.json({ error: 'invalid JSON' }, { status: 400 })
+  }
+
+  // Only react to reply events. Log everything else for analytics.
+  if (event.event_type !== 'reply_received' && event.event_type !== 'email_replied') {
+    return NextResponse.json({ ok: true, action: 'logged_only', event_type: event.event_type })
+  }
+
+  const leadEmail = event.lead_email ?? event.email ?? ''
+  const replyBody = event.reply_body ?? event.body ?? ''
+  const replySubject = event.reply_subject ?? event.subject ?? ''
+  const campaignId = event.campaign_id ?? event.campaign ?? ''
+
+  if (!leadEmail || !replyBody) {
+    return NextResponse.json({ error: 'missing reply fields' }, { status: 400 })
+  }
+
+  // ── Classify via Claude ──────────────────────────────────────
+  const classification = await classifyReply(replyBody, replySubject)
+  const summary = await summarizeReply(replyBody)
+
+  // ── Persist ──────────────────────────────────────────────────
+  await supabase.from('outreach_replies').insert({
+    lead_email: leadEmail,
+    campaign_id: campaignId,
+    reply_body: replyBody,
+    classification,
+    summary,
+  })
+
+  // Update lead status (drop unsubscribers/spam, keep negatives in nurture)
+  const newStatus =
+    classification === 'positive' ? 'positive_reply' :
+    classification === 'objection' ? 'objection' :
+    classification === 'wrong_person' ? 'wrong_person' :
+    classification === 'unsubscribe' ? 'dropped' :
+    classification === 'auto_reply' ? 'auto_reply' :
+    'spam'
+
+  await supabase
+    .from('outreach_leads')
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .eq('email', leadEmail)
+
+  // ── If positive → SMS Peter NOW ──────────────────────────────
+  if (classification === 'positive') {
+    const { data: lead } = await supabase
+      .from('outreach_leads')
+      .select('business_name, owner_first_name, city, trade')
+      .eq('email', leadEmail)
+      .maybeSingle()
+
+    const body =
+      `🔥 Hot reply from ${lead?.business_name ?? leadEmail} (${lead?.trade ?? '?'} · ${lead?.city ?? '?'}):\n\n` +
+      `"${replyBody.slice(0, 240)}${replyBody.length > 240 ? '…' : ''}"\n\n` +
+      `Summary: ${summary}\n\n` +
+      `Reply within 60 min — open Instantly inbox now.`
+
+    try {
+      await twilioClient.messages.create({
+        body,
+        from: process.env.TWILIO_PHONE_NUMBER!,
+        to: PETER_PHONE,
+      })
+    } catch (e) {
+      console.error('hot-reply SMS to Peter failed:', e)
+    }
+  }
+
+  return NextResponse.json({ ok: true, classification, summary })
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+
+type InstantlyWebhookEvent = {
+  event_type: string
+  lead_email?: string
+  email?: string
+  reply_body?: string
+  body?: string
+  reply_subject?: string
+  subject?: string
+  campaign_id?: string
+  campaign?: string
+}
+
+async function classifyReply(body: string, subject: string): Promise<ReplyClassification> {
+  try {
+    const res = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 20,
+      system:
+        'Classify a B2B cold-email reply into ONE category. Output ONLY the category name. ' +
+        'Categories: positive (wants demo/interested/asks question), objection (engaged but pushback), ' +
+        'wrong_person (forwarding/not the right contact), unsubscribe (stop/drop/not interested), ' +
+        'auto_reply (out of office/vacation), spam (unrelated/spam reply).',
+      messages: [{ role: 'user', content: `Subject: ${subject}\n\nBody:\n${body}` }],
+    })
+    const text = (res.content[0].type === 'text' ? res.content[0].text : '').trim().toLowerCase()
+    if (['positive', 'objection', 'wrong_person', 'unsubscribe', 'auto_reply', 'spam'].includes(text)) {
+      return text as ReplyClassification
+    }
+    return 'objection'
+  } catch (e) {
+    console.error('classify failed:', e)
+    return 'objection'
+  }
+}
+
+async function summarizeReply(body: string): Promise<string> {
+  try {
+    const res = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 80,
+      system: 'Summarize this cold-email reply in one sentence (max 25 words). What did they say, in plain English?',
+      messages: [{ role: 'user', content: body }],
+    })
+    return res.content[0].type === 'text' ? res.content[0].text.trim() : body.slice(0, 100)
+  } catch {
+    return body.slice(0, 100)
+  }
+}
