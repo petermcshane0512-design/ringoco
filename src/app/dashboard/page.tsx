@@ -49,7 +49,7 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [provisionLoading, setProvisionLoading] = useState(false);
-  const [tier, setTier] = useState<"solo" | "growth" | "scale">("growth");
+  const [tier, setTier] = useState<"foundation" | "growth">("growth");
   const [interval, setInterval] = useState<"monthly" | "annual">("monthly");
   const router = useRouter();
 
@@ -90,7 +90,7 @@ export default function DashboardPage() {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier, interval, includeSetup: true }),
+        body: JSON.stringify({ tier, interval }),
       }).then((r) => r.json());
       if (res.url) window.location.href = res.url;
     } finally {
@@ -213,20 +213,18 @@ export default function DashboardPage() {
       {/* Activation banner */}
       {profile && !profile.is_active && (() => {
         const TIERS = {
-          solo:   { label: "Solo",   monthly: 147, annual: 1470, setup: 197, calls: 150,  sub: "<$100K rev · 1 person" },
-          growth: { label: "Growth", monthly: 297, annual: 2970, setup: 497, calls: 500,  sub: "2–10 employees · $100–500K" },
-          scale:  { label: "Scale",  monthly: 597, annual: 5970, setup: 997, calls: 1500, sub: "10+ employees · $500K+" },
+          foundation: { label: "Foundation", monthly: 79,  annual: 790,  sub: "Solo contractors · <$100K revenue" },
+          growth:     { label: "Growth",     monthly: 179, annual: 1790, sub: "Growing shops · 2–15 employees" },
         } as const;
         const cur = TIERS[tier];
-        const monthly = interval === "monthly" ? cur.monthly : Math.round(cur.annual / 12);
-        const totalToday = (interval === "monthly" ? cur.monthly : cur.annual) + cur.setup;
+        const totalToday = interval === "monthly" ? cur.monthly : cur.annual;
         return (
           <div style={{ marginBottom: 22, padding: "20px 22px", background: "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)", border: "1px solid #FDE68A", borderRadius: 14 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: "#92400E" }}>Activate your AI receptionist</div>
                 <div style={{ fontSize: 12, color: "#78350F", marginTop: 3, lineHeight: 1.5 }}>
-                  Pick a plan. We auto-provision your Twilio number, register A2P SMS, and tune your prompt after checkout. 30-day money-back.
+                  Pick a plan. We auto-provision your number, register A2P SMS, and tune your prompt after checkout. 30-day money-back.
                 </div>
               </div>
               <div style={{ display: "flex", background: "#fff", border: "1px solid #FDE68A", borderRadius: 10, padding: 3, fontSize: 11, fontWeight: 700 }}>
@@ -237,16 +235,19 @@ export default function DashboardPage() {
                 ))}
               </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 14 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 14 }}>
               {(Object.keys(TIERS) as Array<keyof typeof TIERS>).map((k) => {
                 const t = TIERS[k];
                 const m = interval === "monthly" ? t.monthly : Math.round(t.annual / 12);
                 const active = tier === k;
                 return (
-                  <button key={k} onClick={() => setTier(k)} style={{ padding: "12px 14px", borderRadius: 10, border: active ? "2px solid #92400E" : "1px solid #FDE68A", background: active ? "#fff" : "rgba(255,255,255,0.5)", textAlign: "left", cursor: "pointer" }}>
+                  <button key={k} onClick={() => setTier(k)} style={{ padding: "14px 16px", borderRadius: 10, border: active ? "2px solid #92400E" : "1px solid #FDE68A", background: active ? "#fff" : "rgba(255,255,255,0.5)", textAlign: "left", cursor: "pointer", position: "relative" }}>
+                    {k === "growth" && (
+                      <span style={{ position: "absolute", top: -10, right: 12, fontSize: 9, fontWeight: 800, padding: "3px 8px", borderRadius: 10, background: "#22C55E", color: "#fff", letterSpacing: "0.06em", textTransform: "uppercase" }}>Most popular</span>
+                    )}
                     <div style={{ fontSize: 12, fontWeight: 800, color: "#92400E", marginBottom: 2 }}>{t.label}</div>
-                    <div style={{ fontSize: 18, fontWeight: 900, color: "#0B1F3A", letterSpacing: "-0.5px" }}>${m}<span style={{ fontSize: 11, color: "#78350F", fontWeight: 700 }}>/mo</span></div>
-                    <div style={{ fontSize: 10, color: "#78350F", marginTop: 2 }}>+ ${t.setup} setup · {t.calls} calls/mo</div>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: "#0B1F3A", letterSpacing: "-0.5px" }}>${m}<span style={{ fontSize: 12, color: "#78350F", fontWeight: 700 }}>/mo</span></div>
+                    <div style={{ fontSize: 10, color: "#78350F", marginTop: 2 }}>Unlimited calls · No setup fee</div>
                     <div style={{ fontSize: 10, color: "#A16207", marginTop: 4 }}>{t.sub}</div>
                   </button>
                 );
@@ -254,11 +255,14 @@ export default function DashboardPage() {
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
               <div style={{ fontSize: 12, color: "#78350F" }}>
-                <span style={{ fontWeight: 700 }}>${totalToday}</span> charged today (${interval === "monthly" ? cur.monthly : cur.annual} {interval} + ${cur.setup} setup). Cancel anytime in 30 days for full subscription refund.
+                <span style={{ fontWeight: 700 }}>${totalToday}</span> charged today. {interval === "monthly" ? "Cancel anytime within 30 days for full refund." : "12 months for the price of 10."}
               </div>
               <button onClick={startCheckout} disabled={checkoutLoading} style={{ padding: "12px 26px", borderRadius: 10, border: "none", fontSize: 13, fontWeight: 800, cursor: checkoutLoading ? "wait" : "pointer", background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)", color: "#fff", boxShadow: "0 4px 14px rgba(34,197,94,0.32)", whiteSpace: "nowrap" }}>
                 {checkoutLoading ? "Loading…" : `Activate ${cur.label} →`}
               </button>
+            </div>
+            <div style={{ marginTop: 10, fontSize: 11, color: "#A16207" }}>
+              Multi-location franchise (3+ locations)? <a href="mailto:peter@bellavego.com?subject=Multi-location%20BellAveGo" style={{ color: "#92400E", fontWeight: 700, textDecoration: "underline" }}>Contact for custom pricing</a>
             </div>
           </div>
         );

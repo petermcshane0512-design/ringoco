@@ -42,13 +42,14 @@ const input: React.CSSProperties = {
 const row: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }
 
 const TIER_LABELS: Record<string, { label: string; calls: string; price: string }> = {
-  solo:      { label: 'Solo',     calls: '150 calls/mo',  price: '$147/mo' },
-  growth:    { label: 'Growth',   calls: '500 calls/mo',  price: '$297/mo' },
-  scale:     { label: 'Scale',    calls: '1,500 calls/mo', price: '$597/mo' },
-  multiloc:  { label: 'Multi-location', calls: 'Custom', price: '$1,200+/mo' },
-  cancelled: { label: 'Cancelled', calls: '—', price: '—' },
+  foundation: { label: 'Foundation', calls: 'Unlimited calls', price: '$79/mo' },
+  growth:     { label: 'Growth',     calls: 'Unlimited calls', price: '$179/mo' },
+  multiloc:   { label: 'Multi-location', calls: 'Custom', price: 'Custom' },
+  cancelled:  { label: 'Cancelled', calls: '—', price: '—' },
   // Legacy tiers (existing customers — keep for back-compat)
-  starter:   { label: 'Starter',  calls: '200 calls/mo',  price: '$49/mo' },
+  solo:    { label: 'Solo (legacy)',   calls: '150 calls/mo',   price: '$147/mo' },
+  scale:   { label: 'Scale (legacy)',  calls: '1,500 calls/mo', price: '$597/mo' },
+  starter: { label: 'Starter (legacy)', calls: '200 calls/mo',  price: '$49/mo' },
 }
 
 export default function SettingsPage() {

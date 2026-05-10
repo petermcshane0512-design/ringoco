@@ -12,14 +12,20 @@ const supabase = createClient(
 )
 
 const PRICE_TO_TIER: Record<string, { tier: string; calls: number }> = {
-  [process.env.STRIPE_PRICE_SOLO_MONTHLY || '']: { tier: 'solo', calls: 150 },
-  [process.env.STRIPE_PRICE_SOLO_ANNUAL || '']: { tier: 'solo', calls: 150 },
-  [process.env.STRIPE_PRICE_GROWTH_MONTHLY || '']: { tier: 'growth', calls: 500 },
-  [process.env.STRIPE_PRICE_GROWTH_ANNUAL || '']: { tier: 'growth', calls: 500 },
-  [process.env.STRIPE_PRICE_SCALE_MONTHLY || '']: { tier: 'scale', calls: 1500 },
-  [process.env.STRIPE_PRICE_SCALE_ANNUAL || '']: { tier: 'scale', calls: 1500 },
-  [process.env.STRIPE_PRICE_MULTILOC_MONTHLY || '']: { tier: 'multiloc', calls: 5000 },
-  [process.env.STRIPE_PRICE_MULTILOC_ANNUAL || '']: { tier: 'multiloc', calls: 5000 },
+  // v2 active prices (unlimited calls — number stored for legacy reporting only)
+  [process.env.STRIPE_PRICE_FOUNDATION_MONTHLY || '']: { tier: 'foundation', calls: 99999 },
+  [process.env.STRIPE_PRICE_FOUNDATION_ANNUAL || '']: { tier: 'foundation', calls: 99999 },
+  [process.env.STRIPE_PRICE_GROWTH_MONTHLY || '']: { tier: 'growth', calls: 99999 },
+  [process.env.STRIPE_PRICE_GROWTH_ANNUAL || '']: { tier: 'growth', calls: 99999 },
+  // legacy v1 prices — keep mapping so existing subs don't break
+  [process.env.STRIPE_PRICE_SOLO_MONTHLY_LEGACY || '']: { tier: 'solo', calls: 150 },
+  [process.env.STRIPE_PRICE_SOLO_ANNUAL_LEGACY || '']: { tier: 'solo', calls: 150 },
+  [process.env.STRIPE_PRICE_GROWTH_MONTHLY_LEGACY || '']: { tier: 'growth', calls: 500 },
+  [process.env.STRIPE_PRICE_GROWTH_ANNUAL_LEGACY || '']: { tier: 'growth', calls: 500 },
+  [process.env.STRIPE_PRICE_SCALE_MONTHLY_LEGACY || '']: { tier: 'scale', calls: 1500 },
+  [process.env.STRIPE_PRICE_SCALE_ANNUAL_LEGACY || '']: { tier: 'scale', calls: 1500 },
+  [process.env.STRIPE_PRICE_MULTILOC_MONTHLY_LEGACY || '']: { tier: 'multiloc', calls: 5000 },
+  [process.env.STRIPE_PRICE_MULTILOC_ANNUAL_LEGACY || '']: { tier: 'multiloc', calls: 5000 },
 }
 
 export async function POST(req: NextRequest) {

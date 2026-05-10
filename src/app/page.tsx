@@ -9,6 +9,7 @@ import HeroShowcase from '@/components/HeroShowcase'
 export default function HomePage() {
   const { isSignedIn } = useAuth()
   const [logoHovered, setLogoHovered] = useState(false)
+  const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly')
 
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#F2F9F5', color: '#0B1F3A', minHeight: '100vh', overflowX: 'hidden' }}>
@@ -421,12 +422,12 @@ export default function HomePage() {
 
               <div className="hero-actions">
                 <Link href={isSignedIn ? '/dashboard' : '/sign-up'} className="hero-cta-primary">
-                  {isSignedIn ? 'Open Dashboard' : 'Start Free Trial'}
+                  {isSignedIn ? 'Open Dashboard' : 'Get Started'}
                   <svg className="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                   </svg>
                 </Link>
-                <a href="tel:+17623713351" className="hero-cta-secondary">
+                <a href="tel:+16514677829" className="hero-cta-secondary">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
                   </svg>
@@ -444,12 +445,12 @@ export default function HomePage() {
                   <span className="hero-trust-lab">Always on</span>
                 </div>
                 <div className="hero-trust-item">
-                  <span className="hero-trust-num">$49</span>
+                  <span className="hero-trust-num">$147</span>
                   <span className="hero-trust-lab">Starting / month</span>
                 </div>
                 <div className="hero-trust-item">
-                  <span className="hero-trust-num">14‑day</span>
-                  <span className="hero-trust-lab">Free trial</span>
+                  <span className="hero-trust-num">30‑day</span>
+                  <span className="hero-trust-lab">Money‑back</span>
                 </div>
               </div>
             </div>
@@ -565,9 +566,9 @@ export default function HomePage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20, maxWidth: 960, margin: '0 auto 20px' }}>
           {[
-            { name: 'Solo', price: 147, setup: 197, calls: 150, desc: 'Solo contractors under $100K revenue.', popular: false },
-            { name: 'Growth', price: 297, setup: 497, calls: 500, desc: '2–10 employees. $100K–$500K revenue.', popular: true },
-            { name: 'Scale', price: 597, setup: 997, calls: 1500, desc: '10+ employees. Established shops.', popular: false },
+            { name: 'Foundation', price: 79, calls: 'Unlimited', desc: 'Solo contractors under $100K revenue.', popular: false, customCta: false },
+            { name: 'Growth', price: 179, calls: 'Unlimited', desc: 'Growing shops · 2–15 employees · $100K–$500K.', popular: true, customCta: false },
+            { name: 'Multi-location', price: 0, calls: 'Custom', desc: 'Franchises with 3+ locations. Custom pricing.', popular: false, customCta: true },
           ].map(plan => (
             <div key={plan.name} style={{
               background: plan.popular ? 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)' : '#fff',
@@ -585,12 +586,18 @@ export default function HomePage() {
               )}
               <div style={{ fontSize: 14, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.5)' : '#7AAAB2', marginBottom: 8 }}>{plan.name}</div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 2, marginBottom: 4 }}>
-                <span style={{ fontSize: 20, fontWeight: 900, color: plan.popular ? 'rgba(255,255,255,0.5)' : '#4A7A80', marginTop: 10 }}>$</span>
-                <span style={{ fontSize: 56, fontWeight: 900, color: plan.popular ? '#fff' : '#0B1F3A', lineHeight: 1, letterSpacing: '-2px' }}>{plan.price}</span>
+                {plan.customCta ? (
+                  <span style={{ fontSize: 32, fontWeight: 900, color: '#0B1F3A', lineHeight: 1.1, letterSpacing: '-1px' }}>Custom</span>
+                ) : (
+                  <>
+                    <span style={{ fontSize: 20, fontWeight: 900, color: plan.popular ? 'rgba(255,255,255,0.5)' : '#4A7A80', marginTop: 10 }}>$</span>
+                    <span style={{ fontSize: 56, fontWeight: 900, color: plan.popular ? '#fff' : '#0B1F3A', lineHeight: 1, letterSpacing: '-2px' }}>{plan.price}</span>
+                  </>
+                )}
               </div>
-              <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.38)' : '#7AAAB2', marginBottom: 6 }}>per month · cancel anytime</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>+ ${plan.setup} one-time onboarding</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: plan.popular ? '#18AFA8' : '#0AA89F', marginBottom: 16 }}>{plan.calls.toLocaleString()} calls / month</div>
+              <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.38)' : '#7AAAB2', marginBottom: 6 }}>{plan.customCta ? 'pricing per location' : 'per month · cancel anytime'}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>{plan.customCta ? 'White-glove onboarding included' : 'No setup fee · No contracts'}</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: plan.popular ? '#18AFA8' : '#0AA89F', marginBottom: 16 }}>{plan.calls} calls</div>
               <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.6)' : '#4A7A80', marginBottom: 24, lineHeight: 1.6 }}>{plan.desc}</div>
               <div style={{ marginBottom: 24 }}>
                 {['AI answers every missed call 24/7', 'Job booking + SMS confirmation', 'Quarterly AI consulting reports', 'Local market intelligence', '30-day money-back guarantee'].map(f => (
@@ -606,6 +613,10 @@ export default function HomePage() {
                 <Link href="/dashboard" style={{ display: 'block', textAlign: 'center', padding: '13px', background: plan.popular ? 'linear-gradient(135deg,#0AA89F,#0D8F87)' : 'rgba(10,168,159,0.08)', borderRadius: 10, textDecoration: 'none', color: plan.popular ? '#fff' : '#0AA89F', fontWeight: 800, fontSize: 14, border: plan.popular ? 'none' : '1px solid rgba(10,168,159,0.2)' }}>
                   Dashboard →
                 </Link>
+              ) : plan.customCta ? (
+                <a href="mailto:peter@bellavego.com?subject=Multi-location%20BellAveGo" style={{ display: 'block', textAlign: 'center', padding: '13px', background: 'rgba(10,168,159,0.08)', borderRadius: 10, textDecoration: 'none', color: '#0AA89F', fontWeight: 800, fontSize: 14, border: '1px solid rgba(10,168,159,0.2)' }}>
+                  Contact us →
+                </a>
               ) : (
                 <Link href="/sign-up" style={{ display: 'block', textAlign: 'center', padding: '13px', background: plan.popular ? '#22C55E' : 'rgba(10,168,159,0.08)', borderRadius: 10, textDecoration: 'none', color: plan.popular ? '#fff' : '#0AA89F', fontWeight: 800, fontSize: 14, border: plan.popular ? 'none' : '1px solid rgba(10,168,159,0.2)' }}>
                   Get started →
@@ -615,8 +626,8 @@ export default function HomePage() {
           ))}
         </div>
         <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 16, lineHeight: 1.6 }}>
-          30-day money-back guarantee · Cancel anytime · Pay annually, get 12 months for the price of 10.<br />
-          Multi-location? <a href="mailto:peter@bellavego.com" style={{ color: '#0AA89F', fontWeight: 700, textDecoration: 'none' }}>Contact us</a> for franchise + 3+ location pricing.
+          Unlimited calls · No setup fees · 30-day money-back · Pay annually, get 12 months for the price of 10.<br />
+          <span style={{ fontWeight: 700, color: '#0AA89F' }}>Average customer recovers $4,000+/mo in missed-call revenue</span> — that's 22x ROI on Growth.
         </p>
       </section>
 
@@ -650,7 +661,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <Image src="/logo.png" alt="BellAveGo" width={300} height={100} style={{ objectFit: 'contain' }} />
           <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
-          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>Built for home service businesses · From $147/mo · 30-day money-back · Cancel anytime</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>Built for home service businesses · From $79/mo · Unlimited calls · 30-day money-back</p>
         </div>
       </footer>
 
