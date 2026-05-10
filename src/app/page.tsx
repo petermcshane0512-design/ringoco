@@ -491,23 +491,109 @@ export default function HomePage() {
       {/* CONSULTING PREVIEW */}
       <section style={{ background: 'linear-gradient(180deg, #EBF7F3 0%, #F5FCFA 100%)', padding: '72px 48px 80px', borderBottom: '1px solid #D4E6DC' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#0AA89F', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Included in your plan</p>
-            <h2 style={{ fontSize: 36, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-1px', marginBottom: 12 }}>
-              5 expert consulting reports a year.
+          <div style={{ textAlign: 'center', marginBottom: 36 }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#0AA89F', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Quarterly consulting · Included on Growth+</p>
+            <h2 style={{ fontSize: 'clamp(28px, 3.8vw, 42px)', fontWeight: 900, color: '#0B1F3A', letterSpacing: '-1px', marginBottom: 12, lineHeight: 1.1 }}>
+              A real consulting report —<br /><span style={{ color: '#0AA89F' }}>built from your data, every quarter.</span>
             </h2>
-            <p style={{ fontSize: 16, color: '#4A7A80', maxWidth: 520, margin: '0 auto' }}>
-              AI-powered market research and local intelligence — delivered as a polished PDF — to help your business grow faster.
+            <p style={{ fontSize: 16, color: '#4A7A80', maxWidth: 580, margin: '0 auto', lineHeight: 1.6 }}>
+              Most AI receptionists answer your phone. BellAveGo also pulls your dashboard, your service area&apos;s census + Google Places data, and ships you a polished consulting report — quarterly on Growth, monthly on Multi-location.
             </p>
           </div>
-          <div style={{ borderRadius: 20, overflow: 'hidden', boxShadow: '0 20px 60px rgba(7,27,58,0.12)', border: '1px solid rgba(10,168,159,0.14)' }}>
+
+          {/* What's inside — 3-up feature row */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}>
+            {[
+              {
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                    <polyline points="17 6 23 6 23 12"/>
+                  </svg>
+                ),
+                title: 'Top 3 revenue gaps',
+                desc: 'AI scans your call data and spots the 3 highest-leverage moves. With dollars. e.g. "Saturday 10am–2pm gap = +$5,200/mo at your close rates."',
+              },
+              {
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                  </svg>
+                ),
+                title: 'Local market scan',
+                desc: 'Homeowners in your ZIPs, median income, home age, HVAC replacement opportunity. Census + Google Places fused with your service area.',
+              },
+              {
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 11l3 3L22 4"/>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                  </svg>
+                ),
+                title: '90-day action plan',
+                desc: '5 prioritized moves — ranked by impact ÷ effort, with timelines. Not generic advice. Specific to your data, your trade, your zip.',
+              },
+            ].map(f => (
+              <div key={f.title} style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.16)', borderRadius: 14, padding: '20px 22px', boxShadow: '0 2px 14px rgba(10,168,159,0.06)' }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: 'linear-gradient(135deg, #0AA89F, #0D8F87)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12, boxShadow: '0 4px 12px rgba(10,168,159,0.32)' }}>
+                  {f.icon}
+                </div>
+                <h3 style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A', margin: '0 0 6px', letterSpacing: '-0.2px' }}>{f.title}</h3>
+                <p style={{ fontSize: 13, color: '#4A7A80', margin: 0, lineHeight: 1.55 }}>{f.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Sample report visual + CTA */}
+          <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', boxShadow: '0 24px 70px rgba(7,27,58,0.18)', border: '1px solid rgba(10,168,159,0.18)' }}>
             <Image
               src="/Consulting1.png"
-              alt="BellAveGo Consulting Report"
+              alt="BellAveGo Consulting Report — sample"
               width={1400}
               height={900}
               style={{ width: '100%', height: 'auto', display: 'block' }}
             />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 55%, rgba(7,27,58,0.85) 100%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '24px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+              <div style={{ color: '#fff' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#5EEAD4', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>Sample report</div>
+                <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.3px' }}>Q1 2026 · Mike&apos;s HVAC · Minneapolis</div>
+              </div>
+              <Link href="/sample-report" style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '12px 22px', borderRadius: 10,
+                background: '#fff', color: '#0AA89F',
+                fontWeight: 800, fontSize: 14, textDecoration: 'none',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.32)',
+              }}>
+                View full sample report
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </Link>
+            </div>
+          </div>
+
+          {/* University trust strip */}
+          <div style={{ marginTop: 28, padding: '18px 24px', borderRadius: 14, background: 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, boxShadow: '0 12px 36px rgba(11,31,58,0.18)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #5EEAD4, #0AA89F)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                  <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: '#5EEAD4', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 2 }}>Methodology</div>
+                <div style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', letterSpacing: '-0.2px' }}>
+                  Reports formulated by graduates of <span style={{ color: '#5EEAD4' }}>Harvard, Stanford &amp; Fordham</span>.
+                </div>
+              </div>
+            </div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontWeight: 600 }}>
+              Powered by Claude Sonnet · Census ACS · Google Places
+            </div>
           </div>
         </div>
       </section>

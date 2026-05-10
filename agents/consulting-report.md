@@ -8,6 +8,13 @@ Generates a 1-page BellAveGo-branded PDF report per customer per quarter (+ welc
 - **Quarterly:** every 90 days from welcome
 - 5 reports/year per customer (welcome + Q1–Q4)
 
+## Code paths
+
+- **Type schema:** `src/lib/consultingReport.ts` (`ConsultingReport` type + `SAMPLE_REPORT` reference)
+- **Generation API:** `POST /api/agents/consulting-report` — accepts `{ meta, performance, marketScan, competitive, bellaveScore }`, calls Claude Sonnet with the structured prompt, returns a complete `ConsultingReport`
+- **Public sample render:** `src/app/sample-report/page.tsx` (route: `/sample-report`)
+- **Marketing surface:** `src/app/page.tsx` consulting section links here
+
 ## Uses Skills
 
 - `skills/supabase-query.md` — pull customer call/job data
