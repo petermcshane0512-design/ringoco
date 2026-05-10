@@ -4,11 +4,11 @@ import { ClerkProvider } from "@clerk/nextjs";
 export const metadata: Metadata = {
   title: "BellAveGo — The Best AI Implementation for Teams of 1–15",
   description:
-    "Replace the $60K/yr office manager you can't afford to hire. BellAveGo answers your calls, hunts down quotes, collects past-due invoices, and replies to reviews — for $497/month + $247 onboarding. 30-day money-back guarantee.",
+    "Grow your home service business without growing your team. BellAveGo answers your phone, follows up on quotes, recovers past-due invoices, and drafts replies to every Google review — automatically. Built for teams of 1–15.",
   openGraph: {
-    title: "BellAveGo — The Best AI Implementation for Teams of 1–15",
+    title: "BellAveGo — Grow your home service business without growing your team",
     description:
-      "Four AIs. One office manager. Built for home-service teams of 1–15. $497/mo + $247 onboarding. 30-day money-back guarantee on subscription.",
+      "AI built for home service pros. Answers calls, follows up on quotes, recovers past-due invoices, drafts review replies. Quietly, in the background, while you stay focused on the work.",
     url: "https://www.bellavego.com",
     siteName: "BellAveGo",
     type: "website",

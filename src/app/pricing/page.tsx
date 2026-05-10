@@ -48,7 +48,7 @@ const PLANS: Plan[] = [
     monthly: 497,
     annual: 414,
     setup: 247,
-    tagline: 'Replace the $60K/yr office manager you can’t afford to hire.',
+    tagline: 'Your back-office, on autopilot. So your team stays focused on the work.',
     popular: true,
     features: [
       'Everything in Receptionist, plus:',

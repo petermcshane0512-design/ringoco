@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useAuth, SignOutButton } from '@clerk/nextjs'
 import DashboardPreview from '@/components/DashboardPreview'
 import HeroShowcase from '@/components/HeroShowcase'
+import ConsultingShowcase from '@/components/ConsultingShowcase'
 
 export default function HomePage() {
   const { isSignedIn } = useAuth()
@@ -437,13 +438,13 @@ export default function HomePage() {
 
           <div className="hero-grid">
             <div>
-              <div className="hero-eyebrow">The Best AI Implementation for Teams of 1-15</div>
+              <div className="hero-eyebrow">AI Built for Home Service Pros</div>
               <h1 className="hero-h1">
-                Replace the $60K/yr office manager<br />
-                <span className="accent">you can&apos;t afford to hire.</span>
+                Grow your business —<br />
+                <span className="accent">without growing your team.</span>
               </h1>
               <p className="hero-sub">
-                BellAveGo answers your calls, hunts down quotes, collects past-due invoices, and replies to reviews — all running in the background while you&apos;re on the truck. <strong>$497/month + $247 onboarding. 30-day money-back guarantee.</strong>
+                BellAveGo answers your phone, follows up on quotes, recovers past-due invoices, and drafts replies to every Google review — automatically, in the background, while you stay focused on the work. Built for home service teams of 1–15.
               </p>
 
               <div className="hero-actions">
@@ -492,240 +493,7 @@ export default function HomePage() {
       <div id="lp-preview"><DashboardPreview /></div>
 
       {/* CONSULTING PREVIEW */}
-      <section style={{ background: 'linear-gradient(180deg, #EBF7F3 0%, #F5FCFA 100%)', padding: '64px 32px 72px', borderBottom: '1px solid #D4E6DC' }}>
-        <style>{`
-          @keyframes pdfFloat {
-            0%, 100% { transform: rotate(6deg) translateY(0); }
-            50%      { transform: rotate(6deg) translateY(-6px); }
-          }
-          @keyframes pdfBadgePulse {
-            0%, 100% { box-shadow: 0 8px 24px rgba(10,168,159,0.32), 0 0 0 0 rgba(94,234,212,0.4); }
-            50%      { box-shadow: 0 12px 32px rgba(10,168,159,0.5), 0 0 0 8px rgba(94,234,212,0); }
-          }
-          .consult-wrap { position: relative; max-width: 1200px; margin: 0 auto; }
-          .consult-img { display: block; width: 100%; height: auto; border-radius: 22px; box-shadow: 0 30px 80px rgba(7,27,58,0.18); border: 1px solid rgba(10,168,159,0.18); }
-          .pdf-float-img {
-            position: absolute;
-            top: 64px; right: 28px;
-            display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
-            z-index: 5;
-            text-decoration: none;
-          }
-          .pdf-cta-tag {
-            font-size: 10px; font-weight: 800; color: #fff;
-            letter-spacing: 0.14em; text-transform: uppercase;
-            text-shadow: 0 1px 6px rgba(0,0,0,0.55);
-          }
-          .pdf-cta {
-            display: inline-flex; align-items: center; gap: 7px;
-            padding: 10px 16px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #0AA89F, #0D8F87);
-            color: #fff;
-            font-weight: 800; font-size: 13px;
-            letter-spacing: -0.2px;
-            border: 1px solid rgba(94,234,212,0.4);
-            animation: pdfBadgePulse 2.4s ease-in-out infinite;
-            transition: transform 0.22s ease, filter 0.22s ease;
-            white-space: nowrap;
-          }
-          .pdf-cta-arrow { transition: transform 0.22s ease; }
-          .pdf-float-img:hover .pdf-cta { transform: translateY(-1px); filter: brightness(1.08); }
-          .pdf-float-img:hover .pdf-cta-arrow { transform: translateX(3px); }
-          .pdf-thumb {
-            width: 144px; height: 196px;
-            border-radius: 11px;
-            background: #0B1F3A;
-            border: 1px solid rgba(94,234,212,0.40);
-            box-shadow: 0 18px 40px rgba(11,31,58,0.32), 0 6px 14px rgba(11,31,58,0.18);
-            position: relative;
-            overflow: hidden;
-            animation: pdfFloat 4.2s ease-in-out infinite;
-            transition: transform 0.24s ease;
-            flex-shrink: 0;
-          }
-          .pdf-thumb:hover { transform: rotate(0deg) scale(1.06); }
-          @keyframes pdfThumbDrift {
-            0%   { transform: scale(1.04) translate(0, 0); }
-            50%  { transform: scale(1.10) translate(-2px, -1px); }
-            100% { transform: scale(1.04) translate(0, 0); }
-          }
-          @keyframes pdfFoamShimmer {
-            0%, 100% { opacity: 0.55; transform: translateX(-2%) scaleY(1); }
-            50%      { opacity: 0.85; transform: translateX(2%) scaleY(1.15); }
-          }
-          .pdf-thumb-photo {
-            position: absolute; inset: 0;
-            width: 100%; height: 100%;
-            object-fit: cover; object-position: center;
-            display: block;
-            animation: pdfThumbDrift 14s ease-in-out infinite;
-            will-change: transform;
-          }
-          /* Live foam line where water meets sand — subtle horizontal shimmer */
-          .pdf-thumb-foam {
-            position: absolute; left: -4%; right: -4%;
-            top: 78%;
-            height: 6px;
-            background:
-              radial-gradient(ellipse 35% 100% at 20% 50%, rgba(255,255,255,0.85), transparent 70%),
-              radial-gradient(ellipse 30% 100% at 60% 50%, rgba(255,255,255,0.65), transparent 70%),
-              radial-gradient(ellipse 35% 100% at 88% 50%, rgba(255,255,255,0.75), transparent 70%);
-            mix-blend-mode: screen;
-            animation: pdfFoamShimmer 5.5s ease-in-out infinite;
-            pointer-events: none;
-            filter: blur(1.5px);
-          }
-          /* Top + bottom darkening for text legibility */
-          .pdf-thumb-shade {
-            position: absolute; inset: 0;
-            background:
-              linear-gradient(180deg,
-                rgba(7,22,42,0.72) 0%,
-                rgba(7,22,42,0.36) 26%,
-                rgba(7,22,42,0.0) 48%,
-                rgba(7,22,42,0.0) 68%,
-                rgba(7,22,42,0.55) 100%
-              );
-            pointer-events: none;
-          }
-          .pdf-thumb-content {
-            position: absolute; inset: 0;
-            padding: 10px 11px 9px;
-            display: flex; flex-direction: column;
-            z-index: 2;
-          }
-          .pdf-thumb-logo-wrap {
-            align-self: flex-start;
-            background: rgba(255,255,255,0.94);
-            padding: 4px 8px;
-            border-radius: 6px;
-            margin-bottom: 7px;
-            box-shadow: 0 4px 12px rgba(11,31,58,0.28);
-            display: inline-block;
-          }
-          .pdf-thumb-logo {
-            display: block; height: 14px; width: auto;
-          }
-          .pdf-thumb-eyebrow {
-            display: inline-flex; align-items: center; gap: 4px;
-            font-size: 7px; font-weight: 800;
-            color: #fff;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.7);
-          }
-          .pdf-thumb-eyebrow::before {
-            content: ''; width: 4px; height: 4px; border-radius: 50%;
-            background: #22C55E; box-shadow: 0 0 6px rgba(34,197,94,0.85);
-          }
-          .pdf-thumb-business {
-            font-size: 11px; font-weight: 800; color: #fff;
-            letter-spacing: -0.3px; line-height: 1.1; margin-top: 2px;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.7);
-          }
-          .pdf-thumb-headline {
-            font-size: 18px; font-weight: 900; color: #fff;
-            line-height: 1.0; letter-spacing: -0.6px; margin-top: 4px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.7), 0 0 18px rgba(94,234,212,0.45);
-          }
-          .pdf-thumb-sub {
-            font-size: 8px; font-weight: 700;
-            color: rgba(255,255,255,0.94);
-            letter-spacing: 0.06em;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.65);
-          }
-          .pdf-thumb-meta {
-            display: flex; gap: 3px; flex-wrap: wrap;
-            margin-top: auto;
-          }
-          .pdf-thumb-pill {
-            font-size: 6.5px; font-weight: 800;
-            padding: 2px 5px; border-radius: 99px;
-            background: rgba(11,31,58,0.65);
-            border: 0.5px solid rgba(94,234,212,0.5);
-            color: #fff;
-            letter-spacing: 0.04em;
-            backdrop-filter: blur(3px);
-            -webkit-backdrop-filter: blur(3px);
-          }
-          .pdf-thumb-pin {
-            position: absolute;
-            top: -7px; right: -7px;
-            background: linear-gradient(135deg, #22C55E, #15803D);
-            color: #fff;
-            font-size: 8.5px; font-weight: 800;
-            padding: 3px 7px; border-radius: 99px;
-            letter-spacing: 0.04em;
-            box-shadow: 0 4px 12px rgba(34,197,94,0.42);
-            z-index: 3;
-          }
-          @media (max-width: 720px) {
-            .pdf-float-img { top: 12px; right: 12px; gap: 6px; }
-            .pdf-cta-tag { display: none; }
-            .pdf-cta { padding: 8px 12px; font-size: 11px; }
-            .pdf-thumb { width: 100px; height: 136px; }
-            .pdf-thumb-content { padding: 7px 8px 6px; }
-            .pdf-thumb-logo { height: 12px; margin-bottom: 4px; }
-            .pdf-thumb-business { font-size: 9px; }
-            .pdf-thumb-headline { font-size: 14px; }
-            .pdf-thumb-eyebrow { font-size: 6px; }
-            .pdf-thumb-sub { font-size: 7px; }
-            .pdf-thumb-pill { display: none; }
-          }
-        `}</style>
-
-        <div className="consult-wrap">
-          <Image
-            src="/Consulting1.png"
-            alt="BellAveGo Consulting Report - sample"
-            width={1400}
-            height={900}
-            className="consult-img"
-          />
-          <Link href="/sample-report" className="pdf-float-img" aria-label="View a sample BellAveGo consulting report">
-            <span className="pdf-cta-tag">BellAveGo &middot; PDF</span>
-            <span className="pdf-cta">
-              View a report
-              <svg className="pdf-cta-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-              </svg>
-            </span>
-            <div className="pdf-thumb">
-              <span className="pdf-thumb-pin">PDF</span>
-              <Image
-                src="/sunset-beach.jpg"
-                alt=""
-                width={2400}
-                height={1350}
-                className="pdf-thumb-photo"
-                aria-hidden="true"
-              />
-              <div className="pdf-thumb-foam" />
-              <div className="pdf-thumb-shade" />
-              <div className="pdf-thumb-content">
-                <span className="pdf-thumb-logo-wrap">
-                  <Image
-                    src="/logo.png"
-                    alt="BellAveGo"
-                    width={665}
-                    height={210}
-                    className="pdf-thumb-logo"
-                  />
-                </span>
-                <span className="pdf-thumb-eyebrow">Q1 2026 Report</span>
-                <div className="pdf-thumb-business">Mike&apos;s HVAC</div>
-                <div className="pdf-thumb-headline">$4.5K/mo</div>
-                <div className="pdf-thumb-sub">identified upside</div>
-                <div className="pdf-thumb-meta">
-                  <span className="pdf-thumb-pill">HVAC</span>
-                  <span className="pdf-thumb-pill">★ 7.4</span>
-                </div>
-              </div>
-            </div>
-          </Link>
-        </div>
-      </section>
+      <ConsultingShowcase />
 
       {/* INDUSTRIES */}
       <section style={{ background: '#F2F9F5', borderBottom: '1px solid #D4E6DC', padding: '28px 0 0' }}>
@@ -811,7 +579,7 @@ export default function HomePage() {
             },
             {
               name: 'AI Office Manager', price: 497, setup: 247, tier: 'officemgr', calls: 'Unlimited',
-              desc: 'Replace the $60K/yr office manager you can’t afford to hire. Calls + quote follow-up + collections + reviews.',
+              desc: 'Your back-office, on autopilot. Four AIs that answer calls, chase quotes, recover invoices, and reply to reviews — so your team can stay focused on the work.',
               features: ['Everything in Receptionist, plus:', 'Unlimited calls', 'AI Quote Hunter (auto follow-ups day 2/7/14)', 'AI Collections (nightly past-due chase)', 'AI Reviews (drafts replies for one-tap approval)', 'Smart suggestions on call summaries', 'Jobber / HousecallPro / ServiceTitan integration', '6 bi-monthly intelligence reports/year'],
               popular: true, customCta: false,
             },
