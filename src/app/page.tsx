@@ -434,13 +434,13 @@ export default function HomePage() {
 
           <div className="hero-grid">
             <div>
-              <div className="hero-eyebrow">AI Receptionist · 24/7</div>
+              <div className="hero-eyebrow">AI Office Manager · For Home Service Pros</div>
               <h1 className="hero-h1">
-                Stop losing jobs<br />
-                <span className="accent">to missed calls.</span>
+                Replace the $60K/yr office manager<br />
+                <span className="accent">you can&apos;t afford to hire.</span>
               </h1>
               <p className="hero-sub">
-                BellAveGo answers when you can&apos;t, books the job, and texts your customer — automatically. Built for contractors who&apos;d rather be on the job site than at a desk.
+                BellAveGo answers your calls, hunts down quotes, collects past-due invoices, and replies to reviews — all running in the background while you&apos;re on the truck. <strong>$497/month. No setup fee. First month free.</strong>
               </p>
 
               <div className="hero-actions">
@@ -755,9 +755,9 @@ export default function HomePage() {
           ))}
         </div>
         <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 16, lineHeight: 1.6 }}>
-          Unlimited calls · 30-day money-back · Pay annually, get 12 months for the price of 10.<br />
-          <span style={{ fontWeight: 700, color: '#0AA89F' }}>Average customer recovers $4,000+/mo in missed-call revenue</span> — 14x ROI on Growth.<br />
-          Multi-location franchise? <a href="mailto:peter@bellavego.com?subject=Multi-location%20BellAveGo" style={{ color: '#0AA89F', fontWeight: 700, textDecoration: 'none' }}>Contact us</a> for custom pricing.
+          $0 setup · Month-to-month · First month free · 17% off annual.<br />
+          <span style={{ fontWeight: 700, color: '#0AA89F' }}>Typical $1M HVAC shop sees $18K/mo lift from the 4-AI bundle</span> — 37x return on $497.<br />
+          90-day money-back if we don&apos;t add at least 5 booked jobs.
         </p>
       </section>
 
@@ -791,7 +791,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <Image src="/logo.png" alt="BellAveGo" width={300} height={100} style={{ objectFit: 'contain' }} />
           <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
-          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>Built for home service businesses · From $129/mo · Unlimited calls · 30-day money-back</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>AI Office Manager for home service pros · From $179/mo · First month free · 90-day guarantee</p>
         </div>
       </footer>
 

@@ -11,31 +11,25 @@ const APP_URL =
     ? process.env.NEXT_PUBLIC_APP_URL
     : 'https://www.bellavego.com'
 
-type Tier = 'foundation' | 'growth' | 'premium'
+type Tier = 'receptionist' | 'officemgr' | 'concierge'
 type Interval = 'monthly' | 'annual'
 
 function priceFor(tier: Tier, interval: Interval): string | undefined {
   const map: Record<Tier, Record<Interval, string | undefined>> = {
-    foundation: {
-      monthly: process.env.STRIPE_PRICE_FOUNDATION_MONTHLY,
-      annual: process.env.STRIPE_PRICE_FOUNDATION_ANNUAL,
+    receptionist: {
+      monthly: process.env.STRIPE_PRICE_RECEPTIONIST_MONTHLY,
+      annual: process.env.STRIPE_PRICE_RECEPTIONIST_ANNUAL,
     },
-    growth: {
-      monthly: process.env.STRIPE_PRICE_GROWTH_MONTHLY,
-      annual: process.env.STRIPE_PRICE_GROWTH_ANNUAL,
+    officemgr: {
+      monthly: process.env.STRIPE_PRICE_OFFICEMGR_MONTHLY,
+      annual: process.env.STRIPE_PRICE_OFFICEMGR_ANNUAL,
     },
-    premium: {
-      monthly: process.env.STRIPE_PRICE_PREMIUM_MONTHLY,
-      annual: process.env.STRIPE_PRICE_PREMIUM_ANNUAL,
+    concierge: {
+      monthly: process.env.STRIPE_PRICE_CONCIERGE_MONTHLY,
+      annual: process.env.STRIPE_PRICE_CONCIERGE_ANNUAL,
     },
   }
   return map[tier]?.[interval]
-}
-
-function setupPriceFor(tier: Tier): string | undefined {
-  // v3: only Premium has a setup fee (white-glove onboarding).
-  if (tier === 'premium') return process.env.STRIPE_PRICE_PREMIUM_SETUP
-  return undefined
 }
 
 export async function POST(req: NextRequest) {
@@ -46,8 +40,8 @@ export async function POST(req: NextRequest) {
     tier?: Tier
     interval?: Interval
   }
-  const tier: Tier = body.tier ?? 'growth'
-  const interval: Interval = body.interval ?? 'annual'  // annual is the default — cashflow
+  const tier: Tier = body.tier ?? 'officemgr'  // AI Office Manager is the flagship/default
+  const interval: Interval = body.interval ?? 'monthly'  // GTM: month-to-month, first month free
 
   const subPriceId = priceFor(tier, interval) ?? process.env.STRIPE_PRICE_ID
   if (!subPriceId) {
@@ -55,8 +49,7 @@ export async function POST(req: NextRequest) {
   }
 
   const line_items: { price: string; quantity: number }[] = [{ price: subPriceId, quantity: 1 }]
-  const setupId = setupPriceFor(tier)
-  if (setupId) line_items.push({ price: setupId, quantity: 1 })
+  // v4 has $0 setup across all tiers — concierge sells "white-glove onboarding included"
 
   try {
     const session = await stripe.checkout.sessions.create({

@@ -102,6 +102,10 @@ ${RESPONSE_SHAPE}`
       opportunities: normalizeOpportunities(parsed.opportunities),
       actionPlan: normalizeActions(parsed.actionPlan),
       upsells: SAMPLE_REPORT.upsells,
+      // Borrow service-area map + outreach targets from sample until the data layer
+      // for those is wired (Google Places + lead-source pipeline).
+      serviceAreaMap: SAMPLE_REPORT.serviceAreaMap,
+      outreachTargets: SAMPLE_REPORT.outreachTargets,
       methodology: SAMPLE_REPORT.methodology,
     }
 

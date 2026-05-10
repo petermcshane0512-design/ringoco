@@ -49,7 +49,7 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [provisionLoading, setProvisionLoading] = useState(false);
-  const [tier, setTier] = useState<"foundation" | "growth" | "premium">("growth");
+  const [tier, setTier] = useState<"receptionist" | "officemgr" | "concierge">("officemgr");
   const [interval, setInterval] = useState<"monthly" | "annual">("annual");
   const router = useRouter();
 
@@ -215,9 +215,9 @@ export default function DashboardPage() {
       {/* Activation banner */}
       {profile && !profile.is_active && (() => {
         const TIERS = {
-          foundation: { label: "Foundation", monthly: 129, annual: 1290, setup: 0,   sub: "10 AI bookings/mo · Welcome report · Dashboard" },
-          growth:     { label: "Growth",     monthly: 279, annual: 2790, setup: 0,   sub: "Unlimited bookings · Quarterly reports · Reviews automation" },
-          premium:    { label: "Premium",    monthly: 499, annual: 4990, setup: 497, sub: "Monthly reports · Custom voice · Founder calls · Integrations" },
+          receptionist: { label: "Receptionist Only", monthly: 179, annual: 1790, setup: 0, sub: "AI Receptionist · 500 calls/mo · No setup fee" },
+          officemgr:    { label: "AI Office Manager",  monthly: 497, annual: 4970, setup: 0, sub: "Receptionist + Quote Hunter + Collections + Reviews + monthly intel" },
+          concierge:    { label: "Concierge",          monthly: 997, annual: 9970, setup: 0, sub: "Everything + dedicated success manager (Peter direct) + integrations" },
         } as const;
         const cur = TIERS[tier];
         const subToday = interval === "monthly" ? cur.monthly : cur.annual;
@@ -246,7 +246,7 @@ export default function DashboardPage() {
                 const active = tier === k;
                 return (
                   <button key={k} onClick={() => setTier(k)} style={{ padding: "14px 14px", borderRadius: 10, border: active ? "2px solid #92400E" : "1px solid #FDE68A", background: active ? "#fff" : "rgba(255,255,255,0.5)", textAlign: "left", cursor: "pointer", position: "relative" }}>
-                    {k === "growth" && (
+                    {k === "officemgr" && (
                       <span style={{ position: "absolute", top: -10, right: 10, fontSize: 9, fontWeight: 800, padding: "3px 8px", borderRadius: 10, background: "#22C55E", color: "#fff", letterSpacing: "0.06em", textTransform: "uppercase" }}>Most popular</span>
                     )}
                     <div style={{ fontSize: 12, fontWeight: 800, color: "#92400E", marginBottom: 2 }}>{t.label}</div>

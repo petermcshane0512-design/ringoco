@@ -634,11 +634,62 @@ export function ReportView({ report, sample = false }: { report: ConsultingRepor
                 <b>Seasonal signal:</b> {r.marketScan.seasonalSignal}
               </div>
             </div>
+
+            {/* Service area map */}
+            <div style={{ marginTop: 22 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: 'var(--ink)', margin: 0, letterSpacing: '-0.2px' }}>Service area pinpoints</h3>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-soft)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{r.serviceAreaMap.centerLabel}</span>
+              </div>
+              <ServiceAreaMap report={r} />
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginTop: 12, fontSize: 11, color: 'var(--ink-mid)' }}>
+                <Legend color="#0AA89F" label="Your business" />
+                <Legend color="#22C55E" label="Opportunity zones" />
+                <Legend color="#94A3B8" label="Competitors" />
+              </div>
+            </div>
           </section>
 
-          {/* 6. Upsells table */}
+          {/* 6. Outreach targets */}
+          <section id="outreach" className="cr-section">
+            <h2><span className="cr-section-num">6</span>Outreach Targets<span className="cr-section-tag">Commercial · TCPA-safe</span></h2>
+            <p className="cr-lede">Five high-value B2B prospects in your service area. All commercial properties — legal to cold-call, currently with weak or no HVAC vendor relationship.</p>
+            <div className="cr-tablewrap">
+              <table className="cr-table">
+                <thead>
+                  <tr>
+                    <th>Business</th>
+                    <th>Type</th>
+                    <th>Address</th>
+                    <th>Phone</th>
+                    <th>Why</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {r.outreachTargets.map(t => (
+                    <tr key={t.business}>
+                      <td><strong>{t.business}</strong></td>
+                      <td style={{ color: 'var(--ink-mid)' }}>{t.type}</td>
+                      <td style={{ color: 'var(--ink-mid)' }}>{t.address}</td>
+                      <td>
+                        <a href={`tel:${t.phone.replace(/[^0-9+]/g, '')}`} style={{ color: 'var(--teal)', fontWeight: 700, textDecoration: 'none' }}>
+                          {t.phone}
+                        </a>
+                      </td>
+                      <td style={{ color: 'var(--ink)', fontSize: 12.5, lineHeight: 1.5 }}>{t.why}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p style={{ marginTop: 12, fontSize: 11.5, color: 'var(--ink-soft)', lineHeight: 1.6 }}>
+              Sourced from Google Places + permit office records + property management databases. Residential cold-calling is excluded for TCPA compliance — these are commercial-property and broker contacts only.
+            </p>
+          </section>
+
+          {/* 7. Upsells table */}
           <section id="upsells" className="cr-section">
-            <h2><span className="cr-section-num">6</span>Recommended Priced Upsells<span className="cr-section-tag">Network data</span></h2>
+            <h2><span className="cr-section-num">7</span>Recommended Priced Upsells<span className="cr-section-tag">Network data</span></h2>
             <p className="cr-lede">Avg ticket and close rate from {r.meta.businessType} contractors across the BellAveGo network.</p>
             <div className="cr-tablewrap">
               <table className="cr-table">
@@ -666,9 +717,9 @@ export function ReportView({ report, sample = false }: { report: ConsultingRepor
             </div>
           </section>
 
-          {/* 7. Competitive */}
+          {/* 8. Competitive */}
           <section id="competitive" className="cr-section">
-            <h2><span className="cr-section-num">7</span>Competitive Snapshot<span className="cr-section-tag">Google Places</span></h2>
+            <h2><span className="cr-section-num">8</span>Competitive Snapshot<span className="cr-section-tag">Google Places</span></h2>
             <p className="cr-lede">How you stack against the {r.competitive.totalCompetitors} {r.meta.businessType} businesses within 8 mi.</p>
 
             <div className="cr-comp-head">
@@ -726,7 +777,7 @@ export function ReportView({ report, sample = false }: { report: ConsultingRepor
 
           {/* 8. Action plan */}
           <section id="actions" className="cr-section">
-            <h2><span className="cr-section-num">8</span>90-Day Action Plan<span className="cr-section-tag">Prioritized</span></h2>
+            <h2><span className="cr-section-num">9</span>90-Day Action Plan<span className="cr-section-tag">Prioritized</span></h2>
             <p className="cr-lede">Ranked by expected impact ÷ effort. Each item ties to a specific opportunity above.</p>
             <div className="cr-actions">
               {r.actionPlan.map(a => (
@@ -767,6 +818,7 @@ const SECTIONS = [
   { id: 'score', label: 'BellAveGo Score' },
   { id: 'opps', label: 'Top Opportunities' },
   { id: 'market', label: 'Market Scan' },
+  { id: 'outreach', label: 'Outreach Targets' },
   { id: 'upsells', label: 'Priced Upsells' },
   { id: 'competitive', label: 'Competitive' },
   { id: 'actions', label: '90-Day Plan' },
@@ -840,6 +892,110 @@ function Tile({ num, lab }: { num: string; lab: string }) {
     <div className="cr-tile">
       <div className="cr-tile-num">{num}</div>
       <div className="cr-tile-lab">{lab}</div>
+    </div>
+  )
+}
+
+function Legend({ color, label }: { color: string; label: string }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <span style={{ width: 10, height: 10, borderRadius: '50%', background: color, display: 'inline-block', boxShadow: `0 0 0 2px ${color}33` }} />
+      {label}
+    </span>
+  )
+}
+
+function ServiceAreaMap({ report }: { report: ConsultingReport }) {
+  const points = report.serviceAreaMap.points
+  return (
+    <div style={{
+      position: 'relative',
+      borderRadius: 14,
+      overflow: 'hidden',
+      border: '1px solid var(--line)',
+      background: 'linear-gradient(160deg, #E8F4EF 0%, #DCEDE6 100%)',
+      aspectRatio: '21/9',
+    }}>
+      <svg viewBox="0 0 1000 430" preserveAspectRatio="none" style={{ width: '100%', height: '100%', display: 'block' }}>
+        <defs>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(10,168,159,0.10)" strokeWidth="1" />
+          </pattern>
+          <radialGradient id="lake" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#7DD3C0" stopOpacity="0.85" />
+            <stop offset="100%" stopColor="#5EEAD4" stopOpacity="0.45" />
+          </radialGradient>
+          <filter id="pinShadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+            <feOffset dy="3"/>
+            <feComponentTransfer><feFuncA type="linear" slope="0.45"/></feComponentTransfer>
+            <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <rect width="1000" height="430" fill="url(#grid)" />
+
+        {/* Lake (Cedar Lake-ish blob) */}
+        <ellipse cx="290" cy="170" rx="92" ry="58" fill="url(#lake)" />
+        <ellipse cx="290" cy="170" rx="92" ry="58" fill="none" stroke="rgba(10,168,159,0.32)" strokeWidth="1.2" />
+
+        {/* Roads */}
+        <g stroke="rgba(11,31,58,0.18)" strokeWidth="3" fill="none" strokeLinecap="round">
+          <path d="M0,260 C 220,240 340,300 520,260 S 820,200 1000,230" />
+          <path d="M0,160 C 200,180 360,120 540,150 S 780,100 1000,130" />
+          <path d="M120,0 C 140,140 100,260 160,430" />
+          <path d="M520,0 C 540,140 480,260 540,430" />
+          <path d="M820,0 C 840,140 780,260 840,430" />
+        </g>
+        <g stroke="rgba(255,255,255,0.65)" strokeWidth="1.4" strokeDasharray="4 6" fill="none">
+          <path d="M0,260 C 220,240 340,300 520,260 S 820,200 1000,230" />
+          <path d="M0,160 C 200,180 360,120 540,150 S 780,100 1000,130" />
+          <path d="M120,0 C 140,140 100,260 160,430" />
+          <path d="M520,0 C 540,140 480,260 540,430" />
+          <path d="M820,0 C 840,140 780,260 840,430" />
+        </g>
+
+        {/* ZIP labels (subtle) */}
+        <text x="160" y="94" fill="rgba(11,31,58,0.32)" fontSize="11" fontWeight="700" letterSpacing="0.18em">{report.meta.serviceArea[0] ?? ''}</text>
+        <text x="700" y="94" fill="rgba(11,31,58,0.32)" fontSize="11" fontWeight="700" letterSpacing="0.18em">{report.meta.serviceArea[1] ?? ''}</text>
+        <text x="160" y="394" fill="rgba(11,31,58,0.32)" fontSize="11" fontWeight="700" letterSpacing="0.18em">{report.meta.serviceArea[2] ?? ''}</text>
+        <text x="700" y="394" fill="rgba(11,31,58,0.32)" fontSize="11" fontWeight="700" letterSpacing="0.18em">{report.meta.serviceArea[3] ?? ''}</text>
+
+        {/* Pins */}
+        {points.map((p, i) => {
+          const cx = (p.x / 100) * 1000
+          const cy = (p.y / 100) * 430
+          const fill = p.kind === 'business' ? '#0AA89F' : p.kind === 'opportunity' ? '#22C55E' : '#94A3B8'
+          const ring = p.kind === 'business' ? '#5EEAD4' : p.kind === 'opportunity' ? '#86EFAC' : '#CBD5E1'
+          const r = p.kind === 'business' ? 22 : 18
+          return (
+            <g key={i} filter="url(#pinShadow)">
+              <circle cx={cx} cy={cy} r={r + 4} fill={ring} opacity="0.45" />
+              <circle cx={cx} cy={cy} r={r} fill={fill} stroke="#fff" strokeWidth="2.5" />
+              <text x={cx} y={cy + 4} textAnchor="middle" fill="#fff" fontSize="12" fontWeight="800">{p.label}</text>
+            </g>
+          )
+        })}
+      </svg>
+
+      {/* Pin notes overlay */}
+      <div style={{ position: 'absolute', inset: 0, padding: 12, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', pointerEvents: 'none' }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {points.filter(p => p.kind === 'opportunity').map((p, i) => (
+            <span key={i} style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '5px 10px', borderRadius: 99,
+              background: 'rgba(255,255,255,0.92)',
+              border: '1px solid rgba(34,197,94,0.32)',
+              fontSize: 11, fontWeight: 700, color: 'var(--ink)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.10)',
+            }}>
+              <span style={{ width: 14, height: 14, borderRadius: '50%', background: '#22C55E', color: '#fff', fontSize: 9, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{p.label}</span>
+              {p.note}
+            </span>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

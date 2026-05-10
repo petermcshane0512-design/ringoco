@@ -42,15 +42,19 @@ const input: React.CSSProperties = {
 const row: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }
 
 const TIER_LABELS: Record<string, { label: string; calls: string; price: string }> = {
-  foundation: { label: 'Foundation', calls: 'Unlimited calls', price: '$129/mo' },
-  growth:     { label: 'Growth',     calls: 'Unlimited calls', price: '$279/mo' },
-  premium:    { label: 'Premium',    calls: 'Unlimited calls', price: '$499/mo' },
-  multiloc:   { label: 'Multi-location', calls: 'Custom', price: 'Custom' },
-  cancelled:  { label: 'Cancelled', calls: '—', price: '—' },
+  // v4 active
+  receptionist: { label: 'Receptionist Only', calls: '500 calls/mo',     price: '$179/mo' },
+  officemgr:    { label: 'AI Office Manager', calls: 'Unlimited calls',  price: '$497/mo' },
+  concierge:    { label: 'Concierge',         calls: 'Unlimited calls',  price: '$997/mo' },
+  cancelled:    { label: 'Cancelled', calls: '—', price: '—' },
   // Legacy tiers (existing customers — keep for back-compat)
-  solo:    { label: 'Solo (legacy)',   calls: '150 calls/mo',   price: '$147/mo' },
-  scale:   { label: 'Scale (legacy)',  calls: '1,500 calls/mo', price: '$597/mo' },
-  starter: { label: 'Starter (legacy)', calls: '200 calls/mo',  price: '$49/mo' },
+  foundation:   { label: 'Foundation (legacy)', calls: 'Unlimited', price: '$79/mo or $129/mo' },
+  growth:       { label: 'Growth (legacy)',     calls: 'Unlimited', price: '$179/mo or $279/mo' },
+  premium:      { label: 'Premium (legacy)',    calls: 'Unlimited', price: '$499/mo' },
+  multiloc:     { label: 'Multi-location (legacy)', calls: 'Custom', price: 'Custom' },
+  solo:         { label: 'Solo (legacy)',       calls: '150 calls/mo',   price: '$147/mo' },
+  scale:        { label: 'Scale (legacy)',      calls: '1,500 calls/mo', price: '$597/mo' },
+  starter:      { label: 'Starter (legacy)',    calls: '200 calls/mo',   price: '$49/mo' },
 }
 
 export default function SettingsPage() {

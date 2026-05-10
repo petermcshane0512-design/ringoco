@@ -12,23 +12,23 @@ const supabase = createClient(
 )
 
 const PRICE_TO_TIER: Record<string, { tier: string; calls: number }> = {
-  // v3 active prices (unlimited calls)
-  [process.env.STRIPE_PRICE_FOUNDATION_MONTHLY || '']: { tier: 'foundation', calls: 99999 },
-  [process.env.STRIPE_PRICE_FOUNDATION_ANNUAL || '']: { tier: 'foundation', calls: 99999 },
-  [process.env.STRIPE_PRICE_GROWTH_MONTHLY || '']: { tier: 'growth', calls: 99999 },
-  [process.env.STRIPE_PRICE_GROWTH_ANNUAL || '']: { tier: 'growth', calls: 99999 },
-  [process.env.STRIPE_PRICE_PREMIUM_MONTHLY || '']: { tier: 'premium', calls: 99999 },
-  [process.env.STRIPE_PRICE_PREMIUM_ANNUAL || '']: { tier: 'premium', calls: 99999 },
-  // v2 prices ($79/$179) — back-compat
-  [process.env.STRIPE_PRICE_FOUNDATION_MONTHLY_V2 || '']: { tier: 'foundation', calls: 99999 },
-  [process.env.STRIPE_PRICE_FOUNDATION_ANNUAL_V2 || '']: { tier: 'foundation', calls: 99999 },
-  [process.env.STRIPE_PRICE_GROWTH_MONTHLY_V2 || '']: { tier: 'growth', calls: 99999 },
-  [process.env.STRIPE_PRICE_GROWTH_ANNUAL_V2 || '']: { tier: 'growth', calls: 99999 },
+  // v4 active prices — AI Office Manager positioning (May 10 2026)
+  [process.env.STRIPE_PRICE_RECEPTIONIST_MONTHLY || '']: { tier: 'receptionist', calls: 99999 },
+  [process.env.STRIPE_PRICE_RECEPTIONIST_ANNUAL || '']: { tier: 'receptionist', calls: 99999 },
+  [process.env.STRIPE_PRICE_OFFICEMGR_MONTHLY || '']: { tier: 'officemgr', calls: 99999 },
+  [process.env.STRIPE_PRICE_OFFICEMGR_ANNUAL || '']: { tier: 'officemgr', calls: 99999 },
+  [process.env.STRIPE_PRICE_CONCIERGE_MONTHLY || '']: { tier: 'concierge', calls: 99999 },
+  [process.env.STRIPE_PRICE_CONCIERGE_ANNUAL || '']: { tier: 'concierge', calls: 99999 },
+  // v3 prices ($129/$279/$499) — back-compat
+  [process.env.STRIPE_PRICE_FOUNDATION_MONTHLY_V3 || '']: { tier: 'foundation', calls: 99999 },
+  [process.env.STRIPE_PRICE_FOUNDATION_ANNUAL_V3 || '']: { tier: 'foundation', calls: 99999 },
+  [process.env.STRIPE_PRICE_GROWTH_MONTHLY_V3 || '']: { tier: 'growth', calls: 99999 },
+  [process.env.STRIPE_PRICE_GROWTH_ANNUAL_V3 || '']: { tier: 'growth', calls: 99999 },
+  [process.env.STRIPE_PRICE_PREMIUM_MONTHLY_V3 || '']: { tier: 'premium', calls: 99999 },
+  [process.env.STRIPE_PRICE_PREMIUM_ANNUAL_V3 || '']: { tier: 'premium', calls: 99999 },
   // legacy v1 prices ($147/$297/$597) — back-compat
   [process.env.STRIPE_PRICE_SOLO_MONTHLY_LEGACY || '']: { tier: 'solo', calls: 150 },
   [process.env.STRIPE_PRICE_SOLO_ANNUAL_LEGACY || '']: { tier: 'solo', calls: 150 },
-  [process.env.STRIPE_PRICE_GROWTH_MONTHLY_LEGACY || '']: { tier: 'growth', calls: 500 },
-  [process.env.STRIPE_PRICE_GROWTH_ANNUAL_LEGACY || '']: { tier: 'growth', calls: 500 },
   [process.env.STRIPE_PRICE_SCALE_MONTHLY_LEGACY || '']: { tier: 'scale', calls: 1500 },
   [process.env.STRIPE_PRICE_SCALE_ANNUAL_LEGACY || '']: { tier: 'scale', calls: 1500 },
   [process.env.STRIPE_PRICE_MULTILOC_MONTHLY_LEGACY || '']: { tier: 'multiloc', calls: 5000 },
