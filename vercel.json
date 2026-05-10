@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/crons/review-requests",
-      "schedule": "30 * * * *"
+      "schedule": "30 14 * * *"
     }
   ]
 }
