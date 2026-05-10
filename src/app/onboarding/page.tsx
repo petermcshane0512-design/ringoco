@@ -142,7 +142,7 @@ export default function OnboardingPage() {
       // continue to dashboard even if save fails
     }
     setDone(true)
-    setTimeout(() => router.push('/dashboard'), 2200)
+    setTimeout(() => router.push('/dashboard'), 7000)
   }
 
   const inputStyle: React.CSSProperties = {
@@ -249,24 +249,65 @@ export default function OnboardingPage() {
 
             {/* ── DONE SCREEN ── */}
             {done && (
-              <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ textAlign: 'center', padding: '24px 0 8px' }}>
+              <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ textAlign: 'center', padding: '20px 0 8px' }}>
                 <motion.div
                   animate={{ scale: [1, 1.15, 1] }}
                   transition={{ duration: 0.6, ease: 'easeOut' }}
-                  style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #22C55E, #16A34A)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 8px 28px rgba(34,197,94,0.38)', fontSize: 32 }}
+                  style={{ width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg, #22C55E, #16A34A)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 8px 28px rgba(34,197,94,0.38)', fontSize: 28, color: '#fff', fontWeight: 900 }}
                 >
                   ✓
                 </motion.div>
-                <h2 style={{ fontSize: 24, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.03em', marginBottom: 10 }}>
+                <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.03em', marginBottom: 8 }}>
                   You&apos;re all set!
                 </h2>
-                <p style={{ fontSize: 14, color: '#4A7A80', lineHeight: 1.6, maxWidth: 360, margin: '0 auto 24px' }}>
-                  Your AI receptionist is being activated. Launching your dashboard now...
+                <p style={{ fontSize: 13, color: '#4A7A80', lineHeight: 1.55, maxWidth: 340, margin: '0 auto 18px' }}>
+                  Want to hear how BellAveGo will sound to your customers?
                 </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', background: '#F5FDFB', border: '1px solid rgba(10,168,159,0.18)', borderRadius: 12, padding: '14px 20px', maxWidth: 340, margin: '0 auto' }}>
+
+                {/* Demo call CTA — primary action */}
+                <motion.a
+                  href="tel:+16514677829"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 14,
+                    background: 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)',
+                    border: '1px solid rgba(94,234,212,0.32)',
+                    borderRadius: 14,
+                    padding: '14px 18px',
+                    maxWidth: 360, margin: '0 auto 14px',
+                    textDecoration: 'none',
+                    boxShadow: '0 12px 36px rgba(11,31,58,0.28), 0 0 0 1px rgba(94,234,212,0.14), inset 0 1px 0 rgba(255,255,255,0.08)',
+                    textAlign: 'left',
+                  }}
+                >
+                  <motion.div
+                    animate={{ scale: [1, 1.08, 1] }}
+                    transition={{ duration: 1.6, repeat: Infinity }}
+                    style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #0AA89F, #0D8F87)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 0 24px rgba(94,234,212,0.45)' }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                  </motion.div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#5EEAD4', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 2 }}>
+                      Try the live demo
+                    </div>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>
+                      (651) 467‑7829
+                    </div>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                </motion.a>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', padding: '10px 16px', maxWidth: 340, margin: '0 auto' }}>
                   <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
-                    style={{ width: 18, height: 18, borderRadius: '50%', border: '2.5px solid #0AA89F', borderTopColor: 'transparent' }} />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#0AA89F' }}>Setting up your workspace…</span>
+                    style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid #0AA89F', borderTopColor: 'transparent' }} />
+                  <span style={{ fontSize: 12, fontWeight: 600, color: '#7AAAB2' }}>Setting up your dashboard…</span>
                 </div>
               </motion.div>
             )}

@@ -9,7 +9,6 @@ import HeroShowcase from '@/components/HeroShowcase'
 export default function HomePage() {
   const { isSignedIn } = useAuth()
   const [logoHovered, setLogoHovered] = useState(false)
-  const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly')
 
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#F2F9F5', color: '#0B1F3A', minHeight: '100vh', overflowX: 'hidden' }}>
@@ -409,6 +408,30 @@ export default function HomePage() {
           <div className="hero-blob b1" />
           <div className="hero-blob b2" />
 
+          {/* Brand callback — subtle wave silhouette at bottom (echoes logo) */}
+          <svg
+            viewBox="0 0 1440 90"
+            preserveAspectRatio="none"
+            style={{ position: 'absolute', left: 0, right: 0, bottom: 0, width: '100%', height: 90, pointerEvents: 'none', zIndex: 1 }}
+          >
+            <path
+              d="M0,55 C240,30 460,72 720,52 C980,32 1220,68 1440,45 L1440,90 L0,90 Z"
+              fill="rgba(94,234,212,0.05)"
+            />
+            <path
+              d="M0,55 C240,30 460,72 720,52 C980,32 1220,68 1440,45"
+              stroke="rgba(94,234,212,0.32)"
+              strokeWidth="1.4"
+              fill="none"
+            />
+            <path
+              d="M0,72 C260,48 480,84 720,64 C960,44 1240,80 1440,60"
+              stroke="rgba(94,234,212,0.16)"
+              strokeWidth="1"
+              fill="none"
+            />
+          </svg>
+
           <div className="hero-grid">
             <div>
               <div className="hero-eyebrow">AI Receptionist · 24/7</div>
@@ -445,7 +468,7 @@ export default function HomePage() {
                   <span className="hero-trust-lab">Always on</span>
                 </div>
                 <div className="hero-trust-item">
-                  <span className="hero-trust-num">$147</span>
+                  <span className="hero-trust-num">$79</span>
                   <span className="hero-trust-lab">Starting / month</span>
                 </div>
                 <div className="hero-trust-item">
