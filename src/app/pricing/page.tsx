@@ -255,7 +255,7 @@ export default function PricingPage() {
                     boxShadow: plan.popular ? '0 8px 24px rgba(34,197,94,0.32)' : '0 4px 14px rgba(10,168,159,0.24)',
                   }}
                 >
-                  {isLoading ? 'Loading…' : isSignedIn ? `Activate ${plan.name} →` : 'Get Started →'}
+                  {isLoading ? 'Loading…' : isSignedIn ? "Let's get started →" : 'Get Started →'}
                 </button>
                 <p style={{ fontSize: 11, color: plan.popular ? 'rgba(255,255,255,0.45)' : '#7AAAB2', textAlign: 'center', marginTop: 10, marginBottom: 0, fontWeight: 500 }}>
                   + ${plan.setup} onboarding · 30-day money-back · Cancel anytime

@@ -269,7 +269,7 @@ export default function DashboardPage() {
                 {interval === "monthly" ? " Cancel anytime within 30 days for full refund." : " 12 months for the price of 10."}
               </div>
               <button onClick={startCheckout} disabled={checkoutLoading} style={{ padding: "12px 26px", borderRadius: 10, border: "none", fontSize: 13, fontWeight: 800, cursor: checkoutLoading ? "wait" : "pointer", background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)", color: "#fff", boxShadow: "0 4px 14px rgba(34,197,94,0.32)", whiteSpace: "nowrap" }}>
-                {checkoutLoading ? "Loading…" : `Activate ${cur.label} →`}
+                {checkoutLoading ? "Loading…" : `Let's get started →`}
               </button>
             </div>
             <div style={{ marginTop: 10, fontSize: 11, color: "#A16207" }}>
