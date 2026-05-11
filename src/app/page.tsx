@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useAuth, SignOutButton } from '@clerk/nextjs'
 import DashboardPreview from '@/components/DashboardPreview'
 import ConsultingShowcase from '@/components/ConsultingShowcase'
+import HeroPhone from '@/components/HeroPhone'
 
 export default function HomePage() {
   const { isSignedIn } = useAuth()
@@ -386,8 +387,25 @@ export default function HomePage() {
               position: relative;
               min-height: 460px;
               min-width: 0;
+            }
+            .hero-stage-dash {
+              position: absolute;
+              inset: 0;
               display: flex;
               align-items: center;
+              padding-right: 6%;
+            }
+            .hero-stage-phone {
+              position: absolute;
+              right: -2%;
+              bottom: 0;
+              z-index: 10;
+              animation: heroPhoneFloat 6s ease-in-out infinite;
+              transform-origin: center;
+            }
+            @keyframes heroPhoneFloat {
+              0%, 100% { transform: rotate(4deg) translateY(0); }
+              50%      { transform: rotate(4deg) translateY(-6px); }
             }
 
             @keyframes heroShimmer {
@@ -401,10 +419,14 @@ export default function HomePage() {
 
             @media (max-width: 1024px) {
               .hero-grid { grid-template-columns: 1fr; gap: 48px; padding: 56px 28px; }
-              .hero-stage { min-height: 380px; }
+              .hero-stage { min-height: 420px; }
+              .hero-stage-dash { padding-right: 8%; }
+              .hero-stage-phone { right: 0; }
             }
             @media (max-width: 640px) {
-              .hero-stage { min-height: 320px; }
+              .hero-stage { min-height: 360px; }
+              .hero-stage-phone { display: none; }
+              .hero-stage-dash { padding-right: 0; }
               .hero-trust { gap: 18px; }
               .hero-trust-num { font-size: 18px; }
             }
@@ -484,7 +506,12 @@ export default function HomePage() {
             </div>
 
             <div className="hero-stage">
-              <DashboardPreview compact />
+              <div className="hero-stage-dash">
+                <DashboardPreview compact />
+              </div>
+              <div className="hero-stage-phone">
+                <HeroPhone />
+              </div>
             </div>
           </div>
         </div>
