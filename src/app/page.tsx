@@ -209,28 +209,36 @@ export default function HomePage() {
               width: 100%;
               min-height: 640px;
               background:
-                radial-gradient(1100px 600px at 78% 35%, rgba(10,168,159,0.30), transparent 65%),
-                radial-gradient(900px 700px at 12% 80%, rgba(94,234,212,0.18), transparent 70%),
-                linear-gradient(150deg, #050E1F 0%, #0B1F3A 45%, #0A2E45 100%);
+                radial-gradient(800px 400px at 88% 8%, rgba(255,157,90,0.22), transparent 60%),
+                radial-gradient(900px 500px at 72% 28%, rgba(232,116,43,0.16), transparent 65%),
+                radial-gradient(1100px 600px at 78% 55%, rgba(10,168,159,0.26), transparent 65%),
+                radial-gradient(900px 700px at 12% 85%, rgba(94,234,212,0.20), transparent 70%),
+                linear-gradient(180deg, #050E1F 0%, #0B1F3A 35%, #0F3454 78%, #2D7A92 100%);
               overflow: hidden;
               line-height: normal;
             }
-            .hero-wrap::before {
-              content: '';
-              position: absolute; inset: 0;
-              background-image:
-                linear-gradient(rgba(94,234,212,0.045) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(94,234,212,0.045) 1px, transparent 1px);
-              background-size: 56px 56px;
-              mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 60%, transparent 100%);
-              -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 60%, transparent 100%);
-              pointer-events: none;
-            }
             .hero-wrap::after {
               content: '';
-              position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
-              background: linear-gradient(90deg, transparent, rgba(94,234,212,0.45), transparent);
+              position: absolute; left: -10%; right: -10%; bottom: -2px; height: 88px;
+              background:
+                radial-gradient(ellipse 22% 100% at 18% 60%, rgba(255,255,255,0.32), transparent 70%),
+                radial-gradient(ellipse 28% 100% at 52% 50%, rgba(255,255,255,0.22), transparent 70%),
+                radial-gradient(ellipse 24% 100% at 86% 60%, rgba(255,255,255,0.34), transparent 70%);
+              filter: blur(2px);
+              opacity: 0.55;
+              mix-blend-mode: screen;
               pointer-events: none;
+              animation: heroFoam 6s ease-in-out infinite;
+            }
+            @keyframes heroFoam {
+              0%, 100% { transform: translateX(-1%); opacity: 0.45; }
+              50%      { transform: translateX(1%); opacity: 0.7; }
+            }
+            .hero-waves {
+              position: absolute; left: 0; right: 0; bottom: 0;
+              width: 100%; height: 110px;
+              pointer-events: none;
+              opacity: 0.55;
             }
             .hero-blob {
               position: absolute;
@@ -393,7 +401,9 @@ export default function HomePage() {
               inset: 0;
               display: flex;
               align-items: center;
-              padding-right: 6%;
+              padding-right: 10%;
+              transform: scale(0.82);
+              transform-origin: left center;
             }
             .hero-stage-phone {
               position: absolute;
@@ -434,6 +444,24 @@ export default function HomePage() {
 
           <div className="hero-blob b1" />
           <div className="hero-blob b2" />
+
+          {/* Beach wave silhouettes — brand callback */}
+          <svg className="hero-waves" viewBox="0 0 1440 110" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="wave1" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#5EEAD4" stopOpacity="0" />
+                <stop offset="100%" stopColor="#5EEAD4" stopOpacity="0.55" />
+              </linearGradient>
+              <linearGradient id="wave2" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#0AA89F" stopOpacity="0" />
+                <stop offset="100%" stopColor="#0AA89F" stopOpacity="0.42" />
+              </linearGradient>
+            </defs>
+            <path d="M0,65 C 240,30 460,80 720,55 C 980,30 1220,75 1440,50 L1440,110 L0,110 Z" fill="url(#wave1)" />
+            <path d="M0,80 C 260,55 480,95 720,75 C 960,55 1240,90 1440,72 L1440,110 L0,110 Z" fill="url(#wave2)" />
+            <path d="M0,70 C 260,42 480,90 720,62 C 960,38 1240,82 1440,58" stroke="rgba(94,234,212,0.55)" strokeWidth="1.4" fill="none" />
+            <path d="M0,86 C 280,60 500,98 720,80 C 940,60 1240,95 1440,78" stroke="rgba(94,234,212,0.32)" strokeWidth="1" fill="none" />
+          </svg>
 
           {/* Brand callback — subtle wave silhouette at bottom (echoes logo) */}
           <svg

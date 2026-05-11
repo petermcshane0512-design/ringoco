@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 type Phase =
   | 'ringing'
   | 'connecting'
-  | 'transcript_1' | 'transcript_2' | 'transcript_3' | 'transcript_4'
-  | 'booked'
-  | 'sms_greet' | 'sms_confirm' | 'sms_yes' | 'sms_invoice'
+  | 'transcript_1' | 'transcript_2' | 'transcript_3' | 'transcript_4' | 'transcript_5'
+  | 'captured'
+  | 'sms_alert' | 'sms_caller' | 'sms_issue' | 'sms_window' | 'sms_actions'
   | 'pause'
 
 const SCRIPT: { phase: Phase; ms: number }[] = [
@@ -15,20 +15,23 @@ const SCRIPT: { phase: Phase; ms: number }[] = [
   { phase: 'transcript_1', ms: 2200 },
   { phase: 'transcript_2', ms: 2100 },
   { phase: 'transcript_3', ms: 2300 },
-  { phase: 'transcript_4', ms: 1700 },
-  { phase: 'booked', ms: 2200 },
-  { phase: 'sms_greet', ms: 2400 },
-  { phase: 'sms_confirm', ms: 2200 },
-  { phase: 'sms_yes', ms: 1900 },
-  { phase: 'sms_invoice', ms: 4500 },
+  { phase: 'transcript_4', ms: 2100 },
+  { phase: 'transcript_5', ms: 2400 },
+  { phase: 'captured', ms: 2000 },
+  { phase: 'sms_alert', ms: 2200 },
+  { phase: 'sms_caller', ms: 2000 },
+  { phase: 'sms_issue', ms: 2200 },
+  { phase: 'sms_window', ms: 2400 },
+  { phase: 'sms_actions', ms: 4000 },
   { phase: 'pause', ms: 1800 },
 ]
 
 const TRANSCRIPT = [
-  { speaker: 'ai' as const, text: 'BellAveGo for Mike’s HVAC — how can I help?' },
-  { speaker: 'caller' as const, text: 'Hey, my AC stopped cooling.' },
-  { speaker: 'ai' as const, text: 'Got it. Earliest slot is tomorrow 10 AM — work?' },
-  { speaker: 'caller' as const, text: 'Yes, please.' },
+  { speaker: 'ai' as const, text: 'BellAveGo for Mike’s HVAC — what can I help with?' },
+  { speaker: 'caller' as const, text: 'My AC stopped cooling. Pretty urgent.' },
+  { speaker: 'ai' as const, text: 'Sorry to hear it. Mind sharing your name and number?' },
+  { speaker: 'caller' as const, text: 'Marcus, 612-555-0142.' },
+  { speaker: 'ai' as const, text: 'Got it. When are you generally free? Mike will text you to confirm.' },
 ]
 
 export default function HeroPhone() {
@@ -40,25 +43,28 @@ export default function HeroPhone() {
     return () => clearTimeout(t)
   }, [idx])
 
-  // Compute display state
   const inCall = phase === 'ringing' || phase === 'connecting'
-    || phase.startsWith('transcript_') || phase === 'booked'
+    || phase.startsWith('transcript_') || phase === 'captured'
   const inSms = phase.startsWith('sms_') || phase === 'pause'
+
   const transcriptCount =
     phase === 'transcript_1' ? 1
     : phase === 'transcript_2' ? 2
     : phase === 'transcript_3' ? 3
     : phase === 'transcript_4' ? 4
-    : phase === 'booked' ? 4
-    : 0
-  const smsStep =
-    phase === 'sms_greet' ? 1
-    : phase === 'sms_confirm' ? 2
-    : phase === 'sms_yes' ? 3
-    : phase === 'sms_invoice' || phase === 'pause' ? 4
+    : phase === 'transcript_5' ? 5
+    : phase === 'captured' ? 5
     : 0
 
-  const timerSec = idx <= 1 ? 0 : Math.min(38, (idx - 1) * 7)
+  const smsStep =
+    phase === 'sms_alert' ? 1
+    : phase === 'sms_caller' ? 2
+    : phase === 'sms_issue' ? 3
+    : phase === 'sms_window' ? 4
+    : phase === 'sms_actions' || phase === 'pause' ? 5
+    : 0
+
+  const timerSec = idx <= 1 ? 0 : Math.min(48, (idx - 1) * 8)
 
   return (
     <div className="hp-frame">
@@ -94,7 +100,7 @@ export default function HeroPhone() {
           z-index: 10;
         }
 
-        /* Call view (dark) */
+        /* Call view */
         .hp-call {
           position: absolute; inset: 0;
           background: linear-gradient(180deg, #0B1F3A 0%, #0A1828 50%, #061224 100%);
@@ -134,7 +140,7 @@ export default function HeroPhone() {
         .hp-wave {
           margin: 10px auto 6px;
           display: flex; justify-content: center; align-items: center;
-          gap: 3px; height: 26px;
+          gap: 3px; height: 22px;
         }
         .hp-wave span {
           display: block; width: 3px;
@@ -153,20 +159,20 @@ export default function HeroPhone() {
         .hp-wave span:nth-child(8) { animation-delay: 0.10s; }
         .hp-wave span:nth-child(9) { animation-delay: 0.0s; }
         @keyframes hpWaveBars {
-          0%, 100% { height: 6px; }
-          50%      { height: 22px; }
+          0%, 100% { height: 4px; }
+          50%      { height: 18px; }
         }
         .hp-bubbles {
           flex: 1; min-height: 0;
-          display: flex; flex-direction: column; gap: 5px;
-          margin-top: 6px;
+          display: flex; flex-direction: column; gap: 4px;
+          margin-top: 4px;
           overflow: hidden;
         }
         .hp-bubble {
           font-size: 9.5px;
-          padding: 6px 9px;
+          padding: 5px 8px;
           border-radius: 11px;
-          line-height: 1.35;
+          line-height: 1.32;
           max-width: 88%;
           animation: hpBubbleIn 0.32s ease-out;
         }
@@ -188,16 +194,16 @@ export default function HeroPhone() {
           0%   { opacity: 0; transform: translateY(6px) scale(0.96); }
           100% { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .hp-booked {
+        .hp-captured {
           margin-top: auto;
-          padding: 8px 12px;
-          background: linear-gradient(135deg, #22C55E, #15803D);
+          padding: 7px 10px;
+          background: linear-gradient(135deg, #0AA89F, #0D8F87);
           border-radius: 10px;
           color: #fff;
-          font-size: 10.5px;
+          font-size: 10px;
           font-weight: 800;
           text-align: center;
-          box-shadow: 0 8px 22px rgba(34,197,94,0.45);
+          box-shadow: 0 8px 22px rgba(10,168,159,0.45);
           animation: hpBookedIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
         }
         @keyframes hpBookedIn {
@@ -222,7 +228,7 @@ export default function HeroPhone() {
           100% { box-shadow: 0 0 0 0 rgba(94,234,212,0); }
         }
 
-        /* SMS view (light iOS Messages) */
+        /* SMS view (iOS Messages — BellAveGo → Mike the contractor) */
         .hp-sms {
           position: absolute; inset: 0;
           background: #F2F2F7;
@@ -239,7 +245,7 @@ export default function HeroPhone() {
         }
         .hp-sms-header {
           background: #F2F2F7;
-          padding: 6px 12px 9px;
+          padding: 4px 12px 8px;
           display: flex; flex-direction: column; align-items: center;
           border-bottom: 0.5px solid rgba(0,0,0,0.10);
         }
@@ -257,11 +263,10 @@ export default function HeroPhone() {
           font-size: 11px; font-weight: 600; color: #0a0a0a;
           display: flex; align-items: center; gap: 3px;
         }
-        .hp-sms-name svg { color: #8E8E93; }
         .hp-sms-body {
           flex: 1; min-height: 0;
-          padding: 10px 9px 12px;
-          display: flex; flex-direction: column; gap: 5px;
+          padding: 8px 9px 12px;
+          display: flex; flex-direction: column; gap: 4px;
           overflow: hidden;
         }
         .hp-sms-day {
@@ -269,14 +274,14 @@ export default function HeroPhone() {
           font-size: 8px; font-weight: 700;
           color: #8E8E93;
           letter-spacing: 0.04em;
-          margin: 2px 0 6px;
+          margin: 2px 0 4px;
         }
         .hp-sms-bubble {
-          font-size: 10.5px;
+          font-size: 10px;
           line-height: 1.3;
-          padding: 7px 10px;
-          border-radius: 16px;
-          max-width: 80%;
+          padding: 6px 9px;
+          border-radius: 14px;
+          max-width: 84%;
           animation: hpBubbleIn 0.35s ease-out;
           word-break: break-word;
         }
@@ -286,77 +291,52 @@ export default function HeroPhone() {
           color: #0a0a0a;
           border-bottom-left-radius: 4px;
         }
-        .hp-sms-bubble.out {
-          align-self: flex-end;
-          background: linear-gradient(180deg, #34A4FF, #007AFF);
-          color: #fff;
-          border-bottom-right-radius: 4px;
-          box-shadow: 0 1px 2px rgba(0,122,255,0.18);
+        .hp-sms-bubble.in.alert {
+          background: linear-gradient(135deg, rgba(232,116,43,0.14), rgba(255,157,90,0.10));
+          border: 1px solid rgba(232,116,43,0.32);
+          color: #0a0a0a;
+          font-weight: 700;
         }
+        .hp-sms-bubble.in b { color: #0AA89F; font-weight: 800; }
 
-        /* Invoice card bubble */
-        .hp-invoice {
+        /* Action bubble — looks like an iMessage rich link card */
+        .hp-sms-actions {
           align-self: flex-start;
           background: #fff;
           border-radius: 14px;
           border: 1px solid rgba(0,0,0,0.08);
           width: 92%;
-          padding: 9px 10px 9px;
+          padding: 8px;
           box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-          display: flex; flex-direction: column; gap: 6px;
+          display: flex; flex-direction: column; gap: 5px;
           animation: hpBubbleIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
         }
-        .hp-invoice-head {
-          display: flex; align-items: center; gap: 6px;
-          font-size: 9px; font-weight: 800;
-          color: #0AA89F;
-          letter-spacing: 0.08em; text-transform: uppercase;
+        .hp-sms-actions-head {
+          font-size: 8.5px; font-weight: 800;
+          color: #7AAAB2;
+          letter-spacing: 0.10em; text-transform: uppercase;
+          padding: 0 4px;
         }
-        .hp-invoice-head::before {
-          content: ''; width: 6px; height: 6px; border-radius: 2px;
-          background: linear-gradient(135deg, #0AA89F, #0D8F87);
+        .hp-sms-action-row {
+          display: flex; gap: 5px;
         }
-        .hp-invoice-row {
-          display: flex; justify-content: space-between; align-items: baseline;
-          font-size: 10px;
-          color: #4A6670;
-        }
-        .hp-invoice-row .lab { font-weight: 600; }
-        .hp-invoice-row .val { font-weight: 700; color: #0a0a0a; font-variant-numeric: tabular-nums; }
-        .hp-invoice-total {
-          display: flex; justify-content: space-between; align-items: baseline;
-          padding-top: 5px;
-          border-top: 1px dashed rgba(0,0,0,0.10);
-          font-size: 10px;
-          color: #0a0a0a;
-        }
-        .hp-invoice-total .grand {
-          font-size: 16px; font-weight: 900;
-          background: linear-gradient(135deg, #FF9D5A, #E8742B);
-          -webkit-background-clip: text; background-clip: text; color: transparent;
-          letter-spacing: -0.4px;
-          line-height: 1;
-        }
-        .hp-invoice-buttons {
-          display: flex; gap: 5px; margin-top: 4px;
-        }
-        .hp-invoice-btn {
+        .hp-sms-action {
           flex: 1;
-          padding: 7px 8px;
-          border-radius: 8px;
+          padding: 7px 6px;
+          border-radius: 9px;
           font-size: 9.5px; font-weight: 800;
-          text-align: center;
-          letter-spacing: -0.1px;
+          text-align: center; letter-spacing: -0.1px;
+          display: inline-flex; align-items: center; justify-content: center; gap: 4px;
         }
-        .hp-invoice-btn.primary {
-          background: linear-gradient(135deg, #FF9D5A, #E8742B);
+        .hp-sms-action.primary {
+          background: linear-gradient(135deg, #0AA89F, #0D8F87);
           color: #fff;
-          box-shadow: 0 4px 10px rgba(232,116,43,0.38);
+          box-shadow: 0 4px 10px rgba(10,168,159,0.38);
         }
-        .hp-invoice-btn.ghost {
+        .hp-sms-action.ghost {
           background: #F2F2F7;
           color: #0a0a0a;
-          border: 1px solid rgba(0,0,0,0.08);
+          border: 1px solid rgba(0,0,0,0.10);
         }
       `}</style>
 
@@ -373,7 +353,7 @@ export default function HeroPhone() {
           <div className="hp-state">
             {phase === 'ringing' ? 'Incoming call'
               : phase === 'connecting' ? 'Connecting…'
-              : phase === 'booked' ? 'Job booked!'
+              : phase === 'captured' ? 'Lead captured'
               : 'Active call'}
           </div>
           {phase !== 'ringing' && (
@@ -398,14 +378,14 @@ export default function HeroPhone() {
                   <div key={i} className={`hp-bubble ${t.speaker}`}>{t.text}</div>
                 ))}
               </div>
-              {phase === 'booked' && (
-                <div className="hp-booked">✓ AC tune-up booked · Tomorrow 10 AM</div>
+              {phase === 'captured' && (
+                <div className="hp-captured">✓ Lead sent to Mike</div>
               )}
             </>
           )}
         </div>
 
-        {/* SMS VIEW */}
+        {/* SMS VIEW — BellAveGo → Mike (the contractor) */}
         <div className="hp-sms">
           <div className="hp-sms-status">
             <span>9:42</span>
@@ -413,47 +393,48 @@ export default function HeroPhone() {
           </div>
           <div className="hp-sms-header">
             <div className="hp-sms-avatar">B</div>
-            <div className="hp-sms-name">
-              BellAveGo
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </div>
+            <div className="hp-sms-name">BellAveGo</div>
           </div>
           <div className="hp-sms-body">
-            <div className="hp-sms-day">Today 10:42 AM</div>
+            <div className="hp-sms-day">Today 9:42 AM</div>
 
             {smsStep >= 1 && (
-              <div className="hp-sms-bubble in">
-                Hi Marcus — BellAveGo for Mike’s HVAC. Confirming your AC tune-up <b>tomorrow at 10:00 AM</b>.
+              <div className="hp-sms-bubble in alert">
+                🔔 New job lead — <b>AC repair</b>
               </div>
             )}
             {smsStep >= 2 && (
               <div className="hp-sms-bubble in">
-                Reply <b>YES</b> to confirm or <b>NEW</b> to pick a different time.
+                <b>Marcus T.</b><br />(612) 555-0142
               </div>
             )}
             {smsStep >= 3 && (
-              <div className="hp-sms-bubble out">YES</div>
+              <div className="hp-sms-bubble in">
+                “AC stopped cooling — pretty urgent.”
+              </div>
             )}
             {smsStep >= 4 && (
-              <div className="hp-invoice">
-                <div className="hp-invoice-head">Pre-pay your visit?</div>
-                <div className="hp-invoice-row">
-                  <span className="lab">AC pre-season tune-up</span>
-                  <span className="val">$179</span>
-                </div>
-                <div className="hp-invoice-row">
-                  <span className="lab">Service-call credit</span>
-                  <span className="val">−$10</span>
-                </div>
-                <div className="hp-invoice-total">
-                  <span>Total due</span>
-                  <span className="grand">$169</span>
-                </div>
-                <div className="hp-invoice-buttons">
-                  <div className="hp-invoice-btn primary">Pay $169</div>
-                  <div className="hp-invoice-btn ghost">Pay at visit</div>
+              <div className="hp-sms-bubble in">
+                Available: <b>tomorrow before noon</b> or <b>Tuesday after 3 PM</b>
+              </div>
+            )}
+            {smsStep >= 5 && (
+              <div className="hp-sms-actions">
+                <div className="hp-sms-actions-head">Take the lead from here</div>
+                <div className="hp-sms-action-row">
+                  <div className="hp-sms-action primary">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                    Call Marcus
+                  </div>
+                  <div className="hp-sms-action ghost">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    Schedule
+                  </div>
                 </div>
               </div>
             )}
