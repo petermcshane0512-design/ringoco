@@ -181,7 +181,7 @@ export default function DashboardPage() {
 
   const metrics = [
     {
-      label: "Revenue · May", value: `$${counts.revenue.toLocaleString()}`,
+      label: "Revenue This Month from BellAveGo Leads", value: `$${counts.revenue.toLocaleString()}`,
       sub: counts.revenue > 0 ? "From completed jobs" : "No completed jobs yet",
       iconBg: "#ECFDF5", iconColor: "#059669", accentColor: "#22C55E",
       icon: <><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" /></>,

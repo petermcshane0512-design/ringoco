@@ -85,7 +85,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
   const statCards = [
     { key: 'calls', label: 'Missed Calls Answered Today', value: stats.calls, prefix: '', accent: '#0AA89F' },
     { key: 'jobs', label: 'Jobs Booked Today', value: stats.jobs, prefix: '', accent: '#22C55E' },
-    { key: 'revenue', label: 'Revenue This Month', value: stats.revenue, prefix: '$', accent: '#F59E0B' },
+    { key: 'revenue', label: 'Revenue This Month from BellAveGo Leads', value: stats.revenue, prefix: '$', accent: '#F59E0B' },
     { key: 'saved', label: 'Missed Calls Saved This Month', value: stats.saved, prefix: '', accent: '#8B5CF6' },
   ]
 
