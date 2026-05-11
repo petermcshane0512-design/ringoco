@@ -19,16 +19,18 @@ type Plan = {
   popular: boolean
   features: string[]
   reportCadence: string
+  comingSoon?: boolean        // when true, disables checkout + shows "Join waitlist"
+  comingSoonLabel?: string    // e.g., "Coming September 2026"
 }
 
 const PLANS: Plan[] = [
   {
     tier: 'receptionist',
-    name: 'Receptionist',
+    name: 'Front Desk',
     monthly: 179,
     annual: 149,
     setup: 50,
-    tagline: 'AI captures every call. You close it in one tap.',
+    tagline: 'AI answers every call + your welcome consulting report.',
     popular: false,
     features: [
       '24/7 AI call answering',
@@ -36,11 +38,11 @@ const PLANS: Plan[] = [
       'Instant text summary to your phone after every call',
       'One-tap: confirm appointment · send invoice · call back · acknowledge',
       'Emergency routing to your cell',
-      'Up to 500 calls/month',
-      'Live dashboard (call log + full transcripts + recordings)',
-      '3 quarterly intelligence reports/year',
+      'Up to 50 AI-booked appointments / month',
+      'Live dashboard with call log + full transcripts',
+      'Welcome AI consulting report at activation',
     ],
-    reportCadence: 'Quarterly · 3/year',
+    reportCadence: 'Welcome report · 1/year',
   },
   {
     tier: 'officemgr',
@@ -48,17 +50,18 @@ const PLANS: Plan[] = [
     monthly: 497,
     annual: 414,
     setup: 247,
-    tagline: 'Your back-office, on autopilot. So your team stays focused on the work.',
+    tagline: 'Four AIs running your back office on autopilot.',
     popular: true,
     features: [
-      'Everything in Receptionist, plus:',
-      'Unlimited calls',
+      'Everything in Front Desk, plus:',
+      'Unlimited AI-booked appointments',
       'AI Quote Hunter — auto follow-ups day 2 / 7 / 14',
-      'AI Collections — nightly past-due invoice chase',
-      'AI Reviews — drafts replies to every Google/Yelp review',
-      'Smart suggestions on call summaries (competitor pricing, repeat customers)',
-      'Jobber / HousecallPro / ServiceTitan integration',
-      '6 bi-monthly intelligence reports/year',
+      'AI Collections — past-due invoice chase via SMS + Stripe pay-by-text',
+      'AI Reviews — daily drafts reply to every Google review for one-tap approval',
+      'Smart call-summary insights (sales tips per booking)',
+      'Spanish-language receptionist mode',
+      'Google Reviews automation post-job',
+      '6 bi-monthly AI consulting reports/year',
     ],
     reportCadence: 'Bi-monthly · 6/year',
   },
@@ -68,20 +71,23 @@ const PLANS: Plan[] = [
     monthly: 997,
     annual: 831,
     setup: 497,
-    tagline: 'Everything autonomous. We run the back office for you.',
+    tagline: 'White-glove. Multi-location ready. Founder direct.',
     popular: false,
+    comingSoon: true,
+    comingSoonLabel: 'Coming September 2026',
     features: [
       'Everything in AI Office Manager, plus:',
-      'Auto-confirm mode — turn on when you trust it',
-      'Multi-location support (up to 5 locations, separate Twilio numbers)',
-      'Custom AI prompt tuning for your shop’s voice',
-      'AI Photo Estimator (Q3 2026)',
-      'AI Financing Closer — Wisetack / GreenSky (Q3 2026)',
-      'AI Recruiter — post jobs, screen techs (Q3 2026)',
-      'White-glove onboarding (we wire up your CRM)',
+      'Auto-confirm mode — AI books without your approval after trust period',
+      'Multi-location support (up to 5 locations, separate Twilio numbers each)',
+      'Custom AI prompt tuning to your shop’s exact voice',
+      'AI Photo Estimator — customer texts a photo, AI quotes',
+      'AI Financing Closer — Wisetack / GreenSky integration',
+      'AI Recruiter — post jobs + screen technicians automatically',
+      'Jobber / HousecallPro / ServiceTitan native integration',
+      'White-glove onboarding (Peter wires up your CRM live on call)',
       'Priority support — 24h SLA, dedicated Slack',
       'API access for custom integrations',
-      '12 monthly intelligence reports/year',
+      '12 monthly AI consulting reports/year',
     ],
     reportCadence: 'Monthly · 12/year',
   },
@@ -238,29 +244,57 @@ export default function PricingPage() {
                     )
                   })}
                 </div>
-                <button
-                  onClick={() => handleCheckout(plan.tier, interval)}
-                  disabled={isLoading}
-                  style={{
-                    padding: '14px',
-                    background: plan.popular ? '#22C55E' : 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)',
-                    borderRadius: 10,
-                    border: 'none',
-                    color: '#fff',
-                    fontWeight: 800,
-                    fontSize: 14,
-                    cursor: isLoading ? 'wait' : 'pointer',
-                    fontFamily: 'inherit',
-                    transition: 'all 0.18s ease',
-                    opacity: isLoading ? 0.7 : 1,
-                    boxShadow: plan.popular ? '0 8px 24px rgba(34,197,94,0.32)' : '0 4px 14px rgba(10,168,159,0.24)',
-                  }}
-                >
-                  {isLoading ? 'Loading…' : isSignedIn ? "Let's get started →" : 'Get Started →'}
-                </button>
-                <p style={{ fontSize: 11, color: plan.popular ? 'rgba(255,255,255,0.45)' : '#7AAAB2', textAlign: 'center', marginTop: 10, marginBottom: 0, fontWeight: 500 }}>
-                  + ${plan.setup} onboarding · 30-day money-back · Cancel anytime
-                </p>
+                {plan.comingSoon ? (
+                  <>
+                    <a
+                      href="mailto:peter@bellavego.com?subject=Concierge%20waitlist%20-%20BellAveGo"
+                      style={{
+                        padding: '14px',
+                        background: 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)',
+                        borderRadius: 10,
+                        border: 'none',
+                        color: '#fff',
+                        fontWeight: 800,
+                        fontSize: 14,
+                        textDecoration: 'none',
+                        textAlign: 'center',
+                        display: 'block',
+                        boxShadow: '0 4px 14px rgba(11,31,58,0.32)',
+                      }}
+                    >
+                      Join waitlist →
+                    </a>
+                    <p style={{ fontSize: 11, color: plan.popular ? 'rgba(255,255,255,0.45)' : '#7AAAB2', textAlign: 'center', marginTop: 10, marginBottom: 0, fontWeight: 600 }}>
+                      {plan.comingSoonLabel} · We&apos;ll email when it&apos;s live
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => handleCheckout(plan.tier, interval)}
+                      disabled={isLoading}
+                      style={{
+                        padding: '14px',
+                        background: plan.popular ? '#22C55E' : 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)',
+                        borderRadius: 10,
+                        border: 'none',
+                        color: '#fff',
+                        fontWeight: 800,
+                        fontSize: 14,
+                        cursor: isLoading ? 'wait' : 'pointer',
+                        fontFamily: 'inherit',
+                        transition: 'all 0.18s ease',
+                        opacity: isLoading ? 0.7 : 1,
+                        boxShadow: plan.popular ? '0 8px 24px rgba(34,197,94,0.32)' : '0 4px 14px rgba(10,168,159,0.24)',
+                      }}
+                    >
+                      {isLoading ? 'Loading…' : isSignedIn ? "Let's get started →" : 'Get Started →'}
+                    </button>
+                    <p style={{ fontSize: 11, color: plan.popular ? 'rgba(255,255,255,0.45)' : '#7AAAB2', textAlign: 'center', marginTop: 10, marginBottom: 0, fontWeight: 500 }}>
+                      + ${plan.setup} onboarding · 30-day money-back · Cancel anytime
+                    </p>
+                  </>
+                )}
               </div>
             )
           })}

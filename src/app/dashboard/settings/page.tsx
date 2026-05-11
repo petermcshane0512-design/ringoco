@@ -43,7 +43,7 @@ const row: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1f
 
 const TIER_LABELS: Record<string, { label: string; calls: string; price: string }> = {
   // v4 active
-  receptionist: { label: 'Receptionist Only', calls: '500 calls/mo',     price: '$179/mo' },
+  receptionist: { label: 'Front Desk', calls: '50 bookings/mo',     price: '$179/mo' },
   officemgr:    { label: 'AI Office Manager', calls: 'Unlimited calls',  price: '$497/mo' },
   concierge:    { label: 'Concierge',         calls: 'Unlimited calls',  price: '$997/mo' },
   cancelled:    { label: 'Cancelled', calls: '—', price: '—' },

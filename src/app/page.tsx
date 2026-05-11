@@ -638,20 +638,20 @@ export default function HomePage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20, maxWidth: 960, margin: '0 auto 20px' }}>
           {[
             {
-              name: 'Receptionist', price: 179, setup: 50, tier: 'receptionist', calls: 'Up to 500',
-              desc: 'AI captures every call. You close it in one tap — confirm, invoice, call back, or just acknowledge.',
-              features: ['24/7 AI call answering', 'Captures name · phone · service · address · preferred time', 'Instant text summary to your phone', 'One-tap actions on every call', 'Emergency routing to your cell', 'Live dashboard + transcripts + recordings', '3 quarterly intelligence reports/year'],
+              name: 'Front Desk', price: 179, setup: 50, tier: 'receptionist', calls: 'Up to 50 / mo',
+              desc: 'AI answers every call. You close it in one tap — confirm, invoice, call back, or just acknowledge. Includes a welcome AI consulting report.',
+              features: ['24/7 AI call answering', 'Captures name · phone · service · address · preferred time', 'Instant text summary to your phone', 'One-tap actions on every call', 'Emergency routing to your cell', 'Live dashboard + full transcripts', 'Welcome AI consulting report at activation'],
               popular: false, customCta: false,
             },
             {
               name: 'AI Office Manager', price: 497, setup: 247, tier: 'officemgr', calls: 'Unlimited',
               desc: 'Your back-office, on autopilot. Four AIs that answer calls, chase quotes, recover invoices, and reply to reviews — so your team can stay focused on the work.',
-              features: ['Everything in Receptionist, plus:', 'Unlimited calls', 'AI Quote Hunter (auto follow-ups day 2/7/14)', 'AI Collections (nightly past-due chase)', 'AI Reviews (drafts replies for one-tap approval)', 'Smart suggestions on call summaries', 'Jobber / HousecallPro / ServiceTitan integration', '6 bi-monthly intelligence reports/year'],
+              features: ['Everything in Front Desk, plus:', 'Unlimited calls', 'AI Quote Hunter (auto follow-ups day 2/7/14)', 'AI Collections (nightly past-due chase)', 'AI Reviews (drafts replies for one-tap approval)', 'Smart suggestions on call summaries', 'Jobber / HousecallPro / ServiceTitan integration', '6 bi-monthly intelligence reports/year'],
               popular: true, customCta: false,
             },
             {
-              name: 'Concierge', price: 997, setup: 497, tier: 'concierge', calls: 'Unlimited',
-              desc: 'Everything autonomous. Multi-location ready. White-glove onboarding. We run the back office for you.',
+              name: 'Concierge', price: 997, setup: 497, tier: 'concierge', calls: 'Coming Sept 2026',
+              desc: 'Everything autonomous + multi-location + auto-confirm mode + founder direct. Coming Sept 2026 — join the waitlist now to lock in pricing.',
               features: ['Everything in AI Office Manager, plus:', 'Auto-confirm mode (when you trust it)', 'Multi-location support (up to 5 numbers)', 'Custom AI prompt tuning', 'AI Photo Estimator · Financing Closer · Recruiter (Q3 2026)', 'White-glove onboarding (we wire up your CRM)', 'Priority support — 24h SLA, dedicated Slack', 'API access for custom integrations', '12 monthly intelligence reports/year'],
               popular: false, customCta: false,
             },
