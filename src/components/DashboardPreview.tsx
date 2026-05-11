@@ -20,7 +20,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
   const { isSignedIn } = useAuth()
   const [activeTab, setActiveTab] = useState('Invoicing')
   const [hoveredNav, setHoveredNav] = useState<string | null>(null)
-  const [stats, setStats] = useState({ calls: 38, jobs: 14, revenue: 12480, saved: 22 })
+  const [stats, setStats] = useState({ calls: 3, jobs: 2, revenue: 12500, saved: 24 })
   const [bumped, setBumped] = useState<string | null>(null)
   const [floatEl, setFloatEl] = useState<{ key: string; text: string } | null>(null)
   const [visible, setVisible] = useState(false)
@@ -37,23 +37,31 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
   }, [])
 
   useEffect(() => {
+    // Realistic ambient bumps. Most ticks do nothing — feels live, stays plausible.
+    const CAPS = { calls: 8, jobs: 5, revenue: 14500, saved: 30 }
     const id = setInterval(() => {
       const r = Math.random()
-      if (r < 0.33) {
-        setStats(s => ({ ...s, calls: s.calls + 1 }))
-        trigger('calls', '+1')
-      } else if (r < 0.56) {
-        const inc = (Math.floor(Math.random() * 6) + 1) * 50
-        setStats(s => ({ ...s, revenue: s.revenue + inc }))
-        trigger('revenue', `+$${inc}`)
-      } else if (r < 0.73) {
-        setStats(s => ({ ...s, saved: s.saved + 1 }))
-        trigger('saved', '+1')
-      } else if (r < 0.82) {
-        setStats(s => ({ ...s, jobs: s.jobs + 1 }))
-        trigger('jobs', '+1')
-      }
-    }, 3600)
+      setStats(s => {
+        if (r < 0.10 && s.calls < CAPS.calls) {
+          trigger('calls', '+1')
+          return { ...s, calls: s.calls + 1 }
+        }
+        if (r < 0.20 && s.saved < CAPS.saved) {
+          trigger('saved', '+1')
+          return { ...s, saved: s.saved + 1 }
+        }
+        if (r < 0.27 && s.revenue < CAPS.revenue) {
+          const inc = (Math.floor(Math.random() * 4) + 1) * 50
+          trigger('revenue', `+$${inc}`)
+          return { ...s, revenue: s.revenue + inc }
+        }
+        if (r < 0.31 && s.jobs < CAPS.jobs) {
+          trigger('jobs', '+1')
+          return { ...s, jobs: s.jobs + 1 }
+        }
+        return s
+      })
+    }, 9000)
     return () => clearInterval(id)
   }, [])
 
@@ -75,10 +83,10 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
   }
 
   const statCards = [
-    { key: 'calls', label: 'Calls Answered Today', value: stats.calls, prefix: '', accent: '#0AA89F' },
-    { key: 'jobs', label: 'Jobs Booked', value: stats.jobs, prefix: '', accent: '#22C55E' },
+    { key: 'calls', label: 'Missed Calls Answered Today', value: stats.calls, prefix: '', accent: '#0AA89F' },
+    { key: 'jobs', label: 'Jobs Booked Today', value: stats.jobs, prefix: '', accent: '#22C55E' },
     { key: 'revenue', label: 'Revenue This Month', value: stats.revenue, prefix: '$', accent: '#F59E0B' },
-    { key: 'saved', label: 'Missed Calls Saved', value: stats.saved, prefix: '', accent: '#8B5CF6' },
+    { key: 'saved', label: 'Missed Calls Saved This Month', value: stats.saved, prefix: '', accent: '#8B5CF6' },
   ]
 
   return (
