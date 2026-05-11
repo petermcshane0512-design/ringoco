@@ -357,9 +357,32 @@ Only role: book a service call. Politely decline anything else: "I can only help
       }).select().single()
       job = jobRow
 
+      // Smart call summary insight — Office Manager + Concierge tiers only.
+      // One quick Claude pass over the transcript to surface a sales tip for the contractor.
+      let smartInsight = ''
+      const officeMgrTiers = new Set(['officemgr', 'concierge', 'growth', 'premium'])
+      if (officeMgrTiers.has(profileWithTier?.plan_tier ?? '')) {
+        try {
+          const insightResp = await client.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 100,
+            system:
+              'Read a phone-booking transcript. Output ONE short sales/operations tip the contractor should know before this job. ' +
+              '≤25 words. Concrete, specific to what was said. Format: "💡 [tip]". ' +
+              'Examples: "💡 Customer hinted at budget — bring up financing." "💡 First-time homeowner — pitch maintenance plan." ' +
+              'If nothing useful, output: "💡 Standard call — no extra notes."',
+            messages: [{ role: 'user', content: JSON.stringify(history) }],
+          })
+          smartInsight = insightResp.content[0].type === 'text' ? insightResp.content[0].text.trim() : ''
+        } catch (e) {
+          console.error('smart-insight failed:', e)
+        }
+      }
+
       try {
+        const insightLine = smartInsight ? `\n\n${smartInsight}` : ''
         await twilioClient.messages.create({
-          body: `🔔 New job request via BellAveGo!\n\n👤 Customer: ${name}\n📞 Phone: ${phone || callerPhone}\n🔧 Service: ${service}\n📍 Address: ${address}\n🕐 Requested time: ${time}\n\nReply YES to confirm or NO to decline.\n\nView at bellavego.com/dashboard`,
+          body: `🔔 New job request via BellAveGo!\n\n👤 Customer: ${name}\n📞 Phone: ${phone || callerPhone}\n🔧 Service: ${service}\n📍 Address: ${address}\n🕐 Requested time: ${time}${insightLine}\n\nReply YES to confirm or NO to decline.\n\nView at bellavego.com/dashboard`,
           from: calledNumber || process.env.TWILIO_PHONE_NUMBER!,
           to: ownerPhone,
         })

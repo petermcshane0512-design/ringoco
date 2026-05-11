@@ -316,6 +316,7 @@ export default function HeroPhone() {
           color: #7AAAB2;
           letter-spacing: 0.10em; text-transform: uppercase;
           padding: 0 4px;
+          display: flex; align-items: center; gap: 6px;
         }
         .hp-sms-action-row {
           display: flex; gap: 5px;
@@ -420,7 +421,10 @@ export default function HeroPhone() {
             )}
             {smsStep >= 5 && (
               <div className="hp-sms-actions">
-                <div className="hp-sms-actions-head">Take the lead from here</div>
+                <div className="hp-sms-actions-head">
+                  <span>Take the lead from here</span>
+                  <span style={{ marginLeft: 'auto', fontSize: 8.5, fontWeight: 800, color: '#C84B26', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 99, background: 'rgba(232,116,43,0.14)', border: '1px solid rgba(232,116,43,0.30)' }}>~$420 avg</span>
+                </div>
                 <div className="hp-sms-action-row">
                   <div className="hp-sms-action primary">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">

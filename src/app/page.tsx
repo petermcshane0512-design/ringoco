@@ -6,6 +6,10 @@ import { useAuth, SignOutButton } from '@clerk/nextjs'
 import DashboardPreview from '@/components/DashboardPreview'
 import ConsultingShowcase from '@/components/ConsultingShowcase'
 import HeroPhone from '@/components/HeroPhone'
+import SetupSteps from '@/components/SetupSteps'
+import RoiCalculator from '@/components/RoiCalculator'
+import FounderSection from '@/components/FounderSection'
+import StickyDemoCta from '@/components/StickyDemoCta'
 
 export default function HomePage() {
   const { isSignedIn } = useAuth()
@@ -491,11 +495,11 @@ export default function HomePage() {
             <div>
               <div className="hero-eyebrow">AI Built for Home Service Pros</div>
               <h1 className="hero-h1">
-                Scale your home service business<br />
-                <span className="accent">with AI.</span>
+                Never lose another job<br />
+                <span className="accent">to voicemail.</span>
               </h1>
               <p className="hero-sub">
-                BellAveGo answers your phone, follows up on quotes, recovers past-due invoices, and drafts replies to every Google review — automatically, in the background, while you stay focused on the work. Built for home service teams of 1–15.
+                BellAveGo answers when you can&apos;t, captures the lead, and texts you a summary with the caller&apos;s name, problem, and times they&apos;re available. Pays for itself in one booked job — built for home service teams of 1–15.
               </p>
 
               <div className="hero-actions">
@@ -545,8 +549,17 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* SETUP STEPS — "Live in 12 minutes" */}
+      <SetupSteps />
+
+      {/* ROI CALCULATOR — interactive money-on-the-table preview */}
+      <RoiCalculator />
+
       {/* CONSULTING PREVIEW */}
       <ConsultingShowcase />
+
+      {/* FOUNDER SECTION — story + video placeholder */}
+      <FounderSection />
 
       {/* INDUSTRIES */}
       <section style={{ background: '#F2F9F5', borderBottom: '1px solid #D4E6DC', padding: '28px 0 0' }}>
@@ -739,6 +752,9 @@ export default function HomePage() {
           <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>The best AI implementation for teams of 1–15 · From $179/mo · 90-day money-back · Cancel anytime</p>
         </div>
       </footer>
+
+      {/* Sticky "Hear the AI live" CTA — bottom-right pill desktop, full-width strip mobile */}
+      <StickyDemoCta />
 
     </main>
   )
