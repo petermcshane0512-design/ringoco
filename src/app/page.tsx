@@ -4,7 +4,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth, SignOutButton } from '@clerk/nextjs'
 import DashboardPreview from '@/components/DashboardPreview'
-import HeroShowcase from '@/components/HeroShowcase'
 import ConsultingShowcase from '@/components/ConsultingShowcase'
 
 export default function HomePage() {
@@ -385,8 +384,10 @@ export default function HomePage() {
 
             .hero-stage {
               position: relative;
-              height: 520px;
+              min-height: 460px;
               min-width: 0;
+              display: flex;
+              align-items: center;
             }
 
             @keyframes heroShimmer {
@@ -400,10 +401,10 @@ export default function HomePage() {
 
             @media (max-width: 1024px) {
               .hero-grid { grid-template-columns: 1fr; gap: 48px; padding: 56px 28px; }
-              .hero-stage { height: 440px; }
+              .hero-stage { min-height: 380px; }
             }
             @media (max-width: 640px) {
-              .hero-stage { height: 380px; }
+              .hero-stage { min-height: 320px; }
               .hero-trust { gap: 18px; }
               .hero-trust-num { font-size: 18px; }
             }
@@ -483,14 +484,11 @@ export default function HomePage() {
             </div>
 
             <div className="hero-stage">
-              <HeroShowcase />
+              <DashboardPreview compact />
             </div>
           </div>
         </div>
       </section>
-
-      {/* DASHBOARD PREVIEW */}
-      <div id="lp-preview"><DashboardPreview /></div>
 
       {/* CONSULTING PREVIEW */}
       <ConsultingShowcase />
@@ -636,7 +634,7 @@ export default function HomePage() {
               </div>
               {isSignedIn ? (
                 <Link href={`/pricing?tier=${plan.tier}&autocheckout=1`} style={{ display: 'block', textAlign: 'center', padding: '13px', background: plan.popular ? '#22C55E' : 'linear-gradient(135deg,#0AA89F,#0D8F87)', borderRadius: 10, textDecoration: 'none', color: '#fff', fontWeight: 800, fontSize: 14, border: 'none' }}>
-                  Start Free Month →
+                  Activate {plan.name} →
                 </Link>
               ) : (
                 <Link href={`/pricing?tier=${plan.tier}`} style={{ display: 'block', textAlign: 'center', padding: '13px', background: plan.popular ? '#22C55E' : 'rgba(10,168,159,0.08)', borderRadius: 10, textDecoration: 'none', color: plan.popular ? '#fff' : '#0AA89F', fontWeight: 800, fontSize: 14, border: plan.popular ? 'none' : '1px solid rgba(10,168,159,0.2)' }}>

@@ -43,9 +43,19 @@ export async function POST(req: NextRequest) {
   const tier: Tier = body.tier ?? 'officemgr'  // AI Office Manager is the flagship/default
   const interval: Interval = body.interval ?? 'monthly'
 
-  const subPriceId = priceFor(tier, interval) ?? process.env.STRIPE_PRICE_ID
+  // NO fallback to STRIPE_PRICE_ID — that historically pointed at a legacy $97 price
+  // and silently charged the wrong amount when priceFor() returned empty.
+  // Fail loudly instead.
+  const subPriceId = priceFor(tier, interval)
   if (!subPriceId) {
-    return NextResponse.json({ error: 'No subscription price configured' }, { status: 500 })
+    console.error(`[checkout] No price configured for tier=${tier} interval=${interval}. ` +
+      `Env present: RECEPTIONIST_MONTHLY=${!!process.env.STRIPE_PRICE_RECEPTIONIST_MONTHLY} ` +
+      `OFFICEMGR_MONTHLY=${!!process.env.STRIPE_PRICE_OFFICEMGR_MONTHLY} ` +
+      `CONCIERGE_MONTHLY=${!!process.env.STRIPE_PRICE_CONCIERGE_MONTHLY}`)
+    return NextResponse.json(
+      { error: `Price not configured for ${tier}/${interval}. Contact support — peter@bellavego.com.` },
+      { status: 500 },
+    )
   }
 
   // v6 pricing (May 10 2026): Setup fee on every tier ($50 / $247 / $497).
