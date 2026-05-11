@@ -447,19 +447,19 @@ export default function ConsultingShowcase() {
         /* Mini map */
         .cs-mini-map {
           position: relative;
-          width: 100%; aspect-ratio: 21/9;
-          border-radius: 10px; overflow: hidden;
+          width: 100%; aspect-ratio: 21/8;
+          border-radius: 9px; overflow: hidden;
           background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
           border: 1px solid rgba(94,234,212,0.18);
-          margin: 8px 0;
+          margin: 6px 0;
         }
 
         /* Outreach row */
         .cs-out-row {
-          display: flex; align-items: center; gap: 10px;
-          padding: 8px 0;
+          display: flex; align-items: center; gap: 9px;
+          padding: 6px 0;
           border-bottom: 1px solid rgba(94,234,212,0.10);
-          font-size: 12px;
+          font-size: 11.5px;
         }
         .cs-out-row:last-child { border-bottom: none; }
         .cs-out-name { color: #fff; font-weight: 700; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -467,38 +467,38 @@ export default function ConsultingShowcase() {
 
         /* University ribbon */
         .cs-ribbon {
-          margin: 0 0 36px;
-          padding: 26px 36px;
-          border-radius: 18px;
+          margin: 0 0 22px;
+          padding: 18px 26px;
+          border-radius: 14px;
           background:
             linear-gradient(120deg, rgba(232,116,43,0.16) 0%, rgba(232,116,43,0) 35%, rgba(94,234,212,0) 65%, rgba(94,234,212,0.14) 100%),
             linear-gradient(135deg, #050E1F 0%, #0F2542 60%, #112C4A 100%);
           border: 1px solid rgba(94,234,212,0.26);
-          box-shadow: 0 24px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+          box-shadow: 0 18px 44px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.05);
           display: grid;
           grid-template-columns: auto 1fr auto;
-          gap: 24px;
+          gap: 18px;
           align-items: center;
         }
         @media (max-width: 880px) { .cs-ribbon { grid-template-columns: 1fr; text-align: center; } }
         .cs-rib-ico {
-          width: 48px; height: 48px;
-          border-radius: 12px;
+          width: 40px; height: 40px;
+          border-radius: 10px;
           background: linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B);
           color: #fff;
           display: flex; align-items: center; justify-content: center;
-          box-shadow: 0 8px 20px rgba(232,116,43,0.42);
+          box-shadow: 0 6px 16px rgba(232,116,43,0.42);
           flex-shrink: 0;
         }
         .cs-rib-text { min-width: 0; }
         .cs-rib-tag {
-          font-size: 11px; font-weight: 800; color: #FF9D5A;
-          letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 4px;
+          font-size: 10px; font-weight: 800; color: #FF9D5A;
+          letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 2px;
         }
-        .cs-rib-line { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.3px; line-height: 1.3; }
+        .cs-rib-line { font-size: 15px; font-weight: 800; color: #fff; letter-spacing: -0.2px; line-height: 1.3; }
         .cs-rib-unis { color: #FFD9A8; font-weight: 900; }
-        .cs-rib-stack { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.55); margin-top: 4px; }
-        .cs-rib-side { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.45); letter-spacing: 0.04em; text-align: right; }
+        .cs-rib-stack { font-size: 10.5px; font-weight: 600; color: rgba(255,255,255,0.55); margin-top: 2px; }
+        .cs-rib-side { font-size: 10.5px; font-weight: 700; color: rgba(255,255,255,0.45); letter-spacing: 0.04em; text-align: right; }
 
         /* CTA row */
         .cs-cta-row {
@@ -546,8 +546,8 @@ export default function ConsultingShowcase() {
           to { transform: rotate(360deg); }
         }
         @keyframes csCoverFloat {
-          0%, 100% { transform: rotate(-6deg) translateY(0); }
-          50%      { transform: rotate(-6deg) translateY(-10px); }
+          0%, 100% { transform: rotate(-5deg) translateY(0); }
+          50%      { transform: rotate(-5deg) translateY(-8px); }
         }
         @keyframes csCoverDrift {
           0%   { transform: scale(1.04) translate(0, 0); }
@@ -557,6 +557,24 @@ export default function ConsultingShowcase() {
         @keyframes csFoamShimmer {
           0%, 100% { opacity: 0.55; transform: translateX(-2%) scaleY(1); }
           50%      { opacity: 0.85; transform: translateX(2%) scaleY(1.15); }
+        }
+        @keyframes csHaloPulse {
+          0%, 100% { opacity: 0.55; transform: scale(0.94); }
+          50%      { opacity: 1; transform: scale(1.08); }
+        }
+        @keyframes csRingPulse {
+          0%   { opacity: 0.7; transform: rotate(-5deg) scale(1); }
+          70%  { opacity: 0;   transform: rotate(-5deg) scale(1.18); }
+          100% { opacity: 0;   transform: rotate(-5deg) scale(1.18); }
+        }
+        @keyframes csCtaBob {
+          0%, 100% { transform: translate(-50%, 0); }
+          50%      { transform: translate(-50%, -5px); }
+        }
+        @keyframes csTap {
+          0%, 100% { transform: translateY(0) scale(1); }
+          40%      { transform: translateY(-3px) scale(1.18); }
+          60%      { transform: translateY(0) scale(0.95); }
         }
       `}</style>
 
@@ -609,6 +627,8 @@ export default function ConsultingShowcase() {
 
           {/* Report cover */}
           <div className="cs-cover-wrap">
+            <div className="cs-cover-halo" aria-hidden="true" />
+            <div className="cs-cover-ring" aria-hidden="true" />
             <Link href="/sample-report" className="cs-cover" aria-label="View the full sample report">
               <span className="cs-cover-pin">PDF · 9 pages</span>
               <Image
@@ -636,6 +656,7 @@ export default function ConsultingShowcase() {
                 </div>
               </div>
             </Link>
+            <span className="cs-cover-cta">Click to read the report</span>
           </div>
         </div>
 

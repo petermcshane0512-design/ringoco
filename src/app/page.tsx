@@ -440,8 +440,8 @@ export default function HomePage() {
             <div>
               <div className="hero-eyebrow">AI Built for Home Service Pros</div>
               <h1 className="hero-h1">
-                Grow your business —<br />
-                <span className="accent">without growing your team.</span>
+                Scale your home service business<br />
+                <span className="accent">with AI.</span>
               </h1>
               <p className="hero-sub">
                 BellAveGo answers your phone, follows up on quotes, recovers past-due invoices, and drafts replies to every Google review — automatically, in the background, while you stay focused on the work. Built for home service teams of 1–15.
