@@ -123,7 +123,8 @@ export default function PricingPage() {
       } else {
         console.error('checkout error', data)
         setLoading(null)
-        alert('Checkout failed. Please try again or text Peter at 773-710-9565.')
+        const reason = data?.error || 'Unknown error'
+        alert(`Checkout failed: ${reason}\n\nText Peter at 773-710-9565 with this message.`)
       }
     } catch (err) {
       console.error(err)

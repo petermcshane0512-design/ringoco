@@ -78,7 +78,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: session.url })
   } catch (err) {
-    console.error('checkout error:', err)
-    return NextResponse.json({ error: 'Stripe error' }, { status: 500 })
+    // Surface the actual Stripe error so we can debug instead of guessing
+    const errObj = err as { message?: string; code?: string; type?: string; raw?: { message?: string } }
+    const detail = errObj.raw?.message || errObj.message || String(err)
+    console.error('[checkout] Stripe error:', { tier, interval, subPriceId, setupPriceId, detail, type: errObj.type, code: errObj.code })
+    return NextResponse.json(
+      { error: detail, code: errObj.code, type: errObj.type, tier, interval },
+      { status: 500 },
+    )
   }
 }
