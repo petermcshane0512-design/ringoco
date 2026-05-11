@@ -15,7 +15,7 @@ const REPORTS = [
   { title: 'Q1 2026 Growth Report', date: 'April 1, 2026' },
 ]
 
-export default function DashboardPreview() {
+export default function DashboardPreview({ compact = false }: { compact?: boolean } = {}) {
   const { isSignedIn } = useAuth()
   const [activeTab, setActiveTab] = useState('Invoicing')
   const [hoveredNav, setHoveredNav] = useState<string | null>(null)
@@ -81,7 +81,7 @@ export default function DashboardPreview() {
   ]
 
   return (
-    <section ref={sectionRef} style={{ background: 'linear-gradient(160deg, #F5FCFA 0%, #E8F7F3 45%, #F0FAF7 100%)', padding: isSignedIn ? '88px 24px 40px' : '88px 24px 72px', position: 'relative', overflow: 'hidden' }}>
+    <section ref={sectionRef} style={{ background: compact ? 'transparent' : 'linear-gradient(160deg, #F5FCFA 0%, #E8F7F3 45%, #F0FAF7 100%)', padding: compact ? 0 : (isSignedIn ? '88px 24px 40px' : '88px 24px 72px'), position: 'relative', overflow: 'hidden' }}>
       <style>{`
         @keyframes dpFloatUp { 0%{opacity:1;transform:translateY(0) scale(1);} 100%{opacity:0;transform:translateY(-20px) scale(0.8);} }
         @keyframes dpBounce { 0%,100%{transform:scale(1);} 45%{transform:scale(1.12);} }
@@ -90,12 +90,15 @@ export default function DashboardPreview() {
       `}</style>
 
       {/* Subtle background */}
+      {!compact && (
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: '25%', left: '50%', transform: 'translate(-50%,-50%)', width: 900, height: 600, background: 'radial-gradient(ellipse, rgba(10,168,159,0.07) 0%, transparent 65%)' }} />
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(10,168,159,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(10,168,159,0.035) 1px, transparent 1px)', backgroundSize: '52px 52px' }} />
       </div>
+      )}
 
       {/* Section header */}
+      {!compact && (
       <div style={{ textAlign: 'center', marginBottom: 48, position: 'relative', zIndex: 2 }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(10,168,159,0.1)', border: '1px solid rgba(10,168,159,0.28)', borderRadius: 20, padding: '6px 15px', marginBottom: 20, animation: 'dpBadge 2.6s infinite' }}>
           <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#0AA89F', animation: 'dpDot 2s infinite' }} />
@@ -109,6 +112,7 @@ export default function DashboardPreview() {
           AI-powered answering, booking, invoicing, and revenue tracking -- all in one operating system.
         </p>
       </div>
+      )}
 
       {/* Dashboard mockup */}
       <div
@@ -116,9 +120,11 @@ export default function DashboardPreview() {
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setTilt({ x: 0, y: 0 })}
         style={{
-          maxWidth: 1040, margin: '0 auto 52px',
+          maxWidth: compact ? '100%' : 1040, margin: compact ? '0' : '0 auto 52px',
           position: 'relative', zIndex: 2,
-          transform: 'perspective(1600px) rotateX(' + (tilt.x + (visible ? 0 : 8)) + 'deg) rotateY(' + tilt.y + 'deg) translateY(' + (visible ? 0 : 28) + 'px)',
+          transform: compact
+            ? 'perspective(1800px) rotateY(' + (-14 + tilt.y) + 'deg) rotateX(' + (4 + tilt.x) + 'deg) translateY(' + (visible ? 0 : 28) + 'px)'
+            : 'perspective(1600px) rotateX(' + (tilt.x + (visible ? 0 : 8)) + 'deg) rotateY(' + tilt.y + 'deg) translateY(' + (visible ? 0 : 28) + 'px)',
           opacity: visible ? 1 : 0,
           transition: 'opacity 0.7s ease, transform 0.7s cubic-bezier(0.34,1,0.64,1)',
           borderRadius: 18,
@@ -550,8 +556,8 @@ export default function DashboardPreview() {
         </div>
       </div>
 
-      {/* CTAs -- hidden when signed in */}
-      {!isSignedIn && (
+      {/* CTAs -- hidden when signed in or in compact mode */}
+      {!isSignedIn && !compact && (
         <>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 20, position: 'relative', zIndex: 2 }}>
             <Link href="/sign-up" style={{ padding: '14px 36px', background: 'linear-gradient(135deg, #22C55E, #16A34A)', color: '#fff', fontWeight: 900, fontSize: 15, borderRadius: 11, textDecoration: 'none', boxShadow: '0 4px 22px rgba(34,197,94,0.38)', letterSpacing: '-0.01em' }}>
