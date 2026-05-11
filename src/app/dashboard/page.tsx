@@ -437,13 +437,46 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Consulting Reports */}
-          <div style={card}>
-            <div style={cardHead}>
-              <div>
-                <div style={cardTitle}>BellAveGo Consulting Reports</div>
-                <div style={{ fontSize: 11, color: "#7AAAB2", marginTop: 2 }}>Client reports uploaded by Peter</div>
+          {/* Consulting Reports — sunset orange palette */}
+          <div style={{
+            background: "linear-gradient(160deg, #FFF6EE 0%, #FFFFFF 60%)",
+            border: "1px solid rgba(232,116,43,0.24)",
+            borderRadius: 14,
+            overflow: "hidden",
+            boxShadow: "0 6px 20px rgba(232,116,43,0.12), 0 0 0 1px rgba(232,116,43,0.06)",
+          }}>
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "14px 20px",
+              borderBottom: "1px solid rgba(232,116,43,0.18)",
+              background: "linear-gradient(135deg, rgba(232,116,43,0.06), rgba(255,157,90,0.10))",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{
+                  width: 34, height: 34, borderRadius: 9,
+                  background: "linear-gradient(135deg, #FF9D5A, #E8742B)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: "0 6px 14px rgba(232,116,43,0.42)",
+                  flexShrink: 0,
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="9" y1="13" x2="15" y2="13"/>
+                    <line x1="9" y1="17" x2="13" y2="17"/>
+                  </svg>
+                </div>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 9, fontWeight: 800, color: "#C84B26", letterSpacing: "0.16em", textTransform: "uppercase", padding: "2px 8px", borderRadius: 99, background: "rgba(232,116,43,0.12)", border: "1px solid rgba(232,116,43,0.30)" }}>Consulting</span>
+                    <div style={cardTitle}>BellAveGo Consulting Reports</div>
+                  </div>
+                  <div style={{ fontSize: 11, color: "#8B5A3D", marginTop: 3, fontWeight: 500 }}>Your quarterly growth advisor — delivered as a PDF</div>
+                </div>
               </div>
+              <span style={{ fontSize: 11, fontWeight: 800, padding: "5px 11px", borderRadius: 99, background: "rgba(232,116,43,0.12)", color: "#C84B26", border: "1px solid rgba(232,116,43,0.32)" }}>
+                {reports.length} {reports.length === 1 ? "report" : "reports"}
+              </span>
             </div>
             <div style={{ padding: "0 20px" }}>
               {reports.length === 0 ? (
@@ -455,25 +488,34 @@ export default function DashboardPage() {
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
                     <tr>
-                      <th style={th}>Client</th>
-                      <th style={th}>Report</th>
-                      <th style={th}>Date</th>
-                      <th style={{ ...th, textAlign: "right" }}>Link</th>
+                      <th style={{ ...th, color: "#8B5A3D", borderBottom: "1px solid rgba(232,116,43,0.18)" }}>Client</th>
+                      <th style={{ ...th, color: "#8B5A3D", borderBottom: "1px solid rgba(232,116,43,0.18)" }}>Report</th>
+                      <th style={{ ...th, color: "#8B5A3D", borderBottom: "1px solid rgba(232,116,43,0.18)" }}>Date</th>
+                      <th style={{ ...th, color: "#8B5A3D", borderBottom: "1px solid rgba(232,116,43,0.18)", textAlign: "right" }}>Link</th>
                     </tr>
                   </thead>
                   <tbody>
                     {reports.map((r) => (
                       <tr key={r.id}>
-                        <td style={{ ...td, fontWeight: 600, color: "#0B1F3A" }}>{r.client_name}</td>
-                        <td style={td}>{r.title}</td>
-                        <td style={td}>{new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
-                        <td style={{ ...td, textAlign: "right" }}>
+                        <td style={{ ...td, borderBottom: "1px solid rgba(232,116,43,0.10)", fontWeight: 600, color: "#0B1F3A" }}>{r.client_name}</td>
+                        <td style={{ ...td, borderBottom: "1px solid rgba(232,116,43,0.10)" }}>{r.title}</td>
+                        <td style={{ ...td, borderBottom: "1px solid rgba(232,116,43,0.10)" }}>{new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
+                        <td style={{ ...td, borderBottom: "1px solid rgba(232,116,43,0.10)", textAlign: "right" }}>
                           {r.file_url ? (
-                            <a href={r.file_url} target="_blank" rel="noreferrer" style={{ fontSize: 11, fontWeight: 700, color: "#0AA89F", textDecoration: "none" }}>
+                            <a href={r.file_url} target="_blank" rel="noreferrer" style={{
+                              display: "inline-flex", alignItems: "center", gap: 5,
+                              padding: "6px 12px",
+                              borderRadius: 8,
+                              background: "linear-gradient(135deg, #FF9D5A, #E8742B)",
+                              color: "#fff",
+                              fontSize: 11, fontWeight: 800,
+                              textDecoration: "none",
+                              boxShadow: "0 4px 12px rgba(232,116,43,0.38)",
+                            }}>
                               View →
                             </a>
                           ) : (
-                            <span style={{ fontSize: 11, color: "#7AAAB2" }}>No file</span>
+                            <span style={{ fontSize: 11, color: "#8B5A3D" }}>No file</span>
                           )}
                         </td>
                       </tr>

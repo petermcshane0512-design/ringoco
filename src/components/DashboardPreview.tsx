@@ -514,40 +514,43 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
               </div>
             </div>
 
-            {/* Consulting Reports */}
-            <div style={{ background: '#ffffff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, padding: '11px 13px', boxShadow: '0 2px 10px rgba(7,27,58,0.05)' }}>
+            {/* Consulting Reports — sunset orange palette */}
+            <div style={{ background: 'linear-gradient(160deg, #FFF6EE 0%, #FFFFFF 100%)', border: '1px solid rgba(232,116,43,0.22)', borderRadius: 11, padding: '11px 13px', boxShadow: '0 2px 10px rgba(232,116,43,0.10), 0 0 0 1px rgba(232,116,43,0.06)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 9 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A' }}>BellAveGo Consulting Reports</div>
-                <span style={{ fontSize: 7.5, fontWeight: 600, padding: '2px 8px', borderRadius: 10, background: 'rgba(10,168,159,0.08)', color: '#0AA89F', border: '1px solid rgba(10,168,159,0.2)' }}>2 reports</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 7, fontWeight: 800, color: '#E8742B', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 99, background: 'rgba(232,116,43,0.10)', border: '1px solid rgba(232,116,43,0.28)' }}>Consulting</span>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A' }}>BellAveGo Consulting Reports</div>
+                </div>
+                <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: 'rgba(232,116,43,0.10)', color: '#C84B26', border: '1px solid rgba(232,116,43,0.30)' }}>2 reports</span>
               </div>
               <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 {/* Banner */}
-                <div style={{ flex: '0 0 auto', background: 'linear-gradient(135deg, rgba(10,168,159,0.07), rgba(10,168,159,0.12))', border: '1px solid rgba(10,168,159,0.18)', borderRadius: 8, padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 230 }}>
-                  <div style={{ width: 26, height: 26, borderRadius: 6, background: 'linear-gradient(135deg, #0AA89F, #0D8F87)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <span style={{ fontSize: 12 }}>Rep</span>
+                <div style={{ flex: '0 0 auto', background: 'linear-gradient(135deg, rgba(232,116,43,0.10), rgba(255,157,90,0.16))', border: '1px solid rgba(232,116,43,0.28)', borderRadius: 8, padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 230 }}>
+                  <div style={{ width: 26, height: 26, borderRadius: 6, background: 'linear-gradient(135deg, #FF9D5A, #E8742B)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 10px rgba(232,116,43,0.35)' }}>
+                    <span style={{ fontSize: 12, color: '#fff' }}>Rep</span>
                   </div>
                   <div>
                     <div style={{ fontSize: 8.5, fontWeight: 700, color: '#0B1F3A', lineHeight: 1.3 }}>Your personal growth advisor</div>
-                    <div style={{ fontSize: 7.5, color: '#4A7A80', marginTop: 1 }}>5 expert reports per year</div>
+                    <div style={{ fontSize: 7.5, color: '#8B5A3D', marginTop: 1, fontWeight: 600 }}>Quarterly · network-wide insights</div>
                   </div>
                 </div>
 
                 {/* Report rows */}
                 <div style={{ flex: 1 }}>
                   {REPORTS.map((r, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: i < REPORTS.length - 1 ? '1px solid rgba(10,168,159,0.08)' : 'none' }}>
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: i < REPORTS.length - 1 ? '1px solid rgba(232,116,43,0.10)' : 'none' }}>
                       <div style={{ flex: 1, fontSize: 9, fontWeight: 600, color: '#0B1F3A' }}>{r.title}</div>
-                      <div style={{ fontSize: 8, color: '#7AAAB2' }}>{r.date}</div>
-                      <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 6px', borderRadius: 8, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', flexShrink: 0 }}>Delivered</span>
-                      <div style={{ padding: '2px 8px', borderRadius: 6, background: 'rgba(10,168,159,0.08)', border: '1px solid rgba(10,168,159,0.18)', color: '#0AA89F', fontSize: 8, fontWeight: 600, flexShrink: 0 }}>View</div>
+                      <div style={{ fontSize: 8, color: '#8B5A3D' }}>{r.date}</div>
+                      <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 6px', borderRadius: 8, background: 'rgba(34,197,94,0.10)', color: '#15803D', border: '1px solid rgba(34,197,94,0.3)', flexShrink: 0 }}>Delivered</span>
+                      <div style={{ padding: '2px 8px', borderRadius: 6, background: 'linear-gradient(135deg, #FF9D5A, #E8742B)', color: '#fff', fontSize: 8, fontWeight: 800, flexShrink: 0, boxShadow: '0 2px 6px rgba(232,116,43,0.35)' }}>View</div>
                     </div>
                   ))}
-                  <div style={{ marginTop: 6, padding: '5px 8px', background: 'rgba(10,168,159,0.05)', borderRadius: 7, border: '1px solid rgba(10,168,159,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ marginTop: 6, padding: '5px 8px', background: 'rgba(232,116,43,0.06)', borderRadius: 7, border: '1px dashed rgba(232,116,43,0.28)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
-                      <div style={{ fontSize: 8.5, fontWeight: 600, color: '#4A7A80' }}>Next report . Q2 2026</div>
-                      <div style={{ fontSize: 7.5, color: '#7AAAB2' }}>Due July 1, 2026</div>
+                      <div style={{ fontSize: 8.5, fontWeight: 700, color: '#0B1F3A' }}>Next report · Q2 2026</div>
+                      <div style={{ fontSize: 7.5, color: '#8B5A3D' }}>Due July 1, 2026</div>
                     </div>
-                    <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 6px', borderRadius: 8, background: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A' }}>Upcoming</span>
+                    <span style={{ fontSize: 7.5, fontWeight: 800, padding: '2px 6px', borderRadius: 8, background: 'rgba(232,116,43,0.14)', color: '#C84B26', border: '1px solid rgba(232,116,43,0.30)' }}>Upcoming</span>
                   </div>
                 </div>
               </div>
