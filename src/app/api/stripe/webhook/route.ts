@@ -11,28 +11,17 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+// HARDCODED v6 PRICE_TO_TIER mapping (May 11 2026).
+// Same reason as checkout/route.ts — Vercel env vars repeatedly fail to populate
+// via CLI. Code is the source of truth. To change tiers, edit this object + push.
 const PRICE_TO_TIER: Record<string, { tier: string; calls: number }> = {
-  // v4 active prices — AI Office Manager positioning (May 10 2026)
-  [process.env.STRIPE_PRICE_RECEPTIONIST_MONTHLY || '']: { tier: 'receptionist', calls: 99999 },
-  [process.env.STRIPE_PRICE_RECEPTIONIST_ANNUAL || '']: { tier: 'receptionist', calls: 99999 },
-  [process.env.STRIPE_PRICE_OFFICEMGR_MONTHLY || '']: { tier: 'officemgr', calls: 99999 },
-  [process.env.STRIPE_PRICE_OFFICEMGR_ANNUAL || '']: { tier: 'officemgr', calls: 99999 },
-  [process.env.STRIPE_PRICE_CONCIERGE_MONTHLY || '']: { tier: 'concierge', calls: 99999 },
-  [process.env.STRIPE_PRICE_CONCIERGE_ANNUAL || '']: { tier: 'concierge', calls: 99999 },
-  // v3 prices ($129/$279/$499) — back-compat
-  [process.env.STRIPE_PRICE_FOUNDATION_MONTHLY_V3 || '']: { tier: 'foundation', calls: 99999 },
-  [process.env.STRIPE_PRICE_FOUNDATION_ANNUAL_V3 || '']: { tier: 'foundation', calls: 99999 },
-  [process.env.STRIPE_PRICE_GROWTH_MONTHLY_V3 || '']: { tier: 'growth', calls: 99999 },
-  [process.env.STRIPE_PRICE_GROWTH_ANNUAL_V3 || '']: { tier: 'growth', calls: 99999 },
-  [process.env.STRIPE_PRICE_PREMIUM_MONTHLY_V3 || '']: { tier: 'premium', calls: 99999 },
-  [process.env.STRIPE_PRICE_PREMIUM_ANNUAL_V3 || '']: { tier: 'premium', calls: 99999 },
-  // legacy v1 prices ($147/$297/$597) — back-compat
-  [process.env.STRIPE_PRICE_SOLO_MONTHLY_LEGACY || '']: { tier: 'solo', calls: 150 },
-  [process.env.STRIPE_PRICE_SOLO_ANNUAL_LEGACY || '']: { tier: 'solo', calls: 150 },
-  [process.env.STRIPE_PRICE_SCALE_MONTHLY_LEGACY || '']: { tier: 'scale', calls: 1500 },
-  [process.env.STRIPE_PRICE_SCALE_ANNUAL_LEGACY || '']: { tier: 'scale', calls: 1500 },
-  [process.env.STRIPE_PRICE_MULTILOC_MONTHLY_LEGACY || '']: { tier: 'multiloc', calls: 5000 },
-  [process.env.STRIPE_PRICE_MULTILOC_ANNUAL_LEGACY || '']: { tier: 'multiloc', calls: 5000 },
+  // v6 active (May 2026)
+  'price_1TVLzIGrkP7VQmUjInufjfVe': { tier: 'receptionist', calls: 50 },     // $179/mo
+  'price_1TVLzIGrkP7VQmUjoV1TYYMd': { tier: 'receptionist', calls: 50 },     // $1,790/yr
+  'price_1TVXDFGrkP7VQmUjOVB3qgOh': { tier: 'officemgr', calls: 99999 },     // $497/mo
+  'price_1TVXDFGrkP7VQmUjInUFNEni': { tier: 'officemgr', calls: 99999 },     // $4,970/yr
+  'price_1TVXDGGrkP7VQmUjsBtcKsrE': { tier: 'concierge', calls: 99999 },     // $997/mo
+  'price_1TVXDGGrkP7VQmUjbwIIv7qu': { tier: 'concierge', calls: 99999 },     // $9,970/yr
 }
 
 export async function POST(req: NextRequest) {
@@ -147,6 +136,47 @@ export async function POST(req: NextRequest) {
       }).eq('user_id', profile.user_id)
 
       console.log(`Subscription cancelled for user ${profile.user_id}`)
+    }
+  }
+
+  // ── Payment failure → notify customer, don't suspend yet (Stripe will retry) ──
+  if (event.type === 'invoice.payment_failed') {
+    const invoice = event.data.object as Stripe.Invoice
+    const customerId = invoice.customer as string
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('user_id, owner_phone, business_name, twilio_number, plan_tier')
+      .eq('stripe_customer_id', customerId)
+      .maybeSingle()
+
+    if (profile?.owner_phone) {
+      try {
+        const portalUrl = `https://www.bellavego.com/dashboard/billing`
+        await twilioClient.messages.create({
+          body:
+            `BellAveGo: your card on file was declined for the ${profile.plan_tier || 'subscription'} plan. ` +
+            `Update it before service pauses: ${portalUrl}\n\nQuestions? Text Peter at 773-710-9565.`,
+          from: profile.twilio_number || process.env.TWILIO_PHONE_NUMBER!,
+          to: profile.owner_phone,
+        })
+        console.log(`Payment-failed SMS sent to ${profile.user_id}`)
+      } catch (e) {
+        console.error('Payment-failed SMS error:', e)
+      }
+
+      // Also SMS Peter so he can do white-glove rescue on Concierge customers
+      try {
+        await twilioClient.messages.create({
+          body:
+            `⚠️ Card declined — ${profile.business_name || profile.user_id} (${profile.plan_tier || '?'})\n\n` +
+            `Stripe is retrying. If it ultimately fails the account will suspend.\n\nReach out personally for Concierge customers.`,
+          from: process.env.TWILIO_PHONE_NUMBER!,
+          to: process.env.FALLBACK_OWNER_PHONE!,
+        })
+      } catch (e) {
+        console.error('Payment-failed Peter SMS error:', e)
+      }
     }
   }
 

@@ -35,7 +35,9 @@ type ProfileRow = {
   review_request_enabled: boolean | null
 }
 
-const REVIEW_TIERS = new Set(['growth', 'premium'])
+// v6 tiers that get post-job Review request SMS (Growth/Premium are v3 back-compat).
+// Receptionist tier is too cheap to include this perk — upgrade lever.
+const REVIEW_TIERS = new Set(['officemgr', 'concierge', 'growth', 'premium', 'multiloc'])
 
 export async function GET(req: NextRequest) {
   // Vercel cron sends an Authorization: Bearer ${CRON_SECRET} header automatically

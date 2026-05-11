@@ -137,6 +137,23 @@ export async function POST(req: NextRequest) {
   const services = profile?.services || 'home services'
   const serviceArea = profile?.service_area || 'the local area'
   const aiTone = profile?.ai_tone || 'friendly'
+
+  // ── Account suspension guard ──
+  // Customer had service active (has a provisioned BellAveGo number) but their
+  // subscription is no longer active (Stripe payment failure or cancellation).
+  // Don't burn Claude/Twilio minutes — play a polite "paused" message + hangup.
+  // Demo number is exempt.
+  const profileWithStatus = profile as (typeof profile & { is_active?: boolean; twilio_number?: string }) | null
+  if (!isDemo && profileWithStatus && profileWithStatus.twilio_number && profileWithStatus.is_active === false) {
+    const VR = (await import('twilio')).twiml.VoiceResponse
+    const suspended = new VR()
+    suspended.say(
+      { voice: 'Polly.Joanna-Neural' },
+      `Hi, thanks for calling ${businessName}. Our automated service is temporarily paused. For urgent matters, please reach out directly at ${ownerPhone}. Thanks for your patience.`
+    )
+    suspended.hangup()
+    return new NextResponse(suspended.toString(), { headers: { 'Content-Type': 'text/xml' } })
+  }
   const profileWithLang = profile as (typeof profile & { ai_language?: string }) | null
   const aiLang = (profileWithLang?.ai_language === 'es' ? 'es' : 'en') as 'en' | 'es'
   const voiceName = aiLang === 'es' ? 'Polly.Lupe-Neural' : 'Polly.Joanna-Neural'
