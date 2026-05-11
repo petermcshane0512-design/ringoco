@@ -277,17 +277,29 @@ export default function SetupWizard() {
                     {fwdCode(carrier, profile.twilio_number)}
                   </div>
                   <div style={{ fontSize: 11, color: "rgba(255,255,255,0.85)", marginTop: 8 }}>
-                    On desktop, dial it manually on your business cell. Then tap below.
+                    Tap from your phone &nbsp;·&nbsp; Press call &nbsp;·&nbsp; Hang up
                   </div>
                 </a>
               )}
 
+              {/* What to expect — sets the trust */}
+              <div style={{ marginTop: 14, padding: "12px 14px", background: "#F5FDFB", border: "1px dashed rgba(10,168,159,0.3)", borderRadius: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#0AA89F", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+                  What to expect
+                </div>
+                <ol style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: "#4A7A80", lineHeight: 1.7 }}>
+                  <li>You&apos;ll hear a confirmation tone or short message</li>
+                  <li>Your carrier saves the forwarding rule — calls after 12 sec of no answer route here</li>
+                  <li>We&apos;ll verify in the next step with a live test call</li>
+                </ol>
+              </div>
+
               <button onClick={onDialedForwarding} disabled={busy} style={{ ...primaryButton, marginTop: 16 }}>
-                {busy ? "Saving…" : "I dialed it →"}
+                {busy ? "Saving…" : "Done — let's test it →"}
               </button>
 
               <div style={{ fontSize: 11, color: "#A0BCC2", marginTop: 14, textAlign: "center" }}>
-                Disable later: dial <strong style={{ color: "#4A7A80" }}>{disableCode(carrier)}</strong> from the same phone.
+                To turn off forwarding later, dial <strong style={{ color: "#4A7A80" }}>{disableCode(carrier)}</strong> from the same phone.
               </div>
             </div>
           )}
@@ -392,9 +404,15 @@ export default function SetupWizard() {
 
         </div>
 
-        {/* Footer */}
-        <div style={{ padding: "14px 28px", borderTop: "1px solid rgba(10,168,159,0.1)", background: "#F5FDFB", fontSize: 11, color: "#7AAAB2", textAlign: "center" }}>
-          Stuck? Text Peter directly: <strong style={{ color: "#0AA89F" }}>(773) 710-9565</strong>
+        {/* Footer — sticky help row */}
+        <div style={{ padding: "12px 20px", borderTop: "1px solid rgba(10,168,159,0.1)", background: "linear-gradient(135deg, #0B1F3A, #163356)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>
+            Stuck? Peter answers personally —
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <a href="sms:+17737109565" style={{ padding: "6px 12px", borderRadius: 8, background: "#22C55E", color: "#fff", fontSize: 11, fontWeight: 800, textDecoration: "none" }}>Text</a>
+            <a href="tel:+17737109565" style={{ padding: "6px 12px", borderRadius: 8, background: "rgba(255,255,255,0.12)", color: "#fff", fontSize: 11, fontWeight: 800, textDecoration: "none", border: "1px solid rgba(255,255,255,0.2)" }}>Call</a>
+          </div>
         </div>
       </div>
     </div>

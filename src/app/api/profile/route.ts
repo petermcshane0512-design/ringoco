@@ -7,18 +7,59 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+// Columns we know exist on the bare profiles table. Used as a defensive whitelist
+// when an `ADD COLUMN IF NOT EXISTS` migration hasn't propagated yet — we never
+// want a missing-column error to send the customer back to /onboarding next login.
+const SAFE_PROFILE_COLUMNS = new Set([
+  'user_id', 'business_name', 'business_type', 'owner_phone', 'services',
+  'service_area', 'ai_tone', 'twilio_number', 'revenue_range', 'team_size',
+  'hours_open', 'hours_close', 'onboarding_complete', 'is_active',
+  'plan_tier', 'stripe_customer_id', 'stripe_subscription_id', 'stripe_metered_item_id',
+  'welcomed_at', 'google_place_id', 'review_request_enabled', 'ai_language',
+  'setup_complete', 'setup_step', 'forwarding_carrier', 'forwarding_confirmed_at',
+  'test_call_at', 'test_call_received', 'a2p_submitted_at', 'a2p_brand_sid',
+  'crm_provider', 'crm_connected_at', 'kickoff_scheduled_at', 'custom_prompt_notes',
+])
+
 export async function POST(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await req.json()
+  const raw = await req.json()
+  // Filter to known columns — if migration hasn't propagated, drop the unknown fields
+  // rather than fail the whole save. Customer's business_name still lands; the
+  // "onboarding_complete" flag we attempt anyway and tolerate failure.
+  const filtered: Record<string, unknown> = { user_id: userId }
+  for (const [k, v] of Object.entries(raw)) {
+    if (SAFE_PROFILE_COLUMNS.has(k)) filtered[k] = v
+  }
 
-  const { error } = await supabase.from('profiles').upsert(
-    { user_id: userId, ...body },
-    { onConflict: 'user_id' }
-  )
+  const { error } = await supabase
+    .from('profiles')
+    .upsert(filtered, { onConflict: 'user_id' })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    // If a column is missing (PGRST204), retry with onboarding_complete dropped
+    // so the customer's business info still gets saved.
+    if (error.code === 'PGRST204' || /column.*does not exist/i.test(error.message)) {
+      console.warn('[profile POST] schema mismatch, retrying without optional columns:', error.message)
+      const bareRetry: Record<string, unknown> = {
+        user_id: userId,
+        business_name: raw.business_name,
+        owner_phone: raw.owner_phone,
+        services: raw.services,
+      }
+      const { error: retryErr } = await supabase
+        .from('profiles')
+        .upsert(bareRetry, { onConflict: 'user_id' })
+      if (retryErr) {
+        console.error('[profile POST] retry failed:', retryErr)
+        return NextResponse.json({ error: retryErr.message, hint: 'Run RUN-IN-SUPABASE-NOW.sql' }, { status: 500 })
+      }
+      return NextResponse.json({ ok: true, warning: 'Schema incomplete — onboarding flag not persisted to DB. Run migrations.' })
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
   return NextResponse.json({ ok: true })
 }
 

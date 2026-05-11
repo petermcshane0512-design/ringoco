@@ -59,8 +59,16 @@ export default function DashboardPage() {
     const profileRes = await fetch("/api/profile").then((r) => r.json()).catch(() => null);
     const p = profileRes && !profileRes.error ? profileRes : null;
     setProfile(p);
-    // Send fresh signups (no profile yet, or onboarding not complete) to /onboarding
-    if (!p || !p.onboarding_complete) {
+
+    // Defensive onboarding check — TRIPLE-redundant so a missing column or stale
+    // Clerk metadata never sends an already-onboarded user back to the form:
+    //   1. If profile has a business_name set → they did the form, treat as done
+    //   2. If profile.onboarding_complete === true → done
+    //   3. If neither, send to /onboarding
+    const hasBusinessInfo = !!p?.business_name && p.business_name.trim().length > 0;
+    const onboardingDone = !!(p?.onboarding_complete || hasBusinessInfo);
+
+    if (!p || !onboardingDone) {
       router.replace("/onboarding");
       return;
     }
