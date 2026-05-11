@@ -18,7 +18,7 @@ const REPORTS = [
 
 export default function DashboardPreview({ compact = false }: { compact?: boolean } = {}) {
   const { isSignedIn } = useAuth()
-  const [activeTab, setActiveTab] = useState('Invoicing')
+  const [activeTab, setActiveTab] = useState('Command Center')
   const [hoveredNav, setHoveredNav] = useState<string | null>(null)
   const [stats, setStats] = useState({ calls: 3, jobs: 2, revenue: 12500, saved: 24 })
   const [bumped, setBumped] = useState<string | null>(null)
