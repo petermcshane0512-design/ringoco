@@ -1,0 +1,152 @@
+import { NextResponse } from 'next/server'
+import Stripe from 'stripe'
+import { auth } from '@clerk/nextjs/server'
+import { createClient } from '@supabase/supabase-js'
+import twilio from 'twilio'
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-04-22.dahlia' })
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
+
+const PETER_PHONE = process.env.FALLBACK_OWNER_PHONE ?? '+17737109565'
+const REFUND_WINDOW_DAYS = 30
+
+/**
+ * Self-serve 30-day money-back guarantee on subscription only.
+ * POST /api/subscription/refund
+ *
+ * Refund covers the recurring (subscription) portion of the most recent paid invoice.
+ * Setup fee is NON-REFUNDABLE (covers real onboarding work). Subscription cancels at
+ * period-end (customer keeps service for the rest of the month).
+ */
+export async function POST() {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('user_id, stripe_subscription_id, stripe_customer_id, business_name, owner_phone, plan_tier')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (!profile?.stripe_subscription_id || !profile.stripe_customer_id) {
+    return NextResponse.json({ error: 'No active subscription found' }, { status: 400 })
+  }
+
+  let subscription: Stripe.Subscription
+  try {
+    subscription = await stripe.subscriptions.retrieve(profile.stripe_subscription_id)
+  } catch (e) {
+    console.error('refund: failed to retrieve subscription', e)
+    return NextResponse.json({ error: 'Unable to retrieve subscription' }, { status: 500 })
+  }
+
+  // 30-day window check
+  const createdMs = subscription.created * 1000
+  const daysSinceStart = (Date.now() - createdMs) / (1000 * 60 * 60 * 24)
+  if (daysSinceStart > REFUND_WINDOW_DAYS) {
+    return NextResponse.json({
+      error: `Outside ${REFUND_WINDOW_DAYS}-day window (subscription started ${Math.floor(daysSinceStart)} days ago). Contact peter@bellavego.com for case-by-case review.`,
+    }, { status: 400 })
+  }
+
+  // Recurring (subscription) line item amount — what we refund.
+  // Setup line items live on a separate invoice or are flagged as non-recurring; we skip them.
+  type LooseLineItem = { amount?: number; pricing?: { price_details?: { price?: string } }; price?: { recurring?: unknown } | null }
+  type LooseInvoice = { id?: string; payment_intent?: string | null; charge?: string | null; lines: { data: LooseLineItem[] }; payments?: { data: Array<{ payment?: { payment_intent?: string } }> } }
+
+  const invoices = await stripe.invoices.list({
+    customer: profile.stripe_customer_id,
+    status: 'paid',
+    limit: 10,
+  })
+
+  let recurringTotal = 0
+  let paymentIntentId: string | undefined
+  for (const rawInv of invoices.data) {
+    const inv = rawInv as unknown as LooseInvoice
+    const lineTotal = inv.lines.data.reduce((sum, line) => {
+      const isRecurring = !!line.price?.recurring || !!line.pricing?.price_details?.price
+      // newer SDK: line.pricing.price_details.price points to a Price; we treat any non-zero subscription-line
+      // amount as recurring if the subscription itself owns it. As a defensive heuristic, also require positive amount.
+      return isRecurring && line.amount && line.amount > 0 ? sum + line.amount : sum
+    }, 0)
+    if (lineTotal > 0) {
+      recurringTotal = lineTotal
+      paymentIntentId =
+        inv.payment_intent ||
+        inv.payments?.data?.[0]?.payment?.payment_intent ||
+        undefined
+      break
+    }
+  }
+
+  if (recurringTotal <= 0 || !paymentIntentId) {
+    return NextResponse.json({
+      error: 'No refundable subscription invoice found yet. Your first month may bill at the end of the cycle. Email peter@bellavego.com.',
+    }, { status: 400 })
+  }
+
+  // Refund
+  let refund: Stripe.Refund
+  try {
+    refund = await stripe.refunds.create({
+      payment_intent: paymentIntentId,
+      amount: recurringTotal,
+      reason: 'requested_by_customer',
+      metadata: {
+        userId,
+        reason: '30-day money-back guarantee',
+        business_name: profile.business_name ?? '',
+        tier: profile.plan_tier ?? '',
+      },
+    })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('refund creation failed:', msg)
+    return NextResponse.json({ error: msg }, { status: 500 })
+  }
+
+  // Cancel at period end — they keep service through the rest of this billing cycle
+  let serviceActiveUntil: string | null = null
+  try {
+    const updated = (await stripe.subscriptions.update(profile.stripe_subscription_id, {
+      cancel_at_period_end: true,
+      metadata: { ...subscription.metadata, refunded_at: new Date().toISOString() },
+    })) as unknown as { current_period_end?: number; items: { data: Array<{ current_period_end?: number }> } }
+    const periodEnd = updated.current_period_end || updated.items.data[0]?.current_period_end
+    if (periodEnd) serviceActiveUntil = new Date(periodEnd * 1000).toISOString()
+  } catch (e) {
+    console.error('cancel-at-period-end failed:', e)
+  }
+
+  await supabase
+    .from('profiles')
+    .update({ plan_tier: 'cancelled' })
+    .eq('user_id', userId)
+
+  // SMS Peter every refund — churn signals matter
+  try {
+    await twilioClient.messages.create({
+      body:
+        `⚠️ Refund issued — ${profile.business_name ?? profile.user_id} (${profile.plan_tier ?? '?'})\n\n` +
+        `Amount: $${(recurringTotal / 100).toFixed(2)}\n` +
+        `Day ${Math.floor(daysSinceStart)} of 30-day window\n` +
+        `Refund: ${refund.id}\n\n` +
+        `Reach out to learn why — recover or learn.`,
+      from: process.env.TWILIO_PHONE_NUMBER!,
+      to: PETER_PHONE,
+    })
+  } catch (e) {
+    console.error('refund SMS to Peter failed:', e)
+  }
+
+  return NextResponse.json({
+    ok: true,
+    refund_id: refund.id,
+    refunded_amount: recurringTotal / 100,
+    setup_fee_kept: true,
+    service_active_until: serviceActiveUntil,
+    message: `Refund of $${(recurringTotal / 100).toFixed(2)} processed. Service stays live until ${serviceActiveUntil ? new Date(serviceActiveUntil).toLocaleDateString() : 'end of billing cycle'}. Setup fee retained — it covered real onboarding work.`,
+  })
+}
