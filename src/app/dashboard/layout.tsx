@@ -19,17 +19,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: "'Inter', system-ui, sans-serif", background: 'linear-gradient(145deg, #F5FCFA 0%, #EBF7F3 50%, #F0FAF7 100%)' }}>
 
       {/* ── SIDEBAR ── */}
-      <aside style={{ width: 220, background: '#ffffff', borderRight: '1px solid rgba(10,168,159,0.14)', display: 'flex', flexDirection: 'column', padding: '20px 14px', flexShrink: 0, boxShadow: '2px 0 16px rgba(10,168,159,0.06)' }}>
+      <aside style={{ width: 260, background: '#ffffff', borderRight: '1px solid rgba(10,168,159,0.14)', display: 'flex', flexDirection: 'column', padding: '20px 14px', flexShrink: 0, boxShadow: '2px 0 16px rgba(10,168,159,0.06)' }}>
 
         {/* Logo */}
-        <div style={{ padding: '10px 0 20px', borderBottom: '1px solid rgba(10,168,159,0.12)', marginBottom: 18 }}>
+        <div style={{ padding: '6px 4px 22px', borderBottom: '1px solid rgba(10,168,159,0.12)', marginBottom: 22 }}>
           <Link href="/" style={{ display: 'block', textDecoration: 'none' }}>
             <Image
               src="/logo.png"
               alt="BellAveGo"
-              width={320}
-              height={104}
-              style={{ objectFit: 'contain', width: '100%', height: 'auto', filter: 'brightness(1.05) drop-shadow(0 2px 10px rgba(10,168,159,0.28))' }}
+              width={665}
+              height={210}
+              style={{ objectFit: 'contain', width: '100%', height: 'auto', filter: 'brightness(1.05) drop-shadow(0 4px 14px rgba(10,168,159,0.34))' }}
+              priority
             />
           </Link>
         </div>

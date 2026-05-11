@@ -157,11 +157,11 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
 
         <div style={{ display: 'flex', minHeight: 488 }}>
           {/* -- Sidebar -- */}
-          <aside style={{ width: 158, flexShrink: 0, background: '#ffffff', borderRight: '1px solid rgba(10,168,159,0.14)', display: 'flex', flexDirection: 'column', padding: '13px 10px' }}>
+          <aside style={{ width: 178, flexShrink: 0, background: '#ffffff', borderRight: '1px solid rgba(10,168,159,0.14)', display: 'flex', flexDirection: 'column', padding: '13px 10px' }}>
             {/* Logo */}
-            <div style={{ padding: '2px 4px 10px', borderBottom: '1px solid rgba(10,168,159,0.1)', marginBottom: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-              <Image src="/logo.png" alt="BellAveGo" width={665} height={210} style={{ height: 22, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 1px 4px rgba(10,168,159,0.22))' }} />
-              <div style={{ fontSize: 7.5, color: '#7AAAB2' }}>Mike&apos;s HVAC Co.</div>
+            <div style={{ padding: '2px 4px 12px', borderBottom: '1px solid rgba(10,168,159,0.1)', marginBottom: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <Image src="/logo.png" alt="BellAveGo" width={665} height={210} style={{ height: 38, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(10,168,159,0.32))' }} />
+              <div style={{ fontSize: 8, color: '#7AAAB2' }}>Mike&apos;s HVAC Co.</div>
             </div>
 
             <div style={{ fontSize: 7.5, fontWeight: 700, color: '#7AAAB2', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0 5px', marginBottom: 4 }}>Workspace</div>
