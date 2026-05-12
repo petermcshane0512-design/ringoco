@@ -6,7 +6,6 @@ import { useAuth, SignOutButton } from '@clerk/nextjs'
 import DashboardPreview from '@/components/DashboardPreview'
 import ConsultingShowcase from '@/components/ConsultingShowcase'
 import HeroPhone from '@/components/HeroPhone'
-import SetupSteps from '@/components/SetupSteps'
 import RoiCalculator from '@/components/RoiCalculator'
 import FounderSection from '@/components/FounderSection'
 import StickyDemoCta from '@/components/StickyDemoCta'
@@ -549,14 +548,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SETUP STEPS — "Live in 12 minutes" */}
-      <SetupSteps />
+      {/* CONSULTING PREVIEW */}
+      <ConsultingShowcase />
 
       {/* ROI CALCULATOR — interactive money-on-the-table preview */}
       <RoiCalculator />
-
-      {/* CONSULTING PREVIEW */}
-      <ConsultingShowcase />
 
       {/* FOUNDER SECTION — story + video placeholder */}
       <FounderSection />
