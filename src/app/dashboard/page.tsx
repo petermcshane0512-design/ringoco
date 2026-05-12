@@ -3,7 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { createClient } from "@supabase/supabase-js";
+
+const ADMIN_EMAILS = new Set(["pmcshane@fordham.edu", "peter@bellavego.com"]);
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -51,7 +54,27 @@ export default function DashboardPage() {
   const [provisionLoading, setProvisionLoading] = useState(false);
   const [tier, setTier] = useState<"receptionist" | "officemgr" | "concierge">("officemgr");
   const [interval, setInterval] = useState<"monthly" | "annual">("annual");
+  const [adminSwitching, setAdminSwitching] = useState<string | null>(null);
   const router = useRouter();
+  const { user } = useUser();
+  const isAdmin = !!user?.primaryEmailAddress?.emailAddress &&
+    ADMIN_EMAILS.has(user.primaryEmailAddress.emailAddress.toLowerCase());
+
+  async function adminSwitchTier(target: "receptionist" | "officemgr" | "concierge") {
+    setAdminSwitching(target);
+    const res = await fetch("/api/admin/grant-tier", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tier: target }),
+    });
+    setAdminSwitching(null);
+    if (res.ok) {
+      await fetchAll();
+    } else {
+      const j = await res.json().catch(() => ({}));
+      alert(`Switch failed: ${j.error || res.statusText}`);
+    }
+  }
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -224,6 +247,78 @@ export default function DashboardPage() {
           <div style={{ fontSize: 13, color: "#7AAAB2", marginTop: 3 }}>Live job requests, schedule, and business overview</div>
         </div>
       </div>
+
+      {/* Admin tier-switcher — Peter only */}
+      {isAdmin && (
+        <div style={{
+          marginBottom: 22,
+          padding: "14px 18px",
+          background: "linear-gradient(135deg, #0B1F3A 0%, #1E3A5F 100%)",
+          borderRadius: 14,
+          color: "#fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 14,
+          flexWrap: "wrap",
+        }}>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#7AAAB2", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 3 }}>
+              Admin · You are signed in as {user?.primaryEmailAddress?.emailAddress}
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 700 }}>
+              Currently on: <span style={{ color: "#22C55E" }}>{profile?.plan_tier || "—"}</span>
+              <span style={{ fontWeight: 400, color: "#7AAAB2", marginLeft: 8 }}>
+                · is_active: {String(profile?.is_active ?? false)}
+              </span>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <span style={{ fontSize: 11, color: "#7AAAB2", marginRight: 4 }}>Switch tier:</span>
+            {(["receptionist", "officemgr", "concierge"] as const).map(t => {
+              const isCurrent = profile?.plan_tier === t;
+              const label = t === "receptionist" ? "Front Desk" : t === "officemgr" ? "Office Mgr" : "Concierge";
+              return (
+                <button
+                  key={t}
+                  onClick={() => adminSwitchTier(t)}
+                  disabled={adminSwitching !== null || isCurrent}
+                  style={{
+                    padding: "7px 14px",
+                    borderRadius: 8,
+                    border: isCurrent ? "1px solid #22C55E" : "1px solid rgba(255,255,255,0.2)",
+                    background: isCurrent ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.06)",
+                    color: isCurrent ? "#22C55E" : "#fff",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: isCurrent || adminSwitching ? "default" : "pointer",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  {adminSwitching === t ? "..." : label}
+                  {isCurrent && " ✓"}
+                </button>
+              );
+            })}
+            <Link
+              href="/admin/customers"
+              style={{
+                padding: "7px 14px",
+                borderRadius: 8,
+                border: "1px solid rgba(255,255,255,0.2)",
+                background: "rgba(255,255,255,0.06)",
+                color: "#fff",
+                fontSize: 12,
+                fontWeight: 700,
+                textDecoration: "none",
+                marginLeft: 4,
+              }}
+            >
+              Customers →
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Activation banner */}
       {profile && !profile.is_active && (() => {

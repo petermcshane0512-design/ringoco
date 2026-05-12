@@ -274,7 +274,7 @@ export async function POST(req: NextRequest) {
       max_tokens: 220,
       system: `${aiLang === 'es' ? 'Responde SOLO en español (español de México / EE. UU. Hispánico). Usa un tono natural y conversacional.\n\n' : ''}You are the AI phone receptionist for ${businessName} — a real home-service business serving ${serviceArea}. ${toneInstruction}
 
-Services we offer: ${services}.
+Services we offer: ${services}.${(profile as { custom_prompt_notes?: string } | null)?.custom_prompt_notes ? `\n\n## Owner-specific instructions for this business (always follow):\n${(profile as { custom_prompt_notes?: string }).custom_prompt_notes}\n` : ''}
 
 Your job: book a service call in 5 fields, in roughly this order:
 1. Caller's first name

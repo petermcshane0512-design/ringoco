@@ -35,6 +35,8 @@ yarn-error.log*
 
 # vercel
 .vercel
+.vercel-env-check
+.stripe-prices.json
 
 # typescript
 *.tsbuildinfo
