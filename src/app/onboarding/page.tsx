@@ -11,6 +11,19 @@ const BUSINESS_TYPES = [
   'Pool & Spa', 'Pest Control', 'Other',
 ]
 
+// Common trades the AI can confirm to callers ("Sounds like an HVAC issue").
+// Customers tick the ones they actually do — the AI mentions only these.
+const TRADE_OPTIONS = [
+  'AC repair', 'AC install', 'Heating / furnace', 'Water heater',
+  'Drain cleaning', 'Sewer / main line', 'Toilet / faucet',
+  'Electrical repair', 'Panel upgrade', 'Lighting / fixtures',
+  'Roofing repair', 'Roof replacement', 'Gutters',
+  'Appliance repair', 'Garage doors', 'Locksmith',
+  'House cleaning', 'Carpet / upholstery', 'Pressure washing',
+  'Landscaping / mowing', 'Tree service', 'Snow removal',
+  'Pest control', 'Pool / spa service', 'Handyman / odd jobs',
+]
+
 const REVENUE_OPTIONS = [
   { label: 'Under $100k', value: 'under_100k' },
   { label: '$100k – $500k', value: '100k_500k' },
@@ -32,13 +45,25 @@ const SERVICE_OPTIONS = [
   'Google review requests', 'Follow-up reminders',
 ]
 
+const TONE_OPTIONS = [
+  { label: 'Friendly', value: 'friendly', desc: 'Warm, conversational — like a small-town receptionist.' },
+  { label: 'Professional', value: 'professional', desc: 'Polished and formal — for higher-end clientele.' },
+  { label: 'Concise', value: 'concise', desc: 'Brief and direct — no small talk, just get the booking done.' },
+]
+
+const LANGUAGE_OPTIONS = [
+  { label: 'English only', value: 'en' },
+  { label: 'Spanish (Español)', value: 'es' },
+]
+
 const HOURS_OPTIONS = ['6:00 AM','7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM',
   '1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM','7:00 PM','8:00 PM','9:00 PM']
 
 const STEPS = [
   { id: 1, label: 'Your Business', icon: '🏢' },
-  { id: 2, label: 'About You',    icon: '📊' },
-  { id: 3, label: 'Your Services',icon: '⚙️' },
+  { id: 2, label: 'Your Trades',   icon: '🔧' },
+  { id: 3, label: 'AI Voice',      icon: '🎙️' },
+  { id: 4, label: 'Features',      icon: '⚙️' },
 ]
 
 const slideVariants = {
@@ -50,7 +75,12 @@ const slideVariants = {
 type FormData = {
   businessName: string
   businessType: string
+  ownerFirstName: string
   phone: string
+  serviceArea: string
+  trades: string[]
+  aiTone: 'friendly' | 'professional' | 'concise'
+  aiLanguage: 'en' | 'es'
   revenueRange: string
   teamSize: string
   services: string[]
@@ -70,7 +100,12 @@ export default function OnboardingPage() {
   const [form, setForm] = useState<FormData>({
     businessName: '',
     businessType: '',
+    ownerFirstName: '',
     phone: '',
+    serviceArea: '',
+    trades: [],
+    aiTone: 'friendly',
+    aiLanguage: 'en',
     revenueRange: '',
     teamSize: '',
     services: [],
@@ -89,10 +124,18 @@ export default function OnboardingPage() {
     }))
   }
 
+  function toggleTrade(t: string) {
+    setForm(f => ({
+      ...f,
+      trades: f.trades.includes(t) ? f.trades.filter(x => x !== t) : [...f.trades, t],
+    }))
+  }
+
   function canContinue() {
-    if (step === 1) return form.businessName.trim() && form.businessType && form.phone.trim()
-    if (step === 2) return form.revenueRange && form.teamSize
-    if (step === 3) return form.services.length > 0
+    if (step === 1) return form.businessName.trim() && form.businessType && form.phone.trim() && form.ownerFirstName.trim() && form.serviceArea.trim()
+    if (step === 2) return form.trades.length > 0
+    if (step === 3) return !!form.aiTone && !!form.aiLanguage && form.revenueRange && form.teamSize
+    if (step === 4) return form.services.length > 0
     return true
   }
 
@@ -117,7 +160,12 @@ export default function OnboardingPage() {
         body: JSON.stringify({
           business_name: form.businessName,
           business_type: form.businessType,
+          owner_first_name: form.ownerFirstName,
           owner_phone: form.phone,
+          service_area: form.serviceArea,
+          services_offered: form.trades.join(', '),
+          ai_tone: form.aiTone,
+          ai_language: form.aiLanguage,
           revenue_range: form.revenueRange,
           team_size: form.teamSize,
           services: form.services.join(', '),
@@ -127,7 +175,8 @@ export default function OnboardingPage() {
         }),
       })
       await user?.update({ unsafeMetadata: { onboardingComplete: true } })
-      // Fire diagnostic in background — don't block redirect
+      // Fire-and-forget — these enrich the profile but never block the user
+      fetch('/api/onboarding/resolve-place', { method: 'POST' }).catch(() => {})
       fetch('/api/diagnostics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -312,50 +361,130 @@ export default function OnboardingPage() {
               </motion.div>
             )}
 
-            {/* ── STEP 1: Business basics ── */}
+            {/* ── STEP 1: Business basics + owner + service area ── */}
             {!done && step === 1 && (
               <motion.div key="step1" custom={dir} variants={slideVariants} initial="enter" animate="center" exit="exit"
                 transition={{ duration: 0.3, ease: 'easeOut' }}>
                 <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.02em', marginBottom: 6 }}>
                   Tell us about your business
                 </h2>
-                <p style={{ fontSize: 13, color: '#7AAAB2', marginBottom: 24 }}>We&apos;ll use this to personalize your AI receptionist.</p>
+                <p style={{ fontSize: 13, color: '#7AAAB2', marginBottom: 22 }}>We&apos;ll use this to personalize your AI receptionist.</p>
 
-                <div style={{ marginBottom: 18 }}>
+                <div style={{ marginBottom: 14 }}>
                   <label style={labelStyle}>Business name</label>
                   <input style={inputStyle} placeholder="e.g. Smith HVAC & Plumbing" value={form.businessName}
                     onChange={e => set('businessName', e.target.value)} />
                 </div>
 
-                <div style={{ marginBottom: 18 }}>
-                  <label style={labelStyle}>Business type</label>
-                  <select style={selectStyle} value={form.businessType} onChange={e => set('businessType', e.target.value)}>
-                    <option value="">Select your industry…</option>
-                    {BUSINESS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+                  <div>
+                    <label style={labelStyle}>Business type</label>
+                    <select style={selectStyle} value={form.businessType} onChange={e => set('businessType', e.target.value)}>
+                      <option value="">Select…</option>
+                      {BUSINESS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Your first name</label>
+                    <input style={inputStyle} placeholder="Mike" value={form.ownerFirstName}
+                      onChange={e => set('ownerFirstName', e.target.value)} />
+                  </div>
                 </div>
 
-                <div style={{ marginBottom: 8 }}>
+                <div style={{ marginBottom: 14 }}>
                   <label style={labelStyle}>Business phone number</label>
                   <input style={inputStyle} placeholder="(555) 000-0000" type="tel" value={form.phone}
                     onChange={e => set('phone', e.target.value)} />
                   <p style={{ fontSize: 11, color: '#A0BCC2', marginTop: 5 }}>
-                    This is the number BellAveGo will answer calls for. You can keep your existing number.
+                    The cell your missed calls forward from. You keep your existing number.
+                  </p>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Service area</label>
+                  <input style={inputStyle} placeholder="e.g. metro Atlanta · or Minneapolis–St. Paul" value={form.serviceArea}
+                    onChange={e => set('serviceArea', e.target.value)} />
+                  <p style={{ fontSize: 11, color: '#A0BCC2', marginTop: 5 }}>
+                    The AI will tell callers &quot;we serve {form.serviceArea || 'your area'}.&quot;
                   </p>
                 </div>
               </motion.div>
             )}
 
-            {/* ── STEP 2: Revenue & team ── */}
+            {/* ── STEP 2: Trades — what the AI will confirm to callers ── */}
             {!done && step === 2 && (
               <motion.div key="step2" custom={dir} variants={slideVariants} initial="enter" animate="center" exit="exit"
                 transition={{ duration: 0.3, ease: 'easeOut' }}>
                 <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.02em', marginBottom: 6 }}>
-                  About your business
+                  What services do you offer?
                 </h2>
-                <p style={{ fontSize: 13, color: '#7AAAB2', marginBottom: 24 }}>Helps us tailor your consulting reports and dashboard.</p>
+                <p style={{ fontSize: 13, color: '#7AAAB2', marginBottom: 18 }}>
+                  Pick all that apply. Your AI will only confirm jobs in these categories (&quot;Sounds like an HVAC issue&quot;) and politely route anything else.
+                </p>
 
-                <div style={{ marginBottom: 22 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                  {TRADE_OPTIONS.map(t => {
+                    const active = form.trades.includes(t)
+                    return (
+                      <button key={t} onClick={() => toggleTrade(t)} style={{
+                        padding: '8px 13px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                        border: `1.5px solid ${active ? '#0AA89F' : 'rgba(10,168,159,0.2)'}`,
+                        background: active ? 'rgba(10,168,159,0.1)' : '#F5FDFB',
+                        color: active ? '#0AA89F' : '#4A7A80',
+                        transition: 'all 0.15s ease',
+                      }}>{active ? '✓ ' : ''}{t}</button>
+                    )
+                  })}
+                </div>
+                <p style={{ fontSize: 11, color: '#A0BCC2' }}>
+                  Don&apos;t see one? You can add custom AI instructions from Dashboard → Settings after activation.
+                </p>
+              </motion.div>
+            )}
+
+            {/* ── STEP 3: AI voice + business shape ── */}
+            {!done && step === 3 && (
+              <motion.div key="step3" custom={dir} variants={slideVariants} initial="enter" animate="center" exit="exit"
+                transition={{ duration: 0.3, ease: 'easeOut' }}>
+                <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.02em', marginBottom: 6 }}>
+                  How should your AI sound?
+                </h2>
+                <p style={{ fontSize: 13, color: '#7AAAB2', marginBottom: 18 }}>
+                  This sets the receptionist&apos;s tone and language. You can tweak both later from settings.
+                </p>
+
+                <div style={{ marginBottom: 18 }}>
+                  <label style={labelStyle}>Tone</label>
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    {TONE_OPTIONS.map(o => {
+                      const active = form.aiTone === o.value
+                      return (
+                        <button key={o.value} onClick={() => set('aiTone', o.value as FormData['aiTone'])} style={{
+                          textAlign: 'left', padding: '10px 14px', borderRadius: 10,
+                          border: `1.5px solid ${active ? '#0AA89F' : 'rgba(10,168,159,0.18)'}`,
+                          background: active ? 'rgba(10,168,159,0.08)' : '#F5FDFB',
+                          cursor: 'pointer', fontFamily: 'inherit',
+                        }}>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: active ? '#0AA89F' : '#0B1F3A' }}>
+                            {active ? '✓ ' : ''}{o.label}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#7AAAB2', marginTop: 2 }}>{o.desc}</div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 18 }}>
+                  <label style={labelStyle}>Language</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {LANGUAGE_OPTIONS.map(o => (
+                      <PillButton key={o.value} label={o.label} value={o.value} current={form.aiLanguage} onClick={() => set('aiLanguage', o.value as FormData['aiLanguage'])} />
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 14 }}>
                   <label style={labelStyle}>Annual revenue range</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                     {REVENUE_OPTIONS.map(o => (
@@ -364,7 +493,7 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                <div style={{ marginBottom: 22 }}>
+                <div style={{ marginBottom: 14 }}>
                   <label style={labelStyle}>Team size</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                     {TEAM_OPTIONS.map(o => (
@@ -393,9 +522,9 @@ export default function OnboardingPage() {
               </motion.div>
             )}
 
-            {/* ── STEP 3: Services ── */}
-            {!done && step === 3 && (
-              <motion.div key="step3" custom={dir} variants={slideVariants} initial="enter" animate="center" exit="exit"
+            {/* ── STEP 4: Features ── */}
+            {!done && step === 4 && (
+              <motion.div key="step4" custom={dir} variants={slideVariants} initial="enter" animate="center" exit="exit"
                 transition={{ duration: 0.3, ease: 'easeOut' }}>
                 <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.02em', marginBottom: 6 }}>
                   What do you want BellAveGo to handle?

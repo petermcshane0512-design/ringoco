@@ -1,5 +1,6 @@
 import twilio from 'twilio'
 import { createClient } from '@supabase/supabase-js'
+import { attachNumberToMessagingService, A2P_MESSAGING_SERVICE_SID } from './a2p'
 
 const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID!,
@@ -82,9 +83,26 @@ export async function provisionNumberForUser(userId: string): Promise<ProvisionR
     return { ok: false, error: `purchase failed: ${(e as Error).message}` }
   }
 
+  const update: Record<string, string | boolean> = {
+    twilio_number: purchased.phoneNumber,
+    is_active: true,
+  }
+
+  // Attach to A2P 10DLC messaging service if configured. Non-fatal if it fails —
+  // the number still works for voice + falls back to unregistered SMS.
+  if (A2P_MESSAGING_SERVICE_SID) {
+    const attach = await attachNumberToMessagingService(purchased.sid)
+    if (attach.ok) {
+      update.a2p_messaging_service_sid = A2P_MESSAGING_SERVICE_SID
+      update.a2p_brand_status = 'approved'
+    } else {
+      console.warn(`A2P attach failed for ${purchased.phoneNumber}: ${attach.error}`)
+    }
+  }
+
   const { error: uErr } = await supabase
     .from('profiles')
-    .update({ twilio_number: purchased.phoneNumber, is_active: true })
+    .update(update)
     .eq('user_id', userId)
 
   if (uErr) {

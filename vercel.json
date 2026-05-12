@@ -11,6 +11,14 @@
     {
       "path": "/api/crons/office-manager-daily",
       "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/crons/consulting-reports",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/crons/lifecycle",
+      "schedule": "0 16 * * *"
     }
   ]
 }

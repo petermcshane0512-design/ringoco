@@ -320,6 +320,48 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Pre-activation hero — only shows when no subscription is live.
+          Promotes the banner below from a notice to a hard wall: nothing
+          beneath it renders until they activate. */}
+      {profile && !profile.is_active && (
+        <div style={{
+          marginBottom: 18,
+          padding: "26px 28px",
+          background: "linear-gradient(135deg, #0B1F3A 0%, #163356 100%)",
+          borderRadius: 18,
+          color: "#fff",
+          display: "flex",
+          alignItems: "center",
+          gap: 22,
+          boxShadow: "0 12px 36px rgba(11,31,58,0.24)",
+          flexWrap: "wrap",
+        }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: 16,
+            background: "rgba(239,68,68,0.18)",
+            border: "1px solid rgba(239,68,68,0.4)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
+          }}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FCA5A5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              <line x1="2" y1="2" x2="22" y2="22" stroke="#FCA5A5" strokeWidth="2.4"/>
+            </svg>
+          </div>
+          <div style={{ flex: 1, minWidth: 260 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, color: "#FCA5A5", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 4 }}>
+              AI receptionist is offline
+            </div>
+            <div style={{ fontSize: 20, fontWeight: 900, letterSpacing: "-0.4px", lineHeight: 1.2, marginBottom: 6 }}>
+              Pick a plan to activate your number and start answering missed calls
+            </div>
+            <div style={{ fontSize: 13, color: "#94B6BD", lineHeight: 1.55 }}>
+              Your dashboard is waiting on activation. The moment you pick a plan we auto-buy a local Twilio number, point it at the AI, and text you setup instructions — usually in under 30 seconds.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Activation banner */}
       {profile && !profile.is_active && (() => {
         const TIERS = {
@@ -396,6 +438,9 @@ export default function DashboardPage() {
           </button>
         </div>
       )}
+
+      {/* Everything below this gate is hidden until subscription is active. */}
+      {profile?.is_active && <>
 
       {/* Metric cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 24 }}>
@@ -704,6 +749,8 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      </>}
     </div>
   );
 }

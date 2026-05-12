@@ -19,6 +19,11 @@ const SAFE_PROFILE_COLUMNS = new Set([
   'setup_complete', 'setup_step', 'forwarding_carrier', 'forwarding_confirmed_at',
   'test_call_at', 'test_call_received', 'a2p_submitted_at', 'a2p_brand_sid',
   'crm_provider', 'crm_connected_at', 'kickoff_scheduled_at', 'custom_prompt_notes',
+  // ── added in migration 009 ────────────────────────────────────────
+  'owner_first_name', 'services_offered', 'zip_code', 'business_address',
+  'timezone', 'welcome_report_at', 'last_consulting_report_at',
+  'verification_nudged_at', 'a2p_brand_status', 'a2p_campaign_sid',
+  'a2p_messaging_service_sid',
 ])
 
 export async function POST(req: NextRequest) {
