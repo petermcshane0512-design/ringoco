@@ -1,7 +1,7 @@
-import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
+import { effectiveAuth } from "@/lib/effectiveAuth";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,7 +34,7 @@ export default async function ReportViewerPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { userId } = await auth();
+  const { userId } = await effectiveAuth();
   if (!userId) redirect(`/sign-in?redirect_url=/dashboard/reports/${id}`);
 
   const { data } = await supabase

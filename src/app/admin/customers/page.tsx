@@ -47,8 +47,31 @@ export default function AdminCustomersPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive' | 'stalled'>('all')
+  const [impersonatingId, setImpersonatingId] = useState<string | null>(null)
 
   useEffect(() => { load() }, [])
+
+  async function viewAs(userId: string) {
+    if (impersonatingId) return
+    setImpersonatingId(userId)
+    try {
+      const res = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      })
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        alert(`Could not impersonate: ${j.error ?? 'unknown'}`)
+        setImpersonatingId(null)
+        return
+      }
+      window.location.assign('/dashboard')
+    } catch (e) {
+      alert(`Impersonate request failed: ${e instanceof Error ? e.message : String(e)}`)
+      setImpersonatingId(null)
+    }
+  }
 
   async function load() {
     setLoading(true)
@@ -168,9 +191,25 @@ export default function AdminCustomersPage() {
               ) : filtered.map(c => {
                 const color = TIER_COLOR[c.plan_tier] || { bg: 'rgba(10,168,159,0.06)', fg: '#4A7A80', bd: 'rgba(10,168,159,0.2)' }
                 const stalled = c.is_active && !c.setup_complete
+                const loadingThisRow = impersonatingId === c.user_id
                 return (
-                  <tr key={c.user_id} style={{ borderBottom: '1px solid rgba(10,168,159,0.07)' }}>
-                    <td style={{ padding: '12px 14px', fontWeight: 600, color: '#0B1F3A' }}>{c.business_name || '—'}</td>
+                  <tr
+                    key={c.user_id}
+                    onClick={() => viewAs(c.user_id)}
+                    title="Click to view as this customer (read-only)"
+                    style={{
+                      borderBottom: '1px solid rgba(10,168,159,0.07)',
+                      cursor: impersonatingId ? 'wait' : 'pointer',
+                      transition: 'background 0.12s ease',
+                      opacity: impersonatingId && !loadingThisRow ? 0.5 : 1,
+                    }}
+                    onMouseEnter={e => { if (!impersonatingId) (e.currentTarget as HTMLElement).style.background = 'rgba(10,168,159,0.04)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                  >
+                    <td style={{ padding: '12px 14px', fontWeight: 600, color: '#0B1F3A' }}>
+                      {c.business_name || '—'}
+                      {loadingThisRow && <span style={{ marginLeft: 8, fontSize: 10, color: '#0AA89F' }}>opening…</span>}
+                    </td>
                     <td style={{ padding: '12px 14px', color: '#4A7A80', fontSize: 11 }}>{c.email}</td>
                     <td style={{ padding: '12px 14px' }}>
                       <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 9px', borderRadius: 20, background: color.bg, color: color.fg, border: `1px solid ${color.bd}` }}>

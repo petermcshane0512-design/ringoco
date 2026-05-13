@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
 import { useEffect, useState } from 'react'
+import ImpersonationBanner from '@/components/ImpersonationBanner'
 
 const nav = [
   { label: 'Command Center', href: '/dashboard' },
@@ -38,7 +39,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isActive = (href: string) => href === '/dashboard' ? path === href : path === href || path.startsWith(href + '/')
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: "'Inter', system-ui, sans-serif", background: 'linear-gradient(145deg, #F5FCFA 0%, #EBF7F3 50%, #F0FAF7 100%)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: "'Inter', system-ui, sans-serif", background: 'linear-gradient(145deg, #F5FCFA 0%, #EBF7F3 50%, #F0FAF7 100%)' }}>
+
+      <ImpersonationBanner />
+
+      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
 
       {/* ── SIDEBAR ── */}
       <aside style={{ width: 300, background: '#ffffff', borderRight: '1px solid rgba(10,168,159,0.14)', display: 'flex', flexDirection: 'column', padding: '24px 16px 18px', flexShrink: 0, boxShadow: '2px 0 16px rgba(10,168,159,0.06)' }}>
@@ -163,6 +168,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main style={{ flex: 1, overflowY: 'auto', background: 'transparent' }}>
           {children}
         </main>
+      </div>
       </div>
     </div>
   )

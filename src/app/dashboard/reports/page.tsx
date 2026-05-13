@@ -1,13 +1,11 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
-import { useUser } from "@clerk/nextjs";
+import { effectiveAuth } from "@/lib/effectiveAuth";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
 type Report = {
@@ -20,24 +18,18 @@ type Report = {
   pdf_url: string | null;
 };
 
-export default function ReportsIndexPage() {
-  const { user, isLoaded } = useUser();
-  const [reports, setReports] = useState<Report[]>([]);
-  const [loading, setLoading] = useState(true);
+export default async function ReportsIndexPage() {
+  const { userId } = await effectiveAuth();
+  if (!userId) redirect("/sign-in?redirect_url=/dashboard/reports");
 
-  useEffect(() => {
-    if (!isLoaded || !user) return;
-    (async () => {
-      const { data } = await supabase
-        .from("consulting_reports")
-        .select("id, title, period_label, report_type, bellavego_score, created_at, pdf_url")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(50);
-      setReports((data as Report[]) ?? []);
-      setLoading(false);
-    })();
-  }, [user, isLoaded]);
+  const { data } = await supabase
+    .from("consulting_reports")
+    .select("id, title, period_label, report_type, bellavego_score, created_at, pdf_url")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  const reports = (data as Report[] | null) ?? [];
 
   return (
     <div style={{ padding: "32px 32px 80px", fontFamily: "'Inter', system-ui, sans-serif", maxWidth: 980, margin: "0 auto" }}>
@@ -49,11 +41,7 @@ export default function ReportsIndexPage() {
         AI-generated growth reports based on your actual call and job data, plus local market intel. Delivered automatically on your plan&apos;s cadence.
       </p>
 
-      {loading ? (
-        <div style={emptyBox}>
-          <div style={{ fontSize: 13, color: "#7AAAB2" }}>Loading your reports…</div>
-        </div>
-      ) : reports.length === 0 ? (
+      {reports.length === 0 ? (
         <div style={{ background: "linear-gradient(160deg, #FFF6EE 0%, #FFFFFF 60%)", border: "1px dashed rgba(232,116,43,0.32)", borderRadius: 14, padding: "40px 22px", textAlign: "center" }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>📊</div>
           <div style={{ fontSize: 15, fontWeight: 800, color: "#0B1F3A", marginBottom: 6 }}>No reports yet</div>
@@ -115,8 +103,3 @@ export default function ReportsIndexPage() {
     </div>
   );
 }
-
-const emptyBox: React.CSSProperties = {
-  background: "#fff", border: "1px solid rgba(10,168,159,0.14)",
-  borderRadius: 14, padding: "40px 22px", textAlign: "center",
-};

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { OFFICE_MGR_TIERS } from '@/lib/pricing'
+import { effectiveAuth } from '@/lib/effectiveAuth'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,7 +11,7 @@ const supabase = createClient(
 // Returns the calling user's active quote follow-ups, invoice chases, and review drafts.
 // Tier-gated to Office Manager + Concierge.
 export async function GET() {
-  const { userId } = await auth()
+  const { userId } = await effectiveAuth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data: profile } = await supabase
