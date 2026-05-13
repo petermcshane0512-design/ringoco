@@ -12,10 +12,15 @@ const ADMIN_EMAILS = ['pmcshane@fordham.edu', 'peter@bellavego.com']
 // Admin-only: list every signed-up customer with their tier + activity.
 // Used by /admin/customers (Peter's ops cockpit). Returns at most 500 rows.
 const TIER_MRR: Record<string, number> = {
-  receptionist: 179,
-  officemgr: 497,
-  concierge: 997,
-  // legacy
+  // v7 active (May 12 2026)
+  receptionist: 397,
+  officemgr: 797,
+  concierge: 1997,
+  // v6 grandfathered (price IDs still resolve via PRICE_TO_TIER)
+  receptionist_v6: 179,
+  officemgr_v6: 497,
+  concierge_v6: 997,
+  // even older legacy
   starter: 49,
   growth: 89,
   scale: 149,

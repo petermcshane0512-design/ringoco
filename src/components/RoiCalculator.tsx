@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 
-const TIER_COST = 179 // Office Manager / Growth — anchor against the popular tier
+const TIER_COST = 397 // Receptionist entry tier — anchor for "Net after $X/mo" ROI display
 const WEEKS_PER_MONTH = 4.33
 
 export default function RoiCalculator() {
