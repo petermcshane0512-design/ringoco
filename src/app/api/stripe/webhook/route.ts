@@ -3,6 +3,8 @@ import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
 import { provisionNumberForUser } from '@/lib/provisionNumber'
+import { PRICE_TO_TIER } from '@/lib/pricing'
+import { applyLedgerEntry } from '@/lib/marketing/growth-wallet'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
@@ -10,19 +12,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-
-// HARDCODED v6 PRICE_TO_TIER mapping (May 11 2026).
-// Same reason as checkout/route.ts — Vercel env vars repeatedly fail to populate
-// via CLI. Code is the source of truth. To change tiers, edit this object + push.
-const PRICE_TO_TIER: Record<string, { tier: string; calls: number }> = {
-  // v6 active (May 2026)
-  'price_1TVLzIGrkP7VQmUjInufjfVe': { tier: 'receptionist', calls: 50 },     // $179/mo
-  'price_1TVLzIGrkP7VQmUjoV1TYYMd': { tier: 'receptionist', calls: 50 },     // $1,790/yr
-  'price_1TVXDFGrkP7VQmUjOVB3qgOh': { tier: 'officemgr', calls: 99999 },     // $497/mo
-  'price_1TVXDFGrkP7VQmUjInUFNEni': { tier: 'officemgr', calls: 99999 },     // $4,970/yr
-  'price_1TVXDGGrkP7VQmUjsBtcKsrE': { tier: 'concierge', calls: 99999 },     // $997/mo
-  'price_1TVXDGGrkP7VQmUjbwIIv7qu': { tier: 'concierge', calls: 99999 },     // $9,970/yr
-}
 
 export async function POST(req: NextRequest) {
   const body = await req.text()
@@ -43,6 +32,25 @@ export async function POST(req: NextRequest) {
 
     if (!userId) {
       console.error('No userId in checkout session metadata')
+      return NextResponse.json({ received: true })
+    }
+
+    // ── Growth Wallet top-up (one-time payment, not subscription) ──
+    if (session.metadata?.kind === 'wallet_topup') {
+      const amountCents = parseInt(session.metadata.amountCents ?? '0', 10)
+      if (amountCents > 0) {
+        try {
+          await applyLedgerEntry({
+            supabase, userId, kind: 'topup',
+            amountCents,
+            stripeChargeId: session.payment_intent as string,
+            note: `Top-up via Stripe Checkout — $${(amountCents / 100).toLocaleString()}`,
+          })
+          console.log(`Growth wallet top-up: +$${(amountCents / 100).toFixed(2)} for ${userId}`)
+        } catch (e) {
+          console.error('wallet topup ledger write failed:', e)
+        }
+      }
       return NextResponse.json({ received: true })
     }
 

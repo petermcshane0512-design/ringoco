@@ -1,12 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export default function DashboardPage() {
   const [jobs, setJobs] = useState<any[]>([])
@@ -15,12 +9,12 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function fetchData() {
-      const [{ data: jobsData }, { data: customersData }] = await Promise.all([
-        supabase.from('jobs').select('*').order('created_at', { ascending: false }),
-        supabase.from('customers').select('*'),
+      const [jobsRes, customersRes] = await Promise.all([
+        fetch('/api/jobs/list').then(r => r.json()).catch(() => ({ jobs: [] })),
+        fetch('/api/customers/list').then(r => r.json()).catch(() => ({ customers: [] })),
       ])
-      setJobs(jobsData || [])
-      setCustomers(customersData || [])
+      setJobs(jobsRes.jobs || [])
+      setCustomers(customersRes.customers || [])
       setLoading(false)
     }
     fetchData()

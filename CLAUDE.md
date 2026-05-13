@@ -191,31 +191,30 @@ Every one of these has been embedded as an assumption. Challenge them before act
 | **Phase 4 — Automate Ops** | Self-serve onboarding, churn alerts, auto-renewal. | Months 6-12 |
 | **Phase 5 — Scale** | 342 customers at ~$97 avg = $400K ARR. 800 customers = $1M ARR. | Year 2 |
 
-**Pricing model (Klaviyo-style bundles — never show per-unit cost to customer):**
-- Starter: $49/mo → 200 calls included
-- Growth: $89/mo → 600 calls included
-- Scale: $149/mo → 1,500 calls included
-- Overage: auto-bump to next tier, no surprise charges
-- Consulting reports: included in all plans (AI-generated, zero marginal cost)
+**Pricing model (v6, May 2026 — defined in `src/lib/pricing.ts`):**
+- **Receptionist: $179/mo** ($1,790/yr) → 250 calls/month cap, $50 setup
+- **AI Office Manager: $497/mo** ($4,970/yr) → unlimited calls, $247 setup, adds Quote Hunter / Collections / Reviews / Smart Insights
+- **Concierge: $997/mo** ($9,970/yr) → unlimited calls, $497 setup, same software as Office Manager today
+- **`pricing-v2` preview at /pricing-v2** proposes raising to $397 / $797 / $1,997 + a $2,497/loc Multi-Location tier — not live yet
+- All Stripe price IDs hardcoded in `src/lib/pricing.ts` (Vercel CLI env-var sync was unreliable; code is source of truth)
+- Consulting reports: included in all plans (AI-generated, ~$0.01/report in tokens)
 
 ### Five Things That Matter (Everything Else is Noise)
 
-1. Multi-tenant Twilio — nothing ships until a new signup gets their own number automatically
-2. Usage-based Klaviyo-style billing — metered on backend, bundled on frontend
+1. Multi-tenant Twilio — ✅ shipped May 2026, auto-provisioned on Stripe checkout via `provisionNumberForUser`
+2. Stripe billing live — ✅ shipped, three-tier subscription + auto-suspend on payment failure
 3. AI-generated revenue intelligence report — this IS the moat, not the call answering
-4. Outreach pipeline live — Instantly + AirMail + lead sourcing agent running daily
+4. AI Marketing Operations agent (Concierge tier) — Phase 1 of build, see tasks #1–#12
 5. 70% of time selling, not coding, until 10 paying customers exist
-4. 70% of time selling, not coding, until 10 paying customers exist
-5. Multi-tenancy = a `customer_id` column — not a platform refactor
 
 ---
 
 ## CRITICAL ARCHITECTURE WARNINGS
 
-- **`src/app/api/twilio/voice/route.ts` is LIVE answering real calls** — never modify without explicit instruction and a tested fallback
-- **RLS is disabled on `profiles` table** — intentional; Clerk and Supabase Auth are separate systems; security handled via Clerk middleware
+- **`src/app/api/twilio/voice/route.ts` is LIVE answering real calls** — never modify without explicit instruction and a tested fallback. Look-up by `twilio_number` column on `profiles` (multi-tenant since May 2026).
+- **RLS is disabled on `profiles`, `jobs`, `customers`, and most tables** — intentional. Isolation is enforced by `auth()` + `.eq('user_id', userId)` in **server routes only**. Client pages MUST NOT use the anon Supabase key for tenant-scoped reads — they leak across tenants. Use server API routes (see `/api/jobs/list`, `/api/customers/list` pattern).
 - **Profile saves go through `/api/profile`** using Supabase service role key, not user JWT
-- **Currently single-tenant** — Twilio number `+17623713351` hardcoded to Peter's phone `+17737109565`
+- **All Stripe price IDs + tier-gate sets centralized in `src/lib/pricing.ts`** — DO NOT inline `new Set(['officemgr', ...])` in route files. Import `OFFICE_MGR_TIERS`, `RECEPTIONIST_TIERS`, `REVIEW_TIERS`, `PRICE_IDS`, `PRICE_TO_TIER` from there.
 - **Image files with spaces in filenames** (e.g. `workflow 0.png`) may not render in Next.js — rename to `workflow-0.png` style or URL-encode references
 
 ---

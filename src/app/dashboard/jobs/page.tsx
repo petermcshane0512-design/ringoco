@@ -1,11 +1,5 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<any[]>([])
@@ -19,21 +13,29 @@ export default function JobsPage() {
   }, [])
 
   async function fetchJobs() {
-    const { data } = await supabase.from('jobs').select('*').order('created_at', { ascending: false })
-    setJobs(data || [])
+    const res = await fetch('/api/jobs/list').then(r => r.json()).catch(() => ({ jobs: [] }))
+    setJobs(res.jobs || [])
     setLoading(false)
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    await supabase.from('jobs').insert({ ...form, user_id: 'manual', status: 'pending' })
+    await fetch('/api/jobs/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    })
     setShowForm(false)
     setForm({ title: '', customer_name: '', customer_phone: '', address: '', job_type: '', scheduled_time: '', price: '' })
     fetchJobs()
   }
 
   async function updateStatus(id: string, status: string) {
-    await supabase.from('jobs').update({ status }).eq('id', id)
+    await fetch('/api/jobs/update-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status }),
+    })
     fetchJobs()
   }
 

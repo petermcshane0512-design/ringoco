@@ -1,0 +1,33 @@
+# Skill: Permit Scanner
+
+Pull recent building permits from free open-data portals. Signal for: competitor activity (someone just hired an HVAC contractor for a property in our customer's service area), new construction (future maintenance contracts), and renovation booms.
+
+## Sources (free, no API key)
+- **NYC**: `data.cityofnewyork.us/resource/ipu4-2q9a.json` (DOB Permit Issuance)
+- **Chicago**: `data.cityofchicago.org/resource/ydr8-5enu.json` (Building Permits)
+- **LA**: `data.lacity.org/resource/yv23-pmwf.json` (Building & Safety Permits)
+- **Atlanta, Houston**: TODO — see `permit-scanner.ts` METRO_ADAPTERS
+
+All endpoints are Socrata. Filter pattern: `?$where=issue_date > '{YYYY-MM-DD}'`.
+
+## Permit-type classification
+Regex on `work_type` / `permit_subtype` / `work_description` fields:
+- `hvac|mechanical|heating|cooling|a\/c|air condition` → hvac
+- `plumb` → plumbing
+- `electric` → electrical
+- `roof` → roofing
+- `new building|alteration|renovation|general` → general
+- else → other (skipped)
+
+## Implementation
+`src/lib/marketing/permit-scanner.ts`. Function: `scanPermitsForCustomer({ supabase, userId, metro, zipFilter?, sinceDays? })`.
+
+## Storage
+Idempotent upsert to `permit_events`, key `(user_id, source, permit_id)`.
+
+## Downstream
+- Weekly strategy report surfaces "12 new HVAC permits in your service area this week" as competitor intel
+- For Concierge customers with `concierge_settings.permits_enabled = true`, agent decides whether to convert to a lead (e.g. renovation permit in a ZIP we serve → outbound "Saw a permit was pulled near you — if you also need [trade], here's our number")
+
+## Rate limits
+Socrata public endpoints: ~1 req/sec sustainable without app token. Add `?$$app_token=` once we hit limits.

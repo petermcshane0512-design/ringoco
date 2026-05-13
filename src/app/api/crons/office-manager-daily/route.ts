@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
 import Anthropic from '@anthropic-ai/sdk'
+import { OFFICE_MGR_TIERS } from '@/lib/pricing'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,8 +10,6 @@ const supabase = createClient(
 )
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
 const anthropic = new Anthropic()
-
-const OFFICE_MGR_TIERS = new Set(['officemgr', 'concierge', 'growth', 'premium'])
 
 /**
  * AI Office Manager daily orchestrator.

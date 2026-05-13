@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
+import { REVIEW_TIERS } from '@/lib/pricing'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,9 +36,7 @@ type ProfileRow = {
   review_request_enabled: boolean | null
 }
 
-// v6 tiers that get post-job Review request SMS (Growth/Premium are v3 back-compat).
-// Receptionist tier is too cheap to include this perk — upgrade lever.
-const REVIEW_TIERS = new Set(['officemgr', 'concierge', 'growth', 'premium', 'multiloc'])
+// REVIEW_TIERS centralized in src/lib/pricing.ts — includes multiloc which OFFICE_MGR_TIERS does not.
 
 export async function GET(req: NextRequest) {
   // Vercel cron sends an Authorization: Bearer ${CRON_SECRET} header automatically

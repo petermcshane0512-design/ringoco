@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
+import { OFFICE_MGR_TIERS } from '@/lib/pricing'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
-
-const OFFICE_MGR_TIERS = new Set(['officemgr', 'concierge', 'growth', 'premium'])
 
 // Returns the calling user's active quote follow-ups, invoice chases, and review drafts.
 // Tier-gated to AI Office Manager + Concierge.

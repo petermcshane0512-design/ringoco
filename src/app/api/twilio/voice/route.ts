@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
+import { RECEPTIONIST_TIERS, OFFICE_MGR_TIERS, RECEPTIONIST_CALL_CAP } from '@/lib/pricing'
 
 const client = new Anthropic()
 const supabase = createClient(
@@ -159,13 +160,11 @@ export async function POST(req: NextRequest) {
   const voiceName = aiLang === 'es' ? 'Polly.Lupe-Neural' : 'Polly.Joanna-Neural'
   const speechLang = aiLang === 'es' ? 'es-US' : 'en-US'
 
-  // ── Receptionist tier: cap at 50 calls received per calendar month ──
-  // (Includes legacy 'foundation' tier customers from earlier pricing.)
+  // ── Receptionist tier: monthly call cap ──
+  // Tier sets + cap centralized in src/lib/pricing.ts (legacy 'foundation' included).
   // Demo number is exempt (always full experience for prospects).
   const profileWithTier = profile as (typeof profile & { plan_tier?: string; user_id?: string }) | null
-  const cappedTiers = new Set(['receptionist', 'foundation'])  // foundation = legacy v3
-  const RECEPTIONIST_CALL_CAP = 50
-  if (!isDemo && cappedTiers.has(profileWithTier?.plan_tier ?? '') && profileWithTier?.user_id) {
+  if (!isDemo && RECEPTIONIST_TIERS.has(profileWithTier?.plan_tier ?? '') && profileWithTier?.user_id) {
     const monthStart = new Date()
     monthStart.setDate(1)
     monthStart.setHours(0, 0, 0, 0)
@@ -360,8 +359,7 @@ Only role: book a service call. Politely decline anything else: "I can only help
       // Smart call summary insight — Office Manager + Concierge tiers only.
       // One quick Claude pass over the transcript to surface a sales tip for the contractor.
       let smartInsight = ''
-      const officeMgrTiers = new Set(['officemgr', 'concierge', 'growth', 'premium'])
-      if (officeMgrTiers.has(profileWithTier?.plan_tier ?? '')) {
+      if (OFFICE_MGR_TIERS.has(profileWithTier?.plan_tier ?? '')) {
         try {
           const insightResp = await client.messages.create({
             model: 'claude-haiku-4-5-20251001',
