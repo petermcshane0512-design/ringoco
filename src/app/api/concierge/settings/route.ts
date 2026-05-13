@@ -9,9 +9,10 @@ const supabase = createClient(
 
 const ALLOWED = new Set([
   'service_area_zips', 'competitor_place_ids', 'website_url', 'website_provider',
-  'website_api_token', 'google_place_id', 'google_ads_customer_id', 'meta_ad_account_id',
-  'growth_wallet_auto_topup_cents', 'reactivation_enabled', 'weather_triggers_enabled',
-  'permits_enabled', 'competitor_watch_enabled', 'weekly_report_day',
+  'website_api_token', 'website_collection_id', 'google_place_id',
+  'google_ads_customer_id', 'meta_ad_account_id', 'growth_wallet_auto_topup_cents',
+  'reactivation_enabled', 'weather_triggers_enabled', 'permits_enabled',
+  'competitor_watch_enabled', 'weekly_report_day',
 ])
 
 export async function POST(req: NextRequest) {

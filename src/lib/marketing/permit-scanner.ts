@@ -16,7 +16,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-export type Metro = 'nyc' | 'chicago' | 'la' | 'atlanta' | 'houston'
+export type Metro = 'nyc' | 'chicago' | 'la' | 'atlanta' | 'houston' | 'phoenix'
 
 export type PermitRecord = {
   source: Metro
@@ -33,6 +33,15 @@ export type PermitRecord = {
 const NYC_DOB_PERMITS = 'https://data.cityofnewyork.us/resource/ipu4-2q9a.json'
 const CHICAGO_PERMITS = 'https://data.cityofchicago.org/resource/ydr8-5enu.json'
 const LA_PERMITS = 'https://data.lacity.org/resource/yv23-pmwf.json'
+
+// CKAN-style endpoints for cities without Socrata. Same JSON shape via datastore_search.
+const HOUSTON_PERMITS_CKAN = 'https://data.houstontx.gov/api/3/action/datastore_search'
+const HOUSTON_RESOURCE_ID = 'residential-building-permits'  // TODO: replace with actual UUID once a Houston customer onboards — current value is the dataset slug, exact resource_id may differ
+const PHOENIX_PERMITS_CKAN = 'https://www.phoenixopendata.com/api/3/action/datastore_search'
+const PHOENIX_RESOURCE_ID = '1c61b4b2-1968-4c4b-8ff8-eb44f573e47a'  // Phoenix, AZ Building Permit Data
+
+// ArcGIS FeatureServer for Atlanta (city uses ArcGIS Hub, not Socrata/CKAN).
+const ATLANTA_PERMITS_ARCGIS = 'https://services1.arcgis.com/Ug6cqRSRMcRdvnHc/arcgis/rest/services/Building_Permits/FeatureServer/0/query'
 
 function classifyPermitType(text: string): PermitRecord['permitType'] {
   const t = text.toLowerCase()
@@ -95,12 +104,116 @@ async function fetchLa(sinceIso: string): Promise<PermitRecord[]> {
   }))
 }
 
+async function fetchAtlanta(sinceIso: string): Promise<PermitRecord[]> {
+  // ArcGIS query: where=ISSUEDATE > 'YYYY-MM-DD', outFields=*, f=json
+  // Field names below are best-guess from common Atlanta DPCD schemas. Will need a
+  // pass when a Concierge customer in Atlanta activates and we see live data.
+  const sinceDate = sinceIso.split('T')[0]
+  const url = `${ATLANTA_PERMITS_ARCGIS}?where=${encodeURIComponent(`ISSUEDATE > DATE '${sinceDate}'`)}&outFields=*&resultRecordCount=500&orderByFields=${encodeURIComponent('ISSUEDATE DESC')}&f=json`
+  let res
+  try {
+    res = await fetch(url)
+  } catch (e) {
+    console.warn(`[permit-scanner] Atlanta fetch network error: ${e instanceof Error ? e.message : e}`)
+    return []
+  }
+  if (!res.ok) {
+    console.warn(`[permit-scanner] Atlanta ${res.status} — may need schema retune`)
+    return []
+  }
+  const json = (await res.json()) as { features?: Array<{ attributes: Record<string, unknown> }> }
+  return (json.features ?? []).map(f => {
+    const a = f.attributes
+    const get = (k: string) => (a[k] ?? a[k.toLowerCase()] ?? a[k.toUpperCase()]) as string | undefined
+    const issued = get('ISSUEDATE') ?? get('ISSUE_DATE') ?? get('issue_date') ?? new Date().toISOString()
+    const issuedDate = typeof issued === 'number' ? new Date(issued as number).toISOString() : String(issued)
+    return {
+      source: 'atlanta' as const,
+      permitId: String(get('PERMITNUMBER') ?? get('PERMIT_NUMBER') ?? get('OBJECTID') ?? `${get('ADDRESS') ?? 'x'}-${issuedDate}`),
+      permitType: classifyPermitType(`${get('PERMITTYPE') ?? get('PERMIT_TYPE') ?? ''} ${get('PERMITSUBTYPE') ?? ''} ${get('DESCRIPTION') ?? ''}`),
+      propertyAddress: String(get('ADDRESS') ?? get('LOCATION') ?? ''),
+      propertyZip: get('ZIP') ?? get('ZIPCODE'),
+      permitValueCents: get('VALUE') || get('JOBVALUE') ? Math.round(parseFloat(String(get('VALUE') ?? get('JOBVALUE'))) * 100) : undefined,
+      issuedAt: issuedDate,
+      raw: a,
+    }
+  })
+}
+
+async function fetchHouston(sinceIso: string): Promise<PermitRecord[]> {
+  // CKAN datastore_search. Houston exposes residential permits as monthly aggregates rather
+  // than per-record, which limits per-property lead-gen. We still pull what's available.
+  const sinceDate = sinceIso.split('T')[0]
+  const url = `${HOUSTON_PERMITS_CKAN}?resource_id=${HOUSTON_RESOURCE_ID}&limit=500&q=${encodeURIComponent(sinceDate)}`
+  let res
+  try {
+    res = await fetch(url)
+  } catch (e) {
+    console.warn(`[permit-scanner] Houston fetch network error: ${e instanceof Error ? e.message : e}`)
+    return []
+  }
+  if (!res.ok) {
+    console.warn(`[permit-scanner] Houston ${res.status} — likely needs resource_id update`)
+    return []
+  }
+  const json = (await res.json()) as { result?: { records?: Array<Record<string, unknown>> } }
+  const records = json.result?.records ?? []
+  return records.map(r => {
+    const get = (k: string) => (r[k] ?? r[k.toLowerCase()] ?? r[k.toUpperCase()]) as string | undefined
+    const issued = get('issue_date') ?? get('IssuedDate') ?? new Date().toISOString()
+    return {
+      source: 'houston' as const,
+      permitId: String(get('permit_number') ?? get('PermitNumber') ?? `${get('address') ?? 'x'}-${issued}`),
+      permitType: classifyPermitType(`${get('permit_type') ?? ''} ${get('work_description') ?? get('description') ?? ''}`),
+      propertyAddress: String(get('address') ?? get('Address') ?? ''),
+      propertyZip: get('zip') ?? get('zip_code'),
+      permitValueCents: get('value') ? Math.round(parseFloat(String(get('value'))) * 100) : undefined,
+      issuedAt: String(issued),
+      raw: r,
+    }
+  })
+}
+
+async function fetchPhoenix(sinceIso: string): Promise<PermitRecord[]> {
+  // CKAN datastore_search against Phoenix's known resource ID.
+  const sinceDate = sinceIso.split('T')[0]
+  const url = `${PHOENIX_PERMITS_CKAN}?resource_id=${PHOENIX_RESOURCE_ID}&limit=500&q=${encodeURIComponent(sinceDate)}`
+  let res
+  try {
+    res = await fetch(url)
+  } catch (e) {
+    console.warn(`[permit-scanner] Phoenix fetch network error: ${e instanceof Error ? e.message : e}`)
+    return []
+  }
+  if (!res.ok) {
+    console.warn(`[permit-scanner] Phoenix ${res.status} — may need resource_id refresh`)
+    return []
+  }
+  const json = (await res.json()) as { result?: { records?: Array<Record<string, unknown>> } }
+  const records = json.result?.records ?? []
+  return records.map(r => {
+    const get = (k: string) => (r[k] ?? r[k.toLowerCase()] ?? r[k.toUpperCase()]) as string | undefined
+    const issued = get('PermitIssuedDate') ?? get('issue_date') ?? get('permit_issued_date') ?? new Date().toISOString()
+    return {
+      source: 'phoenix' as const,
+      permitId: String(get('PermitNumber') ?? get('permit_number') ?? `${get('SiteAddress') ?? get('address') ?? 'x'}-${issued}`),
+      permitType: classifyPermitType(`${get('PermitType') ?? get('permit_type') ?? ''} ${get('WorkClass') ?? ''} ${get('Description') ?? ''}`),
+      propertyAddress: String(get('SiteAddress') ?? get('address') ?? ''),
+      propertyZip: get('SiteZip') ?? get('zip'),
+      permitValueCents: get('JobValuation') ? Math.round(parseFloat(String(get('JobValuation'))) * 100) : undefined,
+      issuedAt: String(issued),
+      raw: r,
+    }
+  })
+}
+
 const METRO_ADAPTERS: Record<Metro, (sinceIso: string) => Promise<PermitRecord[]>> = {
   nyc: fetchNyc,
   chicago: fetchChicago,
   la: fetchLa,
-  atlanta: async () => { console.warn('[permit-scanner] atlanta adapter not yet implemented'); return [] },
-  houston: async () => { console.warn('[permit-scanner] houston adapter not yet implemented'); return [] },
+  atlanta: fetchAtlanta,
+  houston: fetchHouston,
+  phoenix: fetchPhoenix,
 }
 
 export type ScanResult = { stored: number; skipped: number; metro: Metro; total: number }

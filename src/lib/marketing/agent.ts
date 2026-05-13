@@ -34,6 +34,7 @@ type ConciergeSettings = {
   website_url?: string | null
   website_provider?: string | null
   website_api_token?: string | null
+  website_collection_id?: string | null
   google_place_id?: string | null
   reactivation_enabled?: boolean | null
   weather_triggers_enabled?: boolean | null
@@ -65,11 +66,12 @@ function inferStateCode(serviceArea: string | null | undefined): string | null {
 function inferMetro(serviceArea: string | null | undefined): Metro | null {
   if (!serviceArea) return null
   const s = serviceArea.toLowerCase()
-  if (s.includes('new york') || s.includes('nyc') || s.includes('manhattan') || s.includes('brooklyn')) return 'nyc'
+  if (s.includes('new york') || s.includes('nyc') || s.includes('manhattan') || s.includes('brooklyn') || s.includes('queens') || s.includes('bronx')) return 'nyc'
   if (s.includes('chicago')) return 'chicago'
   if (s.includes('los angeles') || s.includes(' la ') || s.endsWith(' la')) return 'la'
   if (s.includes('atlanta')) return 'atlanta'
   if (s.includes('houston')) return 'houston'
+  if (s.includes('phoenix') || s.includes('scottsdale') || s.includes('tempe') || s.includes('mesa')) return 'phoenix'
   return null
 }
 
@@ -181,6 +183,7 @@ export async function runMarketingOpsForCustomer(args: {
       websiteUrl: settings?.website_url ?? undefined,
       websiteProvider: settings?.website_provider ?? undefined,
       websiteApiToken: settings?.website_api_token ?? undefined,
+      websiteCollectionId: settings?.website_collection_id ?? undefined,
     })
     return r.published_url ? `published: ${r.published_url}` : (r.ok ? 'drafted (no publish creds)' : `error: ${r.error}`)
   })

@@ -2,13 +2,17 @@
 
 Pull recent building permits from free open-data portals. Signal for: competitor activity (someone just hired an HVAC contractor for a property in our customer's service area), new construction (future maintenance contracts), and renovation booms.
 
-## Sources (free, no API key)
-- **NYC**: `data.cityofnewyork.us/resource/ipu4-2q9a.json` (DOB Permit Issuance)
-- **Chicago**: `data.cityofchicago.org/resource/ydr8-5enu.json` (Building Permits)
-- **LA**: `data.lacity.org/resource/yv23-pmwf.json` (Building & Safety Permits)
-- **Atlanta, Houston**: TODO — see `permit-scanner.ts` METRO_ADAPTERS
+## Sources (all free, no API key)
+- **NYC** (Socrata): `data.cityofnewyork.us/resource/ipu4-2q9a.json` (DOB Permit Issuance)
+- **Chicago** (Socrata): `data.cityofchicago.org/resource/ydr8-5enu.json` (Building Permits)
+- **LA** (Socrata): `data.lacity.org/resource/yv23-pmwf.json` (Building & Safety Permits)
+- **Atlanta** (ArcGIS): `services1.arcgis.com/.../Building_Permits/FeatureServer/0/query` — best-guess field map, retune when first Atlanta customer activates
+- **Houston** (CKAN): `data.houstontx.gov/api/3/action/datastore_search` — exposes monthly aggregates more than per-record (limits per-property lead gen)
+- **Phoenix** (CKAN): `phoenixopendata.com/api/3/action/datastore_search` — resource_id `1c61b4b2-1968-4c4b-8ff8-eb44f573e47a`
 
-All endpoints are Socrata. Filter pattern: `?$where=issue_date > '{YYYY-MM-DD}'`.
+Socrata filter pattern: `?$where=issue_date > '{YYYY-MM-DD}'`.
+ArcGIS filter: `?where=ISSUEDATE > DATE '{YYYY-MM-DD}'&f=json`.
+CKAN filter: text query `?q={YYYY-MM-DD}` (CKAN datastore_search is full-text, not field-specific — narrows but doesn't precisely filter).
 
 ## Permit-type classification
 Regex on `work_type` / `permit_subtype` / `work_description` fields:

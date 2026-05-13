@@ -43,6 +43,7 @@ export async function generateAndPublishPost(args: {
   websiteUrl?: string
   websiteProvider?: string
   websiteApiToken?: string
+  websiteCollectionId?: string  // Webflow CMS Collection ID — required for Webflow only
 }): Promise<{ ok: boolean; published_url?: string; error?: string; post_id?: string }> {
   const targetQuery = `best ${args.trade} ${args.city}`
 
@@ -102,7 +103,10 @@ Write the post.`,
     if (args.websiteProvider === 'wordpress') {
       publishedUrl = await publishToWordPress(args.websiteUrl, args.websiteApiToken, post)
     } else if (args.websiteProvider === 'webflow') {
-      publishedUrl = await publishToWebflow(args.websiteUrl, args.websiteApiToken, post)
+      if (!args.websiteCollectionId) {
+        throw new Error('Webflow CMS Collection ID required — collect during Concierge onboarding')
+      }
+      publishedUrl = await publishToWebflow(args.websiteUrl, args.websiteApiToken, args.websiteCollectionId, post)
     } else {
       throw new Error(`unknown provider: ${args.websiteProvider}`)
     }
@@ -139,13 +143,43 @@ async function publishToWordPress(siteUrl: string, token: string, post: SeoPost)
   return data.link ?? `${siteUrl}/${post.slug}`
 }
 
-async function publishToWebflow(siteUrl: string, token: string, post: SeoPost): Promise<string> {
-  // Webflow CMS API v2 — requires collectionId discovery (customer-specific).
-  // For MVP we return a placeholder and surface a TODO in the dashboard.
-  // Real impl: GET /v2/sites → /v2/sites/{id}/collections → find 'blog' → POST item.
-  void siteUrl
-  void token
-  throw new Error('Webflow publishing requires per-customer collectionId — set up in onboarding wizard')
+async function publishToWebflow(siteUrl: string, token: string, collectionId: string, post: SeoPost): Promise<string> {
+  // Webflow CMS API v2. Posts a new item to the customer's blog collection and
+  // publishes it live (isDraft: false). Customer must have a "Blog Posts" collection
+  // (or similar) with at least name/slug/body fields. The exact field slugs vary by
+  // template — we map our generated post into Webflow's common conventions.
+  //
+  // Auth: Site Token with cms:write scope (created at webflow.com/dashboard → Site
+  // Settings → Apps & Integrations → Generate API token).
+  //
+  // Reference: https://developers.webflow.com/data/reference/cms/collection-items/create-item
+  const res = await fetch(`https://api.webflow.com/v2/collections/${collectionId}/items/live`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'accept-version': '2.0.0',
+    },
+    body: JSON.stringify({
+      isArchived: false,
+      isDraft: false,
+      fieldData: {
+        name: post.title,
+        slug: post.slug,
+        'post-body': markdownToHtml(post.body_md),  // 'post-body' is the most common rich-text slug
+        body: markdownToHtml(post.body_md),         // fallback if collection uses plain 'body'
+        'post-summary': post.title,                 // optional excerpt slot
+      },
+    }),
+  })
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`Webflow API ${res.status}: ${errText.slice(0, 200)}`)
+  }
+  const data = (await res.json()) as { id?: string; fieldData?: { slug?: string } }
+  const slug = data.fieldData?.slug ?? post.slug
+  // Webflow doesn't return a public URL in the create response — derive from site URL.
+  return `${siteUrl.replace(/\/$/, '')}/blog/${slug}`
 }
 
 // Minimal MD→HTML for WP. Customer's WP theme handles styling. Avoid heavy deps.

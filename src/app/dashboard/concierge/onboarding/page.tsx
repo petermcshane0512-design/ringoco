@@ -19,6 +19,7 @@ export default function ConciergeOnboarding() {
     website_url: '',
     website_provider: 'wordpress',
     website_api_token: '',
+    website_collection_id: '',
     growth_wallet_auto_topup_cents: 0,
   })
 
@@ -31,6 +32,7 @@ export default function ConciergeOnboarding() {
       website_url: form.website_url.trim() || null,
       website_provider: form.website_provider,
       website_api_token: form.website_api_token.trim() || null,
+      website_collection_id: form.website_collection_id.trim() || null,
       growth_wallet_auto_topup_cents: form.growth_wallet_auto_topup_cents,
       reactivation_enabled: true,
       weather_triggers_enabled: true,
@@ -101,7 +103,15 @@ export default function ConciergeOnboarding() {
           <div style={{ height: 14 }} />
           <label style={label}>API token / app password</label>
           <input style={input} type="password" placeholder="Base64-encoded user:apppassword for WP" value={form.website_api_token} onChange={e => setForm({ ...form, website_api_token: e.target.value })} />
-          <p style={helpText}>WordPress: <a href="https://wordpress.org/documentation/article/application-passwords/" target="_blank" rel="noopener noreferrer" style={{ color: '#0AA89F' }}>create an Application Password</a>, then base64-encode <code>username:password</code>. Webflow: API token from Site Settings → Apps & Integrations. Stored encrypted at rest.</p>
+          <p style={helpText}>WordPress: <a href="https://wordpress.org/documentation/article/application-passwords/" target="_blank" rel="noopener noreferrer" style={{ color: '#0AA89F' }}>create an Application Password</a>, then base64-encode <code>username:password</code>. Webflow: Site Settings → Apps & Integrations → Generate API token (cms:write scope). Stored encrypted at rest.</p>
+          {form.website_provider === 'webflow' && (
+            <>
+              <div style={{ height: 14 }} />
+              <label style={label}>Webflow CMS Collection ID</label>
+              <input style={input} placeholder="68a1c5b2e3f4..." value={form.website_collection_id} onChange={e => setForm({ ...form, website_collection_id: e.target.value })} />
+              <p style={helpText}>Required for Webflow only. Find it at Webflow Designer → CMS → your blog collection → Settings → Collection ID. We post weekly SEO articles into this collection.</p>
+            </>
+          )}
         </div>
       )}
 
