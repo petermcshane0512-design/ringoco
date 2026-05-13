@@ -17,25 +17,24 @@
 export type Tier = 'receptionist' | 'officemgr' | 'concierge'
 export type Interval = 'monthly' | 'annual'
 
-// ── Stripe Price IDs (v6, May 11 2026) ──────────────────────────
-// Hardcoded because Vercel CLI env-var sync was unreliable. Code is the source of truth.
-// To change a tier's price: create a new Price in Stripe Dashboard, paste its ID here,
-// bump the date below.
+// ── Stripe Price IDs (v7, May 12 2026) ──────────────────────────
+// Created by scripts/create-v7-prices.mjs. To change: edit TIERS in that script,
+// re-run, paste new IDs here. v6 ($179/$497/$997) prices archived in Stripe Dashboard.
 export const PRICE_IDS: Record<Tier, { monthly: string; annual: string; setup: string }> = {
   receptionist: {
-    monthly: 'price_1TVLzIGrkP7VQmUjInufjfVe', // $179/mo
-    annual:  'price_1TVLzIGrkP7VQmUjoV1TYYMd', // $1,790/yr
-    setup:   'price_1TVa1XGrkP7VQmUjC3kilwOR', // $50 setup
+    monthly: 'price_1TWTwsGrkP7VQmUjYdnvv7ZU', // $397/mo
+    annual:  'price_1TWTwsGrkP7VQmUjVH673Rny', // $3,960/yr (10 mo of monthly, 2 free)
+    setup:   'price_1TWTwtGrkP7VQmUjYXR4nQnX', // $250 setup
   },
   officemgr: {
-    monthly: 'price_1TVXDFGrkP7VQmUjOVB3qgOh', // $497/mo
-    annual:  'price_1TVXDFGrkP7VQmUjInUFNEni', // $4,970/yr
-    setup:   'price_1TVa1YGrkP7VQmUjHQMyQvZS', // $247 setup
+    monthly: 'price_1TWTwtGrkP7VQmUjKJ4Ka4MC', // $797/mo
+    annual:  'price_1TWTwtGrkP7VQmUjLD42uJFA', // $7,940/yr
+    setup:   'price_1TWTwuGrkP7VQmUjQ5ZzQzq2', // $500 setup
   },
   concierge: {
-    monthly: 'price_1TVXDGGrkP7VQmUjsBtcKsrE', // $997/mo
-    annual:  'price_1TVXDGGrkP7VQmUjbwIIv7qu', // $9,970/yr
-    setup:   'price_1TVa1YGrkP7VQmUjg7AQL6Y2', // $497 setup
+    monthly: 'price_1TWTwuGrkP7VQmUj6lxFwVvd', // $1,997/mo
+    annual:  'price_1TWTwvGrkP7VQmUjdrMbU1KF', // $19,920/yr
+    setup:   'price_1TWTwvGrkP7VQmUjwWZrApfx', // $1,000 setup
   },
 }
 
@@ -43,6 +42,14 @@ export const PRICE_IDS: Record<Tier, { monthly: string; annual: string; setup: s
 // Used by the Stripe webhook to determine which tier a customer landed on after checkout.
 // Keep `calls` as the soft cap (99999 = "unlimited" UX, no hard wall).
 export const PRICE_TO_TIER: Record<string, { tier: Tier; calls: number }> = {
+  // v7 active (May 12 2026)
+  'price_1TWTwsGrkP7VQmUjYdnvv7ZU': { tier: 'receptionist', calls: 250 },
+  'price_1TWTwsGrkP7VQmUjVH673Rny': { tier: 'receptionist', calls: 250 },
+  'price_1TWTwtGrkP7VQmUjKJ4Ka4MC': { tier: 'officemgr',    calls: 99999 },
+  'price_1TWTwtGrkP7VQmUjLD42uJFA': { tier: 'officemgr',    calls: 99999 },
+  'price_1TWTwuGrkP7VQmUj6lxFwVvd': { tier: 'concierge',    calls: 99999 },
+  'price_1TWTwvGrkP7VQmUjdrMbU1KF': { tier: 'concierge',    calls: 99999 },
+  // v6 legacy (pre-May-12 customers — keep so their renewals/upgrades still match)
   'price_1TVLzIGrkP7VQmUjInufjfVe': { tier: 'receptionist', calls: 250 },
   'price_1TVLzIGrkP7VQmUjoV1TYYMd': { tier: 'receptionist', calls: 250 },
   'price_1TVXDFGrkP7VQmUjOVB3qgOh': { tier: 'officemgr',    calls: 99999 },
@@ -69,12 +76,12 @@ export const RECEPTIONIST_CALL_CAP = 250
 export const TIER_METADATA: Record<Tier, {
   name: string
   monthly: number
-  annual: number   // shown per-month, customer is billed monthly * 10 (2 months free)
+  annual: number   // shown per-month (annual_cents / 12 / 100), customer billed yearly
   setup: number
 }> = {
-  receptionist: { name: 'Receptionist',    monthly: 179, annual: 149, setup: 50  },
-  officemgr:    { name: 'Office Manager',  monthly: 497, annual: 414, setup: 247 },
-  concierge:    { name: 'Concierge',       monthly: 997, annual: 831, setup: 497 },
+  receptionist: { name: 'Receptionist',    monthly: 397,  annual: 330,  setup: 250  },
+  officemgr:    { name: 'Office Manager',  monthly: 797,  annual: 662,  setup: 500  },
+  concierge:    { name: 'Concierge',       monthly: 1997, annual: 1660, setup: 1000 },
 }
 
 // ── Helpers ─────────────────────────────────────────────────────

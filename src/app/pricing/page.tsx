@@ -3,15 +3,15 @@
 /**
  * Live pricing page — v7 ($397 / $797 / $1,997 / $2,497-per-location).
  *
- * CTAs route to mailto: until new Stripe prices are created in the Stripe Dashboard.
- * To enable self-serve checkout: create monthly + annual + setup Stripe prices for
- * each tier, paste IDs into src/lib/pricing.ts PRICE_IDS, then swap the mailto
- * anchors below to call /api/stripe/checkout (see /pricing-legacy for reference).
+ * SMB tier CTAs invoke /api/stripe/checkout against the v7 price IDs in
+ * src/lib/pricing.ts. Multi-Location remains mailto (enterprise sale, founder-led).
  *
  * Old $179/$497/$997 page preserved at /pricing-legacy for rollback or reference.
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@clerk/nextjs'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -96,9 +96,51 @@ const PLANS: Plan[] = [
   },
 ]
 
-export default function PricingV2Page() {
+export default function PricingPage() {
+  const { isSignedIn, isLoaded } = useAuth()
+  const router = useRouter()
   const [interval, setInterval] = useState<Interval>('monthly')
+  const [loading, setLoading] = useState<Tier | null>(null)
   const isAnnual = interval === 'annual'
+
+  // Auto-resume checkout after sign-up redirect: /pricing?tier=X&interval=Y&autocheckout=1
+  useEffect(() => {
+    if (!isLoaded) return
+    const params = new URLSearchParams(window.location.search)
+    const autoTier = params.get('tier') as Tier | null
+    const autoInterval = params.get('interval') as Interval | null
+    const autoCheckout = params.get('autocheckout') === '1'
+    if (autoCheckout && autoTier && isSignedIn) {
+      handleCheckout(autoTier, autoInterval ?? 'monthly')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, isSignedIn])
+
+  async function handleCheckout(tier: Tier, intv: Interval) {
+    if (!isSignedIn) {
+      const next = encodeURIComponent(`/pricing?tier=${tier}&interval=${intv}&autocheckout=1`)
+      router.push(`/sign-up?redirect_url=${next}`)
+      return
+    }
+    setLoading(tier)
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tier, interval: intv }),
+      })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        setLoading(null)
+        alert(`Checkout failed: ${data?.error ?? 'Unknown error'}\n\nText Peter at 773-710-9565.`)
+      }
+    } catch {
+      setLoading(null)
+      alert('Network error. Please try again.')
+    }
+  }
 
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#F2F9F5', color: '#0B1F3A', minHeight: '100vh' }}>
@@ -107,7 +149,11 @@ export default function PricingV2Page() {
         <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
           <Image src="/logo.png" alt="BellAveGo" width={220} height={70} style={{ objectFit: 'contain', marginTop: 8 }} />
         </Link>
-        <Link href="/sign-in" style={{ fontSize: 13, color: '#4A6670', fontWeight: 700, textDecoration: 'none' }}>Sign in →</Link>
+        {isSignedIn ? (
+          <Link href="/dashboard" style={{ padding: '10px 22px', background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800 }}>Dashboard</Link>
+        ) : (
+          <Link href="/sign-in" style={{ fontSize: 13, color: '#4A6670', fontWeight: 700, textDecoration: 'none' }}>Sign in →</Link>
+        )}
       </nav>
 
       <section style={{ padding: '72px 24px 32px', textAlign: 'center', maxWidth: 1200, margin: '0 auto' }}>
@@ -190,8 +236,9 @@ export default function PricingV2Page() {
                     )
                   })}
                 </div>
-                <a
-                  href={`mailto:peter@bellavego.com?subject=BellAveGo%20${encodeURIComponent(plan.name)}%20-%20Sign%20me%20up`}
+                <button
+                  onClick={() => handleCheckout(plan.tier, interval)}
+                  disabled={loading === plan.tier}
                   style={{
                     padding: '14px',
                     background: plan.popular ? '#22C55E' : 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)',
@@ -200,14 +247,18 @@ export default function PricingV2Page() {
                     color: '#fff',
                     fontWeight: 800,
                     fontSize: 14,
-                    textDecoration: 'none',
+                    cursor: loading === plan.tier ? 'wait' : 'pointer',
+                    fontFamily: 'inherit',
                     textAlign: 'center',
                     display: 'block',
+                    width: '100%',
+                    opacity: loading === plan.tier ? 0.7 : 1,
+                    transition: 'all 0.18s ease',
                     boxShadow: plan.popular ? '0 8px 24px rgba(34,197,94,0.32)' : '0 4px 14px rgba(10,168,159,0.24)',
                   }}
                 >
-                  Start with {plan.name} →
-                </a>
+                  {loading === plan.tier ? 'Loading…' : isSignedIn ? `Start with ${plan.name} →` : 'Get Started →'}
+                </button>
                 <p style={{ fontSize: 11, color: plan.popular ? 'rgba(255,255,255,0.45)' : '#7AAAB2', textAlign: 'center', marginTop: 10, marginBottom: 0, fontWeight: 500 }}>
                   + ${plan.setup} onboarding · 30-day money-back · Cancel anytime
                 </p>
