@@ -1,8 +1,17 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@clerk/nextjs'
+/**
+ * Live pricing page — v7 ($397 / $797 / $1,997 / $2,497-per-location).
+ *
+ * CTAs route to mailto: until new Stripe prices are created in the Stripe Dashboard.
+ * To enable self-serve checkout: create monthly + annual + setup Stripe prices for
+ * each tier, paste IDs into src/lib/pricing.ts PRICE_IDS, then swap the mailto
+ * anchors below to call /api/stripe/checkout (see /pricing-legacy for reference).
+ *
+ * Old $179/$497/$997 page preserved at /pricing-legacy for rollback or reference.
+ */
+
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -17,128 +26,78 @@ type Plan = {
   setup: number
   tagline: string
   popular: boolean
-  features: string[]
-  reportCadence: string
-  comingSoon?: boolean        // when true, disables checkout + shows "Join waitlist"
-  comingSoonLabel?: string    // e.g., "Coming September 2026"
+  features: { label: string; auto: boolean }[]
 }
 
 const PLANS: Plan[] = [
   {
     tier: 'receptionist',
-    name: 'Front Desk',
-    monthly: 179,
-    annual: 149,
-    setup: 50,
-    tagline: 'AI answers every call + your welcome consulting report.',
+    name: 'Receptionist',
+    monthly: 397,
+    annual: 330,
+    setup: 250,
+    tagline: 'AI answers every call. You close it in one tap.',
     popular: false,
     features: [
-      '24/7 AI call answering',
-      'AI captures caller name, phone, service, address, preferred time',
-      'Instant text summary to your phone after every call',
-      'One-tap: confirm appointment · send invoice · call back · acknowledge',
-      'Emergency routing to your cell',
-      'Up to 50 AI-booked appointments / month',
-      'Live dashboard with call log + full transcripts',
-      'Welcome AI consulting report at activation',
+      { label: '6 AI Consulting Reports / year (bi-monthly) — revenue, calls, missed jobs, what to fix', auto: true },
+      { label: '24/7 AI call answering — never miss a call again', auto: true },
+      { label: 'Up to 250 inbound calls / month', auto: true },
+      { label: 'AI captures name, phone, service, address, preferred time', auto: true },
+      { label: 'Instant text summary + YES/NO booking approval to your phone', auto: true },
+      { label: 'One-tap: confirm · send payment link · call back · decline', auto: true },
+      { label: 'Auto-provisioned local number in your area code', auto: true },
+      { label: 'Customer + jobs dashboard with full call transcripts', auto: true },
+      { label: 'Spanish-language receptionist mode included', auto: true },
+      { label: 'Welcome AI business diagnostic at activation', auto: true },
+      { label: 'Self-serve Stripe billing portal · 30-day money-back', auto: true },
     ],
-    reportCadence: 'Welcome report · 1/year',
   },
   {
     tier: 'officemgr',
-    name: 'AI Office Manager',
-    monthly: 497,
-    annual: 414,
-    setup: 247,
-    tagline: 'Four AIs running your back office on autopilot.',
+    name: 'Office Manager',
+    monthly: 797,
+    annual: 662,
+    setup: 500,
+    tagline: 'Five AIs running your back office while you turn wrenches.',
     popular: true,
     features: [
-      'Everything in Front Desk, plus:',
-      'Unlimited AI-booked appointments',
-      'AI Quote Hunter — auto follow-ups day 2 / 7 / 14',
-      'AI Collections — past-due invoice chase via SMS + Stripe pay-by-text',
-      'AI Reviews — daily drafts reply to every Google review for one-tap approval',
-      'Smart call-summary insights (sales tips per booking)',
-      'Spanish-language receptionist mode',
-      'Google Reviews automation post-job',
-      '6 bi-monthly AI consulting reports/year',
+      { label: 'Everything in Receptionist, plus:', auto: false },
+      { label: '12 AI Consulting Reports / year (monthly) — conversion, recovery, sales coaching', auto: true },
+      { label: 'Unlimited inbound calls', auto: true },
+      { label: 'AI Quote Hunter — auto follow-up SMS day 2 / 7 / 14 on open quotes', auto: true },
+      { label: 'AI Collections — auto-chase past-due invoices with Stripe pay-by-text', auto: true },
+      { label: 'AI Review Manager — Google reviews polled daily, replies drafted for one-tap approval', auto: true },
+      { label: 'AI Reputation — auto-SMS past customers asking for Google reviews', auto: true },
+      { label: 'Smart Call Summary Insights — sales tip with every booking', auto: true },
+      { label: 'Priority email support — 24-hr SLA', auto: true },
     ],
-    reportCadence: 'Bi-monthly · 6/year',
   },
   {
     tier: 'concierge',
     name: 'Concierge',
-    monthly: 997,
-    annual: 831,
-    setup: 497,
-    tagline: 'White-glove. Multi-location ready. Founder direct.',
+    monthly: 1997,
+    annual: 1660,
+    setup: 1000,
+    tagline: 'AI runs your back office AND your marketing. You just close the work.',
     popular: false,
-    comingSoon: true,
-    comingSoonLabel: 'Coming September 2026',
     features: [
-      'Everything in AI Office Manager, plus:',
-      'Auto-confirm mode — AI books without your approval after trust period',
-      'Multi-location support (up to 5 locations, separate Twilio numbers each)',
-      'Custom AI prompt tuning to your shop’s exact voice',
-      'AI Photo Estimator — customer texts a photo, AI quotes',
-      'AI Financing Closer — Wisetack / GreenSky integration',
-      'AI Recruiter — post jobs + screen technicians automatically',
-      'Jobber / HousecallPro / ServiceTitan native integration',
-      'White-glove onboarding (Peter wires up your CRM live on call)',
-      'Priority support — 24h SLA, dedicated Slack',
-      'API access for custom integrations',
-      '12 monthly AI consulting reports/year',
+      { label: 'Everything in Office Manager, plus:', auto: false },
+      { label: '52 AI Consulting Reports / year (weekly) + quarterly McKinsey-style deep-dive', auto: true },
+      { label: 'AI Marketing Operations — the full growth stack:', auto: false },
+      { label: 'AI Ad Creative Generator — Google + Meta ad copy weekly from your own call transcripts', auto: true },
+      { label: 'AI Lead Sourcing — permits + severe-weather alerts → outbound SMS', auto: true },
+      { label: 'AI Past-Customer Reactivation — drip campaigns to dormant customers', auto: true },
+      { label: 'AI Google Business Profile Watcher — reviews, rating drift, local-pack tracking', auto: true },
+      { label: 'AI Competitor Watcher — daily intel on 5 competitors in your service area', auto: true },
+      { label: 'AI Local SEO — weekly blog posts auto-published to your WordPress site', auto: true },
+      { label: 'Custom AI prompt tuning — your shop’s voice, service catalog, pricing rules', auto: true },
+      { label: 'AI Account Manager — proactive briefings, issue flagging, 4-hour priority SLA', auto: true },
     ],
-    reportCadence: 'Monthly · 12/year',
   },
 ]
 
-export default function PricingPage() {
-  const { isSignedIn, isLoaded } = useAuth()
-  const router = useRouter()
+export default function PricingV2Page() {
   const [interval, setInterval] = useState<Interval>('monthly')
-  const [loading, setLoading] = useState<Tier | null>(null)
-
-  useEffect(() => {
-    if (!isLoaded) return
-    const params = new URLSearchParams(window.location.search)
-    const autoTier = params.get('tier') as Tier | null
-    const autoInterval = params.get('interval') as Interval | null
-    const autoCheckout = params.get('autocheckout') === '1'
-    if (autoCheckout && autoTier && isSignedIn) {
-      handleCheckout(autoTier, autoInterval ?? 'monthly')
-    }
-  }, [isLoaded, isSignedIn])
-
-  async function handleCheckout(tier: Tier, intv: Interval) {
-    if (!isSignedIn) {
-      const next = encodeURIComponent(`/pricing?tier=${tier}&interval=${intv}&autocheckout=1`)
-      router.push(`/sign-up?redirect_url=${next}`)
-      return
-    }
-    setLoading(tier)
-    try {
-      const res = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier, interval: intv }),
-      })
-      const data = await res.json()
-      if (data.url) {
-        window.location.href = data.url
-      } else {
-        console.error('checkout error', data)
-        setLoading(null)
-        const reason = data?.error || 'Unknown error'
-        alert(`Checkout failed: ${reason}\n\nText Peter at 773-710-9565 with this message.`)
-      }
-    } catch (err) {
-      console.error(err)
-      setLoading(null)
-      alert('Network error. Please try again.')
-    }
-  }
-
   const isAnnual = interval === 'annual'
 
   return (
@@ -148,31 +107,19 @@ export default function PricingPage() {
         <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
           <Image src="/logo.png" alt="BellAveGo" width={220} height={70} style={{ objectFit: 'contain', marginTop: 8 }} />
         </Link>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          {isSignedIn ? (
-            <Link href="/dashboard" style={{ padding: '10px 22px', background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800 }}>
-              Dashboard
-            </Link>
-          ) : (
-            <>
-              <Link href="/sign-in" style={{ padding: '10px 22px', border: '1.5px solid #DCE9E2', borderRadius: 8, textDecoration: 'none', color: '#4A6670', fontSize: 14, fontWeight: 500 }}>Sign in</Link>
-              <Link href="/sign-up" style={{ padding: '10px 22px', background: '#22C55E', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800 }}>Get started</Link>
-            </>
-          )}
-        </div>
+        <Link href="/sign-in" style={{ fontSize: 13, color: '#4A6670', fontWeight: 700, textDecoration: 'none' }}>Sign in →</Link>
       </nav>
 
-      <section style={{ padding: '72px 24px 48px', textAlign: 'center', maxWidth: 1100, margin: '0 auto' }}>
+      <section style={{ padding: '72px 24px 32px', textAlign: 'center', maxWidth: 1200, margin: '0 auto' }}>
         <p style={{ fontSize: 13, fontWeight: 700, color: '#0AA89F', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Pricing</p>
         <h1 style={{ fontSize: 'clamp(34px, 4.4vw, 56px)', fontWeight: 900, letterSpacing: '-1.5px', lineHeight: 1.05, marginBottom: 16 }}>
           AI answers every call.<br/>
           <span style={{ background: 'linear-gradient(135deg, #5EEAD4 0%, #2DD4BF 50%, #0AA89F 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>You close it in one tap.</span>
         </h1>
-        <p style={{ fontSize: 17, color: '#4A6670', maxWidth: 640, margin: '0 auto 28px', lineHeight: 1.6 }}>
-          One subscription replaces voicemail, your office manager, your collections agent, and your reputation manager. Pick a tier. 30-day money-back guarantee.
+        <p style={{ fontSize: 17, color: '#4A6670', maxWidth: 680, margin: '0 auto 28px', lineHeight: 1.6 }}>
+          One subscription replaces voicemail, your office manager, your collections agent, and your reputation manager. ⚡ next to a feature = fully automated, hands-off.
         </p>
 
-        {/* Toggle */}
         <div style={{ display: 'inline-flex', alignItems: 'center', background: '#fff', border: '1px solid #DCE9E2', borderRadius: 999, padding: 4, gap: 4, marginBottom: 8 }}>
           <button
             onClick={() => setInterval('monthly')}
@@ -196,11 +143,10 @@ export default function PricingPage() {
         <p style={{ fontSize: 12, color: '#7AAAB2', margin: 0 }}>{isAnnual ? '12 months for the price of 10. Billed once.' : 'Cancel anytime.'}</p>
       </section>
 
-      <section style={{ padding: '0 24px 80px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, maxWidth: 1100, margin: '0 auto' }}>
+      <section style={{ padding: '0 24px 32px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, maxWidth: 1200, margin: '0 auto' }}>
           {PLANS.map(plan => {
             const price = isAnnual ? plan.annual : plan.monthly
-            const isLoading = loading === plan.tier
             return (
               <div key={plan.tier} style={{
                 background: plan.popular ? 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)' : '#fff',
@@ -220,7 +166,7 @@ export default function PricingPage() {
                 <div style={{ fontSize: 14, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.5)' : '#7AAAB2', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{plan.name}</div>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 2, marginBottom: 6 }}>
                   <span style={{ fontSize: 22, fontWeight: 900, color: plan.popular ? 'rgba(255,255,255,0.5)' : '#4A7A80', marginTop: 12 }}>$</span>
-                  <span style={{ fontSize: 60, fontWeight: 900, color: plan.popular ? '#fff' : '#0B1F3A', lineHeight: 1, letterSpacing: '-2px' }}>{price}</span>
+                  <span style={{ fontSize: 60, fontWeight: 900, color: plan.popular ? '#fff' : '#0B1F3A', lineHeight: 1, letterSpacing: '-2px' }}>{price.toLocaleString()}</span>
                   <span style={{ fontSize: 14, color: plan.popular ? 'rgba(255,255,255,0.5)' : '#7AAAB2', fontWeight: 600, alignSelf: 'flex-end', marginBottom: 12, marginLeft: 4 }}>/mo</span>
                 </div>
                 <div style={{ fontSize: 12, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 14, fontWeight: 600 }}>
@@ -231,112 +177,167 @@ export default function PricingPage() {
                 </div>
                 <div style={{ flex: 1, marginBottom: 24 }}>
                   {plan.features.map((f, idx) => {
-                    const isHeader = f.endsWith(':') || f.endsWith('plus:')
+                    const isHeader = f.label.endsWith(':') || f.label.endsWith('plus:')
                     return (
-                      <div key={f + idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '6px 0' }}>
+                      <div key={f.label + idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '6px 0' }}>
                         {!isHeader && (
-                          <div style={{ width: 16, height: 16, background: plan.popular ? '#18AFA8' : '#22C55E', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 3 }}>
-                            <span style={{ color: '#fff', fontSize: 9, fontWeight: 900 }}>{f.includes('Q3 2026') ? '·' : '✓'}</span>
+                          <div style={{ width: 18, height: 18, background: f.auto ? (plan.popular ? '#18AFA8' : '#22C55E') : (plan.popular ? 'rgba(255,255,255,0.18)' : '#E2E8F0'), borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                            <span style={{ color: f.auto ? '#fff' : (plan.popular ? 'rgba(255,255,255,0.7)' : '#64748B'), fontSize: 10, fontWeight: 900 }}>{f.auto ? '⚡' : '✓'}</span>
                           </div>
                         )}
-                        <span style={{ fontSize: 13, color: isHeader ? (plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2') : (plan.popular ? 'rgba(255,255,255,0.86)' : '#0B1F3A'), fontWeight: isHeader ? 700 : 500, fontStyle: isHeader ? 'italic' : 'normal', lineHeight: 1.45, opacity: f.includes('Q3 2026') ? 0.7 : 1 }}>{f}</span>
+                        <span style={{ fontSize: 13, color: isHeader ? (plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2') : (plan.popular ? 'rgba(255,255,255,0.86)' : '#0B1F3A'), fontWeight: isHeader ? 700 : 500, fontStyle: isHeader ? 'italic' : 'normal', lineHeight: 1.45 }}>{f.label}</span>
                       </div>
                     )
                   })}
                 </div>
-                {plan.comingSoon ? (
-                  <>
-                    <a
-                      href="mailto:peter@bellavego.com?subject=Concierge%20waitlist%20-%20BellAveGo"
-                      style={{
-                        padding: '14px',
-                        background: 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)',
-                        borderRadius: 10,
-                        border: 'none',
-                        color: '#fff',
-                        fontWeight: 800,
-                        fontSize: 14,
-                        textDecoration: 'none',
-                        textAlign: 'center',
-                        display: 'block',
-                        boxShadow: '0 4px 14px rgba(11,31,58,0.32)',
-                      }}
-                    >
-                      Join waitlist →
-                    </a>
-                    <p style={{ fontSize: 11, color: plan.popular ? 'rgba(255,255,255,0.45)' : '#7AAAB2', textAlign: 'center', marginTop: 10, marginBottom: 0, fontWeight: 600 }}>
-                      {plan.comingSoonLabel} · We&apos;ll email when it&apos;s live
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => handleCheckout(plan.tier, interval)}
-                      disabled={isLoading}
-                      style={{
-                        padding: '14px',
-                        background: plan.popular ? '#22C55E' : 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)',
-                        borderRadius: 10,
-                        border: 'none',
-                        color: '#fff',
-                        fontWeight: 800,
-                        fontSize: 14,
-                        cursor: isLoading ? 'wait' : 'pointer',
-                        fontFamily: 'inherit',
-                        transition: 'all 0.18s ease',
-                        opacity: isLoading ? 0.7 : 1,
-                        boxShadow: plan.popular ? '0 8px 24px rgba(34,197,94,0.32)' : '0 4px 14px rgba(10,168,159,0.24)',
-                      }}
-                    >
-                      {isLoading ? 'Loading…' : isSignedIn ? "Let's get started →" : 'Get Started →'}
-                    </button>
-                    <p style={{ fontSize: 11, color: plan.popular ? 'rgba(255,255,255,0.45)' : '#7AAAB2', textAlign: 'center', marginTop: 10, marginBottom: 0, fontWeight: 500 }}>
-                      + ${plan.setup} onboarding · 30-day money-back · Cancel anytime
-                    </p>
-                  </>
-                )}
+                <a
+                  href={`mailto:peter@bellavego.com?subject=BellAveGo%20${encodeURIComponent(plan.name)}%20-%20Sign%20me%20up`}
+                  style={{
+                    padding: '14px',
+                    background: plan.popular ? '#22C55E' : 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)',
+                    borderRadius: 10,
+                    border: 'none',
+                    color: '#fff',
+                    fontWeight: 800,
+                    fontSize: 14,
+                    textDecoration: 'none',
+                    textAlign: 'center',
+                    display: 'block',
+                    boxShadow: plan.popular ? '0 8px 24px rgba(34,197,94,0.32)' : '0 4px 14px rgba(10,168,159,0.24)',
+                  }}
+                >
+                  Start with {plan.name} →
+                </a>
+                <p style={{ fontSize: 11, color: plan.popular ? 'rgba(255,255,255,0.45)' : '#7AAAB2', textAlign: 'center', marginTop: 10, marginBottom: 0, fontWeight: 500 }}>
+                  + ${plan.setup} onboarding · 30-day money-back · Cancel anytime
+                </p>
               </div>
             )
           })}
         </div>
       </section>
 
+      {/* Multi-Location enterprise card */}
+      <section style={{ padding: '0 24px 80px' }}>
+        <div style={{
+          maxWidth: 1200,
+          margin: '0 auto',
+          background: 'linear-gradient(135deg, #0B1F3A 0%, #1E3A5F 100%)',
+          borderRadius: 24,
+          padding: '48px 56px',
+          color: '#fff',
+          display: 'grid',
+          gridTemplateColumns: '1.4fr 1fr',
+          gap: 48,
+          alignItems: 'center',
+          border: '2px solid rgba(94, 234, 212, 0.3)',
+        }}>
+          <div>
+            <div style={{ display: 'inline-block', background: 'rgba(94, 234, 212, 0.16)', color: '#5EEAD4', fontSize: 11, fontWeight: 800, padding: '4px 14px', borderRadius: 999, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>
+              Multi-Location · Enterprise
+            </div>
+            <h2 style={{ fontSize: 34, fontWeight: 900, letterSpacing: '-1px', lineHeight: 1.1, marginBottom: 14 }}>
+              For franchises, chains, &amp; roll-ups
+            </h2>
+            <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.78)', lineHeight: 1.6, marginBottom: 24 }}>
+              5+ locations? Every shop gets its own AI receptionist, its own number, its own custom prompt — under one HQ dashboard. Built for Apex, Authority Brands, Neighborly partners, and PE-backed service companies.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 28 }}>
+              {[
+                'Per-location AI prompts (one shop ≠ another)',
+                'Local area-code number per location',
+                'HQ roll-up dashboard (calls/jobs/revenue/location)',
+                'Native CRM integrations: ServiceTitan, HCP, Jobber',
+                'Dedicated CSM — Peter direct for first 5 partner logos',
+                'White-glove onboarding for every location',
+                'Quarterly QBR with Peter + your COO/CFO',
+                'Volume pricing at 25+ locations',
+              ].map(f => (
+                <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, color: 'rgba(255,255,255,0.9)', lineHeight: 1.45 }}>
+                  <span style={{ color: '#5EEAD4', fontWeight: 900, fontSize: 14 }}>✓</span>
+                  <span>{f}</span>
+                </div>
+              ))}
+            </div>
+            <a
+              href="mailto:peter@bellavego.com?subject=Multi-Location%20-%20BellAveGo%20Enterprise"
+              style={{ display: 'inline-block', padding: '14px 28px', background: '#5EEAD4', color: '#0B1F3A', fontWeight: 900, fontSize: 14, borderRadius: 10, textDecoration: 'none' }}
+            >
+              Talk to Peter →
+            </a>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(94, 234, 212, 0.2)', borderRadius: 16, padding: '32px 28px', textAlign: 'center' }}>
+            <p style={{ fontSize: 12, color: 'rgba(94, 234, 212, 0.85)', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>Starts at</p>
+            <div style={{ marginBottom: 8 }}>
+              <span style={{ fontSize: 22, fontWeight: 900, color: 'rgba(255,255,255,0.6)', verticalAlign: 'top' }}>$</span>
+              <span style={{ fontSize: 64, fontWeight: 900, color: '#fff', letterSpacing: '-2px', lineHeight: 1 }}>2,497</span>
+            </div>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', margin: '0 0 24px' }}>per location / month</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.78)', lineHeight: 1.55, marginBottom: 0 }}>
+              + <strong style={{ color: '#fff' }}>$25K</strong> one-time platform setup<br/>
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>Volume discounts at 25+ locations</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section style={{ padding: '60px 24px', background: '#fff', borderTop: '1px solid #DCE9E2' }}>
-        <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center' }}>
-          <h2 style={{ fontSize: 28, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.8px', marginBottom: 16 }}>The math, in plain English.</h2>
-          <p style={{ fontSize: 16, color: '#4A6670', lineHeight: 1.7, marginBottom: 24 }}>
-            A $1M HVAC shop missing 40 calls/month at $385 avg job and 55% book rate is leaving <strong style={{ color: '#0B1F3A' }}>$8,470/month</strong> on the floor. Add unfollowed quotes (~$4,800/mo) and stale AR (~$3,000/mo) and you’re past <strong style={{ color: '#0B1F3A' }}>$16,000/month in lost revenue</strong>.
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <h2 style={{ fontSize: 28, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.8px', marginBottom: 8, textAlign: 'center' }}>Add-On: Growth Wallet</h2>
+          <p style={{ fontSize: 15, color: '#4A6670', textAlign: 'center', marginBottom: 28, maxWidth: 640, marginLeft: 'auto', marginRight: 'auto' }}>
+            Optional with Concierge. Pre-fund a budget. Our AI spends it on Google + Meta ads using creative mined from your call transcripts. 15% management fee. Full transparency dashboard.
           </p>
-          <p style={{ fontSize: 17, fontWeight: 800, color: '#0AA89F' }}>
-            BellAveGo Office Manager: $497/mo. Idiot index in your favor: <span style={{ fontSize: 22 }}>32x.</span>
-          </p>
-          <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 16 }}>
-            90-day money-back if we don’t add at least 5 booked jobs you wouldn’t have otherwise gotten. <a href="tel:+17737109565" style={{ color: '#0AA89F', textDecoration: 'none', fontWeight: 700 }}>Text Peter directly: 773-710-9565</a>
-          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, maxWidth: 900, margin: '0 auto' }}>
+            {[
+              { budget: '$1,000', tier: 'Starter Growth' },
+              { budget: '$2,500', tier: 'Scale Growth' },
+              { budget: '$5,000+', tier: 'Aggressive Growth' },
+            ].map(t => (
+              <div key={t.tier} style={{ background: 'linear-gradient(135deg, #F0FDFA 0%, #ECFEFF 100%)', border: '1px solid rgba(10,168,159,0.25)', borderRadius: 14, padding: '22px 24px', textAlign: 'center' }}>
+                <p style={{ fontSize: 12, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>{t.tier}</p>
+                <p style={{ fontSize: 26, fontWeight: 900, color: '#0B1F3A', margin: '0 0 4px' }}>{t.budget}<span style={{ fontSize: 13, color: '#7AAAB2', fontWeight: 600 }}> / mo ad budget</span></p>
+                <p style={{ fontSize: 12, color: '#4A7A80', margin: 0 }}>+ 15% AI management fee</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       <section style={{ padding: '60px 24px', background: '#F2F9F5', borderTop: '1px solid #DCE9E2' }}>
-        <div style={{ maxWidth: 720, margin: '0 auto' }}>
-          <h3 style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', marginBottom: 28, textAlign: 'center' }}>Common questions</h3>
-          {[
-            { q: 'What does "30-day money-back guarantee" actually mean?', a: 'You pay your one-time onboarding fee + first month subscription today. We provision your AI receptionist, dedicated number, A2P SMS registration, prompt tuning, and integration setup. If within 30 days you decide it’s not for you, full refund on the subscription — keep all your data. Onboarding fee is non-refundable since the work was already done.' },
-            { q: 'Do I have to sign a contract?', a: 'No. All plans are month-to-month. Cancel anytime, your data stays yours.' },
-            { q: 'How does the 90-day guarantee work?', a: 'If after 90 days BellAveGo hasn’t added at least 5 booked jobs you wouldn’t have otherwise gotten, we refund you 100% and you keep all the data we collected. We track every booked job, you can audit it anytime.' },
-            { q: 'What if I want to switch tiers later?', a: 'Upgrade or downgrade anytime in your dashboard. Pro-rated automatically. Annual prepay can be converted to credit if you upgrade.' },
-            { q: 'Will the AI sound like a robot?', a: 'Call (651) 467-7829 right now and find out. It’s the live AI — talk to it like you’re a customer with a broken AC. Most people can’t tell.' },
-            { q: 'Can I keep my existing business number?', a: 'Yes. We forward your existing number to your dedicated AI number, so customers keep dialing the same number they always have. Or we can port it fully — ask in onboarding.' },
-          ].map(({ q, a }) => (
-            <div key={q} style={{ background: '#fff', border: '1px solid #DCE9E2', borderRadius: 12, padding: '18px 22px', marginBottom: 12 }}>
-              <p style={{ fontWeight: 800, color: '#0B1F3A', marginBottom: 6, fontSize: 14 }}>{q}</p>
-              <p style={{ color: '#4A6670', fontSize: 14, lineHeight: 1.6, margin: 0 }}>{a}</p>
-            </div>
-          ))}
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <h2 style={{ fontSize: 28, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.8px', marginBottom: 24, textAlign: 'center' }}>How hands-off is BellAveGo really?</h2>
+          <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 14, padding: '28px 32px' }}>
+            <p style={{ fontSize: 12, fontWeight: 900, color: '#16A34A', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>⚡ Every feature in every tier — fully automated</p>
+            <p style={{ fontSize: 14, color: '#0B1F3A', lineHeight: 1.65, marginBottom: 12 }}>
+              No "Slack with the founder" tax. No "monthly call with Peter" charade. From the moment your card hits Stripe, every part of BellAveGo runs itself — call answering, bookings, follow-ups, collections, reviews, ads, lead-gen. The AI does the work. You do the close.
+            </p>
+            <p style={{ fontSize: 13, color: '#4A7A80', fontStyle: 'italic', margin: 0 }}>
+              The only time a human at BellAveGo touches your account is if you email support — answered in &lt;24 hrs (Office Manager) or &lt;4 hrs (Concierge).
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* What's live today vs roadmap — transparency footer */}
+      <section style={{ padding: '60px 24px', background: '#F2F9F5', borderTop: '1px solid #DCE9E2' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <h2 style={{ fontSize: 24, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.5px', marginBottom: 8, textAlign: 'center' }}>Built today vs. on the roadmap</h2>
+          <p style={{ fontSize: 14, color: '#4A6670', textAlign: 'center', marginBottom: 24, maxWidth: 620, marginLeft: 'auto', marginRight: 'auto' }}>
+            Radical transparency. Every Concierge feature above is live as of today, with these scoped exceptions launching this summer:
+          </p>
+          <div style={{ background: '#fff', border: '1px solid #DCE9E2', borderRadius: 14, padding: '24px 28px' }}>
+            <ul style={{ margin: 0, paddingLeft: 22, color: '#0B1F3A', fontSize: 14, lineHeight: 1.75 }}>
+              <li><strong>Live Google + Meta ad activation</strong> — creatives generate today, sit in your approval queue. Live spend activates the day Google Ads MCC + Meta Business Manager approvals land (we're already in the queue).</li>
+              <li><strong>New-homeowner database</strong> — lead sourcing covers permits + severe-weather alerts today. PropStream homeowner data layer adds Q3 2026.</li>
+              <li><strong>Auto-reply on Google Business Profile reviews</strong> — we read + track today. Posting and auto-replies require Google Business Profile API OAuth (Q3 2026).</li>
+              <li><strong>Webflow SEO publishing</strong> — WordPress sites publish today. Webflow auto-publish Q3 2026 (manual copy/paste workflow until then).</li>
+            </ul>
+          </div>
         </div>
       </section>
 
       <footer style={{ padding: '36px 40px', background: '#0B1F3A', textAlign: 'center' }}>
-        <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>AI Office Manager for home service pros · From $179/mo + $50 setup · 30-day money-back · Cancel anytime</p>
+        <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>BellAveGo · AI Receptionist + AI Marketing for home services pros · 30-day money-back · Cancel anytime</p>
       </footer>
     </main>
   )

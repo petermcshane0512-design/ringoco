@@ -1,9 +1,11 @@
 /**
- * Per-tier consulting report cadence.
+ * Per-tier consulting report cadence (v7 — matches /pricing copy).
  *
- * Front Desk (receptionist):  3 reports/year  → ~122 days between
- * AI Office Manager:          6 reports/year  → ~61  days between
- * Concierge:                  12 reports/year → ~30  days between
+ * Receptionist:     6 reports/year  → ~60 days between (bi-monthly)
+ * Office Manager:  12 reports/year  → ~30 days between (monthly)
+ * Concierge:        4 reports/year  → ~91 days between (quarterly deep-dive ONLY,
+ *                                     since the marketing-ops-weekly cron handles
+ *                                     the 52/yr weekly strategy reports separately)
  *
  * Every tier gets a welcome report on day 1 of activation (`welcome_report_at`).
  * The first periodic report is due `cadenceDays` after that welcome.
@@ -30,15 +32,15 @@ const TIER_MAP: Record<string, CadenceTier> = {
 }
 
 const CADENCE_DAYS: Record<CadenceTier, number> = {
-  receptionist: 122, //  3/year
-  officemgr: 61,     //  6/year
-  concierge: 30,     // 12/year
+  receptionist: 60,  //  6/year
+  officemgr: 30,     // 12/year
+  concierge: 91,     //  4/year (quarterly deep-dive only — weekly handled by marketing-ops cron)
 }
 
 const REPORTS_PER_YEAR: Record<CadenceTier, number> = {
-  receptionist: 3,
-  officemgr: 6,
-  concierge: 12,
+  receptionist: 6,
+  officemgr: 12,
+  concierge: 4,
 }
 
 export function normalizeTier(rawTier: string | null | undefined): CadenceTier | null {

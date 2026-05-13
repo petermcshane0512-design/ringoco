@@ -191,13 +191,13 @@ Every one of these has been embedded as an assumption. Challenge them before act
 | **Phase 4 — Automate Ops** | Self-serve onboarding, churn alerts, auto-renewal. | Months 6-12 |
 | **Phase 5 — Scale** | 342 customers at ~$97 avg = $400K ARR. 800 customers = $1M ARR. | Year 2 |
 
-**Pricing model (v6, May 2026 — defined in `src/lib/pricing.ts`):**
-- **Receptionist: $179/mo** ($1,790/yr) → 250 calls/month cap, $50 setup
-- **AI Office Manager: $497/mo** ($4,970/yr) → unlimited calls, $247 setup, adds Quote Hunter / Collections / Reviews / Smart Insights
-- **Concierge: $997/mo** ($9,970/yr) → unlimited calls, $497 setup, same software as Office Manager today
-- **`pricing-v2` preview at /pricing-v2** proposes raising to $397 / $797 / $1,997 + a $2,497/loc Multi-Location tier — not live yet
-- All Stripe price IDs hardcoded in `src/lib/pricing.ts` (Vercel CLI env-var sync was unreliable; code is source of truth)
-- Consulting reports: included in all plans (AI-generated, ~$0.01/report in tokens)
+**Pricing model (v7, May 12 2026 — defined in `src/lib/pricing.ts`):**
+- **Receptionist: $397/mo** → 250 calls/month, $250 setup, 6 AI consulting reports/yr
+- **Office Manager: $797/mo** → unlimited calls, $500 setup, 12 reports/yr + Quote Hunter / Collections / Reviews / Reputation / Smart Insights
+- **Concierge: $1,997/mo** → unlimited calls, $1,000 setup, 52 weekly strategy reports + 4 quarterly deep-dives, full AI Marketing Operations agent (ad creatives, lead sourcing, SEO, GBP watching, competitor intel, account manager)
+- **Multi-Location: $2,497/loc + $25K setup** — enterprise, founder-led sale
+- **Stripe price IDs**: `src/lib/pricing.ts` currently still holds the v6 IDs (the $179/$497/$997 ones). Public /pricing copy shows v7 amounts; CTAs route to `mailto:` until new Stripe prices are created in Dashboard and pasted into PRICE_IDS. Old self-serve flow preserved at `/pricing-legacy` for rollback.
+- Consulting reports cadence in `src/lib/reportCadence.ts`: Receptionist 6/yr, OfficeMgr 12/yr, Concierge 4/yr quarterly (weekly handled by marketing-ops-weekly cron)
 
 ### Five Things That Matter (Everything Else is Noise)
 
