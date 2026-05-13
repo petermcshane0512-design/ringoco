@@ -41,32 +41,27 @@ export default function HomePage() {
           />
         </a>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {isSignedIn && (
+            <Link href="/dashboard" className="dash-pulse" style={{ padding: '10px 22px', background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800 }}>
+              Dashboard
+            </Link>
+          )}
           <Link href="/founder" style={{ padding: '10px 16px', textDecoration: 'none', color: '#4A6670', fontSize: 14, fontWeight: 600 }}>
-            Founder
+            Why BellAveGo?
           </Link>
           <Link href="/pricing" style={{ padding: '10px 16px', textDecoration: 'none', color: '#4A6670', fontSize: 14, fontWeight: 600 }}>
             Pricing
           </Link>
           {isSignedIn ? (
-            <>
-              <SignOutButton redirectUrl="/">
-                <button style={{ padding: '8px 18px', border: '1.5px solid #DCE9E2', borderRadius: 8, background: 'transparent', color: '#4A6670', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
-                  Sign out
-                </button>
-              </SignOutButton>
-              <Link href="/dashboard" className="dash-pulse" style={{ padding: '10px 22px', background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800 }}>
-                Dashboard
-              </Link>
-            </>
+            <SignOutButton redirectUrl="/">
+              <button style={{ padding: '8px 18px', border: '1.5px solid #DCE9E2', borderRadius: 8, background: 'transparent', color: '#4A6670', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
+                Sign out
+              </button>
+            </SignOutButton>
           ) : (
-            <>
-              <Link href="/sign-in" style={{ padding: '10px 22px', border: '1.5px solid #DCE9E2', borderRadius: 8, textDecoration: 'none', color: '#4A6670', fontSize: 14, fontWeight: 500 }}>
-                Sign in
-              </Link>
-              <Link href="/pricing" className="cta-pulse" style={{ padding: '10px 22px', background: '#22C55E', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800 }}>
-                Get started
-              </Link>
-            </>
+            <Link href="/sign-up" className="cta-pulse" style={{ padding: '10px 22px', background: '#22C55E', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800 }}>
+              Sign in / Create Account
+            </Link>
           )}
         </div>
       </nav>
