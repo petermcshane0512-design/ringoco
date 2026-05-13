@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { SAMPLE_REPORT, type ConsultingReport } from '@/lib/consultingReport'
+import { TIER_METADATA } from '@/lib/pricing'
 
 export default function SampleReportClient() {
   return (
@@ -915,7 +916,7 @@ export function ReportView({ report, sample = false, personalized = false }: { r
                 </Link>
               </div>
               <div className="cr-cta-fineprint">
-                $497/mo for the Office Manager tier (most popular). Cancel within 30 days for a full refund. No credit card needed to talk to Peter first: text (773) 710-9565.
+                ${TIER_METADATA.officemgr.monthly}/mo for the {TIER_METADATA.officemgr.name} tier (most popular). Cancel within 30 days for a full refund. No credit card needed to talk to Peter first: text (773) 710-9565.
               </div>
             </section>
           )}
