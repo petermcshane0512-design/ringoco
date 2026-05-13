@@ -12,7 +12,7 @@
 - [ ] Pull their website. Note: services listed, hours, "book online" presence, photos of trucks.
 - [ ] Run `agents/business-diagnostic.md` if not already run — have their estimated missed-revenue # ready
 - [ ] Have demo Twilio number ready to ring on speakerphone
-- [ ] Have Stripe payment link for $497/mo open in tab — ready to paste
+- [ ] Have Stripe payment link for $797/mo open in tab — ready to paste
 - [ ] Cal.com/calendar open w post-call follow-up slot if needed
 
 ---
@@ -108,7 +108,7 @@ Show quickly. Don't dwell. These are bonus features, not the main pitch.
 >  • At $385 avg job + 55% book rate: $XX,XXX/month walking past u
 >
 > If we catch even half of that — call it $XX,XXX/month —
-> on a $497 cost, that's a {{ratio}}x return. Month one."
+> on a $797 cost, that's a {{ratio}}x return. Month one."
 
 Pause. Let the number sit.
 
@@ -127,7 +127,7 @@ If "no" → move to the ask.
 If they raise a concern → see `07-objection-handlers.md`. Handle it. Then trial close again.
 
 ### Step 2 — The ask (say this verbatim)
-> "Cool. So here's what I'd suggest. Let's get u set up today on the AI Office Manager plan — $497/mo plus a one-time $247 onboarding fee. That onboarding covers ur dedicated AI number, A2P SMS registration, custom prompt tuning, and ur CRM integration. We'll port ur main number forwarding tonight, ur AI number's live by tomorrow morning. I'll text u personally when it's ready. The subscription has a 30-day money-back — if u cancel inside 30 days, full refund on the subscription, u keep all the data. Onboarding fee is non-refundable cuz we already did the work. Sound fair?"
+> "Cool. So here's what I'd suggest. Let's get u set up today on the Office Manager plan — $797/mo plus a one-time $500 onboarding fee. That onboarding covers ur dedicated AI number, A2P SMS registration, custom prompt tuning, and ur CRM integration. We'll port ur main number forwarding tonight, ur AI number's live by tomorrow morning. I'll text u personally when it's ready. The subscription has a 30-day money-back — if u cancel inside 30 days, full refund on the subscription, u keep all the data. Onboarding fee is non-refundable cuz we already did the work. Sound fair?"
 
 [Stop talking. Whoever speaks first loses.]
 

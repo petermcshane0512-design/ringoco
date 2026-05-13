@@ -9,7 +9,7 @@ const supabase = createClient(
 )
 
 // Returns the calling user's active quote follow-ups, invoice chases, and review drafts.
-// Tier-gated to AI Office Manager + Concierge.
+// Tier-gated to Office Manager + Concierge.
 export async function GET() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -21,7 +21,7 @@ export async function GET() {
     .maybeSingle()
 
   if (!profile?.is_active || !OFFICE_MGR_TIERS.has(profile.plan_tier ?? '')) {
-    return NextResponse.json({ error: 'AI Office Manager tier required' }, { status: 403 })
+    return NextResponse.json({ error: 'Office Manager tier required' }, { status: 403 })
   }
 
   // All three tables may be missing if migration 008 hasn't been run.

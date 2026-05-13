@@ -190,7 +190,7 @@ export default function OfficeManagerPage() {
 
       <div style={{ marginBottom: 22 }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
-          AI Office Manager
+          Office Manager
         </div>
         <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 4 }}>Quote Hunter & Collections</h1>
         <p style={{ fontSize: 13, color: '#4A7A80' }}>Track quotes and past-due invoices. The AI follows up on autopilot — you sign off when revenue clears.</p>

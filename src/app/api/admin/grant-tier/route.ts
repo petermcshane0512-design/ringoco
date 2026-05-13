@@ -12,7 +12,7 @@ const ADMIN_EMAILS = ['pmcshane@fordham.edu', 'peter@bellavego.com']
 
 /**
  * Admin-only: grant the calling user any tier instantly, no Stripe checkout.
- * Lets Peter (and only Peter) flip between Receptionist / AI Office Manager / Concierge
+ * Lets Peter (and only Peter) flip between Receptionist / Office Manager / Concierge
  * dashboards on demand for testing + demos.
  *
  * POST /api/admin/grant-tier

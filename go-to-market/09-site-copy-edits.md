@@ -1,6 +1,6 @@
 # SITE COPY EDITS â€” Ship Today
 
-**Goal:** Reposition bellavego.com from "AI Receptionist" to "AI Office Manager" by EOD.
+**Goal:** Reposition bellavego.com from "AI Receptionist" to "Office Manager" by EOD.
 **Files to edit:** `src/app/page.tsx` (hero + bundle section), pricing block.
 **Time budget:** 90 min. Then `git push origin main`.
 
@@ -22,13 +22,13 @@
 
 **Replace with:**
 ```tsx
-<div className="hero-eyebrow">AI Office Manager Â· For Home Service Pros</div>
+<div className="hero-eyebrow">Office Manager Â· For Home Service Pros</div>
 <h1 className="hero-h1">
   Replace the $60K/yr office manager<br />
   <span className="accent">you can&apos;t afford to hire.</span>
 </h1>
 <p className="hero-sub">
-  BellAveGo answers your calls, hunts down quotes, collects past-due invoices, and replies to reviews â€” all running in the background while you&apos;re on the truck. $497/month + $247 onboarding. 30-day money-back guarantee on subscription.
+  BellAveGo answers your calls, hunts down quotes, collects past-due invoices, and replies to reviews â€” all running in the background while you&apos;re on the truck. $797/month + $500 onboarding. 30-day money-back guarantee on subscription.
 </p>
 ```
 
@@ -50,7 +50,7 @@ Insert this section between hero and existing content. Find a clean place â€�
       What you get
     </div>
     <h2 style={{ fontSize: 'clamp(28px, 3.4vw, 44px)', fontWeight: 900, color: '#0B1F3A', lineHeight: 1.1, marginBottom: 16 }}>
-      Four AIs. One office manager.
+      Five AIs. One office manager.
     </h2>
     <p style={{ fontSize: 17, color: '#4A6670', maxWidth: 640, margin: '0 auto 56px', lineHeight: 1.6 }}>
       Most contractors lose money in four places: missed calls, unfollowed quotes, past-due invoices, and bad reviews. We built an AI for each.
@@ -90,27 +90,27 @@ Find the existing pricing section. Replace 3 tiers with:
 
 | Tier | Price | Setup | Tagline |
 |---|---|---|---|
-| Receptionist Only | $179/mo | $50 | "Just answer the calls." |
-| **AI Office Manager** â­ | **$497/mo** | **$247** | "Replace the hire." |
-| Concierge | $997/mo | $497 | "We run it for you." |
+| Receptionist | $397/mo | $50 | "Just answer the calls." |
+| **Office Manager** â­ | **$797/mo** | **$500** | "Replace the hire." |
+| Concierge | $1,997/mo | $797 | "We run it for you." |
 
 **Bullets per tier:**
 
-**Receptionist Only â€” $179/mo**
+**Receptionist â€” $397/mo**
 - AI Receptionist (24/7 call answering)
 - SMS confirmations
 - Calendar booking (Google)
 - Up to 500 calls/mo
 
-**AI Office Manager â€” $497/mo (POPULAR)**
-- Everything in Receptionist Only
+**Office Manager â€” $797/mo (POPULAR)**
+- Everything in Receptionist
 - AI Quote Hunter
 - AI Collections
 - AI Reviews
 - Monthly intelligence report
 - Unlimited calls
 
-**Concierge â€” $997/mo**
+**Concierge â€” $1,997/mo**
 - Everything in Office Manager
 - Dedicated success manager (Peter direct)
 - Custom AI prompt tuning
@@ -120,7 +120,7 @@ Find the existing pricing section. Replace 3 tiers with:
 
 **All plans:** Setup fee · Month-to-month · 30-day money-back on subscription · 17% off annual
 
-**Setup fees:** $50 Receptionist · $247 AI Office Manager · $497 Concierge — covers number provisioning, A2P SMS registration, custom prompt tuning, CRM integration setup. Non-refundable since real work is done at signup.
+**Setup fees:** $50 Receptionist · $500 Office Manager · $797 Concierge — covers number provisioning, A2P SMS registration, custom prompt tuning, CRM integration setup. Non-refundable since real work is done at signup.
 
 ---
 
@@ -156,7 +156,7 @@ Currently the live demo number is mentioned but buried. Add a sticky-ish CTA nea
 
 Per CLAUDE.md cleanup, also delete:
 - Any "Solo / Growth / Scale" tier copy referencing $147/$297/$597 (legacy v1)
-- Any "Quarterly consulting reports" standalone callouts (now folded into Office Manager bundle as "monthly intelligence report")
+- Any "Quarterly consulting reports" standalone callouts (now folded into Office Manager bundle as "monthly intelligence reports")
 - "Multi-location" CTA â†’ keep but rename "Multi-location: contact us" â€” defer this until first 25 customers
 
 ---
@@ -168,9 +168,9 @@ Per CLAUDE.md cleanup, also delete:
 cd C:\Users\peter\ringoco
 npm run dev
 # Open http://localhost:3000, sanity-check:
-#  - Hero shows new "AI Office Manager" headline
+#  - Hero shows new "Office Manager" headline
 #  - 4-module bundle section renders below hero
-#  - Pricing shows $179/$497/$997
+#  - Pricing shows $397/$797/$1,997
 #  - Demo phone number tap-to-call works on mobile preview
 #  - No console errors
 
@@ -178,7 +178,7 @@ npm run dev
 git add src/app/page.tsx
 git status
 git diff --stat
-git commit -m "ship AI Office Manager positioning"
+git commit -m "ship Office Manager positioning"
 git push origin main
 
 # Verify production

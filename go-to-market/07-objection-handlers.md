@@ -14,13 +14,13 @@
 
 ---
 
-## 2. "$497 is too much"
+## 2. "$797 is too much"
 
 **Acknowledge:** "Fair. Compared to Rosie at $149 it looks high."
 **Reframe:** "Difference is what u get. Rosie answers calls. We answer calls + chase quotes + collect on past-due + manage reviews. The all-in office manager u'd hire is $5K/mo. We're 1/10th that."
-**Ask:** "If we just did the missed-call piece for $179/mo — would that be in budget? Most shops upgrade to the full bundle within 60 days once they see the data."
+**Ask:** "If we just did the missed-call piece for $397/mo — would that be in budget? Most shops upgrade to the full bundle within 60 days once they see the data."
 
-[Down-sell to $179 only when budget is the real blocker. Often they'll find $497 once u show ROI math.]
+[Down-sell to $397 only when budget is the real blocker. Often they'll find $797 once u show ROI math.]
 
 ---
 
@@ -87,7 +87,7 @@
 | Objection | What it means | What to do |
 |---|---|---|
 | "Send me a contract first" | Lawyering up before value seen — over-thinker | "We're MTM no contract. Demo first, contract later." If they push, walk. |
-| "How are u different from Rosie/Goodcall" multiple times | Price-shopping | They'll never pay $497. Down-sell to $179 or move on. |
+| "How are u different from Rosie/Goodcall" multiple times | Price-shopping | They'll never pay $797. Down-sell to $397 or move on. |
 | "Can u integrate with [obscure CRM]" | Integration hunter, not buyer | "We integrate w Jobber/HCP/ST. Custom integrations come post-customer-100." |
 | "Do u have case studies / references" before demo | Buying-by-committee mindset | Send 1 case study (when u have one). If they ask for 5 — they're not buying soon. |
 

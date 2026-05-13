@@ -1,4 +1,4 @@
-# OFFER ONE-PAGER — AI Office Manager
+# OFFER ONE-PAGER — Office Manager
 
 **Use this language verbatim in cold emails, calls, demos, landing page.**
 **Test for 30 days. Change if data says change. Not before.**
@@ -7,7 +7,7 @@
 
 ## THE FRAME
 
-> **"We replace the $60K/yr office manager you can't afford to hire — for $497/month."**
+> **"We replace the $60K/yr office manager you can't afford to hire — for $797/month."**
 
 That's the entire pitch. Everything below supports that one sentence.
 
@@ -55,7 +55,7 @@ For a $1M/yr HVAC shop:
 | Recovered past-due AR | $3,000 |
 | Better reviews → more inbound leads | $2,500 |
 | **Total monthly revenue lift** | **$18,770** |
-| **BellAveGo cost** | $497 |
+| **BellAveGo cost** | $797 |
 | **Idiot Index (in customer's favor)** | **37x** |
 
 > "If we add even one extra job a month for u, we've already paid for ourselves 4x over. Don't see 5 booked jobs in 30 days? Full refund on the subscription, and you keep the data."
@@ -64,9 +64,9 @@ For a $1M/yr HVAC shop:
 
 | Tier | Price | Setup (one-time) | Includes |
 |---|---|---|---|
-| **Receptionist Only** | $179/mo | **$50** | AI Receptionist + SMS confirmations + 50-call/mo cap |
-| **AI Office Manager** ⭐ | $497/mo | **$247** | All 4 modules + monthly intelligence report + unlimited calls |
-| **Concierge** | $997/mo | **$497** | Everything + dedicated success manager (Peter, for now) + custom prompt + priority support |
+| **Receptionist** | $397/mo | **$50** | AI Receptionist + SMS confirmations + 250-call/mo cap |
+| **Office Manager** ⭐ | $797/mo | **$500** | All 4 modules + monthly intelligence reports + unlimited calls |
+| **Concierge** | $1,997/mo | **$797** | Everything + dedicated success manager (Peter, for now) + custom prompt + priority support |
 
 **Setup fee covers:** number provisioning, A2P SMS carrier registration, custom prompt tuning, CRM integration setup (Jobber/HCP/ST), 30-min onboarding call. Real human work — non-refundable.
 **Contract:** Month-to-month, cancel anytime — no contract, no commitment beyond the month they're in.
@@ -83,7 +83,7 @@ For a $1M/yr HVAC shop:
 ## OBJECTION PRE-EMPT
 
 - **"AI won't sound natural."** → Live demo number on landing page. Call it from your truck right now.
-- **"$497 is a lot."** → Show the math. One extra job = paid back 1.3x.
+- **"$797 is a lot."** → Show the math. One extra job = paid back 1.3x.
 - **"I don't trust AI w my customers."** → Owner approval mode for first 30 days. AI handles everything but books are confirmed by SMS to you first. After 30 days you'll turn approval off because it's annoying.
 - **"My wife answers the phone."** → Then she can do the rest of the office stuff that AI can't (books, payroll, vendor calls). She'll thank you. (Use w care — read the room.)
 
@@ -97,7 +97,7 @@ For a $1M/yr HVAC shop:
 | Review management | ✗ | ✗ | ✗ | ✓ |
 | Monthly intelligence report | ✗ | ✗ | ✗ | ✓ |
 | Built for trades | ✗ | ✗ | partial | ✓ |
-| Price for full bundle | n/a (would need 4 vendors @ $400+/mo total) | n/a | $300+ live receptionist | **$497 all-in** |
+| Price for full bundle | n/a (would need 4 vendors @ $400+/mo total) | n/a | $300+ live receptionist | **$797 all-in** |
 
 **The wedge:** *"They sell AI that answers your phone. We sell an AI that runs your back office."*
 

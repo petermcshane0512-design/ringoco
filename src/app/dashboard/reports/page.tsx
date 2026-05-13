@@ -59,7 +59,7 @@ export default function ReportsIndexPage() {
           <div style={{ fontSize: 15, fontWeight: 800, color: "#0B1F3A", marginBottom: 6 }}>No reports yet</div>
           <div style={{ fontSize: 12, color: "#8B5A3D", lineHeight: 1.6, maxWidth: 460, margin: "0 auto" }}>
             Your <strong>welcome report</strong> is auto-generated the day after activation. After that, reports arrive on your plan&apos;s cadence:
-            Front Desk &rarr; 3/year &nbsp;·&nbsp; Office Manager &rarr; 6/year &nbsp;·&nbsp; Concierge &rarr; monthly.
+            Receptionist &rarr; bi-monthly (6/yr) &nbsp;·&nbsp; Office Manager &rarr; monthly (12/yr) &nbsp;·&nbsp; Concierge &rarr; weekly (52/yr) + quarterly deep-dive.
           </div>
         </div>
       ) : (

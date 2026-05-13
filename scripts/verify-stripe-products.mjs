@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
- * Verify Stripe products + prices for v4 pricing (Receptionist $179 / Office Manager $497 / Concierge $997).
+ * DEPRECATED (May 12 2026) — this script verified the v4 pricing via env vars
+ * (STRIPE_PRICE_RECEPTIONIST_MONTHLY etc.). Those env vars were never reliably
+ * populated on Vercel, which is why pricing.ts hardcodes the IDs instead.
  *
- * Reads STRIPE_SECRET_KEY + price IDs from .env.local, fetches each price from Stripe,
- * confirms unit_amount + interval match expectations.
+ * For v7 pricing ($397/$797/$1,997 as of May 12 2026), see:
+ *   - scripts/create-v7-prices.mjs   (creates new Stripe prices)
+ *   - src/lib/pricing.ts             (live PRICE_IDS source of truth)
  *
- * Usage:  node scripts/verify-stripe-products.mjs
- *
- * If anything's off, the script prints what's wrong and exits non-zero.
- * Doesn't modify Stripe state — read-only.
+ * Leaving this file in place for historical reference. Do not run.
  */
 
 import Stripe from 'stripe'

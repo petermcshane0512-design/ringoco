@@ -22,7 +22,7 @@
 ## Disqualify (skip these — waste of time)
 
 - 100+ employees → too big, has office staff
-- 0 website OR purely Facebook page → too small, won't pay $497
+- 0 website OR purely Facebook page → too small, won't pay $797
 - Owner's name is on every review reply → already engaged, won't switch
 - Listed as franchise (Mr. Cool, One Hour, Aire Serv) → corporate makes decisions
 - "We're hiring office manager" job posts within 30 days → already solving differently
@@ -60,6 +60,6 @@
 ## Anti-Pattern (do not target — yet)
 
 - Med spas, dentists, law firms (different ICP, different pain, different sales cycle, different price tolerance)
-- Cleaners, lawn care, pest control (lower job value → lower ROI math → harder close at $497)
+- Cleaners, lawn care, pest control (lower job value → lower ROI math → harder close at $797)
 - Multi-location franchises (custom sales motion — this is `Multi-location` tier, not core)
 - Anyone outside US (no Twilio number, no Stripe US bank, opens compliance hell)

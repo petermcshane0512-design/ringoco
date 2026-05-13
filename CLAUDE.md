@@ -196,7 +196,7 @@ Every one of these has been embedded as an assumption. Challenge them before act
 - **Office Manager: $797/mo** → unlimited calls, $500 setup, 12 reports/yr + Quote Hunter / Collections / Reviews / Reputation / Smart Insights
 - **Concierge: $1,997/mo** → unlimited calls, $1,000 setup, 52 weekly strategy reports + 4 quarterly deep-dives, full AI Marketing Operations agent (ad creatives, lead sourcing, SEO, GBP watching, competitor intel, account manager)
 - **Multi-Location: $2,497/loc + $25K setup** — enterprise, founder-led sale
-- **Stripe price IDs**: `src/lib/pricing.ts` currently still holds the v6 IDs (the $179/$497/$997 ones). Public /pricing copy shows v7 amounts; CTAs route to `mailto:` until new Stripe prices are created in Dashboard and pasted into PRICE_IDS. Old self-serve flow preserved at `/pricing-legacy` for rollback.
+- **Stripe price IDs**: `src/lib/pricing.ts` holds v7 IDs ($397/$797/$1,997 created May 12 2026 by `scripts/create-v7-prices.mjs`). v6 IDs ($179/$497/$997) preserved in `PRICE_TO_TIER` reverse map so any grandfathered subscribers still resolve correctly. Old self-serve page preserved at `/pricing-legacy` for rollback.
 - Consulting reports cadence in `src/lib/reportCadence.ts`: Receptionist 6/yr, OfficeMgr 12/yr, Concierge 4/yr quarterly (weekly handled by marketing-ops-weekly cron)
 
 ### Five Things That Matter (Everything Else is Noise)

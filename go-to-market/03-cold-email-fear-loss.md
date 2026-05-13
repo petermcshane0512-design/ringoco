@@ -52,7 +52,7 @@ Last week a HVAC shop near {{city}} closed w us. Owner had 4 trucks,
 on the holiday weekend. We caught all 19. Booked 7. ~$2,400 in jobs
 that wouldn't have existed otherwise.
 
-He pays $497/mo + $247 onboarding (one-time). 30-day money-back on the subscription if
+He pays $797/mo + $500 onboarding (one-time). 30-day money-back on the subscription if
 BellAveGo doesn't book at least 5 jobs.
 
 Same offer for u if u want to test it. Reply "yes" — I'll get u set up
@@ -83,7 +83,7 @@ Three answers I usually hear:
 3. I do, on the truck (the customer in front of u feels brushed off)
 
 There's a 4th option now. AI receptionist that sounds human, books
-the job, texts u the details. $497/mo for the full back-office stack.
+the job, texts u the details. $797/mo for the full back-office stack.
 
 Want me to send u a recording of how it handles a real call? Reply
 "recording" — I'll send 3.
@@ -111,7 +111,7 @@ let me know.
 Otherwise — last note from me:
 
 For HVAC shops $500K–$2M, the office manager u'd hire costs ~$60K/yr.
-We do ~70% of what they'd do for $497/mo. Math is what it is.
+We do ~70% of what they'd do for $797/mo. Math is what it is.
 
 I'll stop emailing after this unless u want me to keep going.
 

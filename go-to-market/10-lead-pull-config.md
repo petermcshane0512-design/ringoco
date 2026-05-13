@@ -130,7 +130,7 @@ Once Batch A through E are flowing:
 By month 3: 6,000 leads in pipeline, 60-90 demos booked, 12-18 customers closed.
 By month 12: 24K leads, 240-360 demos, 50-75 customers (path to $300-500K ARR).
 
-**To hit $1M ARR:** scale outreach 3x by month 6, OR raise concierge tier ARPU from $497 to $797 avg, OR hire SDR. Re-evaluate at month 3.
+**To hit $1M ARR:** scale outreach 3x by month 6, OR raise concierge tier ARPU from $797 to $797 avg, OR hire SDR. Re-evaluate at month 3.
 
 ---
 

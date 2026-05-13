@@ -23,7 +23,7 @@ type Customer = {
 type Totals = { count: number; active: number; mrr: number; calls_mtd: number }
 
 const TIER_LABEL: Record<string, string> = {
-  receptionist: 'Front Desk',
+  receptionist: 'Receptionist',
   officemgr: 'Office Mgr',
   concierge: 'Concierge',
   cancelled: 'Cancelled',

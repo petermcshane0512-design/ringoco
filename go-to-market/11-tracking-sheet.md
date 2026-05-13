@@ -80,13 +80,13 @@ WEEK GRADE: A / B / C / D / F  (be honest)
 
 ## 12-MONTH PACING — Where U Need To Be
 
-To hit $1M ARR by May 12 2027 at $497 avg ARPU:
+To hit $1M ARR by May 12 2027 at $797 avg ARPU:
 
 | Month end | Cumulative customers | MRR | ARR | Reality check |
 |---|---|---|---|---|
 | Jun 2026 | 2 | $994 | $11,928 | manual onboard; founders' friends |
 | Jul 2026 | 5 | $2,485 | $29,820 | first cold-email closes land |
-| Aug 2026 | 10 | $4,970 | $59,640 | sequence dialed in; one referral |
+| Aug 2026 | 10 | $7,940 | $59,640 | sequence dialed in; one referral |
 | Sep 2026 | 18 | $8,946 | $107,352 | hire 1st VA OR multi-tenant ships |
 | Oct 2026 | 30 | $14,910 | $178,920 | repeatable motion proven |
 | Nov 2026 | 48 | $23,856 | $286,272 | reinvest revenue into outreach scale |
@@ -115,7 +115,7 @@ To hit $1M ARR by May 12 2027 at $497 avg ARPU:
 | >5% bounce rate | Bad list / domain not warm | Pause campaign, re-warm, switch enrichment provider |
 | Replies but no demo books | Reply is "not interested" rather than engaged | Email body too pushy; soften CTA, ask qualifying ?'s |
 | Demos booked but no shows | No reminder cadence | Add Cal.com reminder, 24h SMS, day-of SMS |
-| Demos but no closes | Pricing or trust | Test downsell to $179, add 30-day refund, pull case study earlier |
+| Demos but no closes | Pricing or trust | Test downsell to $397, add 30-day refund, pull case study earlier |
 | Closes but immediate churn | Onboarding gap | Day-1 success call, day-7 check-in, day-30 ROI report |
 
 ---

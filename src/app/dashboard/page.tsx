@@ -277,7 +277,7 @@ export default function DashboardPage() {
             <span style={{ fontSize: 11, color: "#7AAAB2", marginRight: 4 }}>Switch tier:</span>
             {(["receptionist", "officemgr", "concierge"] as const).map(t => {
               const isCurrent = profile?.plan_tier === t;
-              const label = t === "receptionist" ? "Front Desk" : t === "officemgr" ? "Office Mgr" : "Concierge";
+              const label = t === "receptionist" ? "Receptionist" : t === "officemgr" ? "Office Mgr" : "Concierge";
               return (
                 <button
                   key={t}
@@ -365,9 +365,9 @@ export default function DashboardPage() {
       {/* Activation banner */}
       {profile && !profile.is_active && (() => {
         const TIERS = {
-          receptionist: { label: "Front Desk", monthly: 179, annual: 1790, setup: 50,  sub: "AI answers every call · 50 bookings/mo · Welcome AI consulting report" },
-          officemgr:    { label: "AI Office Manager",  monthly: 497, annual: 4970, setup: 247, sub: "Receptionist + Quote Hunter + Collections + Reviews + monthly intel" },
-          concierge:    { label: "Concierge",          monthly: 997, annual: 9970, setup: 497, sub: "Everything + dedicated success manager (Peter direct) + integrations" },
+          receptionist: { label: "Receptionist",   monthly: 397,  annual: 3960,  setup: 250,  sub: "AI answers every call · 250 bookings/mo · 6 AI consulting reports/yr" },
+          officemgr:    { label: "Office Manager", monthly: 797,  annual: 7940,  setup: 500,  sub: "Receptionist + Quote Hunter + Collections + Reviews + Reputation + 12 reports/yr" },
+          concierge:    { label: "Concierge",      monthly: 1997, annual: 19920, setup: 1000, sub: "Office Manager + AI Marketing Operations (ad creatives, lead sourcing, SEO, weekly strategy reports)" },
         } as const;
         const cur = TIERS[tier];
         const subToday = interval === "monthly" ? cur.monthly : cur.annual;

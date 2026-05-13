@@ -12,8 +12,9 @@ const supabase = createClient(
 
 /**
  * Daily cron — picks active customers whose tier cadence is due for a consulting
- * report (welcome on day 1, then periodic at Front Desk = 3/yr, Office Manager =
- * 6/yr, Concierge = 12/yr) and generates + delivers each one.
+ * report (welcome on day 1, then periodic at Receptionist = 6/yr, Office Manager =
+ * 12/yr, Concierge = 4/yr quarterly deep-dive only; Concierge weekly handled by
+ * marketing-ops-weekly cron). Cadences defined in src/lib/reportCadence.ts.
  *
  * Cap of 25 reports per run protects against burst spend on Claude/Twilio/Storage.
  * At scale we'll spread bursts across the day, but at 100 customers this is fine.

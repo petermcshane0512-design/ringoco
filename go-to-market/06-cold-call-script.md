@@ -34,7 +34,7 @@ If they hang up — fine. Move to next. Don't take it personally. We're a number
 [If they say "Rosie" or "answering service" — qualify pain. "What do u wish it did better?"]
 
 ### C) "Tell me more"
-> "Cool. The short version: AI receptionist + quote follow-up + collections + review replies. $497/mo plus a one-time $247 onboarding (covers ur dedicated number, A2P SMS registration, custom prompt tuning, CRM integration setup). Replaces about 70% of an office manager's job. 30-day money-back on the subscription — onboarding fee non-refundable since we did the work. Want a 30-min demo Wednesday or Thursday?"
+> "Cool. The short version: AI receptionist + quote follow-up + collections + review replies. $797/mo plus a one-time $500 onboarding (covers ur dedicated number, A2P SMS registration, custom prompt tuning, CRM integration setup). Replaces about 70% of an office manager's job. 30-day money-back on the subscription — onboarding fee non-refundable since we did the work. Want a 30-min demo Wednesday or Thursday?"
 
 ---
 
@@ -44,7 +44,7 @@ If they hang up — fine. Move to next. Don't take it personally. We're a number
 
 > "1. How many calls a week do u think hit voicemail?"
 > "2. Who follows up on quotes — u, or do they kinda just sit there?"
-> "3. If I told u we'd add 4–6 booked jobs a month for $497, would u test it for 30 days w no risk?"
+> "3. If I told u we'd add 4–6 booked jobs a month for $797, would u test it for 30 days w no risk?"
 
 **If they say YES to #3:** book demo NOW. Don't email later. Open Cal.com on screen, lock the slot.
 **If they say "let me think":** that's a no. "Got it — should I check back in 30 days or just leave u alone?"

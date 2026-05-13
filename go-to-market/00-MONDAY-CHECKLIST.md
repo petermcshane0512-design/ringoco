@@ -16,8 +16,8 @@
 ### 8:00–10:00am — SITE COPY UPDATE (deploy by 10am)
 - [ ] Read `09-site-copy-edits.md`
 - [ ] Edit `src/app/page.tsx` lines 437–444 + add bundle section
-- [ ] Edit `src/app/pricing/page.tsx` (or wherever pricing renders) → add $497 "AI Office Manager" tier
-- [ ] `git add . ; git commit -m "ship AI Office Manager positioning" ; git push origin main`
+- [ ] Edit `src/app/pricing/page.tsx` (or wherever pricing renders) → add $797 "Office Manager" tier
+- [ ] `git add . ; git commit -m "ship Office Manager positioning" ; git push origin main`
 - [ ] Verify www.bellavego.com renders new hero
 - [ ] **DO NOT touch invoicing UI today, dont fix metered billing today, dont add tests today.** ship, move on.
 
@@ -64,7 +64,7 @@
 | **MRR** | | | | |
 
 **12-month math (target $1M ARR):**
-- 168 customers @ $497/mo avg
+- 168 customers @ $797/mo avg
 - Close rate 20% from demo → 840 demos needed
 - Demo book rate 5% from cold reply → 16,800 unique contacts
 - **= 50/day cold outreach, 3 demos/day, 1 close every 3 days.**

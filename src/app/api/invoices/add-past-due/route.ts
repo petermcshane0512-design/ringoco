@@ -11,7 +11,7 @@ const supabase = createClient(
 /**
  * AI Collections — capture a past-due invoice.
  * Schedules SMS chase cadence: day 2, day 7, day 14, day 30 with a Stripe Payment Link.
- * Tier-gated to AI Office Manager + Concierge.
+ * Tier-gated to Office Manager + Concierge.
  */
 export async function POST(req: NextRequest) {
   const { userId } = await auth()
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
 
   if (!profile?.is_active || !OFFICE_MGR_TIERS.has(profile.plan_tier ?? '')) {
-    return NextResponse.json({ error: 'AI Collections requires AI Office Manager tier or above.' }, { status: 403 })
+    return NextResponse.json({ error: 'AI Collections requires Office Manager tier or above.' }, { status: 403 })
   }
 
   const body = (await req.json().catch(() => ({}))) as {

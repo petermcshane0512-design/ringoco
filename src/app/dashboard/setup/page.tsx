@@ -52,8 +52,8 @@ function disableCode(carrier: CarrierKey) {
 function tierMeta(tier: Tier | undefined) {
   const t = tier || "receptionist";
   if (t === "concierge") return { label: "Concierge", isOfficeMgr: true, isConcierge: true };
-  if (t === "officemgr" || t === "premium" || t === "growth") return { label: "AI Office Manager", isOfficeMgr: true, isConcierge: false };
-  return { label: "Front Desk", isOfficeMgr: false, isConcierge: false };
+  if (t === "officemgr" || t === "premium" || t === "growth") return { label: "Office Manager", isOfficeMgr: true, isConcierge: false };
+  return { label: "Receptionist", isOfficeMgr: false, isConcierge: false };
 }
 
 export default function SetupWizard() {

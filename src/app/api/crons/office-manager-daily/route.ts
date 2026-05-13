@@ -12,7 +12,7 @@ const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_
 const anthropic = new Anthropic()
 
 /**
- * AI Office Manager daily orchestrator.
+ * Office Manager daily orchestrator.
  *
  * Runs ONCE per day (Vercel Hobby plan = 1 cron/day, so all three Office Mgr
  * agents share this single hook). Runs:
