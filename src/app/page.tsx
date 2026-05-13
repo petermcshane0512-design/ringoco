@@ -688,7 +688,9 @@ export default function HomePage() {
                     <div key={f + idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '6px 0', borderBottom: idx === (plan.features!.length - 1) ? 'none' : `1px solid ${plan.popular ? 'rgba(255,255,255,0.07)' : 'rgba(10,168,159,0.08)'}` }}>
                       {!isHeader && (
                         <div style={{ width: 16, height: 16, background: plan.popular ? '#18AFA8' : '#22C55E', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
-                          <span style={{ color: '#fff', fontSize: 9, fontWeight: 900 }}>âœ“</span>
+                          <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M3 8.5l3.5 3.5 6.5-7" />
+                          </svg>
                         </div>
                       )}
                       <span style={{ fontSize: 12, color: isHeader ? (plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2') : (plan.popular ? 'rgba(255,255,255,0.82)' : '#0B1F3A'), fontWeight: isHeader ? 700 : 500, fontStyle: isHeader ? 'italic' : 'normal', lineHeight: 1.4 }}>{f}</span>

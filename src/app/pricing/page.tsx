@@ -163,7 +163,7 @@ export default function PricingPage() {
           <span style={{ background: 'linear-gradient(135deg, #5EEAD4 0%, #2DD4BF 50%, #0AA89F 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>You close it in one tap.</span>
         </h1>
         <p style={{ fontSize: 17, color: '#4A6670', maxWidth: 680, margin: '0 auto 28px', lineHeight: 1.6 }}>
-          One subscription replaces voicemail, your office manager, your collections agent, and your reputation manager. ⚡ next to a feature = fully automated, hands-off.
+          One subscription replaces voicemail, your office manager, your collections agent, and your reputation manager. Every feature runs on autopilot — your AI does the work, you just close.
         </p>
 
         <div style={{ display: 'inline-flex', alignItems: 'center', background: '#fff', border: '1px solid #DCE9E2', borderRadius: 999, padding: 4, gap: 4, marginBottom: 8 }}>
@@ -227,8 +227,10 @@ export default function PricingPage() {
                     return (
                       <div key={f.label + idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '6px 0' }}>
                         {!isHeader && (
-                          <div style={{ width: 18, height: 18, background: f.auto ? (plan.popular ? '#18AFA8' : '#22C55E') : (plan.popular ? 'rgba(255,255,255,0.18)' : '#E2E8F0'), borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
-                            <span style={{ color: f.auto ? '#fff' : (plan.popular ? 'rgba(255,255,255,0.7)' : '#64748B'), fontSize: 10, fontWeight: 900 }}>{f.auto ? '⚡' : '✓'}</span>
+                          <div style={{ width: 18, height: 18, background: plan.popular ? '#18AFA8' : '#22C55E', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                            <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M3 8.5l3.5 3.5 6.5-7" />
+                            </svg>
                           </div>
                         )}
                         <span style={{ fontSize: 13, color: isHeader ? (plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2') : (plan.popular ? 'rgba(255,255,255,0.86)' : '#0B1F3A'), fontWeight: isHeader ? 700 : 500, fontStyle: isHeader ? 'italic' : 'normal', lineHeight: 1.45 }}>{f.label}</span>
@@ -305,7 +307,9 @@ export default function PricingPage() {
                 'Volume pricing at 25+ locations',
               ].map(f => (
                 <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, color: 'rgba(255,255,255,0.9)', lineHeight: 1.45 }}>
-                  <span style={{ color: '#5EEAD4', fontWeight: 900, fontSize: 14 }}>✓</span>
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#5EEAD4" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0, marginTop: 3 }}>
+                    <path d="M3 8.5l3.5 3.5 6.5-7" />
+                  </svg>
                   <span>{f}</span>
                 </div>
               ))}
