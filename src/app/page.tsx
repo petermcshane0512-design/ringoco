@@ -46,27 +46,18 @@ export default function HomePage() {
               Dashboard
             </Link>
           )}
-          <Link href="/founder" className="nav-pill-why">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
-              <path d="M13 2L3 14h7l-1 8 11-12h-7l1-8z"/>
-            </svg>
+          <Link href="/founder" className="why-pulse">
             Why BellAveGo?
           </Link>
-          <Link href="/pricing" className="nav-pill-price">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <line x1="12" y1="1" x2="12" y2="23" />
-              <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-            </svg>
+          <Link href="/pricing" className="price-pulse">
             Pricing
           </Link>
           {isSignedIn ? (
             <SignOutButton redirectUrl="/">
-              <button style={{ padding: '8px 18px', border: '1.5px solid #DCE9E2', borderRadius: 8, background: 'transparent', color: '#4A6670', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
-                Sign out
-              </button>
+              <button className="signout-link">Sign out</button>
             </SignOutButton>
           ) : (
-            <Link href="/sign-up" className="cta-pulse" style={{ padding: '10px 22px', background: '#22C55E', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800 }}>
+            <Link href="/sign-up" className="join-pulse">
               Sign in / Create Account
             </Link>
           )}

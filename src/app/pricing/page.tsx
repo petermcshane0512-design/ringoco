@@ -153,21 +153,10 @@ export default function PricingPage() {
           {isSignedIn && (
             <Link href="/dashboard" style={{ padding: '10px 22px', background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800 }}>Dashboard</Link>
           )}
-          <Link href="/founder" className="nav-pill-why">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
-              <path d="M13 2L3 14h7l-1 8 11-12h-7l1-8z"/>
-            </svg>
-            Why BellAveGo?
-          </Link>
-          <Link href="/pricing" className="nav-pill-price">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <line x1="12" y1="1" x2="12" y2="23" />
-              <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-            </svg>
-            Pricing
-          </Link>
+          <Link href="/founder" className="why-pulse">Why BellAveGo?</Link>
+          <Link href="/pricing" className="price-pulse">Pricing</Link>
           {!isSignedIn && (
-            <Link href="/sign-up" style={{ padding: '10px 22px', background: '#22C55E', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800 }}>Sign in / Create Account</Link>
+            <Link href="/sign-up" className="join-pulse">Sign in / Create Account</Link>
           )}
         </div>
       </nav>

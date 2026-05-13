@@ -31,49 +31,96 @@ body {
 
 html { overflow-x: hidden; }
 
-/* ── Nav link pills (used on homepage, pricing, founder)
-   Each tab gets its own brand-aligned color so the top-right reads as a
-   palette rather than a row of gray text. Green CTA still wins attention. */
-.nav-pill-why,
-.nav-pill-price {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 16px;
-  border-radius: 9px;
+/* ── Nav glowing pulse buttons (homepage / pricing / founder)
+   Same dash-pulse pattern as the Dashboard button — each tab gets its own
+   color glow so the top-right reads as a palette of living buttons. */
+
+@keyframes whyGlow {
+  0%, 100% { box-shadow: 0 4px 16px rgba(250, 204, 21, 0.50), 0 0 28px rgba(250, 204, 21, 0.32); }
+  50%      { box-shadow: 0 4px 26px rgba(250, 204, 21, 0.74), 0 0 50px rgba(250, 204, 21, 0.50); }
+}
+@keyframes priceGlow {
+  0%, 100% { box-shadow: 0 4px 16px rgba(34, 197, 94, 0.50), 0 0 28px rgba(34, 197, 94, 0.32); }
+  50%      { box-shadow: 0 4px 26px rgba(34, 197, 94, 0.74), 0 0 50px rgba(34, 197, 94, 0.50); }
+}
+@keyframes joinGlow {
+  0%, 100% { box-shadow: 0 4px 16px rgba(139, 92, 246, 0.50), 0 0 28px rgba(139, 92, 246, 0.32); }
+  50%      { box-shadow: 0 4px 26px rgba(139, 92, 246, 0.74), 0 0 50px rgba(139, 92, 246, 0.50); }
+}
+
+.why-pulse,
+.price-pulse,
+.join-pulse {
+  padding: 10px 22px;
+  border-radius: 8px;
   font-size: 14px;
   font-weight: 800;
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
   letter-spacing: -0.1px;
   transition:
-    transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
-    box-shadow 0.22s ease,
-    filter 0.22s ease;
+    transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+    filter 0.28s ease;
 }
 
-/* Why BellAveGo? — sunset orange (founder/story palette) */
-.nav-pill-why {
-  background: linear-gradient(135deg, #FFD9A8 0%, #FF9D5A 50%, #E8742B 100%);
+/* Why BellAveGo? — vibrant yellow */
+.why-pulse {
+  background: linear-gradient(135deg, #FDE047 0%, #FACC15 50%, #EAB308 100%);
+  color: #713F12;
+  border: 1px solid rgba(253, 224, 71, 0.6);
+  animation: whyGlow 2.5s ease-in-out infinite;
+}
+.why-pulse:hover {
+  animation-play-state: paused;
+  transform: scale(1.06) translateY(-2px);
+  box-shadow: 0 10px 40px rgba(250, 204, 21, 0.78), 0 0 64px rgba(250, 204, 21, 0.55);
+  filter: brightness(1.08);
+}
+
+/* Pricing — vibrant green */
+.price-pulse {
+  background: linear-gradient(135deg, #4ADE80 0%, #22C55E 50%, #16A34A 100%);
   color: #fff;
-  border: 1px solid rgba(255, 217, 168, 0.55);
-  box-shadow: 0 4px 14px rgba(232, 116, 43, 0.32);
-  text-shadow: 0 1px 2px rgba(124, 45, 18, 0.18);
+  border: 1px solid rgba(74, 222, 128, 0.5);
+  animation: priceGlow 2.5s ease-in-out infinite;
 }
-.nav-pill-why:hover {
-  transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 8px 26px rgba(232, 116, 43, 0.5);
-  filter: brightness(1.06);
+.price-pulse:hover {
+  animation-play-state: paused;
+  transform: scale(1.06) translateY(-2px);
+  box-shadow: 0 10px 40px rgba(34, 197, 94, 0.78), 0 0 64px rgba(34, 197, 94, 0.55);
+  filter: brightness(1.08);
 }
 
-/* Pricing — amber/gold (money color) */
-.nav-pill-price {
-  background: linear-gradient(135deg, #FDE68A 0%, #FCD34D 50%, #F59E0B 100%);
-  color: #7C2D12;
-  border: 1px solid rgba(252, 211, 77, 0.6);
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+/* Sign in / Create Account — vibrant violet (welcoming, distinct from CTA green) */
+.join-pulse {
+  background: linear-gradient(135deg, #C084FC 0%, #A855F7 50%, #7C3AED 100%);
+  color: #fff;
+  border: 1px solid rgba(192, 132, 252, 0.5);
+  animation: joinGlow 2.5s ease-in-out infinite;
 }
-.nav-pill-price:hover {
-  transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 8px 26px rgba(245, 158, 11, 0.48);
-  filter: brightness(1.06);
+.join-pulse:hover {
+  animation-play-state: paused;
+  transform: scale(1.06) translateY(-2px);
+  box-shadow: 0 10px 40px rgba(139, 92, 246, 0.78), 0 0 64px rgba(139, 92, 246, 0.55);
+  filter: brightness(1.08);
+}
+
+/* Sign out — minimal outline, soft red on hover */
+.signout-link {
+  padding: 8px 18px;
+  border: 1.5px solid #DCE9E2;
+  border-radius: 8px;
+  background: transparent;
+  color: #4A6670;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.18s ease;
+}
+.signout-link:hover {
+  border-color: rgba(220, 38, 38, 0.45);
+  color: #DC2626;
+  background: rgba(254, 242, 242, 0.5);
 }
