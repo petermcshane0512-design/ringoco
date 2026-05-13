@@ -15,9 +15,9 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 const anthropic = new Anthropic()
 
-const SYSTEM_PROMPT = `You are a McKinsey-style strategy consultant writing a weekly business review for a home-services SMB owner.
+const WEEKLY_PROMPT = `You are a McKinsey-style strategy consultant writing a weekly business review for a home-services SMB owner.
 
-Tone: executive-brief. Confident, specific, numerical. No hedging. No fluff.
+Tone: executive-brief. Confident, specific, numerical. No hedging. No fluff. Tactical horizon: 7 days.
 
 Structure your response as STRICT JSON:
 {
@@ -34,6 +34,40 @@ Rules:
 - Skip a section (empty array) if no signal — never invent
 - If the customer had a slow week, say so plainly. Don't manufacture wins.
 - Output ONLY the JSON. No markdown, no commentary.`
+
+const QUARTERLY_PROMPT = `You are a McKinsey Senior Partner writing a quarterly business review for a home-services SMB owner.
+This is the quarterly deep-dive — the customer pays $1,997/mo and expects a real strategic artifact, not a weekly summary.
+
+Tone: senior advisor. Strategic horizon: 90 days. Reference 90-day patterns, not single-week noise. Identify the 2-3 bets that will define the next quarter.
+
+Structure your response as STRICT JSON:
+{
+  "exec_summary": ["3-5 bullets, each a major insight from the quarter, with a numeric anchor"],
+  "quarter_in_review": ["what defined the past 90 days — wins, trends, surprises, with numbers"],
+  "patterns_emerging": ["multi-week patterns: service-mix shifts, customer-acquisition channel shifts, pricing power changes, capacity ceilings"],
+  "competitive_position": ["where the customer stands vs the 5 tracked competitors over 90 days — rating drift, review volume, sentiment themes"],
+  "next_quarter_bets": ["2-3 strategic bets for the next 90 days. Each: WHAT, WHY (cite data), HOW (concrete first move within 14 days)"],
+  "risks": ["concentration, capacity, pricing, or marketing risks that could blow up the next quarter"],
+  "north_star_metric": "one number to obsess over for the next 90 days, with the current value and the target"
+}
+
+Rules:
+- Reference 90-day windows, not weekly
+- Cite SPECIFIC NUMBERS from the data — month-over-month comparisons preferred
+- Bets must be ambitious but doable within 14 days for the first move
+- Skip a section (empty array / empty string) if no signal — never invent
+- This is the most expensive artifact the customer gets all year. Make it land.
+- Output ONLY the JSON. No markdown, no commentary.`
+
+export type ReportType = 'weekly_strategy' | 'quarterly_deep_dive'
+
+function promptFor(reportType: ReportType): string {
+  return reportType === 'quarterly_deep_dive' ? QUARTERLY_PROMPT : WEEKLY_PROMPT
+}
+
+function windowDaysFor(reportType: ReportType): number {
+  return reportType === 'quarterly_deep_dive' ? 90 : 7
+}
 
 export type WeeklyData = {
   weekStart: string
@@ -52,15 +86,28 @@ export type WeeklyData = {
 }
 
 export type ReportNarrative = {
-  exec_summary: string[]
-  key_wins: string[]
-  what_to_fix: string[]
-  competitive_intel: string[]
-  this_weeks_action: string[]
+  exec_summary?: string[]
+  // Weekly fields
+  key_wins?: string[]
+  what_to_fix?: string[]
+  competitive_intel?: string[]
+  this_weeks_action?: string[]
+  // Quarterly fields
+  quarter_in_review?: string[]
+  patterns_emerging?: string[]
+  competitive_position?: string[]
+  next_quarter_bets?: string[]
+  risks?: string[]
+  north_star_metric?: string
 }
 
-export async function gatherWeeklyData(supabase: SupabaseClient, userId: string, weekStart: Date): Promise<WeeklyData> {
-  const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 3600_000)
+export async function gatherWeeklyData(
+  supabase: SupabaseClient,
+  userId: string,
+  weekStart: Date,
+  windowDays: number = 7,
+): Promise<WeeklyData> {
+  const weekEnd = new Date(weekStart.getTime() + windowDays * 24 * 3600_000)
   const startIso = weekStart.toISOString()
   const endIso = weekEnd.toISOString()
 
@@ -155,21 +202,29 @@ export async function gatherWeeklyData(supabase: SupabaseClient, userId: string,
   }
 }
 
-export async function generateNarrative(data: WeeklyData, businessName: string): Promise<ReportNarrative> {
+export async function generateNarrative(
+  data: WeeklyData,
+  businessName: string,
+  reportType: ReportType = 'weekly_strategy',
+): Promise<ReportNarrative> {
+  const periodLabel = reportType === 'quarterly_deep_dive'
+    ? `Quarter ending ${data.weekEnd} (90 days)`
+    : `Week: ${data.weekStart} → ${data.weekEnd}`
+
   const resp = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 2000,
-    system: SYSTEM_PROMPT,
+    max_tokens: reportType === 'quarterly_deep_dive' ? 3500 : 2000,
+    system: promptFor(reportType),
     messages: [
       {
         role: 'user',
         content: `Business: ${businessName}
-Week: ${data.weekStart} → ${data.weekEnd}
+${periodLabel}
 
-Weekly metrics (JSON):
+Metrics (JSON):
 ${JSON.stringify(data, null, 2)}
 
-Write the report.`,
+Write the ${reportType === 'quarterly_deep_dive' ? 'quarterly deep-dive' : 'weekly'} report.`,
       },
     ],
   })
@@ -179,31 +234,29 @@ Write the report.`,
     return JSON.parse(cleaned) as ReportNarrative
   } catch {
     return {
-      exec_summary: ['Report generation hit a parsing issue this week — raw data still in payload.'],
-      key_wins: [],
-      what_to_fix: [],
-      competitive_intel: [],
-      this_weeks_action: [],
+      exec_summary: ['Report generation hit a parsing issue — raw data still in payload below.'],
     }
   }
 }
 
-export async function buildAndStoreWeeklyReport(args: {
+export async function buildAndStoreReport(args: {
   supabase: SupabaseClient
   userId: string
   businessName: string
-  weekStart: Date
+  windowStart: Date  // For weekly: Monday of the current week. For quarterly: 90 days back.
+  reportType: ReportType
 }): Promise<{ reportId: string; publicUrl: string }> {
-  const data = await gatherWeeklyData(args.supabase, args.userId, args.weekStart)
-  const narrative = await generateNarrative(data, args.businessName)
+  const windowDays = windowDaysFor(args.reportType)
+  const data = await gatherWeeklyData(args.supabase, args.userId, args.windowStart, windowDays)
+  const narrative = await generateNarrative(data, args.businessName, args.reportType)
 
   const { data: row, error } = await args.supabase
     .from('concierge_reports')
     .insert({
       user_id: args.userId,
-      report_type: 'weekly_strategy',
+      report_type: args.reportType,
       week_start: data.weekStart,
-      payload: { data, narrative, business_name: args.businessName },
+      payload: { data, narrative, business_name: args.businessName, report_type: args.reportType },
     })
     .select('id')
     .single()
@@ -215,4 +268,20 @@ export async function buildAndStoreWeeklyReport(args: {
       : 'https://www.bellavego.com'
 
   return { reportId: row.id, publicUrl: `${appUrl}/r/${row.id}` }
+}
+
+// Back-compat wrapper for callers that still expect the weekly-only signature.
+export async function buildAndStoreWeeklyReport(args: {
+  supabase: SupabaseClient
+  userId: string
+  businessName: string
+  weekStart: Date
+}): Promise<{ reportId: string; publicUrl: string }> {
+  return buildAndStoreReport({
+    supabase: args.supabase,
+    userId: args.userId,
+    businessName: args.businessName,
+    windowStart: args.weekStart,
+    reportType: 'weekly_strategy',
+  })
 }

@@ -17,7 +17,8 @@ import { watchCompetitorsForCustomer } from './competitor-watcher'
 import { generateCreativesForCustomer } from './ad-creative-generator'
 import { generateAndPublishPost } from './local-seo-publisher'
 import { runReactivationCampaign } from './reactivation-campaign'
-import { buildAndStoreWeeklyReport } from './strategy-report'
+import { buildAndStoreReport } from './strategy-report'
+import { fetchRecentHomeowners, storeHomeownerLeads, isHomeownerLookupEnabled } from './homeowner-lookup'
 import { notifyArtifactReady } from '../notify'
 
 export type AgentRunResult = {
@@ -148,6 +149,29 @@ export async function runMarketingOpsForCustomer(args: {
     })
   }
 
+  // 2b. New-homeowner leads (paid: BatchData / BatchLeads / PropStream).
+  // Highest-converting lead source — only fires if env var is set + customer has ZIPs.
+  if (isHomeownerLookupEnabled() && settings?.service_area_zips?.length) {
+    await safeRun('new_homeowner_leads', async () => {
+      const lookup = await fetchRecentHomeowners({
+        zips: settings.service_area_zips!,
+        state: inferStateCode(profile.service_area) ?? undefined,
+        sinceDays: 60,
+        limit: 50,
+      })
+      if (lookup.leads.length === 0) {
+        return lookup.reason ?? `${lookup.provider}: 0 new homeowners this week`
+      }
+      const stored = await storeHomeownerLeads({
+        supabase: args.supabase,
+        userId: args.userId,
+        leads: lookup.leads,
+        trade: inferPrimaryTrade(profile.services),
+      })
+      return `${stored.stored} new-homeowner leads from ${lookup.provider} (${stored.skipped} skipped — no contact info)`
+    })
+  }
+
   // 3. Competitor snapshots (paid API but cheap)
   if (settings?.competitor_watch_enabled !== false && settings?.competitor_place_ids?.length) {
     await safeRun('competitors', async () => {
@@ -223,19 +247,51 @@ export async function runMarketingOpsForCustomer(args: {
     const weekStart = new Date()
     weekStart.setUTCHours(0, 0, 0, 0)
     weekStart.setUTCDate(weekStart.getUTCDate() - weekStart.getUTCDay() + 1)  // Monday of current week
-    const r = await buildAndStoreWeeklyReport({
+    const r = await buildAndStoreReport({
       supabase: args.supabase,
       userId: args.userId,
       businessName: profile.business_name ?? 'your business',
-      weekStart,
+      windowStart: weekStart,
+      reportType: 'weekly_strategy',
     })
     reportUrl = r.publicUrl
     return `report ${r.reportId} ready`
   })
 
-  // 8. Notify the customer (SMS + email)
+  // 7b. Quarterly deep-dive — fires only on the first Monday of Jan / Apr / Jul / Oct.
+  // Concierge customers get the 52 weeklies AND 4 of these strategic 90-day deep-dives
+  // per year. Different prompt, 90-day data window, McKinsey-senior-partner voice.
+  let quarterlyUrl: string | undefined
+  const now = new Date()
+  const isFirstMonday = now.getUTCDate() <= 7 && now.getUTCDay() === 1
+  const isQuarterMonth = [0, 3, 6, 9].includes(now.getUTCMonth())  // Jan/Apr/Jul/Oct
+  if (isFirstMonday && isQuarterMonth) {
+    await safeRun('quarterly_deep_dive', async () => {
+      const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 3600_000)
+      const r = await buildAndStoreReport({
+        supabase: args.supabase,
+        userId: args.userId,
+        businessName: profile.business_name ?? 'your business',
+        windowStart: ninetyDaysAgo,
+        reportType: 'quarterly_deep_dive',
+      })
+      quarterlyUrl = r.publicUrl
+      return `quarterly ${r.reportId} ready`
+    })
+  }
+
+  // 8. Notify the customer (SMS + email) — quarterly takes priority over weekly if both fire same run
   let notified = { sms: false, email: false }
-  if (reportUrl) {
+  if (quarterlyUrl) {
+    notified = await notifyArtifactReady({
+      supabase: args.supabase,
+      userId: args.userId,
+      artifactType: 'weekly_report',
+      title: 'Your quarterly strategy deep-dive is ready',
+      shortBody: `90 days of patterns, three bets for the next quarter, and the one metric to obsess over.`,
+      publicUrl: quarterlyUrl,
+    })
+  } else if (reportUrl) {
     notified = await notifyArtifactReady({
       supabase: args.supabase,
       userId: args.userId,
@@ -246,5 +302,5 @@ export async function runMarketingOpsForCustomer(args: {
     })
   }
 
-  return { userId: args.userId, steps, reportUrl, notified }
+  return { userId: args.userId, steps, reportUrl: quarterlyUrl ?? reportUrl, notified }
 }
