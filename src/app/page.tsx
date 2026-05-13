@@ -526,7 +526,7 @@ export default function HomePage() {
                   <span className="hero-trust-lab">Always on</span>
                 </div>
                 <div className="hero-trust-item">
-                  <span className="hero-trust-num">$179</span>
+                  <span className="hero-trust-num">$397</span>
                   <span className="hero-trust-lab">Starting / month</span>
                 </div>
                 <div className="hero-trust-item">
@@ -634,21 +634,21 @@ export default function HomePage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20, maxWidth: 960, margin: '0 auto 20px' }}>
           {[
             {
-              name: 'Front Desk', price: 179, setup: 50, tier: 'receptionist', calls: 'Up to 50 / mo',
-              desc: 'AI answers every call. You close it in one tap — confirm, invoice, call back, or just acknowledge. Includes a welcome AI consulting report.',
-              features: ['24/7 AI call answering', 'Captures name · phone · service · address · preferred time', 'Instant text summary to your phone', 'One-tap actions on every call', 'Emergency routing to your cell', 'Live dashboard + full transcripts', 'Welcome AI consulting report at activation'],
+              name: 'Receptionist', price: 397, setup: 250, tier: 'receptionist', calls: 'Up to 250 / mo',
+              desc: 'AI answers every call. You close it in one tap — confirm, invoice, call back, or just acknowledge. Includes a welcome AI consulting report and 6 reports/yr.',
+              features: ['6 AI consulting reports / year (bi-monthly)', '24/7 AI call answering', 'Captures name · phone · service · address · preferred time', 'Instant text summary to your phone', 'One-tap actions on every call', 'Emergency routing to your cell', 'Live dashboard + full transcripts', 'Welcome AI business diagnostic at activation'],
               popular: false, customCta: false,
             },
             {
-              name: 'AI Office Manager', price: 497, setup: 247, tier: 'officemgr', calls: 'Unlimited',
-              desc: 'Your back-office, on autopilot. Four AIs that answer calls, chase quotes, recover invoices, and reply to reviews — so your team can stay focused on the work.',
-              features: ['Everything in Front Desk, plus:', 'Unlimited calls', 'AI Quote Hunter (auto follow-ups day 2/7/14)', 'AI Collections (nightly past-due chase)', 'AI Reviews (drafts replies for one-tap approval)', 'Smart suggestions on call summaries', 'Jobber / HousecallPro / ServiceTitan integration', '6 bi-monthly intelligence reports/year'],
+              name: 'Office Manager', price: 797, setup: 500, tier: 'officemgr', calls: 'Unlimited',
+              desc: 'Your back-office, on autopilot. Five AIs that answer calls, chase quotes, recover invoices, draft review replies, and ask past customers for new reviews.',
+              features: ['Everything in Receptionist, plus:', '12 AI consulting reports / year (monthly)', 'Unlimited calls', 'AI Quote Hunter (auto follow-ups day 2/7/14)', 'AI Collections (auto-chase past-due invoices)', 'AI Reviews (drafts replies for one-tap approval)', 'AI Reputation (auto-SMS past customers for reviews)', 'Smart call-summary sales tips with every booking'],
               popular: true, customCta: false,
             },
             {
-              name: 'Concierge', price: 997, setup: 497, tier: 'concierge', calls: 'Coming Sept 2026',
-              desc: 'Everything autonomous + multi-location + auto-confirm mode + founder direct. Coming Sept 2026 — join the waitlist now to lock in pricing.',
-              features: ['Everything in AI Office Manager, plus:', 'Auto-confirm mode (when you trust it)', 'Multi-location support (up to 5 numbers)', 'Custom AI prompt tuning', 'AI Photo Estimator · Financing Closer · Recruiter (Q3 2026)', 'White-glove onboarding (we wire up your CRM)', 'Priority support — 24h SLA, dedicated Slack', 'API access for custom integrations', '12 monthly intelligence reports/year'],
+              name: 'Concierge', price: 1997, setup: 1000, tier: 'concierge', calls: 'Unlimited',
+              desc: 'AI runs your back office AND your marketing. Weekly strategy reports, ad creative from your own call transcripts, lead sourcing from permits + storms, competitor intel, local SEO. You just close the work.',
+              features: ['Everything in Office Manager, plus:', '52 weekly AI strategy reports + quarterly deep-dive', 'AI Ad Creative Generator (Google + Meta)', 'AI Lead Sourcing (permits + severe-weather alerts)', 'AI Past-Customer Reactivation drips', 'AI Google Business Profile Watcher', 'AI Competitor Watcher (daily intel on 5 competitors)', 'AI Local SEO (weekly WordPress blog posts)', 'Custom AI prompt tuning', 'Priority 4-hour SLA'],
               popular: false, customCta: false,
             },
           ].map(plan => (
@@ -710,7 +710,7 @@ export default function HomePage() {
         </div>
         <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 16, lineHeight: 1.6 }}>
           Month-to-month . 30-day money-back . 17% off annual.<br />
-          <span style={{ fontWeight: 700, color: '#0AA89F' }}>Typical $1M HVAC shop sees $18K/mo lift from the 4-AI bundle</span> — 37x return on $497.<br />
+          <span style={{ fontWeight: 700, color: '#0AA89F' }}>Typical $1M HVAC shop sees $18K/mo lift from the 5-AI bundle</span> — 23x return on $797.<br />
           90-day money-back if we don&apos;t add at least 5 booked jobs.
         </p>
       </section>
@@ -745,7 +745,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <Image src="/logo.png" alt="BellAveGo" width={300} height={100} style={{ objectFit: 'contain' }} />
           <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
-          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>The best AI implementation for teams of 1–15 · From $179/mo · 90-day money-back · Cancel anytime</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>The best AI implementation for teams of 1–15 · From $397/mo · 30-day money-back · Cancel anytime</p>
         </div>
       </footer>
 

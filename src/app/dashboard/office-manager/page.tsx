@@ -180,7 +180,7 @@ export default function OfficeManagerPage() {
     <div style={{ padding: 40, fontFamily: 'system-ui', color: '#DC2626' }}>
       <h2>Office Manager unavailable</h2>
       <p>{error}</p>
-      <p style={{ fontSize: 13, color: '#4A7A80' }}>This feature requires the AI Office Manager tier ($497/mo) or Concierge ($997/mo).</p>
+      <p style={{ fontSize: 13, color: '#4A7A80' }}>This feature requires the Office Manager tier ($797/mo) or Concierge ($1,997/mo).</p>
       <Link href="/dashboard">← Back to dashboard</Link>
     </div>
   )

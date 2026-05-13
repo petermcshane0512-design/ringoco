@@ -42,10 +42,10 @@ const input: React.CSSProperties = {
 const row: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }
 
 const TIER_LABELS: Record<string, { label: string; calls: string; price: string }> = {
-  // v4 active
-  receptionist: { label: 'Front Desk', calls: '50 bookings/mo',     price: '$179/mo' },
-  officemgr:    { label: 'AI Office Manager', calls: 'Unlimited calls',  price: '$497/mo' },
-  concierge:    { label: 'Concierge',         calls: 'Unlimited calls',  price: '$997/mo' },
+  // v7 active (May 12 2026)
+  receptionist: { label: 'Receptionist',      calls: '250 calls/mo',     price: '$397/mo' },
+  officemgr:    { label: 'Office Manager',    calls: 'Unlimited calls',  price: '$797/mo' },
+  concierge:    { label: 'Concierge',         calls: 'Unlimited calls',  price: '$1,997/mo' },
   cancelled:    { label: 'Cancelled', calls: '—', price: '—' },
   // Legacy tiers (existing customers — keep for back-compat)
   foundation:   { label: 'Foundation (legacy)', calls: 'Unlimited', price: '$79/mo or $129/mo' },

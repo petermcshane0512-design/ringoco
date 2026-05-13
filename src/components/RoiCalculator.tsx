@@ -346,7 +346,7 @@ export default function RoiCalculator() {
                 <div className="val">{Math.round(calc.roi)}×</div>
               </div>
               <div className="roi-meta-tile">
-                <div className="lab">Net after $179/mo</div>
+                <div className="lab">Net after $397/mo</div>
                 <div className="val">+${calc.netMonthly.toLocaleString()}</div>
               </div>
             </div>
