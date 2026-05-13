@@ -602,27 +602,20 @@ export function ReportView({ report, sample = false, personalized = false }: { r
         </div>
       )}
 
-      {/* Hero */}
+      {/* Hero — clean: upside number + one subtitle line */}
       <div className="cr-hero">
         <div className="cr-hero-inner">
           <div className="cr-brand">
             <span className="cr-brand-dot" />
-            BellAveGo Consulting · {r.meta.period} Report
+            BellAveGo Consulting
           </div>
           <h1 className="cr-hero-title">
-            {r.meta.businessName}<br />
-            <span className="accent">${(monthlyOpportunityTotal(r) / 1000).toFixed(1)}K/mo</span> in identified upside.
+            <span className="accent">${monthlyOpportunityTotal(r).toLocaleString()}/mo</span><br />
+            in identified upside.
           </h1>
           <p className="cr-hero-sub">
-            A data-driven look at how {r.meta.businessName} performed this quarter, how the local market is shifting, and the three highest-leverage moves to make in the next 90 days.
+            {r.meta.businessName} · {r.meta.period} · {r.meta.metroLabel}
           </p>
-          <div className="cr-hero-meta">
-            <span className="cr-meta-pill">Trade: <strong>{r.meta.businessType}</strong></span>
-            <span className="cr-meta-pill">Service area: <strong>{r.meta.serviceArea.join(', ')}</strong></span>
-            <span className="cr-meta-pill">Metro: <strong>{r.meta.metroLabel}</strong></span>
-            <span className="cr-meta-pill">Generated: <strong>{r.meta.generatedAt}</strong></span>
-            <span className="cr-meta-pill">Report #: <strong>{r.meta.reportNumber}</strong></span>
-          </div>
         </div>
       </div>
 
@@ -642,12 +635,30 @@ export function ReportView({ report, sample = false, personalized = false }: { r
         {/* Content */}
         <div className="cr-content">
 
-          {/* 1. Executive Summary */}
+          {/* 1. Executive Summary — TL;DR box pulls the #1 opportunity, then one paragraph */}
           <section id="exec" className="cr-section">
             <h2><span className="cr-section-num">1</span>Executive Summary<span className="cr-section-tag">Narrative</span></h2>
             <p className="cr-lede">A 60-second read of your quarter and where the biggest dollars are.</p>
+            {r.opportunities[0] && (
+              <div style={{
+                padding: '16px 20px',
+                background: 'linear-gradient(135deg, rgba(34,197,94,0.10), rgba(94,234,212,0.06))',
+                border: '1px solid rgba(34,197,94,0.28)',
+                borderLeft: '4px solid #15803D',
+                borderRadius: 12,
+                marginBottom: 18,
+              }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: '#15803D', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 6 }}>
+                  TL;DR — Biggest single opportunity
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.2px', lineHeight: 1.4 }}>
+                  {r.opportunities[0].title} = <span style={{ color: '#15803D' }}>+{fmtMoney(r.opportunities[0].monthlyValue)}/mo</span>
+                  <span style={{ fontSize: 13, color: '#4A6670', fontWeight: 600 }}> with no ad spend.</span>
+                </div>
+              </div>
+            )}
             <div className="cr-exec">
-              {r.executiveSummary.map((p, i) => <p key={i}>{p}</p>)}
+              {r.executiveSummary.slice(0, 1).map((p, i) => <p key={i}>{p}</p>)}
             </div>
           </section>
 
@@ -670,7 +681,19 @@ export function ReportView({ report, sample = false, personalized = false }: { r
             <h2><span className="cr-section-num">3</span>BellAveGo Score<span className="cr-section-tag">Composite</span></h2>
             <p className="cr-lede">A 1–10 score blending answer rate, booking conversion, response time, and pricing power vs. your local market.</p>
             <div className="cr-score-grid">
-              <ScoreRing score={r.bellaveScore.composite} />
+              <div>
+                <ScoreRing score={r.bellaveScore.composite} />
+                <div style={{
+                  marginTop: 14, textAlign: 'center',
+                  padding: '8px 14px', borderRadius: 99,
+                  background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.28)',
+                  fontSize: 12, fontWeight: 800, color: '#15803D',
+                  letterSpacing: '0.04em',
+                  display: 'inline-block', width: '100%',
+                }}>
+                  {scoreBenchmark(r.bellaveScore.composite, r.meta.businessType, r.meta.metroLabel)}
+                </div>
+              </div>
               <div className="cr-bars">
                 <ScoreBar label="Answer rate" v={r.bellaveScore.answerRate} />
                 <ScoreBar label="Booking conversion" v={r.bellaveScore.bookingConversion} />
@@ -926,7 +949,7 @@ export function ReportView({ report, sample = false, personalized = false }: { r
             <h3>Methodology</h3>
             <p style={{ margin: 0 }}>{r.methodology}</p>
             <div className="cr-foot-credit">
-              <span>Report #{r.meta.reportNumber} · Generated {r.meta.generatedAt}</span>
+              <span>Generated {r.meta.generatedAt}</span>
               <span className="cr-foot-unis">Formulated by graduates of Harvard, Stanford &amp; Fordham</span>
             </div>
           </div>
@@ -937,19 +960,22 @@ export function ReportView({ report, sample = false, personalized = false }: { r
 }
 
 const SECTIONS = [
-  { id: 'exec', label: 'Executive Summary' },
   { id: 'performance', label: 'Performance' },
-  { id: 'score', label: 'BellAveGo Score' },
-  { id: 'opps', label: 'Top Opportunities' },
-  { id: 'market', label: 'Market Scan' },
-  { id: 'outreach', label: 'Outreach Targets' },
-  { id: 'upsells', label: 'Priced Upsells' },
-  { id: 'competitive', label: 'Competitive' },
-  { id: 'actions', label: '90-Day Plan' },
+  { id: 'opps', label: 'Opportunities' },
+  { id: 'market', label: 'Market' },
+  { id: 'actions', label: 'Plan' },
 ]
 
 function monthlyOpportunityTotal(r: ConsultingReport) {
   return r.opportunities.reduce((a, b) => a + b.monthlyValue, 0)
+}
+
+function scoreBenchmark(score: number, trade: string, metro: string) {
+  const tier = score >= 8.5 ? 'Top 10%'
+    : score >= 7.0 ? 'Top 30%'
+    : score >= 5.5 ? 'Top 50%'
+    : 'Bottom 50%'
+  return `${tier} of ${trade} contractors in ${metro.split(',')[0]}`
 }
 
 function Kpi({ label, value, delta }: { label: string; value: string; delta?: number }) {

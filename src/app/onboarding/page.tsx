@@ -12,7 +12,6 @@ const BUSINESS_TYPES = [
 ]
 
 // Common trades the AI can confirm to callers ("Sounds like an HVAC issue").
-// Customers tick the ones they actually do — the AI mentions only these.
 const TRADE_OPTIONS = [
   'AC repair', 'AC install', 'Heating / furnace', 'Water heater',
   'Drain cleaning', 'Sewer / main line', 'Toilet / faucet',
@@ -24,46 +23,9 @@ const TRADE_OPTIONS = [
   'Pest control', 'Pool / spa service', 'Handyman / odd jobs',
 ]
 
-const REVENUE_OPTIONS = [
-  { label: 'Under $100k', value: 'under_100k' },
-  { label: '$100k – $500k', value: '100k_500k' },
-  { label: '$500k – $2M', value: '500k_2m' },
-  { label: '$2M – $4M', value: '2m_4m' },
-  { label: '$4M+', value: '4m_plus' },
-]
-
-const TEAM_OPTIONS = [
-  { label: 'Just me', value: '1' },
-  { label: '2 – 5', value: '2_5' },
-  { label: '6 – 15', value: '6_15' },
-  { label: '15+', value: '15_plus' },
-]
-
-const SERVICE_OPTIONS = [
-  'Call answering', 'Appointment booking', 'SMS confirmations',
-  'Invoice & payments', 'Revenue tracking', 'AI consulting reports',
-  'Google review requests', 'Follow-up reminders',
-]
-
-const TONE_OPTIONS = [
-  { label: 'Friendly', value: 'friendly', desc: 'Warm, conversational — like a small-town receptionist.' },
-  { label: 'Professional', value: 'professional', desc: 'Polished and formal — for higher-end clientele.' },
-  { label: 'Concise', value: 'concise', desc: 'Brief and direct — no small talk, just get the booking done.' },
-]
-
-const LANGUAGE_OPTIONS = [
-  { label: 'English only', value: 'en' },
-  { label: 'Spanish (Español)', value: 'es' },
-]
-
-const HOURS_OPTIONS = ['6:00 AM','7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM',
-  '1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM','7:00 PM','8:00 PM','9:00 PM']
-
 const STEPS = [
   { id: 1, label: 'Your Business', icon: '🏢' },
   { id: 2, label: 'Your Trades',   icon: '🔧' },
-  { id: 3, label: 'AI Voice',      icon: '🎙️' },
-  { id: 4, label: 'Features',      icon: '⚙️' },
 ]
 
 const slideVariants = {
@@ -79,13 +41,6 @@ type FormData = {
   phone: string
   serviceArea: string
   trades: string[]
-  aiTone: 'friendly' | 'professional' | 'concise'
-  aiLanguage: 'en' | 'es'
-  revenueRange: string
-  teamSize: string
-  services: string[]
-  hoursOpen: string
-  hoursClose: string
 }
 
 export default function OnboardingPage() {
@@ -95,7 +50,6 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1)
   const [dir, setDir] = useState(1)
   const [saving, setSaving] = useState(false)
-  const [done, setDone] = useState(false)
 
   const [form, setForm] = useState<FormData>({
     businessName: '',
@@ -104,24 +58,10 @@ export default function OnboardingPage() {
     phone: '',
     serviceArea: '',
     trades: [],
-    aiTone: 'friendly',
-    aiLanguage: 'en',
-    revenueRange: '',
-    teamSize: '',
-    services: [],
-    hoursOpen: '8:00 AM',
-    hoursClose: '6:00 PM',
   })
 
   function set<K extends keyof FormData>(key: K, val: FormData[K]) {
     setForm(f => ({ ...f, [key]: val }))
-  }
-
-  function toggleService(s: string) {
-    setForm(f => ({
-      ...f,
-      services: f.services.includes(s) ? f.services.filter(x => x !== s) : [...f.services, s],
-    }))
   }
 
   function toggleTrade(t: string) {
@@ -134,8 +74,6 @@ export default function OnboardingPage() {
   function canContinue() {
     if (step === 1) return form.businessName.trim() && form.businessType && form.phone.trim() && form.ownerFirstName.trim() && form.serviceArea.trim()
     if (step === 2) return form.trades.length > 0
-    if (step === 3) return !!form.aiTone && !!form.aiLanguage && form.revenueRange && form.teamSize
-    if (step === 4) return form.services.length > 0
     return true
   }
 
@@ -153,45 +91,43 @@ export default function OnboardingPage() {
   async function finish() {
     if (!canContinue() || saving) return
     setSaving(true)
-    try {
-      await fetch('/api/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          business_name: form.businessName,
-          business_type: form.businessType,
-          owner_first_name: form.ownerFirstName,
-          owner_phone: form.phone,
-          service_area: form.serviceArea,
-          services_offered: form.trades.join(', '),
-          ai_tone: form.aiTone,
-          ai_language: form.aiLanguage,
-          revenue_range: form.revenueRange,
-          team_size: form.teamSize,
-          services: form.services.join(', '),
-          hours_open: form.hoursOpen,
-          hours_close: form.hoursClose,
-          onboarding_complete: true,
-        }),
-      })
-      await user?.update({ unsafeMetadata: { onboardingComplete: true } })
-      // Fire-and-forget — these enrich the profile but never block the user
-      fetch('/api/onboarding/resolve-place', { method: 'POST' }).catch(() => {})
-      fetch('/api/diagnostics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          businessName: form.businessName,
-          phone: form.phone,
-          businessType: form.businessType,
-          revenueRange: form.revenueRange,
-        }),
-      }).catch(() => {})
-    } catch {
-      // continue to dashboard even if save fails
-    }
-    setDone(true)
-    setTimeout(() => router.push('/pricing'), 7000)
+    // Fire-and-forget profile save with sensible defaults so we don't block the
+    // user. The remaining preferences (tone/language/hours/features) are wired
+    // to defaults here and editable from Dashboard → Settings post-checkout.
+    fetch('/api/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        business_name: form.businessName,
+        business_type: form.businessType,
+        owner_first_name: form.ownerFirstName,
+        owner_phone: form.phone,
+        service_area: form.serviceArea,
+        services_offered: form.trades.join(', '),
+        ai_tone: 'friendly',
+        ai_language: 'en',
+        revenue_range: '',
+        team_size: '',
+        services: 'Call answering, Appointment booking, SMS confirmations',
+        hours_open: '8:00 AM',
+        hours_close: '6:00 PM',
+        onboarding_complete: true,
+      }),
+    }).catch(() => {})
+    user?.update({ unsafeMetadata: { onboardingComplete: true } }).catch(() => {})
+    fetch('/api/onboarding/resolve-place', { method: 'POST' }).catch(() => {})
+    fetch('/api/diagnostics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        businessName: form.businessName,
+        phone: form.phone,
+        businessType: form.businessType,
+      }),
+    }).catch(() => {})
+    // Send them straight to pricing — no done screen, no auto-redirect timer.
+    // Goal: zero turnover between filling the form and picking a plan.
+    router.push('/pricing')
   }
 
   const inputStyle: React.CSSProperties = {
@@ -206,32 +142,6 @@ export default function OnboardingPage() {
   const labelStyle: React.CSSProperties = {
     display: 'block', fontSize: 11, fontWeight: 700, color: '#7AAAB2',
     textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6,
-  }
-
-  function PillButton({ label, value, current, onClick }: { label: string; value: string; current: string; onClick: () => void }) {
-    const active = current === value
-    return (
-      <button onClick={onClick} style={{
-        padding: '9px 16px', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-        border: `1.5px solid ${active ? '#0AA89F' : 'rgba(10,168,159,0.2)'}`,
-        background: active ? 'rgba(10,168,159,0.08)' : '#F5FDFB',
-        color: active ? '#0AA89F' : '#4A7A80',
-        transition: 'all 0.15s ease',
-      }}>{label}</button>
-    )
-  }
-
-  function ServiceChip({ label }: { label: string }) {
-    const active = form.services.includes(label)
-    return (
-      <button onClick={() => toggleService(label)} style={{
-        padding: '8px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-        border: `1.5px solid ${active ? '#0AA89F' : 'rgba(10,168,159,0.2)'}`,
-        background: active ? 'rgba(10,168,159,0.1)' : '#F5FDFB',
-        color: active ? '#0AA89F' : '#4A7A80',
-        transition: 'all 0.15s ease',
-      }}>{active ? '✓ ' : ''}{label}</button>
-    )
   }
 
   return (
@@ -260,115 +170,48 @@ export default function OnboardingPage() {
       >
 
         {/* Progress header */}
-        {!done && (
-          <div style={{ background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', padding: '20px 28px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                Step {step} of {STEPS.length}
-              </span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>
-                {Math.round((step / STEPS.length) * 100)}% complete
-              </span>
-            </div>
-            {/* Progress bar */}
-            <div style={{ height: 4, background: 'rgba(255,255,255,0.22)', borderRadius: 4 }}>
-              <motion.div
-                animate={{ width: `${(step / STEPS.length) * 100}%` }}
-                transition={{ duration: 0.4, ease: 'easeOut' }}
-                style={{ height: '100%', background: '#fff', borderRadius: 4 }}
-              />
-            </div>
-            {/* Step dots */}
-            <div style={{ display: 'flex', gap: 20, marginTop: 14 }}>
-              {STEPS.map(s => (
-                <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: step >= s.id ? 1 : 0.45 }}>
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: step > s.id ? '#fff' : step === s.id ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>
-                    {step > s.id ? <span style={{ color: '#0AA89F', fontWeight: 800 }}>✓</span> : <span style={{ fontSize: 10 }}>{s.icon}</span>}
-                  </div>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{s.label}</span>
-                </div>
-              ))}
-            </div>
+        <div style={{ background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', padding: '20px 28px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+              Step {step} of {STEPS.length}
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>
+              60 seconds
+            </span>
           </div>
-        )}
+          {/* Progress bar */}
+          <div style={{ height: 4, background: 'rgba(255,255,255,0.22)', borderRadius: 4 }}>
+            <motion.div
+              animate={{ width: `${(step / STEPS.length) * 100}%` }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+              style={{ height: '100%', background: '#fff', borderRadius: 4 }}
+            />
+          </div>
+          {/* Step dots */}
+          <div style={{ display: 'flex', gap: 20, marginTop: 14 }}>
+            {STEPS.map(s => (
+              <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: step >= s.id ? 1 : 0.45 }}>
+                <div style={{ width: 22, height: 22, borderRadius: '50%', background: step > s.id ? '#fff' : step === s.id ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>
+                  {step > s.id ? <span style={{ color: '#0AA89F', fontWeight: 800 }}>✓</span> : <span style={{ fontSize: 10 }}>{s.icon}</span>}
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{s.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Step content */}
         <div style={{ padding: '32px 28px 28px', minHeight: 360, position: 'relative', overflow: 'hidden' }}>
           <AnimatePresence mode="wait" custom={dir}>
 
-            {/* ── DONE SCREEN ── */}
-            {done && (
-              <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ textAlign: 'center', padding: '20px 0 8px' }}>
-                <motion.div
-                  animate={{ scale: [1, 1.15, 1] }}
-                  transition={{ duration: 0.6, ease: 'easeOut' }}
-                  style={{ width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg, #22C55E, #16A34A)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 8px 28px rgba(34,197,94,0.38)', fontSize: 28, color: '#fff', fontWeight: 900 }}
-                >
-                  ✓
-                </motion.div>
-                <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.03em', marginBottom: 8 }}>
-                  You&apos;re all set!
-                </h2>
-                <p style={{ fontSize: 13, color: '#4A7A80', lineHeight: 1.55, maxWidth: 340, margin: '0 auto 18px' }}>
-                  Want to hear how BellAveGo will sound to your customers?
-                </p>
-
-                {/* Demo call CTA — primary action */}
-                <motion.a
-                  href="tel:+16514677829"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.25 }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 14,
-                    background: 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)',
-                    border: '1px solid rgba(94,234,212,0.32)',
-                    borderRadius: 14,
-                    padding: '14px 18px',
-                    maxWidth: 360, margin: '0 auto 14px',
-                    textDecoration: 'none',
-                    boxShadow: '0 12px 36px rgba(11,31,58,0.28), 0 0 0 1px rgba(94,234,212,0.14), inset 0 1px 0 rgba(255,255,255,0.08)',
-                    textAlign: 'left',
-                  }}
-                >
-                  <motion.div
-                    animate={{ scale: [1, 1.08, 1] }}
-                    transition={{ duration: 1.6, repeat: Infinity }}
-                    style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #0AA89F, #0D8F87)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 0 24px rgba(94,234,212,0.45)' }}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                    </svg>
-                  </motion.div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#5EEAD4', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 2 }}>
-                      Try the live demo
-                    </div>
-                    <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>
-                      (651) 467‑7829
-                    </div>
-                  </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                  </svg>
-                </motion.a>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', padding: '10px 16px', maxWidth: 340, margin: '0 auto' }}>
-                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
-                    style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid #0AA89F', borderTopColor: 'transparent' }} />
-                  <span style={{ fontSize: 12, fontWeight: 600, color: '#7AAAB2' }}>Loading your plan options…</span>
-                </div>
-              </motion.div>
-            )}
-
-            {/* ── STEP 1: Business basics + owner + service area ── */}
-            {!done && step === 1 && (
+            {/* ── STEP 1: Business basics ── */}
+            {step === 1 && (
               <motion.div key="step1" custom={dir} variants={slideVariants} initial="enter" animate="center" exit="exit"
                 transition={{ duration: 0.3, ease: 'easeOut' }}>
                 <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.02em', marginBottom: 6 }}>
                   Tell us about your business
                 </h2>
-                <p style={{ fontSize: 13, color: '#7AAAB2', marginBottom: 22 }}>We&apos;ll use this to personalize your AI receptionist.</p>
+                <p style={{ fontSize: 13, color: '#7AAAB2', marginBottom: 22 }}>We&apos;ll personalize your AI receptionist with this. Everything else (tone, hours, features) is editable in settings later.</p>
 
                 <div style={{ marginBottom: 14 }}>
                   <label style={labelStyle}>Business name</label>
@@ -411,18 +254,18 @@ export default function OnboardingPage() {
               </motion.div>
             )}
 
-            {/* ── STEP 2: Trades — what the AI will confirm to callers ── */}
-            {!done && step === 2 && (
+            {/* ── STEP 2: Trades ── */}
+            {step === 2 && (
               <motion.div key="step2" custom={dir} variants={slideVariants} initial="enter" animate="center" exit="exit"
                 transition={{ duration: 0.3, ease: 'easeOut' }}>
                 <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.02em', marginBottom: 6 }}>
                   What services do you offer?
                 </h2>
                 <p style={{ fontSize: 13, color: '#7AAAB2', marginBottom: 18 }}>
-                  Pick all that apply. Your AI will only confirm jobs in these categories (&quot;Sounds like an HVAC issue&quot;) and politely route anything else.
+                  Pick all that apply. Your AI will only confirm jobs in these categories and politely route anything else.
                 </p>
 
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
                   {TRADE_OPTIONS.map(t => {
                     const active = form.trades.includes(t)
                     return (
@@ -436,104 +279,6 @@ export default function OnboardingPage() {
                     )
                   })}
                 </div>
-                <p style={{ fontSize: 11, color: '#A0BCC2' }}>
-                  Don&apos;t see one? You can add custom AI instructions from Dashboard → Settings after activation.
-                </p>
-              </motion.div>
-            )}
-
-            {/* ── STEP 3: AI voice + business shape ── */}
-            {!done && step === 3 && (
-              <motion.div key="step3" custom={dir} variants={slideVariants} initial="enter" animate="center" exit="exit"
-                transition={{ duration: 0.3, ease: 'easeOut' }}>
-                <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.02em', marginBottom: 6 }}>
-                  How should your AI sound?
-                </h2>
-                <p style={{ fontSize: 13, color: '#7AAAB2', marginBottom: 18 }}>
-                  This sets the receptionist&apos;s tone and language. You can tweak both later from settings.
-                </p>
-
-                <div style={{ marginBottom: 18 }}>
-                  <label style={labelStyle}>Tone</label>
-                  <div style={{ display: 'grid', gap: 8 }}>
-                    {TONE_OPTIONS.map(o => {
-                      const active = form.aiTone === o.value
-                      return (
-                        <button key={o.value} onClick={() => set('aiTone', o.value as FormData['aiTone'])} style={{
-                          textAlign: 'left', padding: '10px 14px', borderRadius: 10,
-                          border: `1.5px solid ${active ? '#0AA89F' : 'rgba(10,168,159,0.18)'}`,
-                          background: active ? 'rgba(10,168,159,0.08)' : '#F5FDFB',
-                          cursor: 'pointer', fontFamily: 'inherit',
-                        }}>
-                          <div style={{ fontSize: 13, fontWeight: 800, color: active ? '#0AA89F' : '#0B1F3A' }}>
-                            {active ? '✓ ' : ''}{o.label}
-                          </div>
-                          <div style={{ fontSize: 11, color: '#7AAAB2', marginTop: 2 }}>{o.desc}</div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: 18 }}>
-                  <label style={labelStyle}>Language</label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {LANGUAGE_OPTIONS.map(o => (
-                      <PillButton key={o.value} label={o.label} value={o.value} current={form.aiLanguage} onClick={() => set('aiLanguage', o.value as FormData['aiLanguage'])} />
-                    ))}
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: 14 }}>
-                  <label style={labelStyle}>Annual revenue range</label>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {REVENUE_OPTIONS.map(o => (
-                      <PillButton key={o.value} label={o.label} value={o.value} current={form.revenueRange} onClick={() => set('revenueRange', o.value)} />
-                    ))}
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: 14 }}>
-                  <label style={labelStyle}>Team size</label>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {TEAM_OPTIONS.map(o => (
-                      <PillButton key={o.value} label={o.label} value={o.value} current={form.teamSize} onClick={() => set('teamSize', o.value)} />
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label style={labelStyle}>Typical business hours</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div>
-                      <label style={{ ...labelStyle, marginBottom: 4 }}>Opens</label>
-                      <select style={selectStyle} value={form.hoursOpen} onChange={e => set('hoursOpen', e.target.value)}>
-                        {HOURS_OPTIONS.map(h => <option key={h} value={h}>{h}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label style={{ ...labelStyle, marginBottom: 4 }}>Closes</label>
-                      <select style={selectStyle} value={form.hoursClose} onChange={e => set('hoursClose', e.target.value)}>
-                        {HOURS_OPTIONS.map(h => <option key={h} value={h}>{h}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* ── STEP 4: Features ── */}
-            {!done && step === 4 && (
-              <motion.div key="step4" custom={dir} variants={slideVariants} initial="enter" animate="center" exit="exit"
-                transition={{ duration: 0.3, ease: 'easeOut' }}>
-                <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.02em', marginBottom: 6 }}>
-                  What do you want BellAveGo to handle?
-                </h2>
-                <p style={{ fontSize: 13, color: '#7AAAB2', marginBottom: 22 }}>Select everything you want activated from day one.</p>
-
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9, marginBottom: 24 }}>
-                  {SERVICE_OPTIONS.map(s => <ServiceChip key={s} label={s} />)}
-                </div>
 
                 <div style={{ background: '#F5FDFB', border: '1px solid rgba(10,168,159,0.16)', borderRadius: 12, padding: '14px 16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -541,7 +286,7 @@ export default function OnboardingPage() {
                     <span style={{ fontSize: 12, fontWeight: 700, color: '#0B1F3A' }}>30-day money-back guarantee</span>
                   </div>
                   <p style={{ fontSize: 11, color: '#7AAAB2', margin: 0, lineHeight: 1.6 }}>
-                    Pick your plan after onboarding. Cancel within 30 days for a full subscription refund.
+                    Pick your plan next. Cancel within 30 days for a full subscription refund.
                   </p>
                 </div>
               </motion.div>
@@ -551,34 +296,32 @@ export default function OnboardingPage() {
         </div>
 
         {/* Navigation footer */}
-        {!done && (
-          <div style={{ padding: '0 28px 26px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            {step > 1 ? (
-              <button onClick={back} style={{ padding: '11px 22px', borderRadius: 10, border: '1.5px solid rgba(10,168,159,0.2)', background: 'transparent', color: '#4A7A80', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                ← Back
-              </button>
-            ) : <div />}
-
-            <button
-              onClick={step < STEPS.length ? next : finish}
-              disabled={!canContinue() || saving}
-              style={{
-                padding: '12px 28px', borderRadius: 10, border: 'none', fontSize: 14, fontWeight: 800, cursor: canContinue() ? 'pointer' : 'not-allowed', fontFamily: 'inherit',
-                background: canContinue() ? 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)' : 'rgba(10,168,159,0.1)',
-                color: canContinue() ? '#fff' : '#7AAAB2',
-                boxShadow: canContinue() ? '0 4px 18px rgba(34,197,94,0.32)' : 'none',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              {step < STEPS.length ? 'Continue →' : saving ? 'Saving…' : 'Launch My Dashboard →'}
+        <div style={{ padding: '0 28px 26px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {step > 1 ? (
+            <button onClick={back} style={{ padding: '11px 22px', borderRadius: 10, border: '1.5px solid rgba(10,168,159,0.2)', background: 'transparent', color: '#4A7A80', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              ← Back
             </button>
-          </div>
-        )}
+          ) : <div />}
+
+          <button
+            onClick={step < STEPS.length ? next : finish}
+            disabled={!canContinue() || saving}
+            style={{
+              padding: '12px 28px', borderRadius: 10, border: 'none', fontSize: 14, fontWeight: 800, cursor: canContinue() ? 'pointer' : 'not-allowed', fontFamily: 'inherit',
+              background: canContinue() ? 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)' : 'rgba(10,168,159,0.1)',
+              color: canContinue() ? '#fff' : '#7AAAB2',
+              boxShadow: canContinue() ? '0 4px 18px rgba(34,197,94,0.32)' : 'none',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            {step < STEPS.length ? 'Continue →' : saving ? 'Saving…' : 'Pick your plan →'}
+          </button>
+        </div>
       </motion.div>
 
       <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
         style={{ marginTop: 20, fontSize: 11, color: '#A0BCC2', textAlign: 'center', position: 'relative', zIndex: 1 }}>
-        No credit card required · Setup in 10–15 minutes · Cancel anytime
+        No credit card required · Two steps, 60 seconds · Cancel anytime
       </motion.p>
     </div>
   )

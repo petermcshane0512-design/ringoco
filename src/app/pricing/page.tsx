@@ -187,6 +187,39 @@ export default function PricingPage() {
           >Annual <span style={{ fontSize: 10, padding: '2px 6px', background: isAnnual ? 'rgba(255,255,255,0.22)' : 'rgba(34,197,94,0.16)', color: isAnnual ? '#fff' : '#16A34A', borderRadius: 4, marginLeft: 6, fontWeight: 800 }}>SAVE 17%</span></button>
         </div>
         <p style={{ fontSize: 12, color: '#7AAAB2', margin: 0 }}>{isAnnual ? '12 months for the price of 10. Billed once.' : 'Cancel anytime.'}</p>
+
+        {/* Plan picker — kills the "which one for me?" decision friction */}
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: 6,
+          marginTop: 28, padding: '10px 18px',
+          background: '#fff', border: '1px solid rgba(10,168,159,0.22)', borderRadius: 14,
+          boxShadow: '0 4px 20px rgba(7,27,58,0.05)',
+        }}>
+          <span style={{ fontSize: 12, fontWeight: 800, color: '#0B1F3A', letterSpacing: '0.04em', textTransform: 'uppercase', marginRight: 4 }}>
+            Not sure which?
+          </span>
+          {[
+            { label: 'Solo', tier: 'receptionist' as Tier },
+            { label: '2–10 people', tier: 'officemgr' as Tier },
+            { label: '10+ or want marketing', tier: 'concierge' as Tier },
+          ].map((x, i) => (
+            <span key={x.tier} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              {i > 0 && <span style={{ color: '#DCE9E2', fontSize: 12 }}>·</span>}
+              <button
+                onClick={() => {
+                  document.getElementById(`plan-${x.tier}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                }}
+                style={{
+                  padding: '5px 12px', borderRadius: 8, border: 'none',
+                  background: 'rgba(10,168,159,0.08)', color: '#0AA89F',
+                  fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                {x.label} →
+              </button>
+            </span>
+          ))}
+        </div>
       </section>
 
       <section style={{ padding: '0 24px 32px' }}>
@@ -194,7 +227,7 @@ export default function PricingPage() {
           {PLANS.map(plan => {
             const price = isAnnual ? plan.annual : plan.monthly
             return (
-              <div key={plan.tier} style={{
+              <div key={plan.tier} id={`plan-${plan.tier}`} style={{
                 background: plan.popular ? 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)' : '#fff',
                 borderRadius: 20,
                 padding: '36px 28px',
@@ -203,6 +236,7 @@ export default function PricingPage() {
                 position: 'relative',
                 display: 'flex',
                 flexDirection: 'column',
+                scrollMarginTop: 100,
               }}>
                 {plan.popular && (
                   <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#22C55E', color: '#fff', fontSize: 10, fontWeight: 800, padding: '4px 14px', borderRadius: 20, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
@@ -216,7 +250,9 @@ export default function PricingPage() {
                   <span style={{ fontSize: 14, color: plan.popular ? 'rgba(255,255,255,0.5)' : '#7AAAB2', fontWeight: 600, alignSelf: 'flex-end', marginBottom: 12, marginLeft: 4 }}>/mo</span>
                 </div>
                 <div style={{ fontSize: 12, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 14, fontWeight: 600 }}>
-                  {isAnnual ? `Billed annually · $${(plan.annual * 12).toLocaleString()}/yr` : 'Billed monthly · No contract'}
+                  {isAnnual
+                    ? `Billed once a year as $${(plan.annual * 12).toLocaleString()} · saves $${((plan.monthly - plan.annual) * 12).toLocaleString()}/yr`
+                    : 'Billed monthly · No contract'}
                 </div>
                 <div style={{ fontSize: 14, color: plan.popular ? 'rgba(255,255,255,0.78)' : '#4A7A80', marginBottom: 22, lineHeight: 1.5, fontStyle: 'italic' }}>
                   {plan.tagline}
@@ -332,28 +368,6 @@ export default function PricingPage() {
               + <strong style={{ color: '#fff' }}>$25K</strong> one-time platform setup<br/>
               <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>Volume discounts at 25+ locations</span>
             </p>
-          </div>
-        </div>
-      </section>
-
-      <section style={{ padding: '60px 24px', background: '#fff', borderTop: '1px solid #DCE9E2' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 28, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.8px', marginBottom: 8, textAlign: 'center' }}>Add-On: Growth Wallet</h2>
-          <p style={{ fontSize: 15, color: '#4A6670', textAlign: 'center', marginBottom: 28, maxWidth: 640, marginLeft: 'auto', marginRight: 'auto' }}>
-            Optional with Concierge. Pre-fund a budget. Our AI spends it on Google + Meta ads using creative mined from your call transcripts. 15% management fee. Full transparency dashboard.
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, maxWidth: 900, margin: '0 auto' }}>
-            {[
-              { budget: '$1,000', tier: 'Starter Growth' },
-              { budget: '$2,500', tier: 'Scale Growth' },
-              { budget: '$5,000+', tier: 'Aggressive Growth' },
-            ].map(t => (
-              <div key={t.tier} style={{ background: 'linear-gradient(135deg, #F0FDFA 0%, #ECFEFF 100%)', border: '1px solid rgba(10,168,159,0.25)', borderRadius: 14, padding: '22px 24px', textAlign: 'center' }}>
-                <p style={{ fontSize: 12, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>{t.tier}</p>
-                <p style={{ fontSize: 26, fontWeight: 900, color: '#0B1F3A', margin: '0 0 4px' }}>{t.budget}<span style={{ fontSize: 13, color: '#7AAAB2', fontWeight: 600 }}> / mo ad budget</span></p>
-                <p style={{ fontSize: 12, color: '#4A7A80', margin: 0 }}>+ 15% AI management fee</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>

@@ -212,8 +212,8 @@ export default function DashboardPage() {
 
   const metrics = [
     {
-      label: "Revenue This Month from BellAveGo Leads", value: `$${counts.revenue.toLocaleString()}`,
-      sub: counts.revenue > 0 ? "From completed jobs" : "No completed jobs yet",
+      label: "BellAveGo Revenue · This Month", value: `$${counts.revenue.toLocaleString()}`,
+      sub: counts.revenue > 0 ? "From completed jobs" : "Booked jobs you mark complete will land here",
       iconBg: "#ECFDF5", iconColor: "#059669", accentColor: "#22C55E",
       icon: <><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" /></>,
     },
@@ -231,7 +231,7 @@ export default function DashboardPage() {
     },
     {
       label: "Total Customers", value: String(counts.customers),
-      sub: counts.customers > 0 ? `${counts.customers} contact${counts.customers !== 1 ? "s" : ""}` : "Add your first",
+      sub: counts.customers > 0 ? `${counts.customers} contact${counts.customers !== 1 ? "s" : ""}` : "AI will add them as calls come in",
       iconBg: "rgba(10,168,159,0.1)", iconColor: "#0AA89F", accentColor: "#0AA89F",
       icon: <><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></>,
     },
@@ -240,127 +240,48 @@ export default function DashboardPage() {
   return (
     <div style={{ padding: "28px 32px 60px", fontFamily: "'Inter', system-ui, sans-serif" }}>
 
-      {/* Header */}
-      <div style={{ marginBottom: 26, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      {/* Header — admin switcher inlined as a compact pill so it doesn't dominate */}
+      <div style={{ marginBottom: 26, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
         <div>
           <div style={{ fontSize: 22, fontWeight: 800, color: "#0B1F3A", letterSpacing: "-0.04em" }}>Command Center</div>
           <div style={{ fontSize: 13, color: "#7AAAB2", marginTop: 3 }}>Live job requests, schedule, and business overview</div>
         </div>
-      </div>
-
-      {/* Admin tier-switcher — Peter only */}
-      {isAdmin && (
-        <div style={{
-          marginBottom: 22,
-          padding: "14px 18px",
-          background: "linear-gradient(135deg, #0B1F3A 0%, #1E3A5F 100%)",
-          borderRadius: 14,
-          color: "#fff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 14,
-          flexWrap: "wrap",
-        }}>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "#7AAAB2", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 3 }}>
-              Admin · You are signed in as {user?.primaryEmailAddress?.emailAddress}
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 700 }}>
-              Currently on: <span style={{ color: "#22C55E" }}>{profile?.plan_tier || "—"}</span>
-              <span style={{ fontWeight: 400, color: "#7AAAB2", marginLeft: 8 }}>
-                · is_active: {String(profile?.is_active ?? false)}
-              </span>
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <span style={{ fontSize: 11, color: "#7AAAB2", marginRight: 4 }}>Switch tier:</span>
+        {isAdmin && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "5px 8px 5px 12px",
+            background: "#0B1F3A", borderRadius: 99,
+            fontSize: 11, fontWeight: 700,
+          }}>
+            <span style={{ color: "#7AAAB2", letterSpacing: "0.06em", textTransform: "uppercase", marginRight: 2 }}>Admin</span>
             {(["receptionist", "officemgr", "concierge"] as const).map(t => {
               const isCurrent = profile?.plan_tier === t;
-              const label = t === "receptionist" ? "Receptionist" : t === "officemgr" ? "Office Mgr" : "Concierge";
+              const label = t === "receptionist" ? "Recep" : t === "officemgr" ? "OfMgr" : "Conci";
               return (
                 <button
                   key={t}
                   onClick={() => adminSwitchTier(t)}
                   disabled={adminSwitching !== null || isCurrent}
+                  title={t === "receptionist" ? "Receptionist" : t === "officemgr" ? "Office Manager" : "Concierge"}
                   style={{
-                    padding: "7px 14px",
-                    borderRadius: 8,
-                    border: isCurrent ? "1px solid #22C55E" : "1px solid rgba(255,255,255,0.2)",
-                    background: isCurrent ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.06)",
-                    color: isCurrent ? "#22C55E" : "#fff",
-                    fontSize: 12,
-                    fontWeight: 700,
+                    padding: "4px 10px", borderRadius: 99, border: "none",
+                    background: isCurrent ? "#22C55E" : "transparent",
+                    color: isCurrent ? "#fff" : "rgba(255,255,255,0.7)",
+                    fontSize: 11, fontWeight: 700,
                     cursor: isCurrent || adminSwitching ? "default" : "pointer",
                     fontFamily: "inherit",
                   }}
                 >
-                  {adminSwitching === t ? "..." : label}
-                  {isCurrent && " ✓"}
+                  {adminSwitching === t ? "…" : label}
                 </button>
               );
             })}
-            <Link
-              href="/admin/customers"
-              style={{
-                padding: "7px 14px",
-                borderRadius: 8,
-                border: "1px solid rgba(255,255,255,0.2)",
-                background: "rgba(255,255,255,0.06)",
-                color: "#fff",
-                fontSize: 12,
-                fontWeight: 700,
-                textDecoration: "none",
-                marginLeft: 4,
-              }}
-            >
-              Customers →
+            <Link href="/admin/customers" style={{ padding: "4px 10px", borderRadius: 99, color: "rgba(255,255,255,0.7)", fontSize: 11, fontWeight: 700, textDecoration: "none" }}>
+              Cust →
             </Link>
           </div>
-        </div>
-      )}
-
-      {/* Pre-activation hero — only shows when no subscription is live.
-          Promotes the banner below from a notice to a hard wall: nothing
-          beneath it renders until they activate. */}
-      {profile && !profile.is_active && (
-        <div style={{
-          marginBottom: 18,
-          padding: "26px 28px",
-          background: "linear-gradient(135deg, #0B1F3A 0%, #163356 100%)",
-          borderRadius: 18,
-          color: "#fff",
-          display: "flex",
-          alignItems: "center",
-          gap: 22,
-          boxShadow: "0 12px 36px rgba(11,31,58,0.24)",
-          flexWrap: "wrap",
-        }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 16,
-            background: "rgba(239,68,68,0.18)",
-            border: "1px solid rgba(239,68,68,0.4)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0,
-          }}>
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FCA5A5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-              <line x1="2" y1="2" x2="22" y2="22" stroke="#FCA5A5" strokeWidth="2.4"/>
-            </svg>
-          </div>
-          <div style={{ flex: 1, minWidth: 260 }}>
-            <div style={{ fontSize: 11, fontWeight: 800, color: "#FCA5A5", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 4 }}>
-              AI receptionist is offline
-            </div>
-            <div style={{ fontSize: 20, fontWeight: 900, letterSpacing: "-0.4px", lineHeight: 1.2, marginBottom: 6 }}>
-              Pick a plan to activate your number and start answering missed calls
-            </div>
-            <div style={{ fontSize: 13, color: "#94B6BD", lineHeight: 1.55 }}>
-              Your dashboard is waiting on activation. The moment you pick a plan we auto-buy a local Twilio number, point it at the AI, and text you setup instructions — usually in under 30 seconds.
-            </div>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Activation banner */}
       {profile && !profile.is_active && (() => {
@@ -428,9 +349,9 @@ export default function DashboardPage() {
       {profile?.is_active && !profile.twilio_number && (
         <div style={{ marginBottom: 22, padding: "16px 22px", background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: "#1E40AF" }}>Number not provisioned yet</div>
-            <div style={{ fontSize: 12, color: "#1E3A8A", marginTop: 3 }}>
-              Subscription active but no Twilio number assigned. Click to retry.
+            <div style={{ fontSize: 13, fontWeight: 800, color: "#1E40AF" }}>Your AI receptionist number is being provisioned</div>
+            <div style={{ fontSize: 12, color: "#1E3A8A", marginTop: 3, lineHeight: 1.5 }}>
+              This is the local number your missed calls forward to — the AI answers it 24/7. If it didn&apos;t auto-buy, click retry.
             </div>
           </div>
           <button onClick={retryProvision} disabled={provisionLoading} style={{ padding: "9px 18px", borderRadius: 10, border: "none", fontSize: 12, fontWeight: 800, cursor: provisionLoading ? "wait" : "pointer", background: "#2563EB", color: "#fff" }}>
@@ -439,8 +360,9 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Everything below this gate is hidden until subscription is active. */}
-      {profile?.is_active && <>
+      {/* Dashboard shell — always rendered. Pre-activation users see empty
+          state behind the activation banner above (sells with desire, not a wall). */}
+      <>
 
       {/* Metric cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 24 }}>
@@ -690,7 +612,7 @@ export default function DashboardPage() {
                 <div>
                   <div style={cardTitle}>AI Receptionist</div>
                   <div style={{ fontSize: 10, color: "#7AAAB2", marginTop: 2 }}>
-                    24/7 · {profile?.twilio_number || "Not provisioned"}
+                    24/7 · {profile?.twilio_number || (profile?.is_active ? "Provisioning…" : "We'll buy you a local number after checkout")}
                   </div>
                 </div>
               </div>
@@ -750,7 +672,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      </>}
+      </>
     </div>
   );
 }
