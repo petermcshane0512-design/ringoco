@@ -213,14 +213,14 @@ export default function FounderSection() {
 
       <div className="fs-wrap">
         <div className="fs-text">
-          <span className="fs-eyebrow">Built by a founder, not a fund</span>
-          <h2 className="fs-h2">Hi — I&apos;m Peter.<br /><span className="accent">Here&apos;s why I built BellAveGo.</span></h2>
+          <span className="fs-eyebrow">Built by people who answer their own phones</span>
+          <h2 className="fs-h2"><span className="accent">Here&apos;s why we built BellAveGo.</span></h2>
           <div className="fs-body">
             <p>
-              I watched too many home-service owners lose jobs to voicemail while they were on a ladder, in a crawlspace, or driving between calls. The fix existed — but it was either dumb (a generic call service) or insanely expensive (a $400/mo agency).
+              We watched too many home-service owners lose jobs to voicemail while they were on a ladder, in a crawlspace, or driving between calls. The fix existed — but it was either dumb (a generic call service) or insanely expensive (a $400/mo agency).
             </p>
             <p>
-              BellAveGo is the version I wish my contractor friends had. Answers like a real receptionist. Texts you the lead. Pays for itself in one booked job. No contracts.
+              BellAveGo is the version contractors actually deserve. Answers like a real receptionist. Texts you the lead. Pays for itself in one booked job. No contracts.
             </p>
             <p>
               If it doesn&apos;t earn its keep in the first 30 days, you get a full refund and we part on good terms. That&apos;s the deal.
@@ -239,7 +239,7 @@ export default function FounderSection() {
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                 <polyline points="22,6 12,13 2,6"/>
               </svg>
-              Email me directly
+              Email us directly
             </a>
           </div>
 
@@ -247,16 +247,16 @@ export default function FounderSection() {
             <div className="fs-sig-avatar">P</div>
             <div>
               <div className="fs-sig-name">Peter McShane</div>
-              <div className="fs-sig-role">Founder · BellAveGo · Minneapolis</div>
+              <div className="fs-sig-role">Founder · BellAveGo · Manhattan, NY</div>
             </div>
           </div>
         </div>
 
-        <div className="fs-video" role="button" tabIndex={0} aria-label="Founder video — coming soon">
+        <div className="fs-video" role="button" tabIndex={0} aria-label="BellAveGo story video — coming soon">
           <div className="fs-video-content">
             <div className="fs-video-meta">
-              <span className="fs-video-tag">Founder story</span>
-              <span className="fs-video-duration">60 seconds</span>
+              <span className="fs-video-tag">BellAveGo story</span>
+              <span className="fs-video-duration">Coming soon</span>
             </div>
             <div className="fs-video-play">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="none">
@@ -264,8 +264,8 @@ export default function FounderSection() {
               </svg>
             </div>
             <div className="fs-video-foot">
-              <div className="fs-video-title">Why I built BellAveGo</div>
-              <div className="fs-video-sub">Watch the 60-second story · video dropping soon</div>
+              <div className="fs-video-title">Why we built BellAveGo</div>
+              <div className="fs-video-sub">Coming soon</div>
             </div>
           </div>
         </div>
