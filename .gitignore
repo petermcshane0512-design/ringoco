@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# A2P submission state (contains Twilio SIDs only, no secrets, but local-only)
+.a2p-state.json
+
 # vercel
 .vercel
 .vercel-env-check
