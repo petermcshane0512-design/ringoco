@@ -430,18 +430,57 @@ export default function HomePage() {
               50%      { opacity: 0.45; }
             }
 
+            /* ── Grid layouts for non-hero sections ── */
+            .home-grid-2       { display: grid; grid-template-columns: 1fr 1fr; }
+            .home-grid-3       { display: grid; grid-template-columns: repeat(3, 1fr); }
+            .home-pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+
+            /* ── Tablet ── */
             @media (max-width: 1024px) {
               .hero-grid { grid-template-columns: 1fr; gap: 48px; padding: 56px 28px; }
               .hero-stage { min-height: 420px; }
               .hero-stage-dash { padding-right: 8%; }
               .hero-stage-phone { right: 0; }
             }
-            @media (max-width: 640px) {
-              .hero-stage { min-height: 360px; }
-              .hero-stage-phone { display: none; }
-              .hero-stage-dash { padding-right: 0; }
-              .hero-trust { gap: 18px; }
+
+            /* ── Mobile (iOS portrait / cold-email-click experience) ── */
+            @media (max-width: 768px) {
+              /* Tighter hero — fits above the fold on iPhone */
+              .hero-grid { padding: 36px 18px 56px; gap: 28px; }
+              .hero-eyebrow { font-size: 10.5px; margin-bottom: 14px; padding: 5px 11px; }
+              .hero-h1 { font-size: 32px; line-height: 1.05; margin-bottom: 14px; }
+              .hero-sub { font-size: 15px; margin-bottom: 22px; max-width: 100%; }
+
+              /* CTAs become full-width thumb-targets */
+              .hero-actions { gap: 10px; margin-bottom: 26px; flex-direction: column; align-items: stretch; }
+              .hero-cta-primary, .hero-cta-secondary { width: 100%; justify-content: center; padding: 14px 20px; }
+
+              /* Trust badges shrink */
+              .hero-trust { gap: 16px; padding-top: 18px; }
               .hero-trust-num { font-size: 18px; }
+              .hero-trust-lab { font-size: 10px; }
+
+              /* Dashboard preview stays VISIBLE on mobile (Peter's ask) — but
+                 rescaled to fit the narrow viewport without overflow. The phone
+                 mockup hides since two stacked floating widgets get noisy. */
+              .hero-stage { min-height: 280px; margin-top: 6px; }
+              .hero-stage-phone { display: none; }
+              .hero-stage-dash {
+                padding-right: 0;
+                transform: scale(0.62);
+                transform-origin: top center;
+                inset: 0 -30%;  /* expand bounding box so the scaled-down preview centers nicely */
+              }
+
+              /* Pricing + job-site grids collapse to single column */
+              .home-grid-2,
+              .home-grid-3,
+              .home-pricing-grid { grid-template-columns: 1fr; gap: 16px; }
+
+              /* Tighter section padding throughout */
+              section { padding-left: 18px !important; padding-right: 18px !important; }
+              section h2 { font-size: 28px !important; line-height: 1.1 !important; letter-spacing: -0.6px !important; }
+              section h2 br { display: none; }  /* hard-wrapped headings unwrap on mobile */
             }
           `}</style>
 
@@ -594,7 +633,7 @@ export default function HomePage() {
               While you&apos;re working, driving, or finishing a job, BellAveGo answers the call, books the appointment, and texts the customer.
             </p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 36 }}>
+          <div className="home-grid-2" style={{ gap: 24, marginBottom: 36 }}>
             <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', boxShadow: '0 16px 50px rgba(11,31,58,0.13)' }}>
               <Image src="/customer.png" alt="Contractor on the job" width={600} height={420} style={{ width: '100%', height: 340, objectFit: 'cover', display: 'block' }} />
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(11,31,58,0.88) 0%, transparent 100%)', padding: '36px 26px 22px' }}>
@@ -610,7 +649,7 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 18 }}>
+          <div className="home-grid-3" style={{ gap: 18 }}>
             {[
               { title: 'BellAveGo answers', desc: 'Every call, every time — 24/7' },
               { title: 'Job gets booked', desc: 'Added to your schedule instantly' },
@@ -631,7 +670,7 @@ export default function HomePage() {
         <h2 style={{ fontSize: 42, fontWeight: 900, marginBottom: 8, letterSpacing: '-1.5px', color: '#0B1F3A' }}>Pay for what you use.</h2>
         <p style={{ color: '#4A6670', fontSize: 16, marginBottom: 48 }}>Your first booked job pays for the whole month.</p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20, maxWidth: 960, margin: '0 auto 20px' }}>
+        <div className="home-pricing-grid" style={{ gap: 20, maxWidth: 960, margin: '0 auto 20px' }}>
           {[
             {
               name: 'Receptionist', price: 397, setup: 250, tier: 'receptionist', calls: 'Up to 250 / mo',

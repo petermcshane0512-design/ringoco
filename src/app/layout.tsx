@@ -1,5 +1,12 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,  // allow pinch-zoom (accessibility), but don't auto-zoom out
+  themeColor: "#0B1F3A",
+};
 
 const SITE_URL = "https://www.bellavego.com";
 const OG_IMAGE = `${SITE_URL}/logo.png`;
