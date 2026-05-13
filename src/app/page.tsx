@@ -46,10 +46,17 @@ export default function HomePage() {
               Dashboard
             </Link>
           )}
-          <Link href="/founder" style={{ padding: '10px 16px', textDecoration: 'none', color: '#4A6670', fontSize: 14, fontWeight: 600 }}>
+          <Link href="/founder" className="nav-pill-why">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
+              <path d="M13 2L3 14h7l-1 8 11-12h-7l1-8z"/>
+            </svg>
             Why BellAveGo?
           </Link>
-          <Link href="/pricing" style={{ padding: '10px 16px', textDecoration: 'none', color: '#4A6670', fontSize: 14, fontWeight: 600 }}>
+          <Link href="/pricing" className="nav-pill-price">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="12" y1="1" x2="12" y2="23" />
+              <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+            </svg>
             Pricing
           </Link>
           {isSignedIn ? (
