@@ -1,13 +1,97 @@
 'use client'
+import { Suspense, useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { SAMPLE_REPORT, type ConsultingReport } from '@/lib/consultingReport'
 
 export default function SampleReportPage() {
-  return <ReportView report={SAMPLE_REPORT} sample />
+  return (
+    <Suspense fallback={<ReportView report={SAMPLE_REPORT} sample />}>
+      <PersonalizedReportLoader />
+    </Suspense>
+  )
 }
 
-export function ReportView({ report, sample = false }: { report: ConsultingReport; sample?: boolean }) {
+function PersonalizedReportLoader() {
+  const params = useSearchParams()
+  const businessName = params.get('for') || params.get('business') || ''
+  const zip = params.get('zip') || ''
+  const type = params.get('type') || ''
+  const city = params.get('city') || ''
+  const personalize = !!businessName.trim()
+
+  const [report, setReport] = useState<ConsultingReport>(SAMPLE_REPORT)
+  const [loading, setLoading] = useState(personalize)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!personalize) return
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+    const qs = new URLSearchParams({ for: businessName, ...(zip && { zip }), ...(type && { type }), ...(city && { city }) })
+    fetch(`/api/sample-report/personalize?${qs.toString()}`)
+      .then(async (r) => {
+        if (!r.ok) {
+          const j = await r.json().catch(() => ({}))
+          throw new Error(j.error || `HTTP ${r.status}`)
+        }
+        return r.json()
+      })
+      .then((j: { report: ConsultingReport }) => { if (!cancelled) { setReport(j.report); setLoading(false) } })
+      .catch((e) => { if (!cancelled) { setError(e instanceof Error ? e.message : String(e)); setLoading(false) } })
+    return () => { cancelled = true }
+  }, [personalize, businessName, zip, type, city])
+
+  if (personalize && loading) return <PersonalizingShim businessName={businessName} />
+  if (personalize && error) {
+    return (
+      <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', fontFamily: "'Inter', system-ui, sans-serif", padding: 40, color: '#0B1F3A', background: '#F5FCFA' }}>
+        <div style={{ maxWidth: 460, background: '#fff', border: '1px solid rgba(10,168,159,0.18)', borderRadius: 18, padding: 28, textAlign: 'center', boxShadow: '0 12px 36px rgba(7,27,58,0.08)' }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: '#DC2626', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8 }}>Couldn&apos;t personalize</div>
+          <h2 style={{ fontSize: 18, fontWeight: 900, marginBottom: 8 }}>Showing you the sample report instead</h2>
+          <p style={{ fontSize: 13, color: '#4A6670', marginBottom: 16, lineHeight: 1.55 }}>We&apos;ll still show you what a real BellAveGo Growth Report looks like — just with our demo customer&apos;s data. Reason: {error}.</p>
+          <Link href="/sample-report" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: 10, background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', color: '#fff', fontWeight: 800, fontSize: 13, textDecoration: 'none' }}>See the sample →</Link>
+        </div>
+      </main>
+    )
+  }
+
+  return <ReportView report={report} sample personalized={personalize} />
+}
+
+function PersonalizingShim({ businessName }: { businessName: string }) {
+  return (
+    <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', fontFamily: "'Inter', system-ui, sans-serif", padding: 40, color: '#0B1F3A', background: 'linear-gradient(180deg, #F0F7F5 0%, #F5FCFA 100%)' }}>
+      <style>{`
+        @keyframes shimmerDots { 0%,80%,100% { opacity: 0.3; transform: scale(0.85);} 40% { opacity: 1; transform: scale(1);} }
+        @keyframes scanLine { 0% { transform: translateX(-110%);} 100% { transform: translateX(110%);} }
+      `}</style>
+      <div style={{ maxWidth: 540, width: '100%', background: '#fff', border: '1px solid rgba(10,168,159,0.16)', borderRadius: 22, padding: 36, textAlign: 'center', boxShadow: '0 24px 60px rgba(7,27,58,0.08)', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: '40%', background: 'linear-gradient(90deg, transparent, #0AA89F, transparent)', animation: 'scanLine 1.6s ease-in-out infinite' }} />
+        </div>
+        <div style={{ fontSize: 11, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 10 }}>Generating your personalized report</div>
+        <h1 style={{ fontSize: 24, fontWeight: 900, letterSpacing: '-0.03em', marginBottom: 12, lineHeight: 1.2 }}>{businessName}</h1>
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 18 }}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} style={{ width: 9, height: 9, borderRadius: '50%', background: '#0AA89F', animation: `shimmerDots 1.2s ease-in-out ${i * 0.15}s infinite` }} />
+          ))}
+        </div>
+        <ul style={{ listStyle: 'none', padding: 0, fontSize: 13, color: '#4A6670', lineHeight: 1.9, textAlign: 'left', maxWidth: 340, margin: '0 auto' }}>
+          <li>📍 Pulling your local market from Google Places…</li>
+          <li>🧠 Analyzing your top 5 competitors…</li>
+          <li>📈 Projecting Q-over-Q revenue opportunities…</li>
+          <li>✍️ Drafting your action plan with Claude Sonnet…</li>
+        </ul>
+        <p style={{ fontSize: 11, color: '#7AAAB2', marginTop: 18 }}>This takes 15-30 seconds. Real reports for paying customers use your actual call data.</p>
+      </div>
+    </main>
+  )
+}
+
+export function ReportView({ report, sample = false, personalized = false }: { report: ConsultingReport; sample?: boolean; personalized?: boolean }) {
   const r = report
   const fmtMoney = (n: number) => `$${n.toLocaleString()}`
   const fmtPct = (n: number) => `${n >= 0 ? '+' : ''}${(n * 100).toFixed(0)}%`
@@ -907,6 +991,16 @@ function Legend({ color, label }: { color: string; label: string }) {
 
 function ServiceAreaMap({ report }: { report: ConsultingReport }) {
   const points = report.serviceAreaMap.points
+
+  // Derive a real geographic center for the Google Static Maps API.
+  // Priority: first ZIP from service area (most reliable for Google geocoding)
+  //        →  fallback: first segment of centerLabel
+  //        →  fallback: metroLabel
+  const firstZip = report.meta.serviceArea?.find(z => /^\d{5}$/.test(z))
+  const centerFromLabel = report.serviceAreaMap.centerLabel.split(/[·•|–—-]/)[0].trim()
+  const mapCenter = firstZip || centerFromLabel || report.meta.metroLabel
+  const mapSrc = `/api/google-static-map?center=${encodeURIComponent(mapCenter)}&zoom=12&size=1000x430&maptype=roadmap`
+
   return (
     <div style={{
       position: 'relative',
@@ -916,79 +1010,61 @@ function ServiceAreaMap({ report }: { report: ConsultingReport }) {
       background: 'linear-gradient(160deg, #E8F4EF 0%, #DCEDE6 100%)',
       aspectRatio: '21/9',
     }}>
-      <svg viewBox="0 0 1000 430" preserveAspectRatio="none" style={{ width: '100%', height: '100%', display: 'block' }}>
+      {/* Real Google Maps background — served via our proxy so the API key
+          stays server-side. Falls back to the teal gradient above if Google
+          fails to render (no API key, quota, etc.). */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={mapSrc}
+        alt={`Service area map — ${mapCenter}`}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        loading="lazy"
+      />
+
+      {/* Pin overlay — color-coded business / opportunity / competitor markers
+          floated on top of the real map. Pin positions are stylized (illustrative
+          density of opportunities) rather than literal lat/lng — they communicate
+          "here's where the upside is in your service area" without leaking
+          competitor street addresses. */}
+      <svg viewBox="0 0 1000 430" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
         <defs>
-          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(10,168,159,0.10)" strokeWidth="1" />
-          </pattern>
-          <radialGradient id="lake" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#7DD3C0" stopOpacity="0.85" />
-            <stop offset="100%" stopColor="#5EEAD4" stopOpacity="0.45" />
-          </radialGradient>
           <filter id="pinShadow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
             <feOffset dy="3"/>
-            <feComponentTransfer><feFuncA type="linear" slope="0.45"/></feComponentTransfer>
+            <feComponentTransfer><feFuncA type="linear" slope="0.55"/></feComponentTransfer>
             <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
         </defs>
 
-        <rect width="1000" height="430" fill="url(#grid)" />
-
-        {/* Lake (Cedar Lake-ish blob) */}
-        <ellipse cx="290" cy="170" rx="92" ry="58" fill="url(#lake)" />
-        <ellipse cx="290" cy="170" rx="92" ry="58" fill="none" stroke="rgba(10,168,159,0.32)" strokeWidth="1.2" />
-
-        {/* Roads */}
-        <g stroke="rgba(11,31,58,0.18)" strokeWidth="3" fill="none" strokeLinecap="round">
-          <path d="M0,260 C 220,240 340,300 520,260 S 820,200 1000,230" />
-          <path d="M0,160 C 200,180 360,120 540,150 S 780,100 1000,130" />
-          <path d="M120,0 C 140,140 100,260 160,430" />
-          <path d="M520,0 C 540,140 480,260 540,430" />
-          <path d="M820,0 C 840,140 780,260 840,430" />
-        </g>
-        <g stroke="rgba(255,255,255,0.65)" strokeWidth="1.4" strokeDasharray="4 6" fill="none">
-          <path d="M0,260 C 220,240 340,300 520,260 S 820,200 1000,230" />
-          <path d="M0,160 C 200,180 360,120 540,150 S 780,100 1000,130" />
-          <path d="M120,0 C 140,140 100,260 160,430" />
-          <path d="M520,0 C 540,140 480,260 540,430" />
-          <path d="M820,0 C 840,140 780,260 840,430" />
-        </g>
-
-        {/* ZIP labels (subtle) */}
-        <text x="160" y="94" fill="rgba(11,31,58,0.32)" fontSize="11" fontWeight="700" letterSpacing="0.18em">{report.meta.serviceArea[0] ?? ''}</text>
-        <text x="700" y="94" fill="rgba(11,31,58,0.32)" fontSize="11" fontWeight="700" letterSpacing="0.18em">{report.meta.serviceArea[1] ?? ''}</text>
-        <text x="160" y="394" fill="rgba(11,31,58,0.32)" fontSize="11" fontWeight="700" letterSpacing="0.18em">{report.meta.serviceArea[2] ?? ''}</text>
-        <text x="700" y="394" fill="rgba(11,31,58,0.32)" fontSize="11" fontWeight="700" letterSpacing="0.18em">{report.meta.serviceArea[3] ?? ''}</text>
-
-        {/* Pins */}
         {points.map((p, i) => {
           const cx = (p.x / 100) * 1000
           const cy = (p.y / 100) * 430
-          const fill = p.kind === 'business' ? '#0AA89F' : p.kind === 'opportunity' ? '#22C55E' : '#94A3B8'
-          const ring = p.kind === 'business' ? '#5EEAD4' : p.kind === 'opportunity' ? '#86EFAC' : '#CBD5E1'
+          const fill = p.kind === 'business' ? '#0AA89F' : p.kind === 'opportunity' ? '#22C55E' : '#475569'
+          const ring = p.kind === 'business' ? '#5EEAD4' : p.kind === 'opportunity' ? '#86EFAC' : '#94A3B8'
           const r = p.kind === 'business' ? 22 : 18
           return (
             <g key={i} filter="url(#pinShadow)">
-              <circle cx={cx} cy={cy} r={r + 4} fill={ring} opacity="0.45" />
-              <circle cx={cx} cy={cy} r={r} fill={fill} stroke="#fff" strokeWidth="2.5" />
+              <circle cx={cx} cy={cy} r={r + 6} fill={ring} opacity="0.35" />
+              <circle cx={cx} cy={cy} r={r} fill={fill} stroke="#fff" strokeWidth="3" />
               <text x={cx} y={cy + 4} textAnchor="middle" fill="#fff" fontSize="12" fontWeight="800">{p.label}</text>
             </g>
           )
         })}
       </svg>
 
-      {/* Pin notes overlay */}
+      {/* Pin notes overlay — opportunity callouts pinned to the bottom */}
       <div style={{ position: 'absolute', inset: 0, padding: 12, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', pointerEvents: 'none' }}>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {points.filter(p => p.kind === 'opportunity').map((p, i) => (
             <span key={i} style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               padding: '5px 10px', borderRadius: 99,
-              background: 'rgba(255,255,255,0.92)',
-              border: '1px solid rgba(34,197,94,0.32)',
+              background: 'rgba(255,255,255,0.96)',
+              border: '1px solid rgba(34,197,94,0.42)',
               fontSize: 11, fontWeight: 700, color: 'var(--ink)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.10)',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
             }}>
               <span style={{ width: 14, height: 14, borderRadius: '50%', background: '#22C55E', color: '#fff', fontSize: 9, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{p.label}</span>
               {p.note}

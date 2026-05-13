@@ -364,31 +364,6 @@ export default function ConsultingShowcase() {
           box-shadow: 0 6px 18px rgba(34,197,94,0.5);
           z-index: 3;
         }
-        /* "Click here" floating callout — animated arrow + label */
-        .cs-cover-cta {
-          position: absolute;
-          left: 50%;
-          bottom: -18px;
-          transform: translateX(-50%);
-          display: inline-flex; align-items: center; gap: 8px;
-          padding: 9px 16px;
-          border-radius: 99px;
-          background: linear-gradient(135deg, #FFD9A8 0%, #FF9D5A 55%, #E8742B 100%);
-          color: #0B1F3A;
-          font-size: 12px; font-weight: 900;
-          letter-spacing: -0.1px;
-          box-shadow: 0 12px 28px rgba(232,116,43,0.45), 0 0 0 1px rgba(255,217,168,0.55);
-          white-space: nowrap;
-          animation: csCtaBob 1.8s ease-in-out infinite;
-          z-index: 4;
-          pointer-events: none;
-        }
-        .cs-cover-cta::before {
-          content: '👆';
-          font-size: 13px;
-          animation: csTap 1.4s ease-in-out infinite;
-        }
-
         /* 3 section preview cards */
         .cs-cards {
           display: grid;
@@ -567,15 +542,6 @@ export default function ConsultingShowcase() {
           70%  { opacity: 0;   transform: rotate(-5deg) scale(1.18); }
           100% { opacity: 0;   transform: rotate(-5deg) scale(1.18); }
         }
-        @keyframes csCtaBob {
-          0%, 100% { transform: translate(-50%, 0); }
-          50%      { transform: translate(-50%, -5px); }
-        }
-        @keyframes csTap {
-          0%, 100% { transform: translateY(0) scale(1); }
-          40%      { transform: translateY(-3px) scale(1.18); }
-          60%      { transform: translateY(0) scale(0.95); }
-        }
       `}</style>
 
       <div className="cs-wrap">
@@ -656,7 +622,6 @@ export default function ConsultingShowcase() {
                 </div>
               </div>
             </Link>
-            <span className="cs-cover-cta">Click to read the report</span>
           </div>
         </div>
 

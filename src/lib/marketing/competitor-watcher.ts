@@ -11,6 +11,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { getGoogleApiKey } from '../googleApi'
 
 const PLACES_BASE = 'https://places.googleapis.com/v1'
 
@@ -29,9 +30,9 @@ export type PlaceSnapshot = {
 }
 
 async function fetchPlace(placeId: string): Promise<PlaceSnapshot | null> {
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY
+  const apiKey = getGoogleApiKey()
   if (!apiKey) {
-    console.warn('[competitor-watcher] GOOGLE_MAPS_API_KEY not set; skipping')
+    console.warn('[competitor-watcher] No Google API key set (tried GOOGLE_MAPS_API_KEY + GOOGLE_PLACES_API_KEY); skipping')
     return null
   }
   const url = `${PLACES_BASE}/places/${placeId}`
