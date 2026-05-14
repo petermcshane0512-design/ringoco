@@ -34,8 +34,7 @@ const anthropic = new Anthropic()
  */
 export async function POST(req: NextRequest) {
   const raw = await req.text()
-  const sig = req.headers.get('x-vapi-signature')
-  if (!(await verifyVapiSignature(raw, sig))) {
+  if (!(await verifyVapiSignature(raw, req.headers))) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 

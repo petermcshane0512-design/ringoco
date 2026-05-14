@@ -260,17 +260,39 @@ export async function vapiImportTwilioNumber(opts: {
 }
 
 /**
- * Verify Vapi webhook signature. Vapi signs payloads with HMAC-SHA256 of the
- * raw request body using the serverUrlSecret we configured on the assistant /
- * phone number. Header: x-vapi-signature.
+ * Verify a Vapi webhook. Vapi's auth pattern varies by configuration:
+ *   - serverUrlSecret → header `x-vapi-secret` carrying the literal secret
+ *   - (some integrations) → header `x-vapi-signature` carrying HMAC-SHA256
+ * We accept either. If no VAPI_WEBHOOK_SECRET is configured at all, we allow
+ * the request (dev / smoke-test mode).
+ *
+ * Pass req.headers as a Headers object; we read the two header variants here.
  */
-export async function verifyVapiSignature(rawBody: string, signatureHeader: string | null): Promise<boolean> {
+export async function verifyVapiSignature(rawBody: string, headers: Headers): Promise<boolean> {
   const secret = process.env.VAPI_WEBHOOK_SECRET
-  if (!secret) return true // dev mode — no secret set yet; allow
-  if (!signatureHeader) return false
+  if (!secret) return true
+
+  const plainHeader = headers.get('x-vapi-secret') ?? headers.get('x-vapi-server-secret')
+  const sigHeader = headers.get('x-vapi-signature')
+
   const crypto = await import('node:crypto')
-  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
-  // Constant-time compare
-  if (expected.length !== signatureHeader.length) return false
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signatureHeader))
+
+  // 1. Plain-secret match (Vapi's default pattern with serverUrlSecret).
+  if (plainHeader && plainHeader.length === secret.length) {
+    try {
+      if (crypto.timingSafeEqual(Buffer.from(plainHeader), Buffer.from(secret))) return true
+    } catch { /* fallthrough */ }
+  }
+
+  // 2. HMAC-SHA256 of the raw body (some Vapi integrations).
+  if (sigHeader) {
+    const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
+    if (expected.length === sigHeader.length) {
+      try {
+        if (crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(sigHeader))) return true
+      } catch { /* fallthrough */ }
+    }
+  }
+
+  return false
 }
