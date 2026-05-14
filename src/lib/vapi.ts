@@ -39,13 +39,15 @@ export type TenantContext = {
 }
 
 /**
- * Per-tenant system prompt. Identical conversation contract to the legacy
- * Polly/Haiku route — same 5 fields, ≤22 words/turn, acknowledge then ask.
- * Vapi handles turn-taking + barge-in natively, so we don't need the cadence
- * tricks the old prompt used.
+ * Per-tenant system prompt. Callback-style receptionist (NOT a booker).
+ * The AI's job is to politely take a message and tell the caller the owner
+ * will call them back in the next hour or two — not to schedule a slot.
+ * Three fields only: name, callback phone, brief reason. No address.
+ * Vapi handles turn-taking + barge-in natively.
  */
 export function renderSystemPrompt(t: TenantContext): string {
   const business = t.businessName || 'the business'
+  const ownerFirst = t.ownerFirstName || 'the owner'
   const services = t.services || 'home services'
   const area = t.serviceArea || 'the local area'
   const toneLine =
@@ -53,7 +55,7 @@ export function renderSystemPrompt(t: TenantContext): string {
       ? 'Use a polished, formal tone.'
       : t.aiTone === 'concise'
       ? 'Be extremely brief and direct. No small talk.'
-      : 'Be warm and conversational.'
+      : 'Be warm and conversational — like a friendly small-shop receptionist.'
   const langPreamble =
     t.aiLanguage === 'es'
       ? 'Responde SOLO en español (español de México / EE. UU. Hispánico). Usa un tono natural y conversacional.\n\n'
@@ -62,27 +64,30 @@ export function renderSystemPrompt(t: TenantContext): string {
     ? `\n\n## Owner-specific instructions for this business (always follow):\n${t.customPromptNotes}\n`
     : ''
 
-  return `${langPreamble}You are the AI phone receptionist for ${business} — a real home-service business serving ${area}. ${toneLine}
+  return `${langPreamble}You answer the phone for ${business} — a real home-service business serving ${area}. ${ownerFirst} is busy on a job right now, and your only job is to take a short message so ${ownerFirst} can call them back. ${toneLine}
 
-Services we offer: ${services}.${customNotes}
+Services we cover: ${services}.${customNotes}
 
-Your job: collect 5 fields in this order so the owner can confirm the appointment.
+Your goal: collect THREE things, fast and friendly, then end the call.
 1. Caller's first name
 2. Best callback number
-3. Which service they need — match it to one of our services above ("Sounds like an HVAC issue" / "That's a plumbing call")
-4. Their address (street + city)
-5. Preferred day and time window
+3. One-sentence reason for the call (what service they need, what's going on)
 
 How to talk:
-- Speak like a real receptionist. Conversational, confident, warm — not robotic.
-- Stay under 22 words per turn. Acknowledge what they said before asking the next question.
-- Never say "confirmed" — say "the owner will text you shortly to confirm."
-- If they ask anything off-topic (pricing estimates, technical questions), say "the owner can answer that when he calls back — let me grab your details first."
+- Speak like a real human receptionist. Brief, warm, natural. No robot phrases.
+- Stay under 18 words per turn.
+- DO NOT read back or confirm what they said. One quick acknowledgment ("Got it." / "Okay." / "Sure.") and move to the next question.
+- DO NOT promise specific times. ALWAYS say "${ownerFirst} will call you back in the next hour or two."
+- NEVER use the word "appointment" or "book" — you're taking a message, not scheduling.
+- If they push for pricing, ETA, or technical answers, redirect: "${ownerFirst} can answer that when he calls you back — let me just grab your details."
+- If they ask if this is an AI, be honest and brief: "Yes, I'm the AI assistant. I'll make sure ${ownerFirst} gets your message right away."
+- If they sound urgent ("water everywhere", "no heat", "emergency"), note it in the reason and tell them you'll flag it as urgent.
 
-When you have all 5 fields, call the book_appointment function with them.
-Never invent values. If a field is unclear, ask again briefly.
+When you have all three things, call the take_message function ONCE with them. Then say one short closing line like "Got it — ${ownerFirst} will call you back in the next hour or two. Thanks for calling." and end the call.
 
-Only role: book a service call. Politely decline anything else: "I can only help schedule a service call — what's your name?"`
+Never invent values. If something's unclear, ask once briefly — don't grill them.
+
+Stay in character. Politely decline anything off-topic: "I'm just taking messages right now — what's the best number for ${ownerFirst} to call you back on?"`
 }
 
 /**
@@ -103,58 +108,51 @@ export function buildAssistantConfig(opts: {
       provider: VAPI_MODEL_PROVIDER,
       model: VAPI_MODEL_DEFAULT,
       temperature: 0.6,
-      maxTokens: 180,
+      maxTokens: 140,
       messages: [
         {
           role: 'system',
           content:
-            'You are a polished AI receptionist for a home-service business. ' +
-            'Per-call business context is provided via assistantOverrides. ' +
-            'Collect 5 fields then call book_appointment.',
+            'You answer the phone for a home-service business whose owner is currently busy. ' +
+            'Take a short message (name, callback phone, reason) so the owner can call back. ' +
+            'Per-call business context is injected via assistantOverrides. ' +
+            'Never read back what the caller said. Never schedule a time. ' +
+            'After collecting the three fields, call take_message and end the call.',
         },
       ],
       tools: [
         {
           type: 'function' as const,
           function: {
-            name: 'book_appointment',
+            name: 'take_message',
             description:
-              "Call this exactly once when you've collected all 5 fields from the caller. " +
-              "Don't call it earlier — the owner can't confirm a partial booking.",
+              "Call this exactly once when you've collected the caller's name, callback phone, and a one-sentence reason. " +
+              "Do NOT call it before all three are captured. Do NOT call it more than once per call.",
             parameters: {
               type: 'object',
               properties: {
                 customer_name: {
                   type: 'string',
-                  description: "Caller's full name as they said it.",
+                  description: "Caller's first name (last name optional) as they said it.",
                 },
                 customer_phone: {
                   type: 'string',
                   description:
-                    "Best callback number. Use the number they explicitly gave, not the caller ID.",
+                    "Best callback number the caller gave. Use the number they explicitly said, not the caller ID.",
                 },
-                service_needed: {
+                reason: {
                   type: 'string',
                   description:
-                    "Brief service description matched to one of the business's offered services (e.g. 'AC repair', 'water heater install').",
+                    "One short sentence describing what they need help with, in plain language (e.g. 'AC stopped working, no cold air', 'leak under kitchen sink', 'wants a quote for water heater install').",
                 },
-                address: {
+                urgency: {
                   type: 'string',
-                  description: 'Street address + city.',
-                },
-                preferred_time: {
-                  type: 'string',
+                  enum: ['emergency', 'soon', 'whenever'],
                   description:
-                    "Preferred day and time window, in the caller's own words (e.g. 'Wednesday afternoon').",
+                    "How urgent: 'emergency' if they said water everywhere / no heat / no AC in the heat / safety issue; 'soon' for typical issues; 'whenever' for non-urgent quotes or general questions.",
                 },
               },
-              required: [
-                'customer_name',
-                'customer_phone',
-                'service_needed',
-                'address',
-                'preferred_time',
-              ],
+              required: ['customer_name', 'customer_phone', 'reason', 'urgency'],
             },
           },
           server: {
@@ -179,10 +177,10 @@ export function buildAssistantConfig(opts: {
       endpointing: 300,
     },
 
-    // Vapi will end the call after book_appointment tool returns successfully.
+    // Vapi ends the call after take_message returns successfully.
     endCallFunctionEnabled: true,
     endCallMessage:
-      "Got it. The owner will text you shortly to confirm. Thanks for calling — have a great day.",
+      "Got it — he'll call you back in the next hour or two. Thanks for calling.",
 
     // Guardrails — keep calls from running forever or hanging silent.
     silenceTimeoutSeconds: 25,

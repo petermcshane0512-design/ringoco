@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// ── tool-calls (book_appointment) ───────────────────────────────
+// ── tool-calls (take_message) ───────────────────────────────────
 async function handleToolCalls(message: VapiServerMessage['message']) {
   if (!message) return NextResponse.json({ ok: true })
 
@@ -75,7 +75,7 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
   const results: Array<{ toolCallId: string; result: string }> = []
 
   for (const tc of calls) {
-    if (tc.function?.name !== 'book_appointment') {
+    if (tc.function?.name !== 'take_message') {
       results.push({
         toolCallId: tc.id,
         result: 'Unknown tool — ignored.',
@@ -89,14 +89,13 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
       message.call?.customer?.number ?? args.customer_phone ?? null
 
     // Demo number — send a "this was a BellAveGo demo" SMS to the caller,
-    // skip DB writes + contractor SMS. Mirrors the isDemo path in the legacy
-    // /api/twilio/voice route.
+    // skip DB writes + contractor SMS. Same isDemo path the legacy route uses.
     if (tenant.is_demo) {
       const callerNumber = args.customer_phone || callerPhone
       if (callerNumber) {
         try {
           await twilioClient.messages.create({
-            body: `Hi ${args.customer_name}! This is a BellAveGo demo from Smith HVAC & Plumbing. Your "${args.service_needed}" booking at ${args.address} for ${args.preferred_time} was just captured by AI in under 60 seconds. Build this for your business → bellavego.com`,
+            body: `Hi ${args.customer_name}! This is a BellAveGo demo from Smith HVAC & Plumbing. We captured your message ("${args.reason}") in under 60 seconds — Mike would call you back in the next hour or two. Build this for your business → bellavego.com`,
             from: tenant.twilio_number || process.env.TWILIO_DEMO_NUMBER || process.env.TWILIO_PHONE_NUMBER!,
             to: callerNumber,
           })
@@ -106,7 +105,7 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
       }
       results.push({
         toolCallId: tc.id,
-        result: "Demo booking captured. You'll get a text in a moment.",
+        result: "Demo message captured. You'll get a text in a moment.",
       })
       continue
     }
@@ -119,7 +118,7 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
       continue
     }
 
-    const bookingResult = await bookAppointment({
+    const r = await takeMessage({
       tenant,
       args,
       callSid,
@@ -129,26 +128,27 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
 
     results.push({
       toolCallId: tc.id,
-      result: bookingResult.success
-        ? "Booking captured. The owner will text you shortly to confirm."
-        : `Booking issue: ${bookingResult.error}`,
+      result: r.success
+        ? "Message captured. The owner will call you back in the next hour or two."
+        : `Issue: ${r.error}`,
     })
   }
 
   return NextResponse.json({ results })
 }
 
-async function bookAppointment(opts: {
+async function takeMessage(opts: {
   tenant: TenantMeta
-  args: BookAppointmentArgs
+  args: TakeMessageArgs
   callSid: string
   callerPhone: string | null
   calledNumber: string | null
 }): Promise<{ success: boolean; error?: string }> {
   const { tenant, args, callSid, callerPhone, calledNumber } = opts
   const phone = args.customer_phone || callerPhone
+  const urgencyEmoji = args.urgency === 'emergency' ? '🚨' : args.urgency === 'soon' ? '⚡' : '🕓'
 
-  // 1. Upsert customer
+  // 1. Upsert customer (no address — the AI doesn't capture it anymore)
   let customerId: string | undefined
   if (phone) {
     const { data: existing } = await supabase
@@ -166,7 +166,6 @@ async function bookAppointment(opts: {
           user_id: tenant.user_id,
           name: args.customer_name,
           phone,
-          address: args.address,
         })
         .select('id')
         .single()
@@ -174,7 +173,8 @@ async function bookAppointment(opts: {
     }
   }
 
-  // 2. Insert job
+  // 2. Insert job (status 'pending_approval' kept for dashboard backward compat —
+  // semantically this is "needs callback" not "needs scheduling confirmation").
   const { data: jobRow, error: jobErr } = await supabase
     .from('jobs')
     .insert({
@@ -182,32 +182,28 @@ async function bookAppointment(opts: {
       customer_id: customerId,
       customer_name: args.customer_name,
       customer_phone: phone,
-      job_type: args.service_needed,
-      address: args.address,
-      scheduled_time: args.preferred_time,
-      title: `${args.service_needed} - ${args.customer_name}`,
+      job_type: args.reason,
+      scheduled_time: 'callback requested',
+      title: `Callback: ${args.customer_name} — ${args.reason}`,
       status: 'pending_approval',
     })
     .select('id')
     .single()
 
   if (jobErr) {
-    console.error('vapi book_appointment: job insert failed', jobErr)
+    console.error('vapi take_message: job insert failed', jobErr)
     return { success: false, error: 'database write failed' }
   }
 
-  // 2b. Seed quote_followups so Quote Hunter chases the customer if the
-  // contractor doesn't approve within 2 days. Mirrors the legacy /api/twilio/voice
-  // path so Office Mgr/Concierge customers on Vapi-imported numbers get the
-  // same automated follow-up coverage. YES/NO replies in /api/twilio/sms will
-  // resolve the row to won/lost so chases stop on contractor decision.
+  // 2b. Seed quote_followups so Quote Hunter chases the lead if the contractor
+  // doesn't make the callback within 2 days. Office Mgr/Concierge only.
   try {
     const twoDaysOut = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
     await supabase.from('quote_followups').insert({
       user_id: tenant.user_id,
       customer_name: args.customer_name,
       customer_phone: phone,
-      quote_description: `${args.service_needed} at ${args.address} — requested ${args.preferred_time}`,
+      quote_description: args.reason,
       source: 'ai_call',
       status: 'pending',
       next_followup_at: twoDaysOut,
@@ -216,7 +212,7 @@ async function bookAppointment(opts: {
     console.error('quote_followups seed (vapi) failed:', e)
   }
 
-  // 3. Smart insight (Office Mgr+)
+  // 3. Smart insight (Office Mgr+) — quick sales tip from the captured reason
   let smartInsight = ''
   if (OFFICE_MGR_TIERS.has(tenant.plan_tier ?? '')) {
     try {
@@ -224,12 +220,12 @@ async function bookAppointment(opts: {
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 100,
         system:
-          'Read a phone-booking transcript or summary. Output ONE short sales/ops tip the contractor should know before this job. ' +
-          '≤25 words. Concrete. Format: "💡 [tip]". If nothing useful, output "💡 Standard call — no extra notes."',
+          'Read a one-sentence callback request a homeowner left with an AI receptionist. Output ONE short sales/ops tip the contractor should know BEFORE calling them back. ' +
+          '≤25 words. Concrete. Format: "💡 [tip]". If nothing useful, output "💡 Standard callback — no extra notes."',
         messages: [
           {
             role: 'user',
-            content: `Booking: ${args.customer_name} needs ${args.service_needed} at ${args.address} for ${args.preferred_time}. Phone: ${phone}.`,
+            content: `Callback request: ${args.customer_name} (${phone}) said: "${args.reason}". Urgency: ${args.urgency}.`,
           },
         ],
       })
@@ -239,14 +235,15 @@ async function bookAppointment(opts: {
     }
   }
 
-  // 4. SMS contractor with YES/NO prompt
+  // 4. SMS contractor — tap-to-call link, no YES/NO
   const ownerPhone = tenant.owner_phone ?? process.env.FALLBACK_OWNER_PHONE
   const fromNumber = calledNumber || tenant.twilio_number || process.env.TWILIO_PHONE_NUMBER!
   if (ownerPhone) {
     try {
       const insightLine = smartInsight ? `\n\n${smartInsight}` : ''
+      const telLink = phone ? `\n\n📲 Tap to call: ${phone}` : ''
       await twilioClient.messages.create({
-        body: `🔔 New job request via BellAveGo!\n\n👤 Customer: ${args.customer_name}\n📞 Phone: ${phone}\n🔧 Service: ${args.service_needed}\n📍 Address: ${args.address}\n🕐 Requested time: ${args.preferred_time}${insightLine}\n\nReply YES to confirm or NO to decline.\n\nView at bellavego.com/dashboard`,
+        body: `${urgencyEmoji} New callback via BellAveGo\n\n👤 ${args.customer_name}\n📞 ${phone}\n💬 ${args.reason}\n⚡ Urgency: ${args.urgency}${insightLine}${telLink}\n\nView at bellavego.com/dashboard`,
         from: fromNumber,
         to: ownerPhone,
       })
@@ -255,22 +252,21 @@ async function bookAppointment(opts: {
     }
   }
 
-  // 5. SMS the homeowner
+  // 5. SMS the caller — "we'll call you back" reassurance
   if (phone) {
     try {
+      const businessName = tenant.business_name || 'us'
       await twilioClient.messages.create({
-        body: `Hi ${args.customer_name}, thanks for reaching out to ${tenant.business_name || 'us'}! We received your request for ${args.service_needed} at ${args.address} for ${args.preferred_time}. The owner will confirm your appointment shortly. - ${tenant.business_name || 'BellAveGo'}`,
+        body: `Hi ${args.customer_name}, thanks for calling ${businessName}! We got your message about "${args.reason}". The owner will call you back in the next hour or two. - ${businessName}`,
         from: fromNumber,
         to: phone,
       })
     } catch (e) {
-      console.error('homeowner SMS failed:', e)
+      console.error('caller SMS failed:', e)
     }
   }
 
-  // 6. Upsert call_logs (inception row will be created here if it doesn't
-  // already exist — for Vapi we don't have a pre-conversation hook, so this
-  // is fine. The Receptionist tier cap counts these rows.)
+  // 6. Upsert call_logs (powers Receptionist tier monthly call cap counter)
   try {
     await supabase.from('call_logs').upsert(
       {
@@ -278,7 +274,7 @@ async function bookAppointment(opts: {
         profile_id: tenant.user_id,
         call_sid: callSid,
         caller_phone: callerPhone,
-        job_type: args.service_needed,
+        job_type: args.reason,
         job_created: true,
         booking_completed: true,
         job_id: jobRow?.id,
@@ -300,8 +296,8 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
   const callerPhone = message.call?.customer?.number ?? null
   const transcript = message.transcript ?? message.artifact?.transcript ?? null
   const summary = message.summary ?? message.analysis?.summary ?? null
-  const bookingFromCalls = (message.toolCallList ?? message.toolCalls ?? []).some(
-    (tc) => tc.function?.name === 'book_appointment',
+  const messageCaptured = (message.toolCallList ?? message.toolCalls ?? []).some(
+    (tc) => tc.function?.name === 'take_message',
   )
 
   // Demo calls don't write to DB.
@@ -325,8 +321,8 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
         caller_phone: callerPhone,
         transcript: typeof transcript === 'string' ? transcript : transcript ? JSON.stringify(transcript) : null,
         summary,
-        job_created: bookingFromCalls,
-        booking_completed: bookingFromCalls,
+        job_created: messageCaptured,
+        booking_completed: messageCaptured,
       },
       { onConflict: 'call_sid' },
     )
@@ -360,25 +356,23 @@ function extractTenant(message: VapiServerMessage['message']): TenantMeta {
   }
 }
 
-type BookAppointmentArgs = {
+type TakeMessageArgs = {
   customer_name: string
   customer_phone: string
-  service_needed: string
-  address: string
-  preferred_time: string
+  reason: string
+  urgency: 'emergency' | 'soon' | 'whenever' | string
 }
 
-function parseToolArgs(args: unknown): BookAppointmentArgs {
+function parseToolArgs(args: unknown): TakeMessageArgs {
+  const empty: TakeMessageArgs = { customer_name: '', customer_phone: '', reason: '', urgency: 'soon' }
   if (typeof args === 'string') {
     try {
-      return JSON.parse(args) as BookAppointmentArgs
+      return { ...empty, ...(JSON.parse(args) as Partial<TakeMessageArgs>) }
     } catch {
-      return { customer_name: '', customer_phone: '', service_needed: '', address: '', preferred_time: '' }
+      return empty
     }
   }
-  return (args as BookAppointmentArgs) ?? {
-    customer_name: '', customer_phone: '', service_needed: '', address: '', preferred_time: '',
-  }
+  return { ...empty, ...((args as Partial<TakeMessageArgs>) ?? {}) }
 }
 
 function cryptoRandom(): string {
