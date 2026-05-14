@@ -95,13 +95,13 @@ export default function HomePage() {
             gap: 10px;
             padding: 14px 26px;
             border-radius: 12px;
-            background: linear-gradient(135deg, #22C55E 0%, #16A34A 60%, #15803D 100%);
+            background: linear-gradient(135deg, #14B8A6 0%, #06B6D4 100%);
             color: #fff;
             font-weight: 800;
             font-size: clamp(13px, 1.05vw, 16px);
             letter-spacing: -0.2px;
             text-decoration: none;
-            border: 1px solid rgba(255,255,255,0.18);
+            border: 1px solid rgba(94,234,212,0.45);
             cursor: pointer;
             overflow: hidden;
             animation: heroCtaGlow 2.6s ease-in-out infinite;
@@ -123,21 +123,6 @@ export default function HomePage() {
             transition: transform 0.24s ease;
           }
           .hero-cta:hover .arrow { transform: translateX(4px); }
-
-          .nav-cta {
-            position: relative;
-            padding: 10px 22px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #22C55E 0%, #15A34A 100%);
-            color: #fff;
-            font-size: 14px;
-            font-weight: 800;
-            text-decoration: none;
-            border: 1px solid rgba(255,255,255,0.16);
-            box-shadow: 0 4px 18px rgba(34,197,94,0.42);
-            transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s ease, filter 0.22s ease;
-          }
-          .nav-cta:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 8px 30px rgba(34,197,94,0.6); filter: brightness(1.08); }
 
           .nav-dash {
             position: relative;
