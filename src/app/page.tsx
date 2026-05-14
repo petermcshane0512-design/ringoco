@@ -593,20 +593,20 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Visual story — 2 images, problem → solution */}
+          {/* Visual story — 2 images, customer calling on the LEFT, contractor on the right */}
           <div className="home-grid-2" style={{ gap: 24, marginBottom: 36 }}>
             <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', boxShadow: '0 16px 50px rgba(11,31,58,0.13)' }}>
-              <Image src="/electrician.png" alt="Contractor on the job, phone ringing" width={600} height={420} style={{ width: '100%', height: 340, objectFit: 'cover', display: 'block' }} />
+              <Image src="/customer.png" alt="Customer calling for a job" width={600} height={420} style={{ width: '100%', height: 340, objectFit: 'cover', display: 'block' }} />
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(11,31,58,0.88) 0%, transparent 100%)', padding: '36px 26px 22px' }}>
-                <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, margin: 0 }}>📍 You&apos;re on the job</p>
-                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, margin: '5px 0 0' }}>Phone rings while you&apos;re driving, on a roof, or under a sink.</p>
+                <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, margin: 0 }}>📞 Customer is calling for a job</p>
+                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, margin: '5px 0 0' }}>BellAveGo answers in 12 seconds and captures the booking.</p>
               </div>
             </div>
             <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', boxShadow: '0 16px 50px rgba(11,31,58,0.13)' }}>
-              <Image src="/customer.png" alt="Customer getting confirmation" width={600} height={420} style={{ width: '100%', height: 340, objectFit: 'cover', display: 'block' }} />
+              <Image src="/electrician.png" alt="Contractor on the job" width={600} height={420} style={{ width: '100%', height: 340, objectFit: 'cover', display: 'block' }} />
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(11,31,58,0.88) 0%, transparent 100%)', padding: '36px 26px 22px' }}>
-                <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, margin: 0 }}>💬 Customer gets booked</p>
-                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, margin: '5px 0 0' }}>BellAveGo confirms in their voice and texts them the appointment.</p>
+                <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, margin: 0 }}>📍 You&apos;re on the job</p>
+                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, margin: '5px 0 0' }}>Phone rings while you&apos;re driving, on a roof, or under a sink.</p>
               </div>
             </div>
           </div>
@@ -653,62 +653,117 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* Faux SMS notification card */}
+            {/* iOS iMessage-style card — what the contractor actually sees */}
             <div className="hiw-notif" style={{
               position: 'relative',
-              background: '#fff',
-              borderRadius: 20,
-              padding: '20px 22px',
-              border: '1px solid rgba(34,197,94,0.32)',
-              maxWidth: 420,
+              background: '#FFFFFF',
+              borderRadius: 38,
+              padding: '14px 0 18px',
+              border: '8px solid #1C1C1E',
+              maxWidth: 380,
               margin: '0 auto',
               width: '100%',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif',
+              boxShadow: '0 24px 60px rgba(11,31,58,0.18), 0 0 0 1px rgba(0,0,0,0.04)',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, paddingBottom: 12, borderBottom: '1px solid rgba(10,168,159,0.12)' }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #0AA89F, #0D8F87)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              {/* iOS status bar — time + signal/wifi/battery */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 22px 8px', fontSize: 13, fontWeight: 600, color: '#000' }}>
+                <span style={{ fontVariantNumeric: 'tabular-nums' }}>11:42</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  {/* signal */}
+                  <svg width="16" height="10" viewBox="0 0 16 10" fill="#000"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+                  {/* wifi */}
+                  <svg width="14" height="10" viewBox="0 0 16 12" fill="#000"><path d="M8 11.5a1.2 1.2 0 100-2.4 1.2 1.2 0 000 2.4zM4.2 7.7a5.5 5.5 0 017.6 0l-1.1 1.1a4 4 0 00-5.4 0L4.2 7.7zM1 4.5a10 10 0 0114 0l-1.1 1.1a8.5 8.5 0 00-11.8 0L1 4.5z"/></svg>
+                  {/* battery */}
+                  <div style={{ width: 22, height: 10, border: '1px solid #000', borderRadius: 2.5, position: 'relative', padding: 1, marginLeft: 1 }}>
+                    <div style={{ width: '78%', height: '100%', background: '#000', borderRadius: 1 }} />
+                    <div style={{ position: 'absolute', right: -3, top: 2, width: 1.5, height: 4, background: '#000', borderRadius: 1 }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact header — BellAveGo avatar + name centered */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 22px 14px', borderBottom: '1px solid #E5E5EA' }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(232,116,43,0.32)' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
                   </svg>
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1F3A' }}>BellAveGo · New job request</div>
-                  <div style={{ fontSize: 11, color: '#7AAAB2' }}>2 min ago · 11:42 AM</div>
-                </div>
-                <span style={{ fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 99, background: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Pending</span>
-              </div>
-
-              <div style={{ fontSize: 14, lineHeight: 1.6, color: '#0B1F3A', marginBottom: 14 }}>
-                <div style={{ marginBottom: 8 }}>
-                  <span style={{ fontSize: 10, fontWeight: 800, color: '#7AAAB2', letterSpacing: '0.08em', textTransform: 'uppercase', display: 'block', marginBottom: 2 }}>Caller</span>
-                  <strong>Sarah Chen</strong> · (612) 555-0148
-                </div>
-                <div style={{ marginBottom: 8 }}>
-                  <span style={{ fontSize: 10, fontWeight: 800, color: '#7AAAB2', letterSpacing: '0.08em', textTransform: 'uppercase', display: 'block', marginBottom: 2 }}>Problem</span>
-                  AC unit not blowing cold. Started this morning, kids are home from school.
-                </div>
-                <div style={{ marginBottom: 8 }}>
-                  <span style={{ fontSize: 10, fontWeight: 800, color: '#7AAAB2', letterSpacing: '0.08em', textTransform: 'uppercase', display: 'block', marginBottom: 2 }}>Address</span>
-                  4218 Cedar Lake Rd, St. Louis Park 55416
-                </div>
-                <div>
-                  <span style={{ fontSize: 10, fontWeight: 800, color: '#7AAAB2', letterSpacing: '0.08em', textTransform: 'uppercase', display: 'block', marginBottom: 2 }}>Wants</span>
-                  Today between 2pm and 6pm if possible
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#000' }}>
+                  BellAveGo
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="#8E8E93"><path d="M6 12l-4-4 1.4-1.4L6 9.2l6.6-6.6L14 4z"/></svg>
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <button style={{ padding: '11px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)', color: '#fff', fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 14px rgba(34,197,94,0.35)' }}>
-                  ✓ Book it
-                </button>
-                <button style={{ padding: '11px', borderRadius: 10, border: '1.5px solid rgba(10,168,159,0.25)', background: '#fff', color: '#0AA89F', fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}>
-                  Call back
-                </button>
-                <button style={{ padding: '11px', borderRadius: 10, border: '1.5px solid rgba(10,168,159,0.18)', background: '#F5FDFB', color: '#4A7A80', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                  Send payment link
-                </button>
-                <button style={{ padding: '11px', borderRadius: 10, border: '1.5px solid rgba(239,68,68,0.18)', background: '#FEF2F2', color: '#DC2626', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                  Decline
-                </button>
+              {/* Message thread */}
+              <div style={{ padding: '14px 16px 6px' }}>
+                {/* Date/time stamp — iMessage style centered gray */}
+                <div style={{ textAlign: 'center', fontSize: 11, color: '#8E8E93', margin: '0 0 12px', fontWeight: 600 }}>
+                  <span style={{ fontWeight: 700 }}>Text Message</span>
+                  <span> · Today 11:42 AM</span>
+                </div>
+
+                {/* Received bubble — gray #E9E9EB, left-aligned, iMessage radii */}
+                <div style={{
+                  background: '#E9E9EB',
+                  color: '#000',
+                  borderRadius: 18,
+                  borderBottomLeftRadius: 4,
+                  padding: '10px 14px',
+                  fontSize: 14.5,
+                  lineHeight: 1.42,
+                  maxWidth: '88%',
+                  fontFamily: 'inherit',
+                  letterSpacing: '-0.2px',
+                }}>
+                  <div style={{ fontWeight: 600 }}>🔔 New job — tap to book</div>
+                  <div style={{ marginTop: 6 }}>
+                    <strong>Sarah Chen</strong><br />
+                    📞 (612) 555-0148<br />
+                    🔧 AC not blowing cold — kids home from school<br />
+                    📍 4218 Cedar Lake Rd, St. Louis Park<br />
+                    🕐 Today, 2&ndash;6 PM
+                  </div>
+                  <div style={{ marginTop: 8, fontSize: 13.5, color: '#3C3C43' }}>
+                    Reply <strong>YES</strong> to book or <strong>NO</strong> to pass.
+                  </div>
+                </div>
+
+                {/* Apple smart-action chips — appears under rich messages */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10, maxWidth: '88%' }}>
+                  {[
+                    { label: 'YES, book it', bg: '#34C759', color: '#fff' },
+                    { label: 'Call back',    bg: '#fff',    color: '#007AFF' },
+                    { label: 'Send pay link', bg: '#fff',    color: '#007AFF' },
+                    { label: 'NO, pass',     bg: '#fff',    color: '#FF3B30' },
+                  ].map(b => (
+                    <span key={b.label} style={{
+                      display: 'inline-flex', alignItems: 'center',
+                      padding: '7px 14px',
+                      borderRadius: 99,
+                      background: b.bg,
+                      color: b.color,
+                      border: b.bg === '#fff' ? '1px solid #E5E5EA' : 'none',
+                      fontSize: 13, fontWeight: 600,
+                      letterSpacing: '-0.1px',
+                    }}>
+                      {b.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* iMessage compose bar at the bottom — visual only */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px 0', borderTop: '1px solid #E5E5EA', marginTop: 8 }}>
+                <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#E5E5EA', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ fontSize: 18, color: '#8E8E93', lineHeight: 1, marginTop: -2 }}>+</span>
+                </div>
+                <div style={{ flex: 1, height: 30, borderRadius: 18, border: '1px solid #E5E5EA', background: '#fff', padding: '0 12px', display: 'flex', alignItems: 'center', fontSize: 13, color: '#C7C7CC' }}>
+                  iMessage
+                </div>
+                <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#8E8E93', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M3 11l18-9-9 18-2-7-7-2z"/></svg>
+                </div>
               </div>
             </div>
           </div>
