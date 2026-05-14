@@ -19,12 +19,19 @@ function loadEnvLocal() {
   try {
     const here = dirname(fileURLToPath(import.meta.url))
     const envPath = resolve(here, '..', '.env.local')
-    const text = readFileSync(envPath, 'utf8')
-    for (const line of text.split('\n')) {
-      const m = line.match(/^([A-Z_][A-Z0-9_]*)\s*=\s*(.*)$/)
-      if (!m) continue
-      const [, k, rawV] = m
-      const v = rawV.replace(/^["']|["']$/g, '').trim()
+    let text = readFileSync(envPath, 'utf8')
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1) // strip BOM
+    for (const rawLine of text.split(/\r?\n/)) {
+      const line = rawLine.trim()
+      if (!line || line.startsWith('#')) continue
+      const eq = line.indexOf('=')
+      if (eq < 1) continue
+      const k = line.slice(0, eq).trim()
+      if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(k)) continue
+      let v = line.slice(eq + 1).trim()
+      if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+        v = v.slice(1, -1)
+      }
       if (!process.env[k]) process.env[k] = v
     }
   } catch { /* */ }
