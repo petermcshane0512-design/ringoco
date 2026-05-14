@@ -72,10 +72,9 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  icons: {
-    icon: "/favicon.ico",
-    apple: "/apple-icon.png",
-  },
+  // Favicon + apple-touch-icon are auto-generated from src/app/icon.png and
+  // src/app/apple-icon.png via Next.js's App Router file convention. No
+  // manual icons config needed — adding one would override the file convention.
 };
 
 // JSON-LD Organization schema — helps Google build the right-hand knowledge panel
