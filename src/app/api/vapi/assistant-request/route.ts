@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
   const { data: profile } = await supabase
     .from('profiles')
     .select(
-      'user_id, business_name, owner_first_name, services, service_area, ai_tone, ai_language, custom_prompt_notes, plan_tier, is_active, twilio_number, forwarding_test_started_at',
+      'user_id, business_name, owner_first_name, owner_phone, services, service_area, ai_tone, ai_language, ai_voice_id, backup_owner_phone, custom_prompt_notes, plan_tier, is_active, twilio_number, forwarding_test_started_at',
     )
     .eq('twilio_number', calledNumber)
     .maybeSingle()
@@ -220,7 +220,10 @@ export async function POST(req: NextRequest) {
       },
       voice: {
         provider: VAPI_VOICE_PROVIDER,
-        voiceId: process.env.VAPI_VOICE_ID || VAPI_VOICE_ID_DEFAULT,
+        voiceId:
+          (profile as { ai_voice_id?: string | null }).ai_voice_id ||
+          process.env.VAPI_VOICE_ID ||
+          VAPI_VOICE_ID_DEFAULT,
       },
       // Metadata travels to the end-of-call-report webhook so we know which
       // tenant the call belonged to without a second DB lookup.
@@ -229,6 +232,8 @@ export async function POST(req: NextRequest) {
         business_name: tenant.businessName,
         plan_tier: tenant.planTier,
         twilio_number: tenant.twilioNumber,
+        owner_phone: profile.owner_phone,
+        backup_owner_phone: (profile as { backup_owner_phone?: string | null }).backup_owner_phone || null,
       },
     },
   })

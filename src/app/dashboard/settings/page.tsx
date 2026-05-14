@@ -63,6 +63,11 @@ export default function SettingsPage() {
   const [businessName, setBusinessName] = useState('')
   const [ownerPhone, setOwnerPhone] = useState('')
   const [customPromptNotes, setCustomPromptNotes] = useState('')
+  const [aiTone, setAiTone] = useState<'friendly' | 'professional' | 'concise'>('friendly')
+  const [aiLanguage, setAiLanguage] = useState<'en' | 'es'>('en')
+  const [aiVoiceId, setAiVoiceId] = useState<string>('156fb8d2-335b-4950-9cb3-a2d33befec77')
+  const [backupOwnerPhone, setBackupOwnerPhone] = useState('')
+  const [testCallStatus, setTestCallStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [saving, setSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle')
   const [billingLoading, setBillingLoading] = useState(false)
@@ -80,6 +85,23 @@ export default function SettingsPage() {
     setBusinessName(data?.business_name || '')
     setOwnerPhone(data?.owner_phone || '')
     setCustomPromptNotes(data?.custom_prompt_notes || '')
+    setAiTone((data?.ai_tone as 'friendly' | 'professional' | 'concise') || 'friendly')
+    setAiLanguage((data?.ai_language as 'en' | 'es') || 'en')
+    setAiVoiceId(data?.ai_voice_id || '156fb8d2-335b-4950-9cb3-a2d33befec77')
+    setBackupOwnerPhone(data?.backup_owner_phone || '')
+  }
+
+  async function triggerTestCall() {
+    if (testCallStatus === 'sending') return
+    setTestCallStatus('sending')
+    try {
+      const res = await fetch('/api/onboarding/test-call', { method: 'POST' })
+      setTestCallStatus(res.ok ? 'sent' : 'error')
+      setTimeout(() => setTestCallStatus('idle'), 4000)
+    } catch {
+      setTestCallStatus('error')
+      setTimeout(() => setTestCallStatus('idle'), 4000)
+    }
   }
 
   async function save() {
@@ -92,6 +114,10 @@ export default function SettingsPage() {
         business_name: businessName,
         owner_phone: ownerPhone,
         custom_prompt_notes: customPromptNotes,
+        ai_tone: aiTone,
+        ai_language: aiLanguage,
+        ai_voice_id: aiVoiceId,
+        backup_owner_phone: backupOwnerPhone || null,
       }),
     })
     setSaving(false)
@@ -234,6 +260,161 @@ export default function SettingsPage() {
                 Sign Out
               </button>
             </SignOutButton>
+          </div>
+        </div>
+      </div>
+
+      {/* AI Voice & Tone */}
+      <div style={card}>
+        <div style={cardHead}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#0B1F3A' }}>AI Voice &amp; Tone</div>
+          <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: 'rgba(10,168,159,0.08)', color: '#0AA89F', border: '1px solid rgba(10,168,159,0.2)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Live · ~60s to apply</span>
+        </div>
+        <div style={cardBody}>
+          <p style={{ fontSize: 13, color: '#4A7A80', marginBottom: 16, lineHeight: 1.5 }}>
+            Pick how your AI receptionist sounds. Changes go live within a minute. Tap “Test it” to hear it on your phone before saving.
+          </p>
+
+          {/* Voice picker */}
+          <div style={{ marginBottom: 18 }}>
+            <span style={label}>Voice</span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+              {[
+                { id: '156fb8d2-335b-4950-9cb3-a2d33befec77', name: 'Helpful Woman', desc: 'Warm, professional — default' },
+                { id: 'bf991597-6c13-47e4-8411-91ec2de5c466', name: 'Newslady', desc: 'Polished, news-anchor energy' },
+                { id: '421b3369-f63f-4b03-8980-37a44df1d4e8', name: 'Friendly Man', desc: 'Approachable male voice' },
+              ].map((v) => {
+                const active = aiVoiceId === v.id
+                return (
+                  <button
+                    key={v.id}
+                    onClick={() => setAiVoiceId(v.id)}
+                    style={{
+                      textAlign: 'left',
+                      padding: '12px 14px',
+                      borderRadius: 10,
+                      border: `1.5px solid ${active ? '#0AA89F' : 'rgba(10,168,159,0.18)'}`,
+                      background: active ? 'rgba(10,168,159,0.08)' : '#F5FDFB',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 800, color: active ? '#0AA89F' : '#0B1F3A' }}>
+                      {active ? '✓ ' : ''}{v.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#7AAAB2', marginTop: 2 }}>{v.desc}</div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Tone */}
+          <div style={{ marginBottom: 18 }}>
+            <span style={label}>Tone</span>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {([
+                { v: 'friendly', l: 'Friendly', d: 'Warm, conversational' },
+                { v: 'professional', l: 'Professional', d: 'Polished, formal' },
+                { v: 'concise', l: 'Concise', d: 'Brief, no small talk' },
+              ] as const).map((o) => {
+                const active = aiTone === o.v
+                return (
+                  <button
+                    key={o.v}
+                    onClick={() => setAiTone(o.v)}
+                    style={{
+                      padding: '9px 16px',
+                      borderRadius: 9,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: `1.5px solid ${active ? '#0AA89F' : 'rgba(10,168,159,0.2)'}`,
+                      background: active ? 'rgba(10,168,159,0.08)' : '#F5FDFB',
+                      color: active ? '#0AA89F' : '#4A7A80',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    {active ? '✓ ' : ''}{o.l}
+                    <span style={{ display: 'block', fontSize: 10, fontWeight: 500, color: active ? '#0AA89F' : '#7AAAB2', marginTop: 2 }}>{o.d}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Language */}
+          <div style={{ marginBottom: 18 }}>
+            <span style={label}>Language</span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {([
+                { v: 'en', l: 'English only' },
+                { v: 'es', l: 'Spanish (Español)' },
+              ] as const).map((o) => {
+                const active = aiLanguage === o.v
+                return (
+                  <button
+                    key={o.v}
+                    onClick={() => setAiLanguage(o.v)}
+                    style={{
+                      padding: '9px 16px',
+                      borderRadius: 9,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: `1.5px solid ${active ? '#0AA89F' : 'rgba(10,168,159,0.2)'}`,
+                      background: active ? 'rgba(10,168,159,0.08)' : '#F5FDFB',
+                      color: active ? '#0AA89F' : '#4A7A80',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    {active ? '✓ ' : ''}{o.l}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Backup escalation phone */}
+          <div style={{ marginBottom: 18 }}>
+            <span style={label}>Backup escalation number (optional)</span>
+            <input
+              style={input}
+              value={backupOwnerPhone}
+              onChange={(e) => setBackupOwnerPhone(e.target.value)}
+              placeholder="+15555550100"
+            />
+            <div style={{ fontSize: 11, color: '#7AAAB2', marginTop: 6 }}>
+              When a caller flags an emergency and you don&apos;t pick up within 30s, we&apos;ll SMS this number as a backup so the lead doesn&apos;t die. Leave blank to skip.
+            </div>
+          </div>
+
+          {/* Test call */}
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', paddingTop: 6, borderTop: '1px solid rgba(10,168,159,0.10)' }}>
+            <button
+              onClick={triggerTestCall}
+              disabled={!profile?.twilio_number || testCallStatus === 'sending'}
+              style={{
+                fontSize: 13,
+                fontWeight: 800,
+                padding: '10px 22px',
+                borderRadius: 10,
+                border: 'none',
+                background: testCallStatus === 'sent' ? '#10B981' : 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)',
+                color: '#fff',
+                cursor: !profile?.twilio_number || testCallStatus === 'sending' ? 'not-allowed' : 'pointer',
+                fontFamily: 'inherit',
+                opacity: !profile?.twilio_number ? 0.5 : 1,
+              }}
+            >
+              {testCallStatus === 'idle' && '📞 Test it on my phone'}
+              {testCallStatus === 'sending' && 'Calling…'}
+              {testCallStatus === 'sent' && '✓ Test call sent'}
+              {testCallStatus === 'error' && '✗ Try again'}
+            </button>
+            <div style={{ fontSize: 11, color: '#7AAAB2' }}>
+              Save changes first, then tap to call your business cell with the new voice.
+            </div>
           </div>
         </div>
       </div>

@@ -25,6 +25,9 @@ const SAFE_PROFILE_COLUMNS = new Set([
   'timezone', 'welcome_report_at', 'last_consulting_report_at',
   'verification_nudged_at', 'a2p_brand_status', 'a2p_campaign_sid',
   'a2p_messaging_service_sid',
+  // ── added by AI agent build (May 2026) ────────────────────────────
+  'ai_voice_id', 'backup_owner_phone', 'onboarding_day3_at', 'onboarding_day7_at',
+  'vapi_phone_number_id',
 ])
 
 export async function POST(req: NextRequest) {

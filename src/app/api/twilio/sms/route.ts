@@ -81,8 +81,13 @@ export async function POST(req: NextRequest) {
     return emptyXml()
   }
 
-  // ── 2. HELP — auto-respond with how to reach the business ────────
+  // ── 2. HELP — branch by who's asking ─────────────────────────────
   if (HELP_KEYWORDS.has(body)) {
+    if (from === profile.owner_phone) {
+      // Contractor is asking for onboarding help → conversational Claude
+      return handleOwnerHelp({ from, to, profile })
+    }
+    // End-customer asking how to reach the business → static reply
     const businessName = profile.business_name || 'this business'
     const ownerPhone = profile.owner_phone || ''
     try {
@@ -112,8 +117,78 @@ type Profile = {
   user_id: string
   business_name?: string
   owner_phone?: string
+  owner_first_name?: string
+  forwarding_carrier?: string
+  forwarding_confirmed_at?: string | null
   plan_tier?: string
   twilio_number?: string
+}
+
+/**
+ * Contractor texted HELP from their owner_phone → onboarding coach Claude.
+ * Pulls forwarding state + recent calls + carrier and writes a tailored
+ * walkthrough SMS. Used to be a static reply; now adapts to where they're
+ * stuck.
+ */
+async function handleOwnerHelp(args: { from: string; to: string; profile: Profile }) {
+  const { from, to, profile } = args
+
+  // Pull forwarding state + recent activity
+  const { count: callCount } = await supabase
+    .from('call_logs')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', profile.user_id)
+
+  const carrier = profile.forwarding_carrier || 'unknown'
+  const carrierTipMap: Record<string, string> = {
+    verizon: 'Verizon: dial *71 + your BellAveGo number from your business cell.',
+    att: 'AT&T: dial **61* + your BellAveGo number + *11*15# from your business cell.',
+    tmobile: 'T-Mobile: dial **61* + your BellAveGo number + *11*15# from your business cell.',
+    sprint: 'US Cellular/Cricket/Boost: dial *73 + your BellAveGo number.',
+    unknown: 'Open your phone\'s settings → Phone → Call Forwarding (or use the dial code on the page below).',
+  }
+  const carrierTip = carrierTipMap[carrier] || carrierTipMap.unknown
+
+  const firstName = profile.owner_first_name || 'there'
+  const businessName = profile.business_name || 'your business'
+  const bagNumber = profile.twilio_number || 'your BellAveGo number'
+  const hasCalls = (callCount ?? 0) > 0
+  const forwardingConfirmed = !!profile.forwarding_confirmed_at
+
+  let reply: string
+
+  if (hasCalls) {
+    // Already getting calls → they're asking for a different kind of help
+    reply =
+      `Hey ${firstName} — you've gotten ${callCount} call${callCount === 1 ? '' : 's'}. ` +
+      `If you want to tweak the AI's voice, tone, or instructions: https://www.bellavego.com/dashboard/settings. ` +
+      `If something specific isn't working, reply with what's broken and I'll fix it personally. — Peter`
+  } else if (!forwardingConfirmed) {
+    // Most common case: forwarding not set up
+    reply =
+      `Hey ${firstName}! Looks like ${businessName}'s calls aren't forwarding yet — that's why the AI hasn't answered any. ` +
+      `${carrierTip} Your BellAveGo number is ${bagNumber}. ` +
+      `Full walkthrough with one-tap buttons: https://www.bellavego.com/dashboard/forwarding. ` +
+      `Reply STUCK if it's not working and I'll jump on a call. — Peter`
+  } else {
+    // Forwarding confirmed but still no calls — different problem
+    reply =
+      `Hey ${firstName} — forwarding's set up but no calls have come through yet. ` +
+      `Quick test: call ${bagNumber} from a different phone. The AI should answer in ${businessName}'s name. ` +
+      `If it doesn't, reply BROKEN and I'll dig in immediately. — Peter`
+  }
+
+  try {
+    await twilioClient.messages.create({
+      body: reply,
+      from: to,
+      to: from,
+    })
+  } catch (e) {
+    console.error('owner HELP reply failed:', e)
+  }
+
+  return emptyXml()
 }
 
 async function handleOwnerReply(args: { body: string; from: string; to: string; profile: Profile }) {

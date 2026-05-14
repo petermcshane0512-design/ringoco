@@ -251,6 +251,67 @@ async function takeMessage(opts: {
     }
   }
 
+  // 4b. EMERGENCY ESCALATION — for urgency=emergency, also place an outbound
+  // call to the contractor with a TwiML voice alert. If they don't pick up in
+  // 60s, fallback SMS to backup_owner_phone (or FALLBACK_OWNER_PHONE = Peter).
+  if (args.urgency === 'emergency' && ownerPhone) {
+    try {
+      const appUrl =
+        (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost'))
+          ? process.env.NEXT_PUBLIC_APP_URL
+          : 'https://www.bellavego.com'
+      const businessName = tenant.business_name || 'your business'
+      const safeName = args.customer_name.replace(/[<>&"]/g, '')
+      const safeReason = args.reason.replace(/[<>&"]/g, '')
+      const phoneSpoken = (phone || 'no phone provided').replace(/[<>&"]/g, '')
+      const twimlBody =
+        `<?xml version="1.0" encoding="UTF-8"?>` +
+        `<Response>` +
+        `<Say voice="Polly.Joanna-Neural">BellAveGo emergency call for ${businessName}. ` +
+        `${safeName} just called and needs help right now. They said: ${safeReason}. ` +
+        `Please call them back at ${phoneSpoken}. I'll repeat: ${phoneSpoken}.</Say>` +
+        `<Pause length="1"/>` +
+        `<Say voice="Polly.Joanna-Neural">Press 1 to hear this again, or hang up to call them now.</Say>` +
+        `<Gather numDigits="1" timeout="3"><Say voice="Polly.Joanna-Neural">${safeName} at ${phoneSpoken}. ${safeReason}.</Say></Gather>` +
+        `</Response>`
+
+      const escalationCall = await twilioClient.calls.create({
+        from: fromNumber,
+        to: ownerPhone,
+        twiml: twimlBody,
+        timeout: 30,
+        statusCallback: `${appUrl}/api/twilio/emergency-status?job_id=${jobRow?.id ?? ''}&user_id=${encodeURIComponent(tenant.user_id)}&from=${encodeURIComponent(fromNumber)}`,
+        statusCallbackEvent: ['completed', 'no-answer', 'busy', 'failed'],
+        statusCallbackMethod: 'POST',
+      })
+
+      // Mark the job so we know an emergency call fired
+      if (jobRow?.id) {
+        await supabase
+          .from('jobs')
+          .update({
+            emergency_escalated_at: new Date().toISOString(),
+            emergency_call_sid: escalationCall.sid,
+          })
+          .eq('id', jobRow.id)
+      }
+    } catch (e) {
+      console.error('emergency outbound call failed:', e)
+      // Fallback: at least SMS the backup immediately if the call failed to dial
+      try {
+        const backupPhone =
+          (tenant as { backup_owner_phone?: string }).backup_owner_phone ?? process.env.FALLBACK_OWNER_PHONE
+        if (backupPhone && backupPhone !== ownerPhone) {
+          await twilioClient.messages.create({
+            body: `🚨 EMERGENCY (contractor unreachable) — ${args.customer_name} (${phone}) needs help: ${args.reason}. Please reach out.`,
+            from: fromNumber,
+            to: backupPhone,
+          })
+        }
+      } catch {}
+    }
+  }
+
   // 5. SMS the caller — "we'll call you back" reassurance
   if (phone) {
     try {
@@ -338,6 +399,7 @@ type TenantMeta = {
   user_id: string
   business_name?: string | null
   owner_phone?: string | null
+  backup_owner_phone?: string | null
   plan_tier?: string | null
   twilio_number?: string | null
   is_demo?: boolean
@@ -351,6 +413,7 @@ function extractTenant(message: VapiServerMessage['message']): TenantMeta {
     plan_tier: (md.plan_tier as string) ?? null,
     twilio_number: (md.twilio_number as string) ?? null,
     owner_phone: (md.owner_phone as string) ?? null,
+    backup_owner_phone: (md.backup_owner_phone as string) ?? null,
     is_demo: md.is_demo === true,
   }
 }
