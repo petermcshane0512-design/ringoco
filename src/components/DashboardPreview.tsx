@@ -20,7 +20,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
   const { isSignedIn } = useAuth()
   const [activeTab, setActiveTab] = useState('Command Center')
   const [hoveredNav, setHoveredNav] = useState<string | null>(null)
-  const [stats, setStats] = useState({ calls: 3, jobs: 2, revenue: 12500, saved: 24 })
+  const [stats, setStats] = useState({ calls: 3, jobs: 2, revenue: 12750, saved: 24 })
   const [bumped, setBumped] = useState<string | null>(null)
   const [floatEl, setFloatEl] = useState<{ key: string; text: string } | null>(null)
   const [visible, setVisible] = useState(false)
@@ -82,11 +82,12 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
     })
   }
 
+  // tone: 'orange' = sunset glow + money gradient (revenue), 'teal' = sea glow + teal gradient (everything else)
   const statCards = [
-    { key: 'calls', label: 'Missed Calls Answered Today', value: stats.calls, prefix: '', accent: '#0AA89F' },
-    { key: 'jobs', label: 'Jobs Booked Today', value: stats.jobs, prefix: '', accent: '#22C55E' },
-    { key: 'revenue', label: 'Revenue This Month from BellAveGo Leads', value: stats.revenue, prefix: '$', accent: '#F59E0B' },
-    { key: 'saved', label: 'Missed Calls Saved This Month', value: stats.saved, prefix: '', accent: '#8B5CF6' },
+    { key: 'calls',   label: 'Missed Calls Answered Today',           value: stats.calls,   prefix: '', tone: 'teal'   as const },
+    { key: 'jobs',    label: 'Jobs Booked Today',                     value: stats.jobs,    prefix: '', tone: 'teal'   as const },
+    { key: 'revenue', label: 'Revenue This Month from BellAveGo Leads', value: stats.revenue, prefix: '$', tone: 'orange' as const },
+    { key: 'saved',   label: 'Missed Calls Saved This Month',         value: stats.saved,   prefix: '', tone: 'teal'   as const },
   ]
 
   return (
@@ -136,15 +137,16 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
             : 'perspective(1600px) rotateX(' + (tilt.x + (visible ? 0 : 8)) + 'deg) rotateY(' + tilt.y + 'deg) translateY(' + (visible ? 0 : 28) + 'px)',
           opacity: visible ? 1 : 0,
           transition: 'opacity 0.7s ease, transform 0.7s cubic-bezier(0.34,1,0.64,1)',
-          borderRadius: 18,
-          boxShadow: '0 32px 80px rgba(7,27,58,0.12), 0 8px 32px rgba(10,168,159,0.1), 0 0 0 1px rgba(10,168,159,0.16)',
+          borderRadius: 24,
+          boxShadow: '0 32px 80px rgba(11,31,58,0.14), 0 8px 32px rgba(232,116,43,0.10), 0 0 0 1px rgba(232,116,43,0.16)',
           background: '#ffffff',
           overflow: 'hidden',
           cursor: 'default',
+          isolation: 'isolate',
         }}
       >
         {/* Browser topbar */}
-        <div style={{ height: 46, background: '#ffffff', borderBottom: '1px solid rgba(10,168,159,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px', flexShrink: 0, boxShadow: '0 1px 8px rgba(10,168,159,0.04)' }}>
+        <div style={{ height: 46, background: 'linear-gradient(135deg, #FFFFFF 0%, #FFF7EE 100%)', borderBottom: '1px solid rgba(232,116,43,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px', flexShrink: 0, boxShadow: '0 1px 8px rgba(232,116,43,0.04)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
             <div onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ padding: '4px 10px', borderRadius: 7, border: '1px solid rgba(10,168,159,0.18)', background: '#F5FCFA', color: '#0B1F3A', fontSize: 9.5, fontWeight: 700, cursor: 'pointer', userSelect: 'none' }}>{'<-'} Back to home</div>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#0B1F3A' }}>{activeTab}</div>
@@ -164,7 +166,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
               <div style={{ fontSize: 8, color: '#7AAAB2' }}>Mike&apos;s HVAC Co.</div>
             </div>
 
-            <div style={{ fontSize: 7.5, fontWeight: 700, color: '#7AAAB2', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0 5px', marginBottom: 4 }}>Workspace</div>
+            <div style={{ fontSize: 7.5, fontWeight: 800, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '0 5px', marginBottom: 4 }}>Workspace</div>
 
             {[
               { label: 'Command Center', dot: false },
@@ -177,9 +179,9 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                 <div key={label} onClick={() => setActiveTab(label)} style={{
                   display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px',
                   borderRadius: 7, marginBottom: 1, fontSize: 10, cursor: 'pointer',
-                  background: active ? 'rgba(10,168,159,0.1)' : hovered ? 'rgba(10,168,159,0.06)' : 'transparent',
-                  borderLeft: active ? '2.5px solid #0AA89F' : '2.5px solid transparent',
-                  color: active ? '#0AA89F' : hovered ? '#0AA89F' : '#4A7A80',
+                  background: active ? 'linear-gradient(90deg, rgba(232,116,43,0.10), rgba(20,184,166,0.06))' : hovered ? 'rgba(232,116,43,0.05)' : 'transparent',
+                  borderLeft: active ? '2.5px solid #E8742B' : '2.5px solid transparent',
+                  color: active ? '#C84B26' : hovered ? '#C84B26' : '#4A6670',
                   fontWeight: active ? 700 : hovered ? 600 : 500,
                   transition: 'all 0.15s ease', userSelect: 'none',
                 }}
@@ -192,13 +194,13 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
               )
             })}
 
-            <div style={{ fontSize: 7.5, fontWeight: 700, color: '#7AAAB2', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0 5px', margin: '10px 0 4px' }}>Account</div>
+            <div style={{ fontSize: 7.5, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '0 5px', margin: '10px 0 4px' }}>Account</div>
             <div onClick={() => setActiveTab('Settings')} style={{
               padding: '6px 8px', borderRadius: 7, fontSize: 10, cursor: 'pointer',
-              color: activeTab === 'Settings' ? '#0AA89F' : hoveredNav === 'Settings' ? '#0AA89F' : '#4A7A80',
+              color: activeTab === 'Settings' ? '#C84B26' : hoveredNav === 'Settings' ? '#C84B26' : '#4A6670',
               fontWeight: activeTab === 'Settings' ? 700 : hoveredNav === 'Settings' ? 600 : 500,
-              background: activeTab === 'Settings' ? 'rgba(10,168,159,0.1)' : hoveredNav === 'Settings' ? 'rgba(10,168,159,0.06)' : 'transparent',
-              borderLeft: activeTab === 'Settings' ? '2.5px solid #0AA89F' : '2.5px solid transparent',
+              background: activeTab === 'Settings' ? 'linear-gradient(90deg, rgba(232,116,43,0.10), rgba(20,184,166,0.06))' : hoveredNav === 'Settings' ? 'rgba(232,116,43,0.05)' : 'transparent',
+              borderLeft: activeTab === 'Settings' ? '2.5px solid #E8742B' : '2.5px solid transparent',
               transition: 'all 0.15s ease', userSelect: 'none',
             }}
               onMouseEnter={() => setHoveredNav('Settings')}
@@ -213,8 +215,8 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
             </div>
           </aside>
 
-          {/* -- Main content -- */}
-          <div style={{ flex: 1, padding: '13px 14px', overflowX: 'hidden', minWidth: 0, background: 'linear-gradient(145deg, #F5FCFA 0%, #EBF7F3 50%, #F0FAF7 100%)', overflowY: 'auto' }}>
+          {/* -- Main content -- warm cream gradient matches the live dashboard */}
+          <div style={{ flex: 1, padding: '13px 14px', overflowX: 'hidden', minWidth: 0, background: 'radial-gradient(600px 300px at 88% 6%, rgba(255,217,168,0.32), transparent 70%), radial-gradient(500px 400px at 0% 100%, rgba(94,234,212,0.18), transparent 70%), linear-gradient(165deg, #FFF7EE 0%, #FFFAF3 50%, #FEF1DF 100%)', overflowY: 'auto' }}>
 
           {/* == AI RECEPTIONIST TAB == */}
           {activeTab === 'AI Receptionist' && (
@@ -385,49 +387,67 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
           {/* == COMMAND CENTER TAB (default) == */}
           {activeTab === 'Command Center' && <div>
 
-            {/* Stat cards */}
+            {/* Stat cards — match the live dashboard: warm white, sunset/teal glow + gradient numbers */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 9, marginBottom: 11 }}>
-              {statCards.map(s => (
-                <div key={s.key} style={{
-                  background: '#ffffff',
-                  border: '1px solid rgba(10,168,159,0.14)',
-                  borderRadius: 11,
-                  padding: '11px 12px',
-                  position: 'relative',
-                  overflow: 'visible',
-                  boxShadow: bumped === s.key
-                    ? '0 0 0 2px ' + s.accent + '55, 0 4px 18px ' + s.accent + '28'
-                    : '0 2px 10px rgba(7,27,58,0.05)',
-                  transition: 'box-shadow 0.3s ease',
-                }}>
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2.5, background: s.accent, borderRadius: '11px 11px 0 0' }} />
-                  <div style={{ fontSize: 8.5, fontWeight: 700, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{s.label}</div>
-                  <div style={{ position: 'relative', display: 'inline-block' }}>
-                    <div style={{
-                      fontSize: 20,
-                      fontWeight: 800,
-                      color: '#0B1F3A',
-                      lineHeight: 1,
-                      animation: bumped === s.key ? 'dpBounce 0.38s ease' : 'none',
-                    }}>
-                      {s.prefix}{s.value.toLocaleString()}
+              {statCards.map(s => {
+                const isOrange = s.tone === 'orange'
+                const eyebrowColor = isOrange ? '#C84B26' : '#0AA89F'
+                const glow = isOrange
+                  ? '0 4px 16px rgba(232,116,43,0.14), 0 12px 32px rgba(232,116,43,0.10), inset 0 1px 0 rgba(255,255,255,0.8)'
+                  : '0 4px 16px rgba(20,184,166,0.10), 0 12px 32px rgba(11,31,58,0.06), inset 0 1px 0 rgba(255,255,255,0.8)'
+                const numberGradient = isOrange
+                  ? 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 60%, #C84B26 100%)'
+                  : 'linear-gradient(135deg, #14B8A6 0%, #0AA89F 100%)'
+                const cardBg = isOrange
+                  ? 'linear-gradient(160deg, #FFFFFF 0%, #FFF7EE 100%)'
+                  : 'linear-gradient(160deg, #FFFFFF 0%, #F0FBF8 100%)'
+                const borderColor = isOrange ? 'rgba(232,116,43,0.28)' : 'rgba(20,184,166,0.24)'
+                return (
+                  <div key={s.key} style={{
+                    background: cardBg,
+                    border: `1px solid ${borderColor}`,
+                    borderRadius: 11,
+                    padding: '11px 12px',
+                    position: 'relative',
+                    overflow: 'visible',
+                    boxShadow: bumped === s.key ? `${glow}, 0 0 0 2px ${eyebrowColor}55` : glow,
+                    transition: 'box-shadow 0.3s ease',
+                  }}>
+                    <div style={{ fontSize: 8.5, fontWeight: 800, color: eyebrowColor, textTransform: 'uppercase', letterSpacing: '0.10em', marginBottom: 6 }}>{s.label}</div>
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                      <div style={{
+                        fontSize: 22,
+                        fontWeight: 900,
+                        background: numberGradient,
+                        WebkitBackgroundClip: 'text',
+                        backgroundClip: 'text',
+                        color: 'transparent',
+                        WebkitTextFillColor: 'transparent',
+                        letterSpacing: '-0.5px',
+                        lineHeight: 1,
+                        fontVariantNumeric: 'tabular-nums',
+                        animation: bumped === s.key ? 'dpBounce 0.38s ease' : 'none',
+                        filter: isOrange ? 'drop-shadow(0 2px 6px rgba(232,116,43,0.30))' : 'drop-shadow(0 2px 4px rgba(20,184,166,0.25))',
+                      }}>
+                        {s.prefix}{s.value.toLocaleString()}
+                      </div>
+                      {floatEl?.key === s.key && (
+                        <span style={{
+                          position: 'absolute',
+                          top: -2,
+                          right: -22,
+                          fontSize: 9,
+                          fontWeight: 800,
+                          color: eyebrowColor,
+                          animation: 'dpFloatUp 0.85s ease forwards',
+                          pointerEvents: 'none',
+                          whiteSpace: 'nowrap',
+                        }}>{floatEl.text}</span>
+                      )}
                     </div>
-                    {floatEl?.key === s.key && (
-                      <span style={{
-                        position: 'absolute',
-                        top: -2,
-                        right: -22,
-                        fontSize: 9,
-                        fontWeight: 800,
-                        color: s.accent,
-                        animation: 'dpFloatUp 0.85s ease forwards',
-                        pointerEvents: 'none',
-                        whiteSpace: 'nowrap',
-                      }}>{floatEl.text}</span>
-                    )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             {/* 2-column middle row */}
