@@ -56,14 +56,90 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No called number in payload' }, { status: 400 })
   }
 
+  // The caller's phone (homeowner dialing in normally, OR our office line if
+  // this is a forwarding-verification test call). On Vapi imported numbers
+  // the caller is on message.call.customer.number.
+  const callerNumber = msg.call?.customer?.number ?? null
+
+  // ── Public landing-page demo number ──
+  // Hardcoded "Smith HVAC & Plumbing" fictional profile. No DB writes, no
+  // contractor SMS — just the conversation so prospects hear the AI live.
+  // Mirrors the same isDemo path in the legacy /api/twilio/voice route.
+  if (process.env.TWILIO_DEMO_NUMBER && calledNumber === process.env.TWILIO_DEMO_NUMBER) {
+    const demoTenant: TenantContext = {
+      userId: 'demo',
+      businessName: "Smith HVAC & Plumbing",
+      services: 'HVAC, plumbing, water heater installs, drain cleaning',
+      serviceArea: 'metro Atlanta',
+      aiTone: 'friendly',
+      aiLanguage: 'en',
+      planTier: 'demo',
+      twilioNumber: calledNumber,
+    }
+    return NextResponse.json({
+      assistantOverrides: {
+        firstMessage: `Thanks for calling Smith HVAC and Plumbing. What's going on — what can we help you with today?`,
+        model: {
+          messages: [{ role: 'system', content: renderSystemPrompt(demoTenant) }],
+        },
+        voice: {
+          provider: VAPI_VOICE_PROVIDER,
+          voiceId: process.env.VAPI_VOICE_ID || VAPI_VOICE_ID_DEFAULT,
+        },
+        metadata: {
+          user_id: 'demo',
+          business_name: demoTenant.businessName,
+          plan_tier: 'demo',
+          twilio_number: calledNumber,
+          is_demo: true,
+        },
+      },
+    })
+  }
+
   // Look up the tenant
   const { data: profile } = await supabase
     .from('profiles')
     .select(
-      'user_id, business_name, owner_first_name, services, service_area, ai_tone, ai_language, custom_prompt_notes, plan_tier, is_active, twilio_number',
+      'user_id, business_name, owner_first_name, services, service_area, ai_tone, ai_language, custom_prompt_notes, plan_tier, is_active, twilio_number, forwarding_test_started_at',
     )
     .eq('twilio_number', calledNumber)
     .maybeSingle()
+
+  // ── Forwarding verification handshake ──
+  // If the inbound call to a tenant's BellAveGo number is FROM our office line
+  // (TWILIO_PHONE_NUMBER) AND we recently started a forwarding test for this
+  // tenant, the carrier no-answer-forward fired correctly. Stamp verified and
+  // tell Vapi to terminate immediately — no conversation, no minutes burned.
+  if (
+    profile &&
+    process.env.TWILIO_PHONE_NUMBER &&
+    callerNumber === process.env.TWILIO_PHONE_NUMBER
+  ) {
+    const startedAt = (profile as { forwarding_test_started_at?: string | null }).forwarding_test_started_at
+      ? new Date((profile as { forwarding_test_started_at: string }).forwarding_test_started_at).getTime()
+      : 0
+    const within90s = startedAt > 0 && Date.now() - startedAt < 90_000
+    if (within90s) {
+      try {
+        await supabase
+          .from('profiles')
+          .update({ forwarding_verified_at: new Date().toISOString() })
+          .eq('user_id', profile.user_id)
+      } catch (e) {
+        console.error('vapi forwarding_verified_at stamp failed:', e)
+      }
+      return NextResponse.json({
+        assistantOverrides: {
+          firstMessage: '',
+          endCallMessage: '',
+          endCallFunctionEnabled: false,
+          maxDurationSeconds: 1,
+          silenceTimeoutSeconds: 1,
+        },
+      })
+    }
+  }
 
   if (!profile) {
     // Unknown number — let Vapi play its default and hang up. We shouldn't

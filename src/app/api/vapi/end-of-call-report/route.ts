@@ -88,6 +88,29 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
     const callerPhone =
       message.call?.customer?.number ?? args.customer_phone ?? null
 
+    // Demo number — send a "this was a BellAveGo demo" SMS to the caller,
+    // skip DB writes + contractor SMS. Mirrors the isDemo path in the legacy
+    // /api/twilio/voice route.
+    if (tenant.is_demo) {
+      const callerNumber = args.customer_phone || callerPhone
+      if (callerNumber) {
+        try {
+          await twilioClient.messages.create({
+            body: `Hi ${args.customer_name}! This is a BellAveGo demo from Smith HVAC & Plumbing. Your "${args.service_needed}" booking at ${args.address} for ${args.preferred_time} was just captured by AI in under 60 seconds. Build this for your business → bellavego.com`,
+            from: tenant.twilio_number || process.env.TWILIO_DEMO_NUMBER || process.env.TWILIO_PHONE_NUMBER!,
+            to: callerNumber,
+          })
+        } catch (e) {
+          console.error('demo caller SMS failed:', e)
+        }
+      }
+      results.push({
+        toolCallId: tc.id,
+        result: "Demo booking captured. You'll get a text in a moment.",
+      })
+      continue
+    }
+
     if (!tenant.user_id) {
       results.push({
         toolCallId: tc.id,
@@ -171,6 +194,26 @@ async function bookAppointment(opts: {
   if (jobErr) {
     console.error('vapi book_appointment: job insert failed', jobErr)
     return { success: false, error: 'database write failed' }
+  }
+
+  // 2b. Seed quote_followups so Quote Hunter chases the customer if the
+  // contractor doesn't approve within 2 days. Mirrors the legacy /api/twilio/voice
+  // path so Office Mgr/Concierge customers on Vapi-imported numbers get the
+  // same automated follow-up coverage. YES/NO replies in /api/twilio/sms will
+  // resolve the row to won/lost so chases stop on contractor decision.
+  try {
+    const twoDaysOut = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
+    await supabase.from('quote_followups').insert({
+      user_id: tenant.user_id,
+      customer_name: args.customer_name,
+      customer_phone: phone,
+      quote_description: `${args.service_needed} at ${args.address} — requested ${args.preferred_time}`,
+      source: 'ai_call',
+      status: 'pending',
+      next_followup_at: twoDaysOut,
+    })
+  } catch (e) {
+    console.error('quote_followups seed (vapi) failed:', e)
   }
 
   // 3. Smart insight (Office Mgr+)
@@ -261,6 +304,11 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
     (tc) => tc.function?.name === 'book_appointment',
   )
 
+  // Demo calls don't write to DB.
+  if (tenant.is_demo) {
+    return NextResponse.json({ ok: true, demo: true })
+  }
+
   if (!tenant.user_id) {
     return NextResponse.json({ ok: true, note: 'no tenant metadata' })
   }
@@ -297,6 +345,7 @@ type TenantMeta = {
   owner_phone?: string | null
   plan_tier?: string | null
   twilio_number?: string | null
+  is_demo?: boolean
 }
 
 function extractTenant(message: VapiServerMessage['message']): TenantMeta {
@@ -307,6 +356,7 @@ function extractTenant(message: VapiServerMessage['message']): TenantMeta {
     plan_tier: (md.plan_tier as string) ?? null,
     twilio_number: (md.twilio_number as string) ?? null,
     owner_phone: (md.owner_phone as string) ?? null,
+    is_demo: md.is_demo === true,
   }
 }
 
