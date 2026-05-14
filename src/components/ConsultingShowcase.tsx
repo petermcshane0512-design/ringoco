@@ -305,11 +305,11 @@ export default function ConsultingShowcase() {
         .cs-cover-logo {
           align-self: flex-start;
           background: rgba(255,255,255,0.96);
-          padding: 7px 12px; border-radius: 9px;
-          margin-bottom: 12px;
+          padding: 9px 14px; border-radius: 11px;
+          margin-bottom: 14px;
           box-shadow: 0 6px 16px rgba(11,31,58,0.32);
         }
-        .cs-cover-logo img { display: block; height: 32px; width: auto; }
+        .cs-cover-logo img { display: block; height: 56px; width: auto; }
         .cs-cover-eyebrow {
           display: inline-flex; align-items: center; gap: 5px;
           font-size: 9px; font-weight: 800;
