@@ -538,10 +538,10 @@ export default function ConsultingShowcase() {
         <header className="cs-head">
           <span className="cs-eyebrow">Quarterly Consulting · Included on Growth+</span>
           <h2 className="cs-h2">
-            Every 90 days, BellAveGo finds<br />the <span className="money">money you missed</span>.
+            BellAveGo continuously analyzes your business for <span className="money">missed revenue opportunities</span>.
           </h2>
           <p className="cs-sub">
-            We pull your dashboard, your service area, and your competitors. Then we send a polished report telling you exactly where the next $5K is hiding — and what to do about it this week.
+            Higher-tier plans include more frequent reporting, deeper market analysis, and ongoing AI-driven business intelligence.
           </p>
         </header>
 
