@@ -1,46 +1,17 @@
 'use client'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/nextjs'
 
 /**
- * Meet the Founder — venture-backed vertical-AI feel.
+ * Meet the Founder — Sunset Mission Control aesthetic.
  *
- * Right rail is the live AI call demo (animated waveform, transcript playback,
- * glowing call state) — replaces the old "Coming soon" video that hurt
- * credibility. Left rail is concise emotional copy + premium founder card.
+ * Right rail is a "Why I founded BellAveGo" video placeholder card (video
+ * not recorded yet — sits there ready). Left rail is short emotional headline
+ * + condensed founder summary + premium founder ID card.
  */
-
-const TRANSCRIPT: { who: 'ai' | 'caller'; line: string; pause?: number }[] = [
-  { who: 'ai',     line: 'Thanks for calling Smith HVAC. What can we help you with today?' },
-  { who: 'caller', line: 'Hi, my AC stopped cooling overnight. Kids are home, it’s really hot.' },
-  { who: 'ai',     line: 'Ugh, no good. Can I grab your name and best callback number?' },
-  { who: 'caller', line: 'Sarah Chen — six-one-two, five-five-five, oh-one-four-eight.' },
-  { who: 'ai',     line: 'Got it. What’s the address we’d come out to?' },
-  { who: 'caller', line: '4218 Cedar Lake Road, St. Louis Park.' },
-  { who: 'ai',     line: 'Perfect. Best window today? Morning or afternoon?' },
-  { who: 'caller', line: 'Anytime between 2 and 6 would be amazing.' },
-  { who: 'ai',     line: 'Done — Mike will text you in the next few minutes to confirm. Hang tight.' },
-]
-
 export default function FounderPage() {
   const { isSignedIn } = useAuth()
-
-  // Cycle through transcript lines for the live demo card
-  const [activeIdx, setActiveIdx] = useState(0)
-  useEffect(() => {
-    let cancelled = false
-    function tick(idx: number) {
-      if (cancelled) return
-      setActiveIdx(idx)
-      const next = (idx + 1) % TRANSCRIPT.length
-      const delay = TRANSCRIPT[idx].who === 'ai' ? 2400 : 2000
-      setTimeout(() => tick(next), delay)
-    }
-    tick(0)
-    return () => { cancelled = true }
-  }, [])
 
   return (
     <main className="mc-page" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
@@ -68,19 +39,21 @@ export default function FounderPage() {
 
           {/* Left: copy */}
           <div className="mc-slide-up">
-            <span className="mc-eyebrow" style={{ color: '#FF9D5A' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'linear-gradient(135deg, #FF9D5A, #E8742B)', boxShadow: '0 0 10px rgba(232,116,43,0.7)' }} />
-              Built by people who answer their own phones
-            </span>
-            <h1 style={{ fontSize: 'clamp(34px, 4.4vw, 56px)', fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 18, color: '#0B1F3A' }}>
-              Hi, I&apos;m Peter. I built BellAveGo after watching too many contractors lose jobs <span style={{ background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 60%, #C84B26 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', filter: 'drop-shadow(0 2px 10px rgba(232,116,43,0.32))' }}>to voicemail.</span>
+            <h1 style={{ fontSize: 'clamp(40px, 5.4vw, 68px)', fontWeight: 900, letterSpacing: '-0.045em', lineHeight: 1.02, marginBottom: 26, color: '#0B1F3A' }}>
+              Hi, I&apos;m Peter.<br />
+              I founded <span style={{ background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', filter: 'drop-shadow(0 2px 10px rgba(232,116,43,0.32))' }}>BellAveGo.</span>
             </h1>
-            <p style={{ fontSize: 17, lineHeight: 1.65, color: '#3D5A62', maxWidth: 520, margin: '0 0 18px' }}>
-              Most home-service businesses don&apos;t need more software. They need someone making sure the phone gets answered, the lead gets captured, and the customer gets booked.
-            </p>
-            <p style={{ fontSize: 17, lineHeight: 1.55, color: '#C84B26', fontWeight: 800, margin: '0 0 28px' }}>
-              BellAveGo was built to do exactly that.
-            </p>
+            <div style={{ fontSize: 16, lineHeight: 1.65, color: '#3D5A62', maxWidth: 540 }}>
+              <p style={{ margin: '0 0 14px' }}>
+                BellAveGo was created after watching too many home-service businesses lose valuable jobs to missed calls and outdated answering systems. Contractors deserved a smarter solution &mdash; one that grows their revenue instead of adding more software to manage.
+              </p>
+              <p style={{ margin: '0 0 14px' }}>
+                We combined <span style={{ color: '#0AA89F', fontWeight: 700 }}>AI reception</span>, <span style={{ color: '#0AA89F', fontWeight: 700 }}>lead capture</span>, scheduling, invoicing, and growth-focused consulting into one platform built specifically for home-service teams. The AI responds naturally, captures the right details, and instantly texts the owner actionable info so no lead gets lost.
+              </p>
+              <p style={{ margin: '0 0 26px' }}>
+                We&apos;re focused on long-term relationships with the businesses we work with. If BellAveGo doesn&apos;t earn its keep, we make it right &mdash; that&apos;s the deal.
+              </p>
+            </div>
 
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 28 }}>
               <Link href="/pricing" className="mc-btn-orange">
@@ -107,93 +80,92 @@ export default function FounderPage() {
             </div>
           </div>
 
-          {/* Right: LIVE AI CALL DEMO */}
-          <div className="mc-card mc-card-orange" style={{ padding: 0, overflow: 'hidden' }}>
+          {/* Right: VIDEO PLACEHOLDER — "Why I founded BellAveGo" */}
+          {/* Video isn't recorded yet. When it is, swap the inner play-button
+              block for an <iframe> (Loom / YouTube / mux-player). The card
+              dimensions, glow, and tap target are already set. */}
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="Why I founded BellAveGo — video coming soon"
+            style={{
+              position: 'relative',
+              aspectRatio: '16/10',
+              borderRadius: 22,
+              overflow: 'hidden',
+              cursor: 'pointer',
+              background:
+                'radial-gradient(circle at 30% 25%, rgba(255,157,90,0.30), transparent 55%),' +
+                'radial-gradient(circle at 80% 75%, rgba(20,184,166,0.28), transparent 60%),' +
+                'linear-gradient(135deg, #050E1F 0%, #0B1F3A 50%, #112C4A 100%)',
+              border: '1px solid rgba(94,234,212,0.32)',
+              boxShadow:
+                '0 30px 70px rgba(11,31,58,0.30),' +
+                '0 0 0 1px rgba(232,116,43,0.18),' +
+                '0 0 80px rgba(232,116,43,0.20)',
+              transition: 'transform 0.32s ease, box-shadow 0.32s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-3px)'
+              e.currentTarget.style.boxShadow =
+                '0 40px 90px rgba(11,31,58,0.36), 0 0 0 1px rgba(94,234,212,0.45), 0 0 110px rgba(232,116,43,0.32)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow =
+                '0 30px 70px rgba(11,31,58,0.30), 0 0 0 1px rgba(232,116,43,0.18), 0 0 80px rgba(232,116,43,0.20)'
+            }}
+          >
             <style>{`
-              @keyframes ringPulseHero {
-                0%, 100% { box-shadow: 0 0 0 0 rgba(232,116,43,0.45); }
-                70%      { box-shadow: 0 0 0 14px rgba(232,116,43,0); }
+              @keyframes founderPlayPulse {
+                0%, 100% { box-shadow: 0 18px 40px rgba(232,116,43,0.55), 0 0 0 0 rgba(255,217,168,0.6); }
+                50%      { box-shadow: 0 22px 50px rgba(232,116,43,0.7),  0 0 0 18px rgba(255,217,168,0); }
               }
-              .hero-call-ring { animation: ringPulseHero 2.2s ease-out infinite; }
+              .founder-play { animation: founderPlayPulse 2.4s ease-in-out infinite; }
             `}</style>
 
-            {/* Header bar */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid rgba(232,116,43,0.14)', background: 'linear-gradient(135deg, #FFFFFF 0%, #FFF7EE 100%)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span className="mc-status-pill"><span className="mc-live-dot" /> Live · AI handling call</span>
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: 22 }}>
+              {/* Top meta — coming-soon tag + duration */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '4px 11px', borderRadius: 99,
+                  background: 'rgba(94,234,212,0.14)',
+                  border: '1px solid rgba(94,234,212,0.40)',
+                  fontSize: 10, fontWeight: 800, color: '#5EEAD4',
+                  letterSpacing: '0.16em', textTransform: 'uppercase',
+                }}>
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#E8742B', boxShadow: '0 0 8px rgba(232,116,43,0.7)' }} />
+                  Founder story
+                </span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.62)', letterSpacing: '0.04em' }}>
+                  Coming soon
+                </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, color: '#7AAAB2', fontVariantNumeric: 'tabular-nums' }}>
-                <div className="mc-wave" style={{ height: 18 }}>
-                  <span /><span /><span /><span /><span /><span /><span />
+
+              {/* Center play button */}
+              <div className="founder-play" style={{
+                margin: 'auto',
+                width: 96, height: 96,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #FFD9A8 0%, #FF9D5A 50%, #E8742B 100%)',
+                border: '4px solid rgba(255,255,255,0.92)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#0B1F3A',
+              }}>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
+
+              {/* Bottom title */}
+              <div style={{ textAlign: 'center', color: '#fff' }}>
+                <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.3px', marginBottom: 5 }}>
+                  Why I founded BellAveGo
                 </div>
-                <span>00:24</span>
-              </div>
-            </div>
-
-            {/* Caller card */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 20px', borderBottom: '1px solid rgba(232,116,43,0.10)' }}>
-              <div className="hero-call-ring" style={{ width: 46, height: 46, borderRadius: '50%', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 6px 16px rgba(232,116,43,0.32)' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" strokeWidth="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0B1F3A' }}>Sarah Chen</div>
-                <div style={{ fontSize: 11.5, color: '#4A6670' }}>(612) 555-0148 · St. Louis Park, MN</div>
-              </div>
-              <span style={{ fontSize: 9, fontWeight: 800, padding: '3px 9px', borderRadius: 99, background: 'rgba(232,116,43,0.14)', color: '#C84B26', border: '1px solid rgba(232,116,43,0.36)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Urgent</span>
-            </div>
-
-            {/* Live transcript */}
-            <div style={{ padding: '16px 20px', minHeight: 280, maxHeight: 320, overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {TRANSCRIPT.slice(Math.max(0, activeIdx - 4), activeIdx + 1).map((line, i, arr) => {
-                const isActive = i === arr.length - 1
-                return (
-                  <div key={`${activeIdx}-${i}`} className="mc-slide-up" style={{
-                    display: 'flex', gap: 10, alignItems: 'flex-start',
-                    opacity: isActive ? 1 : 0.45,
-                    transition: 'opacity 0.4s',
-                  }}>
-                    <span style={{
-                      flexShrink: 0,
-                      fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
-                      padding: '3px 8px', borderRadius: 6, marginTop: 2,
-                      background: line.who === 'ai' ? 'rgba(232,116,43,0.10)' : '#F1F5F9',
-                      color: line.who === 'ai' ? '#C84B26' : '#4A6670',
-                      border: line.who === 'ai' ? '1px solid rgba(232,116,43,0.28)' : '1px solid #E2E8F0',
-                    }}>{line.who === 'ai' ? 'AI' : 'Caller'}</span>
-                    <span style={{ fontSize: 13.5, lineHeight: 1.55, color: isActive ? '#0B1F3A' : '#4A6670' }}>
-                      {line.line}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-
-            {/* Captured fields — fills as the call progresses */}
-            <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(232,116,43,0.14)', background: 'linear-gradient(135deg, #FFF7EE 0%, #FFFAF3 100%)' }}>
-              <div style={{ fontSize: 9, fontWeight: 800, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8 }}>
-                Captured this call
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-                {[
-                  { k: 'Name',    v: 'Sarah Chen',     ready: activeIdx >= 3 },
-                  { k: 'Phone',   v: '(612) 555-0148', ready: activeIdx >= 3 },
-                  { k: 'Service', v: 'AC repair',      ready: activeIdx >= 1 },
-                  { k: 'Address', v: '4218 Cedar Lake Rd', ready: activeIdx >= 5 },
-                  { k: 'Window',  v: 'Today 2–6 PM',   ready: activeIdx >= 7 },
-                  { k: 'Status',  v: 'Booking complete', ready: activeIdx >= 8, ok: true },
-                ].map(f => (
-                  <div key={f.k} style={{
-                    padding: '8px 11px', borderRadius: 8,
-                    background: f.ready ? (f.ok ? '#ECFDF5' : '#FFFFFF') : 'rgba(255,255,255,0.5)',
-                    border: `1px solid ${f.ready ? (f.ok ? 'rgba(34,197,94,0.36)' : 'rgba(232,116,43,0.20)') : 'rgba(232,116,43,0.08)'}`,
-                    transition: 'all 0.4s',
-                  }}>
-                    <div style={{ fontSize: 8.5, fontWeight: 800, color: '#7AAAB2', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 1 }}>{f.k}</div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: f.ready ? (f.ok ? '#15803D' : '#0B1F3A') : '#A0BCC2' }}>
-                      {f.ready ? f.v : '—'}
-                    </div>
-                  </div>
-                ))}
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(94,234,212,0.85)', letterSpacing: '0.04em' }}>
+                  Video drops soon &middot; ~3&nbsp;min watch
+                </div>
               </div>
             </div>
           </div>
@@ -251,14 +223,14 @@ export default function FounderPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
             {[
-              { title: 'Multi-tenant Twilio',     desc: 'Every customer auto-provisioned a local AI number on Stripe checkout.' },
-              { title: 'Stripe billing',          desc: 'Three-tier subscription, auto-suspend on payment failure.' },
-              { title: 'AI receptionist (Vapi)',  desc: 'Real Claude Sonnet voice with sub-second latency. Captures 5 fields in under 60 seconds.' },
-              { title: 'Quote Hunter',            desc: 'Auto-follow-up SMS day 2 / 7 / 14 on open quotes.' },
-              { title: 'AI Collections',          desc: 'Auto-chases past-due invoices with Stripe pay-by-text links.' },
-              { title: 'AI Consulting reports',   desc: 'Pulls your data, ranks revenue opportunities by addressable monthly $.' },
+              { title: 'Multi-tenant Twilio',     desc: 'Every customer auto-provisioned a local AI number on Stripe checkout.', tone: 'orange' },
+              { title: 'Stripe billing',          desc: 'Three-tier subscription, auto-suspend on payment failure.', tone: 'teal' },
+              { title: 'AI receptionist (Vapi)',  desc: 'Real Claude Sonnet voice with sub-second latency. Captures 5 fields in under 60 seconds.', tone: 'orange' },
+              { title: 'Quote Hunter',            desc: 'Auto-follow-up SMS day 2 / 7 / 14 on open quotes.', tone: 'teal' },
+              { title: 'AI Collections',          desc: 'Auto-chases past-due invoices with Stripe pay-by-text links.', tone: 'orange' },
+              { title: 'AI Consulting reports',   desc: 'Pulls your data, ranks revenue opportunities by addressable monthly $.', tone: 'teal' },
             ].map(x => (
-              <div key={x.title} className="mc-card" style={{ padding: 20 }}>
+              <div key={x.title} className={`mc-card mc-card-${x.tone}`} style={{ padding: 20 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                   <span className="mc-live-dot" />
                   <span style={{ fontSize: 10, fontWeight: 800, color: '#15803D', letterSpacing: '0.14em', textTransform: 'uppercase' }}>Shipped</span>

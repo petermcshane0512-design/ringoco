@@ -248,7 +248,7 @@ export default function DashboardPage() {
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ fontSize: 28, fontWeight: 900, color: "#0B1F3A", letterSpacing: "-0.04em" }}>
-              Command <span style={{ background: "linear-gradient(135deg, #FF9D5A, #E8742B 60%, #C84B26)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>Center</span>
+              Command <span style={{ background: "linear-gradient(135deg, #FF9D5A 0%, #E8742B 45%, #0AA89F 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>Center</span>
             </div>
             {profile?.is_active && (
               <span className="mc-status-pill"><span className="mc-live-dot" /> AI Active</span>
@@ -374,26 +374,29 @@ export default function DashboardPage() {
           state behind the activation banner above (sells with desire, not a wall). */}
       <>
 
-      {/* Metric cards — big bold numbers, glass navy, orange/teal glows */}
+      {/* Metric cards — big bold numbers, alternating orange + teal glows */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 24 }}>
         {metrics.map((m, idx) => {
-          // Revenue card gets the orange glow; others get teal
-          const isRevenue = idx === 0
+          // Revenue (idx 0) = orange (money); others = teal (AI/operational)
+          const tone: "orange" | "teal" = idx === 0 ? "orange" : "teal"
+          const accent = tone === "orange"
+            ? { eyebrow: "#C84B26", icon: "#E8742B", iconBg: "rgba(232,116,43,0.12)", iconBorder: "rgba(232,116,43,0.30)" }
+            : { eyebrow: "#0AA89F", icon: "#0AA89F", iconBg: "rgba(20,184,166,0.10)", iconBorder: "rgba(20,184,166,0.30)" }
           return (
             <div
               key={m.label}
-              className={`mc-card ${isRevenue ? "mc-card-orange" : ""}`}
+              className={`mc-card mc-card-${tone}`}
               style={{ position: "relative", overflow: "hidden", padding: "20px 22px" }}
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <span style={{ fontSize: 10, fontWeight: 800, color: isRevenue ? "#FF9D5A" : "#5EEAD4", textTransform: "uppercase", letterSpacing: "0.12em" }}>
+                <span style={{ fontSize: 10, fontWeight: 800, color: accent.eyebrow, textTransform: "uppercase", letterSpacing: "0.14em" }}>
                   {m.label}
                 </span>
-                <div style={{ width: 32, height: 32, borderRadius: 9, background: isRevenue ? "rgba(232,116,43,0.16)" : "rgba(94,234,212,0.12)", border: `1px solid ${isRevenue ? "rgba(232,116,43,0.32)" : "rgba(94,234,212,0.28)"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={isRevenue ? "#FF9D5A" : "#5EEAD4"} strokeWidth="2">{m.icon}</svg>
+                <div style={{ width: 32, height: 32, borderRadius: 9, background: accent.iconBg, border: `1px solid ${accent.iconBorder}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={accent.icon} strokeWidth="2">{m.icon}</svg>
                 </div>
               </div>
-              <div className={isRevenue ? "mc-stat-num mc-stat-num-money" : "mc-stat-num mc-stat-num-teal"} style={{ fontSize: "clamp(28px, 3.2vw, 40px)" }}>{m.value}</div>
+              <div className={tone === "orange" ? "mc-stat-num mc-stat-num-money" : "mc-stat-num mc-stat-num-teal"} style={{ fontSize: "clamp(28px, 3.2vw, 40px)" }}>{m.value}</div>
               <div style={{ fontSize: 11.5, marginTop: 8, color: "#4A6670", fontWeight: 500 }}>{m.sub}</div>
             </div>
           )
@@ -683,7 +686,7 @@ export default function DashboardPage() {
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0AA89F" strokeWidth="2">{item.icon}</svg>
                   </div>
                   <span style={{ fontSize: 12.5, color: "#0B1F3A", fontWeight: 600 }}>{item.label}</span>
-                  <span style={{ marginLeft: "auto", fontSize: 12, color: "#E8742B", fontWeight: 700 }}>→</span>
+                  <span style={{ marginLeft: "auto", fontSize: 12, color: "#0AA89F", fontWeight: 700 }}>→</span>
                 </Link>
               ))}
             </div>

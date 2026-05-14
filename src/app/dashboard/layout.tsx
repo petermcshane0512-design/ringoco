@@ -94,13 +94,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Link key={href} href={href} style={{
             display: 'flex', alignItems: 'center', gap: 9, padding: '9px 10px',
             borderRadius: 9, textDecoration: 'none', fontSize: 13, marginBottom: 2,
-            background: isActive(href) ? 'linear-gradient(90deg, rgba(232,116,43,0.12), rgba(232,116,43,0.02))' : 'transparent',
+            background: isActive(href) ? 'linear-gradient(90deg, rgba(232,116,43,0.10), rgba(20,184,166,0.06))' : 'transparent',
             borderLeft: `2.5px solid ${isActive(href) ? '#E8742B' : 'transparent'}`,
             color: isActive(href) ? '#C84B26' : '#4A6670',
             fontWeight: isActive(href) ? 700 : 500,
             transition: 'all 0.18s ease',
           }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">{icon}</svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isActive(href) ? '#0AA89F' : 'currentColor'} strokeWidth="1.8">{icon}</svg>
             {label}
             {dot && (
               <div style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 8px rgba(34,197,94,0.6)' }} />
@@ -109,11 +109,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         ))}
 
         {/* Account nav */}
-        <div style={{ fontSize: 10, fontWeight: 800, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '0 8px', margin: '18px 0 6px' }}>Account</div>
+        <div style={{ fontSize: 10, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '0 8px', margin: '18px 0 6px' }}>Account</div>
         <Link href="/dashboard/settings" style={{
           display: 'flex', alignItems: 'center', gap: 9, padding: '9px 10px',
           borderRadius: 9, textDecoration: 'none', fontSize: 13, marginBottom: 2,
-          background: isActive('/dashboard/settings') ? 'linear-gradient(90deg, rgba(232,116,43,0.12), rgba(232,116,43,0.02))' : 'transparent',
+          background: isActive('/dashboard/settings') ? 'linear-gradient(90deg, rgba(232,116,43,0.10), rgba(20,184,166,0.06))' : 'transparent',
           borderLeft: `2.5px solid ${isActive('/dashboard/settings') ? '#E8742B' : 'transparent'}`,
           color: isActive('/dashboard/settings') ? '#C84B26' : '#4A6670',
           fontWeight: isActive('/dashboard/settings') ? 700 : 500,
