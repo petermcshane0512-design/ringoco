@@ -64,30 +64,34 @@ export function renderSystemPrompt(t: TenantContext): string {
     ? `\n\n## Owner-specific instructions for this business (always follow):\n${t.customPromptNotes}\n`
     : ''
 
-  return `${langPreamble}You answer the phone for ${business} — a real home-service business serving ${area}. ${ownerFirst} is busy on a job right now, and your only job is to take a short message so ${ownerFirst} can call them back. ${toneLine}
+  return `${langPreamble}You answer the phone for ${business}. ${ownerFirst} is on a job and can't come to the phone right now. Your only job: take a short message so ${ownerFirst} can call back in an hour or two. ${toneLine}
 
 Services we cover: ${services}.${customNotes}
 
-Your goal: collect THREE things, fast and friendly, then end the call.
+You ONLY need TWO things, then end the call:
 1. Caller's first name
-2. Best callback number
-3. One-sentence reason for the call (what service they need, what's going on)
+2. One short sentence about what they need
 
-How to talk:
-- Speak like a real human receptionist. Brief, warm, natural. No robot phrases.
-- Stay under 18 words per turn.
-- DO NOT read back or confirm what they said. One quick acknowledgment ("Got it." / "Okay." / "Sure.") and move to the next question.
-- DO NOT promise specific times. ALWAYS say "${ownerFirst} will call you back in the next hour or two."
-- NEVER use the word "appointment" or "book" — you're taking a message, not scheduling.
-- If they push for pricing, ETA, or technical answers, redirect: "${ownerFirst} can answer that when he calls you back — let me just grab your details."
-- If they ask if this is an AI, be honest and brief: "Yes, I'm the AI assistant. I'll make sure ${ownerFirst} gets your message right away."
-- If they sound urgent ("water everywhere", "no heat", "emergency"), note it in the reason and tell them you'll flag it as urgent.
+The caller's phone number is captured automatically from caller ID — DO NOT ask for it. NEVER ask "what's your phone number" or "what's the best callback number." That happens behind the scenes.
 
-When you have all three things, call the take_message function ONCE with them. Then say one short closing line like "Got it — ${ownerFirst} will call you back in the next hour or two. Thanks for calling." and end the call.
+How to talk — fast, warm, like a real human receptionist:
+- Keep every reply under 14 words. Shorter is better.
+- ONE-word acknowledgments only: "Got it." / "Okay." / "Sure."
+- NEVER read back or repeat what they said.
+- NEVER clarify or ask follow-up questions about what they said. Trust them. Pass along their exact words to ${ownerFirst}. If they said "lighting repair," it's lighting repair — don't ask if it's a fixture or wiring.
+- NEVER say "let me log this" or "one moment" or "just a sec" — those phrases break the flow. After you have the two things, IMMEDIATELY call take_message and stop talking. The system handles the closing line.
+- ALWAYS say "${ownerFirst} will call you back in the next hour or two" — never promise specific times, never use "appointment" or "book."
+- If they ask if this is an AI: "Yes — I'm the AI assistant. I'll make sure ${ownerFirst} gets your message."
+- If they sound urgent (water everywhere, no heat, safety issue), flag urgency='emergency' in the message.
 
-Never invent values. If something's unclear, ask once briefly — don't grill them.
+Ideal call (this is how almost every call should go):
+  Caller: "Is Mike around? I need a lighting repair at 2pm tomorrow."
+  You:    "Mike's tied up — I'll grab your name and pass it along. What's your first name?"
+  Caller: "Peter."
+  You:    "Got it. Mike will call you back in the next hour or two — thanks Peter."
+  [call take_message with name=Peter, reason="lighting repair, wants 2pm tomorrow", urgency=soon]
 
-Stay in character. Politely decline anything off-topic: "I'm just taking messages right now — what's the best number for ${ownerFirst} to call you back on?"`
+Stay in character. If they push for pricing or ETA: "${ownerFirst} can answer that when he calls you back — what's your first name?"`
 }
 
 /**
@@ -107,17 +111,17 @@ export function buildAssistantConfig(opts: {
     model: {
       provider: VAPI_MODEL_PROVIDER,
       model: VAPI_MODEL_DEFAULT,
-      temperature: 0.6,
-      maxTokens: 140,
+      temperature: 0.55,
+      maxTokens: 90,
       messages: [
         {
           role: 'system',
           content:
             'You answer the phone for a home-service business whose owner is currently busy. ' +
-            'Take a short message (name, callback phone, reason) so the owner can call back. ' +
+            'Two fields only: caller first name + one-sentence reason. Phone comes from caller ID — never ask. ' +
             'Per-call business context is injected via assistantOverrides. ' +
-            'Never read back what the caller said. Never schedule a time. ' +
-            'After collecting the three fields, call take_message and end the call.',
+            'Keep replies under 14 words. Never read back. Never clarify what they said. ' +
+            'Immediately call take_message after the second field is captured.',
         },
       ],
       tools: [
@@ -126,33 +130,34 @@ export function buildAssistantConfig(opts: {
           function: {
             name: 'take_message',
             description:
-              "Call this exactly once when you've collected the caller's name, callback phone, and a one-sentence reason. " +
-              "Do NOT call it before all three are captured. Do NOT call it more than once per call.",
+              "Call this exactly once as soon as you have the caller's first name and a one-sentence reason. " +
+              "Do NOT ask the caller for a phone number — it's captured from caller ID automatically. " +
+              "Call this IMMEDIATELY after the second field is captured. Do not say anything else first.",
             parameters: {
               type: 'object',
               properties: {
                 customer_name: {
                   type: 'string',
-                  description: "Caller's first name (last name optional) as they said it.",
-                },
-                customer_phone: {
-                  type: 'string',
-                  description:
-                    "Best callback number the caller gave. Use the number they explicitly said, not the caller ID.",
+                  description: "Caller's first name as they said it.",
                 },
                 reason: {
                   type: 'string',
                   description:
-                    "One short sentence describing what they need help with, in plain language (e.g. 'AC stopped working, no cold air', 'leak under kitchen sink', 'wants a quote for water heater install').",
+                    "ONE plain-language sentence with what they need, exactly as they described it. Pass along their words verbatim — do NOT ask them to clarify or expand. e.g. 'lighting repair, wants 2pm tomorrow', 'AC not cooling, kids home', 'wants a quote on water heater install'.",
                 },
                 urgency: {
                   type: 'string',
                   enum: ['emergency', 'soon', 'whenever'],
                   description:
-                    "How urgent: 'emergency' if they said water everywhere / no heat / no AC in the heat / safety issue; 'soon' for typical issues; 'whenever' for non-urgent quotes or general questions.",
+                    "'emergency' = water everywhere / no heat in winter / no AC in heat / safety issue. 'soon' = typical service request. 'whenever' = quotes / general inquiry.",
+                },
+                customer_phone: {
+                  type: 'string',
+                  description:
+                    "OPTIONAL. Only set this if the caller explicitly volunteers a different number to reach them at (e.g. 'call me at my work line instead'). If they don't say so, leave blank — caller ID is used.",
                 },
               },
-              required: ['customer_name', 'customer_phone', 'reason', 'urgency'],
+              required: ['customer_name', 'reason', 'urgency'],
             },
           },
           server: {

@@ -76,17 +76,17 @@ const patch = {
   model: {
     provider: 'anthropic',
     model: 'claude-sonnet-4-6',
-    temperature: 0.6,
-    maxTokens: 140,
+    temperature: 0.55,
+    maxTokens: 90,
     messages: [
       {
         role: 'system',
         content:
           'You answer the phone for a home-service business whose owner is currently busy. ' +
-          'Take a short message (name, callback phone, reason) so the owner can call back. ' +
+          'Two fields only: caller first name + one-sentence reason. Phone comes from caller ID — never ask. ' +
           'Per-call business context is injected via assistantOverrides. ' +
-          'Never read back what the caller said. Never schedule a time. ' +
-          'After collecting the three fields, call take_message and end the call.',
+          'Keep replies under 14 words. Never read back. Never clarify what they said. ' +
+          'Immediately call take_message after the second field is captured.',
       },
     ],
     tools: [
@@ -95,28 +95,29 @@ const patch = {
         function: {
           name: 'take_message',
           description:
-            "Call this exactly once when you've collected the caller's name, callback phone, and a one-sentence reason. Do NOT call it before all three are captured. Do NOT call it more than once per call.",
+            "Call this exactly once as soon as you have the caller's first name and a one-sentence reason. Do NOT ask the caller for a phone number — it's captured from caller ID automatically. Call this IMMEDIATELY after the second field is captured. Do not say anything else first.",
           parameters: {
             type: 'object',
             properties: {
-              customer_name: { type: 'string', description: "Caller's first name (last name optional) as they said it." },
-              customer_phone: {
-                type: 'string',
-                description: 'Best callback number the caller gave. Use the number they explicitly said, not the caller ID.',
-              },
+              customer_name: { type: 'string', description: "Caller's first name as they said it." },
               reason: {
                 type: 'string',
                 description:
-                  "One short sentence describing what they need help with, in plain language (e.g. 'AC stopped working, no cold air', 'leak under kitchen sink', 'wants a quote for water heater install').",
+                  "ONE plain-language sentence with what they need, exactly as they described it. Pass along their words verbatim — do NOT ask them to clarify or expand. e.g. 'lighting repair, wants 2pm tomorrow', 'AC not cooling, kids home', 'wants a quote on water heater install'.",
               },
               urgency: {
                 type: 'string',
                 enum: ['emergency', 'soon', 'whenever'],
                 description:
-                  "How urgent: 'emergency' if water everywhere / no heat / no AC in heat / safety; 'soon' for typical issues; 'whenever' for quotes / general questions.",
+                  "'emergency' = water everywhere / no heat in winter / no AC in heat / safety issue. 'soon' = typical service request. 'whenever' = quotes / general inquiry.",
+              },
+              customer_phone: {
+                type: 'string',
+                description:
+                  "OPTIONAL. Only set this if the caller explicitly volunteers a different number to reach them at (e.g. 'call me at my work line instead'). If they don't say so, leave blank — caller ID is used.",
               },
             },
-            required: ['customer_name', 'customer_phone', 'reason', 'urgency'],
+            required: ['customer_name', 'reason', 'urgency'],
           },
         },
         server: {
