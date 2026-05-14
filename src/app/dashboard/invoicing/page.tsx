@@ -76,39 +76,42 @@ export default function InvoicingPage() {
   }
 
   const card: React.CSSProperties = {
-    background: "#ffffff",
-    border: "1px solid rgba(10,168,159,0.14)",
-    borderRadius: 14,
+    background: "rgba(15,35,70,0.55)",
+    backdropFilter: "blur(16px)",
+    WebkitBackdropFilter: "blur(16px)",
+    border: "1px solid rgba(94,234,212,0.14)",
+    borderRadius: 16,
     overflow: "hidden",
     marginBottom: 16,
-    boxShadow: "0 2px 16px rgba(7,27,58,0.06)",
+    boxShadow: "0 12px 40px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.04)",
   };
   const cardHead: React.CSSProperties = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "14px 18px",
-    borderBottom: "1px solid rgba(10,168,159,0.1)",
+    padding: "16px 20px",
+    borderBottom: "1px solid rgba(94,234,212,0.12)",
+    background: "rgba(255,255,255,0.02)",
   };
-  const cardTitle: React.CSSProperties = { fontSize: 13, fontWeight: 600, color: "#0B1F3A" };
-  const cardBody: React.CSSProperties = { padding: 18 };
+  const cardTitle: React.CSSProperties = { fontSize: 14, fontWeight: 800, color: "#fff", letterSpacing: "-0.2px" };
+  const cardBody: React.CSSProperties = { padding: 22 };
   const label: React.CSSProperties = {
     display: "block",
-    fontSize: 11,
-    fontWeight: 600,
-    color: "#7AAAB2",
+    fontSize: 10,
+    fontWeight: 800,
+    color: "#5EEAD4",
     textTransform: "uppercase",
-    letterSpacing: "0.08em",
-    marginBottom: 6,
+    letterSpacing: "0.12em",
+    marginBottom: 7,
   };
   const input: React.CSSProperties = {
     width: "100%",
-    background: "#F5FDFB",
-    border: "1.5px solid rgba(10,168,159,0.2)",
-    borderRadius: 8,
-    padding: "10px 12px",
-    fontSize: 13,
-    color: "#0B1F3A",
+    background: "rgba(5,14,31,0.55)",
+    border: "1.5px solid rgba(94,234,212,0.22)",
+    borderRadius: 9,
+    padding: "11px 14px",
+    fontSize: 13.5,
+    color: "#fff",
     fontFamily: "system-ui, -apple-system, sans-serif",
     outline: "none",
     boxSizing: "border-box",
@@ -117,26 +120,35 @@ export default function InvoicingPage() {
 
   const statusStyle = (status: string): React.CSSProperties => {
     const map: Record<string, React.CSSProperties> = {
-      sent: { background: "rgba(10,168,159,0.08)", color: "#0AA89F", border: "1px solid rgba(10,168,159,0.22)" },
-      paid: { background: "#ECFDF5", color: "#059669", border: "1px solid #A7F3D0" },
-      failed: { background: "#FEF2F2", color: "#DC2626", border: "1px solid #FECACA" },
+      sent: { background: "rgba(94,234,212,0.12)", color: "#5EEAD4", border: "1px solid rgba(94,234,212,0.32)" },
+      paid: { background: "rgba(34,197,94,0.14)", color: "#4ADE80", border: "1px solid rgba(34,197,94,0.36)" },
+      failed: { background: "rgba(239,68,68,0.12)", color: "#FCA5A5", border: "1px solid rgba(239,68,68,0.32)" },
     };
     return {
       fontSize: 10,
-      fontWeight: 600,
-      padding: "3px 8px",
-      borderRadius: 20,
+      fontWeight: 800,
+      padding: "3px 10px",
+      borderRadius: 99,
+      letterSpacing: "0.08em",
+      textTransform: "uppercase",
       ...(map[status] || map.sent),
     };
   };
 
+  const totalInvoiced = invoices.reduce((s, i) => s + (i.amount || 0), 0);
+  const paidCount = invoices.filter(i => i.status === "paid").length;
+  const pendingCount = invoices.filter(i => i.status === "sent").length;
+  const paidAmount = invoices.filter(i => i.status === "paid").reduce((s, i) => s + (i.amount || 0), 0);
+
   return (
-    <div style={{ padding: "24px 28px 60px", color: "#0B1F3A", fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div style={{ padding: "28px 32px 60px", color: "#fff", fontFamily: "system-ui, -apple-system, sans-serif", maxWidth: 1180, margin: "0 auto" }}>
 
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 10, fontWeight: 600, color: "#7AAAB2", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>Billing</div>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: "#0B1F3A", letterSpacing: "-0.5px", marginBottom: 4 }}>Invoicing</h1>
-        <p style={{ fontSize: 13, color: "#4A7A80" }}>Send payment links to customers instantly via text or email.</p>
+        <div style={{ fontSize: 10, fontWeight: 800, color: "#5EEAD4", textTransform: "uppercase", letterSpacing: "0.18em", marginBottom: 8 }}>Billing</div>
+        <h1 style={{ fontSize: 28, fontWeight: 900, color: "#fff", letterSpacing: "-0.04em", margin: "0 0 6px" }}>
+          Money <span style={{ background: "linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", filter: "drop-shadow(0 0 16px rgba(232,116,43,0.32))" }}>recovered.</span>
+        </h1>
+        <p style={{ fontSize: 14, color: "rgba(255,255,255,0.6)" }}>Send Stripe payment links over text or email. Customer pays in two taps.</p>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
@@ -145,10 +157,10 @@ export default function InvoicingPage() {
           <div style={cardHead}>
             <div>
               <div style={cardTitle}>New invoice</div>
-              <div style={{ fontSize: 11, color: "#7AAAB2", marginTop: 2 }}>Customer pays via Stripe — no account needed</div>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>Customer pays via Stripe in two taps — no account needed</div>
             </div>
-            <div style={{ width: 32, height: 32, borderRadius: 8, background: "#ECFDF5", border: "1px solid #A7F3D0", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2">
+            <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(34,197,94,0.14)", border: "1px solid rgba(34,197,94,0.36)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2">
                 <line x1="12" y1="1" x2="12" y2="23"/>
                 <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
               </svg>
@@ -251,18 +263,35 @@ export default function InvoicingPage() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {[
-            { label: "Total invoiced", value: "$" + invoices.reduce((s, i) => s + (i.amount || 0), 0).toLocaleString(), sub: "All time", accent: "#0AA89F" },
-            { label: "Paid", value: String(invoices.filter(i => i.status === "paid").length), sub: "Completed payments", accent: "#22C55E" },
-            { label: "Pending", value: String(invoices.filter(i => i.status === "sent").length), sub: "Awaiting payment", accent: "#F59E0B" },
-          ].map((s) => (
-            <div key={s.label} style={{ background: "#ffffff", border: "1px solid rgba(10,168,159,0.14)", borderRadius: 14, padding: "18px 20px", position: "relative", overflow: "hidden", boxShadow: "0 2px 16px rgba(7,27,58,0.06)" }}>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "#7AAAB2", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>{s.label}</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: "#0B1F3A", letterSpacing: -1, lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: 11, marginTop: 6, color: "#4A7A80" }}>{s.sub}</div>
-              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${s.accent}, ${s.accent}00)`, borderRadius: "14px 14px 0 0" }} />
+          {/* Money recovered — hero stat with orange glow */}
+          <div className="mc-card mc-card-orange" style={{ padding: "22px 24px" }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#FF9D5A", textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 10 }}>Money Recovered</div>
+            <div className="mc-stat-num mc-stat-num-money" style={{ fontSize: "clamp(34px, 4vw, 48px)" }}>${paidAmount.toLocaleString()}</div>
+            <div style={{ fontSize: 11, marginTop: 8, color: "rgba(255,255,255,0.55)" }}>Paid invoices · all time</div>
+          </div>
+
+          {/* Two smaller stats side by side */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <div className="mc-card" style={{ padding: "18px 20px" }}>
+              <div style={{ fontSize: 10, fontWeight: 800, color: "#5EEAD4", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 8 }}>Paid</div>
+              <div className="mc-stat-num mc-stat-num-teal" style={{ fontSize: 30 }}>{paidCount}</div>
+              <div style={{ fontSize: 11, marginTop: 6, color: "rgba(255,255,255,0.55)" }}>Completed</div>
             </div>
-          ))}
+            <div className="mc-card" style={{ padding: "18px 20px" }}>
+              <div style={{ fontSize: 10, fontWeight: 800, color: "#FBBF24", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 8 }}>Pending</div>
+              <div className="mc-stat-num" style={{ fontSize: 30, color: "#FBBF24" }}>{pendingCount}</div>
+              <div style={{ fontSize: 11, marginTop: 6, color: "rgba(255,255,255,0.55)" }}>Awaiting</div>
+            </div>
+          </div>
+
+          {/* Total invoiced — quiet third row */}
+          <div className="mc-card" style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 800, color: "rgba(94,234,212,0.65)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 4 }}>Total invoiced</div>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.55)" }}>{invoices.length} invoice{invoices.length !== 1 ? "s" : ""} · all time</div>
+            </div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: "#fff", letterSpacing: "-0.4px", fontVariantNumeric: "tabular-nums" }}>${totalInvoiced.toLocaleString()}</div>
+          </div>
         </div>
       </div>
 
@@ -270,19 +299,19 @@ export default function InvoicingPage() {
         <div style={cardHead}>
           <div>
             <div style={cardTitle}>Invoice history</div>
-            <div style={{ fontSize: 11, color: "#7AAAB2", marginTop: 2 }}>All invoices sent to customers</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>Every payment link sent through BellAveGo</div>
           </div>
-          <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: "rgba(10,168,159,0.08)", color: "#0AA89F", border: "1px solid rgba(10,168,159,0.2)" }}>
+          <span style={{ fontSize: 10, fontWeight: 800, padding: "4px 12px", borderRadius: 99, background: "rgba(94,234,212,0.10)", color: "#5EEAD4", border: "1px solid rgba(94,234,212,0.28)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
             {invoices.length} total
           </span>
         </div>
         <div>
           {loading ? (
-            <div style={{ padding: "32px", textAlign: "center", fontSize: 13, color: "#7AAAB2" }}>Loading...</div>
+            <div style={{ padding: "40px", textAlign: "center", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Loading...</div>
           ) : invoices.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "40px 20px" }}>
-              <div style={{ fontSize: 13, fontWeight: 500, color: "#4A7A80", marginBottom: 4 }}>No invoices yet</div>
-              <div style={{ fontSize: 12, color: "#7AAAB2" }}>Send your first invoice using the form above.</div>
+            <div style={{ textAlign: "center", padding: "44px 20px" }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 6 }}>No invoices yet</div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Send your first invoice using the form above.</div>
             </div>
           ) : (
             invoices.map((inv, i) => (
@@ -292,18 +321,19 @@ export default function InvoicingPage() {
                   display: "flex",
                   alignItems: "center",
                   gap: 14,
-                  padding: "14px 18px",
-                  borderBottom: i < invoices.length - 1 ? "1px solid rgba(10,168,159,0.08)" : "none",
+                  padding: "15px 22px",
+                  borderBottom: i < invoices.length - 1 ? "1px solid rgba(94,234,212,0.06)" : "none",
+                  transition: "background 0.18s",
                 }}
               >
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(10,168,159,0.1)", border: "1px solid rgba(10,168,159,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 13, fontWeight: 700, color: "#0AA89F" }}>
+                <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg, rgba(94,234,212,0.18), rgba(20,184,166,0.10))", border: "1px solid rgba(94,234,212,0.32)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 14, fontWeight: 800, color: "#5EEAD4" }}>
                   {(inv.customer_name || "?")[0].toUpperCase()}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#0B1F3A", marginBottom: 2 }}>{inv.customer_name}</div>
-                  <div style={{ fontSize: 11, color: "#7AAAB2" }}>{inv.service_type} · {inv.customer_email || inv.customer_phone}</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: "#fff", marginBottom: 3 }}>{inv.customer_name}</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{inv.service_type} · {inv.customer_email || inv.customer_phone}</div>
                 </div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#0B1F3A", flexShrink: 0 }}>${inv.amount}</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: inv.status === "paid" ? "#4ADE80" : "#fff", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>${inv.amount}</div>
                 <span style={statusStyle(inv.status)}>{inv.status}</span>
                 {inv.stripe_url ? (
                   <a

@@ -32,72 +32,130 @@ export default async function ReportsIndexPage() {
   const reports = (data as Report[] | null) ?? [];
 
   return (
-    <div style={{ padding: "32px 32px 80px", fontFamily: "'Inter', system-ui, sans-serif", maxWidth: 980, margin: "0 auto" }}>
-      <Link href="/dashboard" style={{ fontSize: 12, fontWeight: 700, color: "#0AA89F", textDecoration: "none" }}>← Back to dashboard</Link>
-      <h1 style={{ fontSize: 28, fontWeight: 900, color: "#0B1F3A", letterSpacing: "-0.03em", marginTop: 14, marginBottom: 6 }}>
-        Your consulting reports
-      </h1>
-      <p style={{ fontSize: 14, color: "#4A7A80", marginBottom: 26, lineHeight: 1.55 }}>
+    <div style={{ padding: "32px 32px 80px", fontFamily: "'Inter', system-ui, sans-serif", maxWidth: 1080, margin: "0 auto" }}>
+      <Link href="/dashboard" style={{ fontSize: 12, fontWeight: 700, color: "#5EEAD4", textDecoration: "none" }}>← Back to dashboard</Link>
+
+      <div style={{ marginTop: 18, marginBottom: 8, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <h1 style={{ fontSize: 30, fontWeight: 900, color: "#fff", letterSpacing: "-0.04em", margin: 0 }}>
+          Consulting reports
+        </h1>
+        <span style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          padding: "5px 12px", borderRadius: 99,
+          background: "rgba(232,116,43,0.14)", border: "1px solid rgba(232,116,43,0.32)",
+          fontSize: 10.5, fontWeight: 800, color: "#FF9D5A",
+          letterSpacing: "0.14em", textTransform: "uppercase",
+        }}>
+          McKinsey-grade · AI-generated
+        </span>
+      </div>
+      <p style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", marginBottom: 30, lineHeight: 1.55, maxWidth: 720 }}>
         AI-generated growth reports based on your actual call and job data, plus local market intel. Delivered automatically on your plan&apos;s cadence.
       </p>
 
       {reports.length === 0 ? (
-        <div style={{ background: "linear-gradient(160deg, #FFF6EE 0%, #FFFFFF 60%)", border: "1px dashed rgba(232,116,43,0.32)", borderRadius: 14, padding: "40px 22px", textAlign: "center" }}>
-          <div style={{ fontSize: 32, marginBottom: 8 }}>📊</div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: "#0B1F3A", marginBottom: 6 }}>No reports yet</div>
-          <div style={{ fontSize: 12, color: "#8B5A3D", lineHeight: 1.6, maxWidth: 460, margin: "0 auto" }}>
-            Your <strong>welcome report</strong> is auto-generated the day after activation. After that, reports arrive on your plan&apos;s cadence:
-            Receptionist &rarr; bi-monthly (6/yr) &nbsp;·&nbsp; Office Manager &rarr; monthly (12/yr) &nbsp;·&nbsp; Concierge &rarr; weekly (52/yr) + quarterly deep-dive.
+        <div className="mc-card mc-card-orange" style={{ padding: "56px 32px", textAlign: "center" }}>
+          <div style={{
+            width: 64, height: 64, borderRadius: 16,
+            background: "linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            margin: "0 auto 18px",
+            boxShadow: "0 14px 32px rgba(232,116,43,0.45)",
+          }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="9" y1="13" x2="15" y2="13"/>
+              <line x1="9" y1="17" x2="13" y2="17"/>
+            </svg>
+          </div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: "#fff", marginBottom: 8, letterSpacing: "-0.2px" }}>
+            Your first report is on the way
+          </div>
+          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 1.65, maxWidth: 520, margin: "0 auto" }}>
+            Your <strong style={{ color: "#FF9D5A" }}>welcome report</strong> is auto-generated the day after activation. After that, reports arrive on your plan&apos;s cadence:<br/>
+            <span style={{ display: "inline-block", marginTop: 12, fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
+              <strong style={{ color: "#5EEAD4" }}>Receptionist</strong> · bi-monthly (6/yr)
+              &nbsp;·&nbsp; <strong style={{ color: "#5EEAD4" }}>Office Manager</strong> · monthly (12/yr)
+              &nbsp;·&nbsp; <strong style={{ color: "#5EEAD4" }}>Concierge</strong> · weekly (52/yr) + quarterly deep-dive
+            </span>
           </div>
         </div>
       ) : (
-        <div style={{ display: "grid", gap: 12 }}>
-          {reports.map((r) => (
-            <Link key={r.id} href={`/dashboard/reports/${r.id}`} style={{
-              display: "flex", alignItems: "center", gap: 16,
-              padding: "18px 22px",
-              background: "#fff",
-              border: "1px solid rgba(232,116,43,0.18)",
-              borderRadius: 14,
-              textDecoration: "none",
-              transition: "transform 0.18s ease, box-shadow 0.18s ease",
-              boxShadow: "0 2px 14px rgba(7,27,58,0.05)",
-            }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: 11,
-                background: r.report_type === "welcome" ? "linear-gradient(135deg, #FF9D5A, #E8742B)" : "linear-gradient(135deg, #0AA89F, #0D8F87)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                flexShrink: 0,
-                boxShadow: r.report_type === "welcome"
-                  ? "0 6px 14px rgba(232,116,43,0.36)"
-                  : "0 6px 14px rgba(10,168,159,0.32)",
-              }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="9" y1="13" x2="15" y2="13"/>
-                  <line x1="9" y1="17" x2="13" y2="17"/>
-                </svg>
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 9, fontWeight: 800, color: r.report_type === "welcome" ? "#C84B26" : "#0D8F87", letterSpacing: "0.14em", textTransform: "uppercase", padding: "2px 8px", borderRadius: 99, background: r.report_type === "welcome" ? "rgba(232,116,43,0.10)" : "rgba(10,168,159,0.10)", border: `1px solid ${r.report_type === "welcome" ? "rgba(232,116,43,0.28)" : "rgba(10,168,159,0.28)"}` }}>
-                    {r.report_type === "welcome" ? "Welcome" : "Periodic"}
-                  </span>
-                  <span style={{ fontSize: 11, color: "#7AAAB2" }}>
-                    {new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                  </span>
+        <div style={{ display: "grid", gap: 14 }}>
+          {reports.map((r) => {
+            const isWelcome = r.report_type === "welcome";
+            return (
+              <Link
+                key={r.id}
+                href={`/dashboard/reports/${r.id}`}
+                className={`mc-card ${isWelcome ? "mc-card-orange" : ""}`}
+                style={{
+                  display: "flex", alignItems: "center", gap: 18,
+                  padding: "20px 24px", textDecoration: "none",
+                }}
+              >
+                {/* Icon */}
+                <div style={{
+                  width: 50, height: 50, borderRadius: 12,
+                  background: isWelcome
+                    ? "linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)"
+                    : "linear-gradient(135deg, #5EEAD4, #14B8A6)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                  boxShadow: isWelcome
+                    ? "0 10px 24px rgba(232,116,43,0.42)"
+                    : "0 10px 24px rgba(20,184,166,0.36)",
+                }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isWelcome ? "#fff" : "#0B1F3A"} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="9" y1="13" x2="15" y2="13"/>
+                    <line x1="9" y1="17" x2="13" y2="17"/>
+                  </svg>
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "#0B1F3A", letterSpacing: "-0.2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {r.title}
+
+                {/* Title block */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+                    <span style={{
+                      fontSize: 9.5, fontWeight: 800,
+                      color: isWelcome ? "#FF9D5A" : "#5EEAD4",
+                      letterSpacing: "0.14em", textTransform: "uppercase",
+                      padding: "3px 9px", borderRadius: 99,
+                      background: isWelcome ? "rgba(232,116,43,0.12)" : "rgba(94,234,212,0.10)",
+                      border: `1px solid ${isWelcome ? "rgba(232,116,43,0.30)" : "rgba(94,234,212,0.28)"}`,
+                    }}>
+                      {isWelcome ? "Welcome" : "Periodic"}
+                    </span>
+                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>
+                      {new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", letterSpacing: "-0.2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {r.title}
+                  </div>
+                  <div style={{ fontSize: 11.5, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>
+                    {r.period_label || "—"}
+                  </div>
                 </div>
-                <div style={{ fontSize: 11, color: "#7AAAB2", marginTop: 2 }}>
-                  {r.period_label || "—"}{r.bellavego_score != null && ` · BellAveGo Score ${r.bellavego_score.toFixed(1)}/10`}
-                </div>
-              </div>
-              <span style={{ fontSize: 18, color: "#A0BCC2" }}>›</span>
-            </Link>
-          ))}
+
+                {/* Score badge — visual highlight */}
+                {r.bellavego_score != null && (
+                  <div style={{ textAlign: "center", flexShrink: 0 }}>
+                    <div style={{ fontSize: 9, fontWeight: 800, color: "#5EEAD4", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 4 }}>
+                      Score
+                    </div>
+                    <div className="mc-stat-num mc-stat-num-teal" style={{ fontSize: 28 }}>
+                      {r.bellavego_score.toFixed(1)}
+                    </div>
+                  </div>
+                )}
+
+                <span style={{ fontSize: 22, color: "rgba(94,234,212,0.6)", flexShrink: 0 }}>›</span>
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

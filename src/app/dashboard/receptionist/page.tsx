@@ -2,26 +2,42 @@
 import { useState, useEffect } from 'react'
 
 const card: React.CSSProperties = {
-  background: '#ffffff',
-  border: '1px solid rgba(10,168,159,0.14)',
-  borderRadius: 14,
+  background: 'rgba(15,35,70,0.55)',
+  backdropFilter: 'blur(16px)',
+  WebkitBackdropFilter: 'blur(16px)',
+  border: '1px solid rgba(94,234,212,0.14)',
+  borderRadius: 16,
   overflow: 'hidden',
   marginBottom: 16,
-  boxShadow: '0 2px 16px rgba(7,27,58,0.06)',
+  boxShadow: '0 12px 40px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.04)',
 }
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  background: '#F5FDFB',
-  border: '1.5px solid rgba(10,168,159,0.2)',
-  borderRadius: 8,
-  padding: '10px 14px',
+  background: 'rgba(5,14,31,0.5)',
+  border: '1.5px solid rgba(94,234,212,0.22)',
+  borderRadius: 9,
+  padding: '11px 14px',
   fontSize: 14,
-  color: '#0B1F3A',
+  color: '#fff',
   fontFamily: 'system-ui, -apple-system, sans-serif',
   outline: 'none',
   boxSizing: 'border-box',
 }
+
+// Sample transcript for the live AI call demo card. Cycles through every
+// few seconds so the page feels alive even when no real call is happening.
+const DEMO_TRANSCRIPT: { who: 'ai' | 'caller'; line: string }[] = [
+  { who: 'ai',     line: 'Thanks for calling Smith HVAC. What can we help you with?' },
+  { who: 'caller', line: 'Hi, my AC stopped cooling. Kids are home, it’s really hot.' },
+  { who: 'ai',     line: 'Got it. Can I grab your name and best callback number?' },
+  { who: 'caller', line: 'Sarah Chen — six-one-two, five-five-five, oh-one-four-eight.' },
+  { who: 'ai',     line: 'Thanks Sarah. What’s the address we’d come out to?' },
+  { who: 'caller', line: '4218 Cedar Lake Road, St. Louis Park.' },
+  { who: 'ai',     line: 'Best window today? Morning or afternoon?' },
+  { who: 'caller', line: 'Anytime between 2 and 6 would be amazing.' },
+  { who: 'ai',     line: 'Done. Mike will text you in a few minutes to confirm.' },
+]
 
 export default function ReceptionistPage() {
   const [isActive, setIsActive] = useState(false)
@@ -35,11 +51,19 @@ export default function ReceptionistPage() {
   const [saving, setSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle')
   const [stats, setStats] = useState({ calls: 0, booked: 0, saved: 0 })
-  const [recentCalls, setRecentCalls] = useState<any[]>([])
+  const [demoIdx, setDemoIdx] = useState(0)
 
   useEffect(() => {
     loadProfile()
     loadStats()
+  }, [])
+
+  // Cycle the demo transcript so the page always feels alive.
+  useEffect(() => {
+    const t = setInterval(() => {
+      setDemoIdx(i => (i + 1) % DEMO_TRANSCRIPT.length)
+    }, 2200)
+    return () => clearInterval(t)
   }, [])
 
   async function loadProfile() {
@@ -110,48 +134,110 @@ export default function ReceptionistPage() {
   const callForwardCode = rawNumber.length === 11 ? `*61*+${rawNumber.slice(1)}*11*15#` : ''
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 28px 60px' }}>
+    <div style={{ maxWidth: 1080, margin: '0 auto', padding: '28px 32px 60px' }}>
 
       {/* HEADER */}
-      <div style={{ marginBottom: 8 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: '#0B1F3A', marginBottom: 4 }}>AI Receptionist</h1>
-        <p style={{ color: '#4A7A80', fontSize: 14, margin: 0 }}>Never miss another job. Your AI answers, books, and follows up automatically.</p>
-      </div>
-
-      {/* STATUS BAR */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: isActive ? '#F0FDF4' : '#FFFBEB', border: `1px solid ${isActive ? '#BBF7D0' : '#FDE68A'}`, borderRadius: 14, padding: '16px 24px', marginBottom: 24, marginTop: 24, boxShadow: '0 2px 12px rgba(7,27,58,0.04)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 12, height: 12, borderRadius: '50%', background: isActive ? '#22C55E' : '#F59E0B', boxShadow: isActive ? '0 0 0 4px rgba(34,197,94,0.2)' : '0 0 0 4px rgba(245,158,11,0.2)' }} />
-          <div>
-            <p style={{ fontWeight: 700, fontSize: 15, color: isActive ? '#15803D' : '#92400E', margin: 0 }}>
-              AI Receptionist: {isActive ? 'ACTIVE' : 'NOT ACTIVE'}
-            </p>
-            <p style={{ fontSize: 12, color: isActive ? '#16A34A' : '#B45309', margin: 0 }}>
-              {isActive ? 'Answering calls and booking jobs automatically' : 'Complete setup below to start answering calls'}
-            </p>
-          </div>
+      <div style={{ marginBottom: 22 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <h1 style={{ fontSize: 28, fontWeight: 900, color: '#fff', margin: 0, letterSpacing: '-0.04em' }}>AI Receptionist</h1>
+          {isActive && <span className="mc-status-pill"><span className="mc-live-dot" /> Live</span>}
         </div>
-        <button
-          onClick={handleToggleActive}
-          style={{ padding: '10px 20px', background: isActive ? '#DC2626' : 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)', border: 'none', borderRadius: 9, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', boxShadow: isActive ? '0 2px 8px rgba(220,38,38,0.25)' : '0 4px 14px rgba(34,197,94,0.3)' }}
-        >
-          {isActive ? 'Deactivate' : 'Activate'}
-        </button>
+        <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, margin: '6px 0 0' }}>
+          Never miss another job. Your AI answers, books, and follows up automatically.
+        </p>
       </div>
 
-      {/* STATS */}
+      {/* LIVE CALL DEMO + STATUS — the brain of the page */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 16, marginBottom: 22 }} className="recep-grid">
+        <style>{`@media (max-width:880px){.recep-grid{grid-template-columns:1fr!important}}`}</style>
+
+        {/* LIVE CALL CARD */}
+        <div className="mc-card mc-card-orange" style={{ padding: 0, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid rgba(94,234,212,0.14)', background: 'rgba(255,255,255,0.02)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span className="mc-status-pill"><span className="mc-live-dot" /> Sample call</span>
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>This is what your customers hear.</span>
+            </div>
+            <div className="mc-wave" style={{ height: 20 }}>
+              <span /><span /><span /><span /><span /><span /><span />
+            </div>
+          </div>
+          <div style={{ padding: '18px 22px', minHeight: 200, maxHeight: 260, overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 11 }}>
+            {DEMO_TRANSCRIPT.slice(Math.max(0, demoIdx - 3), demoIdx + 1).map((line, i, arr) => {
+              const isActiveLine = i === arr.length - 1
+              return (
+                <div key={`${demoIdx}-${i}`} className="mc-slide-up" style={{
+                  display: 'flex', gap: 10, alignItems: 'flex-start',
+                  opacity: isActiveLine ? 1 : 0.55,
+                  transition: 'opacity 0.4s',
+                }}>
+                  <span style={{
+                    flexShrink: 0,
+                    fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
+                    padding: '3px 8px', borderRadius: 6, marginTop: 2,
+                    background: line.who === 'ai' ? 'rgba(94,234,212,0.14)' : 'rgba(255,255,255,0.06)',
+                    color: line.who === 'ai' ? '#5EEAD4' : 'rgba(255,255,255,0.7)',
+                    border: line.who === 'ai' ? '1px solid rgba(94,234,212,0.32)' : '1px solid rgba(255,255,255,0.08)',
+                  }}>{line.who === 'ai' ? 'AI' : 'Caller'}</span>
+                  <span style={{ fontSize: 13.5, lineHeight: 1.55, color: isActiveLine ? '#fff' : 'rgba(255,255,255,0.78)' }}>
+                    {line.line}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+          <a
+            href={twilioNumber !== 'Provisioning...' ? `tel:${twilioNumber.replace(/\D/g, '')}` : '#'}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+              padding: '14px 22px', borderTop: '1px solid rgba(94,234,212,0.14)',
+              background: 'linear-gradient(90deg, rgba(232,116,43,0.10), rgba(232,116,43,0.18))',
+              color: '#fff', textDecoration: 'none', fontWeight: 800, fontSize: 13,
+            }}
+          >
+            <span>📞 Call your AI right now — hear it live</span>
+            <span style={{ color: '#FF9D5A', letterSpacing: 1, fontVariantNumeric: 'tabular-nums' }}>{twilioNumber}</span>
+          </a>
+        </div>
+
+        {/* STATUS PANEL */}
+        <div className="mc-card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <div className="mc-eyebrow" style={{ color: isActive ? '#4ADE80' : '#FF9D5A' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive ? '#22C55E' : '#FF9D5A', boxShadow: isActive ? '0 0 8px rgba(34,197,94,0.6)' : '0 0 8px rgba(232,116,43,0.6)' }} />
+              {isActive ? 'AI Active' : 'AI Inactive'}
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', letterSpacing: '-0.4px', marginBottom: 6 }}>
+              {isActive ? 'Answering every call' : 'Setup needed'}
+            </div>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
+              {isActive ? 'Calls route through your BellAveGo number. Booked jobs land in your dashboard, your phone, and your CRM.' : 'Forward your business cell to the BellAveGo number, then activate.'}
+            </div>
+          </div>
+          <button
+            onClick={handleToggleActive}
+            className={isActive ? 'mc-btn-ghost' : 'mc-btn-orange'}
+            style={{ width: '100%', justifyContent: 'center' }}
+          >
+            {isActive ? 'Deactivate AI' : 'Activate AI Receptionist →'}
+          </button>
+        </div>
+      </div>
+
+      {/* STATS — big bold numbers, mission-control feel */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }}>
         {[
-          { label: 'Calls Answered', value: String(stats.calls), sub: 'Answered automatically by AI', icon: '📞' },
-          { label: 'Jobs Booked', value: String(stats.booked), sub: 'Converted from incoming calls', icon: '📅' },
-          { label: 'Missed Calls Saved', value: String(stats.saved), sub: 'Would have gone to voicemail', icon: '🛡️' },
-          { label: 'Revenue Generated', value: '$0', sub: 'Estimated from booked jobs', icon: '💰' },
+          { label: 'Calls Answered',      value: String(stats.calls),  sub: 'Answered automatically by AI', accent: 'teal' },
+          { label: 'Jobs Booked',         value: String(stats.booked), sub: 'Converted from incoming calls', accent: 'teal' },
+          { label: 'Missed Calls Saved',  value: String(stats.saved),  sub: 'Would have gone to voicemail', accent: 'teal' },
+          { label: 'Revenue Recovered',   value: '$0',                  sub: 'Estimated from booked jobs',    accent: 'orange' },
         ].map(s => (
-          <div key={s.label} style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 14, padding: '20px 18px', boxShadow: '0 2px 16px rgba(7,27,58,0.06)' }}>
-            <div style={{ fontSize: 24, marginBottom: 8 }}>{s.icon}</div>
-            <p style={{ fontSize: 26, fontWeight: 800, color: '#0B1F3A', margin: '0 0 4px' }}>{s.value}</p>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#0B1F3A', margin: '0 0 4px' }}>{s.label}</p>
-            <p style={{ fontSize: 11, color: '#7AAAB2', margin: 0, lineHeight: 1.4 }}>{s.sub}</p>
+          <div key={s.label} className={`mc-card ${s.accent === 'orange' ? 'mc-card-orange' : ''}`} style={{ padding: '20px 22px' }}>
+            <span style={{ fontSize: 10, fontWeight: 800, color: s.accent === 'orange' ? '#FF9D5A' : '#5EEAD4', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+              {s.label}
+            </span>
+            <p className={`mc-stat-num ${s.accent === 'orange' ? 'mc-stat-num-money' : ''}`} style={{ margin: '12px 0 0', fontSize: 'clamp(28px, 3vw, 38px)' }}>{s.value}</p>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', margin: '8px 0 0', lineHeight: 1.5 }}>{s.sub}</p>
           </div>
         ))}
       </div>
@@ -159,7 +245,7 @@ export default function ReceptionistPage() {
       {/* ACTIVATION FLOW */}
       {!isActive && (
         <div style={{ ...card, padding: '28px' }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0B1F3A', marginBottom: 20 }}>Get started in 3 steps</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginBottom: 20, letterSpacing: '-0.2px' }}>Get started in 3 steps</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
             {/* Step 1 */}
@@ -168,11 +254,11 @@ export default function ReceptionistPage() {
                 <span style={{ color: step >= 1 ? '#fff' : '#7AAAB2', fontSize: 14, fontWeight: 700 }}>1</span>
               </div>
               <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 700, fontSize: 15, color: '#0B1F3A', margin: '0 0 4px' }}>Your AI phone number</p>
-                <p style={{ fontSize: 13, color: '#4A7A80', margin: '0 0 12px' }}>This is the number BellAveGo uses to answer your calls.</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#F5FDFB', borderRadius: 10, padding: '14px 18px', border: '1px solid rgba(10,168,159,0.18)' }}>
+                <p style={{ fontWeight: 700, fontSize: 15, color: '#fff', margin: '0 0 4px' }}>Your AI phone number</p>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: '0 0 12px' }}>This is the number BellAveGo uses to answer your calls.</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(5,14,31,0.55)', borderRadius: 10, padding: '14px 18px', border: '1px solid rgba(94,234,212,0.22)' }}>
                   <span style={{ fontSize: 20 }}>📞</span>
-                  <span style={{ fontSize: 18, fontWeight: 800, color: '#0AA89F', letterSpacing: 1 }}>{twilioNumber}</span>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: '#5EEAD4', letterSpacing: 1 }}>{twilioNumber}</span>
                   <button
                     onClick={() => { navigator.clipboard.writeText(twilioNumber); setStep(Math.max(step, 2)) }}
                     style={{ marginLeft: 'auto', padding: '6px 14px', background: 'linear-gradient(135deg, #0AA89F, #0D8F87)', border: 'none', borderRadius: 6, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
@@ -191,8 +277,8 @@ export default function ReceptionistPage() {
                 <span style={{ color: step >= 2 ? '#fff' : '#7AAAB2', fontSize: 14, fontWeight: 700 }}>2</span>
               </div>
               <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 700, fontSize: 15, color: '#0B1F3A', margin: '0 0 4px' }}>Forward your calls</p>
-                <p style={{ fontSize: 13, color: '#4A7A80', margin: '0 0 12px' }}>Set up call forwarding so BellAveGo answers when you can&apos;t.</p>
+                <p style={{ fontWeight: 700, fontSize: 15, color: '#fff', margin: '0 0 4px' }}>Forward your calls</p>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: '0 0 12px' }}>Set up call forwarding so BellAveGo answers when you can&apos;t.</p>
                 <div style={{ background: '#F5FDFB', borderRadius: 10, padding: '16px 18px', border: '1px solid rgba(10,168,159,0.18)' }}>
                   <p style={{ fontWeight: 600, fontSize: 13, color: '#0B1F3A', margin: '0 0 8px' }}>📱 iPhone — dial this code</p>
                   {callForwardCode && (
@@ -220,8 +306,8 @@ export default function ReceptionistPage() {
                 <span style={{ color: step >= 3 ? '#fff' : '#7AAAB2', fontSize: 14, fontWeight: 700 }}>3</span>
               </div>
               <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 700, fontSize: 15, color: '#0B1F3A', margin: '0 0 4px' }}>You&apos;re ready to go live</p>
-                <p style={{ fontSize: 13, color: '#4A7A80', margin: '0 0 12px' }}>Click Activate above and BellAveGo will start answering every call.</p>
+                <p style={{ fontWeight: 700, fontSize: 15, color: '#fff', margin: '0 0 4px' }}>You&apos;re ready to go live</p>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: '0 0 12px' }}>Click Activate above and BellAveGo will start answering every call.</p>
                 {step >= 3 && (
                   <button
                     onClick={handleToggleActive}
@@ -236,49 +322,38 @@ export default function ReceptionistPage() {
         </div>
       )}
 
-      {/* TEST YOUR AI */}
-      <div style={{ background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', borderRadius: 14, padding: '24px 28px', marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 20px rgba(10,168,159,0.25)' }}>
-        <div>
-          <p style={{ fontWeight: 700, fontSize: 16, color: '#fff', margin: '0 0 6px' }}>🎙️ Test your AI right now</p>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.78)', margin: 0 }}>See exactly how your customers experience your business</p>
-        </div>
-        <a href={`tel:${twilioNumber.replace(/\D/g, '')}`} style={{ padding: '12px 24px', background: 'rgba(255,255,255,0.18)', border: '1.5px solid rgba(255,255,255,0.35)', borderRadius: 10, textDecoration: 'none', color: '#fff', fontWeight: 800, fontSize: 14, whiteSpace: 'nowrap', backdropFilter: 'blur(8px)' }}>
-          📞 Call AI Demo
-        </a>
-      </div>
-
       {/* AI BEHAVIOR SETTINGS */}
       <div style={{ ...card, padding: '28px' }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0B1F3A', marginBottom: 4 }}>AI Behavior Settings</h2>
-        <p style={{ fontSize: 13, color: '#4A7A80', marginBottom: 24 }}>This controls how your AI speaks to customers.</p>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginBottom: 6, letterSpacing: '-0.2px' }}>AI Behavior Settings</h2>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', marginBottom: 24 }}>Tune how your AI speaks to customers.</p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#7AAAB2', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Business name</label>
+            <label style={{ fontSize: 12, fontWeight: 600, color: '#5EEAD4', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Business name</label>
             <input value={businessName} onChange={e => setBusinessName(e.target.value)} placeholder="e.g. Mike's HVAC" style={inputStyle} />
           </div>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#7AAAB2', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Service area</label>
+            <label style={{ fontSize: 12, fontWeight: 600, color: '#5EEAD4', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Service area</label>
             <input value={serviceArea} onChange={e => setServiceArea(e.target.value)} placeholder="e.g. Chicago, IL" style={inputStyle} />
           </div>
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: '#7AAAB2', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Services offered</label>
+          <label style={{ fontSize: 12, fontWeight: 600, color: '#5EEAD4', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Services offered</label>
           <input value={services} onChange={e => setServices(e.target.value)} placeholder="e.g. AC repair, furnace install, HVAC maintenance" style={inputStyle} />
         </div>
 
         <div style={{ marginBottom: 24 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: '#7AAAB2', display: 'block', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>AI tone</label>
+          <label style={{ fontSize: 12, fontWeight: 600, color: '#5EEAD4', display: 'block', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>AI tone</label>
           <div style={{ display: 'flex', gap: 10 }}>
             {[
               { value: 'friendly', label: '😊 Friendly', desc: 'Warm and conversational' },
               { value: 'professional', label: '💼 Professional', desc: 'Formal and precise' },
               { value: 'fast', label: '⚡ Fast', desc: 'Quick and to the point' },
             ].map(t => (
-              <button key={t.value} onClick={() => setTone(t.value)} style={{ flex: 1, padding: '12px 14px', borderRadius: 10, border: tone === t.value ? '2px solid #0AA89F' : '1.5px solid rgba(10,168,159,0.18)', background: tone === t.value ? 'rgba(10,168,159,0.08)' : '#fff', cursor: 'pointer', textAlign: 'left' }}>
-                <p style={{ fontSize: 14, fontWeight: 700, color: tone === t.value ? '#0AA89F' : '#0B1F3A', margin: '0 0 2px' }}>{t.label}</p>
-                <p style={{ fontSize: 12, color: '#7AAAB2', margin: 0 }}>{t.desc}</p>
+              <button key={t.value} onClick={() => setTone(t.value)} style={{ flex: 1, padding: '12px 14px', borderRadius: 10, border: tone === t.value ? '2px solid #5EEAD4' : '1.5px solid rgba(94,234,212,0.18)', background: tone === t.value ? 'rgba(94,234,212,0.10)' : 'rgba(5,14,31,0.4)', cursor: 'pointer', textAlign: 'left' }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: tone === t.value ? '#5EEAD4' : '#fff', margin: '0 0 2px' }}>{t.label}</p>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', margin: 0 }}>{t.desc}</p>
               </button>
             ))}
           </div>

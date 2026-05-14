@@ -97,3 +97,250 @@ html { overflow-x: hidden; }
   background: #F8FAFC;
   border-color: #CBD5E1;
 }
+
+/* ════════════════════════════════════════════════════════════════
+   MISSION CONTROL DESIGN SYSTEM
+   ════════════════════════════════════════════════════════════════
+   Dark navy + teal/cyan + sunset orange. Used by founder page and
+   every dashboard surface. Goal: premium vertical-AI feeling, not
+   generic admin panel.
+
+   Core tokens:
+     --mc-bg-base      Deep navy gradient background
+     --mc-bg-glass     Translucent glass panel
+     --mc-border       Subtle teal divider
+     --mc-border-hot   Brighter on hover
+     --mc-orange       Sunset accent (revenue, AI, premium signals)
+     --mc-teal         Brand teal
+     --mc-text         Primary text
+     --mc-text-mute    Secondary text
+*/
+
+:root {
+  --mc-orange: #FF9D5A;
+  --mc-orange-hot: #E8742B;
+  --mc-orange-glow: rgba(232, 116, 43, 0.35);
+  --mc-teal: #5EEAD4;
+  --mc-teal-mid: #14B8A6;
+  --mc-teal-glow: rgba(94, 234, 212, 0.30);
+  --mc-text: #fff;
+  --mc-text-mute: #94A3B8;
+  --mc-text-soft: rgba(255, 255, 255, 0.62);
+  --mc-border: rgba(94, 234, 212, 0.14);
+  --mc-border-hot: rgba(94, 234, 212, 0.40);
+  --mc-glass: rgba(15, 35, 70, 0.55);
+  --mc-glass-deep: rgba(10, 25, 52, 0.78);
+}
+
+/* Page background — deep navy with subtle radial light. */
+.mc-page {
+  background:
+    radial-gradient(800px 500px at 88% 8%, rgba(232,116,43,0.10), transparent 60%),
+    radial-gradient(700px 600px at 8% 92%, rgba(94,234,212,0.08), transparent 65%),
+    linear-gradient(180deg, #050E1F 0%, #0B1F3A 50%, #0F2542 100%);
+  color: var(--mc-text);
+  min-height: 100vh;
+}
+
+/* Glass panel — the workhorse card. */
+.mc-card {
+  position: relative;
+  background: var(--mc-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--mc-border);
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+}
+.mc-card:hover {
+  border-color: var(--mc-border-hot);
+  box-shadow:
+    0 20px 56px rgba(0, 0, 0, 0.42),
+    0 0 0 1px var(--mc-border-hot),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Variant: orange-glow card for revenue/money/AI-active items. */
+.mc-card-orange {
+  border-color: rgba(232, 116, 43, 0.30);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.32),
+    0 0 32px rgba(232, 116, 43, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.mc-card-orange:hover {
+  border-color: rgba(232, 116, 43, 0.55);
+  box-shadow:
+    0 20px 56px rgba(0, 0, 0, 0.42),
+    0 0 56px rgba(232, 116, 43, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Variant: teal-glow card for AI/active/live-state items. */
+.mc-card-teal {
+  border-color: rgba(94, 234, 212, 0.30);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.32),
+    0 0 32px rgba(94, 234, 212, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Eyebrow label */
+.mc-eyebrow {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10px; font-weight: 800;
+  color: var(--mc-teal); letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* Big stat numbers — for revenue, calls, jobs */
+.mc-stat-num {
+  font-size: clamp(32px, 4.4vw, 52px);
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.mc-stat-num-money {
+  background: linear-gradient(135deg, #FFD9A8 0%, #FF9D5A 50%, #E8742B 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 16px rgba(232, 116, 43, 0.32));
+}
+.mc-stat-num-teal {
+  background: linear-gradient(135deg, #5EEAD4 0%, #14B8A6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 12px rgba(94, 234, 212, 0.30));
+}
+.mc-stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mc-text-mute);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.mc-stat-delta {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 8px;
+  font-size: 11px; font-weight: 700;
+  color: #4ADE80;
+}
+
+/* Live dot — green pulsing for "AI Active" indicators */
+@keyframes mcLivePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55); opacity: 1; }
+  60%      { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);    opacity: 0.7; }
+}
+.mc-live-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #22C55E;
+  animation: mcLivePulse 1.8s ease-out infinite;
+}
+
+/* "AI Active" status pill */
+.mc-status-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 12px;
+  border-radius: 99px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.32);
+  font-size: 11px; font-weight: 800;
+  color: #4ADE80;
+  letter-spacing: 0.08em; text-transform: uppercase;
+}
+
+/* Animated waveform — for active AI calls */
+@keyframes mcWaveBar {
+  0%, 100% { transform: scaleY(0.35); }
+  50%      { transform: scaleY(1); }
+}
+.mc-wave { display: inline-flex; align-items: center; gap: 3px; height: 28px; }
+.mc-wave span {
+  display: inline-block;
+  width: 3px; height: 100%;
+  background: linear-gradient(180deg, var(--mc-teal), var(--mc-teal-mid));
+  border-radius: 2px;
+  transform-origin: center;
+  animation: mcWaveBar 0.9s ease-in-out infinite;
+}
+.mc-wave span:nth-child(1) { animation-delay: 0s; }
+.mc-wave span:nth-child(2) { animation-delay: 0.10s; }
+.mc-wave span:nth-child(3) { animation-delay: 0.20s; }
+.mc-wave span:nth-child(4) { animation-delay: 0.30s; }
+.mc-wave span:nth-child(5) { animation-delay: 0.15s; }
+.mc-wave span:nth-child(6) { animation-delay: 0.05s; }
+.mc-wave span:nth-child(7) { animation-delay: 0.25s; }
+
+/* Slide-up entrance for live items */
+@keyframes mcSlideUp {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.mc-slide-up { animation: mcSlideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Soft orange ambient glow — drop into corners of page sections */
+.mc-glow-orange {
+  position: absolute; pointer-events: none;
+  border-radius: 50%;
+  filter: blur(80px);
+  background: radial-gradient(circle, rgba(232, 116, 43, 0.32) 0%, transparent 70%);
+}
+.mc-glow-teal {
+  position: absolute; pointer-events: none;
+  border-radius: 50%;
+  filter: blur(80px);
+  background: radial-gradient(circle, rgba(94, 234, 212, 0.22) 0%, transparent 70%);
+}
+
+/* Premium button — orange */
+.mc-btn-orange {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 22px; border-radius: 11px;
+  background: linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B);
+  color: #0B1F3A; font-weight: 900; font-size: 14px;
+  text-decoration: none; border: 1px solid rgba(255, 217, 168, 0.55);
+  box-shadow: 0 10px 32px rgba(232, 116, 43, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s, filter 0.22s;
+  cursor: pointer; font-family: inherit;
+}
+.mc-btn-orange:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 16px 44px rgba(232, 116, 43, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  filter: brightness(1.06);
+}
+
+/* Ghost button — for secondaries inside dark surfaces */
+.mc-btn-ghost {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 12px 18px; border-radius: 11px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(94, 234, 212, 0.25);
+  color: #fff; font-weight: 700; font-size: 13px;
+  text-decoration: none; cursor: pointer; font-family: inherit;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+.mc-btn-ghost:hover {
+  background: rgba(94, 234, 212, 0.10);
+  border-color: rgba(94, 234, 212, 0.5);
+  transform: translateY(-1px);
+}
+
+/* Section divider line with soft glow */
+.mc-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(94, 234, 212, 0.32), transparent);
+  margin: 32px 0;
+  border: none;
+}

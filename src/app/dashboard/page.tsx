@@ -160,32 +160,35 @@ export default function DashboardPage() {
   const pending = jobs.filter((j) => j.status === "pending" || j.status === "pending_approval");
   const upcoming = jobs.filter((j) => j.status === "accepted" || j.status === "scheduled");
 
-  // ── Light coastal styles ──
+  // ── Mission Control styles (glass navy + teal accents + orange glow) ──
   const card: React.CSSProperties = {
-    background: "#ffffff",
-    border: "1px solid rgba(10,168,159,0.14)",
-    borderRadius: 14,
+    background: "rgba(15,35,70,0.55)",
+    backdropFilter: "blur(16px)",
+    WebkitBackdropFilter: "blur(16px)",
+    border: "1px solid rgba(94,234,212,0.14)",
+    borderRadius: 16,
     overflow: "hidden",
-    boxShadow: "0 2px 16px rgba(7,27,58,0.06)",
+    boxShadow: "0 12px 40px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.04)",
   };
   const cardHead: React.CSSProperties = {
     display: "flex", alignItems: "center", justifyContent: "space-between",
-    padding: "14px 20px", borderBottom: "1px solid rgba(10,168,159,0.1)",
+    padding: "16px 22px", borderBottom: "1px solid rgba(94,234,212,0.12)",
+    background: "rgba(255,255,255,0.02)",
   };
-  const cardTitle: React.CSSProperties = { fontSize: 13, fontWeight: 700, color: "#0B1F3A" };
-  const cardBody: React.CSSProperties = { padding: 20 };
+  const cardTitle: React.CSSProperties = { fontSize: 13, fontWeight: 800, color: "#fff", letterSpacing: "-0.1px" };
+  const cardBody: React.CSSProperties = { padding: 22 };
   const th: React.CSSProperties = {
-    fontSize: 10, fontWeight: 700, color: "#7AAAB2", textTransform: "uppercase",
-    letterSpacing: "0.08em", padding: "0 0 10px", textAlign: "left",
-    borderBottom: "1px solid rgba(10,168,159,0.1)",
+    fontSize: 10, fontWeight: 800, color: "#5EEAD4", textTransform: "uppercase",
+    letterSpacing: "0.12em", padding: "0 0 12px", textAlign: "left",
+    borderBottom: "1px solid rgba(94,234,212,0.18)",
   };
   const td: React.CSSProperties = {
-    padding: "12px 0", borderBottom: "1px solid rgba(10,168,159,0.07)",
-    fontSize: 12, color: "#4A7A80", verticalAlign: "middle",
+    padding: "13px 0", borderBottom: "1px solid rgba(94,234,212,0.06)",
+    fontSize: 12.5, color: "rgba(255,255,255,0.78)", verticalAlign: "middle",
   };
-  const emptyBox: React.CSSProperties = { textAlign: "center", padding: "36px 20px" };
-  const emptyTitle: React.CSSProperties = { fontSize: 13, fontWeight: 600, color: "#0B1F3A", marginBottom: 4 };
-  const emptySub: React.CSSProperties = { fontSize: 11, color: "#7AAAB2", lineHeight: 1.6 };
+  const emptyBox: React.CSSProperties = { textAlign: "center", padding: "44px 20px" };
+  const emptyTitle: React.CSSProperties = { fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 6 };
+  const emptySub: React.CSSProperties = { fontSize: 11.5, color: "rgba(255,255,255,0.5)", lineHeight: 1.6 };
 
   function statusPill(status: Job["status"]) {
     const map: Record<string, { bg: string; color: string; border: string; label: string }> = {
@@ -243,8 +246,13 @@ export default function DashboardPage() {
       {/* Header — admin switcher inlined as a compact pill so it doesn't dominate */}
       <div style={{ marginBottom: 26, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: "#0B1F3A", letterSpacing: "-0.04em" }}>Command Center</div>
-          <div style={{ fontSize: 13, color: "#7AAAB2", marginTop: 3 }}>Live job requests, schedule, and business overview</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ fontSize: 26, fontWeight: 900, color: "#fff", letterSpacing: "-0.04em" }}>Command Center</div>
+            {profile?.is_active && (
+              <span className="mc-status-pill"><span className="mc-live-dot" /> AI Active</span>
+            )}
+          </div>
+          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", marginTop: 4 }}>Revenue recovery mission control — live operational view of your AI receptionist</div>
         </div>
         {isAdmin && (
           <div style={{
@@ -364,21 +372,30 @@ export default function DashboardPage() {
           state behind the activation banner above (sells with desire, not a wall). */}
       <>
 
-      {/* Metric cards */}
+      {/* Metric cards — big bold numbers, glass navy, orange/teal glows */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 24 }}>
-        {metrics.map((m) => (
-          <div key={m.label} style={{ background: "#ffffff", border: "1px solid rgba(10,168,159,0.14)", borderRadius: 14, padding: "18px 20px", position: "relative", overflow: "hidden", boxShadow: "0 2px 14px rgba(7,27,58,0.06)" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "#7AAAB2", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              {m.label}
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: m.iconBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={m.iconColor} strokeWidth="2">{m.icon}</svg>
+        {metrics.map((m, idx) => {
+          // Revenue card gets the orange glow; others get teal
+          const isRevenue = idx === 0
+          return (
+            <div
+              key={m.label}
+              className={`mc-card ${isRevenue ? "mc-card-orange" : ""}`}
+              style={{ position: "relative", overflow: "hidden", padding: "20px 22px" }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                <span style={{ fontSize: 10, fontWeight: 800, color: isRevenue ? "#FF9D5A" : "#5EEAD4", textTransform: "uppercase", letterSpacing: "0.12em" }}>
+                  {m.label}
+                </span>
+                <div style={{ width: 32, height: 32, borderRadius: 9, background: isRevenue ? "rgba(232,116,43,0.16)" : "rgba(94,234,212,0.12)", border: `1px solid ${isRevenue ? "rgba(232,116,43,0.32)" : "rgba(94,234,212,0.28)"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={isRevenue ? "#FF9D5A" : "#5EEAD4"} strokeWidth="2">{m.icon}</svg>
+                </div>
               </div>
+              <div className={isRevenue ? "mc-stat-num mc-stat-num-money" : "mc-stat-num"} style={{ fontSize: "clamp(28px, 3.2vw, 40px)" }}>{m.value}</div>
+              <div style={{ fontSize: 11, marginTop: 8, color: "rgba(255,255,255,0.55)" }}>{m.sub}</div>
             </div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: "#0B1F3A", letterSpacing: "-1px", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{m.value}</div>
-            <div style={{ fontSize: 11, marginTop: 6, color: "#7AAAB2" }}>{m.sub}</div>
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg,${m.accentColor},${m.accentColor}00)`, borderRadius: "14px 14px 0 0" }} />
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* Two-col layout */}
@@ -422,7 +439,7 @@ export default function DashboardPage() {
                   <tbody>
                     {pending.map((job) => (
                       <tr key={job.id}>
-                        <td style={{ ...td, fontWeight: 700, color: "#0B1F3A" }}>{job.customer_name}</td>
+                        <td style={{ ...td, fontWeight: 700, color: "#fff" }}>{job.customer_name}</td>
                         <td style={td}>{jobService(job)}</td>
                         <td style={td}>{formatDate(jobTime(job))}</td>
                         <td style={{ ...td, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{job.address || "—"}</td>
@@ -480,10 +497,10 @@ export default function DashboardPage() {
                   <tbody>
                     {jobs.map((job) => (
                       <tr key={job.id}>
-                        <td style={{ ...td, fontWeight: 600, color: "#0B1F3A" }}>{job.customer_name}</td>
+                        <td style={{ ...td, fontWeight: 600, color: "#fff" }}>{job.customer_name}</td>
                         <td style={td}>{jobService(job)}</td>
                         <td style={td}>{formatDate(jobTime(job))}</td>
-                        <td style={{ ...td, fontWeight: 600, color: "#0B1F3A" }}>{job.amount ? `$${job.amount}` : "—"}</td>
+                        <td style={{ ...td, fontWeight: 600, color: "#fff" }}>{job.amount ? `$${job.amount}` : "—"}</td>
                         <td style={td}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                             {statusPill(job.status)}
@@ -602,16 +619,16 @@ export default function DashboardPage() {
 
           {/* AI Receptionist status */}
           <div style={{ ...card }}>
-            <div style={{ background: "linear-gradient(135deg, #E6F7F4 0%, #F0FAF7 100%)", padding: "16px 20px", borderBottom: "1px solid rgba(10,168,159,0.12)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ background: "linear-gradient(135deg, rgba(94,234,212,0.10), rgba(20,184,166,0.04))", padding: "16px 20px", borderBottom: "1px solid rgba(94,234,212,0.14)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(10,168,159,0.12)", border: "1px solid rgba(10,168,159,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0AA89F" strokeWidth="1.8">
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(94,234,212,0.14)", border: "1px solid rgba(94,234,212,0.32)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5EEAD4" strokeWidth="2">
                     <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
                   </svg>
                 </div>
                 <div>
                   <div style={cardTitle}>AI Receptionist</div>
-                  <div style={{ fontSize: 10, color: "#7AAAB2", marginTop: 2 }}>
+                  <div style={{ fontSize: 10.5, color: "rgba(255,255,255,0.55)", marginTop: 2 }}>
                     24/7 · {profile?.twilio_number || (profile?.is_active ? "Provisioning…" : "We'll buy you a local number after checkout")}
                   </div>
                 </div>
@@ -629,12 +646,12 @@ export default function DashboardPage() {
                 { label: "Calls today", val: "0", muted: false },
                 { label: "Leads captured", val: "0", muted: false },
               ].map((row) => (
-                <div key={row.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid rgba(10,168,159,0.08)" }}>
+                <div key={row.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 0", borderBottom: "1px solid rgba(94,234,212,0.08)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                    <div style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(10,168,159,0.3)" }} />
-                    <span style={{ fontSize: 12, color: "#4A7A80" }}>{row.label}</span>
+                    <div style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(94,234,212,0.4)" }} />
+                    <span style={{ fontSize: 12, color: "rgba(255,255,255,0.62)" }}>{row.label}</span>
                   </div>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: row.muted ? "#7AAAB2" : "#0B1F3A" }}>{row.val}</span>
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: row.muted ? "rgba(255,255,255,0.42)" : "#fff", fontVariantNumeric: "tabular-nums" }}>{row.val}</span>
                 </div>
               ))}
               <Link href="/dashboard/receptionist" style={{ width: "100%", marginTop: 16, background: "linear-gradient(135deg, #0AA89F, #18AFA8)", color: "#fff", fontSize: 12, fontWeight: 700, padding: "11px", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, textDecoration: "none", boxShadow: "0 4px 14px rgba(10,168,159,0.25)" }}>
@@ -663,8 +680,8 @@ export default function DashboardPage() {
                   <div style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(10,168,159,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0AA89F" strokeWidth="2">{item.icon}</svg>
                   </div>
-                  <span style={{ fontSize: 12, color: "#0B1F3A", fontWeight: 500 }}>{item.label}</span>
-                  <span style={{ marginLeft: "auto", fontSize: 11, color: "#7AAAB2" }}>→</span>
+                  <span style={{ fontSize: 12.5, color: "#fff", fontWeight: 500 }}>{item.label}</span>
+                  <span style={{ marginLeft: "auto", fontSize: 11, color: "rgba(94,234,212,0.6)" }}>→</span>
                 </Link>
               ))}
             </div>

@@ -39,31 +39,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isActive = (href: string) => href === '/dashboard' ? path === href : path === href || path.startsWith(href + '/')
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: "'Inter', system-ui, sans-serif", background: 'linear-gradient(145deg, #F5FCFA 0%, #EBF7F3 50%, #F0FAF7 100%)' }}>
+    <div className="mc-page" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: "'Inter', system-ui, sans-serif" }}>
 
       <ImpersonationBanner />
 
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
 
       {/* ── SIDEBAR ── */}
-      <aside style={{ width: 300, background: '#ffffff', borderRight: '1px solid rgba(10,168,159,0.14)', display: 'flex', flexDirection: 'column', padding: '24px 16px 18px', flexShrink: 0, boxShadow: '2px 0 16px rgba(10,168,159,0.06)' }}>
+      <aside style={{ width: 300, background: 'rgba(5,14,31,0.78)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderRight: '1px solid rgba(94,234,212,0.12)', display: 'flex', flexDirection: 'column', padding: '24px 16px 18px', flexShrink: 0, boxShadow: '2px 0 30px rgba(0,0,0,0.32)' }}>
 
         {/* Logo — top-left brand moment */}
-        <div style={{ padding: '4px 0 22px', borderBottom: '1px solid rgba(10,168,159,0.12)', marginBottom: 22 }}>
+        <div style={{ padding: '4px 0 22px', borderBottom: '1px solid rgba(94,234,212,0.12)', marginBottom: 22 }}>
           <Link href="/" style={{ display: 'block', textDecoration: 'none' }}>
             <Image
               src="/logo.png"
               alt="BellAveGo"
               width={665}
               height={210}
-              style={{ objectFit: 'contain', width: '100%', height: 'auto', filter: 'brightness(1.05) drop-shadow(0 6px 18px rgba(10,168,159,0.38))' }}
+              style={{ objectFit: 'contain', width: '100%', height: 'auto', filter: 'brightness(1.15) drop-shadow(0 6px 22px rgba(94,234,212,0.42))' }}
               priority
             />
           </Link>
         </div>
 
         {/* Workspace nav */}
-        <div style={{ fontSize: 10, fontWeight: 700, color: '#7AAAB2', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0 8px', marginBottom: 6 }}>Workspace</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(94,234,212,0.6)', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '0 8px', marginBottom: 6 }}>Workspace</div>
 
         {[
           {
@@ -92,30 +92,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           },
         ].map(({ href, label, icon, dot }) => (
           <Link key={href} href={href} style={{
-            display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px',
+            display: 'flex', alignItems: 'center', gap: 9, padding: '9px 10px',
             borderRadius: 9, textDecoration: 'none', fontSize: 13, marginBottom: 2,
-            background: isActive(href) ? 'rgba(10,168,159,0.1)' : 'transparent',
-            borderLeft: `2.5px solid ${isActive(href) ? '#0AA89F' : 'transparent'}`,
-            color: isActive(href) ? '#0AA89F' : '#4A7A80',
+            background: isActive(href) ? 'linear-gradient(90deg, rgba(94,234,212,0.14), rgba(94,234,212,0.04))' : 'transparent',
+            borderLeft: `2.5px solid ${isActive(href) ? '#5EEAD4' : 'transparent'}`,
+            color: isActive(href) ? '#5EEAD4' : 'rgba(255,255,255,0.65)',
             fontWeight: isActive(href) ? 700 : 500,
-            transition: 'all 0.15s ease',
+            transition: 'all 0.18s ease',
           }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">{icon}</svg>
             {label}
             {dot && (
-              <div style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 6px rgba(34,197,94,0.5)' }} />
+              <div style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 8px rgba(34,197,94,0.6)' }} />
             )}
           </Link>
         ))}
 
         {/* Account nav */}
-        <div style={{ fontSize: 10, fontWeight: 700, color: '#7AAAB2', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0 8px', margin: '18px 0 6px' }}>Account</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(94,234,212,0.6)', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '0 8px', margin: '18px 0 6px' }}>Account</div>
         <Link href="/dashboard/settings" style={{
-          display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px',
+          display: 'flex', alignItems: 'center', gap: 9, padding: '9px 10px',
           borderRadius: 9, textDecoration: 'none', fontSize: 13, marginBottom: 2,
-          background: isActive('/dashboard/settings') ? 'rgba(10,168,159,0.1)' : 'transparent',
-          borderLeft: `2.5px solid ${isActive('/dashboard/settings') ? '#0AA89F' : 'transparent'}`,
-          color: isActive('/dashboard/settings') ? '#0AA89F' : '#4A7A80',
+          background: isActive('/dashboard/settings') ? 'linear-gradient(90deg, rgba(94,234,212,0.14), rgba(94,234,212,0.04))' : 'transparent',
+          borderLeft: `2.5px solid ${isActive('/dashboard/settings') ? '#5EEAD4' : 'transparent'}`,
+          color: isActive('/dashboard/settings') ? '#5EEAD4' : 'rgba(255,255,255,0.65)',
           fontWeight: isActive('/dashboard/settings') ? 700 : 500,
         }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -125,12 +125,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </Link>
 
         {/* Footer */}
-        <div style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid rgba(10,168,159,0.1)' }}>
+        <div style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid rgba(94,234,212,0.10)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 9 }}>
             <UserButton />
             <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#0B1F3A' }}>Account</div>
-              <div style={{ fontSize: 10, color: '#7AAAB2' }}>Owner</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>Account</div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>Owner</div>
             </div>
           </div>
         </div>
@@ -140,23 +140,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 
         {/* Topbar */}
-        <div style={{ height: 54, background: '#ffffff', borderBottom: '1px solid rgba(10,168,159,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px', flexShrink: 0, boxShadow: '0 2px 10px rgba(10,168,159,0.05)' }}>
+        <div style={{ height: 54, background: 'rgba(11,31,58,0.65)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(94,234,212,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Link href="/" style={{ padding: '7px 14px', borderRadius: 9, border: '1px solid rgba(10,168,159,0.2)', background: '#F5FCFA', color: '#0B1F3A', textDecoration: 'none', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>
+            <Link href="/" style={{ padding: '7px 14px', borderRadius: 9, border: '1px solid rgba(94,234,212,0.18)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.78)', textDecoration: 'none', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>
               ← Back to home
             </Link>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#0B1F3A' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>
               {nav.find(n => path === n.href || path.startsWith(n.href + '/'))?.label ?? 'Dashboard'}
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {isActiveSub && twilioNumber ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '5px 13px', borderRadius: 20, fontSize: 11, fontWeight: 600, color: '#059669' }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 6px rgba(34,197,94,0.5)' }} />
-                AI Online · {formatUS(twilioNumber)}
-              </div>
+              <div className="mc-status-pill"><span className="mc-live-dot" /> AI Online · {formatUS(twilioNumber)}</div>
             ) : isActiveSub === false ? (
-              <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#FEF2F2', border: '1px solid #FECACA', padding: '5px 13px', borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#DC2626', textDecoration: 'none' }}>
+              <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'rgba(220,38,38,0.14)', border: '1px solid rgba(220,38,38,0.4)', padding: '5px 13px', borderRadius: 99, fontSize: 11, fontWeight: 800, color: '#FCA5A5', textDecoration: 'none', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#DC2626' }} />
                 AI Offline · Activate
               </Link>
