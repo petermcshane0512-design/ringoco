@@ -36,7 +36,8 @@ CREATE INDEX IF NOT EXISTS idx_support_tickets_unresolved_priority
 -- BellAveGo voice route receives the inbound call.
 ALTER TABLE profiles
   ADD COLUMN IF NOT EXISTS forwarding_verified_at timestamptz,
-  ADD COLUMN IF NOT EXISTS forwarding_test_started_at timestamptz;
+  ADD COLUMN IF NOT EXISTS forwarding_test_started_at timestamptz,
+  ADD COLUMN IF NOT EXISTS welcome_escalated_at timestamptz;
 
 -- ── Prompt suggestion + review draft surfacing ───────────────────
 -- The cron-improved-prompts and review-draft tables already exist; we just

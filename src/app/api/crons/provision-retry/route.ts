@@ -119,10 +119,73 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // ── Welcome-SMS recovery ─────────────────────────────────────────
+  // Catches the silent failure where provisioning SUCCEEDED but the welcome
+  // SMS in the Stripe webhook failed (Twilio outage at that exact moment).
+  // Without this, a paying customer never learns their AI is live.
+  //
+  // Targets: active customers with a provisioned Twilio number whose
+  //   welcomed_at is still null and whose row is >5 min old (gives the
+  //   original webhook a chance to land first) but <24 hours old (after
+  //   that, we escalate to Peter).
+  type WelcomeStats = { sent: number; errors: number; escalated: number }
+  const wStats: WelcomeStats = { sent: 0, errors: 0, escalated: 0 }
+  const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+  const dayAgo    = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+
+  const { data: stuckWelcomes } = await supabase
+    .from('profiles')
+    .select('user_id, owner_phone, business_name, twilio_number, created_at, welcome_escalated_at')
+    .eq('is_active', true)
+    .is('welcomed_at', null)
+    .not('twilio_number', 'is', null)
+    .not('owner_phone', 'is', null)
+    .lt('created_at', fiveMinAgo)
+    .limit(50)
+
+  for (const p of stuckWelcomes ?? []) {
+    const isOlderThanDay = new Date(p.created_at).getTime() < new Date(dayAgo).getTime()
+
+    try {
+      await twilioClient.messages.create({
+        body: `Welcome to BellAveGo, ${p.business_name || 'partner'}! Your AI receptionist is live at ${p.twilio_number}. Next step: set up call forwarding so missed calls ring through. Walkthrough: https://www.bellavego.com/dashboard/forwarding — Peter`,
+        from: p.twilio_number,
+        to: p.owner_phone,
+      })
+      await supabase.from('profiles').update({ welcomed_at: new Date().toISOString() }).eq('user_id', p.user_id)
+      wStats.sent++
+    } catch (e) {
+      wStats.errors++
+      // After 24h of failures, ping Peter once — Twilio is clearly broken
+      // for this number or the contractor's carrier is rejecting. Manual touch.
+      const profileWithEscalation = p as typeof p & { welcome_escalated_at?: string | null }
+      if (isOlderThanDay && !profileWithEscalation.welcome_escalated_at) {
+        try {
+          await twilioClient.messages.create({
+            body:
+              `⏰ Welcome SMS stuck > 24h — ${p.business_name || p.user_id}\n\n` +
+              `Number: ${p.twilio_number} → ${p.owner_phone}\n` +
+              `Last error: ${(e as Error).message}\n\n` +
+              `They paid, got a number, but never got the welcome. Reach out personally. https://www.bellavego.com/admin/queue`,
+            from: process.env.TWILIO_PHONE_NUMBER!,
+            to: process.env.FALLBACK_OWNER_PHONE ?? '+17737109565',
+          })
+          await supabase
+            .from('profiles')
+            .update({ welcome_escalated_at: new Date().toISOString() })
+            .eq('user_id', p.user_id)
+          wStats.escalated++
+        } catch (escErr) {
+          console.error('welcome escalation SMS failed:', escErr)
+        }
+      }
+    }
+  }
+
   await supabase.from('agent_runs').insert({
     agent: 'provision-retry',
-    notes: JSON.stringify(stats),
+    notes: JSON.stringify({ ...stats, welcome: wStats }),
   })
 
-  return NextResponse.json({ ok: true, ...stats })
+  return NextResponse.json({ ok: true, ...stats, welcome: wStats })
 }

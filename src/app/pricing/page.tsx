@@ -193,6 +193,35 @@ export default function PricingPage() {
         </div>
         <p style={{ fontSize: 12, color: '#7AAAB2', margin: 0 }}>{isAnnual ? '12 months for the price of 10. Billed once.' : 'Cancel anytime.'}</p>
 
+        {/* Founding-partner banner — kills the setup-fee objection on cold outreach */}
+        <div style={{
+          maxWidth: 720, margin: '28px auto 0', padding: '16px 22px',
+          borderRadius: 14,
+          background: 'linear-gradient(135deg, rgba(232,116,43,0.10), rgba(255,217,168,0.18))',
+          border: '1px solid rgba(232,116,43,0.32)',
+          display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left',
+        }}>
+          <div style={{
+            width: 38, height: 38, borderRadius: 10,
+            background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+            boxShadow: '0 6px 14px rgba(232,116,43,0.40)',
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 15 8.5 22 9.3 17 14.1 18.2 21 12 17.8 5.8 21 7 14.1 2 9.3 9 8.5 12 2" />
+            </svg>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: '#C84B26', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 2 }}>
+              Founding Partner Offer
+            </div>
+            <div style={{ fontSize: 14, color: '#0B1F3A', lineHeight: 1.5 }}>
+              <strong>$0 setup fee + full 30-day money-back, no questions asked.</strong> Limited to the first 10 customers — risk literally nothing to find out if BellAveGo earns its keep.
+            </div>
+          </div>
+        </div>
+
         {/* Plan picker — kills the "which one for me?" decision friction */}
         <div style={{
           display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: 6,
@@ -303,7 +332,7 @@ export default function PricingPage() {
                   {loading === plan.tier ? 'Loading…' : isSignedIn ? `Start with ${plan.name} →` : 'Get Started →'}
                 </button>
                 <p style={{ fontSize: 11, color: plan.popular ? 'rgba(255,255,255,0.45)' : '#7AAAB2', textAlign: 'center', marginTop: 10, marginBottom: 0, fontWeight: 500 }}>
-                  + ${plan.setup} onboarding · 30-day money-back · Cancel anytime
+                  <span style={{ color: plan.popular ? '#5EEAD4' : '#0AA89F', fontWeight: 700 }}>$0 setup</span> for founding partners <span style={{ textDecoration: 'line-through', opacity: 0.5 }}>(${plan.setup})</span> · 30-day full refund · Cancel anytime
                 </p>
               </div>
             )

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { auth } from '@clerk/nextjs/server'
-import { type Tier, type Interval, priceFor, setupPriceFor, isValidTier } from '@/lib/pricing'
+import { type Tier, type Interval, priceFor, isValidTier } from '@/lib/pricing'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2026-04-22.dahlia',
@@ -23,14 +23,13 @@ export async function POST(req: NextRequest) {
   const tier: Tier = isValidTier(body.tier ?? '') ? (body.tier as Tier) : 'officemgr'
   const interval: Interval = body.interval === 'annual' ? 'annual' : 'monthly'
 
-  // v6 pricing: subscription + non-refundable onboarding fee per tier.
-  // 30-day money-back on the subscription only (setup covers real onboarding work).
+  // Founding-partner pricing: subscription only — setup fee waived for the
+  // first batch of customers. Re-add `{ price: setupPriceFor(tier), quantity: 1 }`
+  // to line_items + re-import setupPriceFor once setup fees are turned back on.
   const subPriceId = priceFor(tier, interval)
-  const setupPriceId = setupPriceFor(tier)
 
   const line_items: { price: string; quantity: number }[] = [
     { price: subPriceId, quantity: 1 },
-    { price: setupPriceId, quantity: 1 },
   ]
 
   try {
@@ -49,7 +48,7 @@ export async function POST(req: NextRequest) {
     // Surface the actual Stripe error so we can debug instead of guessing
     const errObj = err as { message?: string; code?: string; type?: string; raw?: { message?: string } }
     const detail = errObj.raw?.message || errObj.message || String(err)
-    console.error('[checkout] Stripe error:', { tier, interval, subPriceId, setupPriceId, detail, type: errObj.type, code: errObj.code })
+    console.error('[checkout] Stripe error:', { tier, interval, subPriceId, detail, type: errObj.type, code: errObj.code })
     return NextResponse.json(
       { error: detail, code: errObj.code, type: errObj.type, tier, interval },
       { status: 500 },
