@@ -305,11 +305,11 @@ export default function ConsultingShowcase() {
         .cs-cover-logo {
           align-self: flex-start;
           background: rgba(255,255,255,0.96);
-          padding: 5px 10px; border-radius: 7px;
-          margin-bottom: 10px;
+          padding: 7px 12px; border-radius: 9px;
+          margin-bottom: 12px;
           box-shadow: 0 6px 16px rgba(11,31,58,0.32);
         }
-        .cs-cover-logo img { display: block; height: 16px; width: auto; }
+        .cs-cover-logo img { display: block; height: 32px; width: auto; }
         .cs-cover-eyebrow {
           display: inline-flex; align-items: center; gap: 5px;
           font-size: 9px; font-weight: 800;
@@ -352,17 +352,6 @@ export default function ConsultingShowcase() {
           backdrop-filter: blur(3px);
           -webkit-backdrop-filter: blur(3px);
           letter-spacing: 0.04em;
-        }
-        .cs-cover-pin {
-          position: absolute;
-          top: -10px; right: -10px;
-          background: linear-gradient(135deg, #22C55E, #15803D);
-          color: #fff;
-          font-size: 10px; font-weight: 800;
-          padding: 4px 10px; border-radius: 99px;
-          letter-spacing: 0.06em;
-          box-shadow: 0 6px 18px rgba(34,197,94,0.5);
-          z-index: 3;
         }
         /* 3 section preview cards */
         .cs-cards {
@@ -596,7 +585,6 @@ export default function ConsultingShowcase() {
             <div className="cs-cover-halo" aria-hidden="true" />
             <div className="cs-cover-ring" aria-hidden="true" />
             <Link href="/sample-report" className="cs-cover" aria-label="View the full sample report">
-              <span className="cs-cover-pin">PDF · 9 pages</span>
               <Image
                 src="/sunset-beach.jpg"
                 alt=""
