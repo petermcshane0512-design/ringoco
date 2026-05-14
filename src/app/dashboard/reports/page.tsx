@@ -33,23 +33,23 @@ export default async function ReportsIndexPage() {
 
   return (
     <div style={{ padding: "32px 32px 80px", fontFamily: "'Inter', system-ui, sans-serif", maxWidth: 1080, margin: "0 auto" }}>
-      <Link href="/dashboard" style={{ fontSize: 12, fontWeight: 700, color: "#5EEAD4", textDecoration: "none" }}>← Back to dashboard</Link>
+      <Link href="/dashboard" style={{ fontSize: 12, fontWeight: 700, color: "#C84B26", textDecoration: "none" }}>← Back to dashboard</Link>
 
       <div style={{ marginTop: 18, marginBottom: 8, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        <h1 style={{ fontSize: 30, fontWeight: 900, color: "#fff", letterSpacing: "-0.04em", margin: 0 }}>
-          Consulting reports
+        <h1 style={{ fontSize: 30, fontWeight: 900, color: "#0B1F3A", letterSpacing: "-0.04em", margin: 0 }}>
+          Consulting <span style={{ background: "linear-gradient(135deg, #FF9D5A, #E8742B 60%, #C84B26)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>reports.</span>
         </h1>
         <span style={{
           display: "inline-flex", alignItems: "center", gap: 6,
           padding: "5px 12px", borderRadius: 99,
-          background: "rgba(232,116,43,0.14)", border: "1px solid rgba(232,116,43,0.32)",
-          fontSize: 10.5, fontWeight: 800, color: "#FF9D5A",
+          background: "rgba(232,116,43,0.10)", border: "1px solid rgba(232,116,43,0.32)",
+          fontSize: 10.5, fontWeight: 800, color: "#C84B26",
           letterSpacing: "0.14em", textTransform: "uppercase",
         }}>
           McKinsey-grade · AI-generated
         </span>
       </div>
-      <p style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", marginBottom: 30, lineHeight: 1.55, maxWidth: 720 }}>
+      <p style={{ fontSize: 14, color: "#4A6670", marginBottom: 30, lineHeight: 1.55, maxWidth: 720 }}>
         AI-generated growth reports based on your actual call and job data, plus local market intel. Delivered automatically on your plan&apos;s cadence.
       </p>
 
@@ -69,15 +69,15 @@ export default async function ReportsIndexPage() {
               <line x1="9" y1="17" x2="13" y2="17"/>
             </svg>
           </div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: "#fff", marginBottom: 8, letterSpacing: "-0.2px" }}>
+          <div style={{ fontSize: 19, fontWeight: 800, color: "#0B1F3A", marginBottom: 10, letterSpacing: "-0.2px" }}>
             Your first report is on the way
           </div>
-          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 1.65, maxWidth: 520, margin: "0 auto" }}>
-            Your <strong style={{ color: "#FF9D5A" }}>welcome report</strong> is auto-generated the day after activation. After that, reports arrive on your plan&apos;s cadence:<br/>
-            <span style={{ display: "inline-block", marginTop: 12, fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
-              <strong style={{ color: "#5EEAD4" }}>Receptionist</strong> · bi-monthly (6/yr)
-              &nbsp;·&nbsp; <strong style={{ color: "#5EEAD4" }}>Office Manager</strong> · monthly (12/yr)
-              &nbsp;·&nbsp; <strong style={{ color: "#5EEAD4" }}>Concierge</strong> · weekly (52/yr) + quarterly deep-dive
+          <div style={{ fontSize: 13.5, color: "#4A6670", lineHeight: 1.65, maxWidth: 520, margin: "0 auto" }}>
+            Your <strong style={{ color: "#C84B26" }}>welcome report</strong> is auto-generated the day after activation. After that, reports arrive on your plan&apos;s cadence:<br/>
+            <span style={{ display: "inline-block", marginTop: 12, fontSize: 12, color: "#3D5A62" }}>
+              <strong style={{ color: "#0AA89F" }}>Receptionist</strong> · bi-monthly (6/yr)
+              &nbsp;·&nbsp; <strong style={{ color: "#0AA89F" }}>Office Manager</strong> · monthly (12/yr)
+              &nbsp;·&nbsp; <strong style={{ color: "#0AA89F" }}>Concierge</strong> · weekly (52/yr) + quarterly deep-dive
             </span>
           </div>
         </div>
@@ -120,22 +120,22 @@ export default async function ReportsIndexPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
                     <span style={{
                       fontSize: 9.5, fontWeight: 800,
-                      color: isWelcome ? "#FF9D5A" : "#5EEAD4",
+                      color: isWelcome ? "#C84B26" : "#0AA89F",
                       letterSpacing: "0.14em", textTransform: "uppercase",
                       padding: "3px 9px", borderRadius: 99,
-                      background: isWelcome ? "rgba(232,116,43,0.12)" : "rgba(94,234,212,0.10)",
-                      border: `1px solid ${isWelcome ? "rgba(232,116,43,0.30)" : "rgba(94,234,212,0.28)"}`,
+                      background: isWelcome ? "rgba(232,116,43,0.10)" : "rgba(20,184,166,0.10)",
+                      border: `1px solid ${isWelcome ? "rgba(232,116,43,0.28)" : "rgba(20,184,166,0.28)"}`,
                     }}>
                       {isWelcome ? "Welcome" : "Periodic"}
                     </span>
-                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>
+                    <span style={{ fontSize: 11, color: "#7AAAB2" }}>
                       {new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     </span>
                   </div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", letterSpacing: "-0.2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: "#0B1F3A", letterSpacing: "-0.2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {r.title}
                   </div>
-                  <div style={{ fontSize: 11.5, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>
+                  <div style={{ fontSize: 11.5, color: "#7AAAB2", marginTop: 3 }}>
                     {r.period_label || "—"}
                   </div>
                 </div>
@@ -143,7 +143,7 @@ export default async function ReportsIndexPage() {
                 {/* Score badge — visual highlight */}
                 {r.bellavego_score != null && (
                   <div style={{ textAlign: "center", flexShrink: 0 }}>
-                    <div style={{ fontSize: 9, fontWeight: 800, color: "#5EEAD4", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 4 }}>
+                    <div style={{ fontSize: 9, fontWeight: 800, color: "#0AA89F", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 4 }}>
                       Score
                     </div>
                     <div className="mc-stat-num mc-stat-num-teal" style={{ fontSize: 28 }}>
@@ -152,7 +152,7 @@ export default async function ReportsIndexPage() {
                   </div>
                 )}
 
-                <span style={{ fontSize: 22, color: "rgba(94,234,212,0.6)", flexShrink: 0 }}>›</span>
+                <span style={{ fontSize: 22, color: "#C84B26", flexShrink: 0 }}>›</span>
               </Link>
             );
           })}

@@ -46,9 +46,9 @@ export default function FounderPage() {
     <main className="mc-page" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
 
       {/* Nav */}
-      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 48px', height: 72, background: 'rgba(11,31,58,0.65)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(94,234,212,0.10)', position: 'sticky', top: 0, zIndex: 100 }}>
+      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 48px', height: 72, background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(232,116,43,0.12)', position: 'sticky', top: 0, zIndex: 100 }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-          <Image src="/logo.png" alt="BellAveGo" width={665} height={210} style={{ objectFit: 'contain', marginTop: 10, filter: 'drop-shadow(0 4px 18px rgba(94,234,212,0.32))' }} />
+          <Image src="/logo.png" alt="BellAveGo" width={665} height={210} style={{ objectFit: 'contain', marginTop: 10 }} />
         </Link>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           {isSignedIn && <Link href="/dashboard" className="nav-cta">Dashboard</Link>}
@@ -72,13 +72,13 @@ export default function FounderPage() {
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'linear-gradient(135deg, #FF9D5A, #E8742B)', boxShadow: '0 0 10px rgba(232,116,43,0.7)' }} />
               Built by people who answer their own phones
             </span>
-            <h1 style={{ fontSize: 'clamp(34px, 4.4vw, 56px)', fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 18, color: '#fff' }}>
-              Hi, I&apos;m Peter. I built BellAveGo after watching too many contractors lose jobs <span style={{ background: 'linear-gradient(135deg, #FFD9A8 0%, #FF9D5A 50%, #E8742B 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', filter: 'drop-shadow(0 0 24px rgba(232,116,43,0.4))' }}>to voicemail.</span>
+            <h1 style={{ fontSize: 'clamp(34px, 4.4vw, 56px)', fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 18, color: '#0B1F3A' }}>
+              Hi, I&apos;m Peter. I built BellAveGo after watching too many contractors lose jobs <span style={{ background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 60%, #C84B26 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', filter: 'drop-shadow(0 2px 10px rgba(232,116,43,0.32))' }}>to voicemail.</span>
             </h1>
-            <p style={{ fontSize: 17, lineHeight: 1.65, color: 'rgba(255,255,255,0.78)', maxWidth: 520, margin: '0 0 18px' }}>
+            <p style={{ fontSize: 17, lineHeight: 1.65, color: '#3D5A62', maxWidth: 520, margin: '0 0 18px' }}>
               Most home-service businesses don&apos;t need more software. They need someone making sure the phone gets answered, the lead gets captured, and the customer gets booked.
             </p>
-            <p style={{ fontSize: 17, lineHeight: 1.55, color: '#5EEAD4', fontWeight: 700, margin: '0 0 28px' }}>
+            <p style={{ fontSize: 17, lineHeight: 1.55, color: '#C84B26', fontWeight: 800, margin: '0 0 28px' }}>
               BellAveGo was built to do exactly that.
             </p>
 
@@ -94,15 +94,15 @@ export default function FounderPage() {
             </div>
 
             {/* Founder ID card */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingTop: 20, borderTop: '1px solid rgba(94,234,212,0.14)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingTop: 20, borderTop: '1px solid rgba(232,116,43,0.18)' }}>
               <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
-                <div style={{ position: 'absolute', inset: -4, borderRadius: '50%', background: 'radial-gradient(circle, rgba(232,116,43,0.55), transparent 70%)', filter: 'blur(10px)' }} />
-                <div style={{ position: 'relative', width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', color: '#0B1F3A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, boxShadow: '0 8px 20px rgba(232,116,43,0.42)', border: '2px solid rgba(255,217,168,0.4)' }}>P</div>
+                <div style={{ position: 'absolute', inset: -6, borderRadius: '50%', background: 'radial-gradient(circle, rgba(232,116,43,0.45), transparent 70%)', filter: 'blur(12px)' }} />
+                <div style={{ position: 'relative', width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', color: '#0B1F3A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, boxShadow: '0 8px 20px rgba(232,116,43,0.42)', border: '2px solid #fff' }}>P</div>
               </div>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', letterSpacing: '-0.2px' }}>Peter McShane</div>
-                <div style={{ fontSize: 12, color: '#5EEAD4', fontWeight: 600, marginTop: 2 }}>Founder &amp; CEO, BellAveGo</div>
-                <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.5)', fontWeight: 500, marginTop: 2 }}>Building AI tools for home-service businesses</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.2px' }}>Peter McShane</div>
+                <div style={{ fontSize: 12, color: '#C84B26', fontWeight: 700, marginTop: 2 }}>Founder &amp; CEO, BellAveGo</div>
+                <div style={{ fontSize: 11.5, color: '#7AAAB2', fontWeight: 500, marginTop: 2 }}>Building AI tools for home-service businesses</div>
               </div>
             </div>
           </div>
@@ -115,18 +115,14 @@ export default function FounderPage() {
                 70%      { box-shadow: 0 0 0 14px rgba(232,116,43,0); }
               }
               .hero-call-ring { animation: ringPulseHero 2.2s ease-out infinite; }
-              @keyframes timeTick {
-                0%   { width: 0 }
-                100% { width: 100% }
-              }
             `}</style>
 
             {/* Header bar */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid rgba(94,234,212,0.14)', background: 'rgba(255,255,255,0.02)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid rgba(232,116,43,0.14)', background: 'linear-gradient(135deg, #FFFFFF 0%, #FFF7EE 100%)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span className="mc-status-pill"><span className="mc-live-dot" /> Live · AI handling call</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, color: 'rgba(255,255,255,0.55)', fontVariantNumeric: 'tabular-nums' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 11, color: '#7AAAB2', fontVariantNumeric: 'tabular-nums' }}>
                 <div className="mc-wave" style={{ height: 18 }}>
                   <span /><span /><span /><span /><span /><span /><span />
                 </div>
@@ -135,15 +131,15 @@ export default function FounderPage() {
             </div>
 
             {/* Caller card */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 20px', borderBottom: '1px solid rgba(94,234,212,0.10)' }}>
-              <div className="hero-call-ring" style={{ width: 46, height: 46, borderRadius: '50%', background: 'linear-gradient(135deg, #163356, #0B1F3A)', border: '1.5px solid rgba(94,234,212,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5EEAD4" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 20px', borderBottom: '1px solid rgba(232,116,43,0.10)' }}>
+              <div className="hero-call-ring" style={{ width: 46, height: 46, borderRadius: '50%', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 6px 16px rgba(232,116,43,0.32)' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" strokeWidth="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>Sarah Chen</div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>(612) 555-0148 · St. Louis Park, MN</div>
+                <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0B1F3A' }}>Sarah Chen</div>
+                <div style={{ fontSize: 11.5, color: '#4A6670' }}>(612) 555-0148 · St. Louis Park, MN</div>
               </div>
-              <span style={{ fontSize: 9, fontWeight: 800, padding: '3px 9px', borderRadius: 99, background: 'rgba(232,116,43,0.18)', color: '#FF9D5A', border: '1px solid rgba(232,116,43,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Urgent</span>
+              <span style={{ fontSize: 9, fontWeight: 800, padding: '3px 9px', borderRadius: 99, background: 'rgba(232,116,43,0.14)', color: '#C84B26', border: '1px solid rgba(232,116,43,0.36)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Urgent</span>
             </div>
 
             {/* Live transcript */}
@@ -153,18 +149,18 @@ export default function FounderPage() {
                 return (
                   <div key={`${activeIdx}-${i}`} className="mc-slide-up" style={{
                     display: 'flex', gap: 10, alignItems: 'flex-start',
-                    opacity: isActive ? 1 : 0.55,
+                    opacity: isActive ? 1 : 0.45,
                     transition: 'opacity 0.4s',
                   }}>
                     <span style={{
                       flexShrink: 0,
                       fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
                       padding: '3px 8px', borderRadius: 6, marginTop: 2,
-                      background: line.who === 'ai' ? 'rgba(94,234,212,0.14)' : 'rgba(255,255,255,0.06)',
-                      color: line.who === 'ai' ? '#5EEAD4' : 'rgba(255,255,255,0.7)',
-                      border: line.who === 'ai' ? '1px solid rgba(94,234,212,0.32)' : '1px solid rgba(255,255,255,0.08)',
+                      background: line.who === 'ai' ? 'rgba(232,116,43,0.10)' : '#F1F5F9',
+                      color: line.who === 'ai' ? '#C84B26' : '#4A6670',
+                      border: line.who === 'ai' ? '1px solid rgba(232,116,43,0.28)' : '1px solid #E2E8F0',
                     }}>{line.who === 'ai' ? 'AI' : 'Caller'}</span>
-                    <span style={{ fontSize: 13.5, lineHeight: 1.55, color: isActive ? '#fff' : 'rgba(255,255,255,0.78)' }}>
+                    <span style={{ fontSize: 13.5, lineHeight: 1.55, color: isActive ? '#0B1F3A' : '#4A6670' }}>
                       {line.line}
                     </span>
                   </div>
@@ -173,8 +169,8 @@ export default function FounderPage() {
             </div>
 
             {/* Captured fields — fills as the call progresses */}
-            <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(94,234,212,0.14)', background: 'rgba(255,255,255,0.02)' }}>
-              <div style={{ fontSize: 9, fontWeight: 800, color: '#5EEAD4', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8 }}>
+            <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(232,116,43,0.14)', background: 'linear-gradient(135deg, #FFF7EE 0%, #FFFAF3 100%)' }}>
+              <div style={{ fontSize: 9, fontWeight: 800, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8 }}>
                 Captured this call
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
@@ -187,13 +183,13 @@ export default function FounderPage() {
                   { k: 'Status',  v: 'Booking complete', ready: activeIdx >= 8, ok: true },
                 ].map(f => (
                   <div key={f.k} style={{
-                    padding: '7px 10px', borderRadius: 8,
-                    background: f.ready ? (f.ok ? 'rgba(34,197,94,0.10)' : 'rgba(94,234,212,0.06)') : 'rgba(255,255,255,0.02)',
-                    border: `1px solid ${f.ready ? (f.ok ? 'rgba(34,197,94,0.32)' : 'rgba(94,234,212,0.18)') : 'rgba(255,255,255,0.04)'}`,
+                    padding: '8px 11px', borderRadius: 8,
+                    background: f.ready ? (f.ok ? '#ECFDF5' : '#FFFFFF') : 'rgba(255,255,255,0.5)',
+                    border: `1px solid ${f.ready ? (f.ok ? 'rgba(34,197,94,0.36)' : 'rgba(232,116,43,0.20)') : 'rgba(232,116,43,0.08)'}`,
                     transition: 'all 0.4s',
                   }}>
-                    <div style={{ fontSize: 8.5, fontWeight: 800, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 1 }}>{f.k}</div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: f.ready ? (f.ok ? '#4ADE80' : '#fff') : 'rgba(255,255,255,0.25)' }}>
+                    <div style={{ fontSize: 8.5, fontWeight: 800, color: '#7AAAB2', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 1 }}>{f.k}</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: f.ready ? (f.ok ? '#15803D' : '#0B1F3A') : '#A0BCC2' }}>
                       {f.ready ? f.v : '—'}
                     </div>
                   </div>
@@ -206,10 +202,10 @@ export default function FounderPage() {
 
       {/* WHY I BUILT IT — three concise quote blocks */}
       <section style={{ position: 'relative', padding: '40px 32px 64px' }}>
-        <div className="mc-glow-orange" style={{ width: 500, height: 500, top: '10%', left: '-10%', opacity: 0.4 }} />
+        <div className="mc-glow-orange" style={{ width: 500, height: 500, top: '10%', left: '-10%' }} />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 1080, margin: '0 auto' }}>
-          <p style={{ fontSize: 11, fontWeight: 800, color: '#5EEAD4', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 14, textAlign: 'center' }}>Why I built it</p>
-          <h2 style={{ fontSize: 'clamp(26px, 3.4vw, 38px)', fontWeight: 900, letterSpacing: '-0.03em', textAlign: 'center', color: '#fff', marginBottom: 36, lineHeight: 1.1 }}>
+          <p style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 14, textAlign: 'center' }}>Why I built it</p>
+          <h2 style={{ fontSize: 'clamp(26px, 3.4vw, 38px)', fontWeight: 900, letterSpacing: '-0.03em', textAlign: 'center', color: '#0B1F3A', marginBottom: 36, lineHeight: 1.1 }}>
             We kept seeing the same problem.
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
@@ -231,8 +227,8 @@ export default function FounderPage() {
               },
             ].map((b, i) => (
               <div key={i} className={`mc-card mc-card-${b.accent}`}>
-                <div className="mc-eyebrow" style={{ color: b.accent === 'orange' ? '#FF9D5A' : '#5EEAD4' }}>{b.eyebrow}</div>
-                <p style={{ fontSize: 15, lineHeight: 1.55, color: 'rgba(255,255,255,0.86)', margin: 0 }}>
+                <div className="mc-eyebrow" style={{ color: b.accent === 'orange' ? '#C84B26' : '#0AA89F' }}>{b.eyebrow}</div>
+                <p style={{ fontSize: 15, lineHeight: 1.6, color: '#0B1F3A', margin: 0, fontWeight: 500 }}>
                   {b.body}
                 </p>
               </div>
@@ -241,16 +237,16 @@ export default function FounderPage() {
         </div>
       </section>
 
-      {/* WHAT'S BUILT — proof rows in dark cards */}
+      {/* WHAT'S BUILT — proof rows */}
       <section style={{ position: 'relative', padding: '40px 32px 64px' }}>
-        <div className="mc-glow-teal" style={{ width: 600, height: 600, bottom: '0', right: '-15%', opacity: 0.6 }} />
+        <div className="mc-glow-teal" style={{ width: 600, height: 600, bottom: '0', right: '-15%' }} />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 1080, margin: '0 auto' }}>
-          <p style={{ fontSize: 11, fontWeight: 800, color: '#5EEAD4', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 14, textAlign: 'center' }}>What&apos;s already built</p>
-          <h2 style={{ fontSize: 'clamp(26px, 3.4vw, 38px)', fontWeight: 900, letterSpacing: '-0.03em', textAlign: 'center', color: '#fff', marginBottom: 12, lineHeight: 1.1 }}>
-            This isn&apos;t a pitch deck. <span style={{ color: '#5EEAD4' }}>It&apos;s shipping software.</span>
+          <p style={{ fontSize: 11, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 14, textAlign: 'center' }}>What&apos;s already built</p>
+          <h2 style={{ fontSize: 'clamp(26px, 3.4vw, 38px)', fontWeight: 900, letterSpacing: '-0.03em', textAlign: 'center', color: '#0B1F3A', marginBottom: 12, lineHeight: 1.1 }}>
+            This isn&apos;t a pitch deck. <span style={{ background: 'linear-gradient(135deg, #FF9D5A, #E8742B 60%, #C84B26)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>It&apos;s shipping software.</span>
           </h2>
-          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.62)', textAlign: 'center', maxWidth: 580, margin: '0 auto 36px', lineHeight: 1.6 }}>
-            Every feature below works today. Call <a href="tel:+16514677829" style={{ color: '#5EEAD4', fontWeight: 700, textDecoration: 'none' }}>(651) 467-7829</a> to hear it yourself.
+          <p style={{ fontSize: 15, color: '#3D5A62', textAlign: 'center', maxWidth: 580, margin: '0 auto 36px', lineHeight: 1.6 }}>
+            Every feature below works today. Call <a href="tel:+16514677829" style={{ color: '#C84B26', fontWeight: 700, textDecoration: 'none' }}>(651) 467-7829</a> to hear it yourself.
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
@@ -262,13 +258,13 @@ export default function FounderPage() {
               { title: 'AI Collections',          desc: 'Auto-chases past-due invoices with Stripe pay-by-text links.' },
               { title: 'AI Consulting reports',   desc: 'Pulls your data, ranks revenue opportunities by addressable monthly $.' },
             ].map(x => (
-              <div key={x.title} className="mc-card" style={{ padding: 18 }}>
+              <div key={x.title} className="mc-card" style={{ padding: 20 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                   <span className="mc-live-dot" />
-                  <span style={{ fontSize: 9.5, fontWeight: 800, color: '#4ADE80', letterSpacing: '0.14em', textTransform: 'uppercase' }}>Shipped</span>
+                  <span style={{ fontSize: 10, fontWeight: 800, color: '#15803D', letterSpacing: '0.14em', textTransform: 'uppercase' }}>Shipped</span>
                 </div>
-                <h3 style={{ fontSize: 15, fontWeight: 800, color: '#fff', margin: '0 0 6px', letterSpacing: '-0.2px' }}>{x.title}</h3>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.62)', margin: 0, lineHeight: 1.55 }}>{x.desc}</p>
+                <h3 style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A', margin: '0 0 6px', letterSpacing: '-0.2px' }}>{x.title}</h3>
+                <p style={{ fontSize: 13, color: '#4A6670', margin: 0, lineHeight: 1.55 }}>{x.desc}</p>
               </div>
             ))}
           </div>
@@ -276,14 +272,14 @@ export default function FounderPage() {
       </section>
 
       {/* CTA */}
-      <section style={{ position: 'relative', padding: '64px 32px', textAlign: 'center', overflow: 'hidden' }}>
-        <div className="mc-glow-orange" style={{ width: 800, height: 800, top: '-50%', left: '50%', transform: 'translateX(-50%)', opacity: 0.7 }} />
+      <section style={{ position: 'relative', padding: '72px 32px', textAlign: 'center', overflow: 'hidden' }}>
+        <div className="mc-glow-orange" style={{ width: 900, height: 900, top: '-60%', left: '50%', transform: 'translateX(-50%)' }} />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 640, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 'clamp(26px, 3.8vw, 40px)', fontWeight: 900, marginBottom: 14, color: '#fff', letterSpacing: '-0.04em', lineHeight: 1.1 }}>
+          <h2 style={{ fontSize: 'clamp(28px, 3.8vw, 42px)', fontWeight: 900, marginBottom: 14, color: '#0B1F3A', letterSpacing: '-0.04em', lineHeight: 1.1 }}>
             Try it before you trust it.
           </h2>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 17, margin: '0 auto 32px', lineHeight: 1.55 }}>
-            Call the demo. Hear the AI. Then decide. <span style={{ color: '#5EEAD4', fontWeight: 700 }}>30-day money-back if it doesn&apos;t earn its keep.</span>
+          <p style={{ color: '#3D5A62', fontSize: 17, margin: '0 auto 32px', lineHeight: 1.55 }}>
+            Call the demo. Hear the AI. Then decide. <span style={{ color: '#C84B26', fontWeight: 800 }}>30-day money-back if it doesn&apos;t earn its keep.</span>
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <a href="tel:+16514677829" className="mc-btn-orange">
@@ -298,9 +294,9 @@ export default function FounderPage() {
       </section>
 
       {/* Footer */}
-      <footer style={{ padding: '32px 40px', background: 'rgba(5,14,31,0.6)', borderTop: '1px solid rgba(94,234,212,0.10)', textAlign: 'center' }}>
-        <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
-          BellAveGo · Built by Peter McShane in Manhattan, NY · <a href="mailto:peter@bellavego.com" style={{ color: '#5EEAD4', textDecoration: 'none' }}>peter@bellavego.com</a>
+      <footer style={{ padding: '32px 40px', background: '#FFF7EE', borderTop: '1px solid rgba(232,116,43,0.18)', textAlign: 'center' }}>
+        <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>
+          BellAveGo · Built by Peter McShane in Manhattan, NY · <a href="mailto:peter@bellavego.com" style={{ color: '#C84B26', textDecoration: 'none', fontWeight: 700 }}>peter@bellavego.com</a>
         </p>
       </footer>
     </main>

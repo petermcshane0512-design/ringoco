@@ -99,133 +99,141 @@ html { overflow-x: hidden; }
 }
 
 /* ════════════════════════════════════════════════════════════════
-   MISSION CONTROL DESIGN SYSTEM
+   SUNSET MISSION CONTROL — light warm theme
    ════════════════════════════════════════════════════════════════
-   Dark navy + teal/cyan + sunset orange. Used by founder page and
-   every dashboard surface. Goal: premium vertical-AI feeling, not
-   generic admin panel.
+   Cream/peach background + sunset orange dominant + teal AI accents.
+   Designed for home-service contractors in their 40s–60s — friendly
+   and warm, not a Bloomberg terminal. Keeps every "alive" element
+   from the dark version (waveforms, glows, big stats, pulses) but
+   on a backdrop their grandma would also feel comfortable in.
 
    Core tokens:
-     --mc-bg-base      Deep navy gradient background
-     --mc-bg-glass     Translucent glass panel
-     --mc-border       Subtle teal divider
-     --mc-border-hot   Brighter on hover
-     --mc-orange       Sunset accent (revenue, AI, premium signals)
-     --mc-teal         Brand teal
-     --mc-text         Primary text
-     --mc-text-mute    Secondary text
+     --mc-orange       Sunset accent (revenue, premium, money signals)
+     --mc-teal         AI / active / status accent
+     --mc-text         Primary text — deep navy
+     --mc-text-mute    Secondary text — slate
+     --mc-paper        Card surface
+     --mc-bg-warm      Cream gradient page background
 */
 
 :root {
   --mc-orange: #FF9D5A;
   --mc-orange-hot: #E8742B;
-  --mc-orange-glow: rgba(232, 116, 43, 0.35);
-  --mc-teal: #5EEAD4;
-  --mc-teal-mid: #14B8A6;
-  --mc-teal-glow: rgba(94, 234, 212, 0.30);
-  --mc-text: #fff;
-  --mc-text-mute: #94A3B8;
-  --mc-text-soft: rgba(255, 255, 255, 0.62);
-  --mc-border: rgba(94, 234, 212, 0.14);
-  --mc-border-hot: rgba(94, 234, 212, 0.40);
-  --mc-glass: rgba(15, 35, 70, 0.55);
-  --mc-glass-deep: rgba(10, 25, 52, 0.78);
+  --mc-orange-deep: #C84B26;
+  --mc-orange-glow: rgba(232, 116, 43, 0.32);
+  --mc-teal: #14B8A6;
+  --mc-teal-mid: #0AA89F;
+  --mc-teal-bright: #5EEAD4;
+  --mc-teal-glow: rgba(20, 184, 166, 0.22);
+  --mc-text: #0B1F3A;
+  --mc-text-mid: #4A6670;
+  --mc-text-mute: #7AAAB2;
+  --mc-paper: #ffffff;
+  --mc-border: rgba(232, 116, 43, 0.12);
+  --mc-border-hot: rgba(232, 116, 43, 0.36);
 }
 
-/* Page background — deep navy with subtle radial light. */
+/* Page background — warm cream with subtle sunset + sea radial glows. */
 .mc-page {
   background:
-    radial-gradient(800px 500px at 88% 8%, rgba(232,116,43,0.10), transparent 60%),
-    radial-gradient(700px 600px at 8% 92%, rgba(94,234,212,0.08), transparent 65%),
-    linear-gradient(180deg, #050E1F 0%, #0B1F3A 50%, #0F2542 100%);
+    radial-gradient(900px 500px at 92% 6%, rgba(255, 217, 168, 0.45), transparent 65%),
+    radial-gradient(700px 500px at 4% 18%, rgba(255, 196, 145, 0.28), transparent 65%),
+    radial-gradient(800px 600px at 0% 100%, rgba(94, 234, 212, 0.18), transparent 70%),
+    linear-gradient(165deg, #FFF7EE 0%, #FFFAF3 38%, #FEF1DF 78%, #FDE8C8 100%);
   color: var(--mc-text);
   min-height: 100vh;
 }
 
-/* Glass panel — the workhorse card. */
+/* Glass card — warm white with soft warm shadow. The workhorse. */
 .mc-card {
   position: relative;
-  background: var(--mc-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--mc-border);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(232, 116, 43, 0.10);
   border-radius: 16px;
   padding: 22px;
   box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.32),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    0 4px 12px rgba(232, 116, 43, 0.06),
+    0 12px 32px rgba(11, 31, 58, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
 }
 .mc-card:hover {
-  border-color: var(--mc-border-hot);
+  border-color: rgba(232, 116, 43, 0.22);
+  transform: translateY(-1px);
   box-shadow:
-    0 20px 56px rgba(0, 0, 0, 0.42),
-    0 0 0 1px var(--mc-border-hot),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 8px 20px rgba(232, 116, 43, 0.10),
+    0 18px 44px rgba(11, 31, 58, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-/* Variant: orange-glow card for revenue/money/AI-active items. */
+/* Variant: orange-glow card — for revenue, money, premium items. */
 .mc-card-orange {
-  border-color: rgba(232, 116, 43, 0.30);
+  background: linear-gradient(160deg, #FFFFFF 0%, #FFF7EE 100%);
+  border-color: rgba(232, 116, 43, 0.28);
   box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.32),
-    0 0 32px rgba(232, 116, 43, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    0 4px 16px rgba(232, 116, 43, 0.14),
+    0 16px 44px rgba(232, 116, 43, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 .mc-card-orange:hover {
-  border-color: rgba(232, 116, 43, 0.55);
+  border-color: rgba(232, 116, 43, 0.50);
+  transform: translateY(-2px);
   box-shadow:
-    0 20px 56px rgba(0, 0, 0, 0.42),
-    0 0 56px rgba(232, 116, 43, 0.32),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 6px 22px rgba(232, 116, 43, 0.22),
+    0 22px 56px rgba(232, 116, 43, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
-/* Variant: teal-glow card for AI/active/live-state items. */
+/* Variant: teal-glow card — for AI/live/status items. */
 .mc-card-teal {
-  border-color: rgba(94, 234, 212, 0.30);
+  background: linear-gradient(160deg, #FFFFFF 0%, #F0FBF8 100%);
+  border-color: rgba(20, 184, 166, 0.24);
   box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.32),
-    0 0 32px rgba(94, 234, 212, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    0 4px 16px rgba(20, 184, 166, 0.10),
+    0 16px 44px rgba(11, 31, 58, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 /* Eyebrow label */
 .mc-eyebrow {
   display: inline-flex; align-items: center; gap: 6px;
-  font-size: 10px; font-weight: 800;
-  color: var(--mc-teal); letter-spacing: 0.18em;
+  font-size: 10.5px; font-weight: 800;
+  color: var(--mc-orange-deep); letter-spacing: 0.16em;
   text-transform: uppercase;
   margin-bottom: 10px;
 }
 
-/* Big stat numbers — for revenue, calls, jobs */
+/* Big stat numbers — for revenue, calls, jobs. Solid navy by default,
+   gradient versions for money / AI accents. */
 .mc-stat-num {
   font-size: clamp(32px, 4.4vw, 52px);
   font-weight: 900;
   letter-spacing: -1.5px;
   line-height: 1;
-  color: #fff;
+  color: var(--mc-text);
   font-variant-numeric: tabular-nums;
 }
 .mc-stat-num-money {
-  background: linear-gradient(135deg, #FFD9A8 0%, #FF9D5A 50%, #E8742B 100%);
+  background: linear-gradient(135deg, #FF9D5A 0%, #E8742B 60%, #C84B26 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 0 16px rgba(232, 116, 43, 0.32));
+  filter: drop-shadow(0 2px 8px rgba(232, 116, 43, 0.35));
 }
 .mc-stat-num-teal {
-  background: linear-gradient(135deg, #5EEAD4 0%, #14B8A6 100%);
+  background: linear-gradient(135deg, #14B8A6 0%, #0AA89F 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 0 12px rgba(94, 234, 212, 0.30));
+  filter: drop-shadow(0 2px 6px rgba(20, 184, 166, 0.28));
 }
 .mc-stat-label {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--mc-text-mute);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.10em;
   text-transform: uppercase;
   margin-bottom: 8px;
 }
@@ -233,7 +241,7 @@ html { overflow-x: hidden; }
   display: inline-flex; align-items: center; gap: 4px;
   margin-top: 8px;
   font-size: 11px; font-weight: 700;
-  color: #4ADE80;
+  color: #16A34A;
 }
 
 /* Live dot — green pulsing for "AI Active" indicators */
@@ -254,10 +262,10 @@ html { overflow-x: hidden; }
   display: inline-flex; align-items: center; gap: 7px;
   padding: 5px 12px;
   border-radius: 99px;
-  background: rgba(34, 197, 94, 0.12);
-  border: 1px solid rgba(34, 197, 94, 0.32);
+  background: rgba(34, 197, 94, 0.10);
+  border: 1px solid rgba(34, 197, 94, 0.30);
   font-size: 11px; font-weight: 800;
-  color: #4ADE80;
+  color: #15803D;
   letter-spacing: 0.08em; text-transform: uppercase;
 }
 
@@ -270,10 +278,11 @@ html { overflow-x: hidden; }
 .mc-wave span {
   display: inline-block;
   width: 3px; height: 100%;
-  background: linear-gradient(180deg, var(--mc-teal), var(--mc-teal-mid));
+  background: linear-gradient(180deg, #FF9D5A, #E8742B);
   border-radius: 2px;
   transform-origin: center;
   animation: mcWaveBar 0.9s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(232, 116, 43, 0.4);
 }
 .mc-wave span:nth-child(1) { animation-delay: 0s; }
 .mc-wave span:nth-child(2) { animation-delay: 0.10s; }
@@ -290,57 +299,76 @@ html { overflow-x: hidden; }
 }
 .mc-slide-up { animation: mcSlideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
-/* Soft orange ambient glow — drop into corners of page sections */
+/* Soft orange ambient glow — drops into corners of page sections to warm
+   the otherwise-flat cream background. Use 0.3-0.5 opacity so it never
+   muddies content underneath. */
 .mc-glow-orange {
   position: absolute; pointer-events: none;
   border-radius: 50%;
-  filter: blur(80px);
-  background: radial-gradient(circle, rgba(232, 116, 43, 0.32) 0%, transparent 70%);
+  filter: blur(90px);
+  background: radial-gradient(circle, rgba(255, 157, 90, 0.28) 0%, transparent 70%);
 }
 .mc-glow-teal {
   position: absolute; pointer-events: none;
   border-radius: 50%;
-  filter: blur(80px);
-  background: radial-gradient(circle, rgba(94, 234, 212, 0.22) 0%, transparent 70%);
+  filter: blur(90px);
+  background: radial-gradient(circle, rgba(94, 234, 212, 0.20) 0%, transparent 70%);
 }
 
-/* Premium button — orange */
+/* Premium button — sunset orange. Same as before, works on light bg. */
 .mc-btn-orange {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 12px 22px; border-radius: 11px;
   background: linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B);
   color: #0B1F3A; font-weight: 900; font-size: 14px;
-  text-decoration: none; border: 1px solid rgba(255, 217, 168, 0.55);
-  box-shadow: 0 10px 32px rgba(232, 116, 43, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  text-decoration: none; border: 1px solid rgba(232, 116, 43, 0.45);
+  box-shadow: 0 10px 28px rgba(232, 116, 43, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s, filter 0.22s;
   cursor: pointer; font-family: inherit;
 }
 .mc-btn-orange:hover {
   transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 16px 44px rgba(232, 116, 43, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  filter: brightness(1.06);
+  box-shadow: 0 14px 38px rgba(232, 116, 43, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  filter: brightness(1.05);
 }
 
-/* Ghost button — for secondaries inside dark surfaces */
+/* Ghost button — paired secondary on light surfaces. */
 .mc-btn-ghost {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 12px 18px; border-radius: 11px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(94, 234, 212, 0.25);
-  color: #fff; font-weight: 700; font-size: 13px;
+  background: #ffffff;
+  border: 1px solid rgba(232, 116, 43, 0.24);
+  color: var(--mc-text); font-weight: 700; font-size: 13px;
   text-decoration: none; cursor: pointer; font-family: inherit;
   transition: background 0.2s, border-color 0.2s, transform 0.2s;
 }
 .mc-btn-ghost:hover {
-  background: rgba(94, 234, 212, 0.10);
-  border-color: rgba(94, 234, 212, 0.5);
+  background: #FFF7EE;
+  border-color: rgba(232, 116, 43, 0.5);
   transform: translateY(-1px);
 }
 
-/* Section divider line with soft glow */
+/* Teal-flavored CTA — for AI/active actions */
+.mc-btn-teal {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 22px; border-radius: 11px;
+  background: linear-gradient(135deg, #14B8A6, #0AA89F);
+  color: #fff; font-weight: 800; font-size: 14px;
+  text-decoration: none; border: 1px solid rgba(94, 234, 212, 0.55);
+  box-shadow: 0 8px 22px rgba(20, 184, 166, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s, filter 0.22s;
+  cursor: pointer; font-family: inherit;
+}
+.mc-btn-teal:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 12px 32px rgba(20, 184, 166, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  filter: brightness(1.05);
+}
+
+/* Section divider with subtle warm glow */
 .mc-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(94, 234, 212, 0.32), transparent);
+  background: linear-gradient(90deg, transparent, rgba(232, 116, 43, 0.22), transparent);
   margin: 32px 0;
   border: none;
 }
