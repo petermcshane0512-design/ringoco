@@ -151,12 +151,12 @@ export default function PricingPage() {
         </Link>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           {isSignedIn && (
-            <Link href="/dashboard" style={{ padding: '10px 22px', background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', borderRadius: 8, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 800 }}>Dashboard</Link>
+            <Link href="/dashboard" className="nav-cta">Dashboard</Link>
           )}
           <Link href="/founder" className="why-pulse">Why BellAveGo?</Link>
           <Link href="/pricing" className="price-pulse">Pricing</Link>
           {!isSignedIn && (
-            <Link href="/sign-up" className="join-pulse">Sign in / Create Account</Link>
+            <Link href="/sign-up" className="nav-cta">Sign in / Create Account</Link>
           )}
         </div>
       </nav>

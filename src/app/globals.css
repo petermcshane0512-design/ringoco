@@ -14,96 +14,100 @@ body {
 
 html { overflow-x: hidden; }
 
-/* ── Nav glowing pulse buttons (homepage / pricing / founder)
-   Same dash-pulse pattern as the Dashboard button — each tab gets its own
-   color glow so the top-right reads as a palette of living buttons. */
+/* ── Nav buttons (homepage / pricing / founder)
+   Refined palette:
+     .nav-cta     — Dashboard / Sign in (PRIMARY, brightest, teal-cyan glow)
+     .why-pulse   — Why BellAveGo? (dark navy glass, secondary informational)
+     .price-pulse — Pricing (soft premium emerald, not neon)
+     .signout-link — Sign out (minimal, slate, doesn't compete) */
 
-@keyframes whyGlow {
-  0%, 100% { box-shadow: 0 4px 16px rgba(239, 68, 68, 0.50), 0 0 28px rgba(239, 68, 68, 0.32); }
-  50%      { box-shadow: 0 4px 26px rgba(239, 68, 68, 0.74), 0 0 50px rgba(239, 68, 68, 0.50); }
+@keyframes navCtaGlow {
+  0%, 100% { box-shadow: 0 4px 16px rgba(6, 182, 212, 0.42), 0 0 28px rgba(6, 182, 212, 0.26); }
+  50%      { box-shadow: 0 4px 26px rgba(6, 182, 212, 0.62), 0 0 50px rgba(6, 182, 212, 0.40); }
 }
 @keyframes priceGlow {
-  0%, 100% { box-shadow: 0 4px 16px rgba(34, 197, 94, 0.50), 0 0 28px rgba(34, 197, 94, 0.32); }
-  50%      { box-shadow: 0 4px 26px rgba(34, 197, 94, 0.74), 0 0 50px rgba(34, 197, 94, 0.50); }
-}
-@keyframes joinGlow {
-  0%, 100% { box-shadow: 0 4px 16px rgba(139, 92, 246, 0.50), 0 0 28px rgba(139, 92, 246, 0.32); }
-  50%      { box-shadow: 0 4px 26px rgba(139, 92, 246, 0.74), 0 0 50px rgba(139, 92, 246, 0.50); }
+  0%, 100% { box-shadow: 0 4px 14px rgba(16, 185, 129, 0.30), 0 0 22px rgba(16, 185, 129, 0.18); }
+  50%      { box-shadow: 0 4px 22px rgba(16, 185, 129, 0.45), 0 0 38px rgba(16, 185, 129, 0.28); }
 }
 
+.nav-cta,
 .why-pulse,
 .price-pulse,
-.join-pulse {
+.signout-link {
   padding: 10px 22px;
   border-radius: 8px;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   letter-spacing: -0.1px;
+  font-family: inherit;
+  cursor: pointer;
   transition:
-    transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
-    filter 0.28s ease;
+    transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.24s ease,
+    border-color 0.24s ease,
+    background 0.24s ease,
+    filter 0.24s ease;
 }
 
-/* Why BellAveGo? — bright red */
-.why-pulse {
-  background: linear-gradient(135deg, #FCA5A5 0%, #EF4444 50%, #DC2626 100%);
+/* Dashboard / Sign in / Create Account — PRIMARY CTA, brightest */
+.nav-cta {
+  background: linear-gradient(135deg, #14B8A6 0%, #06B6D4 100%);
   color: #fff;
-  border: 1px solid rgba(252, 165, 165, 0.55);
-  animation: whyGlow 2.5s ease-in-out infinite;
+  border: 1px solid rgba(94, 234, 212, 0.35);
+  font-weight: 800;
+  animation: navCtaGlow 2.6s ease-in-out infinite;
 }
-.why-pulse:hover {
+.nav-cta:hover {
   animation-play-state: paused;
-  transform: scale(1.06) translateY(-2px);
-  box-shadow: 0 10px 40px rgba(239, 68, 68, 0.78), 0 0 64px rgba(239, 68, 68, 0.55);
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 10px 36px rgba(6, 182, 212, 0.65), 0 0 56px rgba(6, 182, 212, 0.42);
   filter: brightness(1.08);
 }
 
-/* Pricing — vibrant green */
-.price-pulse {
-  background: linear-gradient(135deg, #4ADE80 0%, #22C55E 50%, #16A34A 100%);
+/* Why BellAveGo? — dark navy glass, secondary informational */
+.why-pulse {
+  background: rgba(15, 23, 42, 0.80);
   color: #fff;
-  border: 1px solid rgba(74, 222, 128, 0.5);
-  animation: priceGlow 2.5s ease-in-out infinite;
+  border: 1px solid rgba(34, 211, 238, 0.10);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.why-pulse:hover {
+  transform: translateY(-1px);
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(34, 211, 238, 0.40);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(34, 211, 238, 0.12);
+}
+
+/* Pricing — soft premium emerald (not neon) */
+.price-pulse {
+  background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+  color: #fff;
+  border: 1px solid rgba(52, 211, 153, 0.32);
+  font-weight: 800;
+  animation: priceGlow 3s ease-in-out infinite;
 }
 .price-pulse:hover {
   animation-play-state: paused;
-  transform: scale(1.06) translateY(-2px);
-  box-shadow: 0 10px 40px rgba(34, 197, 94, 0.78), 0 0 64px rgba(34, 197, 94, 0.55);
-  filter: brightness(1.08);
+  transform: scale(1.04) translateY(-2px);
+  box-shadow: 0 10px 32px rgba(16, 185, 129, 0.50), 0 0 48px rgba(16, 185, 129, 0.30);
+  filter: brightness(1.06);
 }
 
-/* Sign in / Create Account — vibrant violet (welcoming, distinct from CTA green) */
-.join-pulse {
-  background: linear-gradient(135deg, #C084FC 0%, #A855F7 50%, #7C3AED 100%);
-  color: #fff;
-  border: 1px solid rgba(192, 132, 252, 0.5);
-  animation: joinGlow 2.5s ease-in-out infinite;
-}
-.join-pulse:hover {
-  animation-play-state: paused;
-  transform: scale(1.06) translateY(-2px);
-  box-shadow: 0 10px 40px rgba(139, 92, 246, 0.78), 0 0 64px rgba(139, 92, 246, 0.55);
-  filter: brightness(1.08);
-}
-
-/* Sign out — minimal outline, soft red on hover */
+/* Sign out — should NOT look important, just quiet slate */
 .signout-link {
-  padding: 8px 18px;
-  border: 1.5px solid #DCE9E2;
-  border-radius: 8px;
-  background: transparent;
-  color: #4A6670;
+  background: rgba(255, 255, 255, 0.80);
+  color: #334155;
+  border: 1px solid #E2E8F0;
   font-size: 13px;
   font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.18s ease;
+  padding: 9px 18px;
 }
 .signout-link:hover {
-  border-color: rgba(220, 38, 38, 0.45);
-  color: #DC2626;
-  background: rgba(254, 242, 242, 0.5);
+  background: rgba(248, 250, 252, 1);
+  border-color: #CBD5E1;
+  color: #1E293B;
 }
