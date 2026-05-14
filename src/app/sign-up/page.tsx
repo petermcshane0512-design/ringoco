@@ -1,4 +1,6 @@
 'use client'
+import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import Image from 'next/image'
 import { SignUp } from '@clerk/nextjs'
 import { motion } from 'framer-motion'
@@ -57,6 +59,20 @@ const STEPS = [
 ]
 
 export default function SignUpPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignUpInner />
+    </Suspense>
+  )
+}
+
+function SignUpInner() {
+  // Honor the redirect_url query param so autocheckout (and any other deep
+  // link from a paid CTA) completes after sign-up. Falls back to onboarding
+  // for organic sign-ups landing here directly.
+  const searchParams = useSearchParams()
+  const redirectUrl = searchParams.get('redirect_url') || '/onboarding'
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -182,7 +198,7 @@ export default function SignUpPage() {
       >
         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 320, height: 320, background: 'radial-gradient(ellipse, rgba(24,175,168,0.11) 0%, transparent 65%)', pointerEvents: 'none' }} />
         <div style={{ width: '100%', position: 'relative', zIndex: 1 }}>
-          <SignUp forceRedirectUrl="/onboarding" appearance={clerkAppearance} />
+          <SignUp forceRedirectUrl={redirectUrl} appearance={clerkAppearance} />
         </div>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.65 }}

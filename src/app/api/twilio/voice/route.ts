@@ -133,6 +133,42 @@ export async function POST(req: NextRequest) {
     profile = data
   }
 
+  // ── Forwarding verification detection ──
+  // If the inbound call is FROM our office line (TWILIO_PHONE_NUMBER) and this
+  // profile has a recent forwarding_test_started_at row, it means the test call
+  // we placed actually forwarded through. Stamp verified, hang up cleanly.
+  // No conversation, no Claude, no SMS — pure verification handshake.
+  if (
+    !isDemo &&
+    profile &&
+    process.env.TWILIO_PHONE_NUMBER &&
+    callerPhone === process.env.TWILIO_PHONE_NUMBER
+  ) {
+    const profileWithVerify = profile as typeof profile & {
+      user_id?: string
+      forwarding_test_started_at?: string | null
+    }
+    const startedAt = profileWithVerify.forwarding_test_started_at
+      ? new Date(profileWithVerify.forwarding_test_started_at).getTime()
+      : 0
+    const within90s = startedAt > 0 && Date.now() - startedAt < 90_000
+
+    if (within90s && profileWithVerify.user_id) {
+      try {
+        await supabase
+          .from('profiles')
+          .update({ forwarding_verified_at: new Date().toISOString() })
+          .eq('user_id', profileWithVerify.user_id)
+      } catch (e) {
+        console.error('forwarding_verified_at stamp failed:', e)
+      }
+      const VR = (await import('twilio')).twiml.VoiceResponse
+      const verified = new VR()
+      verified.hangup()
+      return new NextResponse(verified.toString(), { headers: { 'Content-Type': 'text/xml' } })
+    }
+  }
+
   const businessName = profile?.business_name || 'the business'
   const ownerPhone = profile?.owner_phone || process.env.FALLBACK_OWNER_PHONE!
   const services = profile?.services || 'home services'
@@ -355,6 +391,26 @@ Only role: book a service call. Politely decline anything else: "I can only help
         status: 'pending_approval',
       }).select().single()
       job = jobRow
+
+      // Seed quote_followups so Quote Hunter chases the customer if the
+      // contractor doesn't approve within 2 days. Office Manager + Concierge
+      // tier gating happens at cron-read time, but seeding for everyone is
+      // cheap (a few rows) and lets Quote Hunter activate the moment a
+      // Receptionist customer upgrades.
+      try {
+        const twoDaysOut = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
+        await supabase.from('quote_followups').insert({
+          user_id: profile?.user_id || 'system',
+          customer_name: name,
+          customer_phone: phone || callerPhone,
+          quote_description: `${service} at ${address} — requested ${time}`,
+          source: 'ai_call',
+          status: 'pending',
+          next_followup_at: twoDaysOut,
+        })
+      } catch (e) {
+        console.error('quote_followups seed failed:', e)
+      }
 
       // Smart call summary insight — Office Manager + Concierge tiers only.
       // One quick Claude pass over the transcript to surface a sales tip for the contractor.

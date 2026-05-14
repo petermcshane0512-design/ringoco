@@ -79,13 +79,38 @@ Priority rules:
 
   if (error || !ticket) return NextResponse.json({ error: error?.message ?? 'insert failed' }, { status: 500 })
 
+  // Auto-ack the customer so they know it landed. Concierge gets the 4-hr SLA
+  // promise; everyone else gets "next business day" since that matches policy.
+  let customerAcked = false
+  if (profile?.owner_phone) {
+    try {
+      const slaCopy =
+        profile.plan_tier === 'concierge' ? 'within 4 hours'
+        : priority === 'urgent' ? 'within 4 hours'
+        : 'within 1 business day'
+      await twilioClient.messages.create({
+        body: `BellAveGo: got your support request ("${body.subject.slice(0, 60)}${body.subject.length > 60 ? '…' : ''}"). Peter will respond ${slaCopy}. — BellAveGo Support`,
+        from: process.env.TWILIO_PHONE_NUMBER!,
+        to: profile.owner_phone,
+      })
+      customerAcked = true
+      await supabase
+        .from('support_tickets')
+        .update({ customer_acked_at: new Date().toISOString() })
+        .eq('id', ticket.id)
+    } catch (e) {
+      console.error('[support] customer auto-ack failed:', e)
+    }
+  }
+
   // SMS Peter on every new ticket (urgent/high get more punch)
   try {
     const punch = priority === 'urgent' ? '🚨 URGENT' : priority === 'high' ? '⚠️ HIGH' : '🎫'
     const businessTag = profile?.business_name ? ` — ${profile.business_name}` : ''
     const tierTag = profile?.plan_tier ? ` (${profile.plan_tier})` : ''
+    const ackTag = customerAcked ? '\nCustomer auto-ack sent.' : ''
     await twilioClient.messages.create({
-      body: `${punch} New support ticket${businessTag}${tierTag}\n\nSubject: ${body.subject}\n${aiSummary ? `\nAI: ${aiSummary}\n` : ''}\nView: https://www.bellavego.com/admin/support/${ticket.id}`,
+      body: `${punch} New support ticket${businessTag}${tierTag}\n\nSubject: ${body.subject}\n${aiSummary ? `\nAI: ${aiSummary}\n` : ''}${ackTag}\nView: https://www.bellavego.com/admin/support/${ticket.id}`,
       from: process.env.TWILIO_PHONE_NUMBER!,
       to: process.env.FALLBACK_OWNER_PHONE ?? '+17737109565',
     })

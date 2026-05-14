@@ -19,6 +19,7 @@ type Profile = {
   setup_step?: number;
   forwarding_carrier?: string;
   test_call_at?: string | null;
+  forwarding_verified_at?: string | null;
   crm_provider?: string;
 };
 
@@ -70,38 +71,63 @@ export default function SetupWizard() {
   const [busy, setBusy] = useState(false);
 
   // Initial load + carrier auto-detect
+  // Webhook race fix: instead of bouncing to /dashboard when !is_active, we
+  // poll /api/profile every 1.5s until either (a) the Stripe webhook lands
+  // and is_active flips true OR (b) we exceed the timeout (then fall back to
+  // /dashboard with the activation banner shown).
   useEffect(() => {
-    (async () => {
-      const p: Profile = await fetch("/api/profile").then((r) => r.json()).catch(() => null);
-      if (!p || (p as unknown as { error?: string }).error) {
-        router.replace("/onboarding");
-        return;
-      }
-      if (!p.is_active) {
-        router.replace("/dashboard");
-        return;
-      }
-      if (p.setup_complete) {
-        router.replace("/dashboard");
-        return;
-      }
-      setProfile(p);
-      setStep(p.setup_step && p.setup_step > 1 ? p.setup_step : 1);
-      setCrm(p.crm_provider || "");
-      setLoading(false);
+    let cancelled = false
+    const POLL_INTERVAL_MS = 1500
+    const MAX_WAIT_MS = 60_000  // 40 polls = up to 60s wait for webhook
 
-      // Auto-detect carrier in background — fast, non-blocking
-      try {
-        const det = await fetch("/api/onboarding/detect-carrier").then((r) => r.json());
-        if (det?.carrier && det.carrier !== "other") {
-          setCarrier(det.carrier as CarrierKey);
-          setCarrierDetected(true);
+    async function pollUntilReady() {
+      const startedAt = Date.now()
+      while (!cancelled) {
+        const p: Profile = await fetch("/api/profile").then((r) => r.json()).catch(() => null)
+        if (cancelled) return
+
+        if (!p || (p as unknown as { error?: string }).error) {
+          router.replace("/onboarding")
+          return
         }
-      } catch {
-        // silent — falls through to manual picker
+        if (p.setup_complete) {
+          router.replace("/dashboard")
+          return
+        }
+        if (p.is_active) {
+          // Webhook landed — render the wizard.
+          setProfile(p)
+          setStep(p.setup_step && p.setup_step > 1 ? p.setup_step : 1)
+          setCrm(p.crm_provider || "")
+          setLoading(false)
+
+          // Auto-detect carrier in background — fast, non-blocking
+          try {
+            const det = await fetch("/api/onboarding/detect-carrier").then((r) => r.json())
+            if (!cancelled && det?.carrier && det.carrier !== "other") {
+              setCarrier(det.carrier as CarrierKey)
+              setCarrierDetected(true)
+            }
+          } catch {
+            // silent — falls through to manual picker
+          }
+          return
+        }
+
+        if (Date.now() - startedAt > MAX_WAIT_MS) {
+          // Webhook never landed — bounce to /dashboard so they see the
+          // activation banner with a manual recovery path.
+          router.replace("/dashboard")
+          return
+        }
+
+        await new Promise(r => setTimeout(r, POLL_INTERVAL_MS))
       }
-    })();
-  }, [router]);
+    }
+
+    pollUntilReady()
+    return () => { cancelled = true }
+  }, [router])
 
   const meta = useMemo(() => tierMeta(profile?.plan_tier), [profile?.plan_tier]);
 
@@ -121,8 +147,33 @@ export default function SetupWizard() {
   async function fireTestCall() {
     setTestStatus("calling");
     try {
-      const res = await fetch("/api/onboarding/test-call", { method: "POST" }).then((r) => r.json());
-      setTestStatus(res.ok ? "sent" : "error");
+      const res = await fetch("/api/onboarding/verify-forwarding", { method: "POST" }).then((r) => r.json());
+      if (!res.ok) {
+        setTestStatus("error");
+        return;
+      }
+      // Poll profile.forwarding_verified_at — voice route stamps it when the
+      // forwarded call lands. Time out after 90 sec.
+      const startedAt = Date.now();
+      const maxWait = 90_000;
+      const interval = 2000;
+      const poll = setInterval(async () => {
+        try {
+          const p: Profile = await fetch("/api/profile").then((r) => r.json());
+          if (p?.forwarding_verified_at) {
+            clearInterval(poll);
+            setProfile(prev => prev ? { ...prev, forwarding_verified_at: p.forwarding_verified_at } : prev);
+            setTestStatus("sent");
+            return;
+          }
+          if (Date.now() - startedAt > maxWait) {
+            clearInterval(poll);
+            setTestStatus("error");
+          }
+        } catch {
+          // ignore transient errors, keep polling
+        }
+      }, interval);
     } catch {
       setTestStatus("error");
     }
@@ -168,7 +219,23 @@ export default function SetupWizard() {
   if (loading || !profile) {
     return (
       <div style={pageStyle}>
-        <div style={{ fontSize: 13, color: "#7AAAB2" }}>Loading your setup…</div>
+        <style>{`
+          @keyframes setupSpin { to { transform: rotate(360deg) } }
+        `}</style>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, maxWidth: 380, textAlign: 'center' }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: '50%',
+            border: '3px solid rgba(10,168,159,0.18)',
+            borderTopColor: '#0AA89F',
+            animation: 'setupSpin 0.9s linear infinite',
+          }} />
+          <div style={{ fontSize: 16, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.3px' }}>
+            Setting things up…
+          </div>
+          <div style={{ fontSize: 13, color: '#4A7A80', lineHeight: 1.55 }}>
+            Stripe is wiring up your subscription and we&apos;re buying you a local AI receptionist number. Usually 10–30 seconds.
+          </div>
+        </div>
       </div>
     );
   }
@@ -312,34 +379,29 @@ export default function SetupWizard() {
                   <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                 </div>
                 <h2 style={{ ...titleStyle, textAlign: "center", marginBottom: 6 }}>
-                  {testStatus === "calling" ? "Calling your phone now…" : testStatus === "sent" ? "Got it!" : testStatus === "error" ? "Hmm — couldn't reach you" : "Verifying your line…"}
+                  {testStatus === "calling" ? "Calling your business line — DON'T pick up" : testStatus === "sent" ? "Forwarding works ✓" : testStatus === "error" ? "Forwarding didn't connect" : "Ready to test"}
                 </h2>
-                <p style={{ ...subStyle, textAlign: "center", maxWidth: 360, margin: "0 auto" }}>
-                  {testStatus === "calling" && (<>Pick up. You&apos;ll hear: <em>&ldquo;Hi! This is your BellAveGo AI receptionist doing a quick test call…&rdquo;</em></>)}
-                  {testStatus === "sent" && (<>If you heard it, you&apos;re live. Forwarding works.</>)}
-                  {testStatus === "error" && (<>Test call didn&apos;t connect. Your forwarding code may not have stuck. Tap below to retry.</>)}
-                  {testStatus === "idle" && (<>Hang tight — calling you in a sec.</>)}
+                <p style={{ ...subStyle, textAlign: "center", maxWidth: 380, margin: "0 auto" }}>
+                  {testStatus === "calling" && (<><strong>Let it ring through.</strong> After ~12 seconds your carrier will forward the call to BellAveGo. We&apos;ll detect it automatically. Takes about 30 seconds total.</>)}
+                  {testStatus === "sent" && (<>Your carrier forwarded the call straight to BellAveGo. You&apos;re live — every missed call from now on lands here.</>)}
+                  {testStatus === "error" && (<>Two common causes: (1) you picked up before the carrier forwarded, or (2) the forwarding code didn&apos;t save. Either retry, or go back and re-dial the forwarding code.</>)}
+                  {testStatus === "idle" && (<>Tap below — we&apos;ll call your business line, you let it ring, and we&apos;ll confirm when BellAveGo picks up the forwarded call.</>)}
                 </p>
               </div>
 
               {testStatus === "error" && (
                 <button onClick={fireTestCall} style={{ ...primaryButton, marginTop: 12, marginBottom: 12 }}>
-                  Try again →
+                  Try the test call again →
                 </button>
               )}
               {testStatus === "sent" && (
                 <button onClick={continueAfterTest} disabled={busy} style={primaryButton}>
-                  {meta.isOfficeMgr || meta.isConcierge ? "Heard it — continue →" : "I&apos;m live — open dashboard →"}
-                </button>
-              )}
-              {testStatus === "calling" && (
-                <button onClick={() => setTestStatus("sent")} style={{ ...secondaryButton, marginTop: 4 }}>
-                  Skip — I heard it
+                  {meta.isOfficeMgr || meta.isConcierge ? "Continue →" : "Open dashboard →"}
                 </button>
               )}
               {testStatus === "idle" && (
                 <button onClick={fireTestCall} style={primaryButton}>
-                  Call my phone now →
+                  Start the test call →
                 </button>
               )}
             </div>

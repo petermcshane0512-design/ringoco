@@ -86,17 +86,63 @@ export async function POST(req: NextRequest) {
     console.log(`Subscription activated for user ${userId}: ${planTier}`)
 
     // Provision a Twilio number now that they're paid. Idempotent.
+    // Failures are no longer silent — alert Peter + log to provisioning_failures
+    // so the half-hourly retry cron picks it up.
     let provisionedNumber: string | undefined
+    let provisioningError: string | undefined
     try {
       const provision = await provisionNumberForUser(userId)
       if (provision.ok) {
         provisionedNumber = provision.phoneNumber
         console.log(`Provisioned ${provision.phoneNumber} for ${userId} (reused=${provision.reused})`)
       } else {
+        provisioningError = provision.error
         console.error(`Provisioning failed for ${userId}: ${provision.error}`)
       }
     } catch (e) {
+      provisioningError = (e as Error).message
       console.error(`Provisioning threw for ${userId}:`, e)
+    }
+
+    if (provisioningError) {
+      // Log the failure for the retry cron + alert Peter immediately.
+      const { data: contractor } = await supabase
+        .from('profiles')
+        .select('business_name, owner_phone')
+        .eq('user_id', userId)
+        .maybeSingle()
+
+      try {
+        await supabase.from('provisioning_failures').upsert(
+          {
+            user_id: userId,
+            business_name: contractor?.business_name,
+            owner_phone: contractor?.owner_phone,
+            last_error: provisioningError,
+            status: 'pending',
+            attempts: 1,
+            next_retry_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' }
+        )
+      } catch (e) {
+        console.error('provisioning_failures upsert failed:', e)
+      }
+
+      try {
+        await twilioClient.messages.create({
+          body:
+            `🚨 Provisioning failed — ${contractor?.business_name || userId}\n\n` +
+            `Error: ${provisioningError}\n\n` +
+            `Customer paid but has no Twilio number. Auto-retry will fire in 5min (half-hourly cron). ` +
+            `Manual override: https://www.bellavego.com/admin/provisioning`,
+          from: process.env.TWILIO_PHONE_NUMBER!,
+          to: process.env.FALLBACK_OWNER_PHONE ?? '+17737109565',
+        })
+      } catch (e) {
+        console.error('Provisioning-failure Peter SMS error:', e)
+      }
     }
 
     // Welcome SMS to the contractor (idempotent — only sends if welcomed_at is null).
@@ -157,6 +203,29 @@ export async function POST(req: NextRequest) {
       .select('user_id, owner_phone, business_name, twilio_number, plan_tier')
       .eq('stripe_customer_id', customerId)
       .maybeSingle()
+
+    // Seed invoice_followups so the Collections cron starts SMS chases.
+    // Pulls amount + hosted invoice URL straight from Stripe so the chase
+    // SMS includes a working pay-by-text link with zero contractor input.
+    if (profile?.owner_phone && invoice.amount_due > 0) {
+      try {
+        const hostedUrl = (invoice as Stripe.Invoice & { hosted_invoice_url?: string }).hosted_invoice_url
+        await supabase.from('invoice_followups').insert({
+          user_id: profile.user_id,
+          customer_name: profile.business_name,
+          customer_phone: profile.owner_phone,
+          invoice_amount: invoice.amount_due / 100,
+          invoice_description: invoice.description || `BellAveGo subscription (${profile.plan_tier ?? 'plan'})`,
+          due_date: invoice.due_date ? new Date(invoice.due_date * 1000).toISOString().slice(0, 10) : null,
+          source: 'stripe_failed',
+          status: 'pending',
+          next_chase_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          stripe_payment_link: hostedUrl,
+        })
+      } catch (e) {
+        console.error('invoice_followups seed failed:', e)
+      }
+    }
 
     if (profile?.owner_phone) {
       try {
