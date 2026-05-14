@@ -35,6 +35,16 @@ export type ReportInput = {
     avgCompetitorRating: number           // 0-5
     topCompetitors: { name: string; rating: number; reviewCount: number }[]
     customerRank: number                  // 1 = top
+    // ── NEW (May 2026): real geographic pins for the PDF map ──
+    // Optional — when present, the PDF renders a Google Static Maps image
+    // with real markers for the customer's business + top competitors.
+    mapCenter?: { lat: number; lng: number }
+    mapPoints?: Array<{
+      lat: number
+      lng: number
+      kind: 'business' | 'competitor' | 'opportunity'
+      label: string                       // 1-2 char marker label ("Y", "1", "2"...)
+    }>
   }
   bellaveGoScore: {
     composite: number                     // 1-10
@@ -104,6 +114,25 @@ const styles = StyleSheet.create({
   },
   statValue: { fontSize: 18, fontWeight: 'bold', color: NAVY, letterSpacing: -0.5 },
   statSub: { fontSize: 7, color: SLATE, marginTop: 2 },
+
+  // Service area map (real Google Static Maps with markers)
+  mapImage: {
+    width: '100%',
+    height: 200,
+    objectFit: 'cover',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  mapLegend: {
+    flexDirection: 'row',
+    gap: 18,
+    marginTop: 6,
+    paddingHorizontal: 2,
+  },
+  mapLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  mapLegendDot: { width: 8, height: 8, borderRadius: 4 },
+  mapLegendText: { fontSize: 7, color: SLATE },
 
   // Score block
   scoreRow: { flexDirection: 'row', gap: 12, marginTop: 4 },
@@ -190,6 +219,37 @@ function fmtPct(n: number) {
 }
 
 // ── PDF document ────────────────────────────────────────────────
+/**
+ * Build a Google Static Maps URL with real markers. Routes through our own
+ * proxy so the API key stays server-side. The proxy supports the `markers`
+ * query param (can repeat) — passed through verbatim to Google.
+ *
+ * Marker format: color:<color>|label:<char>|<lat>,<lng>
+ * Customer = teal (closest to brand), competitors = amber numbers 1-5.
+ */
+function buildStaticMapUrl(
+  center: { lat: number; lng: number },
+  points: NonNullable<ReportInput['market']['mapPoints']>,
+): string {
+  const base = (
+    process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost')
+      ? process.env.NEXT_PUBLIC_APP_URL
+      : 'https://www.bellavego.com'
+  ) + '/api/google-static-map'
+  const params = new URLSearchParams()
+  params.set('center', `${center.lat.toFixed(6)},${center.lng.toFixed(6)}`)
+  params.set('zoom', '12')
+  params.set('size', '600x300')
+  for (const p of points.slice(0, 10)) {
+    const color = p.kind === 'business' ? '0x0AA89F' : p.kind === 'opportunity' ? '0x22C55E' : '0xF59E0B'
+    params.append(
+      'markers',
+      `color:${color}|label:${p.label}|${p.lat.toFixed(6)},${p.lng.toFixed(6)}`,
+    )
+  }
+  return `${base}?${params.toString()}`
+}
+
 function ReportDocument({ data }: { data: ReportInput }) {
   const m = data.metrics
   const answerRate = m.callsReceived > 0 ? m.callsAnswered / m.callsReceived : 0
@@ -290,6 +350,27 @@ function ReportDocument({ data }: { data: ReportInput }) {
               </View>
             </View>
           </View>
+
+          {/* Service Area Map — only when we have real lat/lng from Google Places */}
+          {data.market.mapPoints && data.market.mapCenter && (
+            <View style={styles.section} wrap={false}>
+              <Text style={styles.sectionLabel}>Service Area · Your Business vs Competitors</Text>
+              <Image
+                src={buildStaticMapUrl(data.market.mapCenter, data.market.mapPoints)}
+                style={styles.mapImage}
+              />
+              <View style={styles.mapLegend}>
+                <View style={styles.mapLegendItem}>
+                  <View style={[styles.mapLegendDot, { backgroundColor: TEAL }]} />
+                  <Text style={styles.mapLegendText}>Y = your business</Text>
+                </View>
+                <View style={styles.mapLegendItem}>
+                  <View style={[styles.mapLegendDot, { backgroundColor: AMBER }]} />
+                  <Text style={styles.mapLegendText}>1–5 = top competitors by review count</Text>
+                </View>
+              </View>
+            </View>
+          )}
 
           {/* Opportunity */}
           <View style={styles.section}>

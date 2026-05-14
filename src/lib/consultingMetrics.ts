@@ -116,6 +116,10 @@ function topString(arr: string[]): string | null {
 /**
  * Pull local-market context via Google Places. Optional — falls back to a
  * generic "no places data" object so report generation never blocks.
+ *
+ * NEW (May 2026): Also returns lat/lng for the customer's own business + up
+ * to 5 competitors, plus a mapCenter, so the report PDF can render a real
+ * Google Static Maps image with actual pinpoints instead of stylized SVG.
  */
 export async function pullMarketContext(profile: ProfileSlim): Promise<ReportInput['market']> {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY
@@ -133,7 +137,13 @@ export async function pullMarketContext(profile: ProfileSlim): Promise<ReportInp
       `&key=${apiKey}`
     const res = await fetch(url, { next: { revalidate: 0 } })
     const data = (await res.json()) as {
-      results?: { name: string; rating?: number; user_ratings_total?: number; place_id?: string }[]
+      results?: {
+        name: string
+        rating?: number
+        user_ratings_total?: number
+        place_id?: string
+        geometry?: { location?: { lat?: number; lng?: number } }
+      }[]
     }
     const results = (data.results ?? []).filter((r) => r.place_id !== profile.google_place_id)
     const competitorCount = results.length
@@ -146,16 +156,76 @@ export async function pullMarketContext(profile: ProfileSlim): Promise<ReportInp
       rating: r.rating ?? 0,
       reviewCount: r.user_ratings_total ?? 0,
     }))
-    // Rank: by review_count, customer placed somewhere in the middle by default
     const customerRank = Math.max(1, Math.floor(competitorCount / 2))
-    return { competitorCount, avgCompetitorRating, topCompetitors, customerRank }
+
+    // ── Real geographic pins for the PDF map ───────────────────────
+    // 1. Customer's own business — fetch from Google Place Details if they
+    //    have a google_place_id on file, otherwise skip (no marker).
+    let mapCenter: { lat: number; lng: number } | undefined
+    const mapPoints: NonNullable<ReportInput['market']['mapPoints']> = []
+
+    if (profile.google_place_id) {
+      try {
+        const detailsUrl =
+          `https://maps.googleapis.com/maps/api/place/details/json` +
+          `?place_id=${encodeURIComponent(profile.google_place_id)}` +
+          `&fields=name,geometry` +
+          `&key=${apiKey}`
+        const detRes = await fetch(detailsUrl, { next: { revalidate: 0 } })
+        const detData = (await detRes.json()) as {
+          result?: { name?: string; geometry?: { location?: { lat?: number; lng?: number } } }
+        }
+        const loc = detData.result?.geometry?.location
+        if (loc?.lat != null && loc?.lng != null) {
+          mapCenter = { lat: loc.lat, lng: loc.lng }
+          mapPoints.push({
+            lat: loc.lat,
+            lng: loc.lng,
+            kind: 'business',
+            label: 'Y', // "You"
+          })
+        }
+      } catch (e) {
+        console.warn('place details lookup failed:', e)
+      }
+    }
+
+    // 2. Top 5 competitors by review count — plot with numeric labels
+    const competitorsByReviews = [...results].sort(
+      (a, b) => (b.user_ratings_total ?? 0) - (a.user_ratings_total ?? 0),
+    )
+    let pinIdx = 1
+    for (const comp of competitorsByReviews) {
+      if (pinIdx > 5) break
+      const loc = comp.geometry?.location
+      if (loc?.lat == null || loc?.lng == null) continue
+      mapPoints.push({
+        lat: loc.lat,
+        lng: loc.lng,
+        kind: 'competitor',
+        label: String(pinIdx),
+      })
+      // If we still don't have a center (customer has no google_place_id),
+      // anchor the map on the first competitor we plot.
+      if (!mapCenter) mapCenter = { lat: loc.lat, lng: loc.lng }
+      pinIdx++
+    }
+
+    return {
+      competitorCount,
+      avgCompetitorRating,
+      topCompetitors,
+      customerRank,
+      mapCenter,
+      mapPoints: mapPoints.length > 0 ? mapPoints : undefined,
+    }
   } catch (e) {
     console.warn('places lookup failed:', e)
     return fallbackMarket(profile)
   }
 }
 
-function fallbackMarket(p: ProfileSlim): ReportInput['market'] {
+function fallbackMarket(_p: ProfileSlim): ReportInput['market'] {
   return {
     competitorCount: 0,
     avgCompetitorRating: 4.2,
