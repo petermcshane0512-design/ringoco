@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { SAMPLE_REPORT, type ConsultingReport, type Confidence } from '@/lib/consultingReport'
+import { enrichSampleReport } from '@/lib/sampleReportEnrich'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -143,7 +144,17 @@ async function generate(input: PersonalizeBody): Promise<NextResponse> {
     methodology: `Market data sourced from Google Places ${zipCode ? `within ${zipCode}` : 'in the local area'} + US Census ACS 2024. Performance projections based on ${businessType} industry benchmarks across the BellAveGo network. This is a PREVIEW report — actual reports for paying customers use your real call/booking data.`,
   }
 
-  return NextResponse.json({ report }, { headers: { 'Cache-Control': 'public, max-age=300' } })
+  // Enrich serviceAreaMap.points with REAL competitor lat/lng from Google
+  // Places — for personalized prospect demos, the "Y" pin becomes their real
+  // business address. Falls back gracefully if Places API errors.
+  const enriched = await enrichSampleReport({
+    base: report,
+    prospectName: businessName,
+    prospectZip: zipCode || undefined,
+    prospectType: businessType,
+  }).catch(() => report)
+
+  return NextResponse.json({ report: enriched }, { headers: { 'Cache-Control': 'public, max-age=300' } })
 }
 
 // ── Market resolution via Google Places ─────────────────────────

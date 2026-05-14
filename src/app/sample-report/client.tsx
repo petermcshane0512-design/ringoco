@@ -6,23 +6,41 @@ import Image from 'next/image'
 import { SAMPLE_REPORT, type ConsultingReport } from '@/lib/consultingReport'
 import { TIER_METADATA } from '@/lib/pricing'
 
-export default function SampleReportClient() {
+type SampleClientProps = {
+  /** Server-enriched report with REAL Google Places competitor pins.
+   *  When present, the default view uses this. Personalized prospect lookups
+   *  via ?for=... still fetch /api/sample-report/personalize on the client. */
+  initialReport?: ConsultingReport
+  initialSearchParams?: { for?: string; business?: string; zip?: string; type?: string; city?: string }
+}
+
+export default function SampleReportClient({ initialReport, initialSearchParams }: SampleClientProps = {}) {
+  const base = initialReport ?? SAMPLE_REPORT
   return (
-    <Suspense fallback={<ReportView report={SAMPLE_REPORT} sample />}>
-      <PersonalizedReportLoader />
+    <Suspense fallback={<ReportView report={base} sample />}>
+      <PersonalizedReportLoader baseReport={base} initialParams={initialSearchParams} />
     </Suspense>
   )
 }
 
-function PersonalizedReportLoader() {
+function PersonalizedReportLoader({
+  baseReport,
+  initialParams,
+}: {
+  baseReport: ConsultingReport
+  initialParams?: { for?: string; business?: string; zip?: string; type?: string; city?: string }
+}) {
   const params = useSearchParams()
-  const businessName = params.get('for') || params.get('business') || ''
-  const zip = params.get('zip') || ''
-  const type = params.get('type') || ''
-  const city = params.get('city') || ''
-  const personalize = !!businessName.trim()
+  // Server-provided params (from page.tsx) take precedence so the initial
+  // render matches what the server enriched. URL params can still override
+  // after hydration if the user navigates with new ones.
+  const businessName = (initialParams?.for || initialParams?.business || params.get('for') || params.get('business') || '').trim()
+  const zip = initialParams?.zip || params.get('zip') || ''
+  const type = initialParams?.type || params.get('type') || ''
+  const city = initialParams?.city || params.get('city') || ''
+  const personalize = !!businessName
 
-  const [report, setReport] = useState<ConsultingReport>(SAMPLE_REPORT)
+  const [report, setReport] = useState<ConsultingReport>(baseReport)
   const [loading, setLoading] = useState(personalize)
   const [error, setError] = useState<string | null>(null)
 
@@ -757,9 +775,15 @@ export function ReportView({ report, sample = false, personalized = false }: { r
               <ServiceAreaMap report={r} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginTop: 12, fontSize: 11, color: 'var(--ink-mid)' }}>
                 <Legend color="#0AA89F" label="Your business" />
+                <Legend color="#F59E0B" label="Top 5 competitors (real)" />
                 <Legend color="#22C55E" label="Opportunity zones" />
-                <Legend color="#94A3B8" label="Competitors" />
               </div>
+              {/* Honesty disclosure — competitors are real Google Places data;
+                  the demo business is fictional. Real paying customers see their
+                  own real business as the "Y" pin. */}
+              <p style={{ marginTop: 10, fontSize: 11, color: 'var(--ink-soft)', lineHeight: 1.5, fontStyle: 'italic' }}>
+                The competitor pinpoints on this map are <strong style={{ color: 'var(--ink-mid)' }}>real businesses</strong> pulled from Google Places. The demo business profile (Mike&apos;s HVAC &amp; Cooling) is fictional and used only to show the report format — paying customers see their own real business as the &ldquo;Y&rdquo; pin and their own real competitor landscape.
+              </p>
             </div>
           </section>
 
@@ -1058,14 +1082,42 @@ function Legend({ color, label }: { color: string; label: string }) {
 function ServiceAreaMap({ report }: { report: ConsultingReport }) {
   const points = report.serviceAreaMap.points
 
-  // Derive a real geographic center for the Google Static Maps API.
-  // Priority: first ZIP from service area (most reliable for Google geocoding)
-  //        →  fallback: first segment of centerLabel
-  //        →  fallback: metroLabel
-  const firstZip = report.meta.serviceArea?.find(z => /^\d{5}$/.test(z))
-  const centerFromLabel = report.serviceAreaMap.centerLabel.split(/[·•|–—-]/)[0].trim()
-  const mapCenter = firstZip || centerFromLabel || report.meta.metroLabel
-  const mapSrc = `/api/google-static-map?center=${encodeURIComponent(mapCenter)}&zoom=12&size=1000x430&maptype=roadmap`
+  // Has the server enriched the points with real lat/lng (via
+  // sampleReportEnrich.ts)? If yes, we render Google native markers via
+  // markers= URL params. If no, fall back to the stylized SVG overlay over
+  // the static-map background.
+  const realPoints = points.filter(p => typeof p.lat === 'number' && typeof p.lng === 'number')
+  const useRealMarkers = realPoints.length > 0
+
+  // Derive map center. Priority for real-marker mode: the "business" pin's
+  // real lat/lng. Otherwise a geocodable string from the report meta.
+  let mapCenter: string
+  if (useRealMarkers) {
+    const biz = realPoints.find(p => p.kind === 'business') || realPoints[0]
+    mapCenter = `${biz.lat!.toFixed(6)},${biz.lng!.toFixed(6)}`
+  } else {
+    const firstZip = report.meta.serviceArea?.find(z => /^\d{5}$/.test(z))
+    const centerFromLabel = report.serviceAreaMap.centerLabel.split(/[·•|–—-]/)[0].trim()
+    mapCenter = firstZip || centerFromLabel || report.meta.metroLabel
+  }
+
+  // Build the Static Maps URL — include markers= params when we have real
+  // geometry. Google renders these natively at the correct geographic spot.
+  const mapParams = new URLSearchParams({
+    center: mapCenter,
+    zoom: '12',
+    size: '1000x430',
+    maptype: 'roadmap',
+  })
+  if (useRealMarkers) {
+    for (const p of realPoints) {
+      const color = p.kind === 'business' ? '0x0AA89F' : p.kind === 'opportunity' ? '0x22C55E' : '0xF59E0B'
+      // Google Static Maps marker labels accept a single character — clamp.
+      const label = (p.label || '').replace(/[^A-Z0-9]/i, '').charAt(0) || '•'
+      mapParams.append('markers', `color:${color}|label:${label}|${p.lat!.toFixed(6)},${p.lng!.toFixed(6)}`)
+    }
+  }
+  const mapSrc = `/api/google-static-map?${mapParams.toString()}`
 
   return (
     <div style={{
@@ -1087,11 +1139,11 @@ function ServiceAreaMap({ report }: { report: ConsultingReport }) {
         loading="lazy"
       />
 
-      {/* Pin overlay — color-coded business / opportunity / competitor markers
-          floated on top of the real map. Pin positions are stylized (illustrative
-          density of opportunities) rather than literal lat/lng — they communicate
-          "here's where the upside is in your service area" without leaking
-          competitor street addresses. */}
+      {/* Pin overlay — stylized SVG markers shown ONLY when we don't have real
+          Google geometry (useRealMarkers=false). When real lat/lng are available,
+          the markers are rendered natively by Google Static Maps via URL params
+          above, so we skip this overlay entirely. */}
+      {!useRealMarkers && (
       <svg viewBox="0 0 1000 430" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
         <defs>
           <filter id="pinShadow" x="-50%" y="-50%" width="200%" height="200%">
@@ -1117,27 +1169,54 @@ function ServiceAreaMap({ report }: { report: ConsultingReport }) {
           )
         })}
       </svg>
+      )}
 
-      {/* Pin notes overlay — opportunity callouts pinned to the bottom */}
-      <div style={{ position: 'absolute', inset: 0, padding: 12, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', pointerEvents: 'none' }}>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {points.filter(p => p.kind === 'opportunity').map((p, i) => (
-            <span key={i} style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '5px 10px', borderRadius: 99,
-              background: 'rgba(255,255,255,0.96)',
-              border: '1px solid rgba(34,197,94,0.42)',
-              fontSize: 11, fontWeight: 700, color: 'var(--ink)',
-              boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
-              backdropFilter: 'blur(4px)',
-              WebkitBackdropFilter: 'blur(4px)',
-            }}>
-              <span style={{ width: 14, height: 14, borderRadius: '50%', background: '#22C55E', color: '#fff', fontSize: 9, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{p.label}</span>
-              {p.note}
-            </span>
-          ))}
+      {/* Real-marker mode: render a competitor caption strip along the bottom
+          listing the actual Google-Places competitors plotted on the map. */}
+      {useRealMarkers && (
+        <div style={{ position: 'absolute', inset: 0, padding: 12, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', pointerEvents: 'none' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {realPoints.filter(p => p.kind === 'competitor').slice(0, 5).map((p, i) => (
+              <span key={i} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '5px 10px', borderRadius: 99,
+                background: 'rgba(255,255,255,0.96)',
+                border: '1px solid rgba(245,158,11,0.42)',
+                fontSize: 11, fontWeight: 700, color: 'var(--ink)',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)',
+              }}>
+                <span style={{ width: 14, height: 14, borderRadius: '50%', background: '#F59E0B', color: '#fff', fontSize: 9, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{p.label}</span>
+                {p.note}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Stylized opportunity callouts — only in SVG fallback mode */}
+      {!useRealMarkers && (
+        <div style={{ position: 'absolute', inset: 0, padding: 12, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', pointerEvents: 'none' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {points.filter(p => p.kind === 'opportunity').map((p, i) => (
+              <span key={i} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '5px 10px', borderRadius: 99,
+                background: 'rgba(255,255,255,0.96)',
+                border: '1px solid rgba(34,197,94,0.42)',
+                fontSize: 11, fontWeight: 700, color: 'var(--ink)',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)',
+              }}>
+                <span style={{ width: 14, height: 14, borderRadius: '50%', background: '#22C55E', color: '#fff', fontSize: 9, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{p.label}</span>
+                {p.note}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

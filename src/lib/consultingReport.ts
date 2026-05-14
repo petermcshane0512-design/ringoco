@@ -6,6 +6,11 @@ export type ServiceAreaPoint = {
   /** Normalized 0–100 coordinates within the SVG viewport (not real lat/lng) */
   x: number
   y: number
+  /** OPTIONAL real geographic coordinates — when present, the map uses Google
+   *  native markers instead of the stylized SVG overlay. Set by the server-side
+   *  enrichment step (sampleReportEnrich.ts) for real prospects. */
+  lat?: number
+  lng?: number
   note?: string
 }
 

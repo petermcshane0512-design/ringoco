@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import SampleReportClient from './client'
+import { getEnrichedSampleReport } from '@/lib/sampleReportEnrich'
 
 type SearchParams = Promise<{ for?: string; business?: string; zip?: string; type?: string; city?: string }>
 
@@ -51,6 +52,17 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
   }
 }
 
-export default function Page() {
-  return <SampleReportClient />
+export default async function Page({ searchParams }: { searchParams: SearchParams }) {
+  const sp = await searchParams
+  // Enrich the default sample with real Google Places competitor pins for
+  // the configured demo area (St. Louis Park, MN). The "Y" pin is the
+  // fictional demo business at the area centroid. Real prospect personalize
+  // (?for=...) is handled client-side by the personalize API and is enriched
+  // server-side inside that route.
+  const initialReport = await getEnrichedSampleReport({
+    prospectName: undefined,         // default sample = demo business, not real
+    prospectZip: undefined,
+    prospectType: undefined,
+  }).catch(() => undefined)
+  return <SampleReportClient initialReport={initialReport} initialSearchParams={sp} />
 }
