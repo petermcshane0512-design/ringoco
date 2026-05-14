@@ -22,10 +22,10 @@ export default function FounderPage() {
           <Image src="/logo.png" alt="BellAveGo" width={665} height={210} style={{ objectFit: 'contain', marginTop: 10 }} />
         </Link>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          {isSignedIn && <Link href="/dashboard" className="nav-cta">Dashboard</Link>}
-          <Link href="/founder" className="why-pulse">Why BellAveGo?</Link>
+          {isSignedIn && <Link href="/dashboard" className="nav-cta"><span className="nav-cta-text">Dashboard</span></Link>}
+          <Link href="/founder" className="why-pulse"><span className="why-pulse-text">Why BellAveGo?</span></Link>
           <Link href="/pricing" className="price-pulse">Pricing</Link>
-          {!isSignedIn && <Link href="/sign-up" className="nav-cta">Sign in / Create Account</Link>}
+          {!isSignedIn && <Link href="/sign-up" className="nav-cta"><span className="nav-cta-text">Sign in / Create Account</span></Link>}
         </div>
       </nav>
 

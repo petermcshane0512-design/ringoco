@@ -42,12 +42,12 @@ html { overflow-x: hidden; }
     filter 0.22s ease;
 }
 
-/* Dashboard / Sign in / Create Account — main CTA */
+/* Dashboard / Sign in / Create Account — TEAL box + SUNSET-ORANGE gradient text */
 .nav-cta {
   background: linear-gradient(135deg, #14B8A6, #06B6D4);
-  color: #fff;
-  border: 1px solid rgba(94, 234, 212, 0.35);
-  font-weight: 800;
+  color: #fff;  /* fallback if .nav-cta-text doesn't render */
+  border: 1px solid rgba(94, 234, 212, 0.45);
+  font-weight: 900;
   box-shadow: 0 0 22px rgba(20, 184, 166, 0.45);
 }
 .nav-cta:hover {
@@ -55,19 +55,42 @@ html { overflow-x: hidden; }
   box-shadow: 0 0 32px rgba(20, 184, 166, 0.65);
   filter: brightness(1.06);
 }
+/* Inner span — sunset-orange gradient letters that flow lighter to darker L→R */
+.nav-cta-text {
+  background: linear-gradient(90deg, #FFE5C8 0%, #FF9D5A 35%, #E8742B 70%, #C84B26 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+  font-weight: 900;
+  letter-spacing: -0.2px;
+}
 
-/* Why BellAveGo? — bright orange CTA, matches the site's orange brand accents */
+/* Why BellAveGo? — SUNSET-ORANGE box + TEAL-CYAN gradient letters
+   (mirrored relationship to .nav-cta — both colors live on both buttons) */
 .why-pulse {
   background: linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B);
-  color: #0B1F3A;
+  color: #0AA89F;  /* fallback if .why-pulse-text doesn't render */
   border: 1px solid rgba(255, 217, 168, 0.55);
-  font-weight: 800;
+  font-weight: 900;
   box-shadow: 0 0 22px rgba(232, 116, 43, 0.45);
 }
 .why-pulse:hover {
   transform: translateY(-1px);
   box-shadow: 0 0 32px rgba(232, 116, 43, 0.65);
   filter: brightness(1.05);
+}
+/* Inner span — teal-cyan gradient letters mirroring the .nav-cta box color */
+.why-pulse-text {
+  background: linear-gradient(135deg, #14B8A6 0%, #06B6D4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+  font-weight: 900;
+  letter-spacing: -0.2px;
 }
 
 /* Pricing — premium green with green glow */

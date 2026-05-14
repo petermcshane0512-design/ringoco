@@ -42,16 +42,16 @@ export default function HomePage() {
         </a>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           {isSignedIn && (
-            <Link href="/dashboard" className="nav-cta">Dashboard</Link>
+            <Link href="/dashboard" className="nav-cta"><span className="nav-cta-text">Dashboard</span></Link>
           )}
-          <Link href="/founder" className="why-pulse">Why BellAveGo?</Link>
+          <Link href="/founder" className="why-pulse"><span className="why-pulse-text">Why BellAveGo?</span></Link>
           <Link href="/pricing" className="price-pulse">Pricing</Link>
           {isSignedIn ? (
             <SignOutButton redirectUrl="/">
               <button className="signout-link">Sign out</button>
             </SignOutButton>
           ) : (
-            <Link href="/sign-up" className="nav-cta">Sign in / Create Account</Link>
+            <Link href="/sign-up" className="nav-cta"><span className="nav-cta-text">Sign in / Create Account</span></Link>
           )}
         </div>
       </nav>

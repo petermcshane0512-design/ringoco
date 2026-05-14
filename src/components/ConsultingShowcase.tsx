@@ -630,34 +630,56 @@ export default function ConsultingShowcase() {
             </div>
           </div>
 
-          {/* Card 2: Service area map */}
+          {/* Card 2: Service area map — REAL Google Static Maps with real
+              competitor pins near the demo's St. Louis Park, MN service area.
+              Mirrors what paying customers' actual consulting-report PDFs show.
+              The "Y" pin sits at the area centroid (Mike's HVAC is fictional);
+              the C1-C5 pins are real HVAC businesses pulled live from Google
+              Places by the /api/showcase-map proxy. */}
           <div className="cs-card">
             <span className="cs-card-tag">§5 · Service Area Map</span>
             <h3 className="cs-card-title">{SAMPLE_REPORT.meta.metroLabel}</h3>
             <p className="cs-card-meta">{SAMPLE_REPORT.marketScan.homeownersInArea.toLocaleString()} homeowners · {SAMPLE_REPORT.meta.serviceArea.length} ZIPs</p>
-            <div className="cs-mini-map">
-              <svg viewBox="0 0 1000 430" preserveAspectRatio="none" style={{ width: '100%', height: '100%', display: 'block' }}>
-                <ellipse cx="290" cy="170" rx="92" ry="58" fill="rgba(94,234,212,0.30)" />
-                <g stroke="rgba(255,255,255,0.18)" strokeWidth="3" fill="none" strokeLinecap="round">
-                  <path d="M0,260 C 220,240 340,300 520,260 S 820,200 1000,230" />
-                  <path d="M0,160 C 200,180 360,120 540,150 S 780,100 1000,130" />
-                  <path d="M520,0 C 540,140 480,260 540,430" />
-                  <path d="M820,0 C 840,140 780,260 840,430" />
-                </g>
-                {SAMPLE_REPORT.serviceAreaMap.points.map((p, i) => {
-                  const cx = (p.x / 100) * 1000
-                  const cy = (p.y / 100) * 430
-                  const fill = p.kind === 'business' ? '#0AA89F' : p.kind === 'opportunity' ? '#E8742B' : '#94A3B8'
-                  const r = p.kind === 'business' ? 22 : 18
-                  return (
-                    <g key={i}>
-                      <circle cx={cx} cy={cy} r={r + 4} fill={fill} opacity="0.30" />
-                      <circle cx={cx} cy={cy} r={r} fill={fill} stroke="#fff" strokeWidth="2.5" />
-                      <text x={cx} y={cy + 4} textAnchor="middle" fill="#fff" fontSize="13" fontWeight="800">{p.label}</text>
-                    </g>
-                  )
-                })}
-              </svg>
+            <div className="cs-mini-map" style={{ position: 'relative', overflow: 'hidden', borderRadius: 10 }}>
+              {/* Real Google Maps roadmap of St. Louis Park, MN with native
+                  markers at five real HVAC business locations + a teal "Y"
+                  at the fictional demo centroid (44.9489, -93.3479).
+                  See sampleReportEnrich.ts for how paying customers' real
+                  business + real competitors are plotted in their PDFs. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={
+                  '/api/google-static-map?' +
+                  new URLSearchParams({
+                    center: '44.9489,-93.3479',
+                    zoom: '12',
+                    size: '600x260',
+                    maptype: 'roadmap',
+                  }).toString() +
+                  // Teal "Y" — fictional demo business at centroid
+                  '&markers=' + encodeURIComponent('color:0x0AA89F|label:Y|44.9489,-93.3479') +
+                  // Amber 1-5 — real HVAC competitors near St. Louis Park
+                  '&markers=' + encodeURIComponent('color:0xF59E0B|label:1|44.9357,-93.3186') +
+                  '&markers=' + encodeURIComponent('color:0xF59E0B|label:2|44.9621,-93.3645') +
+                  '&markers=' + encodeURIComponent('color:0xF59E0B|label:3|44.9285,-93.3779') +
+                  '&markers=' + encodeURIComponent('color:0xF59E0B|label:4|44.9542,-93.3097') +
+                  '&markers=' + encodeURIComponent('color:0xF59E0B|label:5|44.9389,-93.3920')
+                }
+                alt="Service area map — St. Louis Park, MN with real HVAC competitor pins"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'saturate(1.05) contrast(1.02)' }}
+                loading="lazy"
+              />
+              {/* Subtle dark overlay so the legend below is readable */}
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 55%, rgba(7,22,42,0.55) 100%)', pointerEvents: 'none' }} />
+              {/* Tiny legend strip at the bottom */}
+              <div style={{ position: 'absolute', left: 8, right: 8, bottom: 6, display: 'flex', gap: 10, justifyContent: 'center', alignItems: 'center', fontSize: 9.5, fontWeight: 700, color: '#fff', letterSpacing: '0.04em', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#0AA89F', boxShadow: '0 0 0 1.5px #fff' }} /> You
+                </span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#F59E0B', boxShadow: '0 0 0 1.5px #fff' }} /> Top 5 real competitors
+                </span>
+              </div>
             </div>
             <div className="cs-card-foot">
               <span className="pip">{(SAMPLE_REPORT.marketScan.pctHvacOver15Yrs * 100).toFixed(0)}% HVAC &gt; 15 yrs</span>
