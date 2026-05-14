@@ -319,13 +319,13 @@ export default function HomePage() {
               display: inline-flex; align-items: center; gap: 10px;
               padding: 16px 28px;
               border-radius: 12px;
-              background: linear-gradient(135deg, #0AA89F 0%, #0D8F87 60%, #086F69 100%);
+              background: linear-gradient(135deg, #14B8A6 0%, #06B6D4 100%);
               color: #fff; font-weight: 800; font-size: 15px;
               text-decoration: none;
-              border: 1px solid rgba(94,234,212,0.4);
+              border: 1px solid rgba(94,234,212,0.45);
               box-shadow:
-                0 12px 36px rgba(10,168,159,0.45),
-                0 0 0 1px rgba(94,234,212,0.2),
+                0 12px 36px rgba(20,184,166,0.42),
+                0 0 0 1px rgba(94,234,212,0.22),
                 inset 0 1px 0 rgba(255,255,255,0.18);
               position: relative; overflow: hidden;
               transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s, filter 0.22s;
@@ -340,7 +340,7 @@ export default function HomePage() {
             }
             .hero-cta-primary:hover {
               transform: translateY(-2px) scale(1.03);
-              box-shadow: 0 18px 50px rgba(10,168,159,0.6), 0 0 0 1px rgba(94,234,212,0.35), inset 0 1px 0 rgba(255,255,255,0.18);
+              box-shadow: 0 18px 50px rgba(20,184,166,0.55), 0 0 0 1px rgba(94,234,212,0.40), inset 0 1px 0 rgba(255,255,255,0.18);
               filter: brightness(1.08);
             }
             .hero-cta-primary .arrow { transition: transform 0.22s ease; }
@@ -919,7 +919,7 @@ export default function HomePage() {
         </p>
         <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
           {isSignedIn ? (
-            <Link href="/dashboard" className="dash-pulse" style={{ padding: '16px 46px', background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 16 }}>
+            <Link href="/dashboard" className="dash-pulse" style={{ padding: '16px 46px', background: 'linear-gradient(135deg, #14B8A6 0%, #06B6D4 100%)', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 16 }}>
               Dashboard →
             </Link>
           ) : (

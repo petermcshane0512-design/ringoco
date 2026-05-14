@@ -55,13 +55,9 @@ html { overflow-x: hidden; }
   box-shadow: 0 0 32px rgba(20, 184, 166, 0.65);
   filter: brightness(1.06);
 }
-/* Inner span — sunset-orange gradient letters that flow lighter to darker L→R */
+/* Inner span — kept for structure; letters are plain white now */
 .nav-cta-text {
-  background: linear-gradient(90deg, #FFE5C8 0%, #FF9D5A 35%, #E8742B 70%, #C84B26 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
+  color: #fff;
   display: inline-block;
   font-weight: 900;
   letter-spacing: -0.2px;
@@ -81,13 +77,9 @@ html { overflow-x: hidden; }
   box-shadow: 0 0 32px rgba(232, 116, 43, 0.65);
   filter: brightness(1.05);
 }
-/* Inner span — teal-cyan gradient letters mirroring the .nav-cta box color */
+/* Inner span — kept for structure; letters are plain white now */
 .why-pulse-text {
-  background: linear-gradient(135deg, #14B8A6 0%, #06B6D4 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
+  color: #fff;
   display: inline-block;
   font-weight: 900;
   letter-spacing: -0.2px;
