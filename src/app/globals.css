@@ -19,8 +19,8 @@ html { overflow-x: hidden; }
    color glow so the top-right reads as a palette of living buttons. */
 
 @keyframes whyGlow {
-  0%, 100% { box-shadow: 0 4px 16px rgba(250, 204, 21, 0.50), 0 0 28px rgba(250, 204, 21, 0.32); }
-  50%      { box-shadow: 0 4px 26px rgba(250, 204, 21, 0.74), 0 0 50px rgba(250, 204, 21, 0.50); }
+  0%, 100% { box-shadow: 0 4px 16px rgba(239, 68, 68, 0.50), 0 0 28px rgba(239, 68, 68, 0.32); }
+  50%      { box-shadow: 0 4px 26px rgba(239, 68, 68, 0.74), 0 0 50px rgba(239, 68, 68, 0.50); }
 }
 @keyframes priceGlow {
   0%, 100% { box-shadow: 0 4px 16px rgba(34, 197, 94, 0.50), 0 0 28px rgba(34, 197, 94, 0.32); }
@@ -47,17 +47,17 @@ html { overflow-x: hidden; }
     filter 0.28s ease;
 }
 
-/* Why BellAveGo? — vibrant yellow */
+/* Why BellAveGo? — bright red */
 .why-pulse {
-  background: linear-gradient(135deg, #FDE047 0%, #FACC15 50%, #EAB308 100%);
-  color: #713F12;
-  border: 1px solid rgba(253, 224, 71, 0.6);
+  background: linear-gradient(135deg, #FCA5A5 0%, #EF4444 50%, #DC2626 100%);
+  color: #fff;
+  border: 1px solid rgba(252, 165, 165, 0.55);
   animation: whyGlow 2.5s ease-in-out infinite;
 }
 .why-pulse:hover {
   animation-play-state: paused;
   transform: scale(1.06) translateY(-2px);
-  box-shadow: 0 10px 40px rgba(250, 204, 21, 0.78), 0 0 64px rgba(250, 204, 21, 0.55);
+  box-shadow: 0 10px 40px rgba(239, 68, 68, 0.78), 0 0 64px rgba(239, 68, 68, 0.55);
   filter: brightness(1.08);
 }
 
