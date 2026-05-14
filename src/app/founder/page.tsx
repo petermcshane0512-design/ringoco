@@ -68,20 +68,23 @@ export default function FounderPage() {
               Built by people who answer their own phones
             </span>
             <h1 style={{ fontSize: 'clamp(30px, 4vw, 48px)', fontWeight: 900, letterSpacing: '-0.035em', lineHeight: 1.04, marginBottom: 16, color: '#0B1F3A' }}>
-              Hi, I&apos;m Peter. I&apos;m <span style={{
+              Hi, I&apos;m Peter. I <span style={{
                 background: 'linear-gradient(135deg, #FFD9A8 0%, #FF9D5A 40%, #E8742B 100%)',
                 WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-              }}>building BellAveGo in public.</span>
+              }}>founded BellAveGo.</span>
             </h1>
             <div style={{ fontSize: 16, lineHeight: 1.65, color: '#3D5A62' }}>
               <p style={{ margin: '0 0 14px' }}>
-                I&apos;m a one-person team, currently in Manhattan, NY. I started BellAveGo because I watched too many home-service owners — my friends, my family&apos;s contractors, the guys I called for help — lose jobs to voicemail. The fix existed, but it was either dumb (a $9/mo generic answering service) or insanely expensive ($400/mo agency that takes a cut of every booking).
+                BellAveGo was created after seeing too many home-service businesses lose valuable jobs to missed calls, voicemails, and outdated answering systems. We believed contractors deserved a smarter, more modern solution that actually helps them grow revenue instead of adding more complexity.
               </p>
               <p style={{ margin: '0 0 14px' }}>
-                BellAveGo is the version contractors actually deserve. The AI answers like a real receptionist. Texts you the lead with one-tap actions. Pays for itself in a single booked job. No contracts.
+                BellAveGo combines AI reception, lead capture, scheduling support, invoicing tools, and growth-focused consulting into one platform built specifically for home-service teams. The goal is simple: help businesses capture more opportunities, respond faster, and operate more efficiently.
+              </p>
+              <p style={{ margin: '0 0 14px' }}>
+                Unlike traditional answering services, BellAveGo is designed to feel like a true extension of the business. The AI responds naturally, captures key details, and instantly texts the business owner actionable information so no lead gets lost.
               </p>
               <p style={{ margin: 0 }}>
-                If it doesn&apos;t earn its keep in the first 30 days, you get a full refund and we part on good terms. That&apos;s the deal. My personal number is on every receipt — <a href="tel:+17737109565" style={{ color: '#0AA89F', fontWeight: 700, textDecoration: 'none' }}>(773) 710-9565</a> — and yes, I actually answer it.
+                We&apos;re focused on building long-term relationships with the businesses we work with. If BellAveGo doesn&apos;t create real value, we make it right. Our mission is to help home-service companies modernize operations without losing the personal feel that makes their businesses successful.
               </p>
             </div>
 
@@ -89,7 +92,8 @@ export default function FounderPage() {
               <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #0AA89F, #0D8F87)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 900, boxShadow: '0 6px 14px rgba(10,168,159,0.32)', flexShrink: 0 }}>P</div>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.2px' }}>Peter McShane</div>
-                <div style={{ fontSize: 11.5, color: '#7AAAB2', fontWeight: 600, marginTop: 1 }}>Founder · BellAveGo · Manhattan, NY</div>
+                <div style={{ fontSize: 11.5, color: '#7AAAB2', fontWeight: 600, marginTop: 1 }}>Founder, BellAveGo</div>
+                <div style={{ fontSize: 11.5, color: '#7AAAB2', fontWeight: 600 }}>Manhattan, NY</div>
               </div>
             </div>
 
