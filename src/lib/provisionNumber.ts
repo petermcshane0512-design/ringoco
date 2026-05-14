@@ -1,6 +1,7 @@
 import twilio from 'twilio'
 import { createClient } from '@supabase/supabase-js'
 import { attachNumberToMessagingService, A2P_MESSAGING_SERVICE_SID } from './a2p'
+import { vapiImportTwilioNumber } from './vapi'
 
 const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID!,
@@ -97,6 +98,29 @@ export async function provisionNumberForUser(userId: string): Promise<ProvisionR
       update.a2p_brand_status = 'approved'
     } else {
       console.warn(`A2P attach failed for ${purchased.phoneNumber}: ${attach.error}`)
+    }
+  }
+
+  // Import into Vapi so the conversation layer runs through Cartesia/Claude/Deepgram
+  // instead of the legacy Polly+Haiku route. Vapi overwrites the Twilio voiceUrl
+  // to point at its SIP endpoint on import. SMS URL stays on /api/twilio/sms for
+  // YES/NO handling. Non-fatal: if VAPI_ASSISTANT_ID isn't set yet, the number
+  // still answers via the legacy /api/twilio/voice fallback.
+  const VAPI_ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID
+  if (VAPI_ASSISTANT_ID && process.env.VAPI_API_KEY) {
+    try {
+      const imp = await vapiImportTwilioNumber({
+        twilioPhoneNumber: purchased.phoneNumber,
+        twilioAccountSid: process.env.TWILIO_ACCOUNT_SID!,
+        twilioAuthToken: process.env.TWILIO_AUTH_TOKEN!,
+        assistantId: VAPI_ASSISTANT_ID,
+        serverUrl: `${APP_URL}/api/vapi/assistant-request`,
+        serverUrlSecret: process.env.VAPI_WEBHOOK_SECRET,
+        friendlyName: `BellAveGo · ${profile.business_name || profile.user_id}`,
+      })
+      update.vapi_phone_number_id = imp.id
+    } catch (e) {
+      console.warn(`Vapi import failed for ${purchased.phoneNumber} — falling back to legacy voice:`, e)
     }
   }
 
