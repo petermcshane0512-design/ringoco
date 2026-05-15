@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
@@ -10,6 +10,20 @@ const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_
 
 const PETER_PHONE = process.env.FALLBACK_OWNER_PHONE ?? '+17737109565'
 const REFUND_WINDOW_DAYS = 30
+
+// Structured reasons drive Peter's product roadmap — the SMS he gets on
+// every refund includes the picked reason + the free-text so he can see
+// patterns ("3/5 refunds this week said 'voice sounds robotic'").
+const ALLOWED_REASONS = new Set([
+  'voice_quality',         // AI doesn't sound human enough
+  'not_enough_calls',      // not getting enough leads
+  'too_expensive',         // price not worth it
+  'forwarding_broken',     // couldn't get forwarding to work
+  'wrong_fit',             // not the right product for my business
+  'found_alternative',     // switching to a competitor
+  'business_issue',        // business problem unrelated to product
+  'other',
+])
 
 /**
  * Self-serve 30-day money-back guarantee.
@@ -23,9 +37,14 @@ const REFUND_WINDOW_DAYS = 30
  * (the lineItem filter only matches recurring price lines), so the refund
  * logic stays correct: only the sub portion gets refunded, setup retained.
  */
-export async function POST() {
+export async function POST(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Reason capture (optional — old clients that POST with no body still work)
+  const body = await req.json().catch(() => ({})) as { reason?: string; reasonDetail?: string }
+  const reason = body.reason && ALLOWED_REASONS.has(body.reason) ? body.reason : 'unspecified'
+  const reasonDetail = (body.reasonDetail ?? '').slice(0, 500) // truncate to a sane length
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -120,7 +139,9 @@ export async function POST() {
       reason: 'requested_by_customer',
       metadata: {
         userId,
-        reason: '30-day money-back guarantee',
+        guarantee: '30-day money-back',
+        customer_reason: reason,
+        customer_reason_detail: reasonDetail,
         business_name: profile.business_name ?? '',
         tier: profile.plan_tier ?? '',
       },
@@ -149,15 +170,28 @@ export async function POST() {
     .update({ plan_tier: 'cancelled' })
     .eq('user_id', userId)
 
-  // SMS Peter every refund — churn signals matter
+  // SMS Peter every refund — churn signals matter. Includes the structured
+  // reason + free-text so patterns are obvious without opening Stripe.
+  const reasonLabel: Record<string, string> = {
+    voice_quality:      "AI doesn't sound human enough",
+    not_enough_calls:   "Not getting enough leads",
+    too_expensive:      "Price not worth it",
+    forwarding_broken:  "Couldn't get forwarding to work",
+    wrong_fit:          "Not the right product fit",
+    found_alternative:  "Switching to a competitor",
+    business_issue:     "Business issue unrelated to product",
+    other:              "Other",
+    unspecified:        "(no reason given)",
+  }
   try {
     await twilioClient.messages.create({
       body:
-        `⚠️ Refund issued — ${profile.business_name ?? profile.user_id} (${profile.plan_tier ?? '?'})\n\n` +
-        `Amount: $${(recurringTotal / 100).toFixed(2)}\n` +
-        `Day ${Math.floor(daysSinceStart)} of 30-day window\n` +
-        `Refund: ${refund.id}\n\n` +
-        `Reach out to learn why — recover or learn.`,
+        `⚠️ Refund — ${profile.business_name ?? profile.user_id} (${profile.plan_tier ?? '?'})\n\n` +
+        `Amount: $${(recurringTotal / 100).toFixed(2)} · Day ${Math.floor(daysSinceStart)}/30\n\n` +
+        `📊 Reason: ${reasonLabel[reason]}\n` +
+        (reasonDetail ? `💬 Detail: "${reasonDetail}"\n` : '') +
+        `\nRefund: ${refund.id}\n\n` +
+        `Reach out — recover or learn.`,
       from: process.env.TWILIO_PHONE_NUMBER!,
       to: PETER_PHONE,
     })

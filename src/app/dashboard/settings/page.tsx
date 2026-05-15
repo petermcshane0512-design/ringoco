@@ -74,6 +74,9 @@ export default function SettingsPage() {
   const [cancelling, setCancelling] = useState(false)
   const [cancelStatus, setCancelStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [cancelMessage, setCancelMessage] = useState('')
+  const [cancelModalOpen, setCancelModalOpen] = useState(false)
+  const [cancelReason, setCancelReason] = useState<string>('')
+  const [cancelReasonDetail, setCancelReasonDetail] = useState('')
 
   useEffect(() => { loadProfile() }, [])
 
@@ -133,26 +136,32 @@ export default function SettingsPage() {
     if (url) window.location.href = url
   }
 
-  async function cancelAndRefund() {
-    const confirmed = window.confirm(
-      'Cancel your subscription and request a refund?\n\n' +
-      '• Within 30 days of signup → full refund\n' +
-      '• After 30 days → cancellation only (no refund)\n\n' +
-      'Your BellAveGo number will be paused until you reactivate.'
-    )
-    if (!confirmed) return
+  function openCancelModal() {
+    setCancelReason('')
+    setCancelReasonDetail('')
+    setCancelStatus('idle')
+    setCancelMessage('')
+    setCancelModalOpen(true)
+  }
+
+  async function submitCancel() {
+    if (!cancelReason) return // require a reason picked
     setCancelling(true)
     setCancelStatus('idle')
-    const res = await fetch('/api/subscription/refund', { method: 'POST' })
+    const res = await fetch('/api/subscription/refund', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: cancelReason, reasonDetail: cancelReasonDetail }),
+    })
     const json = await res.json().catch(() => ({}))
     setCancelling(false)
     if (res.ok) {
       setCancelStatus('success')
       setCancelMessage(json.message || 'Cancelled. Refund (if eligible) will appear in 5–10 business days.')
-      setTimeout(() => loadProfile(), 1500)
+      setTimeout(() => { setCancelModalOpen(false); loadProfile() }, 2500)
     } else {
       setCancelStatus('error')
-      setCancelMessage(json.error || 'Could not cancel — please text Peter at +1 (773) 710-9565.')
+      setCancelMessage(json.error || 'Could not cancel — please text Peter at (773) 710-9565.')
     }
   }
 
@@ -517,7 +526,7 @@ export default function SettingsPage() {
                   Your BellAveGo number will be paused.
                 </p>
                 <button
-                  onClick={cancelAndRefund}
+                  onClick={openCancelModal}
                   disabled={cancelling}
                   style={{
                     fontSize: 12,
@@ -531,25 +540,8 @@ export default function SettingsPage() {
                     fontFamily: 'inherit',
                   }}
                 >
-                  {cancelling
-                    ? 'Cancelling...'
-                    : cancelStatus === 'success'
-                    ? 'Cancelled'
-                    : 'Cancel & request refund'}
+                  {cancelStatus === 'success' ? 'Cancelled' : 'Cancel & request refund'}
                 </button>
-                {cancelMessage && (
-                  <div style={{
-                    marginTop: 10,
-                    fontSize: 12,
-                    color: cancelStatus === 'success' ? '#15803D' : '#DC2626',
-                    background: cancelStatus === 'success' ? '#F0FDF4' : '#FEF2F2',
-                    border: `1px solid ${cancelStatus === 'success' ? '#BBF7D0' : '#FECACA'}`,
-                    borderRadius: 8,
-                    padding: '10px 12px',
-                  }}>
-                    {cancelMessage}
-                  </div>
-                )}
               </div>
             </>
           ) : (
@@ -559,6 +551,157 @@ export default function SettingsPage() {
           )}
         </div>
       </div>
+
+      {/* ── Cancel + refund modal ───────────────────────────────────
+          Replaces the old window.confirm() with a real form that captures a
+          structured reason. Reason flows into Stripe metadata + Peter's churn
+          SMS so he can spot patterns ("3/5 recent refunds said 'voice sounds
+          robotic'") without reading every refund individually. */}
+      {cancelModalOpen && (
+        <div
+          onClick={() => !cancelling && setCancelModalOpen(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(11,31,58,0.55)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 20, fontFamily: "'Inter', system-ui, sans-serif",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: 520, background: '#fff',
+              borderRadius: 16, boxShadow: '0 24px 60px rgba(7,27,58,0.32)',
+              border: '1px solid rgba(10,168,159,0.18)',
+              overflow: 'hidden',
+            }}
+          >
+            {cancelStatus === 'success' ? (
+              <div style={{ padding: '32px 28px', textAlign: 'center' }}>
+                <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #22C55E, #16A34A)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 8px 24px rgba(34,197,94,0.42)' }}>
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                </div>
+                <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0B1F3A', margin: '0 0 8px', letterSpacing: '-0.3px' }}>Refund processed</h3>
+                <p style={{ fontSize: 13, color: '#4A6670', lineHeight: 1.55, margin: 0 }}>{cancelMessage}</p>
+              </div>
+            ) : (
+              <>
+                <div style={{ padding: '22px 26px 14px', borderBottom: '1px solid rgba(10,168,159,0.12)' }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 6 }}>
+                    30-day money-back guarantee
+                  </div>
+                  <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0B1F3A', margin: '0 0 6px', letterSpacing: '-0.3px' }}>
+                    Sorry to see you go.
+                  </h3>
+                  <p style={{ fontSize: 13, color: '#4A6670', lineHeight: 1.55, margin: 0 }}>
+                    Help us improve — what didn&apos;t work? Your subscription will be refunded in full and service stays live through the end of this billing cycle.
+                  </p>
+                </div>
+                <div style={{ padding: '20px 26px' }}>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#4A7A80', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+                    Reason (required)
+                  </label>
+                  <div style={{ display: 'grid', gap: 6, marginBottom: 18 }}>
+                    {[
+                      { v: 'voice_quality',     l: "The AI didn't sound human enough" },
+                      { v: 'not_enough_calls',  l: "Not getting enough calls / leads" },
+                      { v: 'forwarding_broken', l: "Couldn't get call forwarding to work" },
+                      { v: 'too_expensive',     l: "Too expensive for my business" },
+                      { v: 'wrong_fit',         l: "Not the right product fit" },
+                      { v: 'found_alternative', l: "Switching to a different service" },
+                      { v: 'business_issue',    l: "Business problem unrelated to product" },
+                      { v: 'other',             l: "Other" },
+                    ].map((o) => {
+                      const active = cancelReason === o.v
+                      return (
+                        <button
+                          key={o.v}
+                          type="button"
+                          onClick={() => setCancelReason(o.v)}
+                          style={{
+                            textAlign: 'left',
+                            padding: '10px 14px',
+                            borderRadius: 9,
+                            border: `1.5px solid ${active ? '#0AA89F' : 'rgba(10,168,159,0.18)'}`,
+                            background: active ? 'rgba(10,168,159,0.08)' : '#F5FDFB',
+                            cursor: 'pointer', fontFamily: 'inherit',
+                            fontSize: 13, fontWeight: 600,
+                            color: active ? '#0AA89F' : '#0B1F3A',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          {active ? '✓ ' : ''}{o.l}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#4A7A80', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                    Anything else? (optional — but really helpful for us)
+                  </label>
+                  <textarea
+                    value={cancelReasonDetail}
+                    onChange={(e) => setCancelReasonDetail(e.target.value)}
+                    placeholder="e.g. The AI kept asking the same question. Or: my forwarding worked but customers said it sounded robotic. The more specific, the more useful."
+                    rows={3}
+                    style={{
+                      width: '100%',
+                      background: '#F5FDFB',
+                      border: '1.5px solid rgba(10,168,159,0.2)',
+                      borderRadius: 8,
+                      padding: '10px 12px',
+                      fontSize: 13,
+                      color: '#0B1F3A',
+                      fontFamily: 'inherit',
+                      lineHeight: 1.5,
+                      outline: 'none',
+                      resize: 'vertical',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  {cancelStatus === 'error' && cancelMessage && (
+                    <div style={{ marginTop: 12, padding: '10px 12px', borderRadius: 8, background: '#FEF2F2', border: '1px solid #FECACA', fontSize: 12, color: '#991B1B' }}>
+                      {cancelMessage}
+                    </div>
+                  )}
+                  <div style={{ marginTop: 18, display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                    <button
+                      type="button"
+                      onClick={() => !cancelling && setCancelModalOpen(false)}
+                      disabled={cancelling}
+                      style={{
+                        padding: '10px 18px', borderRadius: 9,
+                        border: '1.5px solid rgba(10,168,159,0.2)',
+                        background: '#fff', color: '#4A6670',
+                        fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      Never mind, keep my account
+                    </button>
+                    <button
+                      type="button"
+                      onClick={submitCancel}
+                      disabled={!cancelReason || cancelling}
+                      style={{
+                        padding: '10px 18px', borderRadius: 9, border: 'none',
+                        background: !cancelReason ? '#CBD5E1' : '#DC2626',
+                        color: '#fff', fontSize: 13, fontWeight: 800,
+                        cursor: !cancelReason || cancelling ? 'not-allowed' : 'pointer',
+                        fontFamily: 'inherit',
+                        boxShadow: !cancelReason ? 'none' : '0 4px 14px rgba(220,38,38,0.32)',
+                      }}
+                    >
+                      {cancelling ? 'Processing…' : 'Cancel & refund'}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   )
