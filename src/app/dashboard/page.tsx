@@ -4,14 +4,15 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import { createClient } from "@supabase/supabase-js";
 
 const ADMIN_EMAILS = new Set(["pmcshane@fordham.edu", "peter@bellavego.com"]);
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// NOTE: This page previously read jobs/customers/reports directly from
+// Supabase with the anon key. That leaked tenant data across customers
+// (CLAUDE.md explicitly warned: "Client pages MUST NOT use the anon Supabase
+// key for tenant-scoped reads — they leak across tenants"). Now all reads
+// go through /api/dashboard/summary which uses service-role + effectiveAuth
+// to scope to the current (or impersonated) tenant.
 
 type Job = {
   id: string;
@@ -101,22 +102,26 @@ export default function DashboardPage() {
       return;
     }
 
-    const [
-      { data: jobData },
-      { count: jobCount },
-      { count: customerCount },
-      { data: reportData },
-    ] = await Promise.all([
-      supabase.from("jobs").select("*").order("scheduled_at", { ascending: true }).limit(20),
-      supabase.from("jobs").select("*", { count: "exact", head: true }),
-      supabase.from("customers").select("*", { count: "exact", head: true }),
-      supabase.from("consulting_reports").select("*").order("created_at", { ascending: false }).limit(10),
-    ]);
-    const jobList = (jobData as Job[]) || [];
-    const revenue = jobList.filter((j) => j.status === "completed").reduce((sum, j) => sum + (j.amount || 0), 0);
+    // Single server-side call — tenant-scoped, no anon key, no data leak.
+    const summary = await fetch("/api/dashboard/summary")
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null);
+    if (!summary) {
+      setLoadingJobs(false);
+      return;
+    }
+    const jobList = (summary.jobs as Job[]) || [];
+    const revenue = jobList
+      .filter((j) => j.status === "completed")
+      .reduce((sum, j) => sum + (j.amount || 0), 0);
     setJobs(jobList);
-    setReports((reportData as Report[]) || []);
-    setCounts({ jobs: jobCount || 0, customers: customerCount || 0, revenue, leads: 0 });
+    setReports((summary.reports as Report[]) || []);
+    setCounts({
+      jobs: summary.jobsCount || 0,
+      customers: summary.customersCount || 0,
+      revenue,
+      leads: 0,
+    });
     setLoadingJobs(false);
   }
 
@@ -147,10 +152,20 @@ export default function DashboardPage() {
 
   async function handleJobAction(jobId: string, action: "scheduled" | "cancelled" | "completed") {
     setActionLoading(jobId + action);
-    const update: Record<string, unknown> = { status: action };
-    if (action === "completed") update.completed_at = new Date().toISOString();
-    await supabase.from("jobs").update(update).eq("id", jobId);
-    setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, status: action } : j)));
+    // Server-side update — double-filters on user_id so tenant A can't update
+    // tenant B's job by guessing the id. Auto-stamps completed_at on completion.
+    const res = await fetch("/api/jobs/update-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: jobId, status: action }),
+    });
+    if (res.ok) {
+      // Optimistic update — UI feels instant.
+      setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, status: action } : j)));
+    } else {
+      const j = await res.json().catch(() => ({}));
+      alert(`Couldn't update job: ${j.error || res.statusText}`);
+    }
     setActionLoading(null);
   }
 

@@ -19,9 +19,14 @@ export async function POST(req: NextRequest) {
   }
 
   // Double-filter: id AND user_id — prevents tenant A from updating tenant B's job by guessing id.
+  // Also auto-stamp completed_at when transitioning to 'completed' so the review-requests
+  // cron picks up the job 4h later for the Google review SMS.
+  const update: Record<string, unknown> = { status }
+  if (status === 'completed') update.completed_at = new Date().toISOString()
+
   const { data, error } = await supabase
     .from('jobs')
-    .update({ status })
+    .update(update)
     .eq('id', id)
     .eq('user_id', userId)
     .select()

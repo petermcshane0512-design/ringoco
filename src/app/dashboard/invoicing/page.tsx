@@ -1,12 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Tenant-scoped invoice reads now go through /api/invoices/list (service-role
+// + effectiveAuth). The previous client-side Supabase anon-key query leaked
+// invoices across tenants.
 
 type Invoice = {
   id: string;
@@ -39,11 +37,14 @@ export default function InvoicingPage() {
   }, []);
 
   async function fetchInvoices() {
-    const { data } = await supabase
-      .from("invoices")
-      .select("*")
-      .order("created_at", { ascending: false });
-    setInvoices(data || []);
+    const res = await fetch("/api/invoices/list");
+    if (!res.ok) {
+      setInvoices([]);
+      setLoading(false);
+      return;
+    }
+    const j = await res.json();
+    setInvoices((j.invoices as Invoice[]) || []);
     setLoading(false);
   }
 
