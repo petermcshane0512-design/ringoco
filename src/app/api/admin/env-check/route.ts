@@ -31,6 +31,17 @@ export async function GET() {
   return NextResponse.json({
     timestamp: new Date().toISOString(),
     runtime: process.env.VERCEL_ENV ?? 'unknown',
+    // Identity of the Vercel project actually serving this response.
+    // Compare this to the Vercel dashboard URL you're editing to confirm
+    // you're editing the SAME project that serves bellavego.com.
+    vercel_project_identity: {
+      project_production_url: process.env.VERCEL_PROJECT_PRODUCTION_URL ?? null,
+      git_repo_owner: process.env.VERCEL_GIT_REPO_OWNER ?? null,
+      git_repo_slug: process.env.VERCEL_GIT_REPO_SLUG ?? null,
+      git_commit_sha: (process.env.VERCEL_GIT_COMMIT_SHA ?? '').slice(0, 7),
+      deployment_id: process.env.VERCEL_DEPLOYMENT_ID ?? null,
+      branch: process.env.VERCEL_GIT_COMMIT_REF ?? null,
+    },
     google: {
       GOOGLE_MAPS_API_KEY: { set: present('GOOGLE_MAPS_API_KEY'), len: length('GOOGLE_MAPS_API_KEY'), prefix: startsWith('GOOGLE_MAPS_API_KEY') },
       GOOGLE_PLACES_API_KEY: { set: present('GOOGLE_PLACES_API_KEY'), len: length('GOOGLE_PLACES_API_KEY'), prefix: startsWith('GOOGLE_PLACES_API_KEY') },
