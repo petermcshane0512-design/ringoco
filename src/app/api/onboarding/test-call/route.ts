@@ -34,7 +34,7 @@ export async function POST() {
     .maybeSingle()
 
   if (!profile?.twilio_number) {
-    return NextResponse.json({ error: 'No Twilio number provisioned yet' }, { status: 400 })
+    return NextResponse.json({ error: 'No phone number provisioned yet' }, { status: 400 })
   }
   if (!profile.owner_phone) {
     return NextResponse.json({ error: 'No owner phone on file' }, { status: 400 })

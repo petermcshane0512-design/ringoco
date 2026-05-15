@@ -78,7 +78,7 @@ const PLANS: Plan[] = [
     features: [
       'Everything in AI Office Manager, plus:',
       'Auto-confirm mode — AI books without your approval after trust period',
-      'Multi-location support (up to 5 locations, separate Twilio numbers each)',
+      'Multi-location support (up to 5 locations, separate phone numbers each)',
       'Custom AI prompt tuning to your shop’s exact voice',
       'AI Photo Estimator — customer texts a photo, AI quotes',
       'AI Financing Closer — Wisetack / GreenSky integration',

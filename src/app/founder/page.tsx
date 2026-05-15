@@ -224,9 +224,9 @@ export default function FounderPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
             {[
-              { title: 'Multi-tenant Twilio',     desc: 'Every customer auto-provisioned a local AI number on Stripe checkout.', tone: 'orange' },
+              { title: 'Auto-provisioned local number',     desc: 'Every customer gets a local AI number in their area code the moment they pay.', tone: 'orange' },
               { title: 'Stripe billing',          desc: 'Three-tier subscription, auto-suspend on payment failure.', tone: 'teal' },
-              { title: 'AI receptionist (Vapi)',  desc: 'Real Claude Sonnet voice with sub-second latency. Captures 5 fields in under 60 seconds.', tone: 'orange' },
+              { title: 'AI receptionist',  desc: 'Sub-second latency, real natural voice. Captures the lead in under 60 seconds.', tone: 'orange' },
               { title: 'Quote Hunter',            desc: 'Auto-follow-up SMS day 2 / 7 / 14 on open quotes.', tone: 'teal' },
               { title: 'AI Collections',          desc: 'Auto-chases past-due invoices with Stripe pay-by-text links.', tone: 'orange' },
               { title: 'AI Consulting reports',   desc: 'Pulls your data, ranks revenue opportunities by addressable monthly $.', tone: 'teal' },
