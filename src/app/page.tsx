@@ -530,16 +530,16 @@ export default function HomePage() {
 
               <div className="hero-trust">
                 <div className="hero-trust-item">
-                  <span className="hero-trust-num">12s</span>
-                  <span className="hero-trust-lab">Avg answer time</span>
+                  <span className="hero-trust-num">✓</span>
+                  <span className="hero-trust-lab">Beats voicemail</span>
                 </div>
                 <div className="hero-trust-item">
                   <span className="hero-trust-num">24/7</span>
                   <span className="hero-trust-lab">Always on</span>
                 </div>
                 <div className="hero-trust-item">
-                  <span className="hero-trust-num">$397</span>
-                  <span className="hero-trust-lab">Starting / month</span>
+                  <span className="hero-trust-num">$0</span>
+                  <span className="hero-trust-lab">Setup fee waived</span>
                 </div>
                 <div className="hero-trust-item">
                   <span className="hero-trust-num">30‑day</span>
