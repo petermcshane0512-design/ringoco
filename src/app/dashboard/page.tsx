@@ -337,13 +337,12 @@ export default function DashboardPage() {
       {/* Activation banner */}
       {profile && !profile.is_active && (() => {
         const TIERS = {
-          receptionist: { label: "Receptionist",   monthly: 397,  annual: 3960,  setup: 250,  sub: "AI answers every call · 250 bookings/mo · 6 AI consulting reports/yr" },
-          officemgr:    { label: "Office Manager", monthly: 797,  annual: 7940,  setup: 500,  sub: "Receptionist + Quote Hunter + Collections + Reviews + Reputation + 12 reports/yr" },
-          concierge:    { label: "Concierge",      monthly: 1997, annual: 19920, setup: 1000, sub: "Office Manager + AI Marketing Operations (ad creatives, lead sourcing, SEO, weekly strategy reports)" },
+          receptionist: { label: "Receptionist",   monthly: 397,  annual: 3960,  sub: "AI answers every call · 250 bookings/mo · 6 AI consulting reports/yr" },
+          officemgr:    { label: "Office Manager", monthly: 797,  annual: 7940,  sub: "Receptionist + Quote Hunter + Collections + Reviews + Reputation + 12 reports/yr" },
+          concierge:    { label: "Concierge",      monthly: 1997, annual: 19920, sub: "Office Manager + AI Marketing Operations (ad creatives, lead sourcing, SEO, weekly strategy reports)" },
         } as const;
         const cur = TIERS[tier];
-        const subToday = interval === "monthly" ? cur.monthly : cur.annual;
-        const totalToday = subToday + cur.setup;
+        const totalToday = interval === "monthly" ? cur.monthly : cur.annual;
         return (
           <div style={{ marginBottom: 22, padding: "20px 22px", background: "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)", border: "1px solid #FDE68A", borderRadius: 14 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
@@ -373,7 +372,7 @@ export default function DashboardPage() {
                     )}
                     <div style={{ fontSize: 12, fontWeight: 800, color: "#92400E", marginBottom: 2 }}>{t.label}</div>
                     <div style={{ fontSize: 20, fontWeight: 900, color: "#0B1F3A", letterSpacing: "-0.5px" }}>${m}<span style={{ fontSize: 11, color: "#78350F", fontWeight: 700 }}>/mo</span></div>
-                    <div style={{ fontSize: 9, color: "#78350F", marginTop: 2 }}>Unlimited calls{t.setup > 0 ? ` · +$${t.setup} setup` : " · No setup fee"}</div>
+                    <div style={{ fontSize: 9, color: "#78350F", marginTop: 2 }}>Unlimited calls · No setup fee</div>
                     <div style={{ fontSize: 10, color: "#A16207", marginTop: 4, lineHeight: 1.4 }}>{t.sub}</div>
                   </button>
                 );
@@ -381,8 +380,7 @@ export default function DashboardPage() {
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
               <div style={{ fontSize: 12, color: "#78350F" }}>
-                <span style={{ fontWeight: 700 }}>${totalToday}</span> charged today
-                {cur.setup > 0 ? ` ($${subToday} ${interval} + $${cur.setup} onboarding)` : ""}.
+                <span style={{ fontWeight: 700 }}>${totalToday}</span> charged today.
                 {interval === "monthly" ? " Cancel anytime within 30 days for full refund." : " 12 months for the price of 10."}
               </div>
               <button onClick={startCheckout} disabled={checkoutLoading} style={{ padding: "12px 26px", borderRadius: 10, border: "none", fontSize: 13, fontWeight: 800, cursor: checkoutLoading ? "wait" : "pointer", background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)", color: "#fff", boxShadow: "0 4px 14px rgba(34,197,94,0.32)", whiteSpace: "nowrap" }}>

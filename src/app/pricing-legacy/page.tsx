@@ -291,7 +291,7 @@ export default function PricingPage() {
                       {isLoading ? 'Loading…' : isSignedIn ? "Let's get started →" : 'Get Started →'}
                     </button>
                     <p style={{ fontSize: 11, color: plan.popular ? 'rgba(255,255,255,0.45)' : '#7AAAB2', textAlign: 'center', marginTop: 10, marginBottom: 0, fontWeight: 500 }}>
-                      + ${plan.setup} onboarding · 30-day money-back · Cancel anytime
+                      30-day money-back · Cancel anytime
                     </p>
                   </>
                 )}
@@ -336,7 +336,7 @@ export default function PricingPage() {
       </section>
 
       <footer style={{ padding: '36px 40px', background: '#0B1F3A', textAlign: 'center' }}>
-        <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>AI Office Manager for home service pros · From $179/mo + $50 setup · 30-day money-back · Cancel anytime</p>
+        <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>AI Office Manager for home service pros · From $179/mo · 30-day money-back · Cancel anytime</p>
       </footer>
     </main>
   )

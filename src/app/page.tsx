@@ -536,8 +536,8 @@ export default function HomePage() {
                   <span className="hero-trust-lab">Always on</span>
                 </div>
                 <div className="hero-trust-item">
-                  <span className="hero-trust-num">$0</span>
-                  <span className="hero-trust-lab">Setup fee waived</span>
+                  <span className="hero-trust-num">100%</span>
+                  <span className="hero-trust-lab">Calls answered</span>
                 </div>
                 <div className="hero-trust-item">
                   <span className="hero-trust-num">30‑day</span>
@@ -850,7 +850,7 @@ export default function HomePage() {
                 )}
               </div>
               <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.38)' : '#7AAAB2', marginBottom: 6 }}>{plan.customCta ? 'pricing per location' : 'per month · cancel anytime'}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>{plan.customCta ? 'White-glove onboarding included' : '+ $' + plan.setup + ' onboarding · 30-day money-back'}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>{plan.customCta ? 'White-glove kickoff included' : '30-day money-back · Cancel anytime'}</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: plan.popular ? '#18AFA8' : '#0AA89F', marginBottom: 16 }}>{plan.calls} calls</div>
               <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.6)' : '#4A7A80', marginBottom: 24, lineHeight: 1.6 }}>{plan.desc}</div>
               <div style={{ marginBottom: 24 }}>

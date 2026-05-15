@@ -145,8 +145,7 @@ export async function POST() {
     ok: true,
     refund_id: refund.id,
     refunded_amount: recurringTotal / 100,
-    setup_fee_kept: true,
     service_active_until: serviceActiveUntil,
-    message: `Refund of $${(recurringTotal / 100).toFixed(2)} processed. Service stays live until ${serviceActiveUntil ? new Date(serviceActiveUntil).toLocaleDateString() : 'end of billing cycle'}. Setup fee retained — it covered real onboarding work.`,
+    message: `Refund of $${(recurringTotal / 100).toFixed(2)} processed. Service stays live until ${serviceActiveUntil ? new Date(serviceActiveUntil).toLocaleDateString() : 'end of billing cycle'}.`,
   })
 }

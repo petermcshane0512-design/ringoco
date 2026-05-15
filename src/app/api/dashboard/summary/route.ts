@@ -25,7 +25,21 @@ export async function GET() {
   const { userId } = await effectiveAuth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const [jobsRes, jobsCountRes, customersCountRes, reportsRes] = await Promise.all([
+  // Time windows for the AI Receptionist sidebar live metrics
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+  const startOfMonth = new Date()
+  startOfMonth.setDate(1)
+  startOfMonth.setHours(0, 0, 0, 0)
+
+  const [
+    jobsRes,
+    jobsCountRes,
+    customersCountRes,
+    reportsRes,
+    callsTodayRes,
+    leadsThisMonthRes,
+  ] = await Promise.all([
     supabase
       .from('jobs')
       .select('*')
@@ -46,6 +60,21 @@ export async function GET() {
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(10),
+    // Calls received today — drives the "Calls today" sidebar metric
+    supabase
+      .from('call_logs')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .gte('created_at', startOfToday.toISOString()),
+    // Leads captured this month — drives the "Leads captured" sidebar metric.
+    // A "lead" = a call_log row where the AI booked a job (booking_completed=true).
+    // Falls back to total call_logs this month if the booking_completed column is empty.
+    supabase
+      .from('call_logs')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('booking_completed', true)
+      .gte('created_at', startOfMonth.toISOString()),
   ])
 
   if (jobsRes.error) return NextResponse.json({ error: jobsRes.error.message }, { status: 500 })
@@ -55,5 +84,7 @@ export async function GET() {
     jobsCount: jobsCountRes.count ?? 0,
     customersCount: customersCountRes.count ?? 0,
     reports: reportsRes.data ?? [],
+    callsToday: callsTodayRes.count ?? 0,
+    leadsThisMonth: leadsThisMonthRes.count ?? 0,
   })
 }
