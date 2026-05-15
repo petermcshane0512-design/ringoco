@@ -73,15 +73,23 @@ export const RECEPTIONIST_CALL_CAP = 250
 // ── Public tier metadata for /pricing page ──────────────────────
 // Display values for the pricing UI. Decoupled from PRICE_IDS so the page can render
 // without server access.
+//
+// SETUP FEES: zeroed out as of May 15 2026 ("founding-partner pricing — $0 to
+// start, no friction"). The setup Stripe price IDs above are kept for backward
+// compat with grandfathered customers and for easy re-enabling — see the
+// comment in /api/stripe/checkout/route.ts for how to turn them back on.
+// To re-enable: set the values below back to 250 / 500 / 1000 and re-add the
+// setup line item in checkout. UI surfaces conditional on `setup > 0` will
+// auto-resurface the fee disclosure.
 export const TIER_METADATA: Record<Tier, {
   name: string
   monthly: number
   annual: number   // shown per-month (annual_cents / 12 / 100), customer billed yearly
   setup: number
 }> = {
-  receptionist: { name: 'Receptionist',    monthly: 397,  annual: 330,  setup: 250  },
-  officemgr:    { name: 'Office Manager',  monthly: 797,  annual: 662,  setup: 500  },
-  concierge:    { name: 'Concierge',       monthly: 1997, annual: 1660, setup: 1000 },
+  receptionist: { name: 'Receptionist',    monthly: 397,  annual: 330,  setup: 0 },
+  officemgr:    { name: 'Office Manager',  monthly: 797,  annual: 662,  setup: 0 },
+  concierge:    { name: 'Concierge',       monthly: 1997, annual: 1660, setup: 0 },
 }
 
 // ── Helpers ─────────────────────────────────────────────────────

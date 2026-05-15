@@ -12,12 +12,16 @@ const PETER_PHONE = process.env.FALLBACK_OWNER_PHONE ?? '+17737109565'
 const REFUND_WINDOW_DAYS = 30
 
 /**
- * Self-serve 30-day money-back guarantee on subscription only.
+ * Self-serve 30-day money-back guarantee.
  * POST /api/subscription/refund
  *
- * Refund covers the recurring (subscription) portion of the most recent paid invoice.
- * Setup fee is NON-REFUNDABLE (covers real onboarding work). Subscription cancels at
- * period-end (customer keeps service for the rest of the month).
+ * Refund covers the full subscription invoice (no setup fee charged currently —
+ * see TIER_METADATA in src/lib/pricing.ts). Subscription cancels at period-end
+ * so the customer keeps service through the end of the billing cycle they paid for.
+ *
+ * If setup fees are re-enabled in the future, this route already skips them
+ * (the lineItem filter only matches recurring price lines), so the refund
+ * logic stays correct: only the sub portion gets refunded, setup retained.
  */
 export async function POST() {
   const { userId } = await auth()
