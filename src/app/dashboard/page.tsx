@@ -56,6 +56,7 @@ export default function DashboardPage() {
   const [tier, setTier] = useState<"receptionist" | "officemgr" | "concierge">("officemgr");
   const [interval, setInterval] = useState<"monthly" | "annual">("annual");
   const [adminSwitching, setAdminSwitching] = useState<string | null>(null);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
   const router = useRouter();
   const { user } = useUser();
   const isAdmin = !!user?.primaryEmailAddress?.emailAddress &&
@@ -103,9 +104,19 @@ export default function DashboardPage() {
     }
 
     // Single server-side call — tenant-scoped, no anon key, no data leak.
-    const summary = await fetch("/api/dashboard/summary")
-      .then((r) => (r.ok ? r.json() : null))
-      .catch(() => null);
+    setSummaryError(null);
+    let summary: { jobs?: Job[]; jobsCount?: number; customersCount?: number; reports?: Report[] } | null = null;
+    try {
+      const res = await fetch("/api/dashboard/summary");
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        setSummaryError(j.error || `Dashboard load failed (HTTP ${res.status}) — refresh in a moment, or text Peter at 773-710-9565 if it persists.`);
+      } else {
+        summary = await res.json();
+      }
+    } catch {
+      setSummaryError("Couldn't reach the server. Check your connection and refresh.");
+    }
     if (!summary) {
       setLoadingJobs(false);
       return;
@@ -307,6 +318,21 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Summary fetch error — surfaces server problems instead of silently
+          showing zeros that look like "your business has no data." */}
+      {summaryError && (
+        <div style={{ marginBottom: 22, padding: "14px 18px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 12, display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#DC2626", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 14, flexShrink: 0 }}>!</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: "#991B1B" }}>Dashboard couldn&apos;t load your data</div>
+            <div style={{ fontSize: 12, color: "#7F1D1D", marginTop: 2, lineHeight: 1.55 }}>{summaryError}</div>
+          </div>
+          <button onClick={() => fetchAll()} style={{ padding: "7px 14px", borderRadius: 8, border: "none", background: "#DC2626", color: "#fff", fontSize: 12, fontWeight: 800, cursor: "pointer" }}>
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Activation banner */}
       {profile && !profile.is_active && (() => {
