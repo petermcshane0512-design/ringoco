@@ -417,31 +417,33 @@ export default function HomePage() {
             /* ── Mobile (iOS portrait / cold-email-click experience) ── */
             @media (max-width: 768px) {
               /* Tighter hero — fits above the fold on iPhone */
-              .hero-grid { padding: 36px 18px 56px; gap: 28px; }
+              .hero-grid { padding: 36px 18px 48px; gap: 22px; grid-template-columns: 1fr; }
               .hero-eyebrow { font-size: 10.5px; margin-bottom: 14px; padding: 5px 11px; }
-              .hero-h1 { font-size: 32px; line-height: 1.05; margin-bottom: 14px; }
+              .hero-h1 { font-size: 34px; line-height: 1.05; margin-bottom: 14px; }
               .hero-sub { font-size: 15px; margin-bottom: 22px; max-width: 100%; }
 
               /* CTAs become full-width thumb-targets */
-              .hero-actions { gap: 10px; margin-bottom: 26px; flex-direction: column; align-items: stretch; }
+              .hero-actions { gap: 10px; margin-bottom: 22px; flex-direction: column; align-items: stretch; }
               .hero-cta-primary, .hero-cta-secondary { width: 100%; justify-content: center; padding: 14px 20px; }
 
-              /* Trust badges shrink */
-              .hero-trust { gap: 16px; padding-top: 18px; }
-              .hero-trust-num { font-size: 18px; }
-              .hero-trust-lab { font-size: 10px; }
-
-              /* Dashboard preview stays VISIBLE on mobile (Peter's ask) — but
-                 rescaled to fit the narrow viewport without overflow. The phone
-                 mockup hides since two stacked floating widgets get noisy. */
-              .hero-stage { min-height: 280px; margin-top: 6px; }
-              .hero-stage-phone { display: none; }
-              .hero-stage-dash {
-                padding-right: 0;
-                transform: scale(0.62);
-                transform-origin: top center;
-                inset: 0 -30%;  /* expand bounding box so the scaled-down preview centers nicely */
+              /* Trust badges — 2x2 grid on mobile so they don't crush */
+              .hero-trust {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr;
+                gap: 14px 22px;
+                padding-top: 18px;
+                max-width: 100%;
               }
+              .hero-trust-num { font-size: 22px; }
+              .hero-trust-lab { font-size: 10.5px; }
+
+              /* Dashboard preview HIDDEN on mobile.
+                 The desktop renders 1040px of dashboard with a 3D tilt — there's
+                 no clean way to cram that into a 390px viewport without parts
+                 falling off-screen or shrinking to unreadable. Mobile users get
+                 the clean text + CTA hero instead; they'll see the full dashboard
+                 demo when they sign up. Conversion > eye candy on mobile. */
+              .hero-stage { display: none; }
 
               /* Pricing + job-site grids collapse to single column */
               .home-grid-2,

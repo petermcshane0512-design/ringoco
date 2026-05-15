@@ -41,12 +41,32 @@ export async function POST() {
     return NextResponse.json({ error: 'Unable to retrieve subscription' }, { status: 500 })
   }
 
-  // 30-day window check
-  const createdMs = subscription.created * 1000
+  // 30-day window check — anchored to the customer's FIRST EVER subscription,
+  // not the current one. Previously we used the current subscription.created,
+  // which let a customer refund on day 28, re-subscribe on day 29, and get a
+  // fresh 30-day window every cycle. Now: one window per customer, ever.
+  let earliestCreatedSec = subscription.created
+  try {
+    const allSubs = await stripe.subscriptions.list({
+      customer: profile.stripe_customer_id,
+      status: 'all',
+      limit: 100,
+    })
+    for (const s of allSubs.data) {
+      if (s.created < earliestCreatedSec) earliestCreatedSec = s.created
+    }
+  } catch (e) {
+    // Non-fatal — fall back to current subscription.created if list fails
+    console.warn('refund: subscription list failed, using current.created', e)
+  }
+
+  const createdMs = earliestCreatedSec * 1000
   const daysSinceStart = (Date.now() - createdMs) / (1000 * 60 * 60 * 24)
   if (daysSinceStart > REFUND_WINDOW_DAYS) {
     return NextResponse.json({
-      error: `Outside ${REFUND_WINDOW_DAYS}-day window (subscription started ${Math.floor(daysSinceStart)} days ago). Contact peter@bellavego.com for case-by-case review.`,
+      error:
+        `Your account started ${Math.floor(daysSinceStart)} days ago — past the ${REFUND_WINDOW_DAYS}-day money-back window. ` +
+        `If something specific isn't working we want to make it right. Text Peter directly at (773) 710-9565 or email peter@bellavego.com — we handle these case-by-case and usually resolve within 24 hours.`,
     }, { status: 400 })
   }
 

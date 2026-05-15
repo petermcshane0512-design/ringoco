@@ -302,7 +302,7 @@ export default function SetupWizard() {
 
               <h2 style={titleStyle}>Forward your business cell here.</h2>
               <p style={subStyle}>
-                When your phone can&apos;t pick up after about 12 seconds, calls will route to BellAveGo automatically.
+                When your phone can&apos;t pick up after about 15 seconds, calls will route to BellAveGo automatically.
                 {carrierDetected ? (
                   <> We detected your carrier as <strong style={{ color: "#0AA89F" }}>{CARRIER_LABEL[carrier]}</strong>.</>
                 ) : (

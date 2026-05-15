@@ -4,15 +4,22 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
+import { TIER_METADATA, type Tier } from "@/lib/pricing";
 
 const ADMIN_EMAILS = new Set(["pmcshane@fordham.edu", "peter@bellavego.com"]);
 
+// Activation-banner copy. Prices come from TIER_METADATA in src/lib/pricing.ts
+// (single source of truth — if pricing changes, this banner updates automatically).
+const TIER_BANNER_COPY: Record<Tier, string> = {
+  receptionist: "AI answers every call · 250 bookings/mo · 6 AI consulting reports/yr",
+  officemgr:    "Receptionist + Quote Hunter + Collections + Reviews + Reputation + 12 reports/yr",
+  concierge:    "Office Manager + AI Marketing Operations (ad creatives, lead sourcing, SEO, weekly strategy reports)",
+};
+
 // NOTE: This page previously read jobs/customers/reports directly from
-// Supabase with the anon key. That leaked tenant data across customers
-// (CLAUDE.md explicitly warned: "Client pages MUST NOT use the anon Supabase
-// key for tenant-scoped reads — they leak across tenants"). Now all reads
-// go through /api/dashboard/summary which uses service-role + effectiveAuth
-// to scope to the current (or impersonated) tenant.
+// Supabase with the anon key. That leaked tenant data across customers.
+// Now all reads go through /api/dashboard/summary which uses service-role
+// + effectiveAuth to scope to the current (or impersonated) tenant.
 
 type Job = {
   id: string;
@@ -54,9 +61,13 @@ export default function DashboardPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [provisionLoading, setProvisionLoading] = useState(false);
   const [tier, setTier] = useState<"receptionist" | "officemgr" | "concierge">("officemgr");
-  const [interval, setInterval] = useState<"monthly" | "annual">("annual");
+  // Renamed from `interval` to `billingCycle` so we don't shadow the global
+  // `window.setInterval` (which lint rightly flags as a bug magnet).
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("annual");
   const [adminSwitching, setAdminSwitching] = useState<string | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [callsToday, setCallsToday] = useState(0);
+  const [leadsThisMonth, setLeadsThisMonth] = useState(0);
   const router = useRouter();
   const { user } = useUser();
   const isAdmin = !!user?.primaryEmailAddress?.emailAddress &&
@@ -105,7 +116,14 @@ export default function DashboardPage() {
 
     // Single server-side call — tenant-scoped, no anon key, no data leak.
     setSummaryError(null);
-    let summary: { jobs?: Job[]; jobsCount?: number; customersCount?: number; reports?: Report[] } | null = null;
+    let summary: {
+      jobs?: Job[]
+      jobsCount?: number
+      customersCount?: number
+      reports?: Report[]
+      callsToday?: number
+      leadsThisMonth?: number
+    } | null = null;
     try {
       const res = await fetch("/api/dashboard/summary");
       if (!res.ok) {
@@ -131,8 +149,10 @@ export default function DashboardPage() {
       jobs: summary.jobsCount || 0,
       customers: summary.customersCount || 0,
       revenue,
-      leads: 0,
+      leads: summary.leadsThisMonth || 0,
     });
+    setCallsToday(summary.callsToday || 0);
+    setLeadsThisMonth(summary.leadsThisMonth || 0);
     setLoadingJobs(false);
   }
 
@@ -142,7 +162,7 @@ export default function DashboardPage() {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier, interval }),
+        body: JSON.stringify({ tier, interval: billingCycle }),
       }).then((r) => r.json());
       if (res.url) window.location.href = res.url;
     } finally {
@@ -213,6 +233,23 @@ export default function DashboardPage() {
     fontSize: 13, color: "#4A6670", verticalAlign: "middle",
   };
   const emptyBox: React.CSSProperties = { textAlign: "center", padding: "44px 20px" };
+
+  // Skeleton loader — looks like the table is mid-load instead of just "Loading..."
+  function TableSkeleton() {
+    return (
+      <div style={{ padding: "8px 0 24px" }}>
+        <style>{`@keyframes dashShimmer { 0% { background-position: -300px 0 } 100% { background-position: 300px 0 } }`}</style>
+        {[0, 1, 2].map((i) => (
+          <div key={i} style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 0", borderBottom: "1px solid rgba(232,116,43,0.06)", opacity: 0.6 - i * 0.15 }}>
+            <div style={{ flex: 1.6, height: 12, borderRadius: 4, background: "linear-gradient(90deg, rgba(232,116,43,0.06) 0%, rgba(232,116,43,0.16) 50%, rgba(232,116,43,0.06) 100%)", backgroundSize: "600px 100%", animation: "dashShimmer 1.4s linear infinite" }} />
+            <div style={{ flex: 1, height: 12, borderRadius: 4, background: "linear-gradient(90deg, rgba(232,116,43,0.06) 0%, rgba(232,116,43,0.16) 50%, rgba(232,116,43,0.06) 100%)", backgroundSize: "600px 100%", animation: "dashShimmer 1.4s linear infinite 0.2s" }} />
+            <div style={{ flex: 1.2, height: 12, borderRadius: 4, background: "linear-gradient(90deg, rgba(232,116,43,0.06) 0%, rgba(232,116,43,0.16) 50%, rgba(232,116,43,0.06) 100%)", backgroundSize: "600px 100%", animation: "dashShimmer 1.4s linear infinite 0.4s" }} />
+            <div style={{ flex: 0.8, height: 22, borderRadius: 11, background: "linear-gradient(90deg, rgba(232,116,43,0.06) 0%, rgba(232,116,43,0.16) 50%, rgba(232,116,43,0.06) 100%)", backgroundSize: "600px 100%", animation: "dashShimmer 1.4s linear infinite 0.6s" }} />
+          </div>
+        ))}
+      </div>
+    );
+  }
   const emptyTitle: React.CSSProperties = { fontSize: 14, fontWeight: 700, color: "#0B1F3A", marginBottom: 6 };
   const emptySub: React.CSSProperties = { fontSize: 12, color: "#7AAAB2", lineHeight: 1.6 };
 
@@ -236,7 +273,15 @@ export default function DashboardPage() {
 
   function formatDate(iso: string) {
     if (!iso) return "—";
-    return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    // New take_message flow stores non-date values like "callback requested",
+    // "Wednesday afternoon", "ASAP" in scheduled_time. Don't try to parse those
+    // as ISO timestamps — display them verbatim, capitalized.
+    if (!/^\d{4}-\d{2}-\d{2}/.test(iso) && isNaN(Date.parse(iso))) {
+      return iso.charAt(0).toUpperCase() + iso.slice(1);
+    }
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   }
 
   const metrics = [
@@ -334,15 +379,16 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Activation banner */}
+      {/* Activation banner — all pricing from src/lib/pricing.ts (single source
+          of truth). When you update tier prices there, this banner updates
+          automatically with no code change. */}
       {profile && !profile.is_active && (() => {
-        const TIERS = {
-          receptionist: { label: "Receptionist",   monthly: 397,  annual: 3960,  sub: "AI answers every call · 250 bookings/mo · 6 AI consulting reports/yr" },
-          officemgr:    { label: "Office Manager", monthly: 797,  annual: 7940,  sub: "Receptionist + Quote Hunter + Collections + Reviews + Reputation + 12 reports/yr" },
-          concierge:    { label: "Concierge",      monthly: 1997, annual: 19920, sub: "Office Manager + AI Marketing Operations (ad creatives, lead sourcing, SEO, weekly strategy reports)" },
-        } as const;
-        const cur = TIERS[tier];
-        const totalToday = interval === "monthly" ? cur.monthly : cur.annual;
+        const cur = TIER_METADATA[tier];
+        // TIER_METADATA.annual is the per-MONTH equivalent for annual plans.
+        // For "charged today" we need the yearly total (annual × 12) + setup.
+        const subToday = billingCycle === "monthly" ? cur.monthly : cur.annual * 12;
+        const totalToday = subToday + cur.setup;
+        const tierKeys: Tier[] = ["receptionist", "officemgr", "concierge"];
         return (
           <div style={{ marginBottom: 22, padding: "20px 22px", background: "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)", border: "1px solid #FDE68A", borderRadius: 14 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
@@ -354,34 +400,37 @@ export default function DashboardPage() {
               </div>
               <div style={{ display: "flex", background: "#fff", border: "1px solid #FDE68A", borderRadius: 10, padding: 3, fontSize: 11, fontWeight: 700 }}>
                 {(["annual", "monthly"] as const).map((i) => (
-                  <button key={i} onClick={() => setInterval(i)} style={{ padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer", background: interval === i ? "#92400E" : "transparent", color: interval === i ? "#fff" : "#78350F", textTransform: "capitalize" }}>
+                  <button key={i} onClick={() => setBillingCycle(i)} style={{ padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer", background: billingCycle === i ? "#92400E" : "transparent", color: billingCycle === i ? "#fff" : "#78350F", textTransform: "capitalize" }}>
                     {i}{i === "annual" ? " (save 17%)" : ""}
                   </button>
                 ))}
               </div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 14 }}>
-              {(Object.keys(TIERS) as Array<keyof typeof TIERS>).map((k) => {
-                const t = TIERS[k];
-                const m = interval === "monthly" ? t.monthly : Math.round(t.annual / 12);
+              {tierKeys.map((k) => {
+                const t = TIER_METADATA[k];
+                const perMonth = billingCycle === "monthly" ? t.monthly : t.annual;
+                const callsLine = k === "receptionist" ? "250 calls/mo" : "Unlimited calls";
+                const setupLine = t.setup > 0 ? ` · +$${t.setup} setup` : "";
                 const active = tier === k;
                 return (
                   <button key={k} onClick={() => setTier(k)} style={{ padding: "14px 14px", borderRadius: 10, border: active ? "2px solid #92400E" : "1px solid #FDE68A", background: active ? "#fff" : "rgba(255,255,255,0.5)", textAlign: "left", cursor: "pointer", position: "relative" }}>
                     {k === "officemgr" && (
                       <span style={{ position: "absolute", top: -10, right: 10, fontSize: 9, fontWeight: 800, padding: "3px 8px", borderRadius: 10, background: "#22C55E", color: "#fff", letterSpacing: "0.06em", textTransform: "uppercase" }}>Most popular</span>
                     )}
-                    <div style={{ fontSize: 12, fontWeight: 800, color: "#92400E", marginBottom: 2 }}>{t.label}</div>
-                    <div style={{ fontSize: 20, fontWeight: 900, color: "#0B1F3A", letterSpacing: "-0.5px" }}>${m}<span style={{ fontSize: 11, color: "#78350F", fontWeight: 700 }}>/mo</span></div>
-                    <div style={{ fontSize: 9, color: "#78350F", marginTop: 2 }}>Unlimited calls · No setup fee</div>
-                    <div style={{ fontSize: 10, color: "#A16207", marginTop: 4, lineHeight: 1.4 }}>{t.sub}</div>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: "#92400E", marginBottom: 2 }}>{t.name}</div>
+                    <div style={{ fontSize: 20, fontWeight: 900, color: "#0B1F3A", letterSpacing: "-0.5px" }}>${perMonth}<span style={{ fontSize: 11, color: "#78350F", fontWeight: 700 }}>/mo</span></div>
+                    <div style={{ fontSize: 9, color: "#78350F", marginTop: 2 }}>{callsLine}{setupLine}</div>
+                    <div style={{ fontSize: 10, color: "#A16207", marginTop: 4, lineHeight: 1.4 }}>{TIER_BANNER_COPY[k]}</div>
                   </button>
                 );
               })}
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
               <div style={{ fontSize: 12, color: "#78350F" }}>
-                <span style={{ fontWeight: 700 }}>${totalToday}</span> charged today.
-                {interval === "monthly" ? " Cancel anytime within 30 days for full refund." : " 12 months for the price of 10."}
+                <span style={{ fontWeight: 700 }}>${totalToday.toLocaleString()}</span> charged today
+                {cur.setup > 0 ? ` ($${subToday.toLocaleString()} ${billingCycle} + $${cur.setup} setup)` : ""}.
+                {billingCycle === "monthly" ? " Cancel anytime within 30 days for full refund." : " 12 months for the price of 10."}
               </div>
               <button onClick={startCheckout} disabled={checkoutLoading} style={{ padding: "12px 26px", borderRadius: 10, border: "none", fontSize: 13, fontWeight: 800, cursor: checkoutLoading ? "wait" : "pointer", background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)", color: "#fff", boxShadow: "0 4px 14px rgba(34,197,94,0.32)", whiteSpace: "nowrap" }}>
                 {checkoutLoading ? "Loading…" : `Let's get started →`}
@@ -463,7 +512,7 @@ export default function DashboardPage() {
             </div>
             <div style={{ padding: "0 20px" }}>
               {loadingJobs ? (
-                <div style={emptyBox}><div style={{ fontSize: 12, color: "#7AAAB2" }}>Loading...</div></div>
+                <TableSkeleton />
               ) : pending.length === 0 ? (
                 <div style={emptyBox}>
                   <div style={emptyTitle}>No pending requests</div>
@@ -521,7 +570,7 @@ export default function DashboardPage() {
             </div>
             <div style={{ padding: "0 20px" }}>
               {loadingJobs ? (
-                <div style={emptyBox}><div style={{ fontSize: 12, color: "#7AAAB2" }}>Loading...</div></div>
+                <TableSkeleton />
               ) : jobs.length === 0 ? (
                 <div style={emptyBox}>
                   <div style={emptyTitle}>No jobs yet</div>
@@ -612,8 +661,12 @@ export default function DashboardPage() {
             <div style={{ padding: "0 20px" }}>
               {reports.length === 0 ? (
                 <div style={emptyBox}>
-                  <div style={emptyTitle}>No reports yet</div>
-                  <div style={emptySub}>Reports will appear here once uploaded to the consulting_reports table.</div>
+                  <div style={emptyTitle}>Your first report is on the way</div>
+                  <div style={emptySub}>
+                    Your welcome consulting report auto-generates the day after activation.
+                    After that, reports arrive on your plan&apos;s cadence — bi-monthly (Receptionist),
+                    monthly (Office Manager), or weekly + quarterly (Concierge).
+                  </div>
                 </div>
               ) : (
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -684,12 +737,21 @@ export default function DashboardPage() {
               )}
             </div>
             <div style={cardBody}>
-              {[
-                { label: "Status", val: "Not connected", muted: true },
-                { label: "Approval SMS to", val: "Not set", muted: true },
-                { label: "Calls today", val: "0", muted: false },
-                { label: "Leads captured", val: "0", muted: false },
-              ].map((row) => (
+              {/* Live status — pulled from profile + /api/dashboard/summary.
+                  Previously these were hardcoded ("Not connected" / "0") and
+                  customers thought their AI was broken when it was actually fine. */}
+              {(() => {
+                const isLive = !!(profile?.is_active && profile?.twilio_number);
+                const formattedOwnerPhone = profile?.owner_phone
+                  ? profile.owner_phone.replace(/^\+1(\d{3})(\d{3})(\d{4})$/, "($1) $2-$3")
+                  : "Not set";
+                return [
+                  { label: "Status", val: isLive ? "Connected · listening" : "Not connected", muted: !isLive },
+                  { label: "Approval SMS to", val: formattedOwnerPhone, muted: !profile?.owner_phone },
+                  { label: "Calls today", val: String(callsToday), muted: callsToday === 0 },
+                  { label: "Leads captured (mo)", val: String(leadsThisMonth), muted: leadsThisMonth === 0 },
+                ];
+              })().map((row) => (
                 <div key={row.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 0", borderBottom: "1px solid rgba(232,116,43,0.08)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                     <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#FF9D5A" }} />
