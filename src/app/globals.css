@@ -113,6 +113,38 @@ html { overflow-x: hidden; }
   border-color: #CBD5E1;
 }
 
+/* ── Mobile top-nav layout (homepage / founder / pricing)
+   On phones the BellAveGo wordmark + 4 buttons can't fit on one row,
+   so the nav grows taller, the logo is capped, and the buttons wrap
+   onto a second row below it. Desktop layout is untouched. */
+@media (max-width: 720px) {
+  .bavg-top-nav {
+    padding: 10px 14px !important;
+    height: auto !important;
+    min-height: 60px;
+    flex-wrap: wrap !important;
+    row-gap: 10px;
+  }
+  .bavg-top-nav-logo img {
+    max-width: 140px !important;
+    height: auto !important;
+    margin-top: 0 !important;
+  }
+  .bavg-top-nav-actions {
+    gap: 6px !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-end !important;
+    width: 100%;
+  }
+  .bavg-top-nav .nav-cta,
+  .bavg-top-nav .why-pulse,
+  .bavg-top-nav .price-pulse,
+  .bavg-top-nav .signout-link {
+    padding: 7px 11px !important;
+    font-size: 12px !important;
+  }
+}
+
 /* ════════════════════════════════════════════════════════════════
    SUNSET MISSION CONTROL — light warm theme
    ════════════════════════════════════════════════════════════════
