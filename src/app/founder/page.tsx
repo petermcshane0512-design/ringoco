@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@clerk/nextjs'
+import RoiCalculator from '@/components/RoiCalculator'
 
 /**
  * Meet the Founder — Sunset Mission Control aesthetic.
@@ -242,6 +243,9 @@ export default function FounderPage() {
           </div>
         </div>
       </section>
+
+      {/* ROI CALCULATOR — pre-CTA conversion lever (moved from homepage) */}
+      <RoiCalculator />
 
       {/* CTA */}
       <section style={{ position: 'relative', padding: '72px 32px', textAlign: 'center', overflow: 'hidden' }}>
