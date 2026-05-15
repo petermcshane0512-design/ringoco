@@ -67,10 +67,24 @@ export async function GET() {
     anthropic: {
       ANTHROPIC_API_KEY: { set: present('ANTHROPIC_API_KEY') },
     },
+    clerk: {
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: { set: present('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY') },
+      CLERK_SECRET_KEY: { set: present('CLERK_SECRET_KEY') },
+      NEXT_PUBLIC_CLERK_SIGN_IN_URL: { set: present('NEXT_PUBLIC_CLERK_SIGN_IN_URL') },
+      NEXT_PUBLIC_CLERK_SIGN_UP_URL: { set: present('NEXT_PUBLIC_CLERK_SIGN_UP_URL') },
+      NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: { set: present('NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL') },
+      NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: { set: present('NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL') },
+    },
+    supabase: {
+      NEXT_PUBLIC_SUPABASE_URL: { set: present('NEXT_PUBLIC_SUPABASE_URL') },
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: { set: present('NEXT_PUBLIC_SUPABASE_ANON_KEY') },
+      SUPABASE_SERVICE_ROLE_KEY: { set: present('SUPABASE_SERVICE_ROLE_KEY') },
+    },
+    stripe_extras: {
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: { set: present('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY') },
+    },
     other: {
       NEXT_PUBLIC_APP_URL: { set: present('NEXT_PUBLIC_APP_URL'), value: process.env.NEXT_PUBLIC_APP_URL ?? null },
-      NEXT_PUBLIC_SUPABASE_URL: { set: present('NEXT_PUBLIC_SUPABASE_URL') },
-      SUPABASE_SERVICE_ROLE_KEY: { set: present('SUPABASE_SERVICE_ROLE_KEY') },
       CRON_SECRET: { set: present('CRON_SECRET') },
     },
   })
