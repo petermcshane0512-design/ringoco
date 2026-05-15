@@ -6,7 +6,6 @@ import { useAuth, SignOutButton } from '@clerk/nextjs'
 import DashboardPreview from '@/components/DashboardPreview'
 import ConsultingShowcase from '@/components/ConsultingShowcase'
 import HeroPhone from '@/components/HeroPhone'
-import FounderSection from '@/components/FounderSection'
 import StickyDemoCta from '@/components/StickyDemoCta'
 
 export default function HomePage() {
@@ -771,10 +770,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ROI CALCULATOR moved to /founder per Peter — pre-CTA conversion lever there. */}
-
-      {/* FOUNDER SECTION — story + video placeholder */}
-      <FounderSection />
+      {/* ROI CALCULATOR + FOUNDER SECTION both moved to /founder per Peter —
+          homepage is now Hero → Consulting → How It Works → Industries → Pricing → CTA. */}
 
       {/* INDUSTRIES */}
       <section style={{ background: '#F2F9F5', borderBottom: '1px solid #D4E6DC', padding: '28px 0 0' }}>
