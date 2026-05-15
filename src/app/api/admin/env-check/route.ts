@@ -83,6 +83,32 @@ export async function GET() {
     stripe_extras: {
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: { set: present('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY') },
     },
+    // ─── Optional / feature-flagged env vars ─────────────────────
+    // These aren't strictly required for the core product to work, but
+    // certain features (cold email automation, Concierge marketing ops,
+    // admin endpoints) won't function without them.
+    cold_email_stack: {
+      INSTANTLY_API_KEY: { set: present('INSTANTLY_API_KEY') },
+      INSTANTLY_DEFAULT_CAMPAIGN_ID: { set: present('INSTANTLY_DEFAULT_CAMPAIGN_ID') },
+      INSTANTLY_WEBHOOK_SECRET: { set: present('INSTANTLY_WEBHOOK_SECRET') },
+      APOLLO_API_KEY: { set: present('APOLLO_API_KEY') },
+      RESEND_API_KEY: { set: present('RESEND_API_KEY') },
+    },
+    concierge_marketing_ops: {
+      GOOGLE_ADS_DEVELOPER_TOKEN: { set: present('GOOGLE_ADS_DEVELOPER_TOKEN') },
+      GOOGLE_ADS_MCC_ID: { set: present('GOOGLE_ADS_MCC_ID') },
+      META_SYSTEM_USER_TOKEN: { set: present('META_SYSTEM_USER_TOKEN') },
+      PROPSTREAM_API_KEY: { set: present('PROPSTREAM_API_KEY') },
+      BATCHDATA_API_KEY: { set: present('BATCHDATA_API_KEY') },
+      BATCHLEADS_API_KEY: { set: present('BATCHLEADS_API_KEY') },
+    },
+    admin_or_webhooks: {
+      ADMIN_API_SECRET: { set: present('ADMIN_API_SECRET') },
+      CLERK_WEBHOOK_SECRET: { set: present('CLERK_WEBHOOK_SECRET') },
+    },
+    voice_alt: {
+      VAPI_VOICE_ID: { set: present('VAPI_VOICE_ID') },
+    },
     other: {
       NEXT_PUBLIC_APP_URL: { set: present('NEXT_PUBLIC_APP_URL'), value: process.env.NEXT_PUBLIC_APP_URL ?? null },
       CRON_SECRET: { set: present('CRON_SECRET') },
