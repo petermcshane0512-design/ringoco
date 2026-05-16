@@ -157,6 +157,11 @@ export default function DashboardPage() {
   }
 
   async function startCheckout() {
+    // Concierge is waitlist-only until Q3 2026 — short-circuit before Stripe
+    if (tier === "concierge") {
+      window.location.href = "/waitlist?tier=concierge";
+      return;
+    }
     setCheckoutLoading(true);
     try {
       const res = await fetch("/api/stripe/checkout", {
@@ -164,6 +169,11 @@ export default function DashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tier, interval: billingCycle }),
       }).then((r) => r.json());
+      // Belt-and-suspenders: server-side guard also returns {waitlist, redirect}
+      if (res.waitlist && res.redirect) {
+        window.location.href = res.redirect;
+        return;
+      }
       if (res.url) window.location.href = res.url;
     } finally {
       setCheckoutLoading(false);
@@ -388,7 +398,8 @@ export default function DashboardPage() {
         // For "charged today" we need the yearly total (annual × 12) + setup.
         const subToday = billingCycle === "monthly" ? cur.monthly : cur.annual * 12;
         const totalToday = subToday + cur.setup;
-        const tierKeys: Tier[] = ["receptionist", "officemgr", "concierge"];
+        // Concierge hidden from activation banner — waitlist-only until Q3 2026 launch
+        const tierKeys: Tier[] = ["receptionist", "officemgr"];
         return (
           <div style={{ marginBottom: 22, padding: "20px 22px", background: "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)", border: "1px solid #FDE68A", borderRadius: 14 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
@@ -406,7 +417,7 @@ export default function DashboardPage() {
                 ))}
               </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 14 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 14 }}>
               {tierKeys.map((k) => {
                 const t = TIER_METADATA[k];
                 const perMonth = billingCycle === "monthly" ? t.monthly : t.annual;
@@ -436,8 +447,10 @@ export default function DashboardPage() {
                 {checkoutLoading ? "Loading…" : `Let's get started →`}
               </button>
             </div>
-            <div style={{ marginTop: 10, fontSize: 11, color: "#A16207" }}>
-              Multi-location franchise (3+ locations)? <a href="mailto:peter@bellavego.com?subject=Multi-location%20BellAveGo" style={{ color: "#92400E", fontWeight: 700, textDecoration: "underline" }}>Contact for custom pricing</a>
+            <div style={{ marginTop: 10, fontSize: 11, color: "#A16207", lineHeight: 1.7 }}>
+              Want full AI marketing ops (Concierge, $1,997/mo)? <a href="/waitlist?tier=concierge" style={{ color: "#C84B26", fontWeight: 700, textDecoration: "underline" }}>Join waitlist · Launches Q3 2026 →</a>
+              <br />
+              Multi-location franchise (3+ locations)? <a href="/waitlist?tier=multi_location" style={{ color: "#92400E", fontWeight: 700, textDecoration: "underline" }}>Join waitlist →</a>
             </div>
           </div>
         );
