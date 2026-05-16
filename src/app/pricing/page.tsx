@@ -82,7 +82,7 @@ const PLANS: Plan[] = [
     popular: false,
     features: [
       { label: 'Everything in Office Manager, plus:', auto: false },
-      { label: '52 AI Consulting Reports / year (weekly) + quarterly McKinsey-style deep-dive', auto: true },
+      { label: '26 AI Strategy Reports / year (bi-weekly) + 4 quarterly McKinsey-style deep-dives', auto: true },
       { label: 'AI Marketing Operations — the full growth stack:', auto: false },
       { label: 'AI Ad Creative Generator — Google + Meta ad copy weekly from your own call transcripts', auto: true },
       { label: 'AI Lead Sourcing — permits + severe-weather alerts → outbound SMS', auto: true },
@@ -117,6 +117,11 @@ export default function PricingPage() {
   }, [isLoaded, isSignedIn])
 
   async function handleCheckout(tier: Tier, intv: Interval) {
+    // Concierge is waitlist-only until Q3 2026 launch
+    if (tier === 'concierge') {
+      router.push('/waitlist?tier=concierge')
+      return
+    }
     if (!isSignedIn) {
       const next = encodeURIComponent(`/pricing?tier=${tier}&interval=${intv}&autocheckout=1`)
       router.push(`/sign-up?redirect_url=${next}`)
@@ -130,6 +135,10 @@ export default function PricingPage() {
         body: JSON.stringify({ tier, interval: intv }),
       })
       const data = await res.json()
+      if (data.waitlist && data.redirect) {
+        router.push(data.redirect)
+        return
+      }
       if (data.url) {
         window.location.href = data.url
       } else {
@@ -279,35 +288,66 @@ export default function PricingPage() {
                     )
                   })}
                 </div>
-                <button
-                  onClick={() => handleCheckout(plan.tier, interval)}
-                  disabled={loading === plan.tier}
-                  style={{
-                    padding: '14px',
-                    background: plan.popular ? '#22C55E' : 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)',
-                    borderRadius: 10,
-                    border: 'none',
-                    color: '#fff',
-                    fontWeight: 800,
-                    fontSize: 14,
-                    cursor: loading === plan.tier ? 'wait' : 'pointer',
-                    fontFamily: 'inherit',
-                    textAlign: 'center',
-                    display: 'block',
-                    width: '100%',
-                    opacity: loading === plan.tier ? 0.7 : 1,
-                    transition: 'all 0.18s ease',
-                    boxShadow: plan.popular ? '0 8px 24px rgba(34,197,94,0.32)' : '0 4px 14px rgba(10,168,159,0.24)',
-                  }}
-                >
-                  {loading === plan.tier ? 'Loading…' : isSignedIn ? `Start with ${plan.name} →` : 'Get Started →'}
-                </button>
+                {plan.tier === 'concierge' ? (
+                  <Link
+                    href="/waitlist?tier=concierge"
+                    style={{
+                      padding: '14px',
+                      background: 'linear-gradient(135deg, #FFD9A8 0%, #FF9D5A 50%, #E8742B 100%)',
+                      borderRadius: 10, border: 'none',
+                      color: '#0B1F3A',
+                      fontWeight: 900, fontSize: 14,
+                      cursor: 'pointer', fontFamily: 'inherit',
+                      textAlign: 'center', display: 'block', width: '100%',
+                      transition: 'all 0.18s ease',
+                      boxShadow: '0 8px 24px rgba(232,116,43,0.42)',
+                      textDecoration: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    Join waitlist · Limited spots →
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => handleCheckout(plan.tier, interval)}
+                    disabled={loading === plan.tier}
+                    style={{
+                      padding: '14px',
+                      background: plan.popular ? '#22C55E' : 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)',
+                      borderRadius: 10,
+                      border: 'none',
+                      color: '#fff',
+                      fontWeight: 800,
+                      fontSize: 14,
+                      cursor: loading === plan.tier ? 'wait' : 'pointer',
+                      fontFamily: 'inherit',
+                      textAlign: 'center',
+                      display: 'block',
+                      width: '100%',
+                      opacity: loading === plan.tier ? 0.7 : 1,
+                      transition: 'all 0.18s ease',
+                      boxShadow: plan.popular ? '0 8px 24px rgba(34,197,94,0.32)' : '0 4px 14px rgba(10,168,159,0.24)',
+                    }}
+                  >
+                    {loading === plan.tier ? 'Loading…' : isSignedIn ? `Start with ${plan.name} →` : 'Get Started →'}
+                  </button>
+                )}
                 <p style={{ fontSize: 11, color: plan.popular ? 'rgba(255,255,255,0.45)' : '#7AAAB2', textAlign: 'center', marginTop: 10, marginBottom: 0, fontWeight: 500 }}>
-                  30-day full refund · Cancel anytime
+                  {plan.tier === 'concierge'
+                    ? 'Launches Q3 2026 · Early-access pricing for waitlist'
+                    : '30-day full refund · Cancel anytime'}
                 </p>
               </div>
             )
           })}
+        </div>
+
+        {/* Availability disclaimer right under the tier cards */}
+        <div style={{ maxWidth: 1080, margin: '24px auto 0', padding: '0 24px' }}>
+          <div style={{ textAlign: 'center', fontSize: 12.5, color: '#4A7A80', lineHeight: 1.6, padding: '14px 18px', background: 'rgba(255,251,235,0.6)', border: '1px solid rgba(232,116,43,0.18)', borderRadius: 12 }}>
+            <strong style={{ color: '#0B1F3A' }}>Receptionist + Office Manager available now.</strong>{' '}
+            Concierge and Multi-Location launch <strong>Q3 2026</strong>. <Link href="/waitlist?tier=concierge" style={{ color: '#C84B26', fontWeight: 700, textDecoration: 'underline' }}>Join the waitlist for early-access pricing →</Link>
+          </div>
         </div>
       </section>
 
@@ -355,12 +395,12 @@ export default function PricingPage() {
                 </div>
               ))}
             </div>
-            <a
-              href="mailto:peter@bellavego.com?subject=Multi-Location%20-%20BellAveGo%20Enterprise"
+            <Link
+              href="/waitlist?tier=multi_location"
               style={{ display: 'inline-block', padding: '14px 28px', background: '#5EEAD4', color: '#0B1F3A', fontWeight: 900, fontSize: 14, borderRadius: 10, textDecoration: 'none' }}
             >
-              Talk to Peter →
-            </a>
+              Join waitlist · Limited spots →
+            </Link>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(94, 234, 212, 0.2)', borderRadius: 16, padding: '32px 28px', textAlign: 'center' }}>
             <p style={{ fontSize: 12, color: 'rgba(94, 234, 212, 0.85)', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>Starts at</p>

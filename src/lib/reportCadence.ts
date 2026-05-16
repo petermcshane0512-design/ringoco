@@ -5,7 +5,8 @@
  * Office Manager:  12 reports/year  → ~30 days between (monthly)
  * Concierge:        4 reports/year  → ~91 days between (quarterly deep-dive ONLY,
  *                                     since the marketing-ops-weekly cron handles
- *                                     the 52/yr weekly strategy reports separately)
+ *                                     the 26/yr bi-weekly strategy reports separately —
+ *                                     reduced from 52/yr in May 2026 per Peter)
  *
  * Every tier gets a welcome report on day 1 of activation (`welcome_report_at`).
  * The first periodic report is due `cadenceDays` after that welcome.
@@ -34,7 +35,7 @@ const TIER_MAP: Record<string, CadenceTier> = {
 const CADENCE_DAYS: Record<CadenceTier, number> = {
   receptionist: 60,  //  6/year
   officemgr: 30,     // 12/year
-  concierge: 91,     //  4/year (quarterly deep-dive only — weekly handled by marketing-ops cron)
+  concierge: 91,     //  4/year (quarterly deep-dive only — bi-weekly strategy reports handled by marketing-ops cron)
 }
 
 const REPORTS_PER_YEAR: Record<CadenceTier, number> = {

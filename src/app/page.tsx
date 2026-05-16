@@ -405,7 +405,7 @@ export default function HomePage() {
             /* ── Grid layouts for non-hero sections ── */
             .home-grid-2       { display: grid; grid-template-columns: 1fr 1fr; }
             .home-grid-3       { display: grid; grid-template-columns: repeat(3, 1fr); }
-            .home-pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+            .home-pricing-grid { display: grid; grid-template-columns: repeat(2, 1fr); max-width: 760px; }
 
             /* ── Tablet ── */
             @media (max-width: 1024px) {
@@ -807,24 +807,20 @@ export default function HomePage() {
         <p style={{ color: '#4A6670', fontSize: 16, marginBottom: 48 }}>Your first booked job pays for the whole month.</p>
 
         <div className="home-pricing-grid" style={{ gap: 20, maxWidth: 960, margin: '0 auto 20px' }}>
+          {/* Homepage tier cards — Concierge intentionally hidden until Q3 2026 launch.
+              See /pricing for the full lineup including the waitlist CTA. */}
           {[
             {
-              name: 'Receptionist', price: 397, setup: 250, tier: 'receptionist', calls: 'Up to 250 / mo',
+              name: 'Receptionist', price: 397, setup: 0, tier: 'receptionist', calls: 'Up to 250 / mo',
               desc: 'AI answers every call. You close it in one tap — confirm, invoice, call back, or just acknowledge. Includes a welcome AI consulting report and 6 reports/yr.',
               features: ['6 AI consulting reports / year (bi-monthly)', '24/7 AI call answering', 'Captures name · phone · service · address · preferred time', 'Instant text summary to your phone', 'One-tap actions on every call', 'Emergency routing to your cell', 'Live dashboard + full transcripts', 'Welcome AI business diagnostic at activation'],
               popular: false, customCta: false,
             },
             {
-              name: 'Office Manager', price: 797, setup: 500, tier: 'officemgr', calls: 'Unlimited',
+              name: 'Office Manager', price: 797, setup: 0, tier: 'officemgr', calls: 'Unlimited',
               desc: 'Your back-office, on autopilot. Five AIs that answer calls, chase quotes, recover invoices, draft review replies, and ask past customers for new reviews.',
               features: ['Everything in Receptionist, plus:', '12 AI consulting reports / year (monthly)', 'Unlimited calls', 'AI Quote Hunter (auto follow-ups day 2/7/14)', 'AI Collections (auto-chase past-due invoices)', 'AI Reviews (drafts replies for one-tap approval)', 'AI Reputation (auto-SMS past customers for reviews)', 'Smart call-summary sales tips with every booking'],
               popular: true, customCta: false,
-            },
-            {
-              name: 'Concierge', price: 1997, setup: 1000, tier: 'concierge', calls: 'Unlimited',
-              desc: 'AI runs your back office AND your marketing. Weekly strategy reports, ad creative from your own call transcripts, lead sourcing from permits + storms, competitor intel, local SEO. You just close the work.',
-              features: ['Everything in Office Manager, plus:', '52 weekly AI strategy reports + quarterly deep-dive', 'AI Ad Creative Generator (Google + Meta)', 'AI Lead Sourcing (permits + severe-weather alerts)', 'AI Past-Customer Reactivation drips', 'AI Google Business Profile Watcher', 'AI Competitor Watcher (daily intel on 5 competitors)', 'AI Local SEO (weekly WordPress blog posts)', 'Custom AI prompt tuning', 'Priority 4-hour SLA'],
-              popular: false, customCta: false,
             },
           ].map(plan => (
             <div key={plan.name} style={{

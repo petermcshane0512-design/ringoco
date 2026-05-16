@@ -8,17 +8,42 @@ const supabase = createClient(
 )
 
 /**
- * Weekly cron — Monday 06:00 UTC. Runs the AI Marketing Ops Agent for every
- * active Concierge customer. One customer's failure does not abort the loop.
+ * Bi-weekly cron — fires every Monday 06:00 UTC but only runs the Marketing
+ * Ops Agent on EVEN ISO weeks. Net cadence: 26 reports/yr per Concierge
+ * customer (was 52/yr — reduced May 2026 per Peter, see CLAUDE.md pricing v7).
  *
- * Scheduled in vercel.json. Requires Vercel Pro for additional cron slot.
+ * One customer's failure does not abort the loop.
+ * Scheduled in vercel.json.
+ *
+ * Override: pass ?force=1 (admin only) to ignore the week-parity gate.
  */
+function isoWeekNumber(d: Date): number {
+  // Thursday-aligned ISO 8601 week number
+  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+  const dayNum = date.getUTCDay() || 7
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum)
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
+  return Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
+}
+
 export async function GET(req: NextRequest) {
   // Vercel cron sends Authorization: Bearer ${CRON_SECRET} when configured.
   const cronSecret = process.env.CRON_SECRET
   const authHeader = req.headers.get('authorization')
   if (cronSecret && authHeader && authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  }
+
+  // Bi-weekly gate: run only on even ISO weeks unless ?force=1
+  const url = new URL(req.url)
+  const force = url.searchParams.get('force') === '1'
+  const week = isoWeekNumber(new Date())
+  if (!force && week % 2 !== 0) {
+    return NextResponse.json({
+      ok: true,
+      skipped: true,
+      reason: `ISO week ${week} is odd — bi-weekly cron only fires on even weeks`,
+    })
   }
 
   // Fetch all active Concierge customers
