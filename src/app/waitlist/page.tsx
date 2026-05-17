@@ -99,7 +99,7 @@ function WaitlistForm() {
               Our team will personally reach out within 24 hours to chat about your business and lock in early-access pricing for {tierLabel}.
             </p>
             <p style={{ fontSize: 13, color: '#7AAAB2', lineHeight: 1.55, marginBottom: 24 }}>
-              In the meantime, want to see what BellAveGo can do today? Receptionist + Office Manager are available right now.
+              In the meantime, want to see what BellAveGo can do today? Mission Control + Operator are available right now.
             </p>
             <Link href="/pricing" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 11, background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', color: '#fff', fontWeight: 800, fontSize: 14, textDecoration: 'none', boxShadow: '0 6px 18px rgba(10,168,159,0.32)' }}>
               See pricing →

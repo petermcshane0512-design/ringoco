@@ -405,7 +405,7 @@ export default function HomePage() {
             /* ── Grid layouts for non-hero sections ── */
             .home-grid-2       { display: grid; grid-template-columns: 1fr 1fr; }
             .home-grid-3       { display: grid; grid-template-columns: repeat(3, 1fr); }
-            .home-pricing-grid { display: grid; grid-template-columns: repeat(2, 1fr); max-width: 760px; }
+            .home-pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); max-width: 1180px; }
 
             /* ── Tablet ── */
             @media (max-width: 1024px) {
@@ -806,12 +806,11 @@ export default function HomePage() {
         <h2 style={{ fontSize: 42, fontWeight: 900, marginBottom: 8, letterSpacing: '-1.5px', color: '#0B1F3A' }}>Pay for what you use.</h2>
         <p style={{ color: '#4A6670', fontSize: 16, marginBottom: 48 }}>Your first booked job pays for the whole month.</p>
 
-        <div className="home-pricing-grid" style={{ gap: 20, maxWidth: 960, margin: '0 auto 20px' }}>
-          {/* Homepage tier cards — Concierge intentionally hidden until Q3 2026 launch.
-              See /pricing for the full lineup including the waitlist CTA. */}
+        <div className="home-pricing-grid" style={{ gap: 20, maxWidth: 1180, margin: '0 auto 20px' }}>
+          {/* Homepage tier cards — Mission Control + Operator live, Concierge waitlist-only. */}
           {[
             {
-              name: 'Mission Control', price: 397, setup: 0, tier: 'receptionist', calls: 'Up to 250 / mo',
+              name: 'Mission Control', price: 397, setup: 0, tier: 'receptionist', calls: 'Up to 250 / mo', comingSoon: false,
               desc: 'AI answers every call. You close it in one tap — confirm, send a pay-by-text Stripe link, call back, or just acknowledge. Includes 6 AI revenue reports per year.',
               features: [
                 '6 AI Consulting Reports / year — bi-monthly revenue intelligence: missed calls, top services, quote-to-close, what to fix. ($5K–$15K value if you hired a consultant.)',
@@ -842,21 +841,42 @@ export default function HomePage() {
                 'Smart Call-Summary Insights — sales tip with every callback alert',
                 'Priority email support — 24-hour SLA',
               ],
-              popular: true, customCta: false,
+              popular: true, customCta: false, comingSoon: false,
+            },
+            {
+              name: 'Concierge', price: 1997, setup: 0, tier: 'concierge', calls: 'Unlimited',
+              desc: 'AI runs your back office AND your marketing. Ad creative writing, lead sourcing from permits + storms, competitor monitoring, weekly SEO blog posts, plus quarterly McKinsey-style deep-dives.',
+              features: [
+                'Everything in Operator, plus:',
+                '26 AI Strategy Reports / year (bi-weekly) + 4 quarterly McKinsey-style deep-dives',
+                'AI Ad Creative Generator — Google + Meta ad copy weekly from your call transcripts',
+                'AI Lead Sourcing — permits + severe-weather alerts → outbound SMS',
+                'AI Past-Customer Reactivation — drip campaigns to dormant customers',
+                'AI Competitor Watcher — weekly intel on 5 competitors in your service area',
+                'AI Local SEO — weekly blog posts auto-published to your site',
+                'AI Account Manager — weekly briefings + 4-hour priority SLA',
+              ],
+              popular: false, customCta: false, comingSoon: true,
             },
           ].map(plan => (
             <div key={plan.name} style={{
               background: plan.popular ? 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)' : '#fff',
               borderRadius: 20,
               padding: '36px 28px',
-              border: plan.popular ? 'none' : '1px solid rgba(10,168,159,0.18)',
+              border: plan.popular ? 'none' : plan.comingSoon ? '1px dashed rgba(232,116,43,0.45)' : '1px solid rgba(10,168,159,0.18)',
               boxShadow: plan.popular ? '0 24px 60px rgba(11,31,58,0.26)' : '0 2px 16px rgba(7,27,58,0.06)',
               position: 'relative',
               textAlign: 'left',
+              opacity: plan.comingSoon ? 0.92 : 1,
             }}>
               {plan.popular && (
                 <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#22C55E', color: '#fff', fontSize: 10, fontWeight: 800, padding: '4px 14px', borderRadius: 20, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
                   Most Popular
+                </div>
+              )}
+              {plan.comingSoon && (
+                <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', color: '#fff', fontSize: 10, fontWeight: 800, padding: '4px 14px', borderRadius: 20, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap', boxShadow: '0 4px 14px rgba(232,116,43,0.32)' }}>
+                  Coming Soon
                 </div>
               )}
               <div style={{ fontSize: 14, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.5)' : '#7AAAB2', marginBottom: 8 }}>{plan.name}</div>
@@ -891,7 +911,11 @@ export default function HomePage() {
                   )
                 })}
               </div>
-              {isSignedIn ? (
+              {plan.comingSoon ? (
+                <Link href="/waitlist?tier=concierge" style={{ display: 'block', textAlign: 'center', padding: '13px', background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 100%)', borderRadius: 10, textDecoration: 'none', color: '#fff', fontWeight: 800, fontSize: 14, border: 'none', boxShadow: '0 6px 20px rgba(232,116,43,0.32)' }}>
+                  Join Email Waitlist →
+                </Link>
+              ) : isSignedIn ? (
                 <Link href={`/pricing?tier=${plan.tier}&autocheckout=1`} style={{ display: 'block', textAlign: 'center', padding: '13px', background: plan.popular ? '#22C55E' : 'linear-gradient(135deg,#0AA89F,#0D8F87)', borderRadius: 10, textDecoration: 'none', color: '#fff', fontWeight: 800, fontSize: 14, border: 'none' }}>
                   Let&apos;s get started →
                 </Link>

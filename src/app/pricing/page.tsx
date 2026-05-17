@@ -238,7 +238,7 @@ export default function PricingPage() {
 
       <section style={{ padding: '0 24px 32px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, maxWidth: 1200, margin: '0 auto' }}>
-          {PLANS.filter(p => p.tier !== 'concierge').map(plan => {
+          {PLANS.map(plan => {
             const price = isAnnual ? plan.annual : plan.monthly
             return (
               <div key={plan.tier} id={`plan-${plan.tier}`} style={{
@@ -255,6 +255,11 @@ export default function PricingPage() {
                 {plan.popular && (
                   <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#22C55E', color: '#fff', fontSize: 10, fontWeight: 800, padding: '4px 14px', borderRadius: 20, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
                     Most Popular
+                  </div>
+                )}
+                {plan.tier === 'concierge' && (
+                  <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', color: '#fff', fontSize: 10, fontWeight: 800, padding: '4px 14px', borderRadius: 20, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap', boxShadow: '0 4px 14px rgba(232,116,43,0.32)' }}>
+                    Coming Soon
                   </div>
                 )}
                 <div style={{ fontSize: 14, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.5)' : '#7AAAB2', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{plan.name}</div>
@@ -305,7 +310,7 @@ export default function PricingPage() {
                       boxSizing: 'border-box',
                     }}
                   >
-                    Join waitlist · Limited spots →
+                    Join Email Waitlist →
                   </Link>
                 ) : (
                   <button
