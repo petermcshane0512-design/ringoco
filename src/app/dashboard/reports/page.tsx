@@ -75,8 +75,8 @@ export default async function ReportsIndexPage() {
           <div style={{ fontSize: 13.5, color: "#4A6670", lineHeight: 1.65, maxWidth: 520, margin: "0 auto" }}>
             Your <strong style={{ color: "#C84B26" }}>welcome report</strong> is auto-generated the day after activation. After that, reports arrive on your plan&apos;s cadence:<br/>
             <span style={{ display: "inline-block", marginTop: 12, fontSize: 12, color: "#3D5A62" }}>
-              <strong style={{ color: "#0AA89F" }}>Receptionist</strong> · bi-monthly (6/yr)
-              &nbsp;·&nbsp; <strong style={{ color: "#0AA89F" }}>Office Manager</strong> · monthly (12/yr)
+              <strong style={{ color: "#0AA89F" }}>Mission Control</strong> · bi-monthly (6/yr)
+              &nbsp;·&nbsp; <strong style={{ color: "#0AA89F" }}>Operator</strong> · monthly (12/yr)
               &nbsp;·&nbsp; <strong style={{ color: "#0AA89F" }}>Concierge</strong> · weekly (52/yr) + quarterly deep-dive
             </span>
           </div>

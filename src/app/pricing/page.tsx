@@ -32,7 +32,7 @@ type Plan = {
 const PLANS: Plan[] = [
   {
     tier: 'receptionist',
-    name: 'Receptionist',
+    name: 'Mission Control',
     monthly: 397,
     annual: 330,
     setup: 250,
@@ -55,14 +55,14 @@ const PLANS: Plan[] = [
   },
   {
     tier: 'officemgr',
-    name: 'Office Manager',
+    name: 'Operator',
     monthly: 797,
     annual: 662,
     setup: 500,
     tagline: 'Five AIs running your back office while you turn wrenches.',
     popular: true,
     features: [
-      { label: 'Everything in Receptionist, plus:', auto: false },
+      { label: 'Everything in Mission Control, plus:', auto: false },
       { label: '12 AI Consulting Reports / year — monthly revenue intelligence: sales coaching from your actual call transcripts, lead-source attribution, customer lifetime value trends, AI-recommended price increases.', auto: true },
       { label: 'Unlimited inbound calls', auto: true },
       { label: 'AI Quote Hunter — auto follow-up SMS day 2 / 7 / 14 on every open quote', auto: true },
@@ -82,7 +82,7 @@ const PLANS: Plan[] = [
     tagline: 'AI runs your back office AND your marketing. You just close the work.',
     popular: false,
     features: [
-      { label: 'Everything in Office Manager, plus:', auto: false },
+      { label: 'Everything in Operator, plus:', auto: false },
       { label: '26 AI Strategy Reports / year (bi-weekly) + 4 quarterly McKinsey-style deep-dives', auto: true },
       { label: 'AI Marketing Operations — the full growth stack:', auto: false },
       { label: 'AI Ad Creative Generator — Google + Meta ad copy weekly from your own call transcripts', auto: true },
@@ -144,7 +144,7 @@ export default function PricingPage() {
         window.location.href = data.url
       } else {
         setLoading(null)
-        alert(`Checkout failed: ${data?.error ?? 'Unknown error'}\n\nText Peter at 773-710-9565.`)
+        alert(`Checkout failed: ${data?.error ?? 'Unknown error'}\n\nText our team at 773-710-9565.`)
       }
     } catch {
       setLoading(null)
@@ -345,7 +345,7 @@ export default function PricingPage() {
         {/* Availability disclaimer right under the tier cards */}
         <div style={{ maxWidth: 1080, margin: '24px auto 0', padding: '0 24px' }}>
           <div style={{ textAlign: 'center', fontSize: 12.5, color: '#4A7A80', lineHeight: 1.6, padding: '14px 18px', background: 'rgba(255,251,235,0.6)', border: '1px solid rgba(232,116,43,0.18)', borderRadius: 12 }}>
-            <strong style={{ color: '#0B1F3A' }}>Receptionist + Office Manager available now.</strong>{' '}
+            <strong style={{ color: '#0B1F3A' }}>Mission Control + Operator available now.</strong>{' '}
             Concierge and Multi-Location launch <strong>Q3 2026</strong>. <Link href="/waitlist?tier=concierge" style={{ color: '#C84B26', fontWeight: 700, textDecoration: 'underline' }}>Join the waitlist for early-access pricing →</Link>
           </div>
         </div>
@@ -382,9 +382,9 @@ export default function PricingPage() {
                 'Local area-code number per location',
                 'HQ roll-up dashboard (calls/jobs/revenue/location)',
                 'Native CRM integrations: ServiceTitan, HCP, Jobber',
-                'Dedicated CSM — Peter direct for first 5 partner logos',
+                'Dedicated CSM — direct line to the BellAveGo team for first 5 partner logos',
                 'White-glove onboarding for every location',
-                'Quarterly QBR with Peter + your COO/CFO',
+                'Quarterly QBR with the BellAveGo team + your COO/CFO',
                 'Volume pricing at 25+ locations',
               ].map(f => (
                 <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, color: 'rgba(255,255,255,0.9)', lineHeight: 1.45 }}>
@@ -423,10 +423,10 @@ export default function PricingPage() {
           <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 14, padding: '28px 32px' }}>
             <p style={{ fontSize: 12, fontWeight: 900, color: '#16A34A', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>⚡ Every feature in every tier — fully automated</p>
             <p style={{ fontSize: 14, color: '#0B1F3A', lineHeight: 1.65, marginBottom: 12 }}>
-              No "Slack with the founder" tax. No "monthly call with Peter" charade. From the moment your card hits Stripe, every part of BellAveGo runs itself — call answering, bookings, follow-ups, collections, reviews, ads, lead-gen. The AI does the work. You do the close.
+              No "Slack with the founder" tax. No "monthly call with the founder" charade. From the moment your card hits Stripe, every part of BellAveGo runs itself — call answering, bookings, follow-ups, collections, reviews, ads, lead-gen. The AI does the work. You do the close.
             </p>
             <p style={{ fontSize: 13, color: '#4A7A80', fontStyle: 'italic', margin: 0 }}>
-              The only time a human at BellAveGo touches your account is if you email support — answered in &lt;24 hrs (Office Manager) or &lt;4 hrs (Concierge).
+              The only time a human at BellAveGo touches your account is if you email support — answered in &lt;24 hrs (Operator) or &lt;4 hrs (Concierge).
             </p>
           </div>
         </div>

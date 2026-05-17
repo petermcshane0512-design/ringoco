@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
 
         if (contractor?.owner_phone && !contractor.welcomed_at) {
           await twilioClient.messages.create({
-            body: `Welcome to BellAveGo, ${contractor.business_name || 'partner'}! Your AI receptionist is now live at ${result.phoneNumber}. Next step: set up call forwarding so missed calls ring through. Walkthrough: https://www.bellavego.com/dashboard/forwarding — Peter`,
+            body: `Welcome to BellAveGo, ${contractor.business_name || 'partner'}! Your AI receptionist is now live at ${result.phoneNumber}. Next step: set up call forwarding so missed calls ring through. Walkthrough: https://www.bellavego.com/dashboard/forwarding — BellAveGo team`,
             from: result.phoneNumber,
             to: contractor.owner_phone,
           })
@@ -148,7 +148,7 @@ export async function GET(req: NextRequest) {
 
     try {
       await twilioClient.messages.create({
-        body: `Welcome to BellAveGo, ${p.business_name || 'partner'}! Your AI receptionist is live at ${p.twilio_number}. Next step: set up call forwarding so missed calls ring through. Walkthrough: https://www.bellavego.com/dashboard/forwarding — Peter`,
+        body: `Welcome to BellAveGo, ${p.business_name || 'partner'}! Your AI receptionist is live at ${p.twilio_number}. Next step: set up call forwarding so missed calls ring through. Walkthrough: https://www.bellavego.com/dashboard/forwarding — BellAveGo team`,
         from: p.twilio_number,
         to: p.owner_phone,
       })

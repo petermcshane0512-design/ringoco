@@ -64,8 +64,8 @@ export async function GET(req: NextRequest) {
     const hasCalls = (count ?? 0) > 0
 
     const body = hasCalls
-      ? `${firstName}, you've gotten ${count} call${count === 1 ? '' : 's'} so far — nice. Anything you'd want to tweak on the AI? Reply with what you'd change (e.g. "more formal", "always mention free estimates"), or HELP if you want a walkthrough. — Peter`
-      : `Hey ${firstName}, day 3 check-in. Your BellAveGo line still hasn't gotten a call. The most common reason is call forwarding got turned off or never finished. Reply HELP and I'll walk you through it personally in under 5 minutes. — Peter`
+      ? `${firstName}, you've gotten ${count} call${count === 1 ? '' : 's'} so far — nice. Anything you'd want to tweak on the AI? Reply with what you'd change (e.g. "more formal", "always mention free estimates"), or HELP if you want a walkthrough. — BellAveGo team`
+      : `Hey ${firstName}, day 3 check-in. Your BellAveGo line still hasn't gotten a call. The most common reason is call forwarding got turned off or never finished. Reply HELP and our team will walk you through it in under 5 minutes. — BellAveGo team`
 
     try {
       await twilioClient.messages.create({
@@ -111,7 +111,7 @@ export async function GET(req: NextRequest) {
       const body =
         `${firstName}, you're 1 week in — ${count} call${count === 1 ? '' : 's'} captured. ` +
         `If BellAveGo's earning its keep, a quick Google review for us means a lot for a small team like ours: ` +
-        `https://g.page/r/CdQbellavego (takes 30 seconds). And anything we should tweak, just reply. — Peter`
+        `https://g.page/r/CdQbellavego (takes 30 seconds). And anything we should tweak, just reply. — BellAveGo team`
       try {
         await twilioClient.messages.create({
           body,
@@ -131,8 +131,8 @@ export async function GET(req: NextRequest) {
       // Day 7 with zero calls = critical churn risk. Personal + Peter alert.
       const body =
         `${firstName}, week 1 and we still haven't picked up a single call for you — that means forwarding isn't routed right. ` +
-        `That's on me to fix. Reply with a good time today and I'll personally walk you through it (5 min). ` +
-        `If you'd rather not bother, reply REFUND and we'll fully refund your subscription, no questions. — Peter`
+        `That's on us to fix. Reply with a good time today and our team will walk you through it (5 min). ` +
+        `If you'd rather not bother, reply REFUND and we'll fully refund your subscription, no questions. — BellAveGo team`
 
       try {
         await twilioClient.messages.create({

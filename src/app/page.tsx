@@ -811,7 +811,7 @@ export default function HomePage() {
               See /pricing for the full lineup including the waitlist CTA. */}
           {[
             {
-              name: 'Receptionist', price: 397, setup: 0, tier: 'receptionist', calls: 'Up to 250 / mo',
+              name: 'Mission Control', price: 397, setup: 0, tier: 'receptionist', calls: 'Up to 250 / mo',
               desc: 'AI answers every call. You close it in one tap — confirm, send a pay-by-text Stripe link, call back, or just acknowledge. Includes 6 AI revenue reports per year.',
               features: [
                 '6 AI Consulting Reports / year — bi-monthly revenue intelligence: missed calls, top services, quote-to-close, what to fix. ($5K–$15K value if you hired a consultant.)',
@@ -829,10 +829,10 @@ export default function HomePage() {
               popular: false, customCta: false,
             },
             {
-              name: 'Office Manager', price: 797, setup: 0, tier: 'officemgr', calls: 'Unlimited',
+              name: 'Operator', price: 797, setup: 0, tier: 'officemgr', calls: 'Unlimited',
               desc: 'Your back-office, on autopilot. Five AIs that answer calls, chase quotes, recover invoices, draft review replies, and ask past customers for new reviews.',
               features: [
-                'Everything in Receptionist, plus:',
+                'Everything in Mission Control, plus:',
                 '12 AI Consulting Reports / year — monthly revenue intelligence: sales coaching from your actual call transcripts, lead-source attribution, customer lifetime value trends, AI-recommended price increases.',
                 'Unlimited inbound calls',
                 'AI Quote Hunter — auto follow-up SMS day 2 / 7 / 14 on every open quote',

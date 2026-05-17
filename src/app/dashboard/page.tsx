@@ -12,8 +12,8 @@ const ADMIN_EMAILS = new Set(["pmcshane@fordham.edu", "peter@bellavego.com"]);
 // (single source of truth — if pricing changes, this banner updates automatically).
 const TIER_BANNER_COPY: Record<Tier, string> = {
   receptionist: "AI answers every call · 250 bookings/mo · 6 AI consulting reports/yr",
-  officemgr:    "Receptionist + Quote Hunter + Collections + Reviews + Reputation + 12 reports/yr",
-  concierge:    "Office Manager + AI Marketing Operations (ad creatives, lead sourcing, SEO, weekly strategy reports)",
+  officemgr:    "Mission Control + Quote Hunter + Collections + Reviews + Reputation + 12 reports/yr",
+  concierge:    "Operator + AI Marketing Operations (ad creatives, lead sourcing, SEO, weekly strategy reports)",
 };
 
 // NOTE: This page previously read jobs/customers/reports directly from
@@ -128,7 +128,7 @@ export default function DashboardPage() {
       const res = await fetch("/api/dashboard/summary");
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
-        setSummaryError(j.error || `Dashboard load failed (HTTP ${res.status}) — refresh in a moment, or text Peter at 773-710-9565 if it persists.`);
+        setSummaryError(j.error || `Dashboard load failed (HTTP ${res.status}) — refresh in a moment, or text our team at 773-710-9565 if it persists.`);
       } else {
         summary = await res.json();
       }

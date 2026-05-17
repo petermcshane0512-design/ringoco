@@ -53,8 +53,8 @@ function disableCode(carrier: CarrierKey) {
 function tierMeta(tier: Tier | undefined) {
   const t = tier || "receptionist";
   if (t === "concierge") return { label: "Concierge", isOfficeMgr: true, isConcierge: true };
-  if (t === "officemgr" || t === "premium" || t === "growth") return { label: "Office Manager", isOfficeMgr: true, isConcierge: false };
-  return { label: "Receptionist", isOfficeMgr: false, isConcierge: false };
+  if (t === "officemgr" || t === "premium" || t === "growth") return { label: "Operator", isOfficeMgr: true, isConcierge: false };
+  return { label: "Mission Control", isOfficeMgr: false, isConcierge: false };
 }
 
 export default function SetupWizard() {
@@ -427,7 +427,7 @@ export default function SetupWizard() {
                 ))}
               </div>
               <div style={{ fontSize: 11, color: "#7AAAB2", lineHeight: 1.6 }}>
-                We&apos;ll email you the integration link within 24 hours. Concierge customers — Peter sets it up live on the kickoff call.
+                We&apos;ll email you the integration link within 24 hours. Concierge customers — our team sets it up live on the kickoff call.
               </div>
             </div>
           )}
@@ -435,7 +435,7 @@ export default function SetupWizard() {
           {/* STEP 4 — Kickoff (Concierge only) */}
           {step === 4 && meta.isConcierge && (
             <div className="step-enter">
-              <h2 style={titleStyle}>Schedule your kickoff with Peter.</h2>
+              <h2 style={titleStyle}>Schedule your kickoff call.</h2>
               <p style={subStyle}>
                 30 minutes. We&apos;ll tune your AI prompt to your shop&apos;s voice, walk through your CRM live, and get you fully wired.
               </p>
@@ -448,7 +448,7 @@ export default function SetupWizard() {
               </a>
 
               <label style={{ display: "block", fontSize: 11, color: "#7AAAB2", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6, fontWeight: 700 }}>
-                Anything specific you want Peter to tune the AI to? (optional)
+                Anything specific you want our team to tune the AI to? (optional)
               </label>
               <textarea
                 value={promptNotes}
@@ -469,7 +469,7 @@ export default function SetupWizard() {
         {/* Footer — sticky help row */}
         <div style={{ padding: "12px 20px", borderTop: "1px solid rgba(10,168,159,0.1)", background: "linear-gradient(135deg, #0B1F3A, #163356)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>
-            Stuck? Peter answers personally —
+            Stuck? Our team answers personally —
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <a href="sms:+17737109565" style={{ padding: "6px 12px", borderRadius: 8, background: "#22C55E", color: "#fff", fontSize: 11, fontWeight: 800, textDecoration: "none" }}>Text</a>

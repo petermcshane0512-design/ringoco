@@ -311,7 +311,7 @@ export default function PricingPage() {
             BellAveGo Office Manager: $497/mo. Idiot index in your favor: <span style={{ fontSize: 22 }}>32x.</span>
           </p>
           <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 16 }}>
-            90-day money-back if we don’t add at least 5 booked jobs you wouldn’t have otherwise gotten. <a href="tel:+17737109565" style={{ color: '#0AA89F', textDecoration: 'none', fontWeight: 700 }}>Text Peter directly: 773-710-9565</a>
+            90-day money-back if we don’t add at least 5 booked jobs you wouldn’t have otherwise gotten. <a href="tel:+17737109565" style={{ color: '#0AA89F', textDecoration: 'none', fontWeight: 700 }}>Text our team directly: 773-710-9565</a>
           </p>
         </div>
       </section>

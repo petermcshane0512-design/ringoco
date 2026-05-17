@@ -156,7 +156,7 @@ export async function POST(req: NextRequest) {
 
         if (contractor?.owner_phone && !contractor.welcomed_at) {
           await twilioClient.messages.create({
-            body: `Welcome to BellAveGo, ${contractor.business_name || 'partner'}! Your AI receptionist is live at ${provisionedNumber}. Next step: set up call forwarding so missed calls ring through — walkthrough: https://www.bellavego.com/dashboard/forwarding. Heads up: full 30-day money-back guarantee if it's not the right fit, no questions asked. — Peter`,
+            body: `Welcome to BellAveGo, ${contractor.business_name || 'partner'}! Your AI receptionist is live at ${provisionedNumber}. Next step: set up call forwarding so missed calls ring through — walkthrough: https://www.bellavego.com/dashboard/forwarding. Heads up: full 30-day money-back guarantee if it's not the right fit, no questions asked. — BellAveGo team`,
             from: provisionedNumber,
             to: contractor.owner_phone,
           })

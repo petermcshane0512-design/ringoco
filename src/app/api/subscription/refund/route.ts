@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       error:
         `Your account started ${Math.floor(daysSinceStart)} days ago — past the ${REFUND_WINDOW_DAYS}-day money-back window. ` +
-        `If something specific isn't working we want to make it right. Text Peter directly at (773) 710-9565 or email peter@bellavego.com — we handle these case-by-case and usually resolve within 24 hours.`,
+        `If something specific isn't working we want to make it right. Text our team directly at (773) 710-9565 or email peter@bellavego.com — we handle these case-by-case and usually resolve within 24 hours.`,
     }, { status: 400 })
   }
 

@@ -162,20 +162,20 @@ async function handleOwnerHelp(args: { from: string; to: string; profile: Profil
     reply =
       `Hey ${firstName} — you've gotten ${callCount} call${callCount === 1 ? '' : 's'}. ` +
       `If you want to tweak the AI's voice, tone, or instructions: https://www.bellavego.com/dashboard/settings. ` +
-      `If something specific isn't working, reply with what's broken and I'll fix it personally. — Peter`
+      `If something specific isn't working, reply with what's broken and we'll fix it. — BellAveGo team`
   } else if (!forwardingConfirmed) {
     // Most common case: forwarding not set up
     reply =
       `Hey ${firstName}! Looks like ${businessName}'s calls aren't forwarding yet — that's why the AI hasn't answered any. ` +
       `${carrierTip} Your BellAveGo number is ${bagNumber}. ` +
       `Full walkthrough with one-tap buttons: https://www.bellavego.com/dashboard/forwarding. ` +
-      `Reply STUCK if it's not working and I'll jump on a call. — Peter`
+      `Reply STUCK if it's not working and we'll jump on a call. — BellAveGo team`
   } else {
     // Forwarding confirmed but still no calls — different problem
     reply =
       `Hey ${firstName} — forwarding's set up but no calls have come through yet. ` +
       `Quick test: call ${bagNumber} from a different phone. The AI should answer in ${businessName}'s name. ` +
-      `If it doesn't, reply BROKEN and I'll dig in immediately. — Peter`
+      `If it doesn't, reply BROKEN and we'll dig in immediately. — BellAveGo team`
   }
 
   try {

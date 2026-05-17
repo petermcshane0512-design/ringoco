@@ -89,8 +89,8 @@ const organizationJsonLd = {
   description:
     "AI Receptionist + AI Marketing platform for home service contractors. Answers calls, books jobs, recovers revenue, runs marketing.",
   founder: {
-    "@type": "Person",
-    name: "Peter McShane",
+    "@type": "Organization",
+    name: "BellAveGo Team",
   },
   address: {
     "@type": "PostalAddress",

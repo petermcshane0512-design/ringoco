@@ -74,8 +74,8 @@ export default function FounderPage() {
                 <div style={{ position: 'relative', width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', color: '#0B1F3A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, boxShadow: '0 8px 20px rgba(232,116,43,0.42)', border: '2px solid #fff' }}>P</div>
               </div>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.2px' }}>Peter McShane</div>
-                <div style={{ fontSize: 12, color: '#C84B26', fontWeight: 700, marginTop: 2 }}>Founder &amp; CEO, BellAveGo</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.2px' }}>The BellAveGo Team</div>
+                <div style={{ fontSize: 12, color: '#C84B26', fontWeight: 700, marginTop: 2 }}>Software &amp; Finance Team</div>
                 <div style={{ fontSize: 11.5, color: '#7AAAB2', fontWeight: 500, marginTop: 2 }}>Building AI tools for home-service businesses</div>
               </div>
             </div>
@@ -272,7 +272,7 @@ export default function FounderPage() {
       {/* Footer */}
       <footer style={{ padding: '32px 40px', background: '#FFF7EE', borderTop: '1px solid rgba(232,116,43,0.18)', textAlign: 'center' }}>
         <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>
-          BellAveGo · Built by Peter McShane in Manhattan, NY · <a href="mailto:peter@bellavego.com" style={{ color: '#C84B26', textDecoration: 'none', fontWeight: 700 }}>peter@bellavego.com</a>
+          BellAveGo · Built by the BellAveGo software &amp; finance team · <a href="mailto:peter@bellavego.com" style={{ color: '#C84B26', textDecoration: 'none', fontWeight: 700 }}>peter@bellavego.com</a>
         </p>
       </footer>
     </main>

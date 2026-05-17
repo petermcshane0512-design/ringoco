@@ -131,7 +131,7 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
 
       results.push({
         toolCallId: tc.id,
-        result: "Got it — Peter will call back in the next hour or two.",
+        result: "Got it — our team will call back in the next hour or two.",
       })
       continue
     }

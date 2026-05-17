@@ -87,8 +87,8 @@ export const TIER_METADATA: Record<Tier, {
   annual: number   // shown per-month (annual_cents / 12 / 100), customer billed yearly
   setup: number
 }> = {
-  receptionist: { name: 'Receptionist',    monthly: 397,  annual: 330,  setup: 0 },
-  officemgr:    { name: 'Office Manager',  monthly: 797,  annual: 662,  setup: 0 },
+  receptionist: { name: 'Mission Control', monthly: 397,  annual: 330,  setup: 0 },
+  officemgr:    { name: 'Operator',        monthly: 797,  annual: 662,  setup: 0 },
   concierge:    { name: 'Concierge',       monthly: 1997, annual: 1660, setup: 0 },
 }
 

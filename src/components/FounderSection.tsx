@@ -244,10 +244,10 @@ export default function FounderSection() {
           </div>
 
           <div className="fs-sig">
-            <div className="fs-sig-avatar">P</div>
+            <div className="fs-sig-avatar">B</div>
             <div>
-              <div className="fs-sig-name">Peter McShane</div>
-              <div className="fs-sig-role">Founder · BellAveGo · Manhattan, NY</div>
+              <div className="fs-sig-name">The BellAveGo Team</div>
+              <div className="fs-sig-role">Software &amp; Finance Team · Manhattan, NY</div>
             </div>
           </div>
         </div>

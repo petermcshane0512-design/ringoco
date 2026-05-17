@@ -974,7 +974,7 @@ export function ReportView({ report, sample = false, personalized = false }: { r
             <p style={{ margin: 0 }}>{r.methodology}</p>
             <div className="cr-foot-credit">
               <span>Generated {r.meta.generatedAt}</span>
-              <span className="cr-foot-unis">Built in Chicago by Peter McShane · Fordham &rsquo;26</span>
+              <span className="cr-foot-unis">Built by the BellAveGo software &amp; finance team</span>
             </div>
           </div>
         </div>

@@ -89,7 +89,7 @@ Priority rules:
         : priority === 'urgent' ? 'within 4 hours'
         : 'within 1 business day'
       await twilioClient.messages.create({
-        body: `BellAveGo: got your support request ("${body.subject.slice(0, 60)}${body.subject.length > 60 ? '…' : ''}"). Peter will respond ${slaCopy}. — BellAveGo Support`,
+        body: `BellAveGo: got your support request ("${body.subject.slice(0, 60)}${body.subject.length > 60 ? '…' : ''}"). Our team will respond ${slaCopy}. — BellAveGo Support`,
         from: process.env.TWILIO_PHONE_NUMBER!,
         to: profile.owner_phone,
       })

@@ -96,7 +96,7 @@ function WaitlistForm() {
               You&apos;re on the list.
             </h1>
             <p style={{ fontSize: 15, color: '#4A6670', lineHeight: 1.6, marginBottom: 22 }}>
-              Peter will personally reach out within 24 hours to chat about your business and lock in early-access pricing for {tierLabel}.
+              Our team will personally reach out within 24 hours to chat about your business and lock in early-access pricing for {tierLabel}.
             </p>
             <p style={{ fontSize: 13, color: '#7AAAB2', lineHeight: 1.55, marginBottom: 24 }}>
               In the meantime, want to see what BellAveGo can do today? Receptionist + Office Manager are available right now.
@@ -188,7 +188,7 @@ function WaitlistForm() {
               </button>
 
               <p style={{ marginTop: 14, fontSize: 11.5, color: '#7AAAB2', textAlign: 'center', lineHeight: 1.6 }}>
-                Peter calls every waitlist signup personally within 24 hrs. No mass emails, no spam. Just a real conversation about your business.
+                Our team calls every waitlist signup personally within 24 hrs. No mass emails, no spam. Just a real conversation about your business.
               </p>
             </form>
           </div>
