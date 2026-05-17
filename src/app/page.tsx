@@ -1076,7 +1076,6 @@ export default function HomePage() {
             📞 (651) 467-7829
           </a>
         </div>
-        <p style={{ color: 'rgba(255,255,255,0.28)', fontSize: 13, marginTop: 18 }}>No credit card. No contract. No BS.</p>
       </section>
 
       {/* FOOTER */}
