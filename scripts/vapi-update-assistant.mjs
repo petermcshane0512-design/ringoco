@@ -172,6 +172,49 @@ const patch = {
           ...(VAPI_WEBHOOK_SECRET ? { secret: VAPI_WEBHOOK_SECRET } : {}),
         },
       },
+      {
+        type: 'function',
+        function: {
+          name: 'book_appointment',
+          description:
+            "Call this IMMEDIATELY after the caller picks one of the slots you offered from check_availability. " +
+            "DO NOT call this without first calling check_availability — the contractor's real calendar must be checked. " +
+            "DO NOT call this if no calendar is connected — just take the message. " +
+            "On success: the event is created in the contractor's Google Calendar, the caller gets a confirmation SMS, and the contractor gets a booking-alert SMS. " +
+            "The system response tells you what to say next — read it back to the caller naturally.",
+          parameters: {
+            type: 'object',
+            properties: {
+              start_iso: {
+                type: 'string',
+                description:
+                  "EXACT ISO-8601 timestamp of the slot the caller picked (e.g. '2026-05-20T14:00:00-05:00'). " +
+                  "Use the start time from the slot that check_availability returned — do NOT invent a new time.",
+              },
+              duration_min: {
+                type: 'number',
+                description:
+                  "Job duration in minutes. Use the same duration you passed to check_availability so the calendar block matches. Default 90 if uncertain.",
+              },
+              customer_name: {
+                type: 'string',
+                description: "Caller's first name as they said it.",
+              },
+              service_summary: {
+                type: 'string',
+                description:
+                  "ONE plain-language sentence describing the job, in the caller's own words. " +
+                  "e.g. 'AC tune-up', 'leaky kitchen faucet', 'water heater install quote'.",
+              },
+            },
+            required: ['start_iso', 'customer_name', 'service_summary'],
+          },
+        },
+        server: {
+          url: `${BASE_URL}/api/calendar/book`,
+          ...(VAPI_WEBHOOK_SECRET ? { secret: VAPI_WEBHOOK_SECRET } : {}),
+        },
+      },
     ],
   },
 
@@ -213,7 +256,7 @@ console.log('✅ Assistant updated.')
 console.log(`   ID:        ${j.id ?? VAPI_ASSISTANT_ID}`)
 console.log(`   Name:      ${j.name ?? patch.name}`)
 console.log(`   Voice:     Cartesia · ${VAPI_VOICE_ID}`)
-console.log(`   Tools:     take_message + check_availability`)
+console.log(`   Tools:     take_message + check_availability + book_appointment`)
 console.log(`   maxTokens: 220 (was 90 — Emma can finally breathe)`)
 console.log(`   System:    minimal stub — full personality via per-call overrides`)
 console.log(`   First msg: "${patch.firstMessage}"`)

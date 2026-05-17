@@ -7,10 +7,10 @@ const supabase = createClient(
 )
 
 /**
- * Google Calendar OAuth + read-only API client.
+ * Google Calendar OAuth + free-busy read + event write.
  *
- * Scope: `calendar.readonly` only at launch — AI checks free/busy, never
- * writes events. Add `calendar.events` when auto-booking ships (Phase 2).
+ * Scopes: read for free/busy lookup, write for auto-booking events when
+ * Emma confirms an appointment with a caller.
  *
  * Setup (one-time, done in Google Cloud Console):
  *   1. https://console.cloud.google.com/apis/credentials
@@ -20,15 +20,22 @@ const supabase = createClient(
  *   4. Enable Google Calendar API in the same project
  *   5. OAuth consent screen → External (or Internal if Workspace) → publish
  *   6. Add env vars: GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET
+ *
+ * Migration note: contractors who connected BEFORE the write-scope rollout
+ * have read-only tokens. Booking attempts fail with 403 — they need to
+ * reconnect to grant calendar.events. canWriteToGoogle() checks scope.
  */
 
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const GOOGLE_API_BASE = 'https://www.googleapis.com'
 
+const SCOPE_EVENTS_WRITE = 'https://www.googleapis.com/auth/calendar.events'
+
 const SCOPES = [
   'https://www.googleapis.com/auth/calendar.readonly',
   'https://www.googleapis.com/auth/calendar.calendarlist.readonly',
+  SCOPE_EVENTS_WRITE,
   'openid',
   'email',
   'profile',
@@ -265,6 +272,110 @@ export async function getGoogleBusyBlocks(args: {
   } catch (e) {
     await logCalendarEvent(args.connection.user_id, 'google', 'error', `freeBusy threw: ${(e as Error).message}`)
     return []
+  }
+}
+
+/**
+ * Returns true if this connection's token includes calendar.events scope.
+ * Pre-write-scope connections will return false — caller must reconnect.
+ */
+export function canWriteToGoogle(connection: CalendarConnectionRow): boolean {
+  if (!connection.scope) return false
+  return connection.scope.split(/\s+/).includes(SCOPE_EVENTS_WRITE)
+}
+
+export type GoogleEventInput = {
+  summary: string                  // event title
+  description?: string
+  startISO: string                 // ISO timestamp
+  endISO: string
+  timezone?: string                // IANA — defaults to connection timezone
+  location?: string
+  attendeePhone?: string           // surfaced in description (Google needs email for real attendee)
+}
+
+export type GoogleEventResult =
+  | { ok: true; eventId: string; htmlLink?: string }
+  | { ok: false; error: string; status?: number; conflict?: boolean }
+
+/**
+ * Create an event on the contractor's primary calendar.
+ *
+ * Race protection is the CALLER's responsibility — re-check availability
+ * inside the booking endpoint immediately before invoking this. Google's API
+ * doesn't have native conflict-rejection on insert; concurrent writes are
+ * legitimately accepted as parallel events, so we rely on the freeBusy
+ * re-check + the conditional flow upstream.
+ *
+ * Maps a 403 from missing scope to a clear error message so the booking
+ * route can prompt reconnection.
+ */
+export async function createGoogleEvent(args: {
+  connection: CalendarConnectionRow
+  event: GoogleEventInput
+}): Promise<GoogleEventResult> {
+  if (!canWriteToGoogle(args.connection)) {
+    return {
+      ok: false,
+      error: 'Google Calendar connection lacks write scope — reconnect required.',
+    }
+  }
+
+  const accessToken = await getValidAccessToken(args.connection)
+  if (!accessToken) return { ok: false, error: 'Could not refresh access token.' }
+
+  const calendarId = args.connection.calendar_id || 'primary'
+  const tz = args.event.timezone || args.connection.timezone || 'America/Chicago'
+
+  const body = {
+    summary: args.event.summary,
+    description: args.event.description,
+    location: args.event.location,
+    start: { dateTime: args.event.startISO, timeZone: tz },
+    end: { dateTime: args.event.endISO, timeZone: tz },
+    reminders: {
+      useDefault: false,
+      overrides: [
+        { method: 'popup', minutes: 60 },
+        { method: 'popup', minutes: 1440 }, // 24h
+      ],
+    },
+    // Source tag so contractors can identify BellAveGo-created events
+    extendedProperties: {
+      shared: { bellavego_source: 'ai_booking' },
+    },
+  }
+
+  try {
+    const res = await fetch(
+      `${GOOGLE_API_BASE}/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      },
+    )
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '')
+      await logCalendarEvent(args.connection.user_id, 'google', 'event_create_failed', `${res.status} ${txt.slice(0, 200)}`)
+      if (res.status === 403 && /insufficient.*scope|insufficientPermissions/i.test(txt)) {
+        return { ok: false, error: 'Missing calendar.events scope — reconnect required.', status: 403 }
+      }
+      return { ok: false, error: `Google API ${res.status}: ${txt.slice(0, 200)}`, status: res.status }
+    }
+
+    const j = (await res.json()) as { id?: string; htmlLink?: string }
+    if (!j.id) return { ok: false, error: 'Google returned no event id.' }
+    await logCalendarEvent(args.connection.user_id, 'google', 'event_created', j.id)
+    return { ok: true, eventId: j.id, htmlLink: j.htmlLink }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    await logCalendarEvent(args.connection.user_id, 'google', 'event_create_threw', msg)
+    return { ok: false, error: msg }
   }
 }
 
