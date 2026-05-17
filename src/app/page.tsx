@@ -773,8 +773,127 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* CALENDAR SYNC — Emma auto-books to Google/Outlook/Calendly when connected. */}
+      <section style={{ padding: '88px 48px', background: 'linear-gradient(180deg, #FFF8F0 0%, #FFF1E2 60%, #FFF8F0 100%)', borderBottom: '1px solid rgba(232,116,43,0.16)', position: 'relative', overflow: 'hidden' }}>
+        <style>{`
+          @keyframes calGlow {
+            0%, 100% { box-shadow: 0 16px 44px rgba(232,116,43,0.16), 0 0 0 1px rgba(232,116,43,0.16); }
+            50%      { box-shadow: 0 24px 64px rgba(232,116,43,0.28), 0 0 0 1px rgba(232,116,43,0.28); }
+          }
+          .cal-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 28px 22px 24px;
+            border: 1px solid rgba(232,116,43,0.18);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.28s ease;
+            position: relative;
+          }
+          .cal-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 24px 64px rgba(232,116,43,0.24);
+          }
+          .cal-logo {
+            width: 64px; height: 64px; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900;
+            font-size: 28px;
+            color: #fff;
+            box-shadow: 0 8px 22px rgba(11,31,58,0.14), inset 0 1px 0 rgba(255,255,255,0.22);
+          }
+          .cal-status-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #22C55E;
+            box-shadow: 0 0 10px rgba(34,197,94,0.7);
+            animation: pulseDot 2s ease-in-out infinite;
+          }
+          .cal-flow-arrow { color: rgba(232,116,43,0.42); }
+          @media (max-width: 820px) {
+            .cal-grid-3 { grid-template-columns: 1fr !important; }
+            .cal-flow { flex-direction: column !important; gap: 14px !important; }
+            .cal-flow-arrow { transform: rotate(90deg); }
+          }
+        `}</style>
+
+        {/* Background sunset glows */}
+        <div style={{ position: 'absolute', top: '-10%', right: '-8%', width: 540, height: 540, borderRadius: '50%', background: 'radial-gradient(circle, rgba(232,116,43,0.18), transparent 65%)', filter: 'blur(40px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '-20%', left: '-8%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(20,184,166,0.14), transparent 65%)', filter: 'blur(40px)', pointerEvents: 'none' }} />
+
+        <div style={{ maxWidth: 1080, margin: '0 auto', position: 'relative' }}>
+
+          {/* Eyebrow + heading */}
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(232,116,43,0.28)', fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 18 }}>
+              <span className="cal-status-dot" />
+              Live appointment booking
+            </div>
+            <h2 style={{ fontSize: 'clamp(30px, 4.2vw, 46px)', fontWeight: 900, letterSpacing: '-1.2px', lineHeight: 1.05, color: '#0B1F3A', marginBottom: 16 }}>
+              Connect your calendar.<br />
+              <span style={{ background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>Emma books appointments live.</span>
+            </h2>
+            <p style={{ fontSize: 17, color: '#3D5A62', maxWidth: 660, margin: '0 auto', lineHeight: 1.6 }}>
+              Connect once. Emma reads your real availability, offers callers your actual open times, and writes the appointment straight to your calendar — <strong style={{ color: '#0AA89F' }}>with travel buffer baked in</strong> so you never get a back-to-back surprise.
+            </p>
+          </div>
+
+          {/* Three provider logos */}
+          <div className="cal-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, maxWidth: 820, margin: '0 auto 44px' }}>
+            <div className="cal-card">
+              <div className="cal-logo" style={{ background: 'linear-gradient(135deg, #4285F4 0%, #1A73E8 100%)' }}>G</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A' }}>Google Calendar</div>
+              <div style={{ fontSize: 12, color: '#7AAAB2', textAlign: 'center', lineHeight: 1.45 }}>Connect in 30 seconds.<br/>Auto-syncs both ways.</div>
+            </div>
+            <div className="cal-card">
+              <div className="cal-logo" style={{ background: 'linear-gradient(135deg, #0078D4 0%, #005A9E 100%)' }}>O</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A' }}>Microsoft Outlook</div>
+              <div style={{ fontSize: 12, color: '#7AAAB2', textAlign: 'center', lineHeight: 1.45 }}>Work or personal accounts.<br/>Full availability read.</div>
+            </div>
+            <div className="cal-card">
+              <div className="cal-logo" style={{ background: 'linear-gradient(135deg, #006BFF 0%, #0050C9 100%)' }}>C</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A' }}>Calendly</div>
+              <div style={{ fontSize: 12, color: '#7AAAB2', textAlign: 'center', lineHeight: 1.45 }}>Event types respected.<br/>No double-bookings ever.</div>
+            </div>
+          </div>
+
+          {/* Mini flow diagram */}
+          <div className="cal-flow" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, maxWidth: 900, margin: '0 auto 32px', flexWrap: 'wrap' }}>
+            {[
+              { icon: '📞', label: 'Customer calls', sub: '"Need an AC tune-up Tuesday?"' },
+              { icon: '🧠', label: 'Emma checks your calendar', sub: '"Tues 9, Wed 1, or Thurs 11?"' },
+              { icon: '✅', label: 'Booking goes live', sub: 'Event + SMS in 5 seconds' },
+            ].map((step, i, arr) => (
+              <div key={step.label} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ background: '#fff', borderRadius: 14, padding: '14px 18px', border: '1px solid rgba(232,116,43,0.18)', boxShadow: '0 8px 22px rgba(11,31,58,0.06)', minWidth: 220, textAlign: 'left' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                    <span style={{ fontSize: 18 }}>{step.icon}</span>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: '#0B1F3A' }}>{step.label}</span>
+                  </div>
+                  <div style={{ fontSize: 11.5, color: '#7AAAB2', fontStyle: 'italic', paddingLeft: 28 }}>{step.sub}</div>
+                </div>
+                {i < arr.length - 1 && (
+                  <svg className="cal-flow-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Closer */}
+          <div style={{ textAlign: 'center', maxWidth: 580, margin: '0 auto' }}>
+            <p style={{ fontSize: 13, color: '#7AAAB2', lineHeight: 1.65, margin: 0 }}>
+              <strong style={{ color: '#0AA89F' }}>Included in every tier.</strong> No extra cost, no add-on, no contract.<br/>
+              Travel buffer (default 30 minutes) is configurable per business — set it once and Emma respects it on every booking.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* ROI CALCULATOR + FOUNDER SECTION both moved to /founder per Peter —
-          homepage is now Hero → Consulting → How It Works → Industries → Pricing → CTA. */}
+          homepage is now Hero → Consulting → How It Works → Calendar Sync → Industries → Pricing → CTA. */}
 
       {/* INDUSTRIES */}
       <section style={{ background: '#F2F9F5', borderBottom: '1px solid #D4E6DC', padding: '28px 0 0' }}>
@@ -815,6 +934,7 @@ export default function HomePage() {
               features: [
                 '6 AI Consulting Reports / year — bi-monthly revenue intelligence: missed calls, top services, quote-to-close, what to fix. ($5K–$15K value if you hired a consultant.)',
                 '24/7 AI call answering — never miss a job',
+                '📅 Live calendar booking — Emma auto-books to your Google Calendar, Outlook, or Calendly with travel buffer baked in (when connected)',
                 'Auto-provisioned local number in your area code (~30 seconds at signup)',
                 'Captures name · callback # · what they need · preferred time (if mentioned) · urgency',
                 'Instant text summary to your phone in 20 seconds',

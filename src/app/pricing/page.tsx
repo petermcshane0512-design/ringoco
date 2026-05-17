@@ -42,6 +42,7 @@ const PLANS: Plan[] = [
       { label: '6 AI Consulting Reports / year — bi-monthly revenue intelligence: missed calls, top services, quote-to-close ratio, what to fix. ($5K–$15K value if you hired a consultant.)', auto: true },
       { label: '24/7 AI call answering — never miss a job again', auto: true },
       { label: 'Up to 250 inbound calls / month', auto: true },
+      { label: '📅 Live calendar booking — Emma auto-books to your Google Calendar, Outlook, or Calendly with travel buffer baked in (when connected)', auto: true },
       { label: 'Auto-provisioned local number in your area code (~30 seconds at signup)', auto: true },
       { label: 'AI captures name · callback # · what they need · preferred time (if mentioned) · urgency', auto: true },
       { label: 'Instant text summary to your phone in 20 seconds', auto: true },
