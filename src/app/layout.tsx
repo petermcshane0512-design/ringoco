@@ -120,8 +120,8 @@ const softwareJsonLd = {
   description:
     "AI Receptionist + AI Marketing platform for home service contractors. 24/7 call answering, automated booking, AI-powered marketing operations.",
   offers: [
-    { "@type": "Offer", name: "Receptionist",    price: "397",  priceCurrency: "USD" },
-    { "@type": "Offer", name: "Office Manager",  price: "797",  priceCurrency: "USD" },
+    { "@type": "Offer", name: "Mission Control", price: "397",  priceCurrency: "USD" },
+    { "@type": "Offer", name: "Operator",        price: "797",  priceCurrency: "USD" },
     { "@type": "Offer", name: "Concierge",       price: "1997", priceCurrency: "USD" },
   ],
   aggregateRating: undefined,  // add once we have published reviews

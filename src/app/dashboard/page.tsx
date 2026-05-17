@@ -359,7 +359,7 @@ export default function DashboardPage() {
                   key={t}
                   onClick={() => adminSwitchTier(t)}
                   disabled={adminSwitching !== null || isCurrent}
-                  title={t === "receptionist" ? "Receptionist" : t === "officemgr" ? "Office Manager" : "Concierge"}
+                  title={t === "receptionist" ? "Mission Control" : t === "officemgr" ? "Operator" : "Concierge"}
                   style={{
                     padding: "4px 10px", borderRadius: 99, border: "none",
                     background: isCurrent ? "#22C55E" : "transparent",
@@ -683,8 +683,8 @@ export default function DashboardPage() {
                   <div style={emptyTitle}>Your first report is on the way</div>
                   <div style={emptySub}>
                     Your welcome consulting report auto-generates the day after activation.
-                    After that, reports arrive on your plan&apos;s cadence — bi-monthly (Receptionist),
-                    monthly (Office Manager), or weekly + quarterly (Concierge).
+                    After that, reports arrive on your plan&apos;s cadence — bi-monthly (Mission Control),
+                    monthly (Operator), or weekly + quarterly (Concierge).
                   </div>
                 </div>
               ) : (

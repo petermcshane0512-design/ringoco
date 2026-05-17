@@ -21,7 +21,7 @@ export async function GET() {
     .maybeSingle()
 
   if (!profile?.is_active || !OFFICE_MGR_TIERS.has(profile.plan_tier ?? '')) {
-    return NextResponse.json({ error: 'Office Manager tier required' }, { status: 403 })
+    return NextResponse.json({ error: 'Operator tier required' }, { status: 403 })
   }
 
   // All three tables may be missing if migration 008 hasn't been run.

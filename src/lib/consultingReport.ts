@@ -197,13 +197,13 @@ export const SAMPLE_REPORT: ConsultingReport = {
     totalCompetitors: 8,
     strengths: [
       'Highest rating in service area (4.8 vs 4.4 market avg)',
-      'Fastest response time on BellAveGo network (avg 11s)',
-      'Repeat customer rate 41% (network avg 28%)',
+      '24/7 AI receptionist — captures after-hours calls competitors miss',
+      'Instant SMS dispatch beats voicemail-reliant competitors',
     ],
     gaps: [
       'Review volume is 1/10th of largest competitor — deters new homeowners doing price-sensitive research',
-      'No web presence beyond Google Business Profile',
       'No after-hours emergency positioning despite weekend intent data',
+      'No automated quote follow-up — 50%+ of quotes go cold without one',
     ],
   },
   serviceAreaMap: {

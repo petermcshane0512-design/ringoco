@@ -178,9 +178,9 @@ export default function OfficeManagerPage() {
   if (loading) return <div style={{ padding: 40, fontFamily: 'system-ui' }}>Loading…</div>
   if (error) return (
     <div style={{ padding: 40, fontFamily: 'system-ui', color: '#DC2626' }}>
-      <h2>Office Manager unavailable</h2>
+      <h2>Operator unavailable</h2>
       <p>{error}</p>
-      <p style={{ fontSize: 13, color: '#4A7A80' }}>This feature requires the Office Manager tier ($797/mo) or Concierge ($1,997/mo).</p>
+      <p style={{ fontSize: 13, color: '#4A7A80' }}>This feature requires the Operator tier ($797/mo) or Concierge ($1,997/mo).</p>
       <Link href="/dashboard">← Back to dashboard</Link>
     </div>
   )
@@ -190,7 +190,7 @@ export default function OfficeManagerPage() {
 
       <div style={{ marginBottom: 22 }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
-          Office Manager
+          Operator
         </div>
         <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 4 }}>Quote Hunter & Collections</h1>
         <p style={{ fontSize: 13, color: '#4A7A80' }}>Track quotes and past-due invoices. The AI follows up on autopilot — you sign off when revenue clears.</p>
@@ -198,7 +198,7 @@ export default function OfficeManagerPage() {
 
       {tablesMissing && (
         <div style={{ marginBottom: 18, padding: '14px 18px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 12, color: '#92400E', fontSize: 13 }}>
-          <strong>Office Manager tables not installed yet.</strong> Run <code>supabase-migrations/008_office_manager.sql</code> in the Supabase SQL editor.
+          <strong>Operator tables not installed yet.</strong> Run <code>supabase-migrations/008_office_manager.sql</code> in the Supabase SQL editor.
           Until then, adding quotes/invoices below will fail.
         </div>
       )}

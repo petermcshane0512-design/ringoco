@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
 
   if (!profile?.is_active || !OFFICE_MGR_TIERS.has(profile.plan_tier ?? '')) {
-    return NextResponse.json({ error: 'AI Collections requires Office Manager tier or above.' }, { status: 403 })
+    return NextResponse.json({ error: 'AI Collections requires Operator tier or above.' }, { status: 403 })
   }
 
   const body = (await req.json().catch(() => ({}))) as {

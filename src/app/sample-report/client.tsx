@@ -775,8 +775,7 @@ export function ReportView({ report, sample = false, personalized = false }: { r
               <ServiceAreaMap report={r} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginTop: 12, fontSize: 11, color: 'var(--ink-mid)' }}>
                 <Legend color="#0AA89F" label="Your business" />
-                <Legend color="#F59E0B" label="Top 5 competitors (real)" />
-                <Legend color="#22C55E" label="Opportunity zones" />
+                <Legend color="#F59E0B" label="Top 5 competitors by review count (real Google Places data)" />
               </div>
               {/* Honesty disclosure — competitors are real Google Places data;
                   the demo business is fictional. Real paying customers see their
