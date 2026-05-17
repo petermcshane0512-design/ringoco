@@ -90,6 +90,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             href: '/dashboard/forwarding', label: 'Call Forwarding',
             icon: <><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/><polyline points="15 4 20 4 20 9"/><line x1="15" y1="9" x2="20" y2="4"/></>,
           },
+          {
+            href: '/dashboard/calendar', label: 'Calendar Sync',
+            icon: <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,
+          },
         ].map(({ href, label, icon, dot }) => (
           <Link key={href} href={href} style={{
             display: 'flex', alignItems: 'center', gap: 9, padding: '9px 10px',
