@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { disconnectGoogleCalendar } from '@/lib/calendar/google'
+import { disconnectMicrosoftCalendar } from '@/lib/calendar/microsoft'
+import { disconnectCalendly } from '@/lib/calendar/calendly'
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth()
@@ -9,10 +11,9 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({})) as { provider?: string }
   const provider = (body.provider || 'google').toLowerCase()
 
-  if (provider === 'google') {
-    const r = await disconnectGoogleCalendar(userId)
-    return NextResponse.json(r)
-  }
+  if (provider === 'google')    return NextResponse.json(await disconnectGoogleCalendar(userId))
+  if (provider === 'microsoft') return NextResponse.json(await disconnectMicrosoftCalendar(userId))
+  if (provider === 'calendly')  return NextResponse.json(await disconnectCalendly(userId))
 
   return NextResponse.json({ error: `Provider "${provider}" not supported yet` }, { status: 400 })
 }

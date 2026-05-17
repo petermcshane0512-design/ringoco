@@ -433,20 +433,11 @@ export default function SetupWizard() {
                           boxShadow: "0 6px 18px rgba(232,116,43,0.32)",
                         }}
                       >
-                        Connect Google Calendar →
+                        Connect a calendar →
                       </a>
-                      <a
-                        href="/dashboard/calendar"
-                        style={{
-                          padding: "11px 20px", borderRadius: 10,
-                          background: "#fff", color: "#0AA89F",
-                          fontSize: 13, fontWeight: 800,
-                          textDecoration: "none",
-                          border: "1px solid rgba(10,168,159,0.32)",
-                        }}
-                      >
-                        See all 10 calendar options
-                      </a>
+                      <span style={{ fontSize: 11.5, color: "#7AAAB2", fontWeight: 500, alignSelf: "center" }}>
+                        Google Calendar · Microsoft Outlook · Calendly available now (7 more coming)
+                      </span>
                     </div>
                   </div>
                   <button onClick={continueAfterTest} disabled={busy} style={primaryButton}>
