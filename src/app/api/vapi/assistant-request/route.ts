@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { RECEPTIONIST_TIERS, RECEPTIONIST_CALL_CAP } from '@/lib/pricing'
 import {
   renderSystemPrompt,
+  renderSalesAgentPrompt,
   verifyVapiSignature,
   VAPI_VOICE_PROVIDER,
   VAPI_VOICE_ID_DEFAULT,
@@ -61,25 +62,16 @@ export async function POST(req: NextRequest) {
   const callerNumber = msg.call?.customer?.number ?? null
 
   // ── Public landing-page demo number ──
-  // Hardcoded "Smith HVAC & Plumbing" fictional profile. No DB writes, no
-  // contractor SMS — just the conversation so prospects hear the AI live.
-  // Mirrors the same isDemo path in the legacy /api/twilio/voice route.
+  // Emma — BellAveGo's AI sales receptionist. Answers prospect questions about
+  // the product accurately AND demonstrates the AI quality they'd get if they
+  // signed up (the conversation IS the product demo). Captures lead → on
+  // take_message, end-of-call-report SMSes Peter directly with the lead info.
   if (process.env.TWILIO_DEMO_NUMBER && calledNumber === process.env.TWILIO_DEMO_NUMBER) {
-    const demoTenant: TenantContext = {
-      userId: 'demo',
-      businessName: "Smith HVAC & Plumbing",
-      services: 'HVAC, plumbing, water heater installs, drain cleaning',
-      serviceArea: 'metro Atlanta',
-      aiTone: 'friendly',
-      aiLanguage: 'en',
-      planTier: 'demo',
-      twilioNumber: calledNumber,
-    }
     return NextResponse.json({
       assistantOverrides: {
-        firstMessage: `Thanks for calling Smith HVAC and Plumbing. What's going on — what can we help you with today?`,
+        firstMessage: `Hi, this is Emma with BellAveGo. I know you're checking out our AI receptionist for home-service businesses — how can I help?`,
         model: {
-          messages: [{ role: 'system', content: renderSystemPrompt(demoTenant) }],
+          messages: [{ role: 'system', content: renderSalesAgentPrompt() }],
         },
         voice: {
           provider: VAPI_VOICE_PROVIDER,
@@ -87,7 +79,7 @@ export async function POST(req: NextRequest) {
         },
         metadata: {
           user_id: 'demo',
-          business_name: demoTenant.businessName,
+          business_name: 'BellAveGo (sales)',
           plan_tier: 'demo',
           twilio_number: calledNumber,
           is_demo: true,

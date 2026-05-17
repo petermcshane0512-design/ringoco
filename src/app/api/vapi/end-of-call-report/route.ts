@@ -87,24 +87,51 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
     const callerPhone =
       message.call?.customer?.number ?? args.customer_phone ?? null
 
-    // Demo number — send a "this was a BellAveGo demo" SMS to the caller,
-    // skip DB writes + contractor SMS. Same isDemo path the legacy route uses.
+    // Demo number — Emma (BellAveGo's AI sales receptionist) just captured a
+    // prospect lead. Two SMS sends: (1) friendly confirmation to the caller,
+    // (2) hot-lead alert to Peter so he can close them inside the 1-hr window.
     if (tenant.is_demo) {
       const callerNumber = args.customer_phone || callerPhone
+      const fromNumber =
+        tenant.twilio_number || process.env.TWILIO_DEMO_NUMBER || process.env.TWILIO_PHONE_NUMBER!
+
       if (callerNumber) {
         try {
           await twilioClient.messages.create({
-            body: `Hi ${args.customer_name}! This is a BellAveGo demo from Smith HVAC & Plumbing. We captured your message ("${args.reason}") in under 60 seconds — Mike would call you back in the next hour or two. Build this for your business → bellavego.com`,
-            from: tenant.twilio_number || process.env.TWILIO_DEMO_NUMBER || process.env.TWILIO_PHONE_NUMBER!,
+            body: `Hi ${args.customer_name}! Thanks for checking out BellAveGo. Peter (founder) will call you back in the next hour or two to answer anything Emma couldn't. — BellAveGo`,
+            from: fromNumber,
             to: callerNumber,
           })
         } catch (e) {
           console.error('demo caller SMS failed:', e)
         }
       }
+
+      // Hot-lead alert to Peter — warm prospect just demo'd the product
+      const peterPhone = process.env.FALLBACK_OWNER_PHONE
+      if (peterPhone) {
+        try {
+          const urgencyEmoji =
+            args.urgency === 'emergency' ? '🚨' : args.urgency === 'soon' ? '🎯' : '💡'
+          await twilioClient.messages.create({
+            body:
+              `${urgencyEmoji} BellAveGo DEMO LEAD — prospect just called\n\n` +
+              `👤 ${args.customer_name}\n` +
+              `📞 ${callerNumber || 'no phone captured'}\n` +
+              `💬 ${args.reason}\n\n` +
+              (callerNumber ? `📲 Tap to call back: ${callerNumber}\n\n` : '') +
+              `Warm lead — call back within 30 min for best conversion.`,
+            from: fromNumber,
+            to: peterPhone,
+          })
+        } catch (e) {
+          console.error('demo lead alert to Peter failed:', e)
+        }
+      }
+
       results.push({
         toolCallId: tc.id,
-        result: "Demo message captured. You'll get a text in a moment.",
+        result: "Got it — Peter will call back in the next hour or two.",
       })
       continue
     }
