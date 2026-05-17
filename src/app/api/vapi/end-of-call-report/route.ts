@@ -4,6 +4,7 @@ import twilio from 'twilio'
 import Anthropic from '@anthropic-ai/sdk'
 import { OFFICE_MGR_TIERS } from '@/lib/pricing'
 import { verifyVapiSignature } from '@/lib/vapi'
+import { estimateJobTicket } from '@/lib/consultingMetrics'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -201,6 +202,27 @@ async function takeMessage(opts: {
 
   // 2. Insert job (status 'pending_approval' kept for dashboard backward compat —
   // semantically this is "needs callback" not "needs scheduling confirmation").
+  //
+  // Pre-fill amount_estimated with a trade-average ticket so consulting reports
+  // ALWAYS show real-looking revenue, even before the contractor reports actual
+  // amounts. Revenue-followup cron asks for the real number 5+ days post-job;
+  // when contractor texts back, amount + revenue_source='reported' replace this.
+  // We need the contractor's business_type to pick the right estimate.
+  let estimatedAmount: number | null = null
+  try {
+    const { data: profileForEstimate } = await supabase
+      .from('profiles')
+      .select('business_type')
+      .eq('user_id', tenant.user_id)
+      .maybeSingle()
+    estimatedAmount = estimateJobTicket(
+      (profileForEstimate as { business_type?: string | null } | null)?.business_type,
+      args.reason,
+    )
+  } catch (e) {
+    console.error('amount_estimated lookup failed:', e)
+  }
+
   const { data: jobRow, error: jobErr } = await supabase
     .from('jobs')
     .insert({
@@ -212,6 +234,8 @@ async function takeMessage(opts: {
       scheduled_time: 'callback requested',
       title: `Callback: ${args.customer_name} — ${args.reason}`,
       status: 'pending_approval',
+      amount_estimated: estimatedAmount,
+      revenue_source: estimatedAmount != null ? 'estimated' : null,
     })
     .select('id')
     .single()

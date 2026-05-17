@@ -102,7 +102,15 @@ export async function POST(req: NextRequest) {
     return emptyXml()
   }
 
-  // ── 3. Owner replying YES/NO to job approval ─────────────────────
+  // ── 3a. Owner replying with a $ amount or 'skip' to a revenue ask ─
+  if (from === profile.owner_phone) {
+    const revenueIntent = classifyRevenueReply(rawBody)
+    if (revenueIntent) {
+      return handleOwnerRevenueReply({ intent: revenueIntent, to, profile })
+    }
+  }
+
+  // ── 3b. Owner replying YES/NO to job approval ─────────────────────
   if (from === profile.owner_phone) {
     return handleOwnerReply({ body, from, to, profile })
   }
@@ -189,6 +197,179 @@ async function handleOwnerHelp(args: { from: string; to: string; profile: Profil
   }
 
   return emptyXml()
+}
+
+// ── Revenue reply parser ────────────────────────────────────────
+// Classify a contractor's SMS reply to a revenue ask.
+// Returns null if it's not a revenue reply (lets the normal YES/NO logic run).
+type RevenueIntent =
+  | { kind: 'amount'; amount: number }
+  | { kind: 'skip' }
+  | { kind: 'disable' }
+  | { kind: 'enable' }
+
+function classifyRevenueReply(raw: string): RevenueIntent | null {
+  const txt = raw.trim()
+  if (!txt) return null
+
+  // "START REVENUE" / "enable revenue" / "yes revenue" — re-enable asks
+  if (/^(start|enable|yes)\s+revenue$/i.test(txt) || /^revenue\s+(start|on)$/i.test(txt)) {
+    return { kind: 'enable' }
+  }
+
+  // "STOP REVENUE" / "stop revenue" / "no revenue" — disable all future asks
+  if (/^(stop|disable|no)\s+revenue$/i.test(txt) || /^revenue\s+stop$/i.test(txt)) {
+    return { kind: 'disable' }
+  }
+
+  // Bare "skip" or "skip revenue" — mark most-recent ask skipped
+  if (/^skip(\s+revenue)?$/i.test(txt)) {
+    return { kind: 'skip' }
+  }
+
+  // Dollar amount — accepts: "520", "$520", "$520.50", "520.50", "520 for smith"
+  // Reject obvious non-amounts (phone numbers, dates, etc) — must be ≤6 digits before decimal.
+  const m = txt.match(/^\$?\s*(\d{1,6})(?:\.(\d{1,2}))?(?:\s+.*)?$/)
+  if (m) {
+    const dollars = parseInt(m[1], 10)
+    const cents = m[2] ? parseInt(m[2].padEnd(2, '0'), 10) : 0
+    const amount = dollars + cents / 100
+    // Sanity: $1 to $999,999. Lower bound rejects accidental "0" or "1" replies.
+    if (amount >= 1 && amount < 1_000_000) return { kind: 'amount', amount }
+  }
+
+  return null
+}
+
+async function handleOwnerRevenueReply(args: {
+  intent: RevenueIntent
+  to: string
+  profile: Profile
+}) {
+  const { intent, to, profile } = args
+  const ownerPhone = profile.owner_phone!
+
+  // STOP REVENUE — disable all future asks
+  if (intent.kind === 'disable') {
+    try {
+      await supabase
+        .from('profiles')
+        .update({ revenue_asks_disabled: true })
+        .eq('user_id', profile.user_id)
+      await twilioClient.messages.create({
+        body: `Got it — we won't ask about revenue again. Your consulting reports will use trade-average estimates instead. Reply START REVENUE anytime to turn back on.`,
+        from: to,
+        to: ownerPhone,
+      })
+    } catch (e) {
+      console.error('revenue disable failed:', e)
+    }
+    return emptyXml()
+  }
+
+  // START REVENUE — re-enable
+  if (intent.kind === 'enable') {
+    try {
+      await supabase
+        .from('profiles')
+        .update({ revenue_asks_disabled: false })
+        .eq('user_id', profile.user_id)
+      await twilioClient.messages.create({
+        body: `Back on — we'll text once per booked job (max 1/day) so your consulting reports show real revenue. Reply STOP REVENUE anytime to pause.`,
+        from: to,
+        to: ownerPhone,
+      })
+    } catch (e) {
+      console.error('revenue enable failed:', e)
+    }
+    return emptyXml()
+  }
+
+  // For both 'amount' and 'skip', we need the most-recent asked-but-unanswered job.
+  const { data: pendingJob } = await supabase
+    .from('jobs')
+    .select('id, customer_name, job_type')
+    .eq('user_id', profile.user_id)
+    .eq('revenue_skipped', false)
+    .is('amount', null)
+    .not('revenue_asked_at', 'is', null)
+    .order('revenue_asked_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  // 'skip' — mark the most-recent ask as skipped
+  if (intent.kind === 'skip') {
+    if (!pendingJob) {
+      try {
+        await twilioClient.messages.create({
+          body: `No pending revenue ask to skip — you're all caught up.`,
+          from: to,
+          to: ownerPhone,
+        })
+      } catch { /* non-fatal */ }
+      return emptyXml()
+    }
+    try {
+      await supabase
+        .from('jobs')
+        .update({ revenue_skipped: true, revenue_source: 'estimated' })
+        .eq('id', pendingJob.id)
+      const jobLabel = describeJobShort(pendingJob.customer_name, pendingJob.job_type)
+      await twilioClient.messages.create({
+        body: `No problem — we'll use a trade-average estimate for the ${jobLabel}. Reply STOP REVENUE to turn these prompts off entirely.`,
+        from: to,
+        to: ownerPhone,
+      })
+    } catch (e) {
+      console.error('revenue skip failed:', e)
+    }
+    return emptyXml()
+  }
+
+  // 'amount' — save the real number to the most-recent asked job
+  if (intent.kind === 'amount') {
+    if (!pendingJob) {
+      // No outstanding ask — they sent a number cold. Could be a confusion.
+      // Don't blindly save to "most recent job ever" — too risky. Just acknowledge.
+      try {
+        await twilioClient.messages.create({
+          body: `Got the number ($${intent.amount.toLocaleString()}) but I'm not sure which job it's for — we don't have any outstanding revenue prompts. If this was for a recent job, just enter it from your dashboard: https://www.bellavego.com/dashboard/jobs`,
+          from: to,
+          to: ownerPhone,
+        })
+      } catch { /* non-fatal */ }
+      return emptyXml()
+    }
+    try {
+      await supabase
+        .from('jobs')
+        .update({
+          amount: intent.amount,
+          revenue_source: 'reported',
+        })
+        .eq('id', pendingJob.id)
+      const jobLabel = describeJobShort(pendingJob.customer_name, pendingJob.job_type)
+      await twilioClient.messages.create({
+        body: `Got it — $${intent.amount.toLocaleString()} logged for the ${jobLabel}. Thanks, this feeds straight into your next consulting report.`,
+        from: to,
+        to: ownerPhone,
+      })
+    } catch (e) {
+      console.error('revenue save failed:', e)
+    }
+    return emptyXml()
+  }
+
+  return emptyXml()
+}
+
+function describeJobShort(customerName: string | null | undefined, jobType: string | null | undefined): string {
+  const name = (customerName || '').split(/\s+/)[0]
+  const type = (jobType || '').trim()
+  if (name && type) return `${name} ${type}`
+  if (name) return `${name} job`
+  if (type) return type
+  return 'job'
 }
 
 async function handleOwnerReply(args: { body: string; from: string; to: string; profile: Profile }) {

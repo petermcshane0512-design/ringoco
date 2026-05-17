@@ -31,6 +31,8 @@ type Job = {
   scheduled_time?: string;
   status: "pending" | "pending_approval" | "accepted" | "scheduled" | "declined" | "cancelled" | "completed";
   amount?: number;
+  amount_estimated?: number;
+  revenue_source?: 'reported' | 'estimated' | 'stripe' | null;
 };
 
 type Report = {
@@ -140,9 +142,13 @@ export default function DashboardPage() {
       return;
     }
     const jobList = (summary.jobs as Job[]) || [];
+    // Revenue: prefer real reported amounts, fall back to trade-average estimates.
+    // Includes scheduled + completed (excludes only explicit cancel/decline)
+    // because the AI books many jobs that contractors never mark "completed"
+    // in our dashboard — would otherwise look like $0 even with bookings.
     const revenue = jobList
-      .filter((j) => j.status === "completed")
-      .reduce((sum, j) => sum + (j.amount || 0), 0);
+      .filter((j) => !["cancelled", "declined"].includes(j.status))
+      .reduce((sum, j) => sum + (j.amount || j.amount_estimated || 0), 0);
     setJobs(jobList);
     setReports((summary.reports as Report[]) || []);
     setCounts({

@@ -36,6 +36,11 @@ export type InternalMetricsWindow = {
   // Rate fields (precomputed so the score formulas don't recompute)
   answerRate: number
   bookingConversion: number
+  // Revenue breakdown — feeds the report's "real vs estimated" disclosure
+  revenueReported: number      // sum of jobs.amount where revenue_source='reported'
+  revenueEstimated: number     // sum of jobs.amount_estimated where amount IS NULL
+  jobsWithReportedRevenue: number
+  jobsWithEstimatedRevenue: number
 }
 
 export type InternalMetricsWithDelta = {
@@ -100,20 +105,44 @@ async function pullInternalMetrics(
   const callsReceived = calls?.length ?? 0
   const callsAnswered = calls?.filter((c) => c.booking_completed).length ?? 0
 
-  // jobs
+  // jobs — pull amount_estimated + revenue_source for the real-vs-estimated split
   let jobsQuery = supabase
     .from('jobs')
-    .select('id, status, amount, job_type, created_at')
+    .select('id, status, amount, amount_estimated, revenue_source, job_type, created_at')
     .eq('user_id', userId)
     .gte('created_at', sinceIso)
   if (untilIso) jobsQuery = jobsQuery.lt('created_at', untilIso)
   const { data: jobs } = await jobsQuery
 
   const jobsBooked = jobs?.length ?? 0
-  const completedJobs = jobs?.filter((j) => j.status === 'completed') ?? []
-  const jobsCompleted = completedJobs.length
-  const totalRevenue = completedJobs.reduce((s, j) => s + (Number(j.amount) || 0), 0)
-  const avgJobValue = jobsCompleted > 0 ? Math.round(totalRevenue / jobsCompleted) : 0
+  // Revenue counts ALL bookable jobs (not just status='completed') because
+  // the AI books jobs as 'pending_approval' / 'scheduled' and the contractor
+  // often doesn't mark them 'completed' in our dashboard. We exclude only
+  // explicit cancellations + declines so reports reflect actual booked work.
+  const revenueJobs = (jobs ?? []).filter((j) => !['cancelled', 'declined'].includes(j.status as string))
+  const jobsCompleted = revenueJobs.filter((j) => j.status === 'completed').length
+
+  // Real vs estimated split — drives the report disclosure footer.
+  let revenueReported = 0
+  let revenueEstimated = 0
+  let jobsWithReportedRevenue = 0
+  let jobsWithEstimatedRevenue = 0
+  for (const j of revenueJobs) {
+    const real = Number(j.amount) || 0
+    if (real > 0) {
+      revenueReported += real
+      jobsWithReportedRevenue++
+    } else {
+      const est = Number(j.amount_estimated) || 0
+      if (est > 0) {
+        revenueEstimated += est
+        jobsWithEstimatedRevenue++
+      }
+    }
+  }
+  const totalRevenue = revenueReported + revenueEstimated
+  const revenueJobCount = jobsWithReportedRevenue + jobsWithEstimatedRevenue
+  const avgJobValue = revenueJobCount > 0 ? Math.round(totalRevenue / revenueJobCount) : 0
 
   // After-hours saves: calls received outside 8AM-6PM weekdays
   const callsSavedAfterHours = computeAfterHoursCount(calls ?? [])
@@ -152,6 +181,10 @@ async function pullInternalMetrics(
     jobsByType,
     answerRate: callsReceived > 0 ? callsAnswered / callsReceived : 0,
     bookingConversion: callsAnswered > 0 ? jobsBooked / callsAnswered : 0,
+    revenueReported,
+    revenueEstimated,
+    jobsWithReportedRevenue,
+    jobsWithEstimatedRevenue,
   }
 }
 
@@ -661,3 +694,48 @@ export function computeBellaveGoScore(
 }
 
 function round1(n: number): number { return Math.round(n * 10) / 10 }
+
+// ────────────────────────────────────────────────────────────────
+// TRADE TICKET ESTIMATES — shared default $ amount per job by trade
+// Used by:
+//   - Job creation (pre-fill jobs.amount_estimated)
+//   - Revenue-followup cron fallback
+//   - Personalize endpoint (projected performance)
+// Single source of truth so changing one trade updates the whole system.
+// ────────────────────────────────────────────────────────────────
+
+const TRADE_TICKET_ESTIMATES: Array<[RegExp, number]> = [
+  [/hvac|heating|cooling|furnace|air\s*condition/i, 620],
+  [/plumb|water\s*heater|drain|sewer/i, 380],
+  [/electric(al)?/i, 450],
+  [/roof/i, 1850],
+  [/landscap|lawn/i, 240],
+  [/clean/i, 175],
+  [/pest|exterminat/i, 195],
+  [/handyman/i, 280],
+  [/appliance/i, 290],
+  [/garage\s*door/i, 425],
+  [/paint/i, 850],
+  [/window|glazi/i, 540],
+  [/concrete|mason/i, 1200],
+  [/tree|arbor/i, 480],
+  [/snow/i, 180],
+  [/locksmith/i, 165],
+]
+
+const DEFAULT_TICKET = 380
+
+/**
+ * Best-guess average ticket for a trade. Used to pre-fill jobs.amount_estimated
+ * at job creation time. The match runs against `business_type` (e.g. "HVAC")
+ * OR `job_type` (e.g. "AC repair") OR the AI's captured reason ("furnace not heating").
+ * Falls back to $380 for unknown trades.
+ */
+export function estimateJobTicket(...candidates: Array<string | null | undefined>): number {
+  const text = candidates.filter(Boolean).join(' ').toLowerCase()
+  if (!text) return DEFAULT_TICKET
+  for (const [re, val] of TRADE_TICKET_ESTIMATES) {
+    if (re.test(text)) return val
+  }
+  return DEFAULT_TICKET
+}
