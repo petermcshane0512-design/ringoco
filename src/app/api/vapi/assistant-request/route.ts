@@ -72,6 +72,11 @@ export async function POST(req: NextRequest) {
       assistantOverrides: {
         firstMessage: `Hi, this is Emma with BellAveGo. I know you're checking out our AI receptionist for home-service businesses — how can I help?`,
         model: {
+          // Higher maxTokens so Emma can actually explain pricing + handle
+          // objections in natural sentences. Base config uses 220 already
+          // but we set explicitly here so any future base lower won't choke her.
+          maxTokens: 260,
+          temperature: 0.6,
           messages: [{ role: 'system', content: renderSalesAgentPrompt() }],
         },
         voice: {
@@ -203,13 +208,18 @@ export async function POST(req: NextRequest) {
 
   const firstMessage =
     tenant.aiLanguage === 'es'
-      ? `Hola, gracias por llamar a ${tenant.businessName}. ¿En qué le puedo ayudar hoy?`
-      : `Thanks for calling ${tenant.businessName}. What's going on — what can we help you with today?`
+      ? `Hola, soy Emma con ${tenant.businessName}. ${tenant.ownerFirstName || 'El dueño'} está en un trabajo — ¿en qué le puedo ayudar?`
+      : `Hi, this is Emma with ${tenant.businessName}. ${tenant.ownerFirstName || 'The owner'} is out on a job — how can I help?`
 
   return NextResponse.json({
     assistantOverrides: {
       firstMessage,
       model: {
+        // Bumped maxTokens so Emma has room for natural responses — the base
+        // Vapi assistant was created with 90 which forces choppy/robotic replies.
+        // Per-call override here means we don't need to re-deploy the base assistant.
+        maxTokens: 220,
+        temperature: 0.6,
         messages: [
           {
             role: 'system',
