@@ -8,6 +8,10 @@ const isPublicRoute = createRouteMatcher([
   "/founder(.*)",
   "/sign-in(.*)",
   "/sign-up(.*)",
+  // Concierge + Multi-Location waitlist — public form for prospects who don't
+  // have accounts yet. /api/waitlist receives the POST from the form.
+  "/waitlist(.*)",
+  "/api/waitlist(.*)",
   "/api/stripe/webhook(.*)",
   "/api/twilio(.*)",
   "/api/webhooks(.*)",
@@ -19,6 +23,10 @@ const isPublicRoute = createRouteMatcher([
   // Vapi inbound webhooks — Vapi authenticates via x-vapi-secret / signature
   // header verified in the route itself, not via Clerk session.
   "/api/vapi(.*)",
+  // Calendar availability tool — called by Vapi mid-conversation to read the
+  // contractor's free/busy. Vapi authenticates via x-vapi-signature header
+  // (verified inside the route via verifyVapiSignature).
+  "/api/calendar/availability(.*)",
   // Sample report personalize is a public endpoint used by /sample-report
   // (anonymous prospects). Has its own light rate-limit via cache.
   "/api/sample-report(.*)",
