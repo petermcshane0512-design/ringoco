@@ -68,25 +68,35 @@ if (BASE_URL.includes('localhost')) {
 // Mirror src/lib/vapi.ts buildAssistantConfig — kept inline so this script
 // has no TypeScript / build dependency. If you change the canonical version,
 // update both. (One day we'll dedupe via a shared .mjs file.)
+//
+// IMPORTANT — design note (May 2026 rewrite):
+// The base assistant is INTENTIONALLY minimal now. Personality + rules +
+// example dialogues all come via assistantOverrides per-call. Previously
+// the base had restrictive rules ("keep replies under 14 words / never
+// clarify / immediately call take_message after 2 fields") that fought
+// against the per-call override prompts, producing robotic Emma behavior.
+// Now: base = minimal stub, override = the whole show. Run this script
+// after any change to buildAssistantConfig() in src/lib/vapi.ts.
 const patch = {
-  name: 'BellAveGo Receptionist',
-  firstMessage: 'Thanks for calling. How can we help you today?',
+  name: 'BellAveGo Emma',
+  firstMessage: 'Hi, this is Emma. How can I help?',
   firstMessageMode: 'assistant-speaks-first',
 
   model: {
     provider: 'anthropic',
     model: 'claude-sonnet-4-6',
-    temperature: 0.55,
-    maxTokens: 90,
+    temperature: 0.6,
+    maxTokens: 220, // was 90 — too tight, forced robotic replies. Override may bump higher.
     messages: [
       {
         role: 'system',
         content:
-          'You answer the phone for a home-service business whose owner is currently busy. ' +
-          'Two fields only: caller first name + one-sentence reason. Phone comes from caller ID — never ask. ' +
-          'Per-call business context is injected via assistantOverrides. ' +
-          'Keep replies under 14 words. Never read back. Never clarify what they said. ' +
-          'Immediately call take_message after the second field is captured.',
+          'You are Emma, the AI receptionist for a home-service business. ' +
+          'CRITICAL: your complete personality, hard rules, product knowledge (sales mode), ' +
+          'business context (receptionist mode), and example dialogues are injected via ' +
+          'assistantOverrides on every call. Follow the override system message EXACTLY ' +
+          'and IGNORE this fallback message if an override is provided. ' +
+          'Default tools: take_message (always), check_availability (only when override prompt confirms calendar is connected).',
       },
     ],
     tools: [
@@ -95,7 +105,10 @@ const patch = {
         function: {
           name: 'take_message',
           description:
-            "Call this exactly once as soon as you have the caller's first name and a one-sentence reason. Do NOT ask the caller for a phone number — it's captured from caller ID automatically. Call this IMMEDIATELY after the second field is captured. Do not say anything else first.",
+            "Call this after you've captured the caller's first name AND understood what they need (one sentence). " +
+            "Do NOT ask the caller for their phone number — it's captured from caller ID automatically. " +
+            "SALES MODE (Emma representing BellAveGo on the demo line): only call this AFTER you've answered their questions AND captured their first name + business name. " +
+            "RECEPTIONIST MODE (Emma representing a contractor): call this AFTER you've captured the caller's first name + a one-sentence reason for the call.",
           parameters: {
             type: 'object',
             properties: {
@@ -103,18 +116,22 @@ const patch = {
               reason: {
                 type: 'string',
                 description:
-                  "ONE plain-language sentence with what they need, exactly as they described it. Pass along their words verbatim — do NOT ask them to clarify or expand. e.g. 'lighting repair, wants 2pm tomorrow', 'AC not cooling, kids home', 'wants a quote on water heater install'.",
+                  "ONE plain-language sentence with what they need, in their own words. Include preferred time if mentioned. " +
+                  "Receptionist mode examples: 'AC not cooling, kids home', 'leaky kitchen faucet, wants Tuesday', 'quote on water heater install'. " +
+                  "Sales mode examples: \"Mike's Plumbing — ready to sign up for Operator $797\", \"Tom's HVAC — asked about pricing, leaning Mission Control $397\".",
               },
               urgency: {
                 type: 'string',
                 enum: ['emergency', 'soon', 'whenever'],
                 description:
-                  "'emergency' = water everywhere / no heat in winter / no AC in heat / safety issue. 'soon' = typical service request. 'whenever' = quotes / general inquiry.",
+                  "'emergency' = water everywhere / no heat in winter / no AC in heat / electrical / safety. " +
+                  "'soon' = typical service request, interested prospect. " +
+                  "'whenever' = quotes / general inquiry / not ready to decide.",
               },
               customer_phone: {
                 type: 'string',
                 description:
-                  "OPTIONAL. Only set this if the caller explicitly volunteers a different number to reach them at (e.g. 'call me at my work line instead'). If they don't say so, leave blank — caller ID is used.",
+                  "OPTIONAL. Only set this if the caller explicitly volunteers a different number (e.g. 'call me at my work line instead'). If they don't say so, leave blank — caller ID is used.",
               },
             },
             required: ['customer_name', 'reason', 'urgency'],
@@ -125,6 +142,36 @@ const patch = {
           ...(VAPI_WEBHOOK_SECRET ? { secret: VAPI_WEBHOOK_SECRET } : {}),
         },
       },
+      {
+        type: 'function',
+        function: {
+          name: 'check_availability',
+          description:
+            "Call this ONLY when the override system prompt says the contractor has a connected calendar AND the caller wants a specific time. " +
+            "Returns 3-4 real open slots from the contractor's calendar. Read them as natural options and let the caller pick. " +
+            "If the override prompt says no calendar is connected, do NOT call this tool — just take the message.",
+          parameters: {
+            type: 'object',
+            properties: {
+              duration_min: {
+                type: 'number',
+                description:
+                  "Estimated job length in minutes. Default 90 if you can't tell from context. Service call = 60, install/quote = 90, big install = 120-180.",
+              },
+              days_ahead: {
+                type: 'number',
+                description:
+                  "How many days out to look. Default 14. If the caller says 'this week' use 7. 'Next week' use 10. 'Soon' use 14.",
+              },
+            },
+            required: [],
+          },
+        },
+        server: {
+          url: `${BASE_URL}/api/calendar/availability`,
+          ...(VAPI_WEBHOOK_SECRET ? { secret: VAPI_WEBHOOK_SECRET } : {}),
+        },
+      },
     ],
   },
 
@@ -132,7 +179,7 @@ const patch = {
   transcriber: { provider: 'deepgram', model: 'nova-3', language: 'en-US', smartFormat: true, endpointing: 300 },
 
   endCallFunctionEnabled: true,
-  endCallMessage: "Got it — he'll call you back in the next hour or two. Thanks for calling.",
+  endCallMessage: "Got it — talk soon. Thanks for calling.",
 
   silenceTimeoutSeconds: 25,
   maxDurationSeconds: 600,
@@ -166,9 +213,15 @@ console.log('✅ Assistant updated.')
 console.log(`   ID:        ${j.id ?? VAPI_ASSISTANT_ID}`)
 console.log(`   Name:      ${j.name ?? patch.name}`)
 console.log(`   Voice:     Cartesia · ${VAPI_VOICE_ID}`)
-console.log(`   Tool:      take_message (name, phone, reason, urgency)`)
+console.log(`   Tools:     take_message + check_availability`)
+console.log(`   maxTokens: 220 (was 90 — Emma can finally breathe)`)
+console.log(`   System:    minimal stub — full personality via per-call overrides`)
 console.log(`   First msg: "${patch.firstMessage}"`)
 console.log(`   End msg:   "${patch.endCallMessage}"`)
 console.log('')
-console.log('📞 Call your test number to hear the new callback flow.')
+console.log('📞 Call the demo number — Emma should now:')
+console.log('   - Acknowledge what you said (no more "what do you need" after "I want to sign up")')
+console.log('   - Sound conversational (no more 14-word cap, no filler phrases)')
+console.log('   - Answer pricing/feature questions accurately')
+console.log('   - Capture name + business before closing')
 console.log('')
