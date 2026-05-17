@@ -330,6 +330,10 @@ export default function DashboardPage() {
   return (
     <div style={{ padding: "28px 32px 60px", fontFamily: "'Inter', system-ui, sans-serif" }}>
 
+      {/* CALENDAR SYNC PROMO — top of dashboard, hard to miss. Hides itself
+          once the contractor has connected at least one calendar. */}
+      <CalendarSyncBanner />
+
       {/* Header — admin switcher inlined as a compact pill so it doesn't dominate */}
       <div style={{ marginBottom: 26, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
         <div>
@@ -816,5 +820,97 @@ export default function DashboardPage() {
 
       </>
     </div>
+  );
+}
+
+/**
+ * CALENDAR SYNC BANNER — top-of-dashboard prompt to connect Google / Outlook /
+ * Calendly. Hides itself once any calendar is connected (checks /api/calendar/status
+ * on mount). Click goes straight to /dashboard/calendar.
+ *
+ * Kept inline (not extracted to /components) because it's tightly coupled to
+ * the dashboard's own visual rhythm.
+ */
+function CalendarSyncBanner() {
+  const [show, setShow] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/calendar/status")
+      .then((r) => r.json())
+      .then((j: { connections?: Array<{ enabled?: boolean }> }) => {
+        const anyConnected = (j.connections ?? []).some((c) => c.enabled);
+        setShow(!anyConnected);
+        setLoaded(true);
+      })
+      .catch(() => setLoaded(true));
+  }, []);
+
+  if (!loaded || !show) return null;
+
+  return (
+    <Link
+      href="/dashboard/calendar"
+      style={{
+        display: "block",
+        textDecoration: "none",
+        marginBottom: 22,
+        padding: "18px 22px",
+        background: "linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 60%)",
+        border: "1.5px solid rgba(232,116,43,0.32)",
+        borderRadius: 14,
+        boxShadow: "0 8px 24px rgba(232,116,43,0.10)",
+        transition: "transform 0.15s ease, box-shadow 0.15s ease",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div
+          style={{
+            width: 44, height: 44, borderRadius: 11,
+            background: "linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
+            boxShadow: "0 6px 16px rgba(232,116,43,0.35)",
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" strokeWidth="2.4">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span
+              style={{
+                fontSize: 9, fontWeight: 900, color: "#C84B26",
+                background: "rgba(232,116,43,0.12)", padding: "3px 9px", borderRadius: 99,
+                letterSpacing: "0.14em", textTransform: "uppercase",
+              }}
+            >
+              New
+            </span>
+            <span style={{ fontSize: 16, fontWeight: 900, color: "#0B1F3A", letterSpacing: "-0.02em" }}>
+              Connect your calendar so the AI offers real time slots
+            </span>
+          </div>
+          <div style={{ fontSize: 13, color: "#4A6670", lineHeight: 1.5 }}>
+            Google Calendar live now &middot; Microsoft Outlook + Calendly available too. The AI checks your real availability before offering appointment times to callers — no double-booking.
+          </div>
+        </div>
+        <div
+          style={{
+            padding: "10px 18px", borderRadius: 9,
+            background: "linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)",
+            color: "#fff", fontSize: 13, fontWeight: 800,
+            flexShrink: 0,
+            boxShadow: "0 4px 12px rgba(10,168,159,0.32)",
+          }}
+        >
+          Connect →
+        </div>
+      </div>
+    </Link>
   );
 }
