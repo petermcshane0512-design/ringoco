@@ -820,14 +820,14 @@ export function ReportView({ report, sample = false, personalized = false }: { r
               </table>
             </div>
             <p style={{ marginTop: 12, fontSize: 11.5, color: 'var(--ink-soft)', lineHeight: 1.6 }}>
-              Sourced from Google Places + permit office records + property management databases. Residential cold-calling is excluded for TCPA compliance — these are commercial-property and broker contacts only.
+              Sourced from Google Places — commercial properties only. Residential cold-calling is excluded for TCPA compliance. Phone numbers come straight from each business&rsquo;s Google Business Profile, so a paying customer&rsquo;s report shows real, dialable numbers for property managers, restaurants, retail centers, and real-estate brokerages near them.
             </p>
           </section>
 
           {/* 7. Upsells table */}
           <section id="upsells" className="cr-section">
-            <h2><span className="cr-section-num">7</span>Recommended Priced Upsells<span className="cr-section-tag">Network data</span></h2>
-            <p className="cr-lede">Avg ticket and close rate from {r.meta.businessType} contractors across the BellAveGo network.</p>
+            <h2><span className="cr-section-num">7</span>Recommended Priced Upsells<span className="cr-section-tag">Trade benchmarks</span></h2>
+            <p className="cr-lede">Industry-benchmark avg ticket + close rate for {r.meta.businessType.toLowerCase()} services. Paying customers see these tuned against their own job mix.</p>
             <div className="cr-tablewrap">
               <table className="cr-table">
                 <thead>
@@ -974,7 +974,7 @@ export function ReportView({ report, sample = false, personalized = false }: { r
             <p style={{ margin: 0 }}>{r.methodology}</p>
             <div className="cr-foot-credit">
               <span>Generated {r.meta.generatedAt}</span>
-              <span className="cr-foot-unis">Formulated by graduates of Harvard, Stanford &amp; Fordham</span>
+              <span className="cr-foot-unis">Built in Chicago by Peter McShane · Fordham &rsquo;26</span>
             </div>
           </div>
         </div>

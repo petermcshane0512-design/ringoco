@@ -1,10 +1,10 @@
 /* eslint-disable jsx-a11y/alt-text */
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet, renderToBuffer, Image } from '@react-pdf/renderer'
+import type { ConsultingReport } from './consultingReport'
 
 // ── Brand colors ────────────────────────────────────────────────
 const TEAL = '#0AA89F'
-const TEAL_DARK = '#0D8F87'
 const NAVY = '#0B1F3A'
 const SLATE = '#4A7A80'
 const MIST = '#7AAAB2'
@@ -12,51 +12,6 @@ const MIST_LIGHT = '#F5FDFB'
 const GREEN = '#22C55E'
 const AMBER = '#F59E0B'
 const PAPER = '#FFFFFF'
-
-// ── Types ───────────────────────────────────────────────────────
-export type ReportInput = {
-  businessName: string
-  reportTitle: string                     // e.g., "Welcome Report" or "Q1 2026 Performance Report"
-  periodLabel: string                     // e.g., "May 9 – Aug 9, 2026"
-  generatedFor: string                    // owner first name
-  serviceArea: string                     // e.g., "metro Atlanta"
-  metrics: {
-    callsReceived: number
-    callsAnswered: number
-    jobsBooked: number
-    jobsCompleted: number
-    totalRevenue: number
-    avgJobValue: number
-    peakUnansweredHour: string            // e.g., "Tue 2–4 PM"
-    topJobType: string                    // e.g., "HVAC repair"
-  }
-  market: {
-    competitorCount: number
-    avgCompetitorRating: number           // 0-5
-    topCompetitors: { name: string; rating: number; reviewCount: number }[]
-    customerRank: number                  // 1 = top
-    // ── NEW (May 2026): real geographic pins for the PDF map ──
-    // Optional — when present, the PDF renders a Google Static Maps image
-    // with real markers for the customer's business + top competitors.
-    mapCenter?: { lat: number; lng: number }
-    mapPoints?: Array<{
-      lat: number
-      lng: number
-      kind: 'business' | 'competitor' | 'opportunity'
-      label: string                       // 1-2 char marker label ("Y", "1", "2"...)
-    }>
-  }
-  bellaveGoScore: {
-    composite: number                     // 1-10
-    breakdown: { label: string; value: number; max: number }[]  // each 0-10 scaled
-  }
-  opportunity: {
-    headline: string                      // 1 line
-    body: string                          // 2-3 sentences
-    estimatedValue: string                // e.g., "$3,200/mo"
-  }
-  nextQuarter: string                     // 1-2 sentences
-}
 
 // ── Styles ──────────────────────────────────────────────────────
 const styles = StyleSheet.create({
@@ -71,51 +26,53 @@ const styles = StyleSheet.create({
   // Header band
   header: {
     backgroundColor: NAVY,
-    padding: '20 28',
+    padding: '18 28',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  headerTitle: { fontSize: 16, fontWeight: 'bold', color: PAPER, letterSpacing: -0.4 },
-  headerSubtitle: { fontSize: 9, color: '#9CB7C0', marginTop: 3 },
+  headerTitle: { fontSize: 15, fontWeight: 'bold', color: PAPER, letterSpacing: -0.4 },
+  headerSubtitle: { fontSize: 8.5, color: '#9CB7C0', marginTop: 3 },
   headerBrand: { fontSize: 10, color: TEAL, fontWeight: 'bold', letterSpacing: 1.5, textTransform: 'uppercase' },
-  headerBrandSub: { fontSize: 8, color: '#7A8B95', marginTop: 2 },
+  headerBrandSub: { fontSize: 7.5, color: '#7A8B95', marginTop: 2 },
 
   // Body container
-  body: { padding: '20 28' },
-  section: { marginBottom: 14 },
+  body: { padding: '18 28 56' },
+  section: { marginBottom: 12 },
   sectionLabel: {
-    fontSize: 8,
+    fontSize: 7.5,
     fontWeight: 'bold',
     color: TEAL,
     letterSpacing: 1.4,
     textTransform: 'uppercase',
     marginBottom: 6,
   },
-  sectionTitle: { fontSize: 13, fontWeight: 'bold', color: NAVY, marginBottom: 8, letterSpacing: -0.2 },
+  sectionTitle: { fontSize: 12, fontWeight: 'bold', color: NAVY, marginBottom: 6, letterSpacing: -0.2 },
 
   // Stat cards row
-  statsRow: { flexDirection: 'row', gap: 8 },
+  statsRow: { flexDirection: 'row', gap: 6 },
   statCard: {
     flex: 1,
     backgroundColor: MIST_LIGHT,
     borderRadius: 6,
-    padding: 10,
+    padding: 8,
     borderLeftWidth: 3,
     borderLeftColor: TEAL,
   },
   statLabel: {
-    fontSize: 7,
+    fontSize: 6.5,
     color: MIST,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
-    marginBottom: 4,
+    marginBottom: 3,
     fontWeight: 'bold',
   },
-  statValue: { fontSize: 18, fontWeight: 'bold', color: NAVY, letterSpacing: -0.5 },
+  statValue: { fontSize: 15, fontWeight: 'bold', color: NAVY, letterSpacing: -0.4 },
   statSub: { fontSize: 7, color: SLATE, marginTop: 2 },
+  statDeltaUp: { fontSize: 7, color: GREEN, fontWeight: 'bold', marginTop: 2 },
+  statDeltaDown: { fontSize: 7, color: '#DC2626', fontWeight: 'bold', marginTop: 2 },
 
-  // Service area map (real Google Static Maps with markers)
+  // Map
   mapImage: {
     width: '100%',
     height: 200,
@@ -135,62 +92,91 @@ const styles = StyleSheet.create({
   mapLegendText: { fontSize: 7, color: SLATE },
 
   // Score block
-  scoreRow: { flexDirection: 'row', gap: 12, marginTop: 4 },
+  scoreRow: { flexDirection: 'row', gap: 10, marginTop: 2 },
   scoreBox: {
-    width: 110,
+    width: 90,
     backgroundColor: NAVY,
     borderRadius: 8,
-    padding: 12,
+    padding: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  scoreLabel: { fontSize: 7, color: TEAL, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: 'bold', marginBottom: 4 },
-  scoreNumber: { fontSize: 36, fontWeight: 'bold', color: PAPER, lineHeight: 1 },
-  scoreOf: { fontSize: 9, color: MIST, marginTop: 2 },
+  scoreLabel: { fontSize: 6.5, color: TEAL, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: 'bold', marginBottom: 4 },
+  scoreNumber: { fontSize: 30, fontWeight: 'bold', color: PAPER, lineHeight: 1 },
+  scoreOf: { fontSize: 8, color: MIST, marginTop: 2 },
   scoreBreakdown: { flex: 1, justifyContent: 'space-between' },
-  scoreRowItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 },
+  scoreRowItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
   scoreRowLabel: { fontSize: 8, color: SLATE, width: 110 },
   scoreBar: { flex: 1, height: 5, backgroundColor: '#E6F0F2', borderRadius: 3, marginHorizontal: 8 },
   scoreBarFill: { height: 5, backgroundColor: TEAL, borderRadius: 3 },
-  scoreRowValue: { fontSize: 8, color: NAVY, fontWeight: 'bold', width: 28, textAlign: 'right' },
+  scoreRowValue: { fontSize: 8, color: NAVY, fontWeight: 'bold', width: 24, textAlign: 'right' },
 
-  // Market block
-  marketRow: { flexDirection: 'row', gap: 8 },
+  // Opportunities
+  oppCard: {
+    backgroundColor: MIST_LIGHT,
+    borderRadius: 7,
+    padding: 10,
+    marginBottom: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: GREEN,
+  },
+  oppHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 3 },
+  oppRank: { fontSize: 9, fontWeight: 'bold', color: TEAL, marginRight: 6 },
+  oppTitle: { fontSize: 10, fontWeight: 'bold', color: NAVY, flex: 1, letterSpacing: -0.1 },
+  oppValue: { fontSize: 11, fontWeight: 'bold', color: GREEN },
+  oppPattern: { fontSize: 7.5, color: SLATE, lineHeight: 1.5, marginBottom: 4 },
+  oppAction: { fontSize: 7.5, color: NAVY, lineHeight: 1.5, fontWeight: 'bold' },
+  oppConfidence: { fontSize: 6.5, color: MIST, marginTop: 4, textTransform: 'uppercase', letterSpacing: 0.8 },
+
+  // Action plan
+  actionRow: {
+    flexDirection: 'row',
+    paddingVertical: 6,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#E6F0F2',
+    alignItems: 'flex-start',
+  },
+  actionPriority: {
+    width: 18, height: 18, borderRadius: 4,
+    backgroundColor: NAVY, color: PAPER,
+    fontSize: 9, fontWeight: 'bold',
+    textAlign: 'center',
+    marginRight: 8,
+    paddingTop: 3,
+  },
+  actionBody: { flex: 1 },
+  actionTitle: { fontSize: 9, fontWeight: 'bold', color: NAVY, marginBottom: 2 },
+  actionRationale: { fontSize: 7.5, color: SLATE, lineHeight: 1.4, marginBottom: 2 },
+  actionMeta: { fontSize: 7, color: TEAL, fontWeight: 'bold' },
+
+  // Generic table
+  table: { width: '100%' },
+  tableRow: { flexDirection: 'row', paddingVertical: 5, borderBottomWidth: 0.5, borderBottomColor: '#E6F0F2' },
+  tableHeader: { fontSize: 6.5, color: MIST, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 0.8 },
+  tableCell: { fontSize: 8, color: NAVY },
+  tableCellSlate: { fontSize: 8, color: SLATE },
+
+  // Market scan tiles
+  marketRow: { flexDirection: 'row', gap: 6 },
   marketCard: {
     flex: 1,
     backgroundColor: MIST_LIGHT,
     borderRadius: 6,
-    padding: 10,
+    padding: 8,
     borderLeftWidth: 3,
     borderLeftColor: AMBER,
   },
-  competitorList: { marginTop: 4 },
-  competitorItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#E6F0F2',
-  },
-  competitorName: { fontSize: 8, color: NAVY, fontWeight: 'bold' },
-  competitorRating: { fontSize: 8, color: SLATE },
 
-  // Opportunity callout
-  opportunity: {
-    backgroundColor: '#F0FAF7',
-    borderRadius: 8,
-    padding: 14,
-    borderLeftWidth: 4,
-    borderLeftColor: GREEN,
-  },
-  opportunityHead: { fontSize: 11, fontWeight: 'bold', color: NAVY, marginBottom: 4 },
-  opportunityBody: { fontSize: 9, color: SLATE, lineHeight: 1.5 },
-  opportunityValue: {
-    fontSize: 9,
-    color: GREEN,
-    fontWeight: 'bold',
-    marginTop: 6,
-  },
+  // Executive summary
+  execPara: { fontSize: 9, color: SLATE, lineHeight: 1.55, marginBottom: 5 },
+
+  // Strengths/Gaps bullets
+  bulletsRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
+  bulletCol: { flex: 1 },
+  bulletColTitle: { fontSize: 8, fontWeight: 'bold', color: NAVY, marginBottom: 4 },
+  bulletItem: { flexDirection: 'row', marginBottom: 3 },
+  bulletDot: { width: 12, fontSize: 8, color: TEAL },
+  bulletText: { flex: 1, fontSize: 8, color: SLATE, lineHeight: 1.4 },
 
   // Footer
   footer: {
@@ -199,37 +185,41 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: '#F5FDFB',
-    padding: '10 28',
+    padding: '8 28',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: '#D4E6DC',
   },
-  footerText: { fontSize: 7, color: MIST },
-  footerBrand: { fontSize: 8, color: TEAL, fontWeight: 'bold', letterSpacing: 0.8 },
+  footerText: { fontSize: 6.5, color: MIST },
+  footerBrand: { fontSize: 7.5, color: TEAL, fontWeight: 'bold', letterSpacing: 0.8 },
+
+  // Methodology
+  methodology: {
+    fontSize: 7,
+    color: MIST,
+    lineHeight: 1.5,
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
 })
 
 // ── Helpers ─────────────────────────────────────────────────────
 function fmtUSD(n: number) {
-  return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 })
+  return '$' + Math.round(n).toLocaleString('en-US')
 }
 function fmtPct(n: number) {
   return Math.round(n * 100) + '%'
 }
+function fmtDelta(n: number): string {
+  const sign = n >= 0 ? '+' : ''
+  return `${sign}${Math.round(n * 100)}% vs last period`
+}
 
-// ── PDF document ────────────────────────────────────────────────
-/**
- * Build a Google Static Maps URL with real markers. Routes through our own
- * proxy so the API key stays server-side. The proxy supports the `markers`
- * query param (can repeat) — passed through verbatim to Google.
- *
- * Marker format: color:<color>|label:<char>|<lat>,<lng>
- * Customer = teal (closest to brand), competitors = amber numbers 1-5.
- */
 function buildStaticMapUrl(
   center: { lat: number; lng: number },
-  points: NonNullable<ReportInput['market']['mapPoints']>,
+  points: Array<{ lat: number; lng: number; kind: 'business' | 'competitor' | 'opportunity'; label: string }>,
 ): string {
   const base = (
     process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost')
@@ -250,71 +240,120 @@ function buildStaticMapUrl(
   return `${base}?${params.toString()}`
 }
 
-function ReportDocument({ data }: { data: ReportInput }) {
-  const m = data.metrics
-  const answerRate = m.callsReceived > 0 ? m.callsAnswered / m.callsReceived : 0
-  const bookingConv = m.callsAnswered > 0 ? m.jobsBooked / m.callsAnswered : 0
+// ── Page header (shared across pages) ──────────────────────────
+function ReportHeader({ data }: { data: ConsultingReport }) {
+  return (
+    <View style={styles.header}>
+      <View>
+        <Text style={styles.headerTitle}>{data.meta.businessName} · {data.meta.period}</Text>
+        <Text style={styles.headerSubtitle}>{data.meta.metroLabel} · Report #{data.meta.reportNumber}</Text>
+      </View>
+      <View style={{ alignItems: 'flex-end' }}>
+        <Text style={styles.headerBrand}>BellAveGo</Text>
+        <Text style={styles.headerBrandSub}>AI Consulting</Text>
+      </View>
+    </View>
+  )
+}
+
+function ReportFooter({ data }: { data: ConsultingReport }) {
+  return (
+    <View style={styles.footer} fixed>
+      <Text style={styles.footerText}>Generated for {data.meta.ownerName} · {data.meta.generatedAt}</Text>
+      <Text style={styles.footerBrand}>bellavego.com</Text>
+    </View>
+  )
+}
+
+// ── PDF document ────────────────────────────────────────────────
+function ReportDocument({ data }: { data: ConsultingReport }) {
+  const p = data.performance
+  const market = data.competitive
+  const census = data.marketScan
+
+  // Filter map points to only those with real lat/lng
+  const mapPointsWithCoords = data.serviceAreaMap.points
+    .filter((p): p is typeof p & { lat: number; lng: number } => p.lat != null && p.lng != null)
 
   return (
     <Document>
+      {/* ── PAGE 1: Performance · BellAveGo Score · Top 3 Opportunities ── */}
       <Page size="LETTER" style={styles.page}>
-
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.headerTitle}>{data.reportTitle}</Text>
-            <Text style={styles.headerSubtitle}>{data.businessName} · {data.periodLabel} · {data.serviceArea}</Text>
-          </View>
-          <View style={{ alignItems: 'flex-end' }}>
-            <Text style={styles.headerBrand}>BellAveGo</Text>
-            <Text style={styles.headerBrandSub}>AI Consulting</Text>
-          </View>
-        </View>
+        <ReportHeader data={data} />
 
         <View style={styles.body}>
 
-          {/* Stats row */}
+          {/* Executive Summary */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Your Numbers This Quarter</Text>
+            <Text style={styles.sectionLabel}>Executive Summary · TL;DR</Text>
+            {data.executiveSummary.map((para, i) => (
+              <Text key={i} style={styles.execPara}>{para}</Text>
+            ))}
+          </View>
+
+          {/* Performance Stats */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Performance vs Last Period</Text>
             <View style={styles.statsRow}>
               <View style={styles.statCard}>
                 <Text style={styles.statLabel}>Calls Answered</Text>
-                <Text style={styles.statValue}>{m.callsAnswered}</Text>
-                <Text style={styles.statSub}>{fmtPct(answerRate)} answer rate</Text>
+                <Text style={styles.statValue}>{p.callsAnswered}</Text>
+                {p.callsAnsweredDelta !== 0 && (
+                  <Text style={p.callsAnsweredDelta >= 0 ? styles.statDeltaUp : styles.statDeltaDown}>
+                    {fmtDelta(p.callsAnsweredDelta)}
+                  </Text>
+                )}
+                {p.callsAnsweredDelta === 0 && <Text style={styles.statSub}>{fmtPct(p.answerRate)} answer rate</Text>}
               </View>
               <View style={styles.statCard}>
                 <Text style={styles.statLabel}>Jobs Booked</Text>
-                <Text style={styles.statValue}>{m.jobsBooked}</Text>
-                <Text style={styles.statSub}>{fmtPct(bookingConv)} of answered calls</Text>
+                <Text style={styles.statValue}>{p.jobsBooked}</Text>
+                {p.jobsBookedDelta !== 0
+                  ? <Text style={p.jobsBookedDelta >= 0 ? styles.statDeltaUp : styles.statDeltaDown}>{fmtDelta(p.jobsBookedDelta)}</Text>
+                  : <Text style={styles.statSub}>from {p.callsAnswered} answered</Text>}
               </View>
               <View style={styles.statCard}>
-                <Text style={styles.statLabel}>Revenue Captured</Text>
-                <Text style={styles.statValue}>{fmtUSD(m.totalRevenue)}</Text>
-                <Text style={styles.statSub}>Avg job {fmtUSD(m.avgJobValue)}</Text>
+                <Text style={styles.statLabel}>Revenue Booked</Text>
+                <Text style={styles.statValue}>{fmtUSD(p.revenue)}</Text>
+                {p.revenueDelta !== 0
+                  ? <Text style={p.revenueDelta >= 0 ? styles.statDeltaUp : styles.statDeltaDown}>{fmtDelta(p.revenueDelta)}</Text>
+                  : <Text style={styles.statSub}>Avg {fmtUSD(p.avgTicket)}</Text>}
               </View>
               <View style={styles.statCard}>
-                <Text style={styles.statLabel}>Peak Missed</Text>
-                <Text style={[styles.statValue, { fontSize: 13, marginTop: 2 }]}>{m.peakUnansweredHour}</Text>
-                <Text style={styles.statSub}>{m.topJobType} cluster</Text>
+                <Text style={styles.statLabel}>Avg Ticket</Text>
+                <Text style={styles.statValue}>{fmtUSD(p.avgTicket)}</Text>
+                {p.avgTicketDelta !== 0
+                  ? <Text style={p.avgTicketDelta >= 0 ? styles.statDeltaUp : styles.statDeltaDown}>{fmtDelta(p.avgTicketDelta)}</Text>
+                  : <Text style={styles.statSub}>per completed job</Text>}
+              </View>
+              <View style={styles.statCard}>
+                <Text style={styles.statLabel}>Saved After-Hours</Text>
+                <Text style={styles.statValue}>{p.callsSaved}</Text>
+                <Text style={styles.statSub}>calls outside 8-6 weekdays</Text>
               </View>
             </View>
           </View>
 
           {/* BellAveGo Score */}
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>BellAveGo Score</Text>
+          <View style={styles.section} wrap={false}>
+            <Text style={styles.sectionLabel}>BellAveGo Score · Composite</Text>
             <View style={styles.scoreRow}>
               <View style={styles.scoreBox}>
                 <Text style={styles.scoreLabel}>Composite</Text>
-                <Text style={styles.scoreNumber}>{data.bellaveGoScore.composite.toFixed(1)}</Text>
+                <Text style={styles.scoreNumber}>{data.bellaveScore.composite.toFixed(1)}</Text>
                 <Text style={styles.scoreOf}>out of 10</Text>
               </View>
               <View style={styles.scoreBreakdown}>
-                {data.bellaveGoScore.breakdown.map((b) => (
+                {[
+                  { label: 'Answer rate', value: data.bellaveScore.answerRate },
+                  { label: 'Booking conversion', value: data.bellaveScore.bookingConversion },
+                  { label: 'Response time', value: data.bellaveScore.responseTime },
+                  { label: 'Pricing power', value: data.bellaveScore.pricingPower },
+                ].map((b) => (
                   <View key={b.label} style={styles.scoreRowItem}>
                     <Text style={styles.scoreRowLabel}>{b.label}</Text>
                     <View style={styles.scoreBar}>
-                      <View style={[styles.scoreBarFill, { width: `${(b.value / b.max) * 100}%` }]} />
+                      <View style={[styles.scoreBarFill, { width: `${(b.value / 10) * 100}%` }]} />
                     </View>
                     <Text style={styles.scoreRowValue}>{b.value.toFixed(1)}</Text>
                   </View>
@@ -323,40 +362,74 @@ function ReportDocument({ data }: { data: ReportInput }) {
             </View>
           </View>
 
-          {/* Local Market */}
+          {/* Top 3 Opportunities */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Local Market — {data.serviceArea}</Text>
-            <View style={styles.marketRow}>
-              <View style={styles.marketCard}>
-                <Text style={styles.statLabel}>Competitors in your ZIP</Text>
-                <Text style={styles.statValue}>{data.market.competitorCount}</Text>
-                <Text style={styles.statSub}>You rank #{data.market.customerRank}</Text>
+            <Text style={styles.sectionLabel}>Top 3 Revenue Opportunities</Text>
+            {data.opportunities.slice(0, 3).map((o) => (
+              <View key={o.rank} style={styles.oppCard}>
+                <View style={styles.oppHeader}>
+                  <Text style={styles.oppRank}>#{o.rank}</Text>
+                  <Text style={styles.oppTitle}>{o.title}</Text>
+                  <Text style={styles.oppValue}>+{fmtUSD(o.monthlyValue)}/mo</Text>
+                </View>
+                <Text style={styles.oppPattern}>{o.pattern}</Text>
+                <Text style={styles.oppAction}>→ {o.action}</Text>
+                <Text style={styles.oppConfidence}>● {o.confidence} confidence</Text>
               </View>
-              <View style={styles.marketCard}>
-                <Text style={styles.statLabel}>Avg Competitor Rating</Text>
-                <Text style={styles.statValue}>{data.market.avgCompetitorRating.toFixed(1)} ★</Text>
-                <Text style={styles.statSub}>Across {data.market.competitorCount} businesses</Text>
-              </View>
-              <View style={[styles.marketCard, { flex: 2 }]}>
-                <Text style={styles.statLabel}>Top 3 Competitors</Text>
-                <View style={styles.competitorList}>
-                  {data.market.topCompetitors.slice(0, 3).map((c) => (
-                    <View key={c.name} style={styles.competitorItem}>
-                      <Text style={styles.competitorName}>{c.name}</Text>
-                      <Text style={styles.competitorRating}>{c.rating.toFixed(1)} ★ · {c.reviewCount} reviews</Text>
-                    </View>
-                  ))}
+            ))}
+          </View>
+        </View>
+
+        <ReportFooter data={data} />
+      </Page>
+
+      {/* ── PAGE 2: Local Market · Service Area Map · Competitive Snapshot ── */}
+      <Page size="LETTER" style={styles.page}>
+        <ReportHeader data={data} />
+
+        <View style={styles.body}>
+
+          {/* Local Market Scan */}
+          {census.homeownersInArea > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>Local Market Scan · US Census ACS + Google Places</Text>
+              <View style={styles.marketRow}>
+                <View style={styles.marketCard}>
+                  <Text style={styles.statLabel}>Homeowners</Text>
+                  <Text style={styles.statValue}>{census.homeownersInArea.toLocaleString()}</Text>
+                  <Text style={styles.statSub}>in your service area</Text>
+                </View>
+                <View style={styles.marketCard}>
+                  <Text style={styles.statLabel}>Median Income</Text>
+                  <Text style={styles.statValue}>{fmtUSD(census.medianIncome)}</Text>
+                  <Text style={styles.statSub}>household</Text>
+                </View>
+                <View style={styles.marketCard}>
+                  <Text style={styles.statLabel}>Median Home Age</Text>
+                  <Text style={styles.statValue}>{census.medianHomeAge} yrs</Text>
+                  <Text style={styles.statSub}>~{fmtPct(census.pctHvacOver15Yrs)} have aging HVAC</Text>
+                </View>
+                <View style={styles.marketCard}>
+                  <Text style={styles.statLabel}>Addressable / Mo</Text>
+                  <Text style={styles.statValue}>{fmtUSD(census.addressableRevenueMonthly)}</Text>
+                  <Text style={styles.statSub}>est. local spend</Text>
                 </View>
               </View>
+              {census.seasonalSignal && (
+                <Text style={[styles.execPara, { marginTop: 8 }]}>📅 {census.seasonalSignal}</Text>
+              )}
             </View>
-          </View>
+          )}
 
-          {/* Service Area Map — only when we have real lat/lng from Google Places */}
-          {data.market.mapPoints && data.market.mapCenter && (
+          {/* Service Area Map */}
+          {mapPointsWithCoords.length > 0 && data.serviceAreaMap.points.find((p) => p.kind === 'business' && p.lat != null) && (
             <View style={styles.section} wrap={false}>
-              <Text style={styles.sectionLabel}>Service Area · Your Business vs Competitors</Text>
+              <Text style={styles.sectionLabel}>Service Area · Your Business vs Top Competitors</Text>
               <Image
-                src={buildStaticMapUrl(data.market.mapCenter, data.market.mapPoints)}
+                src={buildStaticMapUrl(
+                  { lat: mapPointsWithCoords[0].lat, lng: mapPointsWithCoords[0].lng },
+                  mapPointsWithCoords.map((p) => ({ lat: p.lat, lng: p.lng, kind: p.kind, label: p.label })),
+                )}
                 style={styles.mapImage}
               />
               <View style={styles.mapLegend}>
@@ -372,80 +445,162 @@ function ReportDocument({ data }: { data: ReportInput }) {
             </View>
           )}
 
-          {/* Opportunity */}
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>The Opportunity</Text>
-            <View style={styles.opportunity}>
-              <Text style={styles.opportunityHead}>{data.opportunity.headline}</Text>
-              <Text style={styles.opportunityBody}>{data.opportunity.body}</Text>
-              <Text style={styles.opportunityValue}>Estimated upside: {data.opportunity.estimatedValue}</Text>
+          {/* Competitive Snapshot */}
+          {market.competitors.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>Competitive Snapshot · Google Places</Text>
+              <View style={styles.marketRow}>
+                <View style={styles.marketCard}>
+                  <Text style={styles.statLabel}>Your Rating</Text>
+                  <Text style={styles.statValue}>{market.yourRating > 0 ? `★${market.yourRating.toFixed(1)}` : '—'}</Text>
+                  <Text style={styles.statSub}>{market.yourReviewCount} reviews</Text>
+                </View>
+                <View style={styles.marketCard}>
+                  <Text style={styles.statLabel}>Market Avg</Text>
+                  <Text style={styles.statValue}>★{market.marketAvgRating.toFixed(1)}</Text>
+                  <Text style={styles.statSub}>{market.marketAvgReviewCount} reviews avg</Text>
+                </View>
+                <View style={styles.marketCard}>
+                  <Text style={styles.statLabel}>Your Rank</Text>
+                  <Text style={styles.statValue}>#{market.yourRank || '—'}</Text>
+                  <Text style={styles.statSub}>of {market.totalCompetitors || market.competitors.length + 1} in area</Text>
+                </View>
+              </View>
+              <View style={[styles.table, { marginTop: 8 }]}>
+                <View style={styles.tableRow}>
+                  <Text style={[styles.tableHeader, { flex: 3 }]}>Competitor</Text>
+                  <Text style={[styles.tableHeader, { flex: 1 }]}>Rating</Text>
+                  <Text style={[styles.tableHeader, { flex: 1 }]}>Reviews</Text>
+                  <Text style={[styles.tableHeader, { flex: 1 }]}>Distance</Text>
+                </View>
+                {market.competitors.slice(0, 5).map((c) => (
+                  <View key={c.name} style={styles.tableRow}>
+                    <Text style={[styles.tableCell, { flex: 3, fontWeight: 'bold' }]}>{c.name}</Text>
+                    <Text style={[styles.tableCellSlate, { flex: 1 }]}>★{c.rating.toFixed(1)}</Text>
+                    <Text style={[styles.tableCellSlate, { flex: 1 }]}>{c.reviewCount.toLocaleString()}</Text>
+                    <Text style={[styles.tableCellSlate, { flex: 1 }]}>{c.distance}</Text>
+                  </View>
+                ))}
+              </View>
+              {/* Strengths + Gaps */}
+              {(market.strengths.length > 0 || market.gaps.length > 0) && (
+                <View style={styles.bulletsRow}>
+                  <View style={styles.bulletCol}>
+                    <Text style={styles.bulletColTitle}>✓ Your Strengths</Text>
+                    {market.strengths.slice(0, 3).map((s, i) => (
+                      <View key={i} style={styles.bulletItem}>
+                        <Text style={styles.bulletDot}>•</Text>
+                        <Text style={styles.bulletText}>{s}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  <View style={styles.bulletCol}>
+                    <Text style={styles.bulletColTitle}>✗ Your Gaps</Text>
+                    {market.gaps.slice(0, 3).map((g, i) => (
+                      <View key={i} style={styles.bulletItem}>
+                        <Text style={styles.bulletDot}>•</Text>
+                        <Text style={styles.bulletText}>{g}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
             </View>
-          </View>
+          )}
+        </View>
 
-          {/* Next quarter */}
+        <ReportFooter data={data} />
+      </Page>
+
+      {/* ── PAGE 3: B2B Outreach · Upsells · 90-Day Action Plan · Methodology ── */}
+      <Page size="LETTER" style={styles.page}>
+        <ReportHeader data={data} />
+
+        <View style={styles.body}>
+
+          {/* B2B Outreach Targets */}
+          {data.outreachTargets.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>B2B Outreach Targets · Commercial · TCPA-safe</Text>
+              <Text style={[styles.statSub, { marginBottom: 6, color: SLATE }]}>
+                Real businesses pulled from Google Places. Commercial properties only — legal to cold-call.
+              </Text>
+              <View style={styles.table}>
+                <View style={styles.tableRow}>
+                  <Text style={[styles.tableHeader, { flex: 2 }]}>Business</Text>
+                  <Text style={[styles.tableHeader, { flex: 1.5 }]}>Type</Text>
+                  <Text style={[styles.tableHeader, { flex: 1.2 }]}>Phone</Text>
+                  <Text style={[styles.tableHeader, { flex: 3 }]}>Why</Text>
+                </View>
+                {data.outreachTargets.slice(0, 5).map((t) => (
+                  <View key={t.business} style={styles.tableRow}>
+                    <Text style={[styles.tableCell, { flex: 2, fontWeight: 'bold' }]}>{t.business}</Text>
+                    <Text style={[styles.tableCellSlate, { flex: 1.5 }]}>{t.type}</Text>
+                    <Text style={[styles.tableCell, { flex: 1.2, color: TEAL }]}>{t.phone}</Text>
+                    <Text style={[styles.tableCellSlate, { flex: 3, lineHeight: 1.4 }]}>{t.why}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Recommended Upsells */}
+          {data.upsells.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>Recommended Priced Upsells</Text>
+              <View style={styles.table}>
+                <View style={styles.tableRow}>
+                  <Text style={[styles.tableHeader, { flex: 2 }]}>Service</Text>
+                  <Text style={[styles.tableHeader, { flex: 2.4 }]}>Demand signal</Text>
+                  <Text style={[styles.tableHeader, { flex: 1, textAlign: 'right' }]}>Ticket</Text>
+                  <Text style={[styles.tableHeader, { flex: 1, textAlign: 'right' }]}>Close</Text>
+                  <Text style={[styles.tableHeader, { flex: 1.3, textAlign: 'right' }]}>Monthly</Text>
+                </View>
+                {data.upsells.slice(0, 5).map((u) => (
+                  <View key={u.service} style={styles.tableRow}>
+                    <Text style={[styles.tableCell, { flex: 2, fontWeight: 'bold' }]}>{u.service}</Text>
+                    <Text style={[styles.tableCellSlate, { flex: 2.4 }]}>{u.demandSignal}</Text>
+                    <Text style={[styles.tableCellSlate, { flex: 1, textAlign: 'right' }]}>{fmtUSD(u.avgTicket)}</Text>
+                    <Text style={[styles.tableCellSlate, { flex: 1, textAlign: 'right' }]}>{fmtPct(u.closeRate)}</Text>
+                    <Text style={[styles.tableCell, { flex: 1.3, textAlign: 'right', color: GREEN, fontWeight: 'bold' }]}>+{fmtUSD(u.monthlyOpportunity)}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* 90-Day Action Plan */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>What to Watch Next Quarter</Text>
-            <Text style={{ fontSize: 9, color: SLATE, lineHeight: 1.5 }}>{data.nextQuarter}</Text>
+            <Text style={styles.sectionLabel}>90-Day Action Plan · Prioritized by Impact ÷ Effort</Text>
+            {data.actionPlan.slice(0, 5).map((a) => (
+              <View key={a.priority} style={styles.actionRow}>
+                <Text style={styles.actionPriority}>{a.priority}</Text>
+                <View style={styles.actionBody}>
+                  <Text style={styles.actionTitle}>{a.title}</Text>
+                  <Text style={styles.actionRationale}>{a.rationale}</Text>
+                  <Text style={styles.actionMeta}>
+                    → {a.expectedImpact} · {a.timeline} · {a.effort} effort
+                  </Text>
+                </View>
+              </View>
+            ))}
           </View>
 
+          {/* Methodology */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Methodology</Text>
+            <Text style={styles.methodology}>{data.methodology}</Text>
+          </View>
         </View>
 
-        {/* Footer */}
-        <View style={styles.footer} fixed>
-          <Text style={styles.footerText}>Generated for {data.generatedFor} · BellAveGo AI Consulting</Text>
-          <Text style={styles.footerBrand}>bellavego.com</Text>
-        </View>
+        <ReportFooter data={data} />
       </Page>
     </Document>
   )
 }
 
 // ── Public render API ───────────────────────────────────────────
-export async function generateReportPdf(data: ReportInput): Promise<Buffer> {
+export async function generateReportPdf(data: ConsultingReport): Promise<Buffer> {
   const buffer = await renderToBuffer(<ReportDocument data={data} />)
   return buffer
-}
-
-// ── Sample data for sales demos ─────────────────────────────────
-export const SAMPLE_REPORT: ReportInput = {
-  businessName: 'Smith HVAC & Plumbing',
-  reportTitle: 'Q2 2026 Performance Report',
-  periodLabel: 'Feb 9 – May 9, 2026',
-  generatedFor: 'Mike',
-  serviceArea: 'metro Atlanta · 30309',
-  metrics: {
-    callsReceived: 184,
-    callsAnswered: 167,
-    jobsBooked: 89,
-    jobsCompleted: 78,
-    totalRevenue: 56_180,
-    avgJobValue: 720,
-    peakUnansweredHour: 'Tue 2–4 PM',
-    topJobType: 'AC repair',
-  },
-  market: {
-    competitorCount: 27,
-    avgCompetitorRating: 4.2,
-    topCompetitors: [
-      { name: 'Estes Services', rating: 4.7, reviewCount: 1842 },
-      { name: 'Coolray Heating & Air', rating: 4.6, reviewCount: 2103 },
-      { name: 'Atlanta Plumbing Solutions', rating: 4.4, reviewCount: 318 },
-    ],
-    customerRank: 5,
-  },
-  bellaveGoScore: {
-    composite: 7.4,
-    breakdown: [
-      { label: 'Answer rate', value: 9.1, max: 10 },
-      { label: 'Booking conversion', value: 6.8, max: 10 },
-      { label: 'Response time', value: 8.4, max: 10 },
-      { label: 'Avg job value vs market', value: 5.9, max: 10 },
-    ],
-  },
-  opportunity: {
-    headline: 'Block 2–4 PM Tuesdays — your peak missed window.',
-    body: 'You miss 23% of calls in the Tue 2–4 PM block, and 64% of those that DO get through book HVAC repair (your highest-margin job type, $720 avg). Adding one tech-on-call slot here would capture an estimated 8–12 jobs/quarter currently going to Estes and Coolray.',
-    estimatedValue: '$3,200/mo additional revenue',
-  },
-  nextQuarter: 'Atlanta home-services search demand peaks mid-June (HVAC), late-October (heating), and mid-March (drain cleaning). Coolray launched a new financing offer in your ZIP last week — watch for price-sensitive callers asking about financing options. Your Google rating of 4.5 trails the local average; auto-review-request campaign launching with Growth tier this month should close that gap by August.',
 }

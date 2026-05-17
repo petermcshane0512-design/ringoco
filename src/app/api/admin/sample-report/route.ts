@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { generateReportPdf, SAMPLE_REPORT } from '@/lib/generateReport'
+import { generateReportPdf } from '@/lib/generateReport'
+import { SAMPLE_REPORT } from '@/lib/consultingReport'
 
 /**
  * Public sample-report endpoint for sales demos.

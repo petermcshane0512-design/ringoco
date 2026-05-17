@@ -686,9 +686,9 @@ export default function ConsultingShowcase() {
           <div className="cs-rib-text">
             <div className="cs-rib-tag">Methodology · Our moat</div>
             <div className="cs-rib-line">
-              Reports formulated by graduates of <span className="cs-rib-unis">Harvard, Stanford &amp; Fordham</span>.
+              Your <span className="cs-rib-unis">real call data</span> + your <span className="cs-rib-unis">real local market</span> — analyzed every period, automatically.
             </div>
-            <div className="cs-rib-stack">Powered by Claude Sonnet · US Census ACS · Google Places</div>
+            <div className="cs-rib-stack">Powered by Claude Sonnet 4.6 · US Census ACS · Google Places · Your own BellAveGo dashboard</div>
           </div>
           <div className="cs-rib-side">No competitor<br />offers this.</div>
         </div>

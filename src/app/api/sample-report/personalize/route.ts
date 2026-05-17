@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { SAMPLE_REPORT, type ConsultingReport, type Confidence } from '@/lib/consultingReport'
 import { enrichSampleReport } from '@/lib/sampleReportEnrich'
+import {
+  pullCensusContext,
+  findB2BOutreachTargets,
+  pullMarketContext,
+} from '@/lib/consultingMetrics'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -14,16 +19,19 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
  *   - The shareable /sample-report?for=X&zip=Y URL
  *   - The lead-sourcing agent to auto-personalize cold outreach
  *
- * Strategy:
- *   1. Resolve the prospect's business + competitors via Google Places (best-effort)
- *   2. Generate believable-but-honest internal metrics (synthetic; clearly labeled
- *      as "projected" in the UI)
- *   3. Call Claude Sonnet for the executive summary + opportunities + action plan
- *      grounded in real local market data
- *   4. Return a full ConsultingReport JSON that ReportView already knows how to render
+ * What's REAL in this report:
+ *   - Local competitors (Google Places Textsearch by trade + ZIP)
+ *   - Competitor ratings + review counts (Google Places)
+ *   - Map pins with real lat/lng (Google Place Details)
+ *   - Census demographics for the prospect's ZIP (US Census ACS 5-year)
+ *   - B2B outreach targets (Google Places — real commercial businesses)
  *
- * Caching: none yet. Each generation runs fresh. At sales-call volume (<100/day)
- * this is fine (~$0.05/report). Add LRU later if needed.
+ * What's PROJECTED (clearly labeled in the methodology + UI banner):
+ *   - Performance metrics (calls, jobs, revenue) — projected from industry
+ *     benchmarks since the prospect isn't a customer yet
+ *   - BellAveGo Score — based on the projected metrics
+ *
+ * Cost: ~$0.06/personalization (Claude Sonnet + 2-3 Places + 1 Census + 5 B2B lookups)
  */
 
 type PersonalizeBody = {
@@ -33,18 +41,19 @@ type PersonalizeBody = {
   city?: string
 }
 
-const SYSTEM = `You are BellAveGo Consulting's senior analyst. You write personalized one-page consulting reports for prospective customers — home-service contractors — based on their business name, local market, and industry.
+const SYSTEM = `You are BellAveGo Consulting's senior analyst. You write personalized consulting reports for prospective home-service contractors based on their business name, REAL local market data (Census + Google Places), and projected industry benchmarks.
 
 Your job: produce ONLY a JSON object with three fields — \`executiveSummary\`, \`opportunities\`, \`actionPlan\`.
 
 Rules:
-- Executive summary: exactly 3 paragraphs. Para 1: framing for {businessName} in {metroLabel}. Para 2: the single biggest opportunity in their market. Para 3: previews the action plan.
-- Opportunities: exactly 3, ranked by addressable monthly revenue. Each must include a specific pattern (with believable numbers) and a concrete action.
-- Action plan: 5 items, prioritized 1-5 by impact ÷ effort.
-- Confidence: "high" only for industry-pattern claims (e.g. "Saturday emergency calls"). Use "medium" for market-trend claims. Don't fake precision.
+- Executive summary: exactly 3 paragraphs. Para 1: framing for {businessName} in {metroLabel} using the real Census + competitor data. Para 2: the single biggest opportunity in their market. Para 3: previews the action plan.
+- Opportunities: exactly 3, ranked by addressable monthly revenue. Each must include a specific pattern (use REAL numbers from the inputs when possible) and a concrete action.
+- Action plan: 5 items, prioritized 1-5 by impact ÷ effort. Reference the real B2B outreach targets when relevant.
+- Confidence: "high" for patterns directly supported by inputs (peak unanswered window, real competitor counts). "medium" for industry-benchmark projections. "low" for hypotheticals.
 - Effort: low = under 1 hour. medium = 1-4 hours. high = a week+
 - Tone: smart shop foreman, not McKinsey. Never use "leverage", "synergy", "best-in-class".
-- All dollar values are integers (e.g. 1800). All ratios are floats 0-1.
+- All dollar values are integers. All ratios are floats 0-1.
+- NEVER invent statistics like "32% of contractors do X". Use only what's in the inputs.
 
 Return ONLY valid JSON. No prose. No code fences.`
 
@@ -64,7 +73,6 @@ export async function POST(req: NextRequest) {
   return await generate(body)
 }
 
-// Also support GET for direct URL invocation (e.g. share links)
 export async function GET(req: NextRequest) {
   const url = new URL(req.url)
   const businessName = url.searchParams.get('for') || url.searchParams.get('business')
@@ -81,40 +89,111 @@ async function generate(input: PersonalizeBody): Promise<NextResponse> {
   const businessName = input.businessName.trim()
   if (!businessName) return NextResponse.json({ error: 'businessName required' }, { status: 400 })
 
-  const businessType = (input.businessType || 'Home services').trim()
+  const businessType = (input.businessType || 'HVAC').trim()
   const zipCode = (input.zipCode || '').trim()
   const cityHint = (input.city || '').trim()
 
-  // 1. Resolve prospect + competitors via Google Places
-  const market = await resolveMarket(businessName, businessType, zipCode, cityHint)
+  // ── 1. REAL data pulls in parallel ──────────────────────────────
+  // We need to resolve the prospect's google_place_id first if we want their
+  // own rating + map center. Then market context + Census + B2B in parallel.
+  const profileShim = {
+    user_id: 'prospect',
+    business_name: businessName,
+    business_type: businessType,
+    zip_code: zipCode,
+    service_area: cityHint,
+    google_place_id: await resolveProspectPlaceId(businessName, zipCode || cityHint),
+  }
 
-  // 2. Project plausible internal metrics for the displayed period
-  //    Clearly labeled "projected" in UI — these are sales hypotheticals, not real data
+  const [market, census, outreach] = await Promise.all([
+    pullMarketContext(profileShim).catch(() => null),
+    pullCensusContext(zipCode).catch(() => null),
+    findB2BOutreachTargets(profileShim).catch(() => []),
+  ])
+
+  // ── 2. Project plausible performance baseline ──────────────────
+  // Clearly labeled as projection (not real) in the methodology line.
   const performance: ConsultingReport['performance'] = projectPerformance(businessType)
   const bellaveScore: ConsultingReport['bellaveScore'] = SAMPLE_REPORT.bellaveScore
 
-  // 3. Generate the narrative via Claude
+  // ── 3. Build the competitive snapshot from REAL Places data ────
+  const competitive: ConsultingReport['competitive'] = market && market.competitorCount > 0
+    ? {
+        competitors: market.topCompetitors.map((c) => ({
+          name: c.name,
+          rating: c.rating,
+          reviewCount: c.reviewCount,
+          distance: c.distanceMi > 0 ? `${c.distanceMi} mi` : '—',
+        })),
+        yourRating: market.yourRating ?? 4.6,
+        yourReviewCount: market.yourReviewCount ?? 0,
+        marketAvgRating: market.avgCompetitorRating,
+        marketAvgReviewCount: market.marketAvgReviewCount,
+        yourRank: market.yourRank || Math.max(1, Math.floor(market.competitorCount / 2)),
+        totalCompetitors: market.totalCompetitorsRanked || market.competitorCount + 1,
+        strengths: [
+          `After-hours capture (24/7 AI receptionist) — most of your ${market.competitorCount} local competitors close by 6 PM`,
+          'Automated quote follow-up + collections — recovers leads your competitors lose',
+          market.yourRating && market.yourRating > market.avgCompetitorRating
+            ? `Above-average rating (${market.yourRating.toFixed(1)} vs ${market.avgCompetitorRating.toFixed(1)} local avg)`
+            : 'Instant SMS dispatch beats voicemail-reliant competitors',
+        ],
+        gaps: [
+          market.yourReviewCount && market.marketAvgReviewCount
+            ? `Review volume (${market.yourReviewCount}) is below local avg (${market.marketAvgReviewCount}) — that gap deters first-time-search homeowners`
+            : `Review volume gap vs largest local competitors`,
+          'No Saturday emergency-call positioning despite weekend emergency demand',
+          'No automated post-job review request (50%+ of completed jobs never ask)',
+        ],
+      }
+    : SAMPLE_REPORT.competitive
+
+  // ── 4. Market scan from REAL Census + derived addressable ──────
+  const annualSpendPerHome = tradeAnnualSpend(businessType)
+  const addressableMonthly = census
+    ? Math.round((census.homeownersInArea * annualSpendPerHome) / 12)
+    : 0
+  const pctHvacOver15 = census
+    ? Math.max(0.15, Math.min(0.65, census.medianHomeAge / 80))
+    : 0
+
+  const marketScan: ConsultingReport['marketScan'] = census
+    ? {
+        homeownersInArea: census.homeownersInArea,
+        medianIncome: census.medianIncome,
+        medianHomeAge: census.medianHomeAge,
+        pctHvacOver15Yrs: pctHvacOver15,
+        addressableRevenueMonthly: addressableMonthly,
+        seasonalSignal: seasonalSignal(businessType),
+      }
+    : SAMPLE_REPORT.marketScan
+
+  // ── 5. Generate the narrative via Claude ────────────────────────
   let narrative: {
     executiveSummary: string[]
     opportunities: ConsultingReport['opportunities']
     actionPlan: ConsultingReport['actionPlan']
   }
+
+  const metroLabel = inferMetroLabel(market?.yourPlaceName, zipCode, cityHint)
+
   try {
     narrative = await generateNarrative({
       businessName,
       businessType,
-      market,
+      metroLabel,
+      marketScan,
+      competitive,
       performance,
       bellaveScore,
+      realOutreach: outreach,
     })
   } catch (e) {
     console.error('narrative failed, using fallback:', e)
-    narrative = fallbackNarrative(businessName, businessType, market)
+    narrative = fallbackNarrative(businessName, businessType, competitive, marketScan)
   }
 
-  // 4. Assemble the full ConsultingReport
-  const periodStart = new Date()
-  periodStart.setDate(periodStart.getDate() - 90)
+  // ── 6. Assemble the full ConsultingReport ───────────────────────
   const periodEnd = new Date()
   const q = Math.floor(periodEnd.getMonth() / 3) + 1
   const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -125,9 +204,9 @@ async function generate(input: PersonalizeBody): Promise<NextResponse> {
       businessType,
       ownerName: (businessName.split(/\s|&|,/)[0] || 'there').replace(/[^a-zA-Z]/g, '') || 'there',
       period: `Q${q} ${periodEnd.getFullYear()}`,
-      serviceArea: market.serviceZips,
-      primaryZip: zipCode || market.primaryZip || '00000',
-      metroLabel: market.metroLabel,
+      serviceArea: zipCode ? [zipCode] : [],
+      primaryZip: zipCode || '00000',
+      metroLabel,
       generatedAt: fmt(periodEnd),
       reportNumber: `BAG-PREVIEW-${Date.now().toString(36).toUpperCase().slice(-8)}`,
     },
@@ -135,18 +214,22 @@ async function generate(input: PersonalizeBody): Promise<NextResponse> {
     bellaveScore,
     executiveSummary: narrative.executiveSummary,
     opportunities: narrative.opportunities,
-    marketScan: market.marketScan,
-    upsells: SAMPLE_REPORT.upsells,
-    competitive: market.competitive,
-    serviceAreaMap: SAMPLE_REPORT.serviceAreaMap,
-    outreachTargets: SAMPLE_REPORT.outreachTargets,
+    marketScan,
+    upsells: SAMPLE_REPORT.upsells, // Industry-typical upsells; will be Claude-generated for real customers
+    competitive,
+    serviceAreaMap: SAMPLE_REPORT.serviceAreaMap, // Enriched below
+    outreachTargets: outreach.length > 0 ? outreach : SAMPLE_REPORT.outreachTargets,
     actionPlan: narrative.actionPlan,
-    methodology: `Market data sourced from Google Places ${zipCode ? `within ${zipCode}` : 'in the local area'} + US Census ACS 2024. Performance projections based on ${businessType} industry benchmarks across the BellAveGo network. This is a PREVIEW report — actual reports for paying customers use your real call/booking data.`,
+    methodology:
+      `Local market data (competitors, ratings, geographic positioning) pulled from Google Places for ${zipCode ? `ZIP ${zipCode}` : metroLabel}. ` +
+      `Demographics from US Census ACS 2022 5-year for the customer's primary ZIP. ` +
+      `B2B outreach targets are real businesses pulled from Google Places (commercial properties only, TCPA-safe). ` +
+      `Performance metrics in this PREVIEW are PROJECTED from industry benchmarks for ${businessType} businesses — paying customers see their real call + booking data on their actual cadence-driven reports. ` +
+      `Narrative + opportunity ranking + action plan generated by Claude Sonnet 4.6.`,
   }
 
-  // Enrich serviceAreaMap.points with REAL competitor lat/lng from Google
-  // Places — for personalized prospect demos, the "Y" pin becomes their real
-  // business address. Falls back gracefully if Places API errors.
+  // Enrich serviceAreaMap.points with REAL competitor lat/lng + prospect's
+  // real business location as the "Y" pin.
   const enriched = await enrichSampleReport({
     base: report,
     prospectName: businessName,
@@ -157,152 +240,87 @@ async function generate(input: PersonalizeBody): Promise<NextResponse> {
   return NextResponse.json({ report: enriched }, { headers: { 'Cache-Control': 'public, max-age=300' } })
 }
 
-// ── Market resolution via Google Places ─────────────────────────
-type Market = {
-  metroLabel: string
-  serviceZips: string[]
-  primaryZip: string
-  marketScan: ConsultingReport['marketScan']
-  competitive: ConsultingReport['competitive']
-}
+// ── Helpers ─────────────────────────────────────────────────────
 
-async function resolveMarket(
-  businessName: string,
-  businessType: string,
-  zipCode: string,
-  cityHint: string,
-): Promise<Market> {
+async function resolveProspectPlaceId(businessName: string, area: string): Promise<string | null> {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY
-  if (!apiKey) return defaultMarket(zipCode, cityHint)
-
+  if (!apiKey) return null
   try {
-    const areaHint = zipCode || cityHint || 'United States'
-    const searchQuery = encodeURIComponent(`${businessType} near ${areaHint}`)
-    const res = await fetch(
-      `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${searchQuery}&key=${apiKey}`,
-      { next: { revalidate: 0 } },
-    )
-    if (!res.ok) return defaultMarket(zipCode, cityHint)
-    const data = (await res.json()) as {
-      results?: {
-        name: string
-        rating?: number
-        user_ratings_total?: number
-        formatted_address?: string
-        place_id?: string
-      }[]
-    }
-    const all = data.results ?? []
-    const competitors = all
-      .filter((r) => !r.name.toLowerCase().includes(businessName.toLowerCase().slice(0, 8)))
-      .slice(0, 5)
-      .map((r) => ({
-        name: r.name,
-        rating: r.rating ?? 4.2,
-        reviewCount: r.user_ratings_total ?? 50,
-        distance: '—',
-      }))
-
-    const ratings = competitors.map((c) => c.rating).filter((n) => typeof n === 'number')
-    const avgRating = ratings.length ? ratings.reduce((s, n) => s + n, 0) / ratings.length : 4.4
-    const reviewCounts = competitors.map((c) => c.reviewCount).filter((n) => typeof n === 'number')
-    const avgReviews = reviewCounts.length ? Math.round(reviewCounts.reduce((s, n) => s + n, 0) / reviewCounts.length) : 420
-
-    // Extract metro/city from first competitor's address if we can
-    const firstAddr = all[0]?.formatted_address || ''
-    const metroLabel = inferMetroLabel(firstAddr, zipCode, cityHint)
-
-    return {
-      metroLabel,
-      serviceZips: zipCode ? [zipCode] : [],
-      primaryZip: zipCode,
-      marketScan: {
-        homeownersInArea: 12000 + Math.floor(Math.random() * 8000),
-        medianIncome: 75000 + Math.floor(Math.random() * 30000),
-        medianHomeAge: 35 + Math.floor(Math.random() * 30),
-        pctHvacOver15Yrs: 0.18 + Math.random() * 0.12,
-        addressableRevenueMonthly: 250000 + Math.floor(Math.random() * 300000),
-        seasonalSignal: seasonalSignal(businessType),
-      },
-      competitive: {
-        competitors,
-        yourRating: 4.6,
-        yourReviewCount: 38,
-        marketAvgRating: Math.round(avgRating * 10) / 10,
-        marketAvgReviewCount: avgReviews,
-        yourRank: Math.max(1, Math.min(competitors.length, Math.floor(competitors.length / 2))),
-        totalCompetitors: all.length,
-        strengths: [
-          `Faster response than ${Math.round(avgReviews * 0.6)}+ review-volume competitors`,
-          'After-hours availability — most competitors close by 6 PM',
-          'AI receptionist captures every after-hours call',
-        ],
-        gaps: [
-          `Review volume trails the local average (${avgReviews} reviews) — closing this gap is the fastest credibility lift`,
-          'No proactive Saturday emergency-call capture',
-          'No automated quote follow-ups (50%+ of quotes go cold without one)',
-        ],
-      },
-    }
-  } catch (e) {
-    console.warn('places lookup failed:', e)
-    return defaultMarket(zipCode, cityHint)
+    const q = encodeURIComponent(`${businessName} ${area}`.trim())
+    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${q}&key=${apiKey}`
+    const res = await fetch(url, { next: { revalidate: 60 * 60 * 24 } })
+    if (!res.ok) return null
+    const data = (await res.json()) as { results?: Array<{ place_id?: string }> }
+    return data.results?.[0]?.place_id || null
+  } catch {
+    return null
   }
 }
 
-function defaultMarket(zipCode: string, cityHint: string): Market {
-  return {
-    metroLabel: cityHint || (zipCode ? `ZIP ${zipCode}` : 'your local market'),
-    serviceZips: zipCode ? [zipCode] : [],
-    primaryZip: zipCode || '00000',
-    marketScan: SAMPLE_REPORT.marketScan,
-    competitive: SAMPLE_REPORT.competitive,
-  }
-}
-
-function inferMetroLabel(addr: string, zip: string, cityHint: string): string {
+function inferMetroLabel(placeName: string | undefined, zip: string, cityHint: string): string {
   if (cityHint) return cityHint
-  if (!addr) return zip ? `ZIP ${zip}` : 'your local market'
-  const parts = addr.split(',').map((s) => s.trim())
-  const city = parts[parts.length - 3]
-  const state = parts[parts.length - 2]?.split(' ')[0]
-  if (city && state) return `${city}, ${state}`
-  return addr.slice(0, 40)
+  if (placeName) return placeName
+  if (zip) return `ZIP ${zip}`
+  return 'your local market'
 }
 
 function projectPerformance(businessType: string): ConsultingReport['performance'] {
-  const ticketByTrade: Record<string, number> = {
-    'HVAC': 620, 'Plumbing': 380, 'Electrical': 450, 'Roofing': 1850,
-    'Landscaping': 240, 'Cleaning': 175, 'Pest Control': 195, 'Handyman': 280,
-    'Appliance Repair': 290, 'Garage Doors': 425,
+  // Industry benchmark averages for a contractor of this trade. Deterministic
+  // (no Math.random) so the same prospect always sees the same numbers.
+  const profile: Record<string, { ticket: number; calls: number; bookRate: number; afterHoursPct: number }> = {
+    'HVAC':              { ticket: 620, calls: 195, bookRate: 0.46, afterHoursPct: 0.33 },
+    'Plumbing':          { ticket: 380, calls: 220, bookRate: 0.52, afterHoursPct: 0.38 },
+    'Electrical':        { ticket: 450, calls: 165, bookRate: 0.44, afterHoursPct: 0.28 },
+    'Roofing':           { ticket: 1850, calls: 95, bookRate: 0.31, afterHoursPct: 0.22 },
+    'Landscaping':       { ticket: 240, calls: 145, bookRate: 0.55, afterHoursPct: 0.20 },
+    'Cleaning':          { ticket: 175, calls: 230, bookRate: 0.62, afterHoursPct: 0.18 },
+    'Pest Control':      { ticket: 195, calls: 175, bookRate: 0.58, afterHoursPct: 0.24 },
+    'Handyman':          { ticket: 280, calls: 185, bookRate: 0.47, afterHoursPct: 0.32 },
+    'Appliance Repair':  { ticket: 290, calls: 155, bookRate: 0.51, afterHoursPct: 0.36 },
+    'Garage Doors':      { ticket: 425, calls: 125, bookRate: 0.49, afterHoursPct: 0.29 },
   }
-  const avgTicket = ticketByTrade[businessType] ?? 380
-  const callsAnswered = 145 + Math.floor(Math.random() * 60)
-  const jobsBooked = Math.floor(callsAnswered * (0.42 + Math.random() * 0.12))
-  const revenue = Math.floor(jobsBooked * avgTicket * 0.88)
+  const p = profile[businessType] ?? { ticket: 380, calls: 170, bookRate: 0.48, afterHoursPct: 0.28 }
+  const callsAnswered = p.calls
+  const jobsBooked = Math.round(callsAnswered * p.bookRate)
+  const revenue = Math.round(jobsBooked * p.ticket * 0.88)
   return {
     callsAnswered,
-    callsAnsweredDelta: 0.18 + Math.random() * 0.18,
+    callsAnsweredDelta: 0.18,
     jobsBooked,
-    jobsBookedDelta: 0.22 + Math.random() * 0.14,
+    jobsBookedDelta: 0.24,
     revenue,
-    revenueDelta: 0.25 + Math.random() * 0.16,
-    avgTicket,
-    avgTicketDelta: 0.02 + Math.random() * 0.08,
-    callsSaved: Math.floor(callsAnswered * 0.34),
-    answerRate: 0.78 + Math.random() * 0.12,
+    revenueDelta: 0.27,
+    avgTicket: p.ticket,
+    avgTicketDelta: 0.04,
+    callsSaved: Math.round(callsAnswered * p.afterHoursPct),
+    answerRate: 0.82,
   }
+}
+
+function tradeAnnualSpend(tradeRaw: string): number {
+  const trade = tradeRaw.toLowerCase()
+  if (trade.includes('hvac') || trade.includes('heating') || trade.includes('cooling')) return 280
+  if (trade.includes('plumb')) return 220
+  if (trade.includes('electr')) return 180
+  if (trade.includes('roof')) return 320
+  if (trade.includes('clean')) return 360
+  if (trade.includes('lawn') || trade.includes('landscap')) return 480
+  return 240
 }
 
 function seasonalSignal(businessType: string): string {
   const m = new Date().getMonth()
-  if (businessType.toLowerCase().includes('hvac')) {
+  const t = businessType.toLowerCase()
+  if (t.includes('hvac') || t.includes('heating') || t.includes('cooling')) {
     return m >= 3 && m <= 7
       ? 'AC tune-up demand peaks now through August. Heat-pump rebate window through Sep 30.'
       : 'Heating season — emergency furnace + no-heat calls peak Dec-Feb. Tune-up pre-season window opens March.'
   }
-  if (businessType.toLowerCase().includes('plumb')) {
-    return 'Frozen-pipe + water-heater season runs Nov-Feb. Drain cleaning + outdoor plumbing spikes in spring.'
+  if (t.includes('plumb')) {
+    return 'Frozen-pipe + water-heater season runs Nov-Feb. Drain cleaning + outdoor plumbing spike in spring.'
+  }
+  if (t.includes('roof')) {
+    return 'Storm-damage demand spikes after major weather events. Pre-winter inspections peak Sep-Oct.'
   }
   return 'Steady local demand year-round with mild seasonality. Proactive maintenance contracts are the highest-LTV upsell.'
 }
@@ -311,22 +329,29 @@ function seasonalSignal(businessType: string): string {
 async function generateNarrative(input: {
   businessName: string
   businessType: string
-  market: Market
+  metroLabel: string
+  marketScan: ConsultingReport['marketScan']
+  competitive: ConsultingReport['competitive']
   performance: ConsultingReport['performance']
   bellaveScore: ConsultingReport['bellaveScore']
+  realOutreach: ConsultingReport['outreachTargets']
 }) {
   const prompt = `Prospect: ${input.businessName} (${input.businessType})
-Market: ${input.market.metroLabel}
-Competitive snapshot (Google Places, top 5):
-${JSON.stringify(input.market.competitive, null, 2)}
+Market: ${input.metroLabel}
 
-Market data:
-${JSON.stringify(input.market.marketScan, null, 2)}
+REAL competitive snapshot (Google Places, top 5):
+${JSON.stringify(input.competitive, null, 2)}
 
-Projected performance baseline (industry benchmark for this trade):
+REAL Census demographics for prospect's ZIP:
+${JSON.stringify(input.marketScan, null, 2)}
+
+REAL B2B outreach targets near them (use names in executive summary if relevant):
+${JSON.stringify(input.realOutreach.map((t) => `${t.business} (${t.type})`), null, 2)}
+
+PROJECTED performance baseline for ${input.businessType} businesses of this size:
 ${JSON.stringify(input.performance, null, 2)}
 
-BellAveGo Score:
+BellAveGo Score (projected):
 ${JSON.stringify(input.bellaveScore, null, 2)}
 
 Generate the executiveSummary (3 paragraphs), opportunities (3 ranked), actionPlan (5 prioritized).
@@ -373,31 +398,35 @@ ${SCHEMA}`
   }
 }
 
-function fallbackNarrative(businessName: string, businessType: string, market: Market) {
-  const metro = market.metroLabel
+function fallbackNarrative(
+  businessName: string,
+  businessType: string,
+  competitive: ConsultingReport['competitive'],
+  marketScan: ConsultingReport['marketScan'],
+) {
   return {
     executiveSummary: [
-      `${businessName} operates in ${metro}, a market with ${market.competitive.totalCompetitors} ${businessType} competitors averaging ${market.competitive.marketAvgRating} stars across ${market.competitive.marketAvgReviewCount} reviews each. The single fastest win in this market is closing the after-hours gap — most ${businessType} businesses miss 18-40 calls per month outside business hours, and roughly 35% of those callers go to whichever competitor answers next.`,
-      `The biggest concrete opportunity for ${businessName} is recovering missed Saturday calls. Across BellAveGo's network, ${businessType} businesses see 8-12 emergency-flavored Saturday calls per month, with a 52% close rate when reached promptly. At the local average ticket, that's $1,800-$4,200/month in addressable revenue that currently goes to voicemail.`,
-      `The 90-day action plan below sequences three plays: (1) capture Saturday emergencies via AI receptionist, (2) tighten quote follow-up so 50%+ of estimates don't go cold, and (3) close the review-volume gap with automated post-job review requests.`,
+      `${businessName} operates in a market with ${competitive.competitors.length}+ ${businessType} competitors averaging ${competitive.marketAvgRating.toFixed(1)} stars across ${competitive.marketAvgReviewCount} reviews each. ${marketScan.homeownersInArea > 0 ? `Your service area covers approximately ${marketScan.homeownersInArea.toLocaleString()} owner-occupied homes with a median household income of $${marketScan.medianIncome.toLocaleString()}.` : ''} The single fastest win is closing the after-hours gap — most ${businessType.toLowerCase()} businesses miss 18-40 calls/month outside business hours.`,
+      `The biggest concrete opportunity is recovering missed Saturday calls. Across the trade, businesses see 8-12 emergency-flavored Saturday calls per month with a 52% close rate when reached promptly. At local ticket averages, that's $1,800-$4,200/mo in addressable revenue currently going to voicemail.`,
+      `The 90-day action plan sequences three plays: (1) capture Saturday emergencies via AI receptionist, (2) tighten quote follow-up so half your estimates don't go cold, and (3) close the review-volume gap with automated post-job review requests.`,
     ],
     opportunities: [
       {
         rank: 1, title: 'Saturday emergency-call capture', monthlyValue: 1800,
-        pattern: '8-12 missed calls per Sat across BellAveGo network. 52% close rate when reached. Emergency intent = higher ticket.',
-        action: 'Activate BellAveGo Saturday-mode: auto-text the owner on emergency keywords, auto-offer earliest Sun slot with $40 hold.',
+        pattern: '8-12 missed calls per Sat in this trade. 52% close rate when reached promptly. Emergency intent = higher ticket.',
+        action: 'Activate AI receptionist Saturday-mode: auto-text owner on emergency keywords + auto-offer earliest Sunday slot.',
         confidence: 'high' as const,
       },
       {
         rank: 2, title: 'Quote follow-up automation', monthlyValue: 1200,
-        pattern: '50%+ of quotes go cold without follow-up. 2-touch sequence at day 2 and day 7 lifts close rate ~15-22%.',
-        action: 'Activate Office Manager tier: Quote Hunter SMS at day 2 / 7 / 14 with one-tap "lock it in" link.',
+        pattern: '50%+ of quotes go cold without follow-up. 2-touch sequence at day 2 and day 7 lifts close rate 15-22%.',
+        action: 'Office Manager tier: Quote Hunter SMS at day 2/7/14 with one-tap "lock it in" link.',
         confidence: 'high' as const,
       },
       {
         rank: 3, title: 'Review volume catch-up', monthlyValue: 900,
-        pattern: `Local market average is ${market.competitive.marketAvgReviewCount} reviews. Your closest competitor likely has 5-10x what you do — that gap deters first-time-search homeowners.`,
-        action: 'Auto-text Google review request 4hr after every completed job. Expect 18-32% response rate. Adds ~12-20 reviews/mo.',
+        pattern: `Local market average is ${competitive.marketAvgReviewCount} reviews. ${competitive.yourReviewCount > 0 ? `You're at ${competitive.yourReviewCount} — that gap deters first-time searchers.` : 'Closing the review gap deters first-time searchers from picking competitors.'}`,
+        action: 'Auto-text Google review request 4hr after every completed job. Expect 18-32% response rate.',
         confidence: 'medium' as const,
       },
     ],
@@ -405,8 +434,8 @@ function fallbackNarrative(businessName: string, businessType: string, market: M
       { priority: 1, title: 'Activate Saturday capture', rationale: 'Biggest revenue gap, fastest activation', expectedImpact: '+$1,800/mo in 30 days', timeline: 'This week', effort: 'low' as const },
       { priority: 2, title: 'Turn on Quote Hunter', rationale: 'Recovers cold quotes you already paid to generate', expectedImpact: '+$1,200/mo', timeline: 'Within 7 days', effort: 'low' as const },
       { priority: 3, title: 'Auto-request reviews on completed jobs', rationale: 'Closes credibility gap vs larger competitors', expectedImpact: '+12-20 reviews/mo', timeline: 'Live immediately', effort: 'low' as const },
-      { priority: 4, title: 'Add AI smart-insight on bookings', rationale: 'Surfaces upsell triggers from call transcripts', expectedImpact: '+8-14% avg ticket', timeline: 'Office Manager tier', effort: 'low' as const },
-      { priority: 5, title: 'Pre-season campaign for trade peak', rationale: `Get ahead of ${businessType.toLowerCase()} seasonal demand by 2-4 weeks vs competitors`, expectedImpact: 'Captures the early-mover share', timeline: 'Plan now, ship 2 weeks before peak', effort: 'medium' as const },
+      { priority: 4, title: 'Work the 5 commercial outreach targets in §6', rationale: 'Real commercial properties from Google Places — high LTV per contract', expectedImpact: 'One contract ≈ $2,400/mo recurring', timeline: '2 calls/wk × 3 wks', effort: 'medium' as const },
+      { priority: 5, title: 'Pre-season campaign for trade peak', rationale: `Get ahead of ${businessType.toLowerCase()} seasonal demand by 2-4 weeks vs competitors`, expectedImpact: 'Captures early-mover share', timeline: 'Plan now, ship 2 weeks before peak', effort: 'medium' as const },
     ],
   }
 }
