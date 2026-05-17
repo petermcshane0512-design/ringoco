@@ -436,7 +436,7 @@ export default function SetupWizard() {
                         Connect a calendar →
                       </a>
                       <span style={{ fontSize: 11.5, color: "#7AAAB2", fontWeight: 500, alignSelf: "center" }}>
-                        Google Calendar · Microsoft Outlook · Calendly available now (7 more coming)
+                        Google Calendar · Microsoft Outlook · Calendly
                       </span>
                     </div>
                   </div>

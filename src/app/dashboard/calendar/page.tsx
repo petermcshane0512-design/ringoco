@@ -26,16 +26,9 @@ type Provider = {
 }
 
 const PROVIDERS: Provider[] = [
-  { key: 'google',        name: 'Google Calendar',    tagline: 'Most popular — 60% of contractors use this',     status: 'live', iconBg: '#fff',     iconText: 'G', iconColor: '#4285F4', popularity: 'Most popular' },
-  { key: 'microsoft',     name: 'Microsoft Outlook',  tagline: 'Microsoft 365 / Outlook.com — work + personal',  status: 'live', iconBg: '#0078D4', iconText: 'O' },
-  { key: 'calendly',      name: 'Calendly',           tagline: 'Sales + intake call scheduling',                 status: 'live', iconBg: '#006BFF', iconText: 'C' },
-  { key: 'apple',         name: 'Apple iCloud',       tagline: 'iCloud Calendar (iPhone, Mac)',                  status: 'soon', iconBg: '#000',     iconText: '' },
-  { key: 'housecallpro',  name: 'Housecall Pro',      tagline: 'Top home-services SaaS — plumbing, HVAC',        status: 'soon', iconBg: '#FF6B35', iconText: 'H' },
-  { key: 'jobber',        name: 'Jobber',             tagline: 'Landscaping, cleaning, handyman',                status: 'soon', iconBg: '#10B981', iconText: 'J' },
-  { key: 'servicetitan',  name: 'ServiceTitan',       tagline: 'Enterprise HVAC + plumbing',                     status: 'soon', iconBg: '#E11D48', iconText: 'S' },
-  { key: 'workiz',        name: 'Workiz',             tagline: 'Cleaning, handyman, locksmith',                  status: 'soon', iconBg: '#7C3AED', iconText: 'W' },
-  { key: 'fieldedge',     name: 'FieldEdge',          tagline: 'HVAC-specific, popular in the South',            status: 'soon', iconBg: '#0EA5E9', iconText: 'F' },
-  { key: 'acuity',        name: 'Acuity Scheduling',  tagline: 'Squarespace appointment booking',                status: 'soon', iconBg: '#222',     iconText: 'A' },
+  { key: 'google',    name: 'Google Calendar',   tagline: 'Most popular — 60%+ of contractors use this',     status: 'live', iconBg: '#fff',    iconText: 'G', iconColor: '#4285F4', popularity: 'Most popular' },
+  { key: 'microsoft', name: 'Microsoft Outlook', tagline: 'Microsoft 365 / Outlook.com — work + personal',   status: 'live', iconBg: '#0078D4', iconText: 'O' },
+  { key: 'calendly',  name: 'Calendly',          tagline: 'Sales + intake call scheduling',                  status: 'live', iconBg: '#006BFF', iconText: 'C' },
 ]
 
 // Maps a live provider key to its OAuth start URL.
@@ -130,7 +123,7 @@ function CalendarPageInner() {
         </FlashBanner>
       )}
 
-      {/* The 10 provider list */}
+      {/* The 3 supported provider list */}
       <div style={{ display: 'grid', gap: 10 }}>
         {PROVIDERS.map((p) => {
           const conn = isConnected(p.key)
