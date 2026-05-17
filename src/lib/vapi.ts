@@ -36,6 +36,14 @@ export type TenantContext = {
   customPromptNotes?: string | null
   planTier?: string | null
   twilioNumber?: string | null
+  /**
+   * True when this contractor has at least one enabled calendar connection.
+   * Toggles the AI's behavior: instead of just taking a message, the AI may
+   * call the check_availability tool, read out real open slots, and have the
+   * caller pick one — the chosen slot becomes the preferred time in the message.
+   * Auto-booking (creating an event) is still NOT enabled — Phase 2 work.
+   */
+  hasCalendarConnected?: boolean
 }
 
 /**
@@ -64,9 +72,32 @@ export function renderSystemPrompt(t: TenantContext): string {
     ? `\n\n## Owner-specific instructions for this business (always follow):\n${t.customPromptNotes}\n`
     : ''
 
+  // Calendar-aware extension. When the contractor has connected a calendar,
+  // the AI can offer specific time slots from check_availability rather than
+  // a generic "he'll call you back." It still calls take_message at the end —
+  // we don't auto-create events yet (that's Phase 2). The owner approves the
+  // chosen slot via the existing SMS flow.
+  const calendarPlaybook = t.hasCalendarConnected
+    ? `\n\n## CALENDAR-AWARE MODE (this contractor's calendar is connected)
+You have a check_availability tool. Use it when a caller wants to schedule something.
+
+Flow when the caller wants to book:
+1. After capturing first name, if they want an appointment, call check_availability immediately. Pass duration_min (60 for service calls, 90 for installs/quotes, 120 for big jobs — pick from context).
+2. The tool returns 3-4 real open slots from ${ownerFirst}'s calendar. Read them out as offered options.
+3. Let the caller pick. Capture their pick in plain language as the reason — e.g. "AC repair, Tuesday Jan 14 at 2 PM".
+4. THEN call take_message with that reason. ${ownerFirst} confirms via SMS — the AI does NOT create the event itself.
+5. If no slots come back, say: "Looks like he's booked the next two weeks — I'll have him call you back to find a time."
+
+Slot offers should sound natural:
+  "Mike has Tuesday January 14 at 2 PM, Wednesday at 9 AM, or Thursday at 11 AM — which works?"
+NOT: "I see three available slots in Mike's calendar..."
+
+Still don't promise — say "I can pencil you in" not "you're confirmed." ${ownerFirst} confirms via SMS after the call.`
+    : ''
+
   return `${langPreamble}You answer the phone for ${business}. ${ownerFirst} is on a job and can't come to the phone right now. Your only job: take a short message so ${ownerFirst} can call back in an hour or two. ${toneLine}
 
-Services we cover: ${services}.${customNotes}
+Services we cover: ${services}.${customNotes}${calendarPlaybook}
 
 You ONLY need TWO things, then end the call:
 1. Caller's first name
@@ -80,7 +111,9 @@ How to talk — fast, warm, like a real human receptionist:
 - NEVER read back or repeat what they said.
 - NEVER clarify or ask follow-up questions about what they said. Trust them. Pass along their exact words to ${ownerFirst}. If they said "lighting repair," it's lighting repair — don't ask if it's a fixture or wiring.
 - NEVER say "let me log this" or "one moment" or "just a sec" — those phrases break the flow. After you have the two things, IMMEDIATELY call take_message and stop talking. The system handles the closing line.
-- ALWAYS say "${ownerFirst} will call you back in the next hour or two" — never promise specific times, never use "appointment" or "book."
+- ${t.hasCalendarConnected
+        ? `When suggesting a slot from check_availability, you can say "I can pencil you in" — but ${ownerFirst} confirms via SMS after the call, so never say "you're booked" or "confirmed."`
+        : `ALWAYS say "${ownerFirst} will call you back in the next hour or two" — never promise specific times, never use "appointment" or "book."`}
 - If they ask if this is an AI: "Yes — I'm the AI assistant. I'll make sure ${ownerFirst} gets your message."
 - If they sound urgent (water everywhere, no heat, safety issue), flag urgency='emergency' in the message.
 
@@ -230,6 +263,36 @@ export function buildAssistantConfig(opts: {
           },
           server: {
             url: `${opts.appBaseUrl}/api/vapi/end-of-call-report`,
+            ...(opts.webhookSecret ? { secret: opts.webhookSecret } : {}),
+          },
+        },
+        {
+          type: 'function' as const,
+          function: {
+            name: 'check_availability',
+            description:
+              "Call this ONLY when the contractor has a connected calendar AND the caller wants to schedule a specific time. " +
+              "Returns 3-4 real open slots from the contractor's calendar. Read them as natural options and let the caller pick. " +
+              "If the contractor has no connected calendar, the system prompt will tell you so — do NOT call this tool in that case.",
+            parameters: {
+              type: 'object',
+              properties: {
+                duration_min: {
+                  type: 'number',
+                  description:
+                    "Estimated job length in minutes. Default 90 if you can't tell from context. Service call = 60, install/quote = 90, big install = 120-180.",
+                },
+                days_ahead: {
+                  type: 'number',
+                  description:
+                    "How many days out to look. Default 14. If the caller says 'this week' use 7. 'Next week' use 10. 'Soon' use 14.",
+                },
+              },
+              required: [],
+            },
+          },
+          server: {
+            url: `${opts.appBaseUrl}/api/calendar/availability`,
             ...(opts.webhookSecret ? { secret: opts.webhookSecret } : {}),
           },
         },

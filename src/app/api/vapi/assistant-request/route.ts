@@ -9,6 +9,7 @@ import {
   VAPI_VOICE_ID_DEFAULT,
   type TenantContext,
 } from '@/lib/vapi'
+import { hasCalendarConnected } from '@/lib/calendar/availability'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -180,6 +181,11 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Check calendar connection (Google / Outlook / etc.) — when connected the
+  // AI's prompt gains the check_availability playbook and may offer specific
+  // slots instead of just taking a callback message.
+  const calendarConnected = await hasCalendarConnected(profile.user_id).catch(() => false)
+
   // Build the per-tenant override
   const tenant: TenantContext = {
     userId: profile.user_id,
@@ -192,6 +198,7 @@ export async function POST(req: NextRequest) {
     customPromptNotes: (profile as { custom_prompt_notes?: string | null }).custom_prompt_notes,
     planTier: profile.plan_tier,
     twilioNumber: profile.twilio_number,
+    hasCalendarConnected: calendarConnected,
   }
 
   const firstMessage =

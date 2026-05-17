@@ -395,9 +395,64 @@ export default function SetupWizard() {
                 </button>
               )}
               {testStatus === "sent" && (
-                <button onClick={continueAfterTest} disabled={busy} style={primaryButton}>
-                  {meta.isOfficeMgr || meta.isConcierge ? "Continue →" : "Open dashboard →"}
-                </button>
+                <>
+                  {/* Calendar callout — show this prominently after forwarding works,
+                      so contractors see it BEFORE they bounce to the dashboard. */}
+                  <div style={{
+                    marginTop: 8, marginBottom: 16,
+                    padding: "20px 22px",
+                    background: "linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 60%)",
+                    border: "1.5px solid rgba(232,116,43,0.32)",
+                    borderRadius: 14,
+                    boxShadow: "0 8px 24px rgba(232,116,43,0.10)",
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                      <span style={{
+                        fontSize: 9, fontWeight: 900, color: "#C84B26",
+                        background: "rgba(232,116,43,0.12)", padding: "3px 9px", borderRadius: 99,
+                        letterSpacing: "0.14em", textTransform: "uppercase",
+                      }}>
+                        New · Recommended
+                      </span>
+                      <span style={{ fontSize: 11, color: "#7AAAB2", fontWeight: 600 }}>30 seconds</span>
+                    </div>
+                    <h3 style={{ fontSize: 17, fontWeight: 900, color: "#0B1F3A", margin: 0, marginBottom: 6, letterSpacing: "-0.02em" }}>
+                      Connect your calendar so the AI offers real time slots.
+                    </h3>
+                    <p style={{ fontSize: 13, color: "#4A6670", lineHeight: 1.55, margin: 0, marginBottom: 14 }}>
+                      Without this, the AI takes a message and you call back. <strong>With it,</strong> the AI says "Mike has Tuesday at 2 PM or Wednesday at 9 AM — which works?" — using your actual free time. You still confirm via SMS, never auto-booked.
+                    </p>
+                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                      <a
+                        href="/dashboard/calendar"
+                        style={{
+                          padding: "11px 20px", borderRadius: 10,
+                          background: "linear-gradient(135deg, #FFD9A8 0%, #FF9D5A 50%, #E8742B 100%)",
+                          color: "#0B1F3A", fontSize: 13, fontWeight: 900,
+                          textDecoration: "none",
+                          boxShadow: "0 6px 18px rgba(232,116,43,0.32)",
+                        }}
+                      >
+                        Connect Google Calendar →
+                      </a>
+                      <a
+                        href="/dashboard/calendar"
+                        style={{
+                          padding: "11px 20px", borderRadius: 10,
+                          background: "#fff", color: "#0AA89F",
+                          fontSize: 13, fontWeight: 800,
+                          textDecoration: "none",
+                          border: "1px solid rgba(10,168,159,0.32)",
+                        }}
+                      >
+                        See all 10 calendar options
+                      </a>
+                    </div>
+                  </div>
+                  <button onClick={continueAfterTest} disabled={busy} style={primaryButton}>
+                    {meta.isOfficeMgr || meta.isConcierge ? "Continue →" : "Skip for now — open dashboard →"}
+                  </button>
+                </>
               )}
               {testStatus === "idle" && (
                 <button onClick={fireTestCall} style={primaryButton}>
