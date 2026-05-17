@@ -39,17 +39,18 @@ const PLANS: Plan[] = [
     tagline: 'AI answers every call. You close it in one tap.',
     popular: false,
     features: [
-      { label: '6 AI Consulting Reports / year (bi-monthly) — revenue, calls, missed jobs, what to fix', auto: true },
-      { label: '24/7 AI call answering — never miss a call again', auto: true },
+      { label: '6 AI Consulting Reports / year — bi-monthly revenue intelligence: missed calls, top services, quote-to-close ratio, what to fix. ($5K–$15K value if you hired a consultant.)', auto: true },
+      { label: '24/7 AI call answering — never miss a job again', auto: true },
       { label: 'Up to 250 inbound calls / month', auto: true },
-      { label: 'AI captures name, phone, service, address, preferred time', auto: true },
-      { label: 'Instant text summary + YES/NO booking approval to your phone', auto: true },
-      { label: 'One-tap: confirm · send payment link · call back · decline', auto: true },
-      { label: 'Auto-provisioned local number in your area code', auto: true },
-      { label: 'Customer + jobs dashboard with full call transcripts', auto: true },
+      { label: 'Auto-provisioned local number in your area code (~30 seconds at signup)', auto: true },
+      { label: 'AI captures name · callback # · what they need · preferred time (if mentioned) · urgency', auto: true },
+      { label: 'Instant text summary to your phone in 20 seconds', auto: true },
+      { label: 'One-tap actions: confirm · pay-by-text Stripe link · call back · decline', auto: true },
+      { label: 'Emergency routing — outbound voice call to your cell on urgent jobs', auto: true },
       { label: 'Spanish-language receptionist mode included', auto: true },
-      { label: 'Welcome AI business diagnostic at activation', auto: true },
-      { label: 'Self-serve Stripe billing portal · 30-day money-back', auto: true },
+      { label: 'Live dashboard with full call transcripts + audio', auto: true },
+      { label: 'Welcome AI business diagnostic on activation', auto: true },
+      { label: 'Self-serve Stripe billing portal · 30-day money-back guarantee', auto: true },
     ],
   },
   {
@@ -62,14 +63,14 @@ const PLANS: Plan[] = [
     popular: true,
     features: [
       { label: 'Everything in Receptionist, plus:', auto: false },
-      { label: '12 AI Consulting Reports / year (monthly) — conversion, recovery, sales coaching', auto: true },
+      { label: '12 AI Consulting Reports / year — monthly revenue intelligence: sales coaching from your actual call transcripts, lead-source attribution, customer lifetime value trends, AI-recommended price increases.', auto: true },
       { label: 'Unlimited inbound calls', auto: true },
-      { label: 'AI Quote Hunter — auto follow-up SMS day 2 / 7 / 14 on open quotes', auto: true },
-      { label: 'AI Collections — auto-chase past-due invoices with Stripe pay-by-text', auto: true },
+      { label: 'AI Quote Hunter — auto follow-up SMS day 2 / 7 / 14 on every open quote', auto: true },
+      { label: 'AI Collections — auto-chase past-due invoices with pay-by-text Stripe links', auto: true },
       { label: 'AI Review Manager — Google reviews polled daily, replies drafted for one-tap approval', auto: true },
       { label: 'AI Reputation — auto-SMS past customers asking for Google reviews', auto: true },
-      { label: 'Smart Call Summary Insights — sales tip with every booking', auto: true },
-      { label: 'Priority email support — 24-hr SLA', auto: true },
+      { label: 'Smart Call-Summary Insights — sales tip with every callback alert', auto: true },
+      { label: 'Priority email support — 24-hour SLA', auto: true },
     ],
   },
   {
@@ -214,8 +215,7 @@ export default function PricingPage() {
           </span>
           {[
             { label: 'Solo', tier: 'receptionist' as Tier },
-            { label: '2–10 people', tier: 'officemgr' as Tier },
-            { label: '10+ or want marketing', tier: 'concierge' as Tier },
+            { label: '2+ people', tier: 'officemgr' as Tier },
           ].map((x, i) => (
             <span key={x.tier} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               {i > 0 && <span style={{ color: '#DCE9E2', fontSize: 12 }}>·</span>}
@@ -238,7 +238,7 @@ export default function PricingPage() {
 
       <section style={{ padding: '0 24px 32px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, maxWidth: 1200, margin: '0 auto' }}>
-          {PLANS.map(plan => {
+          {PLANS.filter(p => p.tier !== 'concierge').map(plan => {
             const price = isAnnual ? plan.annual : plan.monthly
             return (
               <div key={plan.tier} id={`plan-${plan.tier}`} style={{
