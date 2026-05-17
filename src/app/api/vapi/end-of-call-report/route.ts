@@ -458,14 +458,33 @@ type TenantMeta = {
 
 function extractTenant(message: VapiServerMessage['message']): TenantMeta {
   const md = (message?.assistant?.metadata ?? message?.call?.assistantOverrides?.metadata ?? {}) as Record<string, unknown>
+
+  // Demo detection: prefer metadata flag, fall back to checking the called
+  // number against TWILIO_DEMO_NUMBER env var. Vapi has been observed to
+  // drop assistantOverrides.metadata in webhook payloads, so we can't rely
+  // on the flag alone — without this fallback, demo calls leak into tenant
+  // tables and skip the Peter hot-lead SMS.
+  const calledNumber =
+    (message?.call as { phoneNumber?: { number?: string }; customer?: { number?: string } })?.phoneNumber?.number ??
+    null
+  const demoEnv = process.env.TWILIO_DEMO_NUMBER
+  const isDemoByNumber = !!(demoEnv && calledNumber && calledNumber === demoEnv)
+  const isDemo = md.is_demo === true || isDemoByNumber
+
+  // Surface in logs whenever the fallback rescues us so we can spot the
+  // metadata round-trip getting flaky in production.
+  if (isDemoByNumber && md.is_demo !== true) {
+    console.warn('extractTenant: demo detected by called-number fallback (metadata.is_demo missing)')
+  }
+
   return {
-    user_id: (md.user_id as string) ?? '',
-    business_name: (md.business_name as string) ?? null,
-    plan_tier: (md.plan_tier as string) ?? null,
-    twilio_number: (md.twilio_number as string) ?? null,
+    user_id: (md.user_id as string) ?? (isDemo ? 'demo' : ''),
+    business_name: (md.business_name as string) ?? (isDemo ? 'BellAveGo (sales)' : null),
+    plan_tier: (md.plan_tier as string) ?? (isDemo ? 'demo' : null),
+    twilio_number: (md.twilio_number as string) ?? calledNumber ?? null,
     owner_phone: (md.owner_phone as string) ?? null,
     backup_owner_phone: (md.backup_owner_phone as string) ?? null,
-    is_demo: md.is_demo === true,
+    is_demo: isDemo,
   }
 }
 
