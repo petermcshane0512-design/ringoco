@@ -31,6 +31,12 @@ export async function GET() {
   const startOfMonth = new Date()
   startOfMonth.setDate(1)
   startOfMonth.setHours(0, 0, 0, 0)
+  // Start of THIS week (Monday) — typical for contractors who plan weekly
+  const startOfWeek = new Date()
+  startOfWeek.setHours(0, 0, 0, 0)
+  const dayOfWeek = startOfWeek.getDay() // 0=Sun, 1=Mon, ... 6=Sat
+  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+  startOfWeek.setDate(startOfWeek.getDate() - daysSinceMonday)
 
   const [
     jobsRes,
@@ -38,6 +44,7 @@ export async function GET() {
     customersCountRes,
     reportsRes,
     callsTodayRes,
+    callsThisWeekRes,
     leadsThisMonthRes,
   ] = await Promise.all([
     supabase
@@ -60,12 +67,18 @@ export async function GET() {
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(10),
-    // Calls received today — drives the "Calls today" sidebar metric
+    // Calls received today — drives the "BellAveGo Calls Answered Today" stat
     supabase
       .from('call_logs')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
       .gte('created_at', startOfToday.toISOString()),
+    // Calls received this week (since Monday) — drives "BellAveGo Calls Answered This Week"
+    supabase
+      .from('call_logs')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .gte('created_at', startOfWeek.toISOString()),
     // Leads captured this month — drives the "Leads captured" sidebar metric.
     // A "lead" = a call_log row where the AI booked a job (booking_completed=true).
     // Falls back to total call_logs this month if the booking_completed column is empty.
@@ -85,6 +98,7 @@ export async function GET() {
     customersCount: customersCountRes.count ?? 0,
     reports: reportsRes.data ?? [],
     callsToday: callsTodayRes.count ?? 0,
+    callsThisWeek: callsThisWeekRes.count ?? 0,
     leadsThisMonth: leadsThisMonthRes.count ?? 0,
   })
 }

@@ -69,6 +69,7 @@ export default function DashboardPage() {
   const [adminSwitching, setAdminSwitching] = useState<string | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [callsToday, setCallsToday] = useState(0);
+  const [callsThisWeek, setCallsThisWeek] = useState(0);
   const [leadsThisMonth, setLeadsThisMonth] = useState(0);
   const router = useRouter();
   const { user } = useUser();
@@ -125,6 +126,7 @@ export default function DashboardPage() {
       reports?: Report[]
       callsToday?: number
       leadsThisMonth?: number
+      callsThisWeek?: number
     } | null = null;
     try {
       const res = await fetch("/api/dashboard/summary");
@@ -158,6 +160,7 @@ export default function DashboardPage() {
       leads: summary.leadsThisMonth || 0,
     });
     setCallsToday(summary.callsToday || 0);
+    setCallsThisWeek(summary.callsThisWeek || 0);
     setLeadsThisMonth(summary.leadsThisMonth || 0);
     setLoadingJobs(false);
   }
@@ -308,16 +311,16 @@ export default function DashboardPage() {
       icon: <><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" /></>,
     },
     {
-      label: "Pending Jobs", value: String(pending.length),
-      sub: pending.length > 0 ? "Awaiting your response" : "All caught up",
+      label: "BellAveGo Calls Answered Today", value: String(callsToday),
+      sub: callsToday > 0 ? `${callsToday} call${callsToday === 1 ? "" : "s"} the AI handled today` : "No calls yet today",
       iconBg: "#FFFBEB", iconColor: "#D97706", accentColor: "#F59E0B",
-      icon: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M12 14v4M10 16h4" /></>,
+      icon: <><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></>,
     },
     {
-      label: "Upcoming Jobs", value: String(upcoming.length),
-      sub: upcoming.length > 0 ? "Accepted & scheduled" : "None scheduled",
+      label: "BellAveGo Calls Answered This Week", value: String(callsThisWeek),
+      sub: callsThisWeek > 0 ? `${callsThisWeek} call${callsThisWeek === 1 ? "" : "s"} since Monday` : "No calls this week yet",
       iconBg: "#EFF6FF", iconColor: "#2563EB", accentColor: "#3B82F6",
-      icon: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></>,
+      icon: <><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></>,
     },
     {
       label: "Total Customers", value: String(counts.customers),
