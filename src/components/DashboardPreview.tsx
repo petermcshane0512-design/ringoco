@@ -197,15 +197,10 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
       >
       <div
         ref={dashRef}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={() => setTilt({ x: 0, y: 0 })}
         style={{
           position: 'relative',
-          transform: compact
-            ? 'perspective(1800px) rotateY(' + (-14 + tilt.y) + 'deg) rotateX(' + (4 + tilt.x) + 'deg) translateY(' + (visible ? 0 : 28) + 'px)'
-            : 'perspective(1600px) rotateX(' + (tilt.x + (visible ? 0 : 8)) + 'deg) rotateY(' + tilt.y + 'deg) translateY(' + (visible ? 0 : 28) + 'px)',
+          transform: 'translateY(' + (visible ? 0 : 28) + 'px)',
           transition: 'transform 0.7s cubic-bezier(0.34,1,0.64,1)',
-          transformOrigin: compact ? 'left center' : 'center center',
           background: '#ffffff',
           cursor: 'default',
         }}
