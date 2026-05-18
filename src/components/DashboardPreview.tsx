@@ -173,32 +173,41 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
       </div>
       )}
 
-      {/* Dashboard mockup. borderRadius is forced on every corner (some
-          browsers were rendering only the LEFT corners as rounded due to
-          the 3D rotateY transform and isolation context — explicit
-          per-corner values guarantee TR/BR aren't flat). */}
+      {/* Dashboard mockup — two-layer structure.
+          OUTER: rounded clip + box shadow. Owns the borderRadius and
+                 overflow: hidden so all four corners are guaranteed
+                 round in every browser, including Safari's 3D-transform
+                 corner bleeding bug.
+          INNER: the 3D-rotated content. Keeping transform separate
+                 from the clip means the rotation can't push square
+                 edges past the outer rounded mask. */}
+      <div
+        style={{
+          maxWidth: compact ? '100%' : 1040,
+          margin: compact ? '0' : '0 auto 52px',
+          position: 'relative', zIndex: 2,
+          borderRadius: 24,
+          overflow: 'hidden',
+          boxShadow: '0 32px 80px rgba(11,31,58,0.14), 0 8px 32px rgba(232,116,43,0.10), 0 0 0 1px rgba(232,116,43,0.16)',
+          background: '#ffffff',
+          opacity: visible ? 1 : 0,
+          transition: 'opacity 0.7s ease',
+          isolation: 'isolate',
+        }}
+      >
       <div
         ref={dashRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setTilt({ x: 0, y: 0 })}
         style={{
-          maxWidth: compact ? '100%' : 1040, margin: compact ? '0' : '0 auto 52px',
-          position: 'relative', zIndex: 2,
+          position: 'relative',
           transform: compact
             ? 'perspective(1800px) rotateY(' + (-14 + tilt.y) + 'deg) rotateX(' + (4 + tilt.x) + 'deg) translateY(' + (visible ? 0 : 28) + 'px)'
             : 'perspective(1600px) rotateX(' + (tilt.x + (visible ? 0 : 8)) + 'deg) rotateY(' + tilt.y + 'deg) translateY(' + (visible ? 0 : 28) + 'px)',
-          opacity: visible ? 1 : 0,
-          transition: 'opacity 0.7s ease, transform 0.7s cubic-bezier(0.34,1,0.64,1)',
-          borderRadius: 24,
-          borderTopLeftRadius: 24,
-          borderTopRightRadius: 24,
-          borderBottomLeftRadius: 24,
-          borderBottomRightRadius: 24,
-          boxShadow: '0 32px 80px rgba(11,31,58,0.14), 0 8px 32px rgba(232,116,43,0.10), 0 0 0 1px rgba(232,116,43,0.16)',
+          transition: 'transform 0.7s cubic-bezier(0.34,1,0.64,1)',
+          transformOrigin: compact ? 'left center' : 'center center',
           background: '#ffffff',
-          overflow: 'hidden',
           cursor: 'default',
-          isolation: 'isolate',
         }}
       >
         {/* Browser topbar */}
@@ -225,9 +234,13 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
             <div style={{ fontSize: 7.5, fontWeight: 800, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '0 5px', marginBottom: 4 }}>Workspace</div>
 
             {[
-              { label: 'Command Center', dot: false },
-              { label: 'AI Receptionist', dot: true },
-              { label: 'Invoicing', dot: false },
+              { label: 'Command Center',     dot: false },
+              { label: 'AI Receptionist',    dot: true  },
+              { label: 'Operator',           dot: false },
+              { label: 'Invoicing',          dot: false },
+              { label: 'Consulting Reports', dot: false },
+              { label: 'Call Forwarding',    dot: false },
+              { label: 'Calendar Sync',      dot: false },
             ].map(({ label, dot }) => {
               const active = activeTab === label
               const hovered = hoveredNav === label
@@ -436,6 +449,130 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                   </div>
                   <span style={{ fontSize: 8, fontWeight: 700, padding: '3px 9px', borderRadius: 10, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', flexShrink: 0 }}>Active</span>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* == OPERATOR TAB == */}
+          {activeTab === 'Operator' && (
+            <div>
+              <div style={{ background: 'linear-gradient(135deg, rgba(232,116,43,0.06), rgba(232,116,43,0.02))', border: '1px solid rgba(232,116,43,0.22)', borderRadius: 11, padding: '12px 14px', marginBottom: 11 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <span style={{ fontSize: 7.5, fontWeight: 800, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '2px 7px', borderRadius: 99, background: 'rgba(232,116,43,0.12)', border: '1px solid rgba(232,116,43,0.30)' }}>Operator</span>
+                  <div style={{ fontSize: 10.5, fontWeight: 800, color: '#0B1F3A' }}>Your AI office manager</div>
+                </div>
+                <div style={{ fontSize: 9, color: '#4A6670', lineHeight: 1.55 }}>Chases stale quotes day 2 / 7 / 14, recovers past-due invoices, requests Google reviews on completed jobs, watches reputation.</div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 9 }}>
+                {[
+                  { title: 'Quote Hunter',    sub: '14 follow-ups sent this month',  stat: '$3,420', label: 'recovered' },
+                  { title: 'AI Collections',  sub: '6 past-due invoices chasing',     stat: '$1,180', label: 'collected' },
+                  { title: 'Review Manager',  sub: 'Auto-asks on every completed job', stat: '+8',     label: 'new reviews' },
+                  { title: 'Reputation',      sub: '4.7★ avg across 3 platforms',     stat: 'Healthy', label: 'status' },
+                ].map(c => (
+                  <div key={c.title} style={{ background: '#fff', border: '1px solid rgba(232,116,43,0.16)', borderRadius: 10, padding: '11px 12px', boxShadow: '0 2px 8px rgba(7,27,58,0.05)' }}>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: '#0B1F3A', marginBottom: 2 }}>{c.title}</div>
+                    <div style={{ fontSize: 8, color: '#7AAAB2', marginBottom: 7 }}>{c.sub}</div>
+                    <div style={{ fontSize: 16, fontWeight: 900, color: '#C84B26', letterSpacing: '-0.4px' }}>{c.stat}</div>
+                    <div style={{ fontSize: 7.5, color: '#8B5A3D', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700, marginTop: 1 }}>{c.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* == CONSULTING REPORTS TAB == */}
+          {activeTab === 'Consulting Reports' && (
+            <div>
+              <div style={{ background: 'linear-gradient(160deg, #FFF6EE 0%, #FFFFFF 100%)', border: '1px solid rgba(232,116,43,0.24)', borderRadius: 11, padding: '12px 14px', marginBottom: 11 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <div style={{ width: 26, height: 26, borderRadius: 7, background: 'linear-gradient(135deg, #FF9D5A, #E8742B)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 8px rgba(232,116,43,0.35)' }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="9" y1="13" x2="15" y2="13"/>
+                      <line x1="9" y1="17" x2="13" y2="17"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10.5, fontWeight: 800, color: '#0B1F3A' }}>BellAveGo Consulting Reports</div>
+                    <div style={{ fontSize: 8, color: '#8B5A3D', marginTop: 1, fontWeight: 600 }}>Your quarterly growth advisor — delivered as a PDF</div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ background: '#fff', border: '1px solid rgba(232,116,43,0.16)', borderRadius: 11, overflow: 'hidden', boxShadow: '0 2px 8px rgba(232,116,43,0.06)' }}>
+                {[
+                  { title: 'Welcome AI Consulting Report',  date: 'March 1, 2026', tag: 'Delivered' },
+                  { title: 'Q1 2026 Growth Report',         date: 'April 1, 2026', tag: 'Delivered' },
+                  { title: 'May 2026 Revenue Intelligence', date: 'May 1, 2026',  tag: 'Delivered' },
+                  { title: 'Q2 2026 Growth Report',         date: 'July 1, 2026', tag: 'Scheduled' },
+                ].map((r, i, arr) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 12px', borderBottom: i < arr.length - 1 ? '1px solid rgba(232,116,43,0.10)' : 'none' }}>
+                    <div style={{ flex: 1, fontSize: 10, fontWeight: 700, color: '#0B1F3A' }}>{r.title}</div>
+                    <div style={{ fontSize: 8.5, color: '#8B5A3D' }}>{r.date}</div>
+                    <span style={{ fontSize: 7, fontWeight: 700, padding: '2px 6px', borderRadius: 8, background: r.tag === 'Delivered' ? 'rgba(34,197,94,0.10)' : 'rgba(232,116,43,0.10)', color: r.tag === 'Delivered' ? '#15803D' : '#C84B26', border: r.tag === 'Delivered' ? '1px solid rgba(34,197,94,0.3)' : '1px solid rgba(232,116,43,0.30)' }}>{r.tag}</span>
+                    <div style={{ padding: '3px 9px', borderRadius: 6, background: r.tag === 'Delivered' ? 'linear-gradient(135deg, #FF9D5A, #E8742B)' : 'rgba(232,116,43,0.10)', color: r.tag === 'Delivered' ? '#fff' : '#C84B26', fontSize: 8, fontWeight: 800, boxShadow: r.tag === 'Delivered' ? '0 2px 6px rgba(232,116,43,0.35)' : 'none' }}>{r.tag === 'Delivered' ? 'View →' : 'Pending'}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* == CALL FORWARDING TAB == */}
+          {activeTab === 'Call Forwarding' && (
+            <div>
+              <div style={{ background: 'linear-gradient(135deg, rgba(10,168,159,0.06), rgba(10,168,159,0.02))', border: '1px solid rgba(10,168,159,0.22)', borderRadius: 11, padding: '12px 14px', marginBottom: 11 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 7.5, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '2px 7px', borderRadius: 99, background: 'rgba(10,168,159,0.10)', border: '1px solid rgba(10,168,159,0.30)' }}>Forwarding</span>
+                  <div style={{ fontSize: 10.5, fontWeight: 800, color: '#0B1F3A' }}>Send missed calls to BellAveGo</div>
+                </div>
+                <div style={{ fontSize: 9, color: '#4A6670', lineHeight: 1.5 }}>Conditional forwarding sends only the calls you can&apos;t answer to your AI receptionist — keeps your real cell number with you.</div>
+              </div>
+              <div style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, padding: '12px 14px', boxShadow: '0 2px 8px rgba(7,27,58,0.05)' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 10 }}>Setup status</div>
+                {[
+                  { step: 1, label: 'AI number provisioned',         val: AI_DEMO_NUMBER, done: true  },
+                  { step: 2, label: 'Carrier auto-detected',         val: 'Verizon Wireless', done: true  },
+                  { step: 3, label: 'Forwarding code dialed',        val: '**61* ' + AI_DEMO_NUMBER + '#',  done: true  },
+                  { step: 4, label: 'Test call verified',            val: 'Last test 2h ago', done: true  },
+                ].map(s => (
+                  <div key={s.step} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 0', borderBottom: '1px solid rgba(10,168,159,0.08)' }}>
+                    <div style={{ width: 18, height: 18, borderRadius: '50%', background: s.done ? '#22C55E' : '#E5E7EB', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 900, flexShrink: 0 }}>
+                      {s.done ? '✓' : s.step}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: '#0B1F3A' }}>{s.label}</div>
+                      <div style={{ fontSize: 8.5, color: '#7AAAB2', marginTop: 1 }}>{s.val}</div>
+                    </div>
+                    <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 7px', borderRadius: 8, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' }}>Done</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* == CALENDAR SYNC TAB == */}
+          {activeTab === 'Calendar Sync' && (
+            <div>
+              <div style={{ background: 'linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 60%)', border: '1px solid rgba(232,116,43,0.24)', borderRadius: 11, padding: '12px 14px', marginBottom: 11 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 7.5, fontWeight: 800, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '2px 7px', borderRadius: 99, background: 'rgba(232,116,43,0.12)', border: '1px solid rgba(232,116,43,0.30)' }}>Calendar</span>
+                  <div style={{ fontSize: 10.5, fontWeight: 800, color: '#0B1F3A' }}>Live appointment booking</div>
+                </div>
+                <div style={{ fontSize: 9, color: '#4A6670', lineHeight: 1.5 }}>Connect once and the AI offers your real open times to callers — no double-booking, travel buffer baked in.</div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 9 }}>
+                {[
+                  { name: 'Google Calendar',   color: '#4285F4', glyph: 'G', status: 'Connected', live: true  },
+                  { name: 'Microsoft Outlook', color: '#0078D4', glyph: 'O', status: 'Available',  live: false },
+                  { name: 'Calendly',          color: '#006BFF', glyph: 'C', status: 'Available',  live: false },
+                ].map(p => (
+                  <div key={p.name} style={{ background: '#fff', border: p.live ? '1.5px solid #22C55E' : '1px solid rgba(10,168,159,0.16)', borderRadius: 11, padding: '12px 10px', textAlign: 'center', boxShadow: '0 2px 8px rgba(7,27,58,0.05)' }}>
+                    <div style={{ width: 34, height: 34, borderRadius: 9, background: p.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 16, margin: '0 auto 8px', boxShadow: '0 4px 10px rgba(11,31,58,0.18)' }}>{p.glyph}</div>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: '#0B1F3A', marginBottom: 4 }}>{p.name}</div>
+                    <span style={{ display: 'inline-block', fontSize: 7.5, fontWeight: 700, padding: '2px 7px', borderRadius: 8, background: p.live ? '#ECFDF5' : 'rgba(10,168,159,0.06)', color: p.live ? '#059669' : '#0AA89F', border: p.live ? '1px solid #A7F3D0' : '1px solid rgba(10,168,159,0.22)' }}>{p.status}</span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -739,7 +876,8 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
           </div>}
           </div>
         </div>
-      </div>
+      </div>{/* /inner 3D-transformed */}
+      </div>{/* /outer rounded clip + shadow */}
 
       {/* CTAs -- hidden when signed in or in compact mode */}
       {!isSignedIn && !compact && (
