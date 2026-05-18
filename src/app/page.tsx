@@ -425,17 +425,49 @@ export default function HomePage() {
 
             /* ── Mobile (iOS portrait / cold-email-click experience) ── */
             @media (max-width: 768px) {
-              /* Tighter hero — fits above the fold on iPhone. Per the mobile
-                 redesign brief, headline goes to clamp(40px..48px) for
-                 thumb-stopping presence; subhead stays compact (15px). */
-              .hero-grid { padding: 36px 18px 48px; gap: 22px; grid-template-columns: 1fr; }
+              .hero-grid { padding: 24px 16px 26px; gap: 18px; grid-template-columns: 1fr; }
               .hero-eyebrow { font-size: 10.5px; margin-bottom: 14px; padding: 5px 11px; }
               .hero-h1 { font-size: clamp(40px, 11vw, 48px); line-height: 1.02; margin-bottom: 16px; letter-spacing: -0.03em; }
-              .hero-sub { font-size: 15.5px; line-height: 1.55; margin-bottom: 24px; max-width: 100%; }
+              .hero-sub { font-size: 15.5px; line-height: 1.55; margin-bottom: 22px; max-width: 100%; }
 
-              /* CTAs become full-width thumb-targets */
-              .hero-actions { gap: 10px; margin-bottom: 22px; flex-direction: column; align-items: stretch; }
-              .hero-cta-primary, .hero-cta-secondary { width: 100%; justify-content: center; padding: 14px 20px; }
+              /* CTAs become full-width thumb-targets, explicitly centered.
+                 The !important on width / box-sizing prevents content from
+                 spilling outside the button on narrow viewports. */
+              .hero-actions {
+                gap: 10px !important;
+                margin-bottom: 22px !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                width: 100% !important;
+              }
+              .hero-cta-primary,
+              .hero-cta-secondary {
+                width: 100% !important;
+                box-sizing: border-box !important;
+                justify-content: center !important;
+                align-items: center !important;
+                text-align: center !important;
+                padding: 14px 16px !important;
+                white-space: normal !important;  /* allow wrap so nothing clips */
+              }
+              /* Secondary CTA — 2-line layout on mobile: label on top, phone
+                 number beneath in slightly smaller / dimmer type. Desktop
+                 collapses these into one inline string. */
+              .hero-cta-secondary { flex-direction: row; gap: 10px !important; }
+              .hero-cta-secondary-label {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                line-height: 1.2 !important;
+                gap: 1px;
+              }
+              .hero-cta-secondary-sep { display: none !important; }
+              .hero-cta-secondary-line2 {
+                font-size: 12.5px !important;
+                opacity: 0.75;
+                font-weight: 600;
+                font-variant-numeric: tabular-nums;
+              }
 
               /* Trust badges — 2x2 grid on mobile so they don't crush */
               .hero-trust {
@@ -448,44 +480,43 @@ export default function HomePage() {
               .hero-trust-num { font-size: 22px; }
               .hero-trust-lab { font-size: 10.5px; }
 
-              /* Dashboard preview VISIBLE on mobile — Peter wants users to
-                 see the live command center as the hero visual on phone.
-                 We scale the desktop component down via transform: scale
-                 and feed it a wider container so it doesn't get squished.
-                 The phone preview hides on mobile (dashboard is primary). */
+              /* Dashboard preview — bigger on mobile (~0.62 scale), tight
+                 margin so the cream consulting section starts immediately
+                 below instead of trailing dark blue dead space. */
               .hero-stage {
                 display: block !important;
                 position: relative;
                 min-height: 0 !important;
                 width: 100%;
-                margin: 6px 0 0;
+                margin: 4px 0 0;
                 overflow: hidden;
-                border-radius: 16px;
+                border-radius: 18px;
               }
               .hero-stage-dash {
                 position: relative !important;
                 inset: auto !important;
                 padding-right: 0 !important;
-                transform: scale(0.46) !important;
+                transform: scale(0.62) !important;
                 transform-origin: top left !important;
-                width: 218% !important;     /* 100 / 0.46 */
-                margin-bottom: -54% !important;
+                width: 161.3% !important;     /* 100 / 0.62 */
+                margin-bottom: -38% !important;
                 display: block !important;
                 align-items: initial !important;
               }
               .hero-stage-phone { display: none !important; }
 
-              /* Pricing grid stays 2-col on mobile so Mission Control +
-                 Operator sit side-by-side. Concierge (3rd child) spans
-                 both columns on row 2. */
+              /* Hero container — kill the desktop min-height: 640px so the
+                 cream consulting section begins right after the dashboard
+                 (no trailing dark-blue dead space). */
+              .hero-wrap { min-height: 0 !important; }
+
+              /* Pricing grid — 1-col stacked (Peter wants each card
+                 stretched full-width), tight gaps to kill dead space. */
               .home-grid-2,
-              .home-grid-3 { grid-template-columns: 1fr; gap: 16px; }
+              .home-grid-3,
               .home-pricing-grid {
-                grid-template-columns: 1fr 1fr !important;
-                gap: 12px !important;
-              }
-              .home-pricing-grid > :nth-child(3) {
-                grid-column: 1 / -1;
+                grid-template-columns: 1fr !important;
+                gap: 14px !important;
               }
 
               /* Tighter section padding throughout */
@@ -572,8 +603,13 @@ export default function HomePage() {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
                   </svg>
-                  <span className="dt-only-inline">Call the AI Demo · (651) 467-7829</span>
-                  <span className="mb-only-inline">Call the AI Demo</span>
+                  {/* Desktop: single inline line. Mobile: label on top,
+                      phone number on a smaller line beneath. */}
+                  <span className="hero-cta-secondary-label">
+                    <span className="hero-cta-secondary-line1">Call the AI Demo</span>
+                    <span className="hero-cta-secondary-sep"> · </span>
+                    <span className="hero-cta-secondary-line2">(651) 467-7829</span>
+                  </span>
                 </a>
               </div>
 
@@ -701,8 +737,48 @@ export default function HomePage() {
           .appt-chip-sunset { background: rgba(232,116,43,0.10); color: #C84B26; }
           .appt-chip-teal   { background: rgba(10,168,159,0.10); color: #0AA89F; }
           @media (max-width: 920px) {
-            .appt-section { padding: 64px 20px !important; }
-            .appt-grid { grid-template-columns: 1fr !important; gap: 20px; }
+            .appt-section { padding: 56px 18px !important; }
+            .appt-grid { gap: 18px; }
+          }
+          /* Phone-specific tightening: keep both cards side-by-side per
+             Peter's request, but skinnier/smaller — shrink internal
+             mockups via CSS zoom so the inline-styled phone + Google
+             Calendar contents scale together. */
+          @media (max-width: 720px) {
+            .appt-section { padding: 44px 10px !important; }
+            .appt-grid {
+              grid-template-columns: 1fr 1fr !important;
+              gap: 8px !important;
+            }
+            .appt-card {
+              padding: 14px 10px 12px !important;
+              gap: 10px !important;
+              border-radius: 14px !important;
+            }
+            .appt-card header h3 { font-size: 14px !important; line-height: 1.2 !important; margin: 0 0 5px !important; }
+            .appt-card header p  { font-size: 10.5px !important; line-height: 1.4 !important; }
+            .appt-chip {
+              font-size: 8.5px !important;
+              padding: 3px 7px !important;
+              margin-bottom: 7px !important;
+              letter-spacing: 0.10em !important;
+            }
+            /* Shrink the inline-styled iPhone frame + Google Calendar card.
+               CSS `zoom` (now standard) proportionally scales every nested
+               pixel value — fonts, padding, borders — without us touching
+               the inline styles. */
+            .appt-phone,
+            .appt-card-auto > div:nth-of-type(2) {
+              zoom: 0.62;
+            }
+            .appt-card ol { gap: 6px !important; }
+            .appt-card ol li { font-size: 10.5px !important; line-height: 1.4 !important; }
+            .appt-step-num {
+              width: 18px !important;
+              height: 18px !important;
+              border-radius: 5px !important;
+              font-size: 9.5px !important;
+            }
           }
         `}</style>
 

@@ -502,6 +502,30 @@ export default function ConsultingShowcase() {
           transform: translateY(-1px);
         }
 
+        /* Mobile — both CTAs stack to full-width and center cleanly so
+           they don't get clipped at narrow viewports. Matches the hero
+           CTA mobile pattern on page.tsx. */
+        @media (max-width: 720px) {
+          .cs-cta-row {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 10px !important;
+            width: 100% !important;
+            padding: 0 6px;
+            box-sizing: border-box;
+          }
+          .cs-cta-primary,
+          .cs-cta-secondary {
+            width: 100% !important;
+            box-sizing: border-box !important;
+            justify-content: center !important;
+            text-align: center !important;
+            padding: 14px 18px !important;
+            font-size: 14px !important;
+            white-space: normal !important;
+          }
+        }
+
         @keyframes csBlink {
           0%, 100% { opacity: 1; }
           50%      { opacity: 0.45; }
