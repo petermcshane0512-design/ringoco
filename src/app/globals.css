@@ -138,61 +138,87 @@ html { overflow-x: hidden; }
   transform: translateY(-1px);
 }
 
+/* ── Mobile visibility utilities ──
+   .dt-only — show on desktop, hide on phone
+   .mb-only — show on phone, hide on desktop
+   Lets us keep DESKTOP MARKUP UNCHANGED while adding mobile-specific
+   variants of buttons / sections / visuals where they exist together
+   in the JSX. (We don't have Tailwind, so these stand in for
+   `hidden lg:block` / `block lg:hidden`.)                            */
+.dt-only { display: inline-flex; }
+.mb-only { display: none !important; }
+@media (max-width: 720px) {
+  .dt-only { display: none !important; }
+  .mb-only { display: inline-flex !important; }
+  /* Block variant for sections/cards that need block-level display
+     (the inline-flex default works for nav buttons but not for
+     hero cards, dashboard mockups, etc.). Use .mb-only-block. */
+  .mb-only-block { display: block !important; }
+}
+.mb-only-block { display: none; }
+
 /* ── Mobile top-nav layout (homepage / founder / pricing)
-   Three-row stack on phones:
-     Row 1: BellAveGo wordmark — 2x bigger, centered (brand statement).
-     Row 2: Sign In + Create Account (auth pair).
-     Row 3: Why BellAveGo? + Pricing (info pair).
-   Auth pair sits above info pair via CSS `order` (DOM order is preserved
-   for desktop layout, where Why/Pricing render first as expected).
+   On phones: BellAveGo wordmark centered, then the three primary nav
+   buttons (Dashboard / Why BellAveGo? / Pricing) stacked vertically,
+   each full-width with a 52px+ tap target. Sign In / Create Account /
+   Sign Out are hidden on mobile — they live in the sticky bottom CTA
+   bar instead, where they're always reachable without scrolling.
    Desktop layout (>720px) is untouched. */
 @media (max-width: 720px) {
   .bavg-top-nav {
-    padding: 14px 14px 16px !important;
+    padding: 18px 18px 20px !important;
     height: auto !important;
     min-height: 80px;
     flex-direction: column !important;
     align-items: stretch !important;
-    row-gap: 14px;
+    row-gap: 16px;
   }
-  /* Row 1 — Logo: 2x bigger, centered */
+  /* Logo — centered, premium size (~220px wordmark) */
   .bavg-top-nav-logo {
     align-self: center !important;
     justify-content: center !important;
     width: 100%;
   }
   .bavg-top-nav-logo img {
-    max-width: 480px !important;
-    width: 92% !important;
+    max-width: 220px !important;
+    width: 100% !important;
     height: auto !important;
     margin-top: 0 !important;
   }
-  /* Rows 2-3 — Buttons: 2 per row, larger tap targets */
+  /* Three stacked full-width buttons */
   .bavg-top-nav-actions {
-    gap: 8px !important;
-    flex-wrap: wrap !important;
-    justify-content: center !important;
+    gap: 10px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
     width: 100%;
   }
-  .bavg-top-nav .nav-cta,
-  .bavg-top-nav .why-pulse,
-  .bavg-top-nav .price-pulse,
+  /* Hide auth buttons on mobile — they're in the sticky bottom CTA */
   .bavg-top-nav .signin-link,
   .bavg-top-nav .signout-link {
-    flex: 0 0 calc(50% - 4px) !important;
+    display: none !important;
+  }
+  /* When user is NOT signed in, .nav-cta is "Create Account" — hide it on
+     mobile too (the sticky bottom CTA handles "Start free trial"). The
+     mobile-only Dashboard button (`.nav-dashboard-mb`) is what the user
+     sees in the nav instead. When signed in, the rendered .nav-cta is
+     "Dashboard" — we keep that one visible via the .nav-dashboard-mb
+     class on it. */
+  .bavg-top-nav .nav-cta:not(.nav-dashboard-mb) {
+    display: none !important;
+  }
+  /* All visible mobile nav buttons: full-width, thumb-friendly */
+  .bavg-top-nav .nav-cta,
+  .bavg-top-nav .why-pulse,
+  .bavg-top-nav .price-pulse {
+    width: 100% !important;
     justify-content: center !important;
-    padding: 13px 10px !important;
-    font-size: 14.5px !important;
+    padding: 16px 18px !important;
+    font-size: 15.5px !important;
+    min-height: 52px;
     letter-spacing: -0.2px !important;
     text-align: center;
     white-space: nowrap;
   }
-  /* Mobile-only row order: auth pair on top, info pair below */
-  .bavg-top-nav .signin-link  { order: 1; }
-  .bavg-top-nav .nav-cta      { order: 2; }  /* Dashboard or Create Account */
-  .bavg-top-nav .signout-link { order: 2; }
-  .bavg-top-nav .why-pulse    { order: 3; }
-  .bavg-top-nav .price-pulse  { order: 4; }
 }
 
 /* ── Sign-in / Sign-up — mobile stack with logo on top

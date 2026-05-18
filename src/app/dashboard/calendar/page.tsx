@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import CalendarGrid from '@/components/CalendarGrid'
 
 type Connection = {
   provider: string
@@ -57,7 +58,9 @@ function CalendarPageInner() {
   async function loadEvents() {
     setEventsLoading(true)
     try {
-      const res = await fetch('/api/calendar/events?days=14')
+      // 60-day window so the month-grid view has data when user navigates
+      // forward without an extra round trip.
+      const res = await fetch('/api/calendar/events?days=60')
       const j = await res.json()
       setEvents(j.events || [])
     } catch { setEvents([]) }
@@ -237,50 +240,38 @@ function CalendarPageInner() {
         </div>
       )}
 
-      {/* AGENDA — next 14 days of events, only when connected.
-          BellAveGo-created events (event_id starts with bellavego_) get the
-          orange highlight + AI Booked badge so the contractor can tell at a
-          glance which appointments the AI booked vs ones they added manually. */}
+      {/* CALENDAR GRID — real month/week/day view of contractor's actual events.
+          Events the AI booked (event_id starts with bellavego_) render in
+          sunset-orange so they pop. Click any event for full details. */}
       {cronofyConnection && (
         <section style={{ marginTop: 32 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <h2 style={{ fontSize: 20, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.02em', margin: 0 }}>
-              Your calendar · next 14 days
+              Your calendar
             </h2>
-            <button
-              onClick={loadEvents}
-              disabled={eventsLoading}
-              style={{
-                padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(10,168,159,0.22)',
-                background: '#fff', color: '#0AA89F', fontSize: 12, fontWeight: 700,
-                cursor: eventsLoading ? 'wait' : 'pointer', fontFamily: 'inherit',
-              }}
-            >
-              {eventsLoading ? 'Refreshing…' : '↻ Refresh'}
-            </button>
+            <div style={{ display: 'flex', gap: 14, fontSize: 11.5, color: '#7AAAB2', alignItems: 'center' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 10, height: 10, borderRadius: 3, background: '#0B1F3A' }} /> Your events
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 10, height: 10, borderRadius: 3, background: 'linear-gradient(135deg, #FF9D5A, #E8742B)' }} /> AI Booked
+              </span>
+            </div>
           </div>
 
-          {/* Color-key chip row */}
-          <div style={{ display: 'flex', gap: 14, marginBottom: 16, fontSize: 11.5, color: '#7AAAB2' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ width: 10, height: 10, borderRadius: 3, background: '#4A6670' }} /> Your events
-            </span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ width: 10, height: 10, borderRadius: 3, background: 'linear-gradient(135deg, #FF9D5A, #E8742B)' }} /> Booked by BellAveGo AI
-            </span>
+          <div style={{
+            background: '#fff', borderRadius: 14, padding: '14px 16px 18px',
+            border: '1px solid rgba(10,168,159,0.14)',
+            boxShadow: '0 4px 20px rgba(7,27,58,0.04)',
+          }}>
+            {eventsLoading && events.length === 0 ? (
+              <div style={{ padding: 80, textAlign: 'center', color: '#7AAAB2', fontSize: 13 }}>
+                Loading your calendar…
+              </div>
+            ) : (
+              <CalendarGrid events={events} onRefresh={loadEvents} />
+            )}
           </div>
-
-          {eventsLoading && events.length === 0 ? (
-            <div style={{ padding: 32, background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 12, textAlign: 'center', color: '#7AAAB2', fontSize: 13 }}>
-              Loading events…
-            </div>
-          ) : events.length === 0 ? (
-            <div style={{ padding: 32, background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 12, textAlign: 'center', color: '#7AAAB2', fontSize: 13 }}>
-              No events in the next 14 days. When the AI books an appointment, it&apos;ll show up here in orange.
-            </div>
-          ) : (
-            <AgendaList events={events} />
-          )}
         </section>
       )}
 
