@@ -36,7 +36,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(target)
   }
 
-  const result = await handleCronofyOAuthCallback({ code, userId })
+  let result
+  try {
+    result = await handleCronofyOAuthCallback({ code, userId })
+  } catch (e) {
+    // Catch-all so we surface the actual error on the dashboard instead of a
+    // raw 500 page. Most likely cause when this fires: missing env var
+    // (CALENDAR_TOKEN_ENCRYPTION_KEY) or a DB constraint failure.
+    target.searchParams.set('calendar', 'error')
+    target.searchParams.set('provider', 'cronofy')
+    target.searchParams.set('reason', `unexpected: ${(e as Error).message.slice(0, 80)}`)
+    return NextResponse.redirect(target)
+  }
   if (!result.ok) {
     target.searchParams.set('calendar', 'error')
     target.searchParams.set('provider', 'cronofy')

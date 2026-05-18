@@ -564,336 +564,472 @@ export default function HomePage() {
       {/* CONSULTING PREVIEW */}
       <ConsultingShowcase />
 
-      {/* HOW IT WORKS — moved above ROI calculator. Shows the actual mechanic:
-          phone rings → AI captures the lead → contractor gets a one-tap text. */}
-      <section style={{ padding: '72px 48px', background: '#EAF5F0', borderBottom: '1px solid #D4E6DC' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 44 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#20B2AA', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>How it works</p>
-            <h2 style={{ fontSize: 40, fontWeight: 900, letterSpacing: '-1px', color: '#0B1F3A', marginBottom: 12 }}>
-              Phone rings. You&apos;re busy.<br />
-              <span style={{ color: '#20B2AA' }}>BellAveGo handles it.</span>
-            </h2>
-            <p style={{ color: '#3D5A62', fontSize: 17, maxWidth: 580, margin: '0 auto', lineHeight: 1.55 }}>
-              The AI answers, asks a few questions, and texts you a one-tap summary — caller, problem, when they want it, and your YES/NO buttons.
-            </p>
-          </div>
-
-          {/* Visual story — 2 images, customer calling on the LEFT, contractor on the right */}
-          <div className="home-grid-2" style={{ gap: 24, marginBottom: 36 }}>
-            <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', boxShadow: '0 16px 50px rgba(11,31,58,0.13)' }}>
-              <Image src="/customer.png" alt="Customer calling for a job" width={600} height={420} style={{ width: '100%', height: 340, objectFit: 'cover', display: 'block' }} />
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(11,31,58,0.88) 0%, transparent 100%)', padding: '36px 26px 22px' }}>
-                <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, margin: 0 }}>📞 Customer is calling for a job</p>
-                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, margin: '5px 0 0' }}>BellAveGo answers in 12 seconds and captures the booking.</p>
-              </div>
-            </div>
-            <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', boxShadow: '0 16px 50px rgba(11,31,58,0.13)' }}>
-              <Image src="/electrician.png" alt="Contractor on the job" width={600} height={420} style={{ width: '100%', height: 340, objectFit: 'cover', display: 'block' }} />
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(11,31,58,0.88) 0%, transparent 100%)', padding: '36px 26px 22px' }}>
-                <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, margin: 0 }}>📍 You&apos;re on the job</p>
-                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, margin: '5px 0 0' }}>Phone rings while you&apos;re driving, on a roof, or under a sink.</p>
-              </div>
-            </div>
-          </div>
-
-          {/* The killer element — a faux SMS notification card showing exactly
-              what the contractor sees on their phone. This is the bit Peter
-              specifically asked for: caller name, what happened, summary, and
-              one-tap actions. */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.1fr)', gap: 36, alignItems: 'center', maxWidth: 1000, margin: '0 auto 36px' }} className="hiw-grid">
-            <style>{`
-              @media (max-width: 820px) {
-                .hiw-grid { grid-template-columns: 1fr !important; }
-              }
-              @keyframes hiwPulse {
-                0%, 100% { box-shadow: 0 24px 60px rgba(34,197,94,0.18), 0 0 0 0 rgba(34,197,94,0.4); }
-                50% { box-shadow: 0 28px 70px rgba(34,197,94,0.25), 0 0 0 14px rgba(34,197,94,0); }
-              }
-              .hiw-notif { animation: hiwPulse 3s ease-in-out infinite; }
-            `}</style>
-            <div>
-              <p style={{ fontSize: 12, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>
-                What lands on your phone
-              </p>
-              <h3 style={{ fontSize: 26, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.6px', lineHeight: 1.15, marginBottom: 14 }}>
-                A text with everything you need to decide.
-              </h3>
-              <p style={{ fontSize: 15, color: '#3D5A62', lineHeight: 1.65, marginBottom: 18 }}>
-                Who called. What they need. When they want it. Plus four one-tap actions: <strong>book it</strong>, <strong>call back</strong>, <strong>send payment link</strong>, or <strong>decline politely</strong>.
-              </p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 14, color: '#0B1F3A', lineHeight: 1.9 }}>
-                {[
-                  ['Caller name + phone', 'verified before the AI hangs up'],
-                  ['Service requested', 'in the caller’s own words'],
-                  ['Address + window', 'when they want you there'],
-                  ['One-tap actions', 'YES books it. NO calls them back.'],
-                ].map(([k, v]) => (
-                  <li key={k} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '4px 0' }}>
-                    <span style={{ width: 16, height: 16, background: '#22C55E', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 4 }}>
-                      <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"><path d="M3 8.5l3.5 3.5 6.5-7" /></svg>
-                    </span>
-                    <span><strong>{k}</strong> <span style={{ color: '#7AAAB2' }}>— {v}</span></span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* iOS iMessage-style card — what the contractor actually sees */}
-            <div className="hiw-notif" style={{
-              position: 'relative',
-              background: '#FFFFFF',
-              borderRadius: 38,
-              padding: '14px 0 18px',
-              border: '8px solid #1C1C1E',
-              maxWidth: 380,
-              margin: '0 auto',
-              width: '100%',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif',
-              boxShadow: '0 24px 60px rgba(11,31,58,0.18), 0 0 0 1px rgba(0,0,0,0.04)',
-            }}>
-              {/* iOS status bar — time + signal/wifi/battery */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 22px 8px', fontSize: 13, fontWeight: 600, color: '#000' }}>
-                <span style={{ fontVariantNumeric: 'tabular-nums' }}>11:42</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  {/* signal */}
-                  <svg width="16" height="10" viewBox="0 0 16 10" fill="#000"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
-                  {/* wifi */}
-                  <svg width="14" height="10" viewBox="0 0 16 12" fill="#000"><path d="M8 11.5a1.2 1.2 0 100-2.4 1.2 1.2 0 000 2.4zM4.2 7.7a5.5 5.5 0 017.6 0l-1.1 1.1a4 4 0 00-5.4 0L4.2 7.7zM1 4.5a10 10 0 0114 0l-1.1 1.1a8.5 8.5 0 00-11.8 0L1 4.5z"/></svg>
-                  {/* battery */}
-                  <div style={{ width: 22, height: 10, border: '1px solid #000', borderRadius: 2.5, position: 'relative', padding: 1, marginLeft: 1 }}>
-                    <div style={{ width: '78%', height: '100%', background: '#000', borderRadius: 1 }} />
-                    <div style={{ position: 'absolute', right: -3, top: 2, width: 1.5, height: 4, background: '#000', borderRadius: 1 }} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Contact header — BellAveGo avatar + name centered */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 22px 14px', borderBottom: '1px solid #E5E5EA' }}>
-                <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(232,116,43,0.32)' }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                  </svg>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#000' }}>
-                  BellAveGo
-                  <svg width="10" height="10" viewBox="0 0 16 16" fill="#8E8E93"><path d="M6 12l-4-4 1.4-1.4L6 9.2l6.6-6.6L14 4z"/></svg>
-                </div>
-              </div>
-
-              {/* Message thread */}
-              <div style={{ padding: '14px 16px 6px' }}>
-                {/* Date/time stamp — iMessage style centered gray */}
-                <div style={{ textAlign: 'center', fontSize: 11, color: '#8E8E93', margin: '0 0 12px', fontWeight: 600 }}>
-                  <span style={{ fontWeight: 700 }}>Text Message</span>
-                  <span> · Today 11:42 AM</span>
-                </div>
-
-                {/* Received bubble — gray #E9E9EB, left-aligned, iMessage radii */}
-                <div style={{
-                  background: '#E9E9EB',
-                  color: '#000',
-                  borderRadius: 18,
-                  borderBottomLeftRadius: 4,
-                  padding: '10px 14px',
-                  fontSize: 14.5,
-                  lineHeight: 1.42,
-                  maxWidth: '88%',
-                  fontFamily: 'inherit',
-                  letterSpacing: '-0.2px',
-                }}>
-                  <div style={{ fontWeight: 600 }}>🔔 New job — tap to book</div>
-                  <div style={{ marginTop: 6 }}>
-                    <strong>Sarah Chen</strong><br />
-                    📞 (612) 555-0148<br />
-                    🔧 AC not blowing cold — kids home from school<br />
-                    📍 4218 Cedar Lake Rd, St. Louis Park<br />
-                    🕐 Today, 2&ndash;6 PM
-                  </div>
-                  <div style={{ marginTop: 8, fontSize: 13.5, color: '#3C3C43' }}>
-                    Reply <strong>YES</strong> to book or <strong>NO</strong> to pass.
-                  </div>
-                </div>
-
-                {/* Apple smart-action chips — appears under rich messages */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10, maxWidth: '88%' }}>
-                  {[
-                    { label: 'YES, book it', bg: '#34C759', color: '#fff' },
-                    { label: 'Call back',    bg: '#fff',    color: '#007AFF' },
-                    { label: 'Send pay link', bg: '#fff',    color: '#007AFF' },
-                    { label: 'NO, pass',     bg: '#fff',    color: '#FF3B30' },
-                  ].map(b => (
-                    <span key={b.label} style={{
-                      display: 'inline-flex', alignItems: 'center',
-                      padding: '7px 14px',
-                      borderRadius: 99,
-                      background: b.bg,
-                      color: b.color,
-                      border: b.bg === '#fff' ? '1px solid #E5E5EA' : 'none',
-                      fontSize: 13, fontWeight: 600,
-                      letterSpacing: '-0.1px',
-                    }}>
-                      {b.label}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* iMessage compose bar at the bottom — visual only */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px 0', borderTop: '1px solid #E5E5EA', marginTop: 8 }}>
-                <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#E5E5EA', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <span style={{ fontSize: 18, color: '#8E8E93', lineHeight: 1, marginTop: -2 }}>+</span>
-                </div>
-                <div style={{ flex: 1, height: 30, borderRadius: 18, border: '1px solid #E5E5EA', background: '#fff', padding: '0 12px', display: 'flex', alignItems: 'center', fontSize: 13, color: '#C7C7CC' }}>
-                  iMessage
-                </div>
-                <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#8E8E93', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M3 11l18-9-9 18-2-7-7-2z"/></svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Three steps below */}
-          <div className="home-grid-3" style={{ gap: 18 }}>
-            {[
-              { n: '1', title: 'Phone rings', desc: 'BellAveGo answers in 12 seconds. Real-sounding voice.' },
-              { n: '2', title: 'AI captures the lead', desc: 'Name, address, problem, urgency, preferred window.' },
-              { n: '3', title: 'You get a one-tap text', desc: 'Tap YES to book. Done in 30 seconds, 24/7.' },
-            ].map(s => (
-              <div key={s.title} style={{ background: '#fff', border: '1px solid #D4E6DC', borderRadius: 14, padding: '24px 22px', textAlign: 'left', boxShadow: '0 2px 14px rgba(32,178,170,0.07)', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg, #0AA89F, #0D8F87)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 15, flexShrink: 0 }}>{s.n}</div>
-                <div>
-                  <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 4, color: '#0B1F3A' }}>{s.title}</p>
-                  <p style={{ color: '#4A6670', fontSize: 13.5, lineHeight: 1.55, margin: 0 }}>{s.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CALENDAR SYNC — Emma auto-books to Google/Outlook/Calendly when connected. */}
-      <section style={{ padding: '88px 48px', background: 'linear-gradient(180deg, #FFF8F0 0%, #FFF1E2 60%, #FFF8F0 100%)', borderBottom: '1px solid rgba(232,116,43,0.16)', position: 'relative', overflow: 'hidden' }}>
+      {/* APPOINTMENTS — Two-mode workflow.
+          One section, both modes BellAveGo handles new jobs:
+          (a) MANUAL — texts the owner a summary with one-tap actions
+          (b) AUTO   — checks calendar, books, writes the event
+          Replaces the prior HOW IT WORKS + CALENDAR SYNC sections so the
+          page communicates flexibility ("pick your mode") instead of two
+          disconnected workflows. iMessage frames + Google Calendar mock
+          are intentionally specific so the value lands in <5 seconds. */}
+      <section className="appt-section" style={{
+        padding: '92px 48px',
+        background: 'linear-gradient(180deg, #FFF8F0 0%, #FFF1E2 50%, #FFF8F0 100%)',
+        borderBottom: '1px solid rgba(232,116,43,0.16)',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
         <style>{`
-          @keyframes calGlow {
-            0%, 100% { box-shadow: 0 16px 44px rgba(232,116,43,0.16), 0 0 0 1px rgba(232,116,43,0.16); }
-            50%      { box-shadow: 0 24px 64px rgba(232,116,43,0.28), 0 0 0 1px rgba(232,116,43,0.28); }
+          @keyframes apptPulse {
+            0%, 100% { box-shadow: 0 20px 50px rgba(11,31,58,0.16), 0 0 0 1px rgba(0,0,0,0.04); }
+            50%      { box-shadow: 0 26px 64px rgba(11,31,58,0.22), 0 0 0 1px rgba(0,0,0,0.04); }
           }
-          .cal-card {
-            background: #fff;
-            border-radius: 20px;
-            padding: 28px 22px 24px;
-            border: 1px solid rgba(232,116,43,0.18);
+          .appt-phone { animation: apptPulse 3.6s ease-in-out infinite; }
+          .appt-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 26px;
+            max-width: 1180px;
+            margin: 0 auto 44px;
+          }
+          .appt-card {
+            background: #FFFFFF;
+            border-radius: 22px;
+            padding: 30px 28px 28px;
+            border: 1px solid rgba(232,116,43,0.16);
+            box-shadow: 0 14px 40px rgba(11,31,58,0.06);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 14px;
-            transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.28s ease;
-            position: relative;
+            gap: 22px;
+            transition: transform 0.32s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.32s ease, border-color 0.32s ease;
           }
-          .cal-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 24px 64px rgba(232,116,43,0.24);
+          .appt-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 26px 60px rgba(11,31,58,0.10);
           }
-          .cal-logo {
-            width: 64px; height: 64px; border-radius: 16px;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 900;
-            font-size: 28px;
-            color: #fff;
-            box-shadow: 0 8px 22px rgba(11,31,58,0.14), inset 0 1px 0 rgba(255,255,255,0.22);
+          .appt-card-manual:hover { border-color: rgba(232,116,43,0.42); }
+          .appt-card-auto:hover   { border-color: rgba(10,168,159,0.42); }
+          .appt-step-num {
+            width: 26px; height: 26px; border-radius: 8px;
+            color: #fff; font-weight: 900; font-size: 12.5px;
+            display: inline-flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
           }
-          .cal-status-dot {
+          .appt-step-num.sunset { background: linear-gradient(135deg, #FF9D5A, #E8742B); }
+          .appt-step-num.teal   { background: linear-gradient(135deg, #14B8A6, #0AA89F); }
+          .appt-toggle {
+            display: inline-flex;
+            padding: 5px;
+            border-radius: 14px;
+            background: #fff;
+            border: 1px solid rgba(232,116,43,0.22);
+            box-shadow: 0 8px 22px rgba(11,31,58,0.06);
+            gap: 4px;
+          }
+          .appt-toggle-seg {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: -0.1px;
+            color: #0B1F3A;
+          }
+          .appt-toggle-seg.is-manual { background: linear-gradient(135deg, rgba(255,157,90,0.18), rgba(232,116,43,0.10)); color: #C84B26; }
+          .appt-toggle-seg.is-auto   { background: linear-gradient(135deg, rgba(20,184,166,0.18), rgba(10,168,159,0.10)); color: #0AA89F; }
+          .appt-toggle-dot {
             width: 8px; height: 8px; border-radius: 50%;
-            background: #22C55E;
-            box-shadow: 0 0 10px rgba(34,197,94,0.7);
-            animation: pulseDot 2s ease-in-out infinite;
           }
-          .cal-flow-arrow { color: rgba(232,116,43,0.42); }
-          @media (max-width: 820px) {
-            .cal-grid-3 { grid-template-columns: 1fr !important; }
-            .cal-flow { flex-direction: column !important; gap: 14px !important; }
-            .cal-flow-arrow { transform: rotate(90deg); }
+          .appt-cta-primary {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 14px 26px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+            color: #fff;
+            font-weight: 800;
+            font-size: 14px;
+            text-decoration: none;
+            box-shadow: 0 10px 28px rgba(34,197,94,0.34);
+            transition: transform 0.24s ease, box-shadow 0.24s ease;
+          }
+          .appt-cta-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(34,197,94,0.45); }
+          .appt-cta-secondary {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 14px 24px;
+            border-radius: 12px;
+            background: #fff;
+            color: #0B1F3A;
+            font-weight: 800;
+            font-size: 14px;
+            text-decoration: none;
+            border: 1px solid rgba(11,31,58,0.14);
+            transition: border-color 0.24s ease, transform 0.24s ease;
+          }
+          .appt-cta-secondary:hover { border-color: rgba(11,31,58,0.32); transform: translateY(-2px); }
+          .appt-chip {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: 10.5px;
+            font-weight: 900;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+          }
+          .appt-chip-sunset { background: rgba(232,116,43,0.10); color: #C84B26; }
+          .appt-chip-teal   { background: rgba(10,168,159,0.10); color: #0AA89F; }
+          @media (max-width: 920px) {
+            .appt-section { padding: 64px 20px !important; }
+            .appt-grid { grid-template-columns: 1fr !important; gap: 20px; }
           }
         `}</style>
 
-        {/* Background sunset glows */}
-        <div style={{ position: 'absolute', top: '-10%', right: '-8%', width: 540, height: 540, borderRadius: '50%', background: 'radial-gradient(circle, rgba(232,116,43,0.18), transparent 65%)', filter: 'blur(40px)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: '-20%', left: '-8%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(20,184,166,0.14), transparent 65%)', filter: 'blur(40px)', pointerEvents: 'none' }} />
+        {/* background sunset glows */}
+        <div aria-hidden style={{ position: 'absolute', top: '-12%', right: '-8%', width: 540, height: 540, borderRadius: '50%', background: 'radial-gradient(circle, rgba(232,116,43,0.18), transparent 65%)', filter: 'blur(40px)', pointerEvents: 'none' }} />
+        <div aria-hidden style={{ position: 'absolute', bottom: '-14%', left: '-8%', width: 540, height: 540, borderRadius: '50%', background: 'radial-gradient(circle, rgba(20,184,166,0.14), transparent 65%)', filter: 'blur(40px)', pointerEvents: 'none' }} />
 
-        <div style={{ maxWidth: 1080, margin: '0 auto', position: 'relative' }}>
+        <div style={{ maxWidth: 1180, margin: '0 auto', position: 'relative' }}>
 
-          {/* Eyebrow + heading */}
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(232,116,43,0.28)', fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 18 }}>
-              <span className="cal-status-dot" />
-              Live appointment booking
-            </div>
-            <h2 style={{ fontSize: 'clamp(30px, 4.2vw, 46px)', fontWeight: 900, letterSpacing: '-1.2px', lineHeight: 1.05, color: '#0B1F3A', marginBottom: 16 }}>
-              Connect your calendar.<br />
-              <span style={{ background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>Emma books appointments live.</span>
-            </h2>
-            <p style={{ fontSize: 17, color: '#3D5A62', maxWidth: 660, margin: '0 auto', lineHeight: 1.6 }}>
-              Connect once. Emma reads your real availability, offers callers your actual open times, and writes the appointment straight to your calendar — <strong style={{ color: '#0AA89F' }}>with travel buffer baked in</strong> so you never get a back-to-back surprise.
-            </p>
+          {/* Eyebrow pill */}
+          <div style={{ textAlign: 'center', marginBottom: 14 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.78)', border: '1px solid rgba(232,116,43,0.28)', fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+              Two ways to handle appointments
+            </span>
           </div>
 
-          {/* Three provider logos */}
-          <div className="cal-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, maxWidth: 820, margin: '0 auto 44px' }}>
-            <div className="cal-card">
-              <div className="cal-logo" style={{ background: 'linear-gradient(135deg, #4285F4 0%, #1A73E8 100%)' }}>G</div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A' }}>Google Calendar</div>
-              <div style={{ fontSize: 12, color: '#7AAAB2', textAlign: 'center', lineHeight: 1.45 }}>Connect in 30 seconds.<br/>Auto-syncs both ways.</div>
-            </div>
-            <div className="cal-card">
-              <div className="cal-logo" style={{ background: 'linear-gradient(135deg, #0078D4 0%, #005A9E 100%)' }}>O</div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A' }}>Microsoft Outlook</div>
-              <div style={{ fontSize: 12, color: '#7AAAB2', textAlign: 'center', lineHeight: 1.45 }}>Work or personal accounts.<br/>Full availability read.</div>
-            </div>
-            <div className="cal-card">
-              <div className="cal-logo" style={{ background: 'linear-gradient(135deg, #006BFF 0%, #0050C9 100%)' }}>C</div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A' }}>Calendly</div>
-              <div style={{ fontSize: 12, color: '#7AAAB2', textAlign: 'center', lineHeight: 1.45 }}>Event types respected.<br/>No double-bookings ever.</div>
-            </div>
-          </div>
+          {/* Heading */}
+          <h2 style={{ fontSize: 'clamp(30px, 4.2vw, 46px)', fontWeight: 900, letterSpacing: '-1.2px', lineHeight: 1.05, color: '#0B1F3A', textAlign: 'center', maxWidth: 880, margin: '0 auto 14px' }}>
+            You stay in control.{' '}
+            <span style={{ background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>BellAveGo handles the call.</span>
+          </h2>
 
-          {/* Mini flow diagram */}
-          <div className="cal-flow" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, maxWidth: 900, margin: '0 auto 32px', flexWrap: 'wrap' }}>
-            {[
-              { icon: '📞', label: 'Customer calls', sub: '"Need an AC tune-up Tuesday?"' },
-              { icon: '🧠', label: 'Emma checks your calendar', sub: '"Tues 9, Wed 1, or Thurs 11?"' },
-              { icon: '✅', label: 'Booking goes live', sub: 'Event + SMS in 5 seconds' },
-            ].map((step, i, arr) => (
-              <div key={step.label} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{ background: '#fff', borderRadius: 14, padding: '14px 18px', border: '1px solid rgba(232,116,43,0.18)', boxShadow: '0 8px 22px rgba(11,31,58,0.06)', minWidth: 220, textAlign: 'left' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                    <span style={{ fontSize: 18 }}>{step.icon}</span>
-                    <span style={{ fontSize: 13, fontWeight: 800, color: '#0B1F3A' }}>{step.label}</span>
-                  </div>
-                  <div style={{ fontSize: 11.5, color: '#7AAAB2', fontStyle: 'italic', paddingLeft: 28 }}>{step.sub}</div>
-                </div>
-                {i < arr.length - 1 && (
-                  <svg className="cal-flow-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                  </svg>
-                )}
+          {/* Subheading */}
+          <p style={{ fontSize: 17, color: '#3D5A62', lineHeight: 1.6, maxWidth: 720, margin: '0 auto 28px', textAlign: 'center' }}>
+            Connect your calendar for automatic booking, or keep it manual and approve every job from a text.
+          </p>
+
+          {/* Toggle visual — non-functional, communicates duality */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 44 }}>
+            <div className="appt-toggle">
+              <div className="appt-toggle-seg is-manual">
+                <span className="appt-toggle-dot" style={{ background: '#E8742B' }} />
+                Manual approval
               </div>
-            ))}
+              <div className="appt-toggle-seg is-auto">
+                <span className="appt-toggle-dot" style={{ background: '#0AA89F' }} />
+                Auto-booking
+              </div>
+            </div>
+            <p style={{ fontSize: 11, color: '#7AAAB2', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 800, margin: 0 }}>
+              Both modes available · switch anytime
+            </p>
           </div>
 
-          {/* Closer */}
-          <div style={{ textAlign: 'center', maxWidth: 580, margin: '0 auto' }}>
-            <p style={{ fontSize: 13, color: '#7AAAB2', lineHeight: 1.65, margin: 0 }}>
-              <strong style={{ color: '#0AA89F' }}>Included in every tier.</strong> No extra cost, no add-on, no contract.<br/>
-              Travel buffer (default 30 minutes) is configurable per business — set it once and Emma respects it on every booking.
+          {/* Two-card comparison */}
+          <div className="appt-grid">
+
+            {/* ── LEFT — Text me first (manual approval) ─────────────── */}
+            <article className="appt-card appt-card-manual">
+              <header>
+                <span className="appt-chip appt-chip-sunset">
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#E8742B' }} />
+                  No calendar required
+                </span>
+                <h3 style={{ fontSize: 24, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.5px', margin: '0 0 8px' }}>
+                  Text me first
+                </h3>
+                <p style={{ fontSize: 14, color: '#4A6670', lineHeight: 1.55, margin: 0 }}>
+                  BellAveGo answers the call, captures the details, and texts you everything you need to decide.
+                </p>
+              </header>
+
+              {/* iPhone — manual mode iMessage */}
+              <div className="appt-phone" style={{
+                position: 'relative',
+                background: '#FFFFFF',
+                borderRadius: 36,
+                padding: '12px 0 16px',
+                border: '7px solid #1C1C1E',
+                maxWidth: 330,
+                margin: '0 auto',
+                width: '100%',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif',
+              }}>
+                {/* iOS status bar */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px 6px', fontSize: 12.5, fontWeight: 600, color: '#000' }}>
+                  <span style={{ fontVariantNumeric: 'tabular-nums' }}>11:42</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <svg width="16" height="10" viewBox="0 0 16 10" fill="#000"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+                    <svg width="14" height="10" viewBox="0 0 16 12" fill="#000"><path d="M8 11.5a1.2 1.2 0 100-2.4 1.2 1.2 0 000 2.4zM4.2 7.7a5.5 5.5 0 017.6 0l-1.1 1.1a4 4 0 00-5.4 0L4.2 7.7zM1 4.5a10 10 0 0114 0l-1.1 1.1a8.5 8.5 0 00-11.8 0L1 4.5z"/></svg>
+                    <div style={{ width: 22, height: 10, border: '1px solid #000', borderRadius: 2.5, position: 'relative', padding: 1, marginLeft: 1 }}>
+                      <div style={{ width: '78%', height: '100%', background: '#000', borderRadius: 1 }} />
+                      <div style={{ position: 'absolute', right: -3, top: 2, width: 1.5, height: 4, background: '#000', borderRadius: 1 }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact header */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 22px 12px', borderBottom: '1px solid #E5E5EA' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(232,116,43,0.32)' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                  </div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#000' }}>BellAveGo</div>
+                </div>
+
+                {/* Message thread */}
+                <div style={{ padding: '12px 14px 4px' }}>
+                  <div style={{ textAlign: 'center', fontSize: 10.5, color: '#8E8E93', margin: '0 0 10px', fontWeight: 600 }}>
+                    <span style={{ fontWeight: 700 }}>Text Message</span>
+                    <span> · Today 11:42 AM</span>
+                  </div>
+
+                  <div style={{
+                    background: '#E9E9EB',
+                    color: '#000',
+                    borderRadius: 17,
+                    borderBottomLeftRadius: 4,
+                    padding: '10px 14px',
+                    fontSize: 13.5,
+                    lineHeight: 1.42,
+                    maxWidth: '92%',
+                    letterSpacing: '-0.2px',
+                  }}>
+                    <div style={{ fontWeight: 700 }}>New job request — Sarah Chen</div>
+                    <div style={{ marginTop: 6, fontSize: 13 }}>
+                      <strong>Needs:</strong> AC not blowing cold<br />
+                      <strong>Address:</strong> 4218 Cedar Lake Rd<br />
+                      <strong>Preferred:</strong> Today, 2&ndash;4 PM<br />
+                      <strong>Caller said:</strong> kids home from school, needs help today
+                    </div>
+                    <div style={{ marginTop: 8, fontSize: 12.5, color: '#3C3C43' }}>
+                      Reply <strong>YES</strong> to confirm, <strong>NO</strong> to pass, or call Sarah back.
+                    </div>
+                  </div>
+
+                  {/* Action chips */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10, maxWidth: '92%' }}>
+                    {[
+                      { label: 'Yes, book it', bg: '#34C759', color: '#fff' },
+                      { label: 'Call back',     bg: '#fff',    color: '#007AFF' },
+                      { label: 'Send pay link', bg: '#fff',    color: '#007AFF' },
+                    ].map(b => (
+                      <span key={b.label} style={{
+                        display: 'inline-flex', alignItems: 'center',
+                        padding: '6px 13px',
+                        borderRadius: 99,
+                        background: b.bg,
+                        color: b.color,
+                        border: b.bg === '#fff' ? '1px solid #E5E5EA' : 'none',
+                        fontSize: 12.5, fontWeight: 600,
+                        letterSpacing: '-0.1px',
+                      }}>
+                        {b.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* 3-step flow */}
+              <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {[
+                  'BellAveGo answers the missed call',
+                  'Customer explains what they need',
+                  'You get a text with approve, call back, or payment options',
+                ].map((s, i) => (
+                  <li key={s} style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
+                    <span className="appt-step-num sunset">{i + 1}</span>
+                    <span style={{ fontSize: 13.5, color: '#0B1F3A', lineHeight: 1.5, fontWeight: 500 }}>{s}</span>
+                  </li>
+                ))}
+              </ol>
+            </article>
+
+            {/* ── RIGHT — Book it automatically (auto-booking) ───────── */}
+            <article className="appt-card appt-card-auto">
+              <header>
+                <span className="appt-chip appt-chip-teal">
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 8px rgba(34,197,94,0.7)' }} />
+                  Calendar connected
+                </span>
+                <h3 style={{ fontSize: 24, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.5px', margin: '0 0 8px' }}>
+                  Book it automatically
+                </h3>
+                <p style={{ fontSize: 14, color: '#4A6670', lineHeight: 1.55, margin: 0 }}>
+                  When your calendar is connected, BellAveGo checks your availability, confirms the time, and adds the job automatically.
+                </p>
+              </header>
+
+              {/* iPhone — auto mode confirmation */}
+              <div className="appt-phone" style={{
+                position: 'relative',
+                background: '#FFFFFF',
+                borderRadius: 36,
+                padding: '12px 0 16px',
+                border: '7px solid #1C1C1E',
+                maxWidth: 330,
+                margin: '0 auto',
+                width: '100%',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px 6px', fontSize: 12.5, fontWeight: 600, color: '#000' }}>
+                  <span style={{ fontVariantNumeric: 'tabular-nums' }}>11:42</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <svg width="16" height="10" viewBox="0 0 16 10" fill="#000"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+                    <svg width="14" height="10" viewBox="0 0 16 12" fill="#000"><path d="M8 11.5a1.2 1.2 0 100-2.4 1.2 1.2 0 000 2.4zM4.2 7.7a5.5 5.5 0 017.6 0l-1.1 1.1a4 4 0 00-5.4 0L4.2 7.7zM1 4.5a10 10 0 0114 0l-1.1 1.1a8.5 8.5 0 00-11.8 0L1 4.5z"/></svg>
+                    <div style={{ width: 22, height: 10, border: '1px solid #000', borderRadius: 2.5, position: 'relative', padding: 1, marginLeft: 1 }}>
+                      <div style={{ width: '78%', height: '100%', background: '#000', borderRadius: 1 }} />
+                      <div style={{ position: 'absolute', right: -3, top: 2, width: 1.5, height: 4, background: '#000', borderRadius: 1 }} />
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 22px 12px', borderBottom: '1px solid #E5E5EA' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(232,116,43,0.32)' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                  </div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#000' }}>BellAveGo</div>
+                </div>
+
+                <div style={{ padding: '12px 14px 4px' }}>
+                  <div style={{ textAlign: 'center', fontSize: 10.5, color: '#8E8E93', margin: '0 0 10px', fontWeight: 600 }}>
+                    <span style={{ fontWeight: 700 }}>Text Message</span>
+                    <span> · Today 11:43 AM</span>
+                  </div>
+
+                  <div style={{
+                    background: '#E9E9EB',
+                    color: '#000',
+                    borderRadius: 17,
+                    borderBottomLeftRadius: 4,
+                    padding: '10px 14px',
+                    fontSize: 13.5,
+                    lineHeight: 1.42,
+                    maxWidth: '92%',
+                    letterSpacing: '-0.2px',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 700, color: '#0B7A3A' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0B7A3A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 6L9 17l-5-5"/>
+                      </svg>
+                      Appointment booked
+                    </div>
+                    <div style={{ marginTop: 6, fontSize: 13 }}>
+                      <strong>Sarah Chen</strong><br />
+                      AC repair<br />
+                      Today, 2:30 PM<br />
+                      4218 Cedar Lake Rd
+                    </div>
+                    <div style={{ marginTop: 8, fontSize: 12.5, color: '#3C3C43', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                        <rect x="3" y="4.5" width="18" height="16.5" rx="2" fill="#fff" stroke="#3C3C43" strokeWidth="1.6"/>
+                        <rect x="3" y="4.5" width="18" height="4" rx="2" fill="#4285F4"/>
+                        <line x1="8" y1="2.5" x2="8" y2="6.5" stroke="#3C3C43" strokeWidth="1.6" strokeLinecap="round"/>
+                        <line x1="16" y1="2.5" x2="16" y2="6.5" stroke="#3C3C43" strokeWidth="1.6" strokeLinecap="round"/>
+                      </svg>
+                      Added to Google Calendar
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Google Calendar event card */}
+              <div style={{
+                background: '#FFFFFF',
+                borderRadius: 14,
+                border: '1px solid #E1E5EA',
+                boxShadow: '0 8px 22px rgba(11,31,58,0.08)',
+                overflow: 'hidden',
+                maxWidth: 330,
+                width: '100%',
+                margin: '0 auto',
+                fontFamily: '"Google Sans", Roboto, system-ui, sans-serif',
+              }}>
+                {/* Calendar header strip */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderBottom: '1px solid #E8EAED', background: '#F8FAFC' }}>
+                  {/* Google Calendar logo */}
+                  <div style={{ position: 'relative', width: 22, height: 22, borderRadius: 4, overflow: 'hidden', flexShrink: 0, boxShadow: '0 1px 3px rgba(11,31,58,0.18)' }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, width: '50%', height: '50%', background: '#4285F4' }} />
+                    <div style={{ position: 'absolute', top: 0, right: 0, width: '50%', height: '50%', background: '#EA4335' }} />
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, width: '50%', height: '50%', background: '#34A853' }} />
+                    <div style={{ position: 'absolute', bottom: 0, right: 0, width: '50%', height: '50%', background: '#FBBC04' }} />
+                    <div style={{ position: 'absolute', inset: 3.5, background: '#fff', borderRadius: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8.5, fontWeight: 800, color: '#1F2937' }}>17</div>
+                  </div>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: '#202124' }}>Google Calendar</div>
+                  <div style={{ marginLeft: 'auto', fontSize: 11, color: '#5F6368' }}>Today</div>
+                </div>
+
+                {/* Event card */}
+                <div style={{ display: 'flex', gap: 11, padding: '14px 14px 16px' }}>
+                  <div style={{ width: 4, borderRadius: 2, background: '#33B679', flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 700, color: '#202124', letterSpacing: '-0.1px', marginBottom: 4, lineHeight: 1.25 }}>
+                      AC Repair &mdash; Sarah Chen
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: '#3C4043', marginBottom: 4 }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5F6368" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                      Today, 2:30 PM &ndash; 3:30 PM
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 12.5, color: '#3C4043', marginBottom: 10 }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5F6368" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginTop: 2, flexShrink: 0 }}>
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+                      </svg>
+                      <span>4218 Cedar Lake Rd</span>
+                    </div>
+                    <div style={{ paddingTop: 10, borderTop: '1px solid #E8EAED', fontSize: 12, color: '#5F6368', lineHeight: 1.5 }}>
+                      Customer says AC is not blowing cold. Kids are home from school. High urgency.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3-step flow */}
+              <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {[
+                  'BellAveGo checks your calendar',
+                  'Customer picks an open time',
+                  'Appointment is booked and added to your calendar',
+                ].map((s, i) => (
+                  <li key={s} style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
+                    <span className="appt-step-num teal">{i + 1}</span>
+                    <span style={{ fontSize: 13.5, color: '#0B1F3A', lineHeight: 1.5, fontWeight: 500 }}>{s}</span>
+                  </li>
+                ))}
+              </ol>
+            </article>
+          </div>
+
+          {/* Trust copy */}
+          <div style={{ textAlign: 'center', maxWidth: 720, margin: '0 auto 28px' }}>
+            <p style={{ fontSize: 17, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.2px', margin: '0 0 6px' }}>
+              Start manual. Connect your calendar later.
             </p>
+            <p style={{ fontSize: 14, color: '#4A6670', margin: 0, lineHeight: 1.55 }}>
+              BellAveGo works whether you want full control or full automation.
+            </p>
+          </div>
+
+          {/* CTAs */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
+            <Link href={isSignedIn ? '/dashboard' : '/sign-up'} className="appt-cta-primary">
+              Start free trial
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </Link>
+            <Link href="/demo" className="appt-cta-secondary">
+              See how it works
+            </Link>
           </div>
         </div>
       </section>
 
       {/* ROI CALCULATOR + FOUNDER SECTION both moved to /founder per Peter —
-          homepage is now Hero → Consulting → How It Works → Calendar Sync → Industries → Pricing → CTA. */}
+          homepage is now Hero → Consulting → Appointments (2-mode) → Industries → Pricing → CTA. */}
 
       {/* INDUSTRIES */}
       <section style={{ background: '#F2F9F5', borderBottom: '1px solid #D4E6DC', padding: '28px 0 0' }}>

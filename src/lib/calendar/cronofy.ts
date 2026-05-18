@@ -140,11 +140,15 @@ export async function handleCronofyOAuthCallback(args: {
     linking_profile?: { provider_name?: string; profile_id?: string; profile_name?: string }
   }
 
-  // 2. Fetch userinfo so we can store provider + email on the connection row
+  // 2. Fetch userinfo so we can store provider + email on the connection row.
+  // Cronofy's response shape: { sub, "cronofy.type": "userinfo",
+  // "cronofy.data": { profiles: [{ provider_name, profile_name, ... }] } }
+  // — email lives inside profile_name (Google/MS/Apple all use the email
+  // address as the profile name).
   let email: string | undefined
   let name: string | undefined
   let provider: string | undefined
-  let timezone = 'America/Chicago'
+  const timezone = 'America/Chicago'
   try {
     const meRes = await fetch(`${CRONOFY_API_BASE}/userinfo`, {
       headers: { Authorization: `Bearer ${tokens.access_token}` },
@@ -152,22 +156,18 @@ export async function handleCronofyOAuthCallback(args: {
     if (meRes.ok) {
       const u = (await meRes.json()) as {
         sub?: string
-        email?: string
-        name?: string
-        'cronofy.type'?: string
         'cronofy.data'?: {
           profiles?: Array<{
             provider_name?: string
             profile_id?: string
-            profile_name?: string
+            profile_name?: string  // typically the email address
           }>
-          authorization?: { scope?: string; status?: string }
         }
       }
-      email = u.email
-      name = u.name
-      // Use the first profile's provider name (e.g. "google", "office365", "apple")
-      provider = u['cronofy.data']?.profiles?.[0]?.provider_name
+      const first = u['cronofy.data']?.profiles?.[0]
+      provider = first?.provider_name
+      email = first?.profile_name
+      name = first?.profile_name
     }
   } catch { /* non-fatal */ }
   // Also fall back to linking_profile from token response if userinfo didn't help
