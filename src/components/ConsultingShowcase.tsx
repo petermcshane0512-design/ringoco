@@ -504,8 +504,11 @@ export default function ConsultingShowcase() {
 
         /* Mobile — both CTAs stack to full-width and center cleanly so
            they don't get clipped at narrow viewports. Matches the hero
-           CTA mobile pattern on page.tsx. */
+           CTA mobile pattern on page.tsx. Also hides the dense §4/§5/§6
+           preview card row + methodology ribbon — too cramped on phones
+           and not load-bearing for the conversion (Peter's call). */
         @media (max-width: 720px) {
+          .cs-cards { display: none !important; }
           .cs-cta-row {
             flex-direction: column !important;
             align-items: stretch !important;
