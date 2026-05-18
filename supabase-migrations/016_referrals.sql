@@ -30,21 +30,31 @@ create index if not exists profiles_referred_by_idx
 
 
 -- ── referrals table ─────────────────────────────────────────────
--- One row per successfully credited referral. UNIQUE on referred_user_id
--- guarantees we never double-credit if the Stripe webhook retries.
+-- One row per attributed referral. Two-stage flow (anti-abuse v2):
+--   - status='pending'  : recorded at first checkout, awaiting day-31 maturity
+--   - status='credited' : referrer's Stripe credit has been applied
+--   - status='voided'   : referred customer cancelled/refunded before day 31
+-- UNIQUE on referred_user_id guarantees we never double-credit on retry.
 create table if not exists referrals (
-  id                      uuid primary key default gen_random_uuid(),
-  referrer_user_id        text not null,
-  referred_user_id        text not null unique,
-  referral_code           text not null,
-  credit_amount_cents     integer not null,
-  stripe_balance_txn_id   text,
-  credit_applied_at       timestamptz default now(),
-  created_at              timestamptz default now()
+  id                                uuid primary key default gen_random_uuid(),
+  referrer_user_id                  text not null,
+  referred_user_id                  text not null unique,
+  referral_code                     text not null,
+  status                            text not null default 'pending',
+  referred_subscription_id          text,
+  referred_subscription_started_at  timestamptz,
+  credit_amount_cents               integer,             -- nullable until status='credited'
+  stripe_balance_txn_id             text,
+  credit_applied_at                 timestamptz,
+  voided_at                         timestamptz,
+  voided_reason                     text,
+  created_at                        timestamptz default now()
 );
 
 create index if not exists referrals_referrer_idx on referrals (referrer_user_id);
 create index if not exists referrals_code_idx on referrals (referral_code);
+create index if not exists referrals_subscription_idx on referrals (referred_subscription_id) where referred_subscription_id is not null;
+create index if not exists referrals_status_idx on referrals (status);
 
 
 -- ── Verify ──────────────────────────────────────────────────────

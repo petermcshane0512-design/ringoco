@@ -5,7 +5,7 @@ import twilio from 'twilio'
 import { provisionNumberForUser } from '@/lib/provisionNumber'
 import { PRICE_TO_TIER } from '@/lib/pricing'
 import { applyLedgerEntry } from '@/lib/marketing/growth-wallet'
-import { applyReferralCredit } from '@/lib/referrals'
+import { recordPendingReferral, applyPendingReferralCredit, voidPendingReferral } from '@/lib/referrals'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
@@ -86,20 +86,28 @@ export async function POST(req: NextRequest) {
 
     console.log(`Subscription activated for user ${userId}: ${planTier}`)
 
-    // ── Referral credit ──
+    // ── Stage 1: record PENDING referral (anti-abuse) ──
     // If this new customer was referred (profiles.referred_by set from the
-    // bavg_ref cookie at signup), grant the referrer a free month equal to
-    // their current tier price. Stripe customer-balance credit auto-applies
-    // to their next invoice. Idempotent — won't double-credit on webhook retry.
+    // bavg_ref cookie at signup), record a pending referral row. NO Stripe
+    // credit fires yet — that waits until the referred customer survives past
+    // day 31 (30-day money-back window + 1). The actual credit grant happens
+    // in the invoice.payment_succeeded handler below.
     try {
-      const referralResult = await applyReferralCredit({ newUserId: userId })
-      if (referralResult.ok) {
-        console.log(`Referral credit applied: ${userId} referred → $${referralResult.credited} free month to referrer`)
-      } else if (referralResult.reason && referralResult.reason !== 'no referral attribution') {
-        console.warn(`Referral credit skipped for ${userId}: ${referralResult.reason}`)
+      if (subscriptionId) {
+        const subForReferral = await stripe.subscriptions.retrieve(subscriptionId)
+        const referralResult = await recordPendingReferral({
+          newUserId: userId,
+          subscriptionId,
+          subscriptionCreatedISO: new Date(subForReferral.created * 1000).toISOString(),
+        })
+        if (referralResult.ok) {
+          console.log(`Pending referral recorded for ${userId} — credit fires after referred customer's day 31`)
+        } else if (referralResult.reason && referralResult.reason !== 'no referral attribution') {
+          console.warn(`Pending referral skipped for ${userId}: ${referralResult.reason}`)
+        }
       }
     } catch (e) {
-      console.error(`Referral credit threw for ${userId}:`, e)
+      console.error(`recordPendingReferral threw for ${userId}:`, e)
     }
 
     // Provision a Twilio number now that they're paid. Idempotent.
@@ -207,6 +215,41 @@ export async function POST(req: NextRequest) {
       }).eq('user_id', profile.user_id)
 
       console.log(`Subscription cancelled for user ${profile.user_id}`)
+    }
+
+    // Void any pending referral tied to this subscription so the referrer
+    // doesn't get credit for a customer who bailed. No-op if the referral
+    // already fired (status='credited') or never existed.
+    try {
+      const voidResult = await voidPendingReferral({
+        subscriptionId: subscription.id,
+        reason: 'subscription cancelled before qualifying age',
+      })
+      if (voidResult.voided) {
+        console.log(`Voided pending referral for cancelled subscription ${subscription.id}`)
+      }
+    } catch (e) {
+      console.error(`voidPendingReferral threw for ${subscription.id}:`, e)
+    }
+  }
+
+  // ── invoice.payment_succeeded — Stage 2 of referral credit ──
+  // Fires on EVERY paid invoice (initial + renewals). The handler is a
+  // no-op unless there's a pending referral for this subscription AND
+  // the subscription is >31 days old (past the 30-day money-back window).
+  // When both true, the referrer's Stripe customer-balance credit fires.
+  if (event.type === 'invoice.payment_succeeded') {
+    const invoice = event.data.object as Stripe.Invoice & { subscription?: string | null }
+    const subscriptionId = (invoice.subscription as string | null) ?? null
+    if (subscriptionId) {
+      try {
+        const result = await applyPendingReferralCredit({ subscriptionId })
+        if (result.ok) {
+          console.log(`Referral credit fired on invoice payment: $${result.credited} to referrer of subscription ${subscriptionId}`)
+        }
+      } catch (e) {
+        console.error(`applyPendingReferralCredit threw for subscription ${subscriptionId}:`, e)
+      }
     }
   }
 

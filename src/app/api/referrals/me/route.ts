@@ -24,7 +24,9 @@ export async function GET() {
   return NextResponse.json({
     code,
     shareUrl: buildShareUrl(code),
-    count: stats.count,
+    pendingCount: stats.pendingCount,
+    creditedCount: stats.creditedCount,
+    count: stats.totalCount,
     totalCreditCents: stats.totalCreditCents,
     totalCreditDollars: Math.round(stats.totalCreditCents / 100),
   })

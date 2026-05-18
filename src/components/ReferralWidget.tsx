@@ -5,6 +5,8 @@ type ReferralData = {
   code: string
   shareUrl: string
   count: number
+  pendingCount: number
+  creditedCount: number
   totalCreditDollars: number
 }
 
@@ -59,7 +61,7 @@ export default function ReferralWidget() {
           <span style={{ fontSize: 18 }}>🎁</span>
           <div>
             <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1F3A' }}>Refer a contractor, get a free month</div>
-            <div style={{ fontSize: 11, color: '#7AAAB2', marginTop: 2 }}>Unlimited referrals · Credit auto-applies to your next bill</div>
+            <div style={{ fontSize: 11, color: '#7AAAB2', marginTop: 2 }}>Unlimited referrals · Credit applies after they complete month 2</div>
           </div>
         </div>
       </div>
@@ -68,10 +70,11 @@ export default function ReferralWidget() {
         {error && <div style={{ fontSize: 13, color: '#C84B26' }}>Couldn&apos;t load referral data: {error}</div>}
         {data && (
           <>
-            {/* Stats row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 18 }}>
-              <Stat label="Referrals" value={`${data.count}`} accent="#0AA89F" />
-              <Stat label="Credit earned" value={`$${data.totalCreditDollars}`} accent="#E8742B" />
+            {/* Stats row — 3 stats: in trial, credited, total $ earned */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 18 }}>
+              <Stat label="In trial" value={`${data.pendingCount}`} accent="#0AA89F" hint="signed up, awaiting day 31" />
+              <Stat label="Credited" value={`${data.creditedCount}`} accent="#16A34A" hint="completed month 2" />
+              <Stat label="Earned" value={`$${data.totalCreditDollars}`} accent="#E8742B" hint="auto-applied" />
             </div>
 
             {/* Share link */}
@@ -142,11 +145,11 @@ export default function ReferralWidget() {
               </div>
               <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: '#3D5A62', lineHeight: 1.7 }}>
                 <li>Share your link with another home-service contractor</li>
-                <li>They sign up + pick a tier through your link</li>
-                <li>The day their first payment clears, your next BellAveGo bill is on us</li>
+                <li>They sign up + pick a tier through your link (shows as &quot;In trial&quot; here)</li>
+                <li>When they complete their second month (past the 30-day money-back window), your next BellAveGo bill is on us</li>
               </ol>
               <p style={{ fontSize: 11, color: '#7AAAB2', marginTop: 10, marginBottom: 0, fontStyle: 'italic' }}>
-                Credit equals your current monthly tier price. No cap on referrals. Credits apply automatically.
+                The 31-day wait protects against refund-and-bail abuse. Credit equals your current monthly tier price. No cap on referrals. Credits apply automatically.
               </p>
             </div>
           </>
@@ -156,18 +159,23 @@ export default function ReferralWidget() {
   )
 }
 
-function Stat({ label, value, accent }: { label: string; value: string; accent: string }) {
+function Stat({ label, value, accent, hint }: { label: string; value: string; accent: string; hint?: string }) {
   return (
     <div style={{
-      background: '#fff', borderRadius: 10, padding: '14px 16px',
+      background: '#fff', borderRadius: 10, padding: '12px 14px',
       border: '1px solid rgba(232,116,43,0.14)',
     }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
         {label}
       </div>
-      <div style={{ fontSize: 28, fontWeight: 900, color: accent, letterSpacing: '-0.5px', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+      <div style={{ fontSize: 24, fontWeight: 900, color: accent, letterSpacing: '-0.5px', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
         {value}
       </div>
+      {hint && (
+        <div style={{ fontSize: 10, color: '#7AAAB2', marginTop: 6, lineHeight: 1.3 }}>
+          {hint}
+        </div>
+      )}
     </div>
   )
 }
