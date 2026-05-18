@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { getGoogleBusyBlocks, type CalendarConnectionRow, type FreeBusyBlock } from './google'
 import { getMicrosoftBusyBlocks } from './microsoft'
 import { getCalendlyBusyBlocks } from './calendly'
+import { getCronofyBusyBlocks } from './cronofy'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -84,6 +85,7 @@ export async function findAvailableSlots(args: {
   // Collect busy blocks from every connected provider in parallel
   const providerBusy = await Promise.all(
     conns.map(async (c) => {
+      if (c.provider === 'cronofy')   return await getCronofyBusyBlocks({ connection: c, windowStart, windowEnd })
       if (c.provider === 'google')    return await getGoogleBusyBlocks({ connection: c, windowStart, windowEnd })
       if (c.provider === 'microsoft') return await getMicrosoftBusyBlocks({ connection: c, windowStart, windowEnd })
       if (c.provider === 'calendly')  return await getCalendlyBusyBlocks({ connection: c, windowStart, windowEnd })

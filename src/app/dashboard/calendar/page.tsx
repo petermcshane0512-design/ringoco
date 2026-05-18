@@ -14,40 +14,15 @@ type Connection = {
   lastError: string | null
 }
 
-type Provider = {
-  key: string
-  name: string
-  tagline: string
-  status: 'live' | 'soon'
-  iconBg: string
-  iconText: string
-  iconColor?: string
-  popularity?: string
-}
-
-const PROVIDERS: Provider[] = [
-  { key: 'google',    name: 'Google Calendar',   tagline: 'Most popular — 60%+ of contractors use this',     status: 'live', iconBg: '#fff',    iconText: 'G', iconColor: '#4285F4', popularity: 'Most popular' },
-  { key: 'microsoft', name: 'Microsoft Outlook', tagline: 'Microsoft 365 / Outlook.com — work + personal',   status: 'live', iconBg: '#0078D4', iconText: 'O' },
-  { key: 'calendly',  name: 'Calendly',          tagline: 'Sales + intake call scheduling',                  status: 'live', iconBg: '#006BFF', iconText: 'C' },
-]
-
-// Maps a live provider key to its OAuth start URL.
-const CONNECT_URLS: Record<string, string> = {
-  google:    '/api/calendar/google/connect',
-  microsoft: '/api/calendar/microsoft/connect',
-  calendly:  '/api/calendar/calendly/connect',
-}
-
 function CalendarPageInner() {
   const params = useSearchParams()
   const [connections, setConnections] = useState<Connection[]>([])
   const [loading, setLoading] = useState(true)
-  const [disconnecting, setDisconnecting] = useState<string | null>(null)
-  const [voting, setVoting] = useState<string | null>(null)
+  const [disconnecting, setDisconnecting] = useState(false)
   const flashStatus = params.get('calendar')
-  const flashProvider = params.get('provider')
   const flashReason = params.get('reason')
   const flashAccount = params.get('account')
+  const flashUnderlying = params.get('underlying')
 
   useEffect(() => { refresh() }, [])
 
@@ -61,41 +36,32 @@ function CalendarPageInner() {
     finally { setLoading(false) }
   }
 
-  function isConnected(provider: string): Connection | undefined {
-    return connections.find((c) => c.provider === provider && c.enabled)
-  }
+  const cronofyConnection = connections.find((c) => c.provider === 'cronofy' && c.enabled)
 
-  async function disconnect(provider: string) {
-    if (!confirm(`Disconnect ${provider}? The AI will stop offering specific slots from this calendar.`)) return
-    setDisconnecting(provider)
+  async function disconnect() {
+    if (!confirm('Disconnect your calendar? The AI will stop offering specific time slots from your calendar.')) return
+    setDisconnecting(true)
     try {
       await fetch('/api/calendar/disconnect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider }),
+        body: JSON.stringify({ provider: 'cronofy' }),
       })
       await refresh()
-    } finally { setDisconnecting(null) }
+    } finally { setDisconnecting(false) }
   }
 
-  async function voteForProvider(providerKey: string, providerName: string) {
-    setVoting(providerKey)
-    try {
-      // Reuse the waitlist endpoint as a generic interest signal —
-      // tier_interested is repurposed to "calendar:<provider>" so it lands in
-      // the same Twilio alert to Peter as Concierge waitlist signups.
-      await fetch('/api/waitlist/concierge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: 'calendar-vote@bellavego.internal',
-          notes: `Voted for ${providerName} calendar integration`,
-          tier_interested: 'concierge',  // route through existing waitlist table
-        }),
-      })
-      alert(`Got it — we'll notify you when ${providerName} integration ships. Vote logged.`)
-    } catch { alert('Vote failed — try again.') }
-    finally { setVoting(null) }
+  // Pretty name for the underlying provider on the success banner / connection chip
+  const prettyProvider = (raw: string | null | undefined): string => {
+    const p = (raw || '').toLowerCase()
+    if (p.includes('google'))    return 'Google Calendar'
+    if (p.includes('office365')) return 'Microsoft 365'
+    if (p.includes('outlook'))   return 'Microsoft Outlook'
+    if (p.includes('exchange'))  return 'Microsoft Exchange'
+    if (p.includes('apple') || p.includes('icloud')) return 'Apple iCloud'
+    if (p.includes('caldav'))    return 'CalDAV'
+    if (p)                       return raw as string
+    return 'your calendar'
   }
 
   return (
@@ -105,123 +71,143 @@ function CalendarPageInner() {
       </Link>
 
       <h1 style={{ fontSize: 30, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.04em', marginTop: 14, marginBottom: 8 }}>
-        Connect a calendar.
+        Connect your calendar.
       </h1>
       <p style={{ fontSize: 15, color: '#4A6670', lineHeight: 1.55, maxWidth: 680, marginBottom: 24 }}>
-        Give the AI receptionist access to your real-time availability and it'll <strong>offer specific time slots</strong> during the call — "Mike has Tuesday at 2 PM or Wednesday at 9 AM, which works?" — instead of just taking a message. You still confirm every booking via SMS.
+        Give the AI receptionist access to your real-time availability and it&apos;ll <strong>offer specific time slots</strong> during the call — &quot;Mike has Tuesday at 2 PM or Wednesday at 9 AM, which works?&quot; — instead of just taking a message. Auto-booking ships in Phase 2 (Q3 2026).
       </p>
 
       {/* Flash banners from OAuth callback */}
       {flashStatus === 'connected' && (
         <FlashBanner kind="success">
-          ✅ {flashProvider === 'google' ? 'Google Calendar' : 'Calendar'} connected{flashAccount ? ` (${flashAccount})` : ''}. The AI will start offering specific slots on the next inbound call.
+          ✅ Connected to {prettyProvider(flashUnderlying)}{flashAccount ? ` (${flashAccount})` : ''}. The AI will start offering specific slots on the next inbound call.
         </FlashBanner>
       )}
       {flashStatus === 'error' && (
         <FlashBanner kind="error">
-          Couldn't connect calendar. {flashReason ? <em>Reason: {flashReason}</em> : null} Try again, or text our team at 773-710-9565.
+          Couldn&apos;t connect calendar. {flashReason ? <em>Reason: {flashReason}</em> : null} Try again, or text our team at 773-710-9565.
         </FlashBanner>
       )}
 
-      {/* The 3 supported provider list */}
-      <div style={{ display: 'grid', gap: 10 }}>
-        {PROVIDERS.map((p) => {
-          const conn = isConnected(p.key)
-          const isLive = p.status === 'live'
-          return (
-            <div key={p.key} style={{
-              display: 'grid',
-              gridTemplateColumns: '56px 1fr auto',
-              alignItems: 'center',
-              gap: 14,
-              padding: '16px 18px',
-              background: '#fff',
-              border: conn ? '1.5px solid #22C55E' : '1px solid rgba(10,168,159,0.16)',
-              borderRadius: 14,
-              boxShadow: '0 2px 12px rgba(7,27,58,0.04)',
+      {/* Single Connect-a-Calendar card — Cronofy handles the provider picker */}
+      {cronofyConnection ? (
+        // CONNECTED state
+        <div style={{
+          background: '#fff',
+          border: '1.5px solid #22C55E',
+          borderRadius: 16,
+          padding: '24px 28px',
+          boxShadow: '0 4px 20px rgba(7,27,58,0.04)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14 }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: 12,
+              background: 'linear-gradient(135deg, #22C55E, #16A34A)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 6px 16px rgba(34,197,94,0.32)',
             }}>
-              {/* Icon */}
-              <div style={{
-                width: 44, height: 44, borderRadius: 11,
-                background: p.iconBg,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontWeight: 900, fontSize: 18,
-                color: p.iconColor || '#fff',
-                border: p.iconBg === '#fff' ? '1px solid #E2E8F0' : 'none',
-              }}>
-                {p.iconText || (p.key === 'apple' ? '' : p.name[0])}
-              </div>
-
-              {/* Name + tagline */}
-              <div style={{ minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A' }}>{p.name}</span>
-                  {p.popularity && !conn && (
-                    <span style={{ fontSize: 9, fontWeight: 900, color: '#C84B26', background: 'rgba(232,116,43,0.10)', padding: '2px 7px', borderRadius: 99, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                      {p.popularity}
-                    </span>
-                  )}
-                  {conn && (
-                    <span style={{ fontSize: 9, fontWeight: 900, color: '#16A34A', background: 'rgba(34,197,94,0.10)', padding: '2px 7px', borderRadius: 99, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                      Connected
-                    </span>
-                  )}
-                </div>
-                <div style={{ fontSize: 12, color: '#7AAAB2', lineHeight: 1.45 }}>
-                  {conn ? (conn.email || 'Connected') : p.tagline}
-                </div>
-              </div>
-
-              {/* Action button */}
-              <div>
-                {conn ? (
-                  <button
-                    onClick={() => disconnect(p.key)}
-                    disabled={disconnecting === p.key}
-                    style={{
-                      padding: '9px 16px', borderRadius: 9,
-                      background: '#FEF2F2', color: '#991B1B',
-                      border: '1px solid #FECACA',
-                      fontSize: 12, fontWeight: 800, cursor: 'pointer',
-                      fontFamily: 'inherit',
-                    }}
-                  >
-                    {disconnecting === p.key ? 'Disconnecting…' : 'Disconnect'}
-                  </button>
-                ) : isLive ? (
-                  <a
-                    href={CONNECT_URLS[p.key] || '#'}
-                    style={{
-                      display: 'inline-block',
-                      padding: '10px 18px', borderRadius: 9,
-                      background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)',
-                      color: '#fff', fontSize: 12, fontWeight: 800,
-                      textDecoration: 'none',
-                      boxShadow: '0 4px 12px rgba(10,168,159,0.28)',
-                    }}
-                  >
-                    Connect →
-                  </a>
-                ) : (
-                  <button
-                    onClick={() => voteForProvider(p.key, p.name)}
-                    disabled={voting === p.key || loading}
-                    style={{
-                      padding: '9px 14px', borderRadius: 9,
-                      background: 'rgba(10,168,159,0.08)',
-                      color: '#0D8F87', border: '1px solid rgba(10,168,159,0.22)',
-                      fontSize: 11, fontWeight: 800, cursor: 'pointer',
-                      fontFamily: 'inherit',
-                    }}
-                  >
-                    {voting === p.key ? 'Voting…' : 'Coming soon · Vote'}
-                  </button>
-                )}
-              </div>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
             </div>
-          )
-        })}
-      </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 9, fontWeight: 900, color: '#16A34A', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>
+                Calendar connected
+              </div>
+              <div style={{ fontSize: 17, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.02em' }}>
+                {cronofyConnection.name || prettyProvider(cronofyConnection.provider)}
+              </div>
+              {cronofyConnection.email && (
+                <div style={{ fontSize: 13, color: '#7AAAB2', marginTop: 2 }}>{cronofyConnection.email}</div>
+              )}
+            </div>
+            <button
+              onClick={disconnect}
+              disabled={disconnecting}
+              style={{
+                padding: '10px 18px', borderRadius: 9,
+                background: '#FEF2F2', color: '#991B1B',
+                border: '1px solid #FECACA',
+                fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              {disconnecting ? 'Disconnecting…' : 'Disconnect'}
+            </button>
+          </div>
+          <div style={{ padding: '12px 14px', background: '#F0FAF7', borderRadius: 10, fontSize: 13, color: '#0D8F87' }}>
+            ✓ The AI now checks your real-time availability before offering appointment times on every call.
+          </div>
+        </div>
+      ) : (
+        // NOT-CONNECTED state — one big Connect button
+        <div style={{
+          background: 'linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 60%)',
+          border: '1.5px solid rgba(232,116,43,0.32)',
+          borderRadius: 16,
+          padding: '28px 32px',
+          boxShadow: '0 8px 32px rgba(232,116,43,0.10)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <span style={{
+              fontSize: 9, fontWeight: 900, color: '#C84B26',
+              background: 'rgba(232,116,43,0.12)', padding: '3px 9px', borderRadius: 99,
+              letterSpacing: '0.14em', textTransform: 'uppercase',
+            }}>
+              Recommended · 60 seconds
+            </span>
+          </div>
+          <h2 style={{ fontSize: 20, fontWeight: 900, color: '#0B1F3A', margin: '0 0 8px', letterSpacing: '-0.02em' }}>
+            Let the AI offer real appointment times
+          </h2>
+          <p style={{ fontSize: 14, color: '#4A6670', lineHeight: 1.55, margin: '0 0 18px' }}>
+            Connect <strong>any</strong> calendar — Google, Microsoft Outlook, Office 365, Apple iCloud, Exchange, or CalDAV — and the AI checks your real availability before offering specific slots to callers. You pick which calendar provider on the next screen.
+          </p>
+          <a
+            href="/api/calendar/cronofy/connect"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '13px 26px', borderRadius: 11,
+              background: 'linear-gradient(135deg, #FFD9A8 0%, #FF9D5A 50%, #E8742B 100%)',
+              color: '#0B1F3A', fontSize: 14, fontWeight: 900,
+              textDecoration: 'none',
+              boxShadow: '0 8px 22px rgba(232,116,43,0.32)',
+            }}
+          >
+            Connect Calendar
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </a>
+
+          {/* Supported providers row */}
+          <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px solid rgba(232,116,43,0.18)' }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: '#7AAAB2', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>
+              Supports
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {[
+                { name: 'Google Calendar', color: '#4285F4' },
+                { name: 'Microsoft 365', color: '#0078D4' },
+                { name: 'Microsoft Outlook', color: '#0078D4' },
+                { name: 'Exchange', color: '#00897B' },
+                { name: 'Apple iCloud', color: '#0B1F3A' },
+                { name: 'CalDAV', color: '#7C3AED' },
+              ].map((p) => (
+                <span key={p.name} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '6px 12px', borderRadius: 99,
+                  background: '#fff', border: '1px solid rgba(10,168,159,0.18)',
+                  fontSize: 11.5, fontWeight: 700, color: '#0B1F3A',
+                }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: p.color }} />
+                  {p.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* How it works */}
       <div style={{ marginTop: 32, padding: '22px 26px', background: '#F0FAF7', border: '1px solid rgba(10,168,159,0.22)', borderRadius: 14 }}>
@@ -229,14 +215,14 @@ function CalendarPageInner() {
           How calendar-aware booking works
         </h3>
         <ol style={{ paddingLeft: 18, margin: 0, fontSize: 13, color: '#4A6670', lineHeight: 1.7 }}>
-          <li>Connect a calendar (this page). Takes 30 seconds.</li>
-          <li>Caller asks to schedule. The AI calls a real-time check against your calendar.</li>
-          <li>AI offers 3 actual open slots — "Tuesday 2 PM, Wednesday 9 AM, or Thursday 11 AM."</li>
-          <li>Caller picks one. You get an SMS — "Sarah picked Tuesday 2 PM. Reply YES to lock in."</li>
-          <li>You confirm via YES/NO. We don't auto-create the event yet — that's coming in Phase 2 (Q3 2026).</li>
+          <li>Click <strong>Connect Calendar</strong> → pick your calendar provider → grant access (60 seconds total)</li>
+          <li>Caller asks to schedule. The AI checks your calendar in real time</li>
+          <li>AI offers 3 actual open slots — &quot;Tuesday 2 PM, Wednesday 9 AM, or Thursday 11 AM&quot;</li>
+          <li>Caller picks one. You get an SMS — &quot;Sarah picked Tuesday 2 PM. Reply YES to confirm.&quot;</li>
+          <li>You confirm via YES — auto-create event in your calendar arrives in Phase 2 (Q3 2026)</li>
         </ol>
         <p style={{ fontSize: 11.5, color: '#7AAAB2', marginTop: 12, marginBottom: 0, fontStyle: 'italic' }}>
-          Privacy: we only read free/busy windows — never event titles, attendees, or notes. Disconnect anytime.
+          Privacy: we only read free/busy windows — never event titles, attendees, or notes. Disconnect anytime. Powered by Cronofy.
         </p>
       </div>
     </main>

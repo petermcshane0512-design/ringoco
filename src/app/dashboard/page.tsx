@@ -357,7 +357,7 @@ export default function DashboardPage() {
             <span style={{ color: "#7AAAB2", letterSpacing: "0.06em", textTransform: "uppercase", marginRight: 2 }}>Admin</span>
             {(["receptionist", "officemgr", "concierge"] as const).map(t => {
               const isCurrent = profile?.plan_tier === t;
-              const label = t === "receptionist" ? "Recep" : t === "officemgr" ? "OfMgr" : "Conci";
+              const label = t === "receptionist" ? "Mission Control" : t === "officemgr" ? "Operator" : "Concierge";
               return (
                 <button
                   key={t}
