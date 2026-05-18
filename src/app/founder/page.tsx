@@ -36,53 +36,54 @@ export default function FounderPage() {
         <div className="mc-glow-orange" style={{ width: 600, height: 600, top: '-20%', right: '-10%', opacity: 0.65 }} />
         <div className="mc-glow-teal" style={{ width: 700, height: 700, bottom: '-40%', left: '-12%' }} />
 
-        <div className="founder-grid" style={{ position: 'relative', zIndex: 1, maxWidth: 1180, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(0, 0.95fr) minmax(0, 1.1fr)', gap: 56, alignItems: 'center' }}>
-          <style>{`@media (max-width:920px){.founder-grid{grid-template-columns:1fr!important;gap:36px!important}}`}</style>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: 1180, margin: '0 auto' }}>
+          <style>{`
+            @media (max-width: 920px) {
+              .founder-quad { grid-template-columns: 1fr !important; gap: 22px !important; }
+              .founder-quad .quad-left,
+              .founder-quad .quad-right { gap: 18px !important; }
+            }
+          `}</style>
 
-          {/* Left: copy */}
-          <div className="mc-slide-up">
-            <h1 style={{ fontSize: 'clamp(40px, 5.4vw, 68px)', fontWeight: 900, letterSpacing: '-0.045em', lineHeight: 1.02, marginBottom: 26, color: '#0B1F3A' }}>
-              Hi, I&apos;m Peter.<br />
-              I founded <span style={{ background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', filter: 'drop-shadow(0 2px 10px rgba(232,116,43,0.32))' }}>BellAveGo.</span>
-            </h1>
-            <div style={{ fontSize: 16, lineHeight: 1.65, color: '#3D5A62', maxWidth: 560 }}>
-              <p style={{ margin: '0 0 16px' }}>
+          {/* Headline spans the full width above the 4-corner layout */}
+          <h1 className="mc-slide-up" style={{ fontSize: 'clamp(40px, 5.4vw, 68px)', fontWeight: 900, letterSpacing: '-0.045em', lineHeight: 1.02, marginBottom: 32, color: '#0B1F3A', maxWidth: 880 }}>
+            Hi, I&apos;m Peter.<br />
+            I founded <span style={{ background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', filter: 'drop-shadow(0 2px 10px rgba(232,116,43,0.32))' }}>BellAveGo.</span>
+          </h1>
+
+          {/* Four-corner reading layout:
+                TL = Para 1 (origin),  TR = Para 3 (impact/mission)
+                BL = Para 2 (team),    BR = Video card
+              Reader scans down the left column (paragraphs 1 -> 2),
+              then crosses to the right column where the closing
+              paragraph sits above the visual anchor (the video). */}
+          <div
+            className="founder-quad mc-slide-up"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: 36,
+              alignItems: 'start',
+              marginBottom: 36,
+            }}
+          >
+            {/* LEFT column — paragraphs 1 + 2 stacked */}
+            <div className="quad-left" style={{ display: 'flex', flexDirection: 'column', gap: 18, fontSize: 16, lineHeight: 1.65, color: '#3D5A62' }}>
+              <p style={{ margin: 0 }}>
                 I didn&apos;t start BellAveGo because AI was trending &mdash; I started it because I watched hardworking people lose money while doing the actual work. One afternoon, I was helping my friend Joe with a garage project when his phone rang four different times in under an hour. He ignored two calls because his hands were full, answered one just to say <em>&ldquo;I&rsquo;ll call you back,&rdquo;</em> and had to completely stop working just to schedule an appointment. Standing there watching it happen in real time, it hit me: thousands of home-service businesses are losing revenue every single day simply because they&rsquo;re too busy working to manage everything happening around them.
               </p>
-              <p style={{ margin: '0 0 16px' }}>
-                My team and I have spent years deep in the world of <span style={{ color: '#0AA89F', fontWeight: 700 }}>LLMs</span>, <span style={{ color: '#0AA89F', fontWeight: 700 }}>voice AI</span>, <span style={{ color: '#0AA89F', fontWeight: 700 }}>agentic workflows</span>, retrieval systems, automation pipelines, and conversational inference systems &mdash; not just experimenting with AI, but learning how to deploy it in ways that actually solve operational problems for real businesses. That&rsquo;s why we built BellAveGo: an AI receptionist and operational intelligence platform designed specifically for home-service teams with anywhere from one to fifteen employees. BellAveGo answers missed calls, books appointments, captures leads, analyzes neighborhood demand patterns, identifies revenue opportunities, and helps owners stop losing business while they&rsquo;re physically on the job.
+              <p style={{ margin: 0 }}>
+                My team and I have spent years deep in the world of LLMs, voice AI, agentic workflows, retrieval systems, automation pipelines, and conversational inference systems &mdash; not just experimenting with AI, but learning how to deploy it in ways that actually solve operational problems for real businesses. That&rsquo;s why we built BellAveGo: an AI receptionist and operational intelligence platform designed specifically for home-service teams with anywhere from one to fifteen employees. BellAveGo answers missed calls, books appointments, captures leads, analyzes neighborhood demand patterns, identifies revenue opportunities, and helps owners stop losing business while they&rsquo;re physically on the job.
               </p>
-              <p style={{ margin: '0 0 26px' }}>
+            </div>
+
+            {/* RIGHT column — paragraph 3 on top, video below */}
+            <div className="quad-right" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+              <p style={{ margin: 0, fontSize: 16, lineHeight: 1.65, color: '#3D5A62' }}>
                 Behind the scenes, BellAveGo runs a network of <span style={{ color: '#C84B26', fontWeight: 800 }}>over 30 specialized agentic AI systems</span> that continuously analyze call behavior, local market trends, competitor positioning, booking inefficiencies, customer intent, and missed revenue opportunities across each client&rsquo;s service area. Those systems help generate BellAveGo consulting reports, which are then manually reviewed and refined by our team to turn raw AI analysis into real-world business strategy. We genuinely believe <strong>every single home-service business in the world could increase yearly revenue by 30%+ using BellAveGo</strong> &mdash; simply by capturing more leads, reducing missed opportunities, automating scheduling, saving time on the job, and identifying market opportunities they otherwise would never see. BellAveGo was never built to replace hardworking people &mdash; it was built to give smaller teams access to the kind of automation, operational intelligence, and market analysis that used to only exist inside large companies.
               </p>
-            </div>
 
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 28 }}>
-              <Link href="/pricing" className="mc-btn-orange">
-                Try BellAveGo
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-              </Link>
-              <a href="tel:+16514677829" className="mc-btn-ghost">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                Hear the AI live · (651) 467-7829
-              </a>
-            </div>
-
-            {/* Founder ID card */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingTop: 20, borderTop: '1px solid rgba(232,116,43,0.18)' }}>
-              <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
-                <div style={{ position: 'absolute', inset: -6, borderRadius: '50%', background: 'radial-gradient(circle, rgba(232,116,43,0.45), transparent 70%)', filter: 'blur(12px)' }} />
-                <div style={{ position: 'relative', width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', color: '#0B1F3A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, boxShadow: '0 8px 20px rgba(232,116,43,0.42)', border: '2px solid #fff' }}>P</div>
-              </div>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.2px' }}>The BellAveGo Team</div>
-                <div style={{ fontSize: 12, color: '#C84B26', fontWeight: 700, marginTop: 2 }}>Software &amp; Finance Team</div>
-                <div style={{ fontSize: 11.5, color: '#7AAAB2', fontWeight: 500, marginTop: 2 }}>Building AI tools for home-service businesses</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: VIDEO PLACEHOLDER — "Why I founded BellAveGo" */}
+              {/* VIDEO PLACEHOLDER — "Why I founded BellAveGo" */}
           {/* Video isn't recorded yet. When it is, swap the inner play-button
               block for an <iframe> (Loom / YouTube / mux-player). The card
               dimensions, glow, and tap target are already set. */}
@@ -171,7 +172,35 @@ export default function FounderPage() {
               </div>
             </div>
           </div>
-        </div>
+            </div>{/* /quad-right */}
+          </div>{/* /founder-quad */}
+
+          {/* CTA buttons + Founder ID card — full width below the quad */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <Link href="/pricing" className="mc-btn-orange">
+                Try BellAveGo
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </Link>
+              <a href="tel:+16514677829" className="mc-btn-ghost">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                Hear the AI live · (651) 467-7829
+              </a>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingTop: 18, borderTop: '1px solid rgba(232,116,43,0.18)' }}>
+              <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
+                <div style={{ position: 'absolute', inset: -6, borderRadius: '50%', background: 'radial-gradient(circle, rgba(232,116,43,0.45), transparent 70%)', filter: 'blur(12px)' }} />
+                <div style={{ position: 'relative', width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', color: '#0B1F3A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, boxShadow: '0 8px 20px rgba(232,116,43,0.42)', border: '2px solid #fff' }}>P</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.2px' }}>The BellAveGo Team</div>
+                <div style={{ fontSize: 12, color: '#C84B26', fontWeight: 700, marginTop: 2 }}>Software &amp; Finance Team</div>
+                <div style={{ fontSize: 11.5, color: '#7AAAB2', fontWeight: 500, marginTop: 2 }}>Building AI tools for home-service businesses</div>
+              </div>
+            </div>
+          </div>
+        </div>{/* /outer hero wrapper */}
       </section>
 
       {/* WHAT'S BUILT — proof rows */}
