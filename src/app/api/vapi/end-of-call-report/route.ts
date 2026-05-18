@@ -4,6 +4,7 @@ import twilio from 'twilio'
 import Anthropic from '@anthropic-ai/sdk'
 import { OFFICE_MGR_TIERS } from '@/lib/pricing'
 import { verifyVapiSignature } from '@/lib/vapi'
+import { sendEmail, renderLeadAlertEmail } from '@/lib/email'
 import { estimateJobTicket } from '@/lib/consultingMetrics'
 
 const supabase = createClient(
@@ -127,6 +128,34 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
           })
         } catch (e) {
           console.error('demo lead alert to Peter failed:', e)
+        }
+      }
+
+      // Demo lead email to Peter — reliable iPhone alert while SMS is
+      // carrier-blocked during A2P registration.
+      const peterAlertEmail = process.env.FALLBACK_OWNER_EMAIL || 'bellavegollc@gmail.com'
+      if (peterAlertEmail) {
+        try {
+          const appUrl =
+            (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost'))
+              ? process.env.NEXT_PUBLIC_APP_URL
+              : 'https://www.bellavego.com'
+          const { subject, html, text } = renderLeadAlertEmail({
+            toEmail: peterAlertEmail,
+            contractorBusinessName: 'BellAveGo Demo (prospect)',
+            contractorOwnerName: 'Peter (you)',
+            contractorPhone: peterPhone || '',
+            callerName: args.customer_name,
+            callerPhone: callerNumber,
+            callerMessage: args.reason,
+            urgency: args.urgency,
+            twilioNumberCalled: process.env.TWILIO_DEMO_NUMBER ?? null,
+            callTimeISO: new Date().toISOString(),
+            forwardPageUrl: `${appUrl}/admin/forward`,
+          })
+          await sendEmail({ to: peterAlertEmail, subject: `🎯 DEMO LEAD — ${args.customer_name}`, html, text })
+        } catch (e) {
+          console.error('demo lead email to Peter failed:', e)
         }
       }
 
@@ -299,6 +328,37 @@ async function takeMessage(opts: {
       })
     } catch (e) {
       console.error('contractor SMS failed:', e)
+    }
+  }
+
+  // 4c. EMAIL ALERT TO PETER — during A2P registration period, SMS to
+  // contractor is often blocked by carriers (error 30034). Email-to-Peter
+  // gives him a reliable, real-time notification on his iPhone so he can
+  // open /admin/forward and manually iMessage the contractor in 5 seconds.
+  // Also stays useful post-A2P as a permanent searchable record.
+  const peterAlertEmail = process.env.FALLBACK_OWNER_EMAIL || 'bellavegollc@gmail.com'
+  if (peterAlertEmail && ownerPhone) {
+    try {
+      const appUrl =
+        (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost'))
+          ? process.env.NEXT_PUBLIC_APP_URL
+          : 'https://www.bellavego.com'
+      const { subject, html, text } = renderLeadAlertEmail({
+        toEmail: peterAlertEmail,
+        contractorBusinessName: tenant.business_name || 'a BellAveGo customer',
+        contractorOwnerName: (tenant as { owner_first_name?: string }).owner_first_name || 'the owner',
+        contractorPhone: ownerPhone,
+        callerName: args.customer_name,
+        callerPhone: phone,
+        callerMessage: args.reason,
+        urgency: args.urgency,
+        twilioNumberCalled: calledNumber,
+        callTimeISO: new Date().toISOString(),
+        forwardPageUrl: `${appUrl}/admin/forward`,
+      })
+      await sendEmail({ to: peterAlertEmail, subject, html, text })
+    } catch (e) {
+      console.error('peter alert email failed:', e)
     }
   }
 
