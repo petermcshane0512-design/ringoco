@@ -63,7 +63,7 @@ function SignUpInner() {
   const redirectUrl = searchParams.get('redirect_url') || '/onboarding'
 
   return (
-    <div style={{
+    <div className="auth-page" style={{
       minHeight: '100vh',
       background: 'linear-gradient(160deg, #ffffff 0%, #F2FDFB 22%, #E6FAF6 45%, #F0FCFA 68%, #E8F9F5 100%)',
       display: 'flex',
@@ -96,6 +96,7 @@ function SignUpInner() {
 
       {/* ══ LEFT — Logo only ══ */}
       <motion.div
+        className="auth-logo"
         initial={{ opacity: 0, x: -16 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
@@ -124,6 +125,7 @@ function SignUpInner() {
 
       {/* ══ RIGHT — Form ══ */}
       <motion.div
+        className="auth-form"
         initial={{ opacity: 0, x: 16 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}

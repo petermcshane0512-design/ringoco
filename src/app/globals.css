@@ -114,34 +114,75 @@ html { overflow-x: hidden; }
 }
 
 /* ── Mobile top-nav layout (homepage / founder / pricing)
-   On phones the BellAveGo wordmark + 4 buttons can't fit on one row,
-   so the nav grows taller, the logo is capped, and the buttons wrap
-   onto a second row below it. Desktop layout is untouched. */
+   Two-row stack on phones:
+     Row 1: BellAveGo wordmark, large and CENTERED (logo is the brand
+            statement, not a corner afterthought).
+     Row 2: 4 nav buttons in a horizontal row, larger tap targets,
+            evenly spread across the full width.
+   Desktop layout (>720px) is untouched. */
 @media (max-width: 720px) {
   .bavg-top-nav {
-    padding: 10px 14px !important;
+    padding: 12px 14px 14px !important;
     height: auto !important;
-    min-height: 60px;
-    flex-wrap: wrap !important;
-    row-gap: 10px;
+    min-height: 80px;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    row-gap: 12px;
+  }
+  /* Row 1 — logo centered + bigger */
+  .bavg-top-nav-logo {
+    align-self: center !important;
+    justify-content: center !important;
+    width: 100%;
   }
   .bavg-top-nav-logo img {
-    max-width: 140px !important;
+    max-width: 240px !important;
     height: auto !important;
     margin-top: 0 !important;
   }
+  /* Row 2 — buttons horizontal, evenly spread, bigger */
   .bavg-top-nav-actions {
-    gap: 6px !important;
-    flex-wrap: wrap !important;
-    justify-content: flex-end !important;
+    gap: 8px !important;
+    flex-wrap: nowrap !important;
+    justify-content: space-between !important;
     width: 100%;
   }
   .bavg-top-nav .nav-cta,
   .bavg-top-nav .why-pulse,
   .bavg-top-nav .price-pulse,
   .bavg-top-nav .signout-link {
-    padding: 7px 11px !important;
-    font-size: 12px !important;
+    flex: 1 1 0 !important;          /* equal-width fill */
+    justify-content: center !important;
+    padding: 11px 8px !important;
+    font-size: 13px !important;
+    letter-spacing: -0.2px !important;
+    text-align: center;
+    white-space: nowrap;
+  }
+}
+
+/* ── Sign-in / Sign-up — mobile stack with logo on top
+   Desktop is side-by-side (logo left half, form right half). On phones
+   the 500px-wide form column overflows, so we drop to a column with
+   the logo as a small banner above the Clerk form. */
+@media (max-width: 720px) {
+  .auth-page {
+    flex-direction: column !important;
+  }
+  .auth-logo {
+    flex: none !important;
+    padding: 24px 18px 4px !important;
+    width: 100% !important;
+  }
+  .auth-logo a {
+    width: 220px !important;
+    max-width: 60% !important;
+  }
+  .auth-form {
+    width: 100% !important;
+    padding: 8px 16px 40px !important;
+    border-left: none !important;
+    border-top: 1px solid rgba(10,168,159,0.12);
   }
 }
 

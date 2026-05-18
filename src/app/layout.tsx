@@ -2,16 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
-// Mobile renders the desktop layout zoomed out (width=1100 forces phone
-// browsers to treat the viewport as 1100px wide and scale to fit). This
-// keeps multi-column layouts — appointments side-by-side, 3-tier pricing,
-// founder video next to copy — instead of stacking everything to a tall
-// 1-column phone view. maximumScale: 5 keeps pinch-zoom for readability.
-// Desktop browsers ignore this width hint and use the real window size.
 export const viewport: Viewport = {
-  width: 1100,
+  width: "device-width",
   initialScale: 1,
-  maximumScale: 5,
+  maximumScale: 5,  // allow pinch-zoom (accessibility), but don't auto-zoom out
   themeColor: "#0B1F3A",
 };
 

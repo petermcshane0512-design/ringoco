@@ -47,7 +47,7 @@ const clerkAppearance = {
 
 export default function SignInPage() {
   return (
-    <div style={{
+    <div className="auth-page" style={{
       minHeight: '100vh',
       background: 'linear-gradient(160deg, #ffffff 0%, #F2FDFB 22%, #E6FAF6 45%, #F0FCFA 68%, #E8F9F5 100%)',
       display: 'flex',
@@ -80,6 +80,7 @@ export default function SignInPage() {
 
       {/* ══ LEFT — Logo only ══ */}
       <motion.div
+        className="auth-logo"
         initial={{ opacity: 0, x: -16 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
@@ -108,6 +109,7 @@ export default function SignInPage() {
 
       {/* ══ RIGHT — Form ══ */}
       <motion.div
+        className="auth-form"
         initial={{ opacity: 0, x: 16 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
