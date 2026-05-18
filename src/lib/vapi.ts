@@ -710,6 +710,30 @@ export async function vapiCreateAssistant(config: ReturnType<typeof buildAssista
   return (await res.json()) as { id: string }
 }
 
+/**
+ * PATCH an existing Vapi assistant in place. Use this after editing
+ * buildAssistantConfig() — the deployed Vapi assistant doesn't auto-update
+ * when we change the code; we have to push the new config explicitly.
+ *
+ * Re-run scripts/sync-vapi-assistant.mjs after any change to tools, prompt,
+ * or transcriber config.
+ */
+export async function vapiUpdateAssistant(
+  assistantId: string,
+  config: ReturnType<typeof buildAssistantConfig>,
+): Promise<{ id: string }> {
+  const res = await fetch(`${VAPI_API_BASE}/assistant/${assistantId}`, {
+    method: 'PATCH',
+    headers: vapiHeaders(),
+    body: JSON.stringify(config),
+  })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`Vapi assistant update failed (${res.status}): ${body}`)
+  }
+  return (await res.json()) as { id: string }
+}
+
 export async function vapiImportTwilioNumber(opts: {
   twilioPhoneNumber: string
   twilioAccountSid: string

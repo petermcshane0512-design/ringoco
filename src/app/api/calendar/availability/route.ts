@@ -119,15 +119,21 @@ async function handleVapiToolCall(payload: VapiServerMessage) {
       continue
     }
 
-    // Emit a natural, AI-readable list of the top 3-4 slots
+    // Emit a natural, AI-readable list of the top 3-4 slots.
+    // Each line includes the human-readable label AND the ISO timestamp so the
+    // AI can pass the ISO back verbatim in take_message → which lets us
+    // auto-create the calendar event with millisecond precision (Phase 2).
     const top = summary.slots.slice(0, 4)
-    const sentence = top.length === 1
-      ? `The contractor is available ${top[0].label}.`
-      : `The contractor has these open slots: ${top.map((s) => s.label).join('; ')}.`
+    const lines = top.map((s, i) => `Option ${i + 1}: ${s.label}  [iso=${s.start}, duration_min=${summary.durationMin}]`)
 
     results.push({
       toolCallId: tc.id,
-      result: `${sentence} Offer the caller a choice — when they pick one, capture it as the preferred time in the take_message reason.`,
+      result:
+        `The contractor has these open slots:\n${lines.join('\n')}\n\n` +
+        `Read the human labels (NOT the iso=) to the caller. When they pick one, ` +
+        `call take_message with appointment_start_iso = the iso= value from their pick ` +
+        `AND appointment_duration_min = ${summary.durationMin}. ` +
+        `This lets the system auto-book the appointment into the contractor's calendar.`,
     })
   }
 

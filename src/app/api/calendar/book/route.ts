@@ -4,6 +4,7 @@ import twilio from 'twilio'
 import { verifyVapiSignature } from '@/lib/vapi'
 import { findAvailableSlots } from '@/lib/calendar/availability'
 import { createGoogleEvent, type CalendarConnectionRow } from '@/lib/calendar/google'
+import { createCronofyEvent } from '@/lib/calendar/cronofy'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -132,48 +133,78 @@ export async function POST(req: NextRequest) {
       continue
     }
 
-    // ── Load Google connection (Phase 1 = Google only) ──
+    // ── Load contractor's calendar connection ──
+    // Prefer Cronofy (unified API across Google/Outlook/Apple, what new
+    // customers connect via). Fall back to direct Google OAuth row if they
+    // connected via the legacy /api/calendar/google flow.
     const { data: connRows } = await supabase
       .from('calendar_connections')
       .select('*')
       .eq('user_id', userId)
-      .eq('provider', 'google')
+      .in('provider', ['cronofy', 'google'])
       .eq('enabled', true)
-      .limit(1)
-    const conn = (connRows?.[0] ?? null) as CalendarConnectionRow | null
+    const cronofyConn = (connRows ?? []).find((c) => c.provider === 'cronofy') as CalendarConnectionRow | undefined
+    const googleConn  = (connRows ?? []).find((c) => c.provider === 'google')  as CalendarConnectionRow | undefined
+    const conn = cronofyConn || googleConn
+
     if (!conn) {
       results.push({
         toolCallId: tc.id,
         result:
-          'No Google Calendar connection for this contractor (Outlook/Calendly write is Phase 2). Take a message.',
+          'No calendar connection for this contractor. Take a message and let the owner call back to confirm a time.',
       })
       continue
     }
 
-    // ── Create the event ──
-    const eventResult = await createGoogleEvent({
-      connection: conn,
-      event: {
-        summary: `BellAveGo · ${args.service_summary || 'Appointment'} — ${args.customer_name}`,
-        description:
-          `Customer: ${args.customer_name}\n` +
-          `Phone: ${callerPhone || '(captured from caller ID)'}\n` +
-          `Service: ${args.service_summary || '(see call summary)'}\n\n` +
-          `Booked via BellAveGo AI on ${new Date().toLocaleString('en-US', { timeZone: conn.timezone || 'America/Chicago' })}.`,
-        startISO: startDate.toISOString(),
-        endISO: endDate.toISOString(),
-        timezone: conn.timezone || 'America/Chicago',
-        attendeePhone: callerPhone || undefined,
-      },
-    })
+    // ── Create the event (Cronofy → Google fallback) ──
+    // We need a stable jobId for the Cronofy event_id (prefix bellavego_ so
+    // the dashboard agenda highlights it as AI-booked). Insert the job row
+    // FIRST so we have its uuid, then create the calendar event referencing it.
+    const provisionalJobId = crypto.randomUUID()
+
+    const eventSummary = `BellAveGo · ${args.service_summary || 'Appointment'} — ${args.customer_name}`
+    const eventDescription =
+      `Customer: ${args.customer_name}\n` +
+      `Phone: ${callerPhone || '(captured from caller ID)'}\n` +
+      `Service: ${args.service_summary || '(see call summary)'}\n\n` +
+      `Booked via BellAveGo AI on ${new Date().toLocaleString('en-US', { timeZone: conn.timezone || 'America/Chicago' })}.`
+
+    let eventResult: { ok: boolean; error?: string; status?: number; eventId?: string; htmlLink?: string }
+
+    if (cronofyConn) {
+      // Cronofy path — works for Google/Outlook/Apple via one API
+      const r = await createCronofyEvent({
+        connection: cronofyConn,
+        eventId: `bellavego_${provisionalJobId.replace(/-/g, '')}`,
+        summary: eventSummary,
+        description: eventDescription,
+        startIso: startDate.toISOString(),
+        endIso: endDate.toISOString(),
+      })
+      eventResult = { ok: r.ok, error: r.error, eventId: `bellavego_${provisionalJobId.replace(/-/g, '')}` }
+    } else {
+      // Legacy direct-Google path
+      const r = await createGoogleEvent({
+        connection: googleConn!,
+        event: {
+          summary: eventSummary,
+          description: eventDescription,
+          startISO: startDate.toISOString(),
+          endISO: endDate.toISOString(),
+          timezone: conn.timezone || 'America/Chicago',
+          attendeePhone: callerPhone || undefined,
+        },
+      })
+      eventResult = r
+    }
 
     if (!eventResult.ok) {
-      console.error('book_appointment: createGoogleEvent failed:', eventResult.error)
+      console.error('book_appointment: createEvent failed:', eventResult.error)
       results.push({
         toolCallId: tc.id,
         result:
           eventResult.status === 403
-            ? `Google reconnect needed. Take a message instead — let the contractor know they need to reconnect Google Calendar.`
+            ? `Calendar reconnect needed. Take a message instead — let the contractor know they need to reconnect their calendar.`
             : `Couldn't save the booking — take a message instead and the owner will call back to confirm.`,
       })
       continue
@@ -203,6 +234,7 @@ export async function POST(req: NextRequest) {
       }
 
       await supabase.from('jobs').insert({
+        id: provisionalJobId,
         user_id: userId,
         customer_id: customerId,
         customer_name: args.customer_name,
@@ -240,12 +272,12 @@ export async function POST(req: NextRequest) {
       try {
         await twilioClient.messages.create({
           body:
-            `📅 NEW BOOKING via BellAveGo\n\n` +
+            `📅 AI BOOKED · BellAveGo\n\n` +
             `👤 ${args.customer_name}\n` +
             `📞 ${callerPhone || 'no phone captured'}\n` +
             `🔧 ${args.service_summary || 'Appointment'}\n` +
             `🕐 ${slotLabel}\n\n` +
-            `Already on your Google Calendar.${eventResult.htmlLink ? `\n${eventResult.htmlLink}` : ''}`,
+            `Already on your calendar (look for the orange "AI Booked" event).${eventResult.htmlLink ? `\n${eventResult.htmlLink}` : ''}`,
           from: tenantTwilioNumber,
           to: ownerPhone,
         })
