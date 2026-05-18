@@ -24,17 +24,20 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
   const { isSignedIn } = useAuth()
   const [activeTab, setActiveTab] = useState('Command Center')
   const [hoveredNav, setHoveredNav] = useState<string | null>(null)
-  // Mirror the live /dashboard metric cards: Revenue (month) + Pending +
-  // Upcoming + Customers. Older keys (calls, jobs, saved) are kept around
-  // because the AI Receptionist and Invoicing tabs still reference them.
+  // Mirror the live /dashboard metric cards: Revenue (month) + Calls Today +
+  // Calls This Week + Customers. Older keys (pending/upcoming/calls/jobs/saved)
+  // are kept around because the AI Receptionist and Invoicing tabs + the
+  // "All jobs" table further down still reference them.
   const [stats, setStats] = useState({
-    revenue: 12750,
-    pending: 1,
-    upcoming: 4,
-    customers: 24,
-    calls: 3,
-    jobs: 2,
-    saved: 18,
+    revenue: 18430,
+    callsToday: 5,
+    callsThisWeek: 27,
+    pending: 2,
+    upcoming: 6,
+    customers: 124,
+    calls: 5,
+    jobs: 4,
+    saved: 22,
   })
   const [bumped, setBumped] = useState<string | null>(null)
   const [floatEl, setFloatEl] = useState<{ key: string; text: string } | null>(null)
@@ -56,26 +59,32 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
     // plausible. Revenue moves most often (money signals are the most
     // emotional); customers crawl up occasionally; pending/upcoming flex
     // in a believable range.
-    const CAPS = { revenue: 16800, pending: 3, upcoming: 6, customers: 31, calls: 8, jobs: 5, saved: 26 }
+    const CAPS = { revenue: 24800, callsToday: 9, callsThisWeek: 38, pending: 3, upcoming: 8, customers: 145, calls: 8, jobs: 5, saved: 26 }
     const id = setInterval(() => {
       const r = Math.random()
       setStats(s => {
         if (r < 0.30 && s.revenue < CAPS.revenue) {
-          const inc = (Math.floor(Math.random() * 4) + 1) * 50
+          const inc = (Math.floor(Math.random() * 5) + 1) * 80
           trigger('revenue', `+$${inc}`)
           return { ...s, revenue: s.revenue + inc }
         }
-        if (r < 0.42 && s.upcoming < CAPS.upcoming) {
-          trigger('upcoming', '+1')
-          return { ...s, upcoming: s.upcoming + 1, jobs: Math.min(s.jobs + 1, CAPS.jobs) }
+        // Calls today + week tick together — every new call hitting today also
+        // counts toward the week. Most visually-emotional bump for sales demos.
+        if (r < 0.50 && s.callsToday < CAPS.callsToday && s.callsThisWeek < CAPS.callsThisWeek) {
+          trigger('callsToday', '+1 call')
+          return {
+            ...s,
+            callsToday: s.callsToday + 1,
+            callsThisWeek: s.callsThisWeek + 1,
+            calls: Math.min(s.calls + 1, CAPS.calls),
+          }
         }
-        if (r < 0.50 && s.customers < CAPS.customers) {
+        if (r < 0.65 && s.customers < CAPS.customers) {
           trigger('customers', '+1')
-          return { ...s, customers: s.customers + 1, calls: Math.min(s.calls + 1, CAPS.calls), saved: Math.min(s.saved + 1, CAPS.saved) }
+          return { ...s, customers: s.customers + 1, saved: Math.min(s.saved + 1, CAPS.saved) }
         }
-        if (r < 0.56 && s.pending < CAPS.pending) {
-          trigger('pending', '+1')
-          return { ...s, pending: s.pending + 1 }
+        if (r < 0.75 && s.upcoming < CAPS.upcoming) {
+          return { ...s, upcoming: s.upcoming + 1, jobs: Math.min(s.jobs + 1, CAPS.jobs) }
         }
         return s
       })
@@ -114,20 +123,20 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
       icon: <><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" /></>,
     },
     {
-      key: 'pending',
-      label: 'Pending Jobs',
-      value: stats.pending,
+      key: 'callsToday',
+      label: 'BellAveGo Calls Answered Today',
+      value: stats.callsToday,
       prefix: '',
       tone: 'teal' as const,
-      icon: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M12 14v4M10 16h4" /></>,
+      icon: <><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></>,
     },
     {
-      key: 'upcoming',
-      label: 'Upcoming Jobs',
-      value: stats.upcoming,
+      key: 'callsThisWeek',
+      label: 'BellAveGo Calls Answered This Week',
+      value: stats.callsThisWeek,
       prefix: '',
       tone: 'teal' as const,
-      icon: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></>,
+      icon: <><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></>,
     },
     {
       key: 'customers',
