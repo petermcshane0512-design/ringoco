@@ -440,8 +440,33 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
             </div>
           )}
 
-          {/* == COMMAND CENTER TAB (default) == */}
+          {/* == COMMAND CENTER TAB (default) ==
+              Mirrors /dashboard exactly: Calendar Sync banner, 4 metric
+              cards, 2-col layout (Incoming Requests + All Jobs +
+              Consulting Reports on the left; AI Receptionist status +
+              Quick actions on the right). */}
           {activeTab === 'Command Center' && <div>
+
+            {/* Calendar Sync banner — mini version of the real one. */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 12px', marginBottom: 11, background: 'linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 60%)', border: '1px solid rgba(232,116,43,0.32)', borderRadius: 10, boxShadow: '0 4px 12px rgba(232,116,43,0.08)' }}>
+              <div style={{ width: 26, height: 26, borderRadius: 7, background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 3px 8px rgba(232,116,43,0.32)' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 1 }}>
+                  <span style={{ fontSize: 7, fontWeight: 900, color: '#C84B26', background: 'rgba(232,116,43,0.12)', padding: '1.5px 5px', borderRadius: 99, letterSpacing: '0.14em', textTransform: 'uppercase' }}>New</span>
+                  <span style={{ fontSize: 10.5, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.02em' }}>Connect your calendar so the AI offers real time slots</span>
+                </div>
+                <div style={{ fontSize: 8, color: '#4A6670', lineHeight: 1.4 }}>Google Calendar · Microsoft Outlook · Calendly</div>
+              </div>
+              <div style={{ padding: '5px 10px', borderRadius: 7, background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', color: '#fff', fontSize: 9, fontWeight: 800, flexShrink: 0, boxShadow: '0 3px 8px rgba(10,168,159,0.32)' }}>Connect →</div>
+            </div>
+
 
             {/* Stat cards — match the live dashboard exactly: warm white
                 gradient bg, eyebrow label + colored icon box on top, big
@@ -518,94 +543,154 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
               })}
             </div>
 
-            {/* 2-column middle row */}
+            {/* 2-column middle row — left: tables. right: sidebar widgets. */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 210px', gap: 9, marginBottom: 9 }}>
 
-              {/* Left: Incoming + Jobs */}
+              {/* Left col — Incoming requests (table) + All jobs (table) */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
 
-                {/* Incoming Requests */}
-                <div style={{ background: '#ffffff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, padding: '11px 13px', boxShadow: '0 2px 10px rgba(7,27,58,0.05)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 9 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A' }}>Incoming Requests</div>
-                    <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 7px', borderRadius: 10, background: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A' }}>1 pending</span>
-                  </div>
-                  <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 9, padding: '10px 12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
-                      <div>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: '#0B1F3A', marginBottom: 2 }}>Lighting Repair -- 9240 South Hoyne Ave</div>
-                        <div style={{ fontSize: 9.5, color: '#4A7A80' }}>Customer requested tomorrow around 3:00 PM</div>
-                      </div>
-                      <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 7px', borderRadius: 10, background: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A', whiteSpace: 'nowrap', flexShrink: 0 }}>Pending</span>
+                {/* Incoming requests — table-style, mirrors live dashboard */}
+                <div style={{ background: '#ffffff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, boxShadow: '0 2px 10px rgba(7,27,58,0.05)', overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', borderBottom: '1px solid rgba(10,168,159,0.08)' }}>
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A' }}>Incoming requests</div>
+                      <div style={{ fontSize: 7.5, color: '#7AAAB2', marginTop: 1 }}>Accept or decline jobs from your AI receptionist</div>
                     </div>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <div style={{ padding: '4px 11px', borderRadius: 6, background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#059669', fontSize: 9, fontWeight: 700 }}>Accept</div>
-                      <div style={{ padding: '4px 11px', borderRadius: 6, background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', fontSize: 9, fontWeight: 700 }}>Decline</div>
-                    </div>
+                    <span style={{ fontSize: 7, fontWeight: 700, padding: '2px 7px', borderRadius: 10, background: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A' }}>2 pending</span>
                   </div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ background: 'rgba(10,168,159,0.03)' }}>
+                        <th style={{ fontSize: 7, fontWeight: 800, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'left', padding: '5px 10px' }}>Customer</th>
+                        <th style={{ fontSize: 7, fontWeight: 800, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'left', padding: '5px 10px' }}>Service</th>
+                        <th style={{ fontSize: 7, fontWeight: 800, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'left', padding: '5px 10px' }}>When</th>
+                        <th style={{ fontSize: 7, fontWeight: 800, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'right', padding: '5px 10px' }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { name: 'Sarah L.',  svc: 'Lighting Repair', when: 'Tomorrow 3:00 PM' },
+                        { name: 'James W.', svc: 'AC Not Cooling',  when: 'Today 5:30 PM' },
+                      ].map((row, i) => (
+                        <tr key={i} style={{ borderTop: '1px solid rgba(10,168,159,0.08)' }}>
+                          <td style={{ fontSize: 9, fontWeight: 700, color: '#0B1F3A', padding: '6px 10px' }}>{row.name}</td>
+                          <td style={{ fontSize: 9, color: '#4A6670', padding: '6px 10px' }}>{row.svc}</td>
+                          <td style={{ fontSize: 9, color: '#4A6670', padding: '6px 10px' }}>{row.when}</td>
+                          <td style={{ padding: '6px 10px', textAlign: 'right' }}>
+                            <div style={{ display: 'inline-flex', gap: 5 }}>
+                              <span style={{ padding: '2px 7px', borderRadius: 5, background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#059669', fontSize: 7.5, fontWeight: 700 }}>Accept</span>
+                              <span style={{ padding: '2px 7px', borderRadius: 5, background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', fontSize: 7.5, fontWeight: 700 }}>Decline</span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
 
-                {/* All Jobs */}
-                <div style={{ background: '#ffffff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, padding: '11px 13px', boxShadow: '0 2px 10px rgba(7,27,58,0.05)' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 9 }}>All Jobs</div>
-                  {JOBS.map((j, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: i < JOBS.length - 1 ? '1px solid rgba(10,168,159,0.08)' : 'none' }}>
-                      <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(10,168,159,0.1)', border: '1px solid rgba(10,168,159,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, color: '#0AA89F', flexShrink: 0 }}>
-                        {j.name[0]}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 10, fontWeight: 600, color: '#0B1F3A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.name} . {j.type}</div>
-                        <div style={{ fontSize: 8, color: '#7AAAB2' }}>{j.time}</div>
-                      </div>
-                      <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 7px', borderRadius: 8, flexShrink: 0, ...(j.status === 'scheduled' ? { background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' } : { background: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A' }) }}>
-                        {j.status === 'scheduled' ? 'Scheduled' : 'Pending'}
-                      </span>
-                    </div>
-                  ))}
+                {/* All jobs — table-style, mirrors live dashboard */}
+                <div style={{ background: '#ffffff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, boxShadow: '0 2px 10px rgba(7,27,58,0.05)', overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', borderBottom: '1px solid rgba(10,168,159,0.08)' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A' }}>All jobs</div>
+                    <span style={{ fontSize: 7.5, color: '#7AAAB2', fontWeight: 600 }}>{stats.upcoming + stats.pending} total</span>
+                  </div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ background: 'rgba(10,168,159,0.03)' }}>
+                        <th style={{ fontSize: 7, fontWeight: 800, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'left', padding: '5px 10px' }}>Customer</th>
+                        <th style={{ fontSize: 7, fontWeight: 800, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'left', padding: '5px 10px' }}>Service</th>
+                        <th style={{ fontSize: 7, fontWeight: 800, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'left', padding: '5px 10px' }}>Scheduled</th>
+                        <th style={{ fontSize: 7, fontWeight: 800, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'left', padding: '5px 10px' }}>Amount</th>
+                        <th style={{ fontSize: 7, fontWeight: 800, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'left', padding: '5px 10px' }}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { name: 'Marcus T.', svc: 'HVAC Repair',         when: 'Today 8:00 AM',      amount: '$485', status: 'scheduled' },
+                        { name: 'Diane R.',  svc: 'Plumbing Estimate',   when: 'Tomorrow 10:00 AM',  amount: '—',    status: 'pending'   },
+                        { name: 'Kevin S.',  svc: 'Electrical Repair',   when: 'Tomorrow 2:00 PM',   amount: '$210', status: 'scheduled' },
+                        { name: 'Priya L.',  svc: 'Cleaning',            when: 'Thu 9:00 AM',        amount: '$150', status: 'scheduled' },
+                      ].map((row, i, arr) => {
+                        const pill = row.status === 'scheduled'
+                          ? { bg: '#ECFDF5', color: '#059669', border: '#A7F3D0', label: 'Scheduled' }
+                          : { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A', label: 'Pending' }
+                        return (
+                          <tr key={i} style={{ borderTop: i === 0 ? 'none' : '1px solid rgba(10,168,159,0.06)' }}>
+                            <td style={{ fontSize: 9, fontWeight: 700, color: '#0B1F3A', padding: '6px 10px' }}>{row.name}</td>
+                            <td style={{ fontSize: 9, color: '#4A6670', padding: '6px 10px' }}>{row.svc}</td>
+                            <td style={{ fontSize: 9, color: '#4A6670', padding: '6px 10px' }}>{row.when}</td>
+                            <td style={{ fontSize: 9, fontWeight: 700, color: '#0B1F3A', padding: '6px 10px' }}>{row.amount}</td>
+                            <td style={{ padding: '6px 10px' }}>
+                              <span style={{ display: 'inline-block', fontSize: 7, fontWeight: 700, padding: '2px 7px', borderRadius: 8, background: pill.bg, color: pill.color, border: `1px solid ${pill.border}` }}>{pill.label}</span>
+                            </td>
+                          </tr>
+                        )
+                      }).slice(0, JOBS.length)}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
-              {/* Right: AI Receptionist + Quick Actions */}
+              {/* Right col — AI Receptionist status + Quick actions */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
 
-                {/* AI Receptionist */}
-                <div style={{ background: '#ffffff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, padding: '11px 12px', boxShadow: '0 2px 10px rgba(7,27,58,0.05)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 10 }}>
-                    <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 5px rgba(34,197,94,0.5)', animation: 'dpDot 2s infinite' }} />
-                    <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A' }}>AI Receptionist</div>
-                    <span style={{ marginLeft: 'auto', fontSize: 7.5, fontWeight: 700, padding: '2px 7px', borderRadius: 8, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' }}>Online</span>
-                  </div>
-                  {[
-                    { label: 'Calls today', value: stats.calls, key: 'calls', color: '#0AA89F' },
-                    { label: 'Leads captured', value: stats.jobs, key: 'jobs', color: '#22C55E' },
-                  ].map(row => (
-                    <div key={row.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px solid rgba(10,168,159,0.08)' }}>
-                      <div style={{ fontSize: 9, color: '#7AAAB2' }}>{row.label}</div>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: row.color, animation: bumped === row.key ? 'dpBounce 0.38s ease' : 'none' }}>
-                        {row.value}
+                {/* AI Receptionist — mirrors real dashboard structure */}
+                <div style={{ background: '#ffffff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, boxShadow: '0 2px 10px rgba(7,27,58,0.05)', overflow: 'hidden' }}>
+                  <div style={{ background: 'linear-gradient(135deg, #FFFFFF 0%, #F0FBF8 100%)', padding: '9px 11px', borderBottom: '1px solid rgba(20,184,166,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                      <div style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(20,184,166,0.12)', border: '1px solid rgba(20,184,166,0.32)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0AA89F" strokeWidth="2">
+                          <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A' }}>AI Receptionist</div>
+                        <div style={{ fontSize: 7.5, color: '#4A6670', marginTop: 1 }}>24/7 · {AI_DEMO_NUMBER}</div>
                       </div>
                     </div>
-                  ))}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 0' }}>
-                    <div style={{ fontSize: 9, color: '#7AAAB2' }}>Approval SMS</div>
-                    <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 7px', borderRadius: 8, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' }}>Connected</span>
+                    <span style={{ fontSize: 7, fontWeight: 700, padding: '2px 7px', borderRadius: 10, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' }}>Live</span>
+                  </div>
+                  <div style={{ padding: '6px 11px' }}>
+                    {[
+                      { label: 'Status', val: 'Connected · listening' },
+                      { label: 'Approval SMS to', val: '(555) 010-3318' },
+                      { label: 'Calls today', val: String(stats.calls) },
+                      { label: 'Leads captured (mo)', val: String(stats.jobs) },
+                    ].map((row, i, arr) => (
+                      <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0', borderBottom: i < arr.length - 1 ? '1px solid rgba(232,116,43,0.08)' : 'none' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                          <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#FF9D5A' }} />
+                          <span style={{ fontSize: 8.5, color: '#4A6670' }}>{row.label}</span>
+                        </div>
+                        <span style={{ fontSize: 9, fontWeight: 700, color: '#0B1F3A', fontVariantNumeric: 'tabular-nums' }}>{row.val}</span>
+                      </div>
+                    ))}
+                    <div style={{ marginTop: 9, background: 'linear-gradient(135deg, #0AA89F, #18AFA8)', color: '#fff', fontSize: 9, fontWeight: 700, padding: '7px 10px', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, boxShadow: '0 3px 9px rgba(10,168,159,0.25)' }}>
+                      Configure Receptionist →
+                    </div>
                   </div>
                 </div>
 
-                {/* Quick Actions */}
-                <div style={{ background: '#ffffff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, padding: '11px 12px', boxShadow: '0 2px 10px rgba(7,27,58,0.05)' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 9 }}>Quick Actions</div>
-                  {[
-                    { label: 'Send an invoice', icon: 'Pay' },
-                    { label: 'View settings', icon: 'Cfg' },
-                  ].map((a, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 0', borderBottom: i < 1 ? '1px solid rgba(10,168,159,0.08)' : 'none' }}>
-                      <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(10,168,159,0.08)', border: '1px solid rgba(10,168,159,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, flexShrink: 0 }}>
-                        {a.icon}
+                {/* Quick actions — mirrors real dashboard's 3 items */}
+                <div style={{ background: '#ffffff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, boxShadow: '0 2px 10px rgba(7,27,58,0.05)', overflow: 'hidden' }}>
+                  <div style={{ padding: '9px 11px', borderBottom: '1px solid rgba(10,168,159,0.08)' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A' }}>Quick actions</div>
+                  </div>
+                  <div style={{ padding: '4px 11px 6px' }}>
+                    {[
+                      { label: 'Send an invoice',  icon: <><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="12" y1="18" x2="12" y2="12" /><line x1="9" y1="15" x2="15" y2="15" /></> },
+                      { label: 'View settings',    icon: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" /></> },
+                      { label: 'Go to home page', icon: <><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></> },
+                    ].map((a, i, arr) => (
+                      <div key={a.label} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 0', borderBottom: i < arr.length - 1 ? '1px solid rgba(10,168,159,0.06)' : 'none' }}>
+                        <div style={{ width: 20, height: 20, borderRadius: 5, background: 'rgba(10,168,159,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#0AA89F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{a.icon}</svg>
+                        </div>
+                        <div style={{ fontSize: 9, color: '#0B1F3A', fontWeight: 600, flex: 1 }}>{a.label}</div>
+                        <span style={{ fontSize: 9, color: '#0AA89F', fontWeight: 700 }}>→</span>
                       </div>
-                      <div style={{ fontSize: 10, color: '#0AA89F', fontWeight: 600 }}>{a.label}</div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
