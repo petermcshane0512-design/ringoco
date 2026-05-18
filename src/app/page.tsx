@@ -640,32 +640,6 @@ export default function HomePage() {
           .appt-toggle-dot {
             width: 8px; height: 8px; border-radius: 50%;
           }
-          .appt-cta-primary {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 14px 26px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
-            color: #fff;
-            font-weight: 800;
-            font-size: 14px;
-            text-decoration: none;
-            box-shadow: 0 10px 28px rgba(34,197,94,0.34);
-            transition: transform 0.24s ease, box-shadow 0.24s ease;
-          }
-          .appt-cta-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(34,197,94,0.45); }
-          .appt-cta-secondary {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 14px 24px;
-            border-radius: 12px;
-            background: #fff;
-            color: #0B1F3A;
-            font-weight: 800;
-            font-size: 14px;
-            text-decoration: none;
-            border: 1px solid rgba(11,31,58,0.14);
-            transition: border-color 0.24s ease, transform 0.24s ease;
-          }
-          .appt-cta-secondary:hover { border-color: rgba(11,31,58,0.32); transform: translateY(-2px); }
           .appt-chip {
             display: inline-flex; align-items: center; gap: 7px;
             padding: 5px 12px;
@@ -1005,25 +979,14 @@ export default function HomePage() {
             </article>
           </div>
 
-          {/* Trust copy */}
-          <div style={{ textAlign: 'center', maxWidth: 720, margin: '0 auto 28px' }}>
+          {/* Trust copy — closer for the section. Pricing section follows. */}
+          <div style={{ textAlign: 'center', maxWidth: 720, margin: '0 auto' }}>
             <p style={{ fontSize: 17, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.2px', margin: '0 0 6px' }}>
               Start manual. Connect your calendar later.
             </p>
             <p style={{ fontSize: 14, color: '#4A6670', margin: 0, lineHeight: 1.55 }}>
               BellAveGo works whether you want full control or full automation.
             </p>
-          </div>
-
-          {/* CTAs */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
-            <Link href={isSignedIn ? '/dashboard' : '/sign-up'} className="appt-cta-primary">
-              Start free trial
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </Link>
-            <Link href="/demo" className="appt-cta-secondary">
-              See how it works
-            </Link>
           </div>
         </div>
       </section>
