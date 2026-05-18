@@ -389,6 +389,94 @@ export async function createCronofyEvent(args: {
   }
 }
 
+/**
+ * List the user's upcoming calendar events across ALL connected calendars.
+ * Used by the dashboard to render the agenda view.
+ *
+ * Cronofy returns events from every connected provider (Google, Outlook,
+ * Apple, etc.) in one unified response — no per-provider logic needed.
+ *
+ * BellAveGo-created events are identified by their event_id prefix
+ * `bellavego_` (set by createCronofyEvent when AI books an appointment).
+ * The display layer detects this and styles them distinctively.
+ */
+export type CalendarEvent = {
+  id: string
+  summary: string
+  description?: string
+  location?: string
+  start: string             // ISO timestamp
+  end: string
+  allDay: boolean
+  status?: 'confirmed' | 'tentative' | 'cancelled'
+  isBellaveGo: boolean      // true if event_id starts with 'bellavego_'
+  source?: string           // provider name from underlying calendar (best-effort)
+}
+
+export async function listCronofyEvents(args: {
+  connection: CalendarConnectionRow
+  windowStart: Date
+  windowEnd: Date
+}): Promise<CalendarEvent[]> {
+  const accessToken = await getValidAccessToken(args.connection)
+  if (!accessToken) return []
+  try {
+    const params = new URLSearchParams({
+      from: args.windowStart.toISOString(),
+      to: args.windowEnd.toISOString(),
+      tzid: args.connection.timezone || 'America/Chicago',
+      include_managed: 'true',
+      include_deleted: 'false',
+      include_moved: 'true',
+      localized_times: 'true',
+    })
+    const res = await fetch(`${CRONOFY_API_BASE}/events?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    if (!res.ok) {
+      await logCalendarEvent(args.connection.user_id, 'cronofy', 'error', `events ${res.status}`)
+      return []
+    }
+    const data = (await res.json()) as {
+      events?: Array<{
+        event_id?: string
+        event_uid?: string
+        calendar_id?: string
+        summary?: string
+        description?: string
+        location?: { description?: string }
+        start?: string | { time?: string; tzid?: string }
+        end?: string | { time?: string; tzid?: string }
+        status?: 'confirmed' | 'tentative' | 'cancelled'
+      }>
+    }
+    return (data.events ?? [])
+      .filter((ev) => ev.start && ev.end && ev.status !== 'cancelled')
+      .map((ev) => {
+        const startStr = typeof ev.start === 'string' ? ev.start : (ev.start?.time ?? '')
+        const endStr   = typeof ev.end   === 'string' ? ev.end   : (ev.end?.time   ?? '')
+        // Cronofy returns "2026-05-18" for all-day events (no time component)
+        const allDay = /^\d{4}-\d{2}-\d{2}$/.test(startStr)
+        const eventIdent = ev.event_id || ev.event_uid || ''
+        return {
+          id: eventIdent,
+          summary: ev.summary || '(untitled event)',
+          description: ev.description,
+          location: ev.location?.description,
+          start: allDay ? `${startStr}T00:00:00Z` : startStr,
+          end:   allDay ? `${endStr}T23:59:59Z`   : endStr,
+          allDay,
+          status: ev.status,
+          isBellaveGo: eventIdent.toLowerCase().startsWith('bellavego_'),
+        }
+      })
+      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+  } catch (e) {
+    await logCalendarEvent(args.connection.user_id, 'cronofy', 'error', `events threw: ${(e as Error).message}`)
+    return []
+  }
+}
+
 export async function disconnectCronofy(userId: string): Promise<{ ok: boolean }> {
   // Best-effort revoke at Cronofy
   try {

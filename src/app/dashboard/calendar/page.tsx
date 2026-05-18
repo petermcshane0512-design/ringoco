@@ -14,11 +14,25 @@ type Connection = {
   lastError: string | null
 }
 
+type CalendarEvent = {
+  id: string
+  summary: string
+  description?: string
+  location?: string
+  start: string
+  end: string
+  allDay: boolean
+  status?: string
+  isBellaveGo: boolean
+}
+
 function CalendarPageInner() {
   const params = useSearchParams()
   const [connections, setConnections] = useState<Connection[]>([])
   const [loading, setLoading] = useState(true)
   const [disconnecting, setDisconnecting] = useState(false)
+  const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [eventsLoading, setEventsLoading] = useState(false)
   const flashStatus = params.get('calendar')
   const flashReason = params.get('reason')
   const flashAccount = params.get('account')
@@ -32,8 +46,22 @@ function CalendarPageInner() {
       const res = await fetch('/api/calendar/status')
       const j = await res.json()
       setConnections(j.connections || [])
+      // Auto-load events if connected
+      if ((j.connections || []).some((c: Connection) => c.enabled)) {
+        loadEvents()
+      }
     } catch { setConnections([]) }
     finally { setLoading(false) }
+  }
+
+  async function loadEvents() {
+    setEventsLoading(true)
+    try {
+      const res = await fetch('/api/calendar/events?days=14')
+      const j = await res.json()
+      setEvents(j.events || [])
+    } catch { setEvents([]) }
+    finally { setEventsLoading(false) }
   }
 
   const cronofyConnection = connections.find((c) => c.provider === 'cronofy' && c.enabled)
@@ -209,6 +237,53 @@ function CalendarPageInner() {
         </div>
       )}
 
+      {/* AGENDA — next 14 days of events, only when connected.
+          BellAveGo-created events (event_id starts with bellavego_) get the
+          orange highlight + AI Booked badge so the contractor can tell at a
+          glance which appointments the AI booked vs ones they added manually. */}
+      {cronofyConnection && (
+        <section style={{ marginTop: 32 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.02em', margin: 0 }}>
+              Your calendar · next 14 days
+            </h2>
+            <button
+              onClick={loadEvents}
+              disabled={eventsLoading}
+              style={{
+                padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(10,168,159,0.22)',
+                background: '#fff', color: '#0AA89F', fontSize: 12, fontWeight: 700,
+                cursor: eventsLoading ? 'wait' : 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              {eventsLoading ? 'Refreshing…' : '↻ Refresh'}
+            </button>
+          </div>
+
+          {/* Color-key chip row */}
+          <div style={{ display: 'flex', gap: 14, marginBottom: 16, fontSize: 11.5, color: '#7AAAB2' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 10, height: 10, borderRadius: 3, background: '#4A6670' }} /> Your events
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 10, height: 10, borderRadius: 3, background: 'linear-gradient(135deg, #FF9D5A, #E8742B)' }} /> Booked by BellAveGo AI
+            </span>
+          </div>
+
+          {eventsLoading && events.length === 0 ? (
+            <div style={{ padding: 32, background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 12, textAlign: 'center', color: '#7AAAB2', fontSize: 13 }}>
+              Loading events…
+            </div>
+          ) : events.length === 0 ? (
+            <div style={{ padding: 32, background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 12, textAlign: 'center', color: '#7AAAB2', fontSize: 13 }}>
+              No events in the next 14 days. When the AI books an appointment, it&apos;ll show up here in orange.
+            </div>
+          ) : (
+            <AgendaList events={events} />
+          )}
+        </section>
+      )}
+
       {/* How it works */}
       <div style={{ marginTop: 32, padding: '22px 26px', background: '#F0FAF7', border: '1px solid rgba(10,168,159,0.22)', borderRadius: 14 }}>
         <h3 style={{ fontSize: 14, fontWeight: 900, color: '#0B1F3A', marginTop: 0, marginBottom: 10 }}>
@@ -243,6 +318,109 @@ function FlashBanner({ kind, children }: { kind: 'success' | 'error'; children: 
       lineHeight: 1.5,
     }}>
       {children}
+    </div>
+  )
+}
+
+/**
+ * AgendaList — groups events by day, renders each event card.
+ * BellAveGo-booked events get the orange gradient + "AI Booked" badge.
+ */
+function AgendaList({ events }: { events: CalendarEvent[] }) {
+  // Group by YYYY-MM-DD
+  const byDay = new Map<string, CalendarEvent[]>()
+  for (const ev of events) {
+    const key = new Date(ev.start).toLocaleDateString('en-US', {
+      weekday: 'long', month: 'short', day: 'numeric',
+    })
+    const arr = byDay.get(key) ?? []
+    arr.push(ev)
+    byDay.set(key, arr)
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      {Array.from(byDay.entries()).map(([dayLabel, dayEvents]) => (
+        <div key={dayLabel}>
+          <div style={{
+            fontSize: 11, fontWeight: 800, color: '#7AAAB2',
+            letterSpacing: '0.12em', textTransform: 'uppercase',
+            marginBottom: 8,
+          }}>
+            {dayLabel}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {dayEvents.map((ev) => <EventCard key={ev.id} event={ev} />)}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function EventCard({ event }: { event: CalendarEvent }) {
+  const start = new Date(event.start)
+  const end = new Date(event.end)
+  const timeLabel = event.allDay
+    ? 'All day'
+    : `${start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} – ${end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+
+  const isAI = event.isBellaveGo
+
+  return (
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: '110px 4px 1fr auto',
+      gap: 14,
+      alignItems: 'center',
+      padding: '12px 16px',
+      background: isAI ? 'linear-gradient(135deg, #FFF6EE 0%, #FFFFFF 70%)' : '#fff',
+      border: isAI ? '1.5px solid rgba(232,116,43,0.42)' : '1px solid rgba(10,168,159,0.14)',
+      borderRadius: 11,
+      boxShadow: isAI ? '0 4px 14px rgba(232,116,43,0.16)' : '0 2px 8px rgba(7,27,58,0.04)',
+    }}>
+      {/* Time column */}
+      <div style={{
+        fontSize: 12, fontWeight: 700,
+        color: isAI ? '#C84B26' : '#4A6670',
+        whiteSpace: 'nowrap',
+      }}>
+        {timeLabel}
+      </div>
+
+      {/* Color bar */}
+      <div style={{
+        height: '100%', minHeight: 24, borderRadius: 2,
+        background: isAI ? 'linear-gradient(180deg, #FF9D5A, #E8742B)' : '#4A6670',
+      }} />
+
+      {/* Event details */}
+      <div style={{ minWidth: 0 }}>
+        <div style={{
+          fontSize: 14, fontWeight: 700, color: '#0B1F3A',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {event.summary}
+        </div>
+        {event.location && (
+          <div style={{ fontSize: 11.5, color: '#7AAAB2', marginTop: 2 }}>
+            📍 {event.location}
+          </div>
+        )}
+      </div>
+
+      {/* AI Booked badge — only shown for events created by BellAveGo */}
+      {isAI && (
+        <span style={{
+          padding: '4px 10px', borderRadius: 99,
+          background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)',
+          color: '#0B1F3A', fontSize: 9, fontWeight: 900,
+          letterSpacing: '0.14em', textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+        }}>
+          AI Booked
+        </span>
+      )}
     </div>
   )
 }
