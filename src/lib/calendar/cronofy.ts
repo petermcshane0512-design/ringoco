@@ -61,14 +61,14 @@ const CRONOFY_TOKEN_URL = `${CRONOFY_API_HOST}/oauth/token`
 const CRONOFY_API_BASE = `${CRONOFY_API_HOST}/v1`
 
 // Scopes we request. read_free_busy is essential. create_event + delete_event
-// unlock Phase 2 auto-booking. account_read pulls profile so we know the
+// unlock Phase 2 auto-booking. read_account pulls profile so we know the
 // underlying provider account (email) for the connections list.
 const SCOPES = [
   'read_free_busy',
   'read_events',
   'create_event',
   'delete_event',
-  'account_read',
+  'read_account',
 ].join(' ')
 
 function getRedirectUri(): string {
