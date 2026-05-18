@@ -24,10 +24,49 @@
 //
 // On success it prints the Customer Profile SID. Approval is usually 1–3 hours.
 // Once approved, run scripts/a2p-brand-and-campaign.mjs to finish brand+campaign.
+//
+// AUTH NOTE (May 2026 rewrite):
+// Uses the official `twilio` SDK initialized exactly with the live account
+// credentials from .env.local — TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN. No
+// API Key SID/Secret, no Messaging Service SID, no test creds. The previous
+// version of this script hand-rolled Basic auth with an env parser that
+// didn't trim trailing whitespace/CRLF from values, which corrupted the
+// auth token in transit and caused 401s. Fixed by both (a) using the SDK's
+// auth and (b) shipping a robust env loader that trims values and strips BOM.
 
 import { readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
+import twilio from 'twilio'
+
+// ── Robust .env.local loader ──────────────────────────────────────
+// Strips UTF-8 BOM, trims values, handles quoted values, ignores
+// comments/blank lines. Sets process.env so the twilio SDK picks up
+// TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN without further plumbing.
+function loadEnvLocal() {
+  try {
+    const here = dirname(fileURLToPath(import.meta.url))
+    const envPath = resolve(here, '..', '.env.local')
+    let text = readFileSync(envPath, 'utf8')
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1) // strip BOM
+    for (const rawLine of text.split(/\r?\n/)) {
+      const line = rawLine.trim()
+      if (!line || line.startsWith('#')) continue
+      const eq = line.indexOf('=')
+      if (eq < 1) continue
+      const k = line.slice(0, eq).trim()
+      if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(k)) continue
+      let v = line.slice(eq + 1).trim()
+      if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+        v = v.slice(1, -1)
+      }
+      if (!process.env[k]) process.env[k] = v
+    }
+  } catch (e) {
+    console.error('Could not read .env.local:', e.message)
+  }
+}
+loadEnvLocal()
 
 // ── Parse CLI args ────────────────────────────────────────────────
 const args = {}
@@ -60,38 +99,28 @@ const WEBSITE = args['website'] || 'https://www.bellavego.com'
 const BRAND = args['brand'] || 'BellAveGo'
 const USE_CASE = args['use-case'] || 'MIXED'
 
-// ── Load Twilio creds ─────────────────────────────────────────────
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const envPath = resolve(__dirname, '..', '.env.local')
-const env = {}
-for (const line of readFileSync(envPath, 'utf8').split(/\r?\n/)) {
-  const m = line.match(/^([A-Z_]+)=(.*)$/)
-  if (m) env[m[1]] = m[2].replace(/^"|"$/g, '')
+// ── Twilio client — exact initialization per spec ─────────────────
+if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
+  console.error('\n❌ TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN must be set in .env.local')
+  process.exit(1)
 }
-const SID = env.TWILIO_ACCOUNT_SID
-const TOK = env.TWILIO_AUTH_TOKEN
-const basic = 'Basic ' + Buffer.from(`${SID}:${TOK}`).toString('base64')
+if (!process.env.TWILIO_ACCOUNT_SID.startsWith('AC')) {
+  console.error(`\n❌ TWILIO_ACCOUNT_SID must start with "AC" — got "${process.env.TWILIO_ACCOUNT_SID.slice(0, 4)}..."`)
+  console.error('   You\'re using either a test SID, an API Key SID, or a corrupted value.')
+  process.exit(1)
+}
+const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
 
 const INDIVIDUAL_PROFILE_POLICY = 'RNffcb02a20420c81caf596ffc44f69712'
 const EXISTING_ADDRESS_SID = 'ADb3583b9c2438bff3a1c842e220545df6' // 9232 S Bell Ave, Chicago IL 60643 (already created)
 
-// ── HTTP helper ───────────────────────────────────────────────────
-async function tw(method, url, body) {
-  const opts = { method, headers: { Authorization: basic } }
-  if (body) {
-    opts.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    opts.body = new URLSearchParams(body).toString()
-  }
-  const r = await fetch(url, opts)
-  const text = await r.text()
-  let json = null
-  try { json = JSON.parse(text) } catch {}
-  return { status: r.status, ok: r.ok, body: json ?? text }
-}
-
-function die(label, res) {
-  console.error(`\n❌ ${label} → ${res.status}`)
-  console.error('   ' + JSON.stringify(res.body))
+// ── Helpers ───────────────────────────────────────────────────────
+function die(label, err) {
+  console.error(`\n❌ ${label}`)
+  if (err?.status) console.error(`   HTTP ${err.status}`)
+  if (err?.code) console.error(`   code ${err.code}`)
+  if (err?.moreInfo) console.error(`   more info: ${err.moreInfo}`)
+  console.error(`   ${err?.message || JSON.stringify(err)}`)
   console.error('\nNothing was submitted to Twilio yet, no fees charged.')
   process.exit(1)
 }
@@ -104,82 +133,102 @@ function ok(label, sid) {
 console.log(`\n=== Submitting Twilio Individual Customer Profile for ${BRAND} ===`)
 console.log(`    Name: ${FIRST_NAME} ${LAST_NAME}  ·  DOB: ${DOB}`)
 console.log(`    ID: ${ID_TYPE} (${ID_STATE})  ·  Number: ${ID_NUMBER.slice(0, 2)}*** (masked in output)`)
-console.log(`    Phone: ${PHONE}  ·  Email: ${EMAIL}\n`)
+console.log(`    Phone: ${PHONE}  ·  Email: ${EMAIL}`)
+console.log(`    Account: ${process.env.TWILIO_ACCOUNT_SID.slice(0, 8)}…  (auth via twilio SDK)\n`)
 
 // 1. Create empty Customer Profile
-const cpResp = await tw('POST', 'https://trusthub.twilio.com/v1/CustomerProfiles', {
-  FriendlyName: `${BRAND} Sole Prop Customer Profile`,
-  Email: EMAIL,
-  PolicySid: INDIVIDUAL_PROFILE_POLICY,
-})
-if (!cpResp.ok) die('Create Customer Profile', cpResp)
-const profileSid = cpResp.body.sid
+let profile
+try {
+  profile = await client.trusthub.v1.customerProfiles.create({
+    friendlyName: `${BRAND} Sole Prop Customer Profile`,
+    email: EMAIL,
+    policySid: INDIVIDUAL_PROFILE_POLICY,
+  })
+} catch (e) {
+  die('Create Customer Profile', e)
+}
+const profileSid = profile.sid
 ok('Customer Profile created', profileSid)
 
 // 2. Create individual_customer_profile_information end user
-const indAttrs = {
-  website_url: WEBSITE,
-  first_name: FIRST_NAME,
-  last_name: LAST_NAME,
-  email: EMAIL,
-  phone_number: PHONE,
-  birth_date: DOB,
-  identification_type: ID_TYPE,
-  identification_number: ID_NUMBER,
-  identification_state: ID_STATE,
-  company_name: BRAND,
-  use_case: USE_CASE,
-  notification_mobile_number: PHONE,
+let endUser
+try {
+  endUser = await client.trusthub.v1.endUsers.create({
+    friendlyName: `${FIRST_NAME} ${LAST_NAME} (Individual Info)`,
+    type: 'individual_customer_profile_information',
+    attributes: {
+      website_url: WEBSITE,
+      first_name: FIRST_NAME,
+      last_name: LAST_NAME,
+      email: EMAIL,
+      phone_number: PHONE,
+      birth_date: DOB,
+      identification_type: ID_TYPE,
+      identification_number: ID_NUMBER,
+      identification_state: ID_STATE,
+      company_name: BRAND,
+      use_case: USE_CASE,
+      notification_mobile_number: PHONE,
+    },
+  })
+} catch (e) {
+  die('Create Individual Info end-user', e)
 }
-const euResp = await tw('POST', 'https://trusthub.twilio.com/v1/EndUsers', {
-  FriendlyName: `${FIRST_NAME} ${LAST_NAME} (Individual Info)`,
-  Type: 'individual_customer_profile_information',
-  Attributes: JSON.stringify(indAttrs),
-})
-if (!euResp.ok) die('Create Individual Info end-user', euResp)
-const endUserSid = euResp.body.sid
+const endUserSid = endUser.sid
 ok('Individual Info end-user created', endUserSid)
 
 // 3. Create supporting document linking the existing address
-const docResp = await tw('POST', 'https://trusthub.twilio.com/v1/SupportingDocuments', {
-  FriendlyName: `${BRAND} Business Address Document`,
-  Type: 'customer_profile_address',
-  Attributes: JSON.stringify({ address_sids: EXISTING_ADDRESS_SID }),
-})
-if (!docResp.ok) die('Create Address SupportingDocument', docResp)
-const docSid = docResp.body.sid
+let doc
+try {
+  doc = await client.trusthub.v1.supportingDocuments.create({
+    friendlyName: `${BRAND} Business Address Document`,
+    type: 'customer_profile_address',
+    attributes: { address_sids: EXISTING_ADDRESS_SID },
+  })
+} catch (e) {
+  die('Create Address SupportingDocument', e)
+}
+const docSid = doc.sid
 ok('Address SupportingDocument created', docSid)
 
 // 4. Assign end-user + document to the customer profile
-const assign1 = await tw(
-  'POST',
-  `https://trusthub.twilio.com/v1/CustomerProfiles/${profileSid}/EntityAssignments`,
-  { ObjectSid: endUserSid },
-)
-if (!assign1.ok) die('Assign end-user to profile', assign1)
+try {
+  await client.trusthub.v1
+    .customerProfiles(profileSid)
+    .customerProfilesEntityAssignments
+    .create({ objectSid: endUserSid })
+} catch (e) {
+  die('Assign end-user to profile', e)
+}
 ok('End-user attached to profile')
 
-const assign2 = await tw(
-  'POST',
-  `https://trusthub.twilio.com/v1/CustomerProfiles/${profileSid}/EntityAssignments`,
-  { ObjectSid: docSid },
-)
-if (!assign2.ok) die('Assign document to profile', assign2)
+try {
+  await client.trusthub.v1
+    .customerProfiles(profileSid)
+    .customerProfilesEntityAssignments
+    .create({ objectSid: docSid })
+} catch (e) {
+  die('Assign document to profile', e)
+}
 ok('Address document attached to profile')
 
 // 5. Evaluate the profile — Twilio tells us if anything is missing before we submit
-const evalResp = await tw('POST', `https://trusthub.twilio.com/v1/CustomerProfiles/${profileSid}/Evaluations`, {
-  PolicySid: INDIVIDUAL_PROFILE_POLICY,
-})
-if (!evalResp.ok) die('Evaluate profile', evalResp)
+let evalResult
+try {
+  evalResult = await client.trusthub.v1
+    .customerProfiles(profileSid)
+    .customerProfilesEvaluations
+    .create({ policySid: INDIVIDUAL_PROFILE_POLICY })
+} catch (e) {
+  die('Evaluate profile', e)
+}
 
-const evalStatus = evalResp.body.status
-const evalResults = evalResp.body.results
+const evalStatus = evalResult.status
 ok(`Evaluation complete: ${evalStatus}`)
 
 if (evalStatus !== 'compliant') {
   console.error('\n⚠️  Profile is NOT compliant — fix these before submitting:')
-  for (const r of evalResults ?? []) {
+  for (const r of evalResult.results ?? []) {
     if (r.passed) continue
     console.error(`   - ${r.requirement_friendly_name || r.requirement_name}`)
     for (const f of r.fields ?? []) {
@@ -191,13 +240,18 @@ if (evalStatus !== 'compliant') {
 }
 
 // 6. Submit the profile for review
-const submitResp = await tw('POST', `https://trusthub.twilio.com/v1/CustomerProfiles/${profileSid}`, {
-  Status: 'pending-review',
-})
-if (!submitResp.ok) die('Submit profile for review', submitResp)
-ok(`Profile submitted for review (status: ${submitResp.body.status})`)
+let submitted
+try {
+  submitted = await client.trusthub.v1.customerProfiles(profileSid).update({
+    status: 'pending-review',
+  })
+} catch (e) {
+  die('Submit profile for review', e)
+}
+ok(`Profile submitted for review (status: ${submitted.status})`)
 
 // 7. Save state for the next script
+const __dirname = dirname(fileURLToPath(import.meta.url))
 const statePath = resolve(__dirname, '..', '.a2p-state.json')
 writeFileSync(statePath, JSON.stringify({
   customer_profile_sid: profileSid,
@@ -211,7 +265,7 @@ writeFileSync(statePath, JSON.stringify({
 console.log('\n────────────────────────────────────────────────')
 console.log(`🎉 Customer Profile submitted!`)
 console.log(`   SID: ${profileSid}`)
-console.log(`   Status: ${submitResp.body.status}`)
+console.log(`   Status: ${submitted.status}`)
 console.log(`   Saved state: .a2p-state.json (gitignored — contains no secrets)`)
 console.log('')
 console.log('Next:')
