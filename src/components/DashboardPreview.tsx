@@ -6,9 +6,9 @@ import { useAuth } from '@clerk/nextjs'
 
 const JOBS = [
   { name: 'Marcus T.', type: 'HVAC Repair', status: 'scheduled', time: 'Today 8:00 AM' },
-  { name: 'Diane R.', type: 'Plumbing Estimate', status: 'pending_approval', time: 'Tomorrow 10:00 AM' },
-  { name: 'Kevin S.', type: 'Electrical Repair', status: 'scheduled', time: 'Tomorrow 2:00 PM' },
-  { name: 'Priya L.', type: 'Cleaning Appointment', status: 'scheduled', time: 'Thu 9:00 AM' },
+  { name: 'Diane R.', type: 'Furnace Tune-up', status: 'pending_approval', time: 'Tomorrow 10:00 AM' },
+  { name: 'Kevin S.', type: 'Heat Pump Service', status: 'scheduled', time: 'Tomorrow 2:00 PM' },
+  { name: 'Priya L.', type: 'AC Maintenance', status: 'scheduled', time: 'Thu 9:00 AM' },
 ]
 
 const REPORTS = [
@@ -43,6 +43,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
   const [floatEl, setFloatEl] = useState<{ key: string; text: string } | null>(null)
   const [visible, setVisible] = useState(false)
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
+  const [isHovered, setIsHovered] = useState(false)
   const dashRef = useRef<HTMLDivElement>(null)
   const sectionRef = useRef<HTMLDivElement>(null)
 
@@ -191,16 +192,30 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                  from the clip means the rotation can't push square
                  edges past the outer rounded mask. */}
       <div
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => { setIsHovered(false); setTilt({ x: 0, y: 0 }) }}
+        onMouseMove={handleMouseMove}
         style={{
           maxWidth: compact ? '100%' : 1040,
           margin: compact ? '0' : '0 auto 52px',
           position: 'relative', zIndex: 2,
           borderRadius: 24,
           overflow: 'hidden',
-          boxShadow: '0 32px 80px rgba(11,31,58,0.14), 0 8px 32px rgba(232,116,43,0.10), 0 0 0 1px rgba(232,116,43,0.16)',
+          // 3D context for the inner tilt + hover scale. Subtle baseline tilt
+          // gives the dashboard a "floating slab" feel; hover bumps up scale
+          // 2% and adds a deeper shadow so it feels like the slab lifts toward you.
+          perspective: 1400,
+          boxShadow: isHovered
+            ? '0 48px 120px rgba(11,31,58,0.22), 0 14px 48px rgba(232,116,43,0.18), 0 0 0 1px rgba(232,116,43,0.20)'
+            : '0 32px 80px rgba(11,31,58,0.14), 0 8px 32px rgba(232,116,43,0.10), 0 0 0 1px rgba(232,116,43,0.16)',
           background: '#ffffff',
           opacity: visible ? 1 : 0,
-          transition: 'opacity 0.7s ease',
+          // Combine baseline 3D tilt + mouse follow (when hovered) + scale-up on hover.
+          // Baseline: subtle rotateX(-6deg) rotateY(2deg) so the slab tilts back-right.
+          // While hovered, the mouse-tracked tilt softens the rotation toward the cursor.
+          transform: `rotateX(${(-6 + tilt.x * 0.4).toFixed(2)}deg) rotateY(${(2 + tilt.y * 0.4).toFixed(2)}deg) scale(${isHovered ? 1.02 : 1})`,
+          transformStyle: 'preserve-3d',
+          transition: 'opacity 0.7s ease, transform 0.35s cubic-bezier(0.34,1,0.64,1), box-shadow 0.35s ease',
           isolation: 'isolate',
         }}
       >
@@ -321,9 +336,9 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                 <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 9 }}>Recent Calls</div>
                 {[
                   { name: 'Mike R.', type: 'HVAC Repair', time: '2m ago', status: 'booked' },
-                  { name: 'Sarah L.', type: 'Plumbing Issue', time: '18m ago', status: 'booked' },
+                  { name: 'Sarah L.', type: "Furnace Won't Start", time: '18m ago', status: 'booked' },
                   { name: 'James W.', type: 'AC Not Cooling', time: '1h ago', status: 'saved' },
-                  { name: 'Ana K.', type: 'Electrical Check', time: '2h ago', status: 'booked' },
+                  { name: 'Ana K.', type: 'Thermostat Install', time: '2h ago', status: 'booked' },
                 ].map((c, i, arr) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: i < arr.length - 1 ? '1px solid rgba(10,168,159,0.08)' : 'none' }}>
                     <div style={{ width: 24, height: 24, borderRadius: '50%', background: c.status === 'booked' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)', border: c.status === 'booked' ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, flexShrink: 0 }}>{c.status === 'booked' ? 'Cal' : 'Tel'}</div>
@@ -388,9 +403,9 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                 <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 9 }}>Recent Invoices</div>
                 {[
                   { name: 'Marcus T.', service: 'HVAC Repair', amount: '$485', status: 'paid' },
-                  { name: 'Sarah L.', service: 'Plumbing Fix', amount: '$320', status: 'paid' },
-                  { name: 'Diane R.', service: 'Electrical', amount: '$210', status: 'sent' },
-                  { name: 'Kevin S.', service: 'AC Tune-up', amount: '$150', status: 'sent' },
+                  { name: 'Sarah L.', service: 'Furnace Repair', amount: '$320', status: 'paid' },
+                  { name: 'Diane R.', service: 'AC Tune-up', amount: '$210', status: 'sent' },
+                  { name: 'Kevin S.', service: 'Heat Pump Install', amount: '$3,850', status: 'sent' },
                 ].map((inv, i, arr) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: i < arr.length - 1 ? '1px solid rgba(10,168,159,0.08)' : 'none' }}>
                     <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(10,168,159,0.1)', border: '1px solid rgba(10,168,159,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 800, color: '#0AA89F', flexShrink: 0 }}>{inv.name[0]}</div>
@@ -412,7 +427,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                 <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 10 }}>Business Profile</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   {[
-                    { label: 'Business name', value: 'Smith HVAC & Services' },
+                    { label: 'Business name', value: "Mike's HVAC & Cooling" },
                     { label: 'Business type', value: 'HVAC' },
                     { label: 'Phone number', value: '(651) 467-7829' },
                     { label: 'Business hours', value: '8 AM - 6 PM' },
@@ -807,7 +822,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                     </thead>
                     <tbody>
                       {[
-                        { name: 'Sarah L.',  svc: 'Lighting Repair', when: 'Tomorrow 3:00 PM' },
+                        { name: 'Sarah L.',  svc: 'Duct Cleaning', when: 'Tomorrow 3:00 PM' },
                         { name: 'James W.', svc: 'AC Not Cooling',  when: 'Today 5:30 PM' },
                       ].map((row, i) => (
                         <tr key={i} style={{ borderTop: '1px solid rgba(10,168,159,0.08)' }}>
@@ -845,8 +860,8 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                     <tbody>
                       {[
                         { name: 'Marcus T.', svc: 'HVAC Repair',         when: 'Today 8:00 AM',      amount: '$485', status: 'scheduled' },
-                        { name: 'Diane R.',  svc: 'Plumbing Estimate',   when: 'Tomorrow 10:00 AM',  amount: '—',    status: 'pending'   },
-                        { name: 'Kevin S.',  svc: 'Electrical Repair',   when: 'Tomorrow 2:00 PM',   amount: '$210', status: 'scheduled' },
+                        { name: 'Diane R.',  svc: 'Furnace Tune-up',   when: 'Tomorrow 10:00 AM',  amount: '—',    status: 'pending'   },
+                        { name: 'Kevin S.',  svc: 'Heat Pump Service',   when: 'Tomorrow 2:00 PM',   amount: '$210', status: 'scheduled' },
                         { name: 'Priya L.',  svc: 'Cleaning',            when: 'Thu 9:00 AM',        amount: '$150', status: 'scheduled' },
                       ].map((row, i, arr) => {
                         const pill = row.status === 'scheduled'
