@@ -293,7 +293,7 @@ export default function PricingPage() {
       </section>
 
       <section style={{ padding: '0 24px 32px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, maxWidth: 1200, margin: '0 auto' }}>
+        <div className="pricing-tier-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, maxWidth: 1200, margin: '0 auto' }}>
           {PLANS.map(plan => {
             const price = isAnnual ? plan.annual : plan.monthly
             return (

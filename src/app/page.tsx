@@ -448,18 +448,45 @@ export default function HomePage() {
               .hero-trust-num { font-size: 22px; }
               .hero-trust-lab { font-size: 10.5px; }
 
-              /* Dashboard preview HIDDEN on mobile.
-                 The desktop renders 1040px of dashboard with a 3D tilt — there's
-                 no clean way to cram that into a 390px viewport without parts
-                 falling off-screen or shrinking to unreadable. Mobile users get
-                 the clean text + CTA hero instead; they'll see the full dashboard
-                 demo when they sign up. Conversion > eye candy on mobile. */
-              .hero-stage { display: none; }
+              /* Dashboard preview VISIBLE on mobile — Peter wants users to
+                 see the live command center as the hero visual on phone.
+                 We scale the desktop component down via transform: scale
+                 and feed it a wider container so it doesn't get squished.
+                 The phone preview hides on mobile (dashboard is primary). */
+              .hero-stage {
+                display: block !important;
+                position: relative;
+                min-height: 0 !important;
+                width: 100%;
+                margin: 6px 0 0;
+                overflow: hidden;
+                border-radius: 16px;
+              }
+              .hero-stage-dash {
+                position: relative !important;
+                inset: auto !important;
+                padding-right: 0 !important;
+                transform: scale(0.46) !important;
+                transform-origin: top left !important;
+                width: 218% !important;     /* 100 / 0.46 */
+                margin-bottom: -54% !important;
+                display: block !important;
+                align-items: initial !important;
+              }
+              .hero-stage-phone { display: none !important; }
 
-              /* Pricing + job-site grids collapse to single column */
+              /* Pricing grid stays 2-col on mobile so Mission Control +
+                 Operator sit side-by-side. Concierge (3rd child) spans
+                 both columns on row 2. */
               .home-grid-2,
-              .home-grid-3,
-              .home-pricing-grid { grid-template-columns: 1fr; gap: 16px; }
+              .home-grid-3 { grid-template-columns: 1fr; gap: 16px; }
+              .home-pricing-grid {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 12px !important;
+              }
+              .home-pricing-grid > :nth-child(3) {
+                grid-column: 1 / -1;
+              }
 
               /* Tighter section padding throughout */
               section { padding-left: 18px !important; padding-right: 18px !important; }

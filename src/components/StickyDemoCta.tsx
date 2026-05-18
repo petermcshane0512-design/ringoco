@@ -99,12 +99,13 @@ export default function StickyDemoCta() {
           font-variant-numeric: tabular-nums;
         }
 
-        /* Mobile sticky bottom bar — 2 buttons side by side */
-        .sdc-mobile { display: none; }
+        /* Mobile sticky bottom bar — disabled per Peter (covers content).
+           Desktop floating pill remains; phones simply don't show it. */
+        .sdc-mobile { display: none !important; }
         @media (max-width: 767px) {
-          .sdc-desktop { display: none; }
-          .sdc-mobile {
-            display: flex;
+          .sdc-desktop { display: none !important; }
+          .sdc-mobile { display: none !important; }
+          .sdc-mobile-unused-block {
             position: fixed;
             left: 10px; right: 10px; bottom: 10px;
             z-index: 90;

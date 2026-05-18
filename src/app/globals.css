@@ -165,61 +165,75 @@ html { overflow-x: hidden; }
 }
 
 /* ── Mobile top-nav layout (homepage / founder / pricing)
-   On phones: BellAveGo wordmark centered, then the three primary nav
-   buttons (Dashboard / Why BellAveGo? / Pricing) stacked vertically,
-   each full-width with a 52px+ tap target. Sign In / Create Account /
-   Sign Out are hidden on mobile — they live in the sticky bottom CTA
-   bar instead, where they're always reachable without scrolling.
-   Desktop layout (>720px) is untouched. */
+   On phones: BellAveGo wordmark on the LEFT, buttons compact on the
+   RIGHT. Single row so the hero content (headline + dashboard preview)
+   is visible without scrolling past a tall nav stack. Desktop layout
+   (>720px) is untouched. */
 @media (max-width: 720px) {
   .bavg-top-nav {
-    padding: 18px 18px 20px !important;
+    padding: 10px 12px !important;
     height: auto !important;
-    min-height: 80px;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    row-gap: 16px;
+    min-height: 56px;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px;
+    row-gap: 6px;
   }
-  /* Logo — centered, premium size (~220px wordmark) */
+  /* Logo — left side, ~140px */
   .bavg-top-nav-logo {
+    flex-shrink: 0;
     align-self: center !important;
-    justify-content: center !important;
-    width: 100%;
+    justify-content: flex-start !important;
+    width: auto !important;
   }
   .bavg-top-nav-logo img {
-    max-width: 220px !important;
-    width: 100% !important;
+    max-width: 138px !important;
+    width: auto !important;
     height: auto !important;
     margin-top: 0 !important;
   }
-  /* Three stacked full-width buttons */
+  /* Buttons — right side, compact, single row */
   .bavg-top-nav-actions {
-    gap: 10px !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    width: 100%;
+    gap: 5px !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    width: auto !important;
+    flex: 1 1 auto;
+    min-width: 0;
   }
-  /* Mobile nav button styling — full-width, thumb-friendly.
-     Applies to every nav button class. On the homepage the desktop auth
-     buttons (Sign In / Create Account / Sign Out / desktop Dashboard)
-     carry .dt-only so they're hidden on phones and the user sees just
-     Dashboard / Why / Pricing. Other nav-bearing pages (founder, pricing,
-     terms, privacy) currently keep their existing auth buttons visible
-     on mobile since they don't have a sticky CTA — that's fine, they'll
-     just stack 4–5 tall instead of 3. */
   .bavg-top-nav .nav-cta,
   .bavg-top-nav .why-pulse,
   .bavg-top-nav .price-pulse,
   .bavg-top-nav .signin-link,
   .bavg-top-nav .signout-link {
-    width: 100% !important;
+    width: auto !important;
+    flex: 0 0 auto !important;
     justify-content: center !important;
-    padding: 16px 18px !important;
-    font-size: 15.5px !important;
-    min-height: 52px;
+    padding: 7px 10px !important;
+    font-size: 11.5px !important;
+    min-height: 0 !important;
     letter-spacing: -0.2px !important;
     text-align: center;
     white-space: nowrap;
+    border-radius: 7px !important;
+  }
+}
+
+/* ── Pricing tier grid on mobile (the full /pricing page)
+   2-column layout so Mission Control + Operator sit side-by-side;
+   Concierge (3rd card) spans both columns on row 2. Desktop's
+   inline `gridTemplateColumns: repeat(auto-fit, minmax(300px, 1fr))`
+   keeps its 3-column desktop behavior — this only overrides on phones. */
+@media (max-width: 720px) {
+  .pricing-tier-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+  .pricing-tier-grid > :nth-child(3) {
+    grid-column: 1 / -1;
   }
 }
 
