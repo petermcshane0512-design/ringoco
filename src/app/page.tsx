@@ -764,7 +764,7 @@ export default function HomePage() {
               letter-spacing: 0.10em !important;
             }
             /* Shrink the inline-styled iPhone frame + Google Calendar card.
-               CSS `zoom` (now standard) proportionally scales every nested
+               CSS zoom (now standard) proportionally scales every nested
                pixel value — fonts, padding, borders — without us touching
                the inline styles. */
             .appt-phone,
