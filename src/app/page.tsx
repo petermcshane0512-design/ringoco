@@ -50,7 +50,10 @@ export default function HomePage() {
               <button className="signout-link">Sign out</button>
             </SignOutButton>
           ) : (
-            <Link href="/sign-up" className="nav-cta"><span className="nav-cta-text">Sign in / Create Account</span></Link>
+            <>
+              <Link href="/sign-in" className="signin-link">Sign In</Link>
+              <Link href="/sign-up" className="nav-cta"><span className="nav-cta-text">Create Account</span></Link>
+            </>
           )}
         </div>
       </nav>

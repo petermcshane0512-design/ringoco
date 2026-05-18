@@ -113,52 +113,86 @@ html { overflow-x: hidden; }
   border-color: #CBD5E1;
 }
 
+/* Sign In — ghost button with teal accent. Pairs with .nav-cta (Create
+   Account), where .nav-cta is the dominant primary action and this is
+   the lighter "I already have an account" option. */
+.signin-link {
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  letter-spacing: -0.1px;
+  font-family: inherit;
+  cursor: pointer;
+  background: #ffffff;
+  color: #0AA89F;
+  border: 1px solid rgba(10, 168, 159, 0.32);
+  transition: background 0.22s, border-color 0.22s, transform 0.22s;
+}
+.signin-link:hover {
+  background: #F0FBFA;
+  border-color: rgba(10, 168, 159, 0.55);
+  transform: translateY(-1px);
+}
+
 /* ── Mobile top-nav layout (homepage / founder / pricing)
-   Two-row stack on phones:
-     Row 1: BellAveGo wordmark, large and CENTERED (logo is the brand
-            statement, not a corner afterthought).
-     Row 2: 4 nav buttons in a horizontal row, larger tap targets,
-            evenly spread across the full width.
+   Three-row stack on phones:
+     Row 1: BellAveGo wordmark — 2x bigger, centered (brand statement).
+     Row 2: Sign In + Create Account (auth pair).
+     Row 3: Why BellAveGo? + Pricing (info pair).
+   Auth pair sits above info pair via CSS `order` (DOM order is preserved
+   for desktop layout, where Why/Pricing render first as expected).
    Desktop layout (>720px) is untouched. */
 @media (max-width: 720px) {
   .bavg-top-nav {
-    padding: 12px 14px 14px !important;
+    padding: 14px 14px 16px !important;
     height: auto !important;
     min-height: 80px;
     flex-direction: column !important;
     align-items: stretch !important;
-    row-gap: 12px;
+    row-gap: 14px;
   }
-  /* Row 1 — logo centered + bigger */
+  /* Row 1 — Logo: 2x bigger, centered */
   .bavg-top-nav-logo {
     align-self: center !important;
     justify-content: center !important;
     width: 100%;
   }
   .bavg-top-nav-logo img {
-    max-width: 240px !important;
+    max-width: 480px !important;
+    width: 92% !important;
     height: auto !important;
     margin-top: 0 !important;
   }
-  /* Row 2 — buttons horizontal, evenly spread, bigger */
+  /* Rows 2-3 — Buttons: 2 per row, larger tap targets */
   .bavg-top-nav-actions {
     gap: 8px !important;
-    flex-wrap: nowrap !important;
-    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
     width: 100%;
   }
   .bavg-top-nav .nav-cta,
   .bavg-top-nav .why-pulse,
   .bavg-top-nav .price-pulse,
+  .bavg-top-nav .signin-link,
   .bavg-top-nav .signout-link {
-    flex: 1 1 0 !important;          /* equal-width fill */
+    flex: 0 0 calc(50% - 4px) !important;
     justify-content: center !important;
-    padding: 11px 8px !important;
-    font-size: 13px !important;
+    padding: 13px 10px !important;
+    font-size: 14.5px !important;
     letter-spacing: -0.2px !important;
     text-align: center;
     white-space: nowrap;
   }
+  /* Mobile-only row order: auth pair on top, info pair below */
+  .bavg-top-nav .signin-link  { order: 1; }
+  .bavg-top-nav .nav-cta      { order: 2; }  /* Dashboard or Create Account */
+  .bavg-top-nav .signout-link { order: 2; }
+  .bavg-top-nav .why-pulse    { order: 3; }
+  .bavg-top-nav .price-pulse  { order: 4; }
 }
 
 /* ── Sign-in / Sign-up — mobile stack with logo on top

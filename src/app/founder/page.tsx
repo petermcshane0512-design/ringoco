@@ -26,7 +26,8 @@ export default function FounderPage() {
           {isSignedIn && <Link href="/dashboard" className="nav-cta"><span className="nav-cta-text">Dashboard</span></Link>}
           <Link href="/founder" className="why-pulse"><span className="why-pulse-text">Why BellAveGo?</span></Link>
           <Link href="/pricing" className="price-pulse">Pricing</Link>
-          {!isSignedIn && <Link href="/sign-up" className="nav-cta"><span className="nav-cta-text">Sign in / Create Account</span></Link>}
+          {!isSignedIn && <Link href="/sign-in" className="signin-link">Sign In</Link>}
+          {!isSignedIn && <Link href="/sign-up" className="nav-cta"><span className="nav-cta-text">Create Account</span></Link>}
         </div>
       </nav>
 

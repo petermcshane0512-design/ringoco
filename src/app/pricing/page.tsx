@@ -167,7 +167,10 @@ export default function PricingPage() {
           <Link href="/founder" className="why-pulse"><span className="why-pulse-text">Why BellAveGo?</span></Link>
           <Link href="/pricing" className="price-pulse">Pricing</Link>
           {!isSignedIn && (
-            <Link href="/sign-up" className="nav-cta"><span className="nav-cta-text">Sign in / Create Account</span></Link>
+            <>
+              <Link href="/sign-in" className="signin-link">Sign In</Link>
+              <Link href="/sign-up" className="nav-cta"><span className="nav-cta-text">Create Account</span></Link>
+            </>
           )}
         </div>
       </nav>
