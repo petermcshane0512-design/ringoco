@@ -40,21 +40,26 @@ export default function HomePage() {
           />
         </a>
         <div className="bavg-top-nav-actions" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {/* Desktop-only auth + dashboard (mobile gets a single Dashboard
+              button below, plus sticky CTA at the bottom of the viewport). */}
           {isSignedIn && (
-            <Link href="/dashboard" className="nav-cta"><span className="nav-cta-text">Dashboard</span></Link>
+            <Link href="/dashboard" className="nav-cta dt-only"><span className="nav-cta-text">Dashboard</span></Link>
           )}
           <Link href="/founder" className="why-pulse"><span className="why-pulse-text">Why BellAveGo?</span></Link>
           <Link href="/pricing" className="price-pulse">Pricing</Link>
           {isSignedIn ? (
             <SignOutButton redirectUrl="/">
-              <button className="signout-link">Sign out</button>
+              <button className="signout-link dt-only">Sign out</button>
             </SignOutButton>
           ) : (
             <>
-              <Link href="/sign-in" className="signin-link">Sign In</Link>
-              <Link href="/sign-up" className="nav-cta"><span className="nav-cta-text">Create Account</span></Link>
+              <Link href="/sign-in" className="signin-link dt-only">Sign In</Link>
+              <Link href="/sign-up" className="nav-cta dt-only"><span className="nav-cta-text">Create Account</span></Link>
             </>
           )}
+          {/* Mobile-only: single Dashboard nav button. Clerk middleware
+              redirects unauthed users to /sign-in automatically. */}
+          <Link href="/dashboard" className="nav-cta mb-only"><span className="nav-cta-text">Dashboard</span></Link>
         </div>
       </nav>
 
@@ -420,11 +425,13 @@ export default function HomePage() {
 
             /* ── Mobile (iOS portrait / cold-email-click experience) ── */
             @media (max-width: 768px) {
-              /* Tighter hero — fits above the fold on iPhone */
+              /* Tighter hero — fits above the fold on iPhone. Per the mobile
+                 redesign brief, headline goes to clamp(40px..48px) for
+                 thumb-stopping presence; subhead stays compact (15px). */
               .hero-grid { padding: 36px 18px 48px; gap: 22px; grid-template-columns: 1fr; }
               .hero-eyebrow { font-size: 10.5px; margin-bottom: 14px; padding: 5px 11px; }
-              .hero-h1 { font-size: 34px; line-height: 1.05; margin-bottom: 14px; }
-              .hero-sub { font-size: 15px; margin-bottom: 22px; max-width: 100%; }
+              .hero-h1 { font-size: clamp(40px, 11vw, 48px); line-height: 1.02; margin-bottom: 16px; letter-spacing: -0.03em; }
+              .hero-sub { font-size: 15.5px; line-height: 1.55; margin-bottom: 24px; max-width: 100%; }
 
               /* CTAs become full-width thumb-targets */
               .hero-actions { gap: 10px; margin-bottom: 22px; flex-direction: column; align-items: stretch; }
@@ -513,13 +520,23 @@ export default function HomePage() {
                 Never lose another job<br />
                 <span className="accent">to voicemail.</span>
               </h1>
-              <p className="hero-sub">
+              {/* Subhead — desktop keeps the long sales-y version, mobile
+                  gets a short scannable one. Both Pads use the same .hero-sub
+                  base styles; .dt-only / .mb-only-block control visibility. */}
+              <p className="hero-sub dt-only-block">
                 BellAveGo answers when you can&apos;t, captures the lead, and texts you a summary with the caller&apos;s name, problem, and times they&apos;re available. Pays for itself in one booked job — built for home service teams of 1–15.
+              </p>
+              <p className="hero-sub mb-only-block">
+                BellAveGo answers missed calls, captures the job, and texts you the next step in seconds.
               </p>
 
               <div className="hero-actions">
                 <Link href={isSignedIn ? '/dashboard' : '/sign-up'} className="hero-cta-primary">
-                  {isSignedIn ? 'Open Dashboard' : 'Get Started'}
+                  {/* Desktop reads "Get Started" / "Open Dashboard"; mobile
+                      always reads "Open Dashboard" (the unsigned path still
+                      sends them to sign-up via the href above). */}
+                  <span className="dt-only-inline">{isSignedIn ? 'Open Dashboard' : 'Get Started'}</span>
+                  <span className="mb-only-inline">Open Dashboard</span>
                   <svg className="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                   </svg>
@@ -528,7 +545,8 @@ export default function HomePage() {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
                   </svg>
-                  Call the AI Demo · (651) 467-7829
+                  <span className="dt-only-inline">Call the AI Demo · (651) 467-7829</span>
+                  <span className="mb-only-inline">Call the AI Demo</span>
                 </a>
               </div>
 

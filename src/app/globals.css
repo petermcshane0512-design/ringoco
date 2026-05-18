@@ -139,23 +139,30 @@ html { overflow-x: hidden; }
 }
 
 /* ── Mobile visibility utilities ──
-   .dt-only — show on desktop, hide on phone
-   .mb-only — show on phone, hide on desktop
    Lets us keep DESKTOP MARKUP UNCHANGED while adding mobile-specific
-   variants of buttons / sections / visuals where they exist together
-   in the JSX. (We don't have Tailwind, so these stand in for
-   `hidden lg:block` / `block lg:hidden`.)                            */
-.dt-only { display: inline-flex; }
-.mb-only { display: none !important; }
+   variants of buttons / sections / visuals that live alongside the
+   desktop versions in the JSX. (We don't have Tailwind, so these
+   stand in for `hidden lg:block` / `block lg:hidden`.)
+     .dt-only         — inline-flex on desktop, hidden on phone
+     .mb-only         — hidden on desktop, inline-flex on phone
+     .dt-only-block   — block on desktop, hidden on phone
+     .mb-only-block   — hidden on desktop, block on phone
+     .dt-only-inline  — inline on desktop, hidden on phone
+     .mb-only-inline  — hidden on desktop, inline on phone  */
+.dt-only         { display: inline-flex; }
+.mb-only         { display: none !important; }
+.dt-only-block   { display: block; }
+.mb-only-block   { display: none !important; }
+.dt-only-inline  { display: inline; }
+.mb-only-inline  { display: none !important; }
 @media (max-width: 720px) {
-  .dt-only { display: none !important; }
-  .mb-only { display: inline-flex !important; }
-  /* Block variant for sections/cards that need block-level display
-     (the inline-flex default works for nav buttons but not for
-     hero cards, dashboard mockups, etc.). Use .mb-only-block. */
-  .mb-only-block { display: block !important; }
+  .dt-only         { display: none !important; }
+  .mb-only         { display: inline-flex !important; }
+  .dt-only-block   { display: none !important; }
+  .mb-only-block   { display: block !important; }
+  .dt-only-inline  { display: none !important; }
+  .mb-only-inline  { display: inline !important; }
 }
-.mb-only-block { display: none; }
 
 /* ── Mobile top-nav layout (homepage / founder / pricing)
    On phones: BellAveGo wordmark centered, then the three primary nav
@@ -192,24 +199,19 @@ html { overflow-x: hidden; }
     align-items: stretch !important;
     width: 100%;
   }
-  /* Hide auth buttons on mobile — they're in the sticky bottom CTA */
-  .bavg-top-nav .signin-link,
-  .bavg-top-nav .signout-link {
-    display: none !important;
-  }
-  /* When user is NOT signed in, .nav-cta is "Create Account" — hide it on
-     mobile too (the sticky bottom CTA handles "Start free trial"). The
-     mobile-only Dashboard button (`.nav-dashboard-mb`) is what the user
-     sees in the nav instead. When signed in, the rendered .nav-cta is
-     "Dashboard" — we keep that one visible via the .nav-dashboard-mb
-     class on it. */
-  .bavg-top-nav .nav-cta:not(.nav-dashboard-mb) {
-    display: none !important;
-  }
-  /* All visible mobile nav buttons: full-width, thumb-friendly */
+  /* Mobile nav button styling — full-width, thumb-friendly.
+     Applies to every nav button class. On the homepage the desktop auth
+     buttons (Sign In / Create Account / Sign Out / desktop Dashboard)
+     carry .dt-only so they're hidden on phones and the user sees just
+     Dashboard / Why / Pricing. Other nav-bearing pages (founder, pricing,
+     terms, privacy) currently keep their existing auth buttons visible
+     on mobile since they don't have a sticky CTA — that's fine, they'll
+     just stack 4–5 tall instead of 3. */
   .bavg-top-nav .nav-cta,
   .bavg-top-nav .why-pulse,
-  .bavg-top-nav .price-pulse {
+  .bavg-top-nav .price-pulse,
+  .bavg-top-nav .signin-link,
+  .bavg-top-nav .signout-link {
     width: 100% !important;
     justify-content: center !important;
     padding: 16px 18px !important;
