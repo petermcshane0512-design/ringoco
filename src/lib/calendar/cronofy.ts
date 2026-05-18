@@ -39,9 +39,26 @@ const supabase = createClient(
  *   5. Env vars: CRONOFY_CLIENT_ID, CRONOFY_CLIENT_SECRET
  */
 
-const CRONOFY_AUTH_URL = 'https://app.cronofy.com/oauth/authorize'
-const CRONOFY_TOKEN_URL = 'https://api.cronofy.com/oauth/token'
-const CRONOFY_API_BASE = 'https://api.cronofy.com/v1'
+// Cronofy data residency — defaults to US. EU customers should set
+// CRONOFY_API_HOST=https://api-de.cronofy.com (and AU = https://api-au.cronofy.com).
+// We normalize: accept with or without the https:// prefix, strip any trailing slash.
+function normalizeHost(raw: string | undefined, fallback: string): string {
+  const h = (raw || fallback).trim().replace(/\/+$/, '')
+  if (h.startsWith('http://') || h.startsWith('https://')) return h
+  return `https://${h}`
+}
+
+const CRONOFY_API_HOST = normalizeHost(process.env.CRONOFY_API_HOST, 'https://api.cronofy.com')
+// app.cronofy.com hosts OAuth for US. Derive the matching app host from the API
+// host so EU/AU customers go through the right OAuth endpoint too.
+const CRONOFY_APP_HOST = CRONOFY_API_HOST
+  .replace('https://api-de.cronofy.com', 'https://app-de.cronofy.com')
+  .replace('https://api-au.cronofy.com', 'https://app-au.cronofy.com')
+  .replace('https://api.cronofy.com', 'https://app.cronofy.com')
+
+const CRONOFY_AUTH_URL = `${CRONOFY_APP_HOST}/oauth/authorize`
+const CRONOFY_TOKEN_URL = `${CRONOFY_API_HOST}/oauth/token`
+const CRONOFY_API_BASE = `${CRONOFY_API_HOST}/v1`
 
 // Scopes we request. read_free_busy is essential. create_event + delete_event
 // unlock Phase 2 auto-booking. account_read pulls profile so we know the
