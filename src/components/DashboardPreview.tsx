@@ -556,7 +556,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                 </div>
                 <div style={{ fontSize: 9, color: '#4A6670', lineHeight: 1.5 }}>Connect once and the AI offers your real open times to callers — no double-booking, travel buffer baked in.</div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 9 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 9, marginBottom: 11 }}>
                 {[
                   { name: 'Google Calendar',   color: '#4285F4', glyph: 'G', status: 'Connected', live: true  },
                   { name: 'Microsoft Outlook', color: '#0078D4', glyph: 'O', status: 'Available',  live: false },
@@ -568,6 +568,103 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                     <span style={{ display: 'inline-block', fontSize: 7.5, fontWeight: 700, padding: '2px 7px', borderRadius: 8, background: p.live ? '#ECFDF5' : 'rgba(10,168,159,0.06)', color: p.live ? '#059669' : '#0AA89F', border: p.live ? '1px solid #A7F3D0' : '1px solid rgba(10,168,159,0.22)' }}>{p.status}</span>
                   </div>
                 ))}
+              </div>
+
+              {/* Mini week view — fake HVAC schedule. Orange blocks were
+                  auto-booked by BellAveGo's AI receptionist; blue blocks
+                  are pre-existing Google Calendar events. */}
+              <div style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, overflow: 'hidden', boxShadow: '0 2px 8px rgba(7,27,58,0.05)' }}>
+                {/* Header — month + legend */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderBottom: '1px solid rgba(10,168,159,0.10)', background: 'linear-gradient(135deg, #FFFFFF 0%, #FFFAF3 100%)' }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.2px' }}>May 18 – May 22 · This week</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: '#4285F4' }} />
+                      <span style={{ fontSize: 7.5, fontWeight: 700, color: '#4A6670' }}>Google</span>
+                    </div>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: 'linear-gradient(135deg, #FF9D5A, #E8742B)' }} />
+                      <span style={{ fontSize: 7.5, fontWeight: 700, color: '#C84B26' }}>BellAveGo auto-booked</span>
+                    </div>
+                  </div>
+                </div>
+                {/* 5-day grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', borderTop: '1px solid rgba(10,168,159,0.08)' }}>
+                  {[
+                    {
+                      day: 'Mon', date: '18',
+                      events: [
+                        { time: '8:00 AM',  title: 'AC tune-up · Marcus T.',     source: 'google' },
+                        { time: '1:00 PM',  title: 'Furnace inspect · Diane R.', source: 'bavg'   },
+                      ],
+                    },
+                    {
+                      day: 'Tue', date: '19',
+                      events: [
+                        { time: '9:00 AM',  title: 'HVAC repair · Kevin S.',     source: 'google' },
+                        { time: '2:00 PM',  title: 'Maintenance · Priya L.',     source: 'google' },
+                      ],
+                    },
+                    {
+                      day: 'Wed', date: '20',
+                      events: [
+                        { time: '10:00 AM', title: 'AC install est. · Sarah L.', source: 'bavg'   },
+                        { time: '3:00 PM',  title: 'Ductwork check',             source: 'google' },
+                      ],
+                    },
+                    {
+                      day: 'Thu', date: '21',
+                      events: [
+                        { time: '8:00 AM',  title: 'Emergency · James W.',       source: 'bavg'   },
+                        { time: '1:00 PM',  title: 'Tune-up call',               source: 'google' },
+                      ],
+                    },
+                    {
+                      day: 'Fri', date: '22',
+                      events: [
+                        { time: '9:00 AM',  title: 'Heating diagnostic',         source: 'google' },
+                        { time: '11:00 AM', title: 'AC repair · Mike R.',        source: 'bavg'   },
+                      ],
+                    },
+                  ].map((col, i, arr) => (
+                    <div key={col.day} style={{ borderRight: i < arr.length - 1 ? '1px solid rgba(10,168,159,0.08)' : 'none', padding: '8px 6px', minHeight: 130 }}>
+                      <div style={{ textAlign: 'center', marginBottom: 7 }}>
+                        <div style={{ fontSize: 7, fontWeight: 800, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.10em' }}>{col.day}</div>
+                        <div style={{ fontSize: 13, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.4px', lineHeight: 1 }}>{col.date}</div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                        {col.events.map((ev, j) => {
+                          const isBavg = ev.source === 'bavg'
+                          return (
+                            <div key={j} style={{
+                              borderRadius: 5,
+                              padding: '4px 6px',
+                              background: isBavg
+                                ? 'linear-gradient(135deg, rgba(255,157,90,0.95), rgba(232,116,43,0.95))'
+                                : 'rgba(66,133,244,0.92)',
+                              color: '#fff',
+                              borderLeft: isBavg ? '3px solid #C84B26' : '3px solid #1A73E8',
+                              boxShadow: isBavg
+                                ? '0 2px 6px rgba(232,116,43,0.32)'
+                                : '0 2px 5px rgba(66,133,244,0.28)',
+                            }}>
+                              <div style={{ fontSize: 7, fontWeight: 800, letterSpacing: '0.05em', opacity: 0.92 }}>{ev.time}</div>
+                              <div style={{ fontSize: 8.5, fontWeight: 700, lineHeight: 1.2, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.title}</div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Footer summary */}
+                <div style={{ padding: '7px 12px', borderTop: '1px solid rgba(10,168,159,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(232,116,43,0.04)' }}>
+                  <span style={{ fontSize: 8, fontWeight: 700, color: '#8B5A3D' }}>10 appointments this week</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 8, fontWeight: 800, color: '#C84B26' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: 2, background: 'linear-gradient(135deg, #FF9D5A, #E8742B)' }} />
+                    4 auto-booked by AI · Saved you ~80 min
+                  </span>
+                </div>
               </div>
             </div>
           )}
