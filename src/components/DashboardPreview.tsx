@@ -4,11 +4,15 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@clerk/nextjs'
 
+// Canonical 4 appointments — same set surfaces across AI Receptionist (recent
+// calls), Calendar mini-view, and the Jobs table. Demonstrates the power-user
+// flow: every call the AI fields is auto-booked into the contractor's calendar
+// without manual approval. No pending_approval status anywhere.
 const JOBS = [
-  { name: 'Marcus T.', type: 'HVAC Repair', status: 'scheduled', time: 'Today 8:00 AM' },
-  { name: 'Diane R.', type: 'Furnace Tune-up', status: 'pending_approval', time: 'Tomorrow 10:00 AM' },
-  { name: 'Kevin S.', type: 'Heat Pump Service', status: 'scheduled', time: 'Tomorrow 2:00 PM' },
-  { name: 'Priya L.', type: 'AC Maintenance', status: 'scheduled', time: 'Thu 9:00 AM' },
+  { name: 'Marcus T.', type: 'HVAC Repair',         status: 'scheduled', time: 'Today 8:00 AM' },
+  { name: 'Sarah L.',  type: "Furnace Won't Start", status: 'scheduled', time: 'Today 1:00 PM' },
+  { name: 'Kevin S.',  type: 'Heat Pump Service',   status: 'scheduled', time: 'Tomorrow 9:00 AM' },
+  { name: 'Ana K.',    type: 'Thermostat Install',  status: 'scheduled', time: 'Tomorrow 2:00 PM' },
 ]
 
 const REPORTS = [
@@ -32,8 +36,8 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
     revenue: 18430,
     callsToday: 5,
     callsThisWeek: 27,
-    pending: 2,
-    upcoming: 6,
+    pending: 0,        // auto-booking on — never pending
+    upcoming: 4,       // matches canonical JOBS list above
     customers: 124,
     calls: 5,
     jobs: 4,
@@ -335,18 +339,18 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
               <div style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, padding: '11px 13px', marginBottom: 9, boxShadow: '0 2px 8px rgba(7,27,58,0.05)' }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 9 }}>Recent Calls</div>
                 {[
-                  { name: 'Mike R.', type: 'HVAC Repair', time: '2m ago', status: 'booked' },
-                  { name: 'Sarah L.', type: "Furnace Won't Start", time: '18m ago', status: 'booked' },
-                  { name: 'James W.', type: 'AC Not Cooling', time: '1h ago', status: 'saved' },
-                  { name: 'Ana K.', type: 'Thermostat Install', time: '2h ago', status: 'booked' },
+                  { name: 'Ana K.',    type: 'Thermostat Install',  time: '2m ago',  when: 'Tomorrow 2:00 PM' },
+                  { name: 'Kevin S.',  type: 'Heat Pump Service',   time: '18m ago', when: 'Tomorrow 9:00 AM' },
+                  { name: 'Sarah L.',  type: "Furnace Won't Start", time: '1h ago',  when: 'Today 1:00 PM' },
+                  { name: 'Marcus T.', type: 'HVAC Repair',         time: '2h ago',  when: 'Today 8:00 AM' },
                 ].map((c, i, arr) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: i < arr.length - 1 ? '1px solid rgba(10,168,159,0.08)' : 'none' }}>
-                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: c.status === 'booked' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)', border: c.status === 'booked' ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, flexShrink: 0 }}>{c.status === 'booked' ? 'Cal' : 'Tel'}</div>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 800, flexShrink: 0, color: '#0B1F3A' }}>AI</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 10, fontWeight: 600, color: '#0B1F3A' }}>{c.name} . {c.type}</div>
-                      <div style={{ fontSize: 8, color: '#7AAAB2' }}>{c.time}</div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: '#0B1F3A' }}>{c.name} · {c.type}</div>
+                      <div style={{ fontSize: 8, color: '#7AAAB2' }}>{c.time} · auto-booked for {c.when}</div>
                     </div>
-                    <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 7px', borderRadius: 8, flexShrink: 0, ...(c.status === 'booked' ? { background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' } : { background: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A' }) }}>{c.status === 'booked' ? 'Booked' : 'Saved'}</span>
+                    <span style={{ fontSize: 7.5, fontWeight: 800, padding: '2px 7px', borderRadius: 8, flexShrink: 0, background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', color: '#0B1F3A', letterSpacing: '0.04em' }}>AUTO-BOOKED</span>
                   </div>
                 ))}
               </div>
@@ -616,38 +620,38 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', borderTop: '1px solid rgba(10,168,159,0.08)' }}>
                   {[
                     {
+                      // TODAY — first 2 calendar events match the 4 AI-booked
+                      // canonical customers shown in the AI Receptionist tab + Jobs table.
                       day: 'Mon', date: '18',
                       events: [
-                        { time: '8:00 AM',  title: 'AC tune-up · Marcus T.',     source: 'google' },
-                        { time: '1:00 PM',  title: 'Furnace inspect · Diane R.', source: 'bavg'   },
+                        { time: '8:00 AM', title: 'HVAC Repair · Marcus T.',         source: 'bavg'   },
+                        { time: '1:00 PM', title: "Furnace Won't Start · Sarah L.",  source: 'bavg'   },
                       ],
                     },
                     {
                       day: 'Tue', date: '19',
                       events: [
-                        { time: '9:00 AM',  title: 'HVAC repair · Kevin S.',     source: 'google' },
-                        { time: '2:00 PM',  title: 'Maintenance · Priya L.',     source: 'google' },
+                        { time: '9:00 AM', title: 'Heat Pump Service · Kevin S.',    source: 'bavg'   },
+                        { time: '2:00 PM', title: 'Thermostat Install · Ana K.',     source: 'bavg'   },
                       ],
                     },
                     {
                       day: 'Wed', date: '20',
                       events: [
-                        { time: '10:00 AM', title: 'AC install est. · Sarah L.', source: 'bavg'   },
-                        { time: '3:00 PM',  title: 'Ductwork check',             source: 'google' },
+                        { time: '12:00 PM', title: 'Lunch with Pat',                 source: 'google' },
+                        { time: '3:00 PM',  title: 'Supplier pickup',                source: 'google' },
                       ],
                     },
                     {
                       day: 'Thu', date: '21',
                       events: [
-                        { time: '8:00 AM',  title: 'Emergency · James W.',       source: 'bavg'   },
-                        { time: '1:00 PM',  title: 'Tune-up call',               source: 'google' },
+                        { time: '10:00 AM', title: 'Truck inspection',               source: 'google' },
                       ],
                     },
                     {
                       day: 'Fri', date: '22',
                       events: [
-                        { time: '9:00 AM',  title: 'Heating diagnostic',         source: 'google' },
-                        { time: '11:00 AM', title: 'AC repair · Mike R.',        source: 'bavg'   },
+                        { time: '8:00 AM', title: 'Team huddle',                     source: 'google' },
                       ],
                     },
                   ].map((col, i, arr) => (
@@ -802,50 +806,29 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
               {/* Left col — Incoming requests (table) + All jobs (table) */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
 
-                {/* Incoming requests — table-style, mirrors live dashboard */}
-                <div style={{ background: '#ffffff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, boxShadow: '0 2px 10px rgba(7,27,58,0.05)', overflow: 'hidden' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', borderBottom: '1px solid rgba(10,168,159,0.08)' }}>
-                    <div>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A' }}>Incoming requests</div>
-                      <div style={{ fontSize: 7.5, color: '#7AAAB2', marginTop: 1 }}>Accept or decline jobs from your AI receptionist</div>
+                {/* Auto-booking status banner — replaces "Incoming requests" since
+                    this contractor has auto-booking turned on. No queue, no approval
+                    step, just a live status that the AI is handling everything. */}
+                <div style={{ background: 'linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 65%)', border: '1.5px solid rgba(232,116,43,0.32)', borderRadius: 11, boxShadow: '0 4px 14px rgba(232,116,43,0.12)', overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 30, height: 30, borderRadius: 9, background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 9px rgba(232,116,43,0.32)' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 800, color: '#C84B26', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Auto-booking ON</div>
+                        <div style={{ fontSize: 9.5, color: '#4A6670', marginTop: 1 }}>AI books straight to your calendar &middot; no approval needed</div>
+                      </div>
                     </div>
-                    <span style={{ fontSize: 7, fontWeight: 700, padding: '2px 7px', borderRadius: 10, background: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A' }}>2 pending</span>
+                    <span style={{ fontSize: 7, fontWeight: 800, padding: '3px 8px', borderRadius: 10, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', letterSpacing: '0.06em' }}>4 BOOKED TODAY</span>
                   </div>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                      <tr style={{ background: 'rgba(10,168,159,0.03)' }}>
-                        <th style={{ fontSize: 7, fontWeight: 800, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'left', padding: '5px 10px' }}>Customer</th>
-                        <th style={{ fontSize: 7, fontWeight: 800, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'left', padding: '5px 10px' }}>Service</th>
-                        <th style={{ fontSize: 7, fontWeight: 800, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'left', padding: '5px 10px' }}>When</th>
-                        <th style={{ fontSize: 7, fontWeight: 800, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'right', padding: '5px 10px' }}>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[
-                        { name: 'Sarah L.',  svc: 'Duct Cleaning', when: 'Tomorrow 3:00 PM' },
-                        { name: 'James W.', svc: 'AC Not Cooling',  when: 'Today 5:30 PM' },
-                      ].map((row, i) => (
-                        <tr key={i} style={{ borderTop: '1px solid rgba(10,168,159,0.08)' }}>
-                          <td style={{ fontSize: 9, fontWeight: 700, color: '#0B1F3A', padding: '6px 10px' }}>{row.name}</td>
-                          <td style={{ fontSize: 9, color: '#4A6670', padding: '6px 10px' }}>{row.svc}</td>
-                          <td style={{ fontSize: 9, color: '#4A6670', padding: '6px 10px' }}>{row.when}</td>
-                          <td style={{ padding: '6px 10px', textAlign: 'right' }}>
-                            <div style={{ display: 'inline-flex', gap: 5 }}>
-                              <span style={{ padding: '2px 7px', borderRadius: 5, background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#059669', fontSize: 7.5, fontWeight: 700 }}>Accept</span>
-                              <span style={{ padding: '2px 7px', borderRadius: 5, background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', fontSize: 7.5, fontWeight: 700 }}>Decline</span>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
 
                 {/* All jobs — table-style, mirrors live dashboard */}
                 <div style={{ background: '#ffffff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, boxShadow: '0 2px 10px rgba(7,27,58,0.05)', overflow: 'hidden' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', borderBottom: '1px solid rgba(10,168,159,0.08)' }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A' }}>All jobs</div>
-                    <span style={{ fontSize: 7.5, color: '#7AAAB2', fontWeight: 600 }}>{stats.upcoming + stats.pending} total</span>
+                    <span style={{ fontSize: 7.5, color: '#7AAAB2', fontWeight: 600 }}>{stats.upcoming} total</span>
                   </div>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
@@ -859,14 +842,12 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                     </thead>
                     <tbody>
                       {[
-                        { name: 'Marcus T.', svc: 'HVAC Repair',         when: 'Today 8:00 AM',      amount: '$485', status: 'scheduled' },
-                        { name: 'Diane R.',  svc: 'Furnace Tune-up',   when: 'Tomorrow 10:00 AM',  amount: '—',    status: 'pending'   },
-                        { name: 'Kevin S.',  svc: 'Heat Pump Service',   when: 'Tomorrow 2:00 PM',   amount: '$210', status: 'scheduled' },
-                        { name: 'Priya L.',  svc: 'Cleaning',            when: 'Thu 9:00 AM',        amount: '$150', status: 'scheduled' },
+                        { name: 'Marcus T.', svc: 'HVAC Repair',         when: 'Today 8:00 AM',     amount: '$485',   status: 'auto' },
+                        { name: 'Sarah L.',  svc: "Furnace Won't Start", when: 'Today 1:00 PM',     amount: '$640',   status: 'auto' },
+                        { name: 'Kevin S.',  svc: 'Heat Pump Service',   when: 'Tomorrow 9:00 AM',  amount: '$3,850', status: 'auto' },
+                        { name: 'Ana K.',    svc: 'Thermostat Install',  when: 'Tomorrow 2:00 PM',  amount: '$425',   status: 'auto' },
                       ].map((row, i, arr) => {
-                        const pill = row.status === 'scheduled'
-                          ? { bg: '#ECFDF5', color: '#059669', border: '#A7F3D0', label: 'Scheduled' }
-                          : { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A', label: 'Pending' }
+                        const pill = { bg: 'rgba(232,116,43,0.10)', color: '#C84B26', border: 'rgba(232,116,43,0.32)', label: 'AI Auto-Booked' }
                         return (
                           <tr key={i} style={{ borderTop: i === 0 ? 'none' : '1px solid rgba(10,168,159,0.06)' }}>
                             <td style={{ fontSize: 9, fontWeight: 700, color: '#0B1F3A', padding: '6px 10px' }}>{row.name}</td>
