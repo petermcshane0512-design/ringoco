@@ -45,15 +45,15 @@ export default function FounderPage() {
               Hi, I&apos;m Peter.<br />
               I founded <span style={{ background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', filter: 'drop-shadow(0 2px 10px rgba(232,116,43,0.32))' }}>BellAveGo.</span>
             </h1>
-            <div style={{ fontSize: 16, lineHeight: 1.65, color: '#3D5A62', maxWidth: 540 }}>
-              <p style={{ margin: '0 0 14px' }}>
-                BellAveGo was created after watching too many home-service businesses lose valuable jobs to missed calls and outdated answering systems. Contractors deserved a smarter solution &mdash; one that grows their revenue instead of adding more software to manage.
+            <div style={{ fontSize: 16, lineHeight: 1.65, color: '#3D5A62', maxWidth: 560 }}>
+              <p style={{ margin: '0 0 16px' }}>
+                I didn&apos;t start BellAveGo because AI was trending &mdash; I started it because I watched hardworking people lose money while doing the actual work. One afternoon, I was helping my friend Joe with a garage project when his phone rang four different times in under an hour. He ignored two calls because his hands were full, answered one just to say <em>&ldquo;I&rsquo;ll call you back,&rdquo;</em> and had to completely stop working just to schedule an appointment. Standing there watching it happen in real time, it hit me: thousands of home-service businesses are losing revenue every single day simply because they&rsquo;re too busy working to manage everything happening around them.
               </p>
-              <p style={{ margin: '0 0 14px' }}>
-                We combined <span style={{ color: '#0AA89F', fontWeight: 700 }}>AI reception</span>, <span style={{ color: '#0AA89F', fontWeight: 700 }}>lead capture</span>, scheduling, invoicing, and growth-focused consulting into one platform built specifically for home-service teams. The AI responds naturally, captures the right details, and instantly texts the owner actionable info so no lead gets lost.
+              <p style={{ margin: '0 0 16px' }}>
+                My team and I have spent years deep in the world of <span style={{ color: '#0AA89F', fontWeight: 700 }}>LLMs</span>, <span style={{ color: '#0AA89F', fontWeight: 700 }}>voice AI</span>, <span style={{ color: '#0AA89F', fontWeight: 700 }}>agentic workflows</span>, retrieval systems, automation pipelines, and conversational inference systems &mdash; not just experimenting with AI, but learning how to deploy it in ways that actually solve operational problems for real businesses. That&rsquo;s why we built BellAveGo: an AI receptionist and operational intelligence platform designed specifically for home-service teams with anywhere from one to fifteen employees. BellAveGo answers missed calls, books appointments, captures leads, analyzes neighborhood demand patterns, identifies revenue opportunities, and helps owners stop losing business while they&rsquo;re physically on the job.
               </p>
               <p style={{ margin: '0 0 26px' }}>
-                We&apos;re focused on long-term relationships with the businesses we work with. If BellAveGo doesn&apos;t earn its keep, we make it right &mdash; that&apos;s the deal.
+                Behind the scenes, BellAveGo runs a network of <span style={{ color: '#C84B26', fontWeight: 800 }}>over 30 specialized agentic AI systems</span> that continuously analyze call behavior, local market trends, competitor positioning, booking inefficiencies, customer intent, and missed revenue opportunities across each client&rsquo;s service area. Those systems help generate BellAveGo consulting reports, which are then manually reviewed and refined by our team to turn raw AI analysis into real-world business strategy. We genuinely believe <strong>every single home-service business in the world could increase yearly revenue by 30%+ using BellAveGo</strong> &mdash; simply by capturing more leads, reducing missed opportunities, automating scheduling, saving time on the job, and identifying market opportunities they otherwise would never see. BellAveGo was never built to replace hardworking people &mdash; it was built to give smaller teams access to the kind of automation, operational intelligence, and market analysis that used to only exist inside large companies.
               </p>
             </div>
 
@@ -170,43 +170,6 @@ export default function FounderPage() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* WHY I BUILT IT — three concise quote blocks */}
-      <section style={{ position: 'relative', padding: '40px 32px 64px' }}>
-        <div className="mc-glow-orange" style={{ width: 500, height: 500, top: '10%', left: '-10%' }} />
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 1080, margin: '0 auto' }}>
-          <p style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 14, textAlign: 'center' }}>Why I built it</p>
-          <h2 style={{ fontSize: 'clamp(26px, 3.4vw, 38px)', fontWeight: 900, letterSpacing: '-0.03em', textAlign: 'center', color: '#0B1F3A', marginBottom: 36, lineHeight: 1.1 }}>
-            We kept seeing the same problem.
-          </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
-            {[
-              {
-                eyebrow: 'The pain',
-                body: 'Good businesses missing valuable jobs because they were on a ladder, driving between calls, or under a sink when the phone rang.',
-                accent: 'orange',
-              },
-              {
-                eyebrow: 'The market',
-                body: 'Most solutions were either expensive agencies, outdated answering services, or generic AI tools that sounded robotic.',
-                accent: 'teal',
-              },
-              {
-                eyebrow: 'The fix',
-                body: 'We built BellAveGo to feel like a real front desk for modern home-service teams — answers like a human, books like a pro, costs less than a missed job.',
-                accent: 'orange',
-              },
-            ].map((b, i) => (
-              <div key={i} className={`mc-card mc-card-${b.accent}`}>
-                <div className="mc-eyebrow" style={{ color: b.accent === 'orange' ? '#C84B26' : '#0AA89F' }}>{b.eyebrow}</div>
-                <p style={{ fontSize: 15, lineHeight: 1.6, color: '#0B1F3A', margin: 0, fontWeight: 500 }}>
-                  {b.body}
-                </p>
-              </div>
-            ))}
           </div>
         </div>
       </section>
