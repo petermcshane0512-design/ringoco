@@ -43,6 +43,28 @@ export async function POST(req: NextRequest) {
     if (SAFE_PROFILE_COLUMNS.has(k)) filtered[k] = v
   }
 
+  // ── Referral attribution capture ──
+  // If the visitor landed via ?ref=BAVG-XXXXXX, middleware set a bavg_ref cookie.
+  // Read it here on first profile creation and pre-fill referred_by so the
+  // Stripe webhook can grant the referrer a free month when checkout completes.
+  // First-touch wins: we never overwrite an existing referred_by value.
+  try {
+    const refCookie = req.cookies.get('bavg_ref')?.value
+    if (refCookie && /^BAVG-[A-Z0-9]{6}$/.test(refCookie)) {
+      const { data: existing } = await supabase
+        .from('profiles')
+        .select('referred_by')
+        .eq('user_id', userId)
+        .maybeSingle()
+      const already = (existing as { referred_by?: string | null } | null)?.referred_by
+      if (!already) {
+        filtered.referred_by = refCookie
+      }
+    }
+  } catch {
+    // Cookie read failure is non-fatal — profile save continues without attribution.
+  }
+
   const { error } = await supabase
     .from('profiles')
     .upsert(filtered, { onConflict: 'user_id' })

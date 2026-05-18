@@ -5,6 +5,7 @@ import twilio from 'twilio'
 import { provisionNumberForUser } from '@/lib/provisionNumber'
 import { PRICE_TO_TIER } from '@/lib/pricing'
 import { applyLedgerEntry } from '@/lib/marketing/growth-wallet'
+import { applyReferralCredit } from '@/lib/referrals'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
@@ -84,6 +85,22 @@ export async function POST(req: NextRequest) {
     }).eq('user_id', userId)
 
     console.log(`Subscription activated for user ${userId}: ${planTier}`)
+
+    // ── Referral credit ──
+    // If this new customer was referred (profiles.referred_by set from the
+    // bavg_ref cookie at signup), grant the referrer a free month equal to
+    // their current tier price. Stripe customer-balance credit auto-applies
+    // to their next invoice. Idempotent — won't double-credit on webhook retry.
+    try {
+      const referralResult = await applyReferralCredit({ newUserId: userId })
+      if (referralResult.ok) {
+        console.log(`Referral credit applied: ${userId} referred → $${referralResult.credited} free month to referrer`)
+      } else if (referralResult.reason && referralResult.reason !== 'no referral attribution') {
+        console.warn(`Referral credit skipped for ${userId}: ${referralResult.reason}`)
+      }
+    } catch (e) {
+      console.error(`Referral credit threw for ${userId}:`, e)
+    }
 
     // Provision a Twilio number now that they're paid. Idempotent.
     // Failures are no longer silent — alert Peter + log to provisioning_failures

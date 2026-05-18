@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -8,6 +9,8 @@ const isPublicRoute = createRouteMatcher([
   "/founder(.*)",
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/privacy(.*)",
+  "/terms(.*)",
   // Concierge + Multi-Location waitlist — public form for prospects who don't
   // have accounts yet. /api/waitlist receives the POST from the form.
   "/waitlist(.*)",
@@ -23,10 +26,10 @@ const isPublicRoute = createRouteMatcher([
   // Vapi inbound webhooks — Vapi authenticates via x-vapi-secret / signature
   // header verified in the route itself, not via Clerk session.
   "/api/vapi(.*)",
-  // Calendar availability tool — called by Vapi mid-conversation to read the
-  // contractor's free/busy. Vapi authenticates via x-vapi-signature header
-  // (verified inside the route via verifyVapiSignature).
+  // Calendar tool endpoints — called by Vapi mid-conversation. They authenticate
+  // via x-vapi-signature header (verified inside each route via verifyVapiSignature).
   "/api/calendar/availability(.*)",
+  "/api/calendar/book(.*)",
   // Sample report personalize is a public endpoint used by /sample-report
   // (anonymous prospects). Has its own light rate-limit via cache.
   "/api/sample-report(.*)",
@@ -34,10 +37,52 @@ const isPublicRoute = createRouteMatcher([
   "/api/og(.*)",
 ]);
 
+/**
+ * Referral attribution cookie. Customers share links like
+ * https://www.bellavego.com/?ref=BAVG-MK7H2X — we drop that into a 90-day
+ * cookie so when the visitor signs up + pays, the Stripe webhook can
+ * credit the original referrer a free month.
+ *
+ * 90 days = long enough for normal evaluation cycles, short enough to
+ * fade if they never sign up.
+ */
+const REF_COOKIE_NAME = "bavg_ref";
+const REF_COOKIE_MAX_AGE_SECONDS = 90 * 24 * 60 * 60;
+// Format: BAVG-XXXXXX (6 uppercase alphanumeric). Reject anything else
+// so we don't store arbitrary junk from the query string.
+const VALID_REF_RE = /^BAVG-[A-Z0-9]{6}$/;
+
 export default clerkMiddleware(async (auth, request) => {
+  // ── Referral attribution — capture ?ref= once per visitor ──
+  // Runs before Clerk auth so it works for anonymous landing-page visitors.
+  let response: NextResponse | null = null;
+  try {
+    const refParam = request.nextUrl.searchParams.get("ref");
+    if (refParam) {
+      const normalized = refParam.toUpperCase().trim();
+      const already = request.cookies.get(REF_COOKIE_NAME)?.value;
+      // Only set if we don't already have one — first attribution wins
+      // (prevents a competitor referrer-link from stealing credit if the
+      // prospect was already in someone else's funnel).
+      if (!already && VALID_REF_RE.test(normalized)) {
+        response = NextResponse.next();
+        response.cookies.set(REF_COOKIE_NAME, normalized, {
+          maxAge: REF_COOKIE_MAX_AGE_SECONDS,
+          httpOnly: false, // readable client-side so onboarding form can pre-fill
+          sameSite: "lax",
+          path: "/",
+        });
+      }
+    }
+  } catch {
+    // Cookie parsing or response construction failure — non-fatal,
+    // continue with normal request flow.
+  }
+
   if (!isPublicRoute(request)) {
     await auth.protect();
   }
+  return response ?? undefined;
 });
 
 export const config = {

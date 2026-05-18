@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useUser, SignOutButton } from '@clerk/nextjs'
+import ReferralWidget from '@/components/ReferralWidget'
 
 const card: React.CSSProperties = {
   background: '#ffffff',
@@ -179,6 +180,9 @@ export default function SettingsPage() {
         <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0B1F3A', letterSpacing: '-0.5px', marginBottom: 4 }}>Settings</h1>
         <p style={{ fontSize: 13, color: '#4A7A80' }}>Manage your account, business info, and billing.</p>
       </div>
+
+      {/* Referral program — free month per referred contractor */}
+      <ReferralWidget />
 
       {/* Business Info */}
       <div style={card}>
