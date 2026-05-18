@@ -16,11 +16,26 @@ const REPORTS = [
   { title: 'Q1 2026 Growth Report', date: 'April 1, 2026' },
 ]
 
+// Public AI demo number used everywhere on marketing pages — never a real
+// tenant's auto-provisioned Twilio number.
+const AI_DEMO_NUMBER = '(651) 467-7829'
+
 export default function DashboardPreview({ compact = false }: { compact?: boolean } = {}) {
   const { isSignedIn } = useAuth()
   const [activeTab, setActiveTab] = useState('Command Center')
   const [hoveredNav, setHoveredNav] = useState<string | null>(null)
-  const [stats, setStats] = useState({ calls: 3, jobs: 2, revenue: 12750, saved: 24 })
+  // Mirror the live /dashboard metric cards: Revenue (month) + Pending +
+  // Upcoming + Customers. Older keys (calls, jobs, saved) are kept around
+  // because the AI Receptionist and Invoicing tabs still reference them.
+  const [stats, setStats] = useState({
+    revenue: 12750,
+    pending: 1,
+    upcoming: 4,
+    customers: 24,
+    calls: 3,
+    jobs: 2,
+    saved: 18,
+  })
   const [bumped, setBumped] = useState<string | null>(null)
   const [floatEl, setFloatEl] = useState<{ key: string; text: string } | null>(null)
   const [visible, setVisible] = useState(false)
@@ -37,27 +52,30 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
   }, [])
 
   useEffect(() => {
-    // Realistic ambient bumps. Most ticks do nothing — feels live, stays plausible.
-    const CAPS = { calls: 8, jobs: 5, revenue: 14500, saved: 30 }
+    // Realistic ambient bumps. Most ticks do nothing — feels live, stays
+    // plausible. Revenue moves most often (money signals are the most
+    // emotional); customers crawl up occasionally; pending/upcoming flex
+    // in a believable range.
+    const CAPS = { revenue: 16800, pending: 3, upcoming: 6, customers: 31, calls: 8, jobs: 5, saved: 26 }
     const id = setInterval(() => {
       const r = Math.random()
       setStats(s => {
-        if (r < 0.10 && s.calls < CAPS.calls) {
-          trigger('calls', '+1')
-          return { ...s, calls: s.calls + 1 }
-        }
-        if (r < 0.20 && s.saved < CAPS.saved) {
-          trigger('saved', '+1')
-          return { ...s, saved: s.saved + 1 }
-        }
-        if (r < 0.27 && s.revenue < CAPS.revenue) {
+        if (r < 0.30 && s.revenue < CAPS.revenue) {
           const inc = (Math.floor(Math.random() * 4) + 1) * 50
           trigger('revenue', `+$${inc}`)
           return { ...s, revenue: s.revenue + inc }
         }
-        if (r < 0.31 && s.jobs < CAPS.jobs) {
-          trigger('jobs', '+1')
-          return { ...s, jobs: s.jobs + 1 }
+        if (r < 0.42 && s.upcoming < CAPS.upcoming) {
+          trigger('upcoming', '+1')
+          return { ...s, upcoming: s.upcoming + 1, jobs: Math.min(s.jobs + 1, CAPS.jobs) }
+        }
+        if (r < 0.50 && s.customers < CAPS.customers) {
+          trigger('customers', '+1')
+          return { ...s, customers: s.customers + 1, calls: Math.min(s.calls + 1, CAPS.calls), saved: Math.min(s.saved + 1, CAPS.saved) }
+        }
+        if (r < 0.56 && s.pending < CAPS.pending) {
+          trigger('pending', '+1')
+          return { ...s, pending: s.pending + 1 }
         }
         return s
       })
@@ -82,12 +100,43 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
     })
   }
 
-  // tone: 'orange' = sunset glow + money gradient (revenue), 'teal' = sea glow + teal gradient (everything else)
+  // Mirror /dashboard exactly: Revenue (orange/money tone), then three
+  // operational cards on teal tone — Pending Jobs, Upcoming Jobs, Total
+  // Customers. Each card carries an icon path that matches the live
+  // dashboard's `metrics` array in src/app/dashboard/page.tsx.
   const statCards = [
-    { key: 'calls',   label: 'Missed Calls Answered Today',           value: stats.calls,   prefix: '', tone: 'teal'   as const },
-    { key: 'jobs',    label: 'Jobs Booked Today',                     value: stats.jobs,    prefix: '', tone: 'teal'   as const },
-    { key: 'revenue', label: 'Revenue This Month from BellAveGo Leads', value: stats.revenue, prefix: '$', tone: 'orange' as const },
-    { key: 'saved',   label: 'Missed Calls Saved This Month',         value: stats.saved,   prefix: '', tone: 'teal'   as const },
+    {
+      key: 'revenue',
+      label: 'BellAveGo Revenue · This Month',
+      value: stats.revenue,
+      prefix: '$',
+      tone: 'orange' as const,
+      icon: <><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" /></>,
+    },
+    {
+      key: 'pending',
+      label: 'Pending Jobs',
+      value: stats.pending,
+      prefix: '',
+      tone: 'teal' as const,
+      icon: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M12 14v4M10 16h4" /></>,
+    },
+    {
+      key: 'upcoming',
+      label: 'Upcoming Jobs',
+      value: stats.upcoming,
+      prefix: '',
+      tone: 'teal' as const,
+      icon: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></>,
+    },
+    {
+      key: 'customers',
+      label: 'Total Customers',
+      value: stats.customers,
+      prefix: '',
+      tone: 'teal' as const,
+      icon: <><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></>,
+    },
   ]
 
   return (
@@ -124,7 +173,10 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
       </div>
       )}
 
-      {/* Dashboard mockup */}
+      {/* Dashboard mockup. borderRadius is forced on every corner (some
+          browsers were rendering only the LEFT corners as rounded due to
+          the 3D rotateY transform and isolation context — explicit
+          per-corner values guarantee TR/BR aren't flat). */}
       <div
         ref={dashRef}
         onMouseMove={handleMouseMove}
@@ -138,6 +190,10 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
           opacity: visible ? 1 : 0,
           transition: 'opacity 0.7s ease, transform 0.7s cubic-bezier(0.34,1,0.64,1)',
           borderRadius: 24,
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+          borderBottomLeftRadius: 24,
+          borderBottomRightRadius: 24,
           boxShadow: '0 32px 80px rgba(11,31,58,0.14), 0 8px 32px rgba(232,116,43,0.10), 0 0 0 1px rgba(232,116,43,0.16)',
           background: '#ffffff',
           overflow: 'hidden',
@@ -153,7 +209,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '4px 11px', borderRadius: 16, fontSize: 9.5, fontWeight: 600, color: '#059669' }}>
             <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 5px rgba(34,197,94,0.5)', animation: 'dpDot 2s infinite' }} />
-            AI Online . (762) 371-3351
+            AI Online . (651) 467-7829
           </div>
         </div>
 
@@ -226,7 +282,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                   <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22C55E', animation: 'dpDot 2s infinite' }} />
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#0B1F3A' }}>AI Receptionist -- Online</div>
-                    <div style={{ fontSize: 8.5, color: '#7AAAB2', marginTop: 1 }}>Answering calls 24/7 . (762) 371-3351</div>
+                    <div style={{ fontSize: 8.5, color: '#7AAAB2', marginTop: 1 }}>Answering calls 24/7 . (651) 467-7829</div>
                   </div>
                 </div>
                 <span style={{ fontSize: 8, fontWeight: 700, padding: '3px 10px', borderRadius: 10, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' }}>Active</span>
@@ -341,7 +397,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                   {[
                     { label: 'Business name', value: 'Smith HVAC & Services' },
                     { label: 'Business type', value: 'HVAC' },
-                    { label: 'Phone number', value: '(762) 371-3351' },
+                    { label: 'Phone number', value: '(651) 467-7829' },
                     { label: 'Business hours', value: '8 AM - 6 PM' },
                   ].map(f => (
                     <div key={f.label}>
@@ -387,11 +443,16 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
           {/* == COMMAND CENTER TAB (default) == */}
           {activeTab === 'Command Center' && <div>
 
-            {/* Stat cards — match the live dashboard: warm white, sunset/teal glow + gradient numbers */}
+            {/* Stat cards — match the live dashboard exactly: warm white
+                gradient bg, eyebrow label + colored icon box on top, big
+                gradient stat number below. */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 9, marginBottom: 11 }}>
               {statCards.map(s => {
                 const isOrange = s.tone === 'orange'
                 const eyebrowColor = isOrange ? '#C84B26' : '#0AA89F'
+                const iconStroke  = isOrange ? '#E8742B' : '#0AA89F'
+                const iconBg      = isOrange ? 'rgba(232,116,43,0.12)' : 'rgba(20,184,166,0.10)'
+                const iconBorder  = isOrange ? 'rgba(232,116,43,0.30)' : 'rgba(20,184,166,0.30)'
                 const glow = isOrange
                   ? '0 4px 16px rgba(232,116,43,0.14), 0 12px 32px rgba(232,116,43,0.10), inset 0 1px 0 rgba(255,255,255,0.8)'
                   : '0 4px 16px rgba(20,184,166,0.10), 0 12px 32px rgba(11,31,58,0.06), inset 0 1px 0 rgba(255,255,255,0.8)'
@@ -413,7 +474,14 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                     boxShadow: bumped === s.key ? `${glow}, 0 0 0 2px ${eyebrowColor}55` : glow,
                     transition: 'box-shadow 0.3s ease',
                   }}>
-                    <div style={{ fontSize: 8.5, fontWeight: 800, color: eyebrowColor, textTransform: 'uppercase', letterSpacing: '0.10em', marginBottom: 6 }}>{s.label}</div>
+                    {/* Row 1 — eyebrow label + icon */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+                      <div style={{ fontSize: 8, fontWeight: 800, color: eyebrowColor, textTransform: 'uppercase', letterSpacing: '0.10em', lineHeight: 1.25, flex: 1 }}>{s.label}</div>
+                      <div style={{ width: 22, height: 22, borderRadius: 7, background: iconBg, border: `1px solid ${iconBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={iconStroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{s.icon}</svg>
+                      </div>
+                    </div>
+                    {/* Row 2 — big gradient stat number */}
                     <div style={{ position: 'relative', display: 'inline-block' }}>
                       <div style={{
                         fontSize: 22,
