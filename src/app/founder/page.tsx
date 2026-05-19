@@ -31,48 +31,52 @@ export default function FounderPage() {
         </div>
       </nav>
 
-      {/* HERO — emotional headline + live AI demo card */}
-      <section style={{ position: 'relative', padding: '72px 32px 80px', overflow: 'hidden' }}>
+      {/* HERO — emotional headline + live AI demo card.
+          Spacing/typography retuned for a premium SaaS founder-story
+          feel (Stripe/Ramp/Linear cadence). Wider content area, large
+          column gap, looser line-height, stronger vertical rhythm. */}
+      <section style={{ position: 'relative', padding: '104px 40px 120px', overflow: 'hidden' }}>
         <div className="mc-glow-orange" style={{ width: 600, height: 600, top: '-20%', right: '-10%', opacity: 0.65 }} />
         <div className="mc-glow-teal" style={{ width: 700, height: 700, bottom: '-40%', left: '-12%' }} />
 
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 1180, margin: '0 auto' }}>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: 1320, margin: '0 auto' }}>
           <style>{`
-            @media (max-width: 920px) {
-              .founder-quad { grid-template-columns: 1fr !important; gap: 22px !important; }
+            @media (max-width: 1100px) {
+              .founder-quad { column-gap: 56px !important; }
+            }
+            @media (max-width: 960px) {
+              .founder-quad { grid-template-columns: 1fr !important; column-gap: 0 !important; row-gap: 36px !important; }
               .founder-quad .quad-left,
-              .founder-quad .quad-right { gap: 18px !important; }
+              .founder-quad .quad-right { gap: 26px !important; }
+              .founder-meta { flex-direction: column !important; align-items: flex-start !important; gap: 28px !important; }
             }
           `}</style>
 
-          {/* Headline spans the full width above the 4-corner layout */}
-          <h1 className="mc-slide-up" style={{ fontSize: 'clamp(40px, 5.4vw, 68px)', fontWeight: 900, letterSpacing: '-0.045em', lineHeight: 1.02, marginBottom: 32, color: '#0B1F3A', maxWidth: 880 }}>
+          {/* Headline — full-width banner above the body grid. */}
+          <h1 className="mc-slide-up" style={{ fontSize: 'clamp(44px, 5.8vw, 72px)', fontWeight: 900, letterSpacing: '-0.045em', lineHeight: 1.02, marginBottom: 64, color: '#0B1F3A', maxWidth: 980 }}>
             Hi, I&apos;m Peter.<br />
             I founded <span style={{ background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', filter: 'drop-shadow(0 2px 10px rgba(232,116,43,0.32))' }}>BellAveGo.</span>
           </h1>
 
-          {/* Four-corner reading layout:
-                TL = Para 1 (origin),  TR = Para 3 (impact/mission)
-                BL = Para 2 (team),    BR = Video card
-              Reader scans down the left column (paragraphs 1 -> 2),
-              then crosses to the right column where the closing
-              paragraph sits above the visual anchor (the video). */}
+          {/* Body grid — slightly wider left (text) column than right
+              (visual) column. Large column gap creates the editorial
+              breathing room; both columns flow top-down naturally. */}
           <div
             className="founder-quad mc-slide-up"
             style={{
               display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 36,
-              alignItems: 'stretch',
-              marginBottom: 36,
+              gridTemplateColumns: '1.12fr 1fr',
+              columnGap: 88,
+              rowGap: 40,
+              alignItems: 'start',
+              marginBottom: 64,
             }}
           >
-            {/* LEFT column — paragraphs 1 + 2 stacked, justified so the bottom
-                of paragraph 2 hugs the bottom of the column (aligning with the
-                bottom of the video card in the right column). The video makes
-                the right column naturally taller — stretching the left column
-                + pushing P2 to the bottom keeps the four corners in a clean box. */}
-            <div className="quad-left" style={{ display: 'flex', flexDirection: 'column', gap: 20, justifyContent: 'space-between', fontSize: 18, lineHeight: 1.6, color: '#3D5A62' }}>
+            {/* LEFT column — paragraphs 1 + 2 with generous paragraph
+                spacing. Natural flow (top-down) replaces the prior
+                space-between justification, which had been making P2
+                feel detached from P1. */}
+            <div className="quad-left" style={{ display: 'flex', flexDirection: 'column', gap: 32, fontSize: 18, lineHeight: 1.72, color: '#3D5A62' }}>
               <p style={{ margin: 0 }}>
                 I didn&apos;t start BellAveGo because AI was trending &mdash; I started it because I watched hardworking people lose money while doing the actual work. One afternoon, I was helping my friend Joe with a garage project when his phone rang four different times in under an hour. He ignored two calls because his hands were full, answered one just to say <em>&ldquo;I&rsquo;ll call you back,&rdquo;</em> and had to completely stop working just to schedule an appointment. Standing there watching it happen in real time, it hit me: thousands of home-service businesses are losing revenue every single day simply because they&rsquo;re too busy working to manage everything happening around them.
               </p>
@@ -81,9 +85,9 @@ export default function FounderPage() {
               </p>
             </div>
 
-            {/* RIGHT column — paragraph 3 on top, video below */}
-            <div className="quad-right" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-              <p style={{ margin: 0, fontSize: 18, lineHeight: 1.6, color: '#3D5A62' }}>
+            {/* RIGHT column — paragraph 3 on top, video below. */}
+            <div className="quad-right" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+              <p style={{ margin: 0, fontSize: 18, lineHeight: 1.72, color: '#3D5A62' }}>
                 Behind the scenes, BellAveGo runs a network of <span style={{ color: '#C84B26', fontWeight: 800 }}>over 30 specialized agentic AI systems</span> that continuously analyze call behavior, local market trends, competitor positioning, booking inefficiencies, customer intent, and missed revenue opportunities across each client&rsquo;s service area. Those systems help generate BellAveGo consulting reports, which are then manually reviewed and refined by our team to turn raw AI analysis into real-world business strategy. We genuinely believe <strong>every single home-service business in the world could increase yearly revenue by 30%+ using BellAveGo</strong> &mdash; simply by capturing more leads, reducing missed opportunities, automating scheduling, saving time on the job, and identifying market opportunities they otherwise would never see. BellAveGo was never built to replace hardworking people &mdash; it was built to give smaller teams access to the kind of automation, operational intelligence, and market analysis that used to only exist inside large companies.
               </p>
 
@@ -179,9 +183,22 @@ export default function FounderPage() {
             </div>{/* /quad-right */}
           </div>{/* /founder-quad */}
 
-          {/* CTA buttons + Founder ID card — full width below the quad */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          {/* CTAs (left) + Founder ID card (right) on the same row, with
+              a soft top divider that visually re-anchors them to the
+              story above. On mobile this stacks via the .founder-meta
+              media query in the <style> block above. */}
+          <div
+            className="founder-meta"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 40,
+              paddingTop: 44,
+              borderTop: '1px solid rgba(232,116,43,0.16)',
+            }}
+          >
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
               <Link href="/pricing" className="mc-btn-orange">
                 Try BellAveGo
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -192,7 +209,7 @@ export default function FounderPage() {
               </a>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingTop: 18, borderTop: '1px solid rgba(232,116,43,0.18)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
                 <div style={{ position: 'absolute', inset: -6, borderRadius: '50%', background: 'radial-gradient(circle, rgba(232,116,43,0.45), transparent 70%)', filter: 'blur(12px)' }} />
                 <div style={{ position: 'relative', width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', color: '#0B1F3A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, boxShadow: '0 8px 20px rgba(232,116,43,0.42)', border: '2px solid #fff' }}>P</div>
