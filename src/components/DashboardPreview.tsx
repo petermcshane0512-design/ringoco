@@ -60,41 +60,46 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
   }, [])
 
   useEffect(() => {
-    // Realistic ambient bumps. Most ticks do nothing — feels live, stays
-    // plausible. Revenue moves most often (money signals are the most
-    // emotional); customers crawl up occasionally; pending/upcoming flex
-    // in a believable range.
-    const CAPS = { revenue: 24800, callsToday: 9, callsThisWeek: 38, pending: 3, upcoming: 8, customers: 145, calls: 8, jobs: 5, saved: 26 }
-    const id = setInterval(() => {
-      const r = Math.random()
+    // Slow, coordinated bump — feels like real production data, not a demo
+    // animation. 10-minute initial wait, then every 6 minutes:
+    //   +1 call answered (today + week tick together)
+    //   +$1,000 revenue
+    //   +1 BellAveGo appointment booked (upcoming counter)
+    // Most prospects leave before 10 min so they see a fully static dashboard —
+    // people who stay get one believable "live" bump every 6 min.
+    const CAPS = { revenue: 50000, callsToday: 25, callsThisWeek: 80, upcoming: 24, customers: 180 }
+    const INITIAL_WAIT_MS = 10 * 60 * 1000   // 10 minutes
+    const TICK_INTERVAL_MS = 6 * 60 * 1000   // 6 minutes
+
+    function singleBump() {
       setStats(s => {
-        if (r < 0.30 && s.revenue < CAPS.revenue) {
-          const inc = (Math.floor(Math.random() * 5) + 1) * 80
-          trigger('revenue', `+$${inc}`)
-          return { ...s, revenue: s.revenue + inc }
+        const newCallsToday  = Math.min(s.callsToday + 1, CAPS.callsToday)
+        const newCallsWeek   = Math.min(s.callsThisWeek + 1, CAPS.callsThisWeek)
+        const newRevenue     = Math.min(s.revenue + 1000, CAPS.revenue)
+        const newUpcoming    = Math.min(s.upcoming + 1, CAPS.upcoming)
+        return {
+          ...s,
+          callsToday: newCallsToday,
+          callsThisWeek: newCallsWeek,
+          revenue: newRevenue,
+          upcoming: newUpcoming,
         }
-        // Calls today + week tick together — every new call hitting today also
-        // counts toward the week. Most visually-emotional bump for sales demos.
-        if (r < 0.50 && s.callsToday < CAPS.callsToday && s.callsThisWeek < CAPS.callsThisWeek) {
-          trigger('callsToday', '+1 call')
-          return {
-            ...s,
-            callsToday: s.callsToday + 1,
-            callsThisWeek: s.callsThisWeek + 1,
-            calls: Math.min(s.calls + 1, CAPS.calls),
-          }
-        }
-        if (r < 0.65 && s.customers < CAPS.customers) {
-          trigger('customers', '+1')
-          return { ...s, customers: s.customers + 1, saved: Math.min(s.saved + 1, CAPS.saved) }
-        }
-        if (r < 0.75 && s.upcoming < CAPS.upcoming) {
-          return { ...s, upcoming: s.upcoming + 1, jobs: Math.min(s.jobs + 1, CAPS.jobs) }
-        }
-        return s
       })
-    }, 9000)
-    return () => clearInterval(id)
+      trigger('callsToday', '+1 call · +$1K · +1 booking')
+    }
+
+    const firstTick = setTimeout(() => {
+      singleBump()
+      const id = setInterval(singleBump, TICK_INTERVAL_MS)
+      // Stash the interval id on the timeout so the cleanup can find it
+      ;(firstTick as unknown as { _interval?: ReturnType<typeof setInterval> })._interval = id
+    }, INITIAL_WAIT_MS)
+
+    return () => {
+      clearTimeout(firstTick)
+      const stashed = (firstTick as unknown as { _interval?: ReturnType<typeof setInterval> })._interval
+      if (stashed) clearInterval(stashed)
+    }
   }, [])
 
   function trigger(key: string, text: string) {
@@ -160,6 +165,23 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
         @keyframes dpBounce { 0%,100%{transform:scale(1);} 45%{transform:scale(1.12);} }
         @keyframes dpDot { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.5;transform:scale(1.45);} }
         @keyframes dpBadge { 0%,100%{box-shadow:0 0 0 0 rgba(10,168,159,0.3);} 70%{box-shadow:0 0 0 8px rgba(10,168,159,0);} }
+
+        /* Per-section hover lift — sections inside the dashboard mockup
+           rise slightly when hovered (NOT the whole dashboard). Soft shadow
+           and 1.5% scale to feel responsive without being obnoxious. */
+        .dp-hover-lift {
+          transition: transform 0.25s cubic-bezier(0.34,1,0.64,1),
+                      box-shadow 0.25s ease,
+                      border-color 0.25s ease;
+          will-change: transform;
+        }
+        .dp-hover-lift:hover {
+          transform: translateY(-3px) scale(1.015);
+          box-shadow: 0 14px 32px rgba(11,31,58,0.18),
+                      0 4px 14px rgba(232,116,43,0.16),
+                      0 0 0 1px rgba(232,116,43,0.30) !important;
+          z-index: 10;
+        }
       `}</style>
 
       {/* Subtle background */}
@@ -196,30 +218,22 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                  from the clip means the rotation can't push square
                  edges past the outer rounded mask. */}
       <div
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => { setIsHovered(false); setTilt({ x: 0, y: 0 }) }}
-        onMouseMove={handleMouseMove}
         style={{
           maxWidth: compact ? '100%' : 1040,
           margin: compact ? '0' : '0 auto 52px',
           position: 'relative', zIndex: 2,
           borderRadius: 24,
           overflow: 'hidden',
-          // 3D context for the inner tilt + hover scale. Subtle baseline tilt
-          // gives the dashboard a "floating slab" feel; hover bumps up scale
-          // 2% and adds a deeper shadow so it feels like the slab lifts toward you.
+          // Subtle baseline 3D tilt — gives the dashboard a "floating slab"
+          // feel at rest. NO whole-dashboard hover effect — individual
+          // sections inside lift on hover instead (see .dp-hover-lift CSS).
           perspective: 1400,
-          boxShadow: isHovered
-            ? '0 48px 120px rgba(11,31,58,0.22), 0 14px 48px rgba(232,116,43,0.18), 0 0 0 1px rgba(232,116,43,0.20)'
-            : '0 32px 80px rgba(11,31,58,0.14), 0 8px 32px rgba(232,116,43,0.10), 0 0 0 1px rgba(232,116,43,0.16)',
+          boxShadow: '0 32px 80px rgba(11,31,58,0.14), 0 8px 32px rgba(232,116,43,0.10), 0 0 0 1px rgba(232,116,43,0.16)',
           background: '#ffffff',
           opacity: visible ? 1 : 0,
-          // Combine baseline 3D tilt + mouse follow (when hovered) + scale-up on hover.
-          // Baseline: subtle rotateX(-6deg) rotateY(2deg) so the slab tilts back-right.
-          // While hovered, the mouse-tracked tilt softens the rotation toward the cursor.
-          transform: `rotateX(${(-6 + tilt.x * 0.4).toFixed(2)}deg) rotateY(${(2 + tilt.y * 0.4).toFixed(2)}deg) scale(${isHovered ? 1.02 : 1})`,
+          transform: 'rotateX(-5deg) rotateY(2deg)',
           transformStyle: 'preserve-3d',
-          transition: 'opacity 0.7s ease, transform 0.35s cubic-bezier(0.34,1,0.64,1), box-shadow 0.35s ease',
+          transition: 'opacity 0.7s ease',
           isolation: 'isolate',
         }}
       >
@@ -746,7 +760,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                   : 'linear-gradient(160deg, #FFFFFF 0%, #F0FBF8 100%)'
                 const borderColor = isOrange ? 'rgba(232,116,43,0.28)' : 'rgba(20,184,166,0.24)'
                 return (
-                  <div key={s.key} style={{
+                  <div key={s.key} className="dp-hover-lift" style={{
                     background: cardBg,
                     border: `1px solid ${borderColor}`,
                     borderRadius: 11,
@@ -754,7 +768,6 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                     position: 'relative',
                     overflow: 'visible',
                     boxShadow: bumped === s.key ? `${glow}, 0 0 0 2px ${eyebrowColor}55` : glow,
-                    transition: 'box-shadow 0.3s ease',
                   }}>
                     {/* Row 1 — eyebrow label + icon */}
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
@@ -809,7 +822,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                 {/* Auto-booking status banner — replaces "Incoming requests" since
                     this contractor has auto-booking turned on. No queue, no approval
                     step, just a live status that the AI is handling everything. */}
-                <div style={{ background: 'linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 65%)', border: '1.5px solid rgba(232,116,43,0.32)', borderRadius: 11, boxShadow: '0 4px 14px rgba(232,116,43,0.12)', overflow: 'hidden' }}>
+                <div className="dp-hover-lift" style={{ background: 'linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 65%)', border: '1.5px solid rgba(232,116,43,0.32)', borderRadius: 11, boxShadow: '0 4px 14px rgba(232,116,43,0.12)', overflow: 'hidden' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <div style={{ width: 30, height: 30, borderRadius: 9, background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 9px rgba(232,116,43,0.32)' }}>
@@ -825,7 +838,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                 </div>
 
                 {/* All jobs — table-style, mirrors live dashboard */}
-                <div style={{ background: '#ffffff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, boxShadow: '0 2px 10px rgba(7,27,58,0.05)', overflow: 'hidden' }}>
+                <div className="dp-hover-lift" style={{ background: '#ffffff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, boxShadow: '0 2px 10px rgba(7,27,58,0.05)', overflow: 'hidden' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 13px', borderBottom: '1px solid rgba(10,168,159,0.08)' }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A' }}>All jobs</div>
                     <span style={{ fontSize: 7.5, color: '#7AAAB2', fontWeight: 600 }}>{stats.upcoming} total</span>
@@ -869,7 +882,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
 
                 {/* AI Receptionist — mirrors real dashboard structure */}
-                <div style={{ background: '#ffffff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, boxShadow: '0 2px 10px rgba(7,27,58,0.05)', overflow: 'hidden' }}>
+                <div className="dp-hover-lift" style={{ background: '#ffffff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, boxShadow: '0 2px 10px rgba(7,27,58,0.05)', overflow: 'hidden' }}>
                   <div style={{ background: 'linear-gradient(135deg, #FFFFFF 0%, #F0FBF8 100%)', padding: '9px 11px', borderBottom: '1px solid rgba(20,184,166,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                       <div style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(20,184,166,0.12)', border: '1px solid rgba(20,184,166,0.32)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -906,7 +919,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                 </div>
 
                 {/* Quick actions — mirrors real dashboard's 3 items */}
-                <div style={{ background: '#ffffff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, boxShadow: '0 2px 10px rgba(7,27,58,0.05)', overflow: 'hidden' }}>
+                <div className="dp-hover-lift" style={{ background: '#ffffff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, boxShadow: '0 2px 10px rgba(7,27,58,0.05)', overflow: 'hidden' }}>
                   <div style={{ padding: '9px 11px', borderBottom: '1px solid rgba(10,168,159,0.08)' }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A' }}>Quick actions</div>
                   </div>
