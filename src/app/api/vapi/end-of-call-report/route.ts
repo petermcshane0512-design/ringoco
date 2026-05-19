@@ -90,6 +90,40 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
     const callerPhone =
       message.call?.customer?.number ?? args.customer_phone ?? null
 
+    // Fallback tenant lookup. Vapi has been observed to drop
+    // assistantOverrides.metadata in webhook payloads (see comments in
+    // extractTenant). When that happens for a real tenant call, we'd
+    // otherwise lose the lead with "couldn't locate the business account."
+    // Recover by querying profiles by the called number — same lookup
+    // assistant-request did when the call was first set up.
+    if (!tenant.is_demo && !tenant.user_id) {
+      const calledNumber =
+        message.call?.phoneNumber?.number ?? tenant.twilio_number ?? null
+      if (calledNumber) {
+        try {
+          const { data: recovered } = await supabase
+            .from('profiles')
+            .select('user_id, business_name, owner_phone, backup_owner_phone, plan_tier, twilio_number')
+            .eq('twilio_number', calledNumber)
+            .maybeSingle()
+          if (recovered?.user_id) {
+            console.warn(
+              `handleToolCalls: recovered tenant ${recovered.user_id} via twilio_number lookup (Vapi metadata was missing)`,
+            )
+            tenant.user_id = recovered.user_id
+            tenant.business_name = recovered.business_name ?? tenant.business_name
+            tenant.owner_phone = recovered.owner_phone ?? tenant.owner_phone
+            tenant.backup_owner_phone =
+              (recovered as { backup_owner_phone?: string | null }).backup_owner_phone ?? tenant.backup_owner_phone
+            tenant.plan_tier = recovered.plan_tier ?? tenant.plan_tier
+            tenant.twilio_number = recovered.twilio_number ?? tenant.twilio_number
+          }
+        } catch (e) {
+          console.error('handleToolCalls fallback tenant lookup failed:', e)
+        }
+      }
+    }
+
     // Demo number — Emma (BellAveGo's AI sales receptionist) just captured a
     // prospect lead. Two SMS sends: (1) friendly confirmation to the caller,
     // (2) hot-lead alert to Peter so he can close them inside the 1-hr window.
@@ -106,7 +140,7 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
             to: callerNumber,
           })
         } catch (e) {
-          console.error('demo caller SMS failed:', e)
+          logTwilioSmsError('demo caller SMS', e)
         }
       }
 
@@ -128,7 +162,7 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
             to: peterPhone,
           })
         } catch (e) {
-          console.error('demo lead alert to Peter failed:', e)
+          logTwilioSmsError('demo lead alert to Peter', e)
         }
       }
 
@@ -168,9 +202,15 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
     }
 
     if (!tenant.user_id) {
+      console.error('handleToolCalls: no tenant.user_id after fallback lookup — lead LOST', {
+        callSid,
+        calledNumber: message.call?.phoneNumber?.number,
+        callerPhone,
+      })
       results.push({
         toolCallId: tc.id,
-        result: "Couldn't locate the business account — please call back.",
+        result:
+          "I'm having trouble reaching this business's system right now — could you try calling back in a few minutes? Sorry about that.",
       })
       continue
     }
@@ -187,7 +227,7 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
       toolCallId: tc.id,
       result: r.success
         ? "Message captured. The owner will call you back in the next hour or two."
-        : `Issue: ${r.error}`,
+        : "I'm having trouble saving that on my end — could you also text the owner directly so it doesn't get lost? Sorry about that.",
     })
   }
 
@@ -292,11 +332,15 @@ async function takeMessage(opts: {
     console.error('quote_followups seed (vapi) failed:', e)
   }
 
-  // 3. Smart insight (Office Mgr+) — quick sales tip from the captured reason
+  // 3. Smart insight (Office Mgr+) — quick sales tip from the captured reason.
+  // Wrapped in a 4s timeout: missing insight is fine, but a hanging Anthropic
+  // call would stall the whole tool-call webhook and Vapi may time out the
+  // exchange. 4s leaves >15s of headroom against Vapi's typical tool-call
+  // budget.
   let smartInsight = ''
   if (OFFICE_MGR_TIERS.has(tenant.plan_tier ?? '')) {
     try {
-      const r = await anthropic.messages.create({
+      const insightPromise = anthropic.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 100,
         system:
@@ -309,7 +353,13 @@ async function takeMessage(opts: {
           },
         ],
       })
-      smartInsight = r.content[0].type === 'text' ? r.content[0].text.trim() : ''
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000))
+      const r = await Promise.race([insightPromise, timeoutPromise])
+      if (r === null) {
+        console.warn('smart-insight timed out after 4s — proceeding without it')
+      } else {
+        smartInsight = r.content[0].type === 'text' ? r.content[0].text.trim() : ''
+      }
     } catch (e) {
       console.error('smart-insight failed:', e)
     }
@@ -328,7 +378,7 @@ async function takeMessage(opts: {
         to: ownerPhone,
       })
     } catch (e) {
-      console.error('contractor SMS failed:', e)
+      logTwilioSmsError('contractor SMS', e)
     }
   }
 
@@ -464,7 +514,7 @@ async function takeMessage(opts: {
         to: phone,
       })
     } catch (e) {
-      console.error('caller SMS failed:', e)
+      logTwilioSmsError('caller confirmation SMS', e)
     }
   }
 
@@ -600,6 +650,26 @@ function parseToolArgs(args: unknown): TakeMessageArgs {
 
 function cryptoRandom(): string {
   return 'vapi_' + Math.random().toString(36).slice(2, 12)
+}
+
+/**
+ * Log Twilio SMS failures with distinct prefixes so 30034 (A2P unregistered-
+ * sender carrier block) can be filtered out from real outages in the logs.
+ * The contractor-lead email path is the workaround until A2P is approved —
+ * once approved, 30034 should disappear and this stays as a clean error log.
+ */
+function logTwilioSmsError(context: string, e: unknown): void {
+  const code = (e as { code?: number })?.code
+  const msg = (e as Error)?.message ?? String(e)
+  if (code === 30034) {
+    console.warn(`[SMS_CARRIER_BLOCKED] ${context} — Twilio 30034 (A2P unregistered). Email fallback covers it.`)
+    return
+  }
+  if (code === 30003 || code === 30005 || code === 30006) {
+    console.warn(`[SMS_UNDELIVERABLE] ${context} — Twilio ${code}: ${msg}`)
+    return
+  }
+  console.error(`[SMS_FAILED] ${context} — Twilio ${code ?? 'unknown'}: ${msg}`)
 }
 
 // ── Types (narrow shape of Vapi's server messages) ──────────────

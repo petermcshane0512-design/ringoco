@@ -115,11 +115,19 @@ export async function POST(req: NextRequest) {
     // so the half-hourly retry cron picks it up.
     let provisionedNumber: string | undefined
     let provisioningError: string | undefined
+    let vapiImportError: string | undefined
     try {
       const provision = await provisionNumberForUser(userId)
       if (provision.ok) {
         provisionedNumber = provision.phoneNumber
         console.log(`Provisioned ${provision.phoneNumber} for ${userId} (reused=${provision.reused})`)
+        // Partial failure: Twilio number bought but Vapi import didn't take.
+        // Number works on legacy voice; we still want a provisioning_failures
+        // row so the retry cron re-attempts the Vapi import + Peter is paged.
+        if (provision.vapiImportFailed) {
+          vapiImportError = provision.vapiImportError ?? 'unknown Vapi import error'
+          console.error(`Vapi import failed for ${userId} after Twilio purchase: ${vapiImportError}`)
+        }
       } else {
         provisioningError = provision.error
         console.error(`Provisioning failed for ${userId}: ${provision.error}`)
@@ -129,13 +137,19 @@ export async function POST(req: NextRequest) {
       console.error(`Provisioning threw for ${userId}:`, e)
     }
 
-    if (provisioningError) {
+    if (provisioningError || vapiImportError) {
       // Log the failure for the retry cron + alert Peter immediately.
+      // Two flavors:
+      //   - provisioningError: nothing got bought, customer has no number.
+      //   - vapiImportError: number bought but stuck on legacy voice — still
+      //     needs intervention because the customer paid for Cartesia/Claude.
       const { data: contractor } = await supabase
         .from('profiles')
         .select('business_name, owner_phone')
         .eq('user_id', userId)
         .maybeSingle()
+
+      const lastError = provisioningError ?? `vapi import failed: ${vapiImportError}`
 
       try {
         await supabase.from('provisioning_failures').upsert(
@@ -143,7 +157,7 @@ export async function POST(req: NextRequest) {
             user_id: userId,
             business_name: contractor?.business_name,
             owner_phone: contractor?.owner_phone,
-            last_error: provisioningError,
+            last_error: lastError,
             status: 'pending',
             attempts: 1,
             next_retry_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
@@ -156,11 +170,15 @@ export async function POST(req: NextRequest) {
       }
 
       try {
+        const headline = provisioningError
+          ? `🚨 Provisioning failed — ${contractor?.business_name || userId}`
+          : `⚠️ Vapi import failed — ${contractor?.business_name || userId}`
+        const detail = provisioningError
+          ? `Customer paid but has no Twilio number.`
+          : `Customer has a working Twilio number on the LEGACY Polly voice. Cartesia/Claude won't activate until Vapi import succeeds.`
         await twilioClient.messages.create({
           body:
-            `🚨 Provisioning failed — ${contractor?.business_name || userId}\n\n` +
-            `Error: ${provisioningError}\n\n` +
-            `Customer paid but has no Twilio number. Auto-retry will fire in 5min (half-hourly cron). ` +
+            `${headline}\n\nError: ${lastError}\n\n${detail} Auto-retry will fire in 5min (half-hourly cron). ` +
             `Manual override: https://www.bellavego.com/admin/provisioning`,
           from: process.env.TWILIO_PHONE_NUMBER!,
           to: process.env.FALLBACK_OWNER_PHONE ?? '+17737109565',
@@ -233,11 +251,13 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── invoice.payment_succeeded — Stage 2 of referral credit ──
-  // Fires on EVERY paid invoice (initial + renewals). The handler is a
-  // no-op unless there's a pending referral for this subscription AND
-  // the subscription is >31 days old (past the 30-day money-back window).
-  // When both true, the referrer's Stripe customer-balance credit fires.
+  // ── invoice.payment_succeeded — Stage 2 of referral credit + un-pause ──
+  // Fires on EVERY paid invoice (initial + renewals). Two jobs:
+  //   1. Referral credit: no-op unless there's a pending referral for this
+  //      subscription AND the subscription is >31 days old. When both true,
+  //      the referrer's Stripe customer-balance credit fires.
+  //   2. Un-pause: if the customer was paused by a prior payment_failed
+  //      event, flip is_active back to true now that they paid.
   if (event.type === 'invoice.payment_succeeded') {
     const invoice = event.data.object as Stripe.Invoice & { subscription?: string | null }
     const subscriptionId = (invoice.subscription as string | null) ?? null
@@ -251,9 +271,36 @@ export async function POST(req: NextRequest) {
         console.error(`applyPendingReferralCredit threw for subscription ${subscriptionId}:`, e)
       }
     }
+
+    const customerId = invoice.customer as string
+    if (customerId) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('user_id, is_active, plan_tier')
+        .eq('stripe_customer_id', customerId)
+        .maybeSingle()
+      // Restore service only if it was paused AND the plan wasn't outright
+      // cancelled (which sets plan_tier='cancelled' via subscription.deleted).
+      if (profile?.user_id && profile.is_active === false && profile.plan_tier !== 'cancelled') {
+        try {
+          await supabase
+            .from('profiles')
+            .update({ is_active: true })
+            .eq('user_id', profile.user_id)
+          console.log(`Restored service for ${profile.user_id} on payment_succeeded`)
+        } catch (e) {
+          console.error('payment_succeeded is_active flip failed:', e)
+        }
+      }
+    }
   }
 
-  // ── Payment failure → notify customer, don't suspend yet (Stripe will retry) ──
+  // ── Payment failure → pause service immediately + notify customer ──
+  // Stripe will continue retrying the card for ~3 days. During that window
+  // we previously left is_active=true, which meant calls kept being answered
+  // (and minutes burned) by a delinquent customer. Now we flip is_active=false
+  // right away — assistant-request returns the "service paused" message —
+  // and invoice.payment_succeeded below flips it back when they pay.
   if (event.type === 'invoice.payment_failed') {
     const invoice = event.data.object as Stripe.Invoice
     const customerId = invoice.customer as string
@@ -263,6 +310,18 @@ export async function POST(req: NextRequest) {
       .select('user_id, owner_phone, business_name, twilio_number, plan_tier')
       .eq('stripe_customer_id', customerId)
       .maybeSingle()
+
+    if (profile?.user_id) {
+      try {
+        await supabase
+          .from('profiles')
+          .update({ is_active: false })
+          .eq('user_id', profile.user_id)
+        console.log(`Paused service for ${profile.user_id} on payment_failed`)
+      } catch (e) {
+        console.error('payment_failed is_active flip failed:', e)
+      }
+    }
 
     // Seed invoice_followups so the Collections cron starts SMS chases.
     // Pulls amount + hosted invoice URL straight from Stripe so the chase

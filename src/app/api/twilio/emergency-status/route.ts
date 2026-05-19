@@ -62,6 +62,14 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
 
   if (!job) return NextResponse.json({ ok: true, note: 'job missing' })
+
+  // Tenant ownership check — the userId in the URL is untrusted (anyone who
+  // guesses a job_id could craft ?user_id=victim to probe another tenant's
+  // profile + trigger SMS to their backup phone). Verify the job actually
+  // belongs to the claimed user before doing anything with userId.
+  if (job.user_id !== userId) {
+    return NextResponse.json({ ok: true, note: 'tenant mismatch' })
+  }
   if (job.emergency_fallback_sent_at) {
     // Already sent fallback — Twilio sometimes fires multiple status callbacks
     return NextResponse.json({ ok: true, already_sent: true })

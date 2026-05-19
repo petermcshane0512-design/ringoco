@@ -80,12 +80,17 @@ export async function notifyArtifactReady(args: {
 }
 
 export async function lookupOwnerEmail(userId: string): Promise<string | null> {
-  // Lazy-import Clerk to keep this util cheap when called from Vercel functions
+  // Lazy-import Clerk to keep this util cheap when called from Vercel functions.
+  // Prefer the primary email — Clerk returns emailAddresses[] in insertion order,
+  // so [0] may not be the address the contractor actually checks if they verified
+  // a second address later (work email added after signup, etc.).
   try {
     const { clerkClient } = await import('@clerk/nextjs/server')
     const client = await clerkClient()
     const u = await client.users.getUser(userId)
-    return u.emailAddresses?.[0]?.emailAddress ?? null
+    const primaryId = u.primaryEmailAddressId
+    const primary = primaryId ? u.emailAddresses?.find((e) => e.id === primaryId) : null
+    return primary?.emailAddress ?? u.emailAddresses?.[0]?.emailAddress ?? null
   } catch (e) {
     console.error('[notify] clerk lookup failed:', e)
     return null

@@ -27,7 +27,20 @@ function extractAreaCode(phone: string | null | undefined): string | undefined {
 }
 
 export type ProvisionResult =
-  | { ok: true; phoneNumber: string; reused: boolean }
+  | {
+      ok: true
+      phoneNumber: string
+      reused: boolean
+      /**
+       * True when the Twilio number was purchased successfully but the Vapi
+       * import step failed. Caller (Stripe webhook) should still send the
+       * welcome SMS (the number works on the legacy Polly route) AND record
+       * a provisioning_failures row so the retry cron re-attempts the Vapi
+       * import and Peter is alerted to investigate.
+       */
+      vapiImportFailed?: boolean
+      vapiImportError?: string
+    }
   | { ok: false; error: string }
 
 /**
@@ -38,12 +51,30 @@ export type ProvisionResult =
 export async function provisionNumberForUser(userId: string): Promise<ProvisionResult> {
   const { data: profile, error: pErr } = await supabase
     .from('profiles')
-    .select('user_id, twilio_number, owner_phone, business_name')
+    .select('user_id, twilio_number, owner_phone, business_name, vapi_phone_number_id, vapi_import_failed_at')
     .eq('user_id', userId)
     .maybeSingle()
 
   if (pErr || !profile) return { ok: false, error: 'profile not found' }
+
+  // Already has a Twilio number — but if the Vapi import previously failed
+  // (vapi_phone_number_id null AND vapi_import_failed_at set), retry just the
+  // Vapi step so the customer eventually gets the Cartesia/Claude flow they
+  // paid for instead of being stuck on the legacy Polly route.
   if (profile.twilio_number) {
+    const needsVapiRetry =
+      !(profile as { vapi_phone_number_id?: string | null }).vapi_phone_number_id &&
+      (profile as { vapi_import_failed_at?: string | null }).vapi_import_failed_at
+    if (needsVapiRetry) {
+      const retry = await retryVapiImport({
+        userId,
+        twilioPhoneNumber: profile.twilio_number,
+        businessName: profile.business_name,
+      })
+      if (!retry.ok) {
+        return { ok: false, error: `vapi import retry failed: ${retry.error}` }
+      }
+    }
     return { ok: true, phoneNumber: profile.twilio_number, reused: true }
   }
 
@@ -84,7 +115,7 @@ export async function provisionNumberForUser(userId: string): Promise<ProvisionR
     return { ok: false, error: `purchase failed: ${(e as Error).message}` }
   }
 
-  const update: Record<string, string | boolean> = {
+  const update: Record<string, string | boolean | null> = {
     twilio_number: purchased.phoneNumber,
     is_active: true,
   }
@@ -104,8 +135,13 @@ export async function provisionNumberForUser(userId: string): Promise<ProvisionR
   // Import into Vapi so the conversation layer runs through Cartesia/Claude/Deepgram
   // instead of the legacy Polly+Haiku route. Vapi overwrites the Twilio voiceUrl
   // to point at its SIP endpoint on import. SMS URL stays on /api/twilio/sms for
-  // YES/NO handling. Non-fatal: if VAPI_ASSISTANT_ID isn't set yet, the number
-  // still answers via the legacy /api/twilio/voice fallback.
+  // YES/NO handling.
+  //
+  // If the import fails, the customer's number works but answers via the legacy
+  // Polly/Haiku route — they paid for Claude/Cartesia, so we surface this as a
+  // provisioning failure (caught by the Stripe webhook + retry cron) and alert
+  // Peter. We do NOT silently degrade to legacy.
+  let vapiImportFailureMessage: string | null = null
   const VAPI_ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID
   if (VAPI_ASSISTANT_ID && process.env.VAPI_API_KEY) {
     try {
@@ -119,9 +155,22 @@ export async function provisionNumberForUser(userId: string): Promise<ProvisionR
         friendlyName: `BellAveGo · ${profile.business_name || profile.user_id}`,
       })
       update.vapi_phone_number_id = imp.id
+      update.vapi_import_failed_at = null
+      update.vapi_import_error = null
     } catch (e) {
-      console.warn(`Vapi import failed for ${purchased.phoneNumber} — falling back to legacy voice:`, e)
+      vapiImportFailureMessage = (e as Error).message
+      console.error(
+        `Vapi import failed for ${purchased.phoneNumber} — customer will hear legacy voice until retried:`,
+        e,
+      )
+      update.vapi_import_failed_at = new Date().toISOString()
+      update.vapi_import_error = vapiImportFailureMessage
     }
+  } else {
+    vapiImportFailureMessage = 'VAPI_ASSISTANT_ID or VAPI_API_KEY missing — Vapi import skipped'
+    console.error(vapiImportFailureMessage)
+    update.vapi_import_failed_at = new Date().toISOString()
+    update.vapi_import_error = vapiImportFailureMessage
   }
 
   const { error: uErr } = await supabase
@@ -133,5 +182,59 @@ export async function provisionNumberForUser(userId: string): Promise<ProvisionR
     return { ok: false, error: `db update failed: ${uErr.message}` }
   }
 
-  return { ok: true, phoneNumber: purchased.phoneNumber, reused: false }
+  return {
+    ok: true,
+    phoneNumber: purchased.phoneNumber,
+    reused: false,
+    vapiImportFailed: !!vapiImportFailureMessage,
+    vapiImportError: vapiImportFailureMessage ?? undefined,
+  }
+}
+
+/**
+ * Re-runs just the Vapi import step for a profile that already has a Twilio
+ * number but no vapi_phone_number_id. Called by provisionNumberForUser when a
+ * retry comes in (via provision-retry cron or a fresh Stripe webhook fire on
+ * an already-paid customer).
+ */
+async function retryVapiImport(opts: {
+  userId: string
+  twilioPhoneNumber: string
+  businessName: string | null | undefined
+}): Promise<{ ok: true; vapiPhoneNumberId: string } | { ok: false; error: string }> {
+  const VAPI_ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID
+  if (!VAPI_ASSISTANT_ID || !process.env.VAPI_API_KEY) {
+    return { ok: false, error: 'VAPI_ASSISTANT_ID or VAPI_API_KEY missing' }
+  }
+  try {
+    const imp = await vapiImportTwilioNumber({
+      twilioPhoneNumber: opts.twilioPhoneNumber,
+      twilioAccountSid: process.env.TWILIO_ACCOUNT_SID!,
+      twilioAuthToken: process.env.TWILIO_AUTH_TOKEN!,
+      assistantId: VAPI_ASSISTANT_ID,
+      serverUrl: `${APP_URL}/api/vapi/assistant-request`,
+      serverUrlSecret: process.env.VAPI_WEBHOOK_SECRET,
+      friendlyName: `BellAveGo · ${opts.businessName || opts.userId}`,
+    })
+    await supabase
+      .from('profiles')
+      .update({
+        vapi_phone_number_id: imp.id,
+        vapi_import_failed_at: null,
+        vapi_import_error: null,
+      })
+      .eq('user_id', opts.userId)
+    return { ok: true, vapiPhoneNumberId: imp.id }
+  } catch (e) {
+    const msg = (e as Error).message
+    console.error(`retryVapiImport failed for ${opts.userId}:`, e)
+    await supabase
+      .from('profiles')
+      .update({
+        vapi_import_failed_at: new Date().toISOString(),
+        vapi_import_error: msg,
+      })
+      .eq('user_id', opts.userId)
+    return { ok: false, error: msg }
+  }
 }
