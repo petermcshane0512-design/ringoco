@@ -72,7 +72,7 @@ export default function FounderPage() {
                 bottom of the video card in the right column). The video makes
                 the right column naturally taller — stretching the left column
                 + pushing P2 to the bottom keeps the four corners in a clean box. */}
-            <div className="quad-left" style={{ display: 'flex', flexDirection: 'column', gap: 18, justifyContent: 'space-between', fontSize: 16, lineHeight: 1.65, color: '#3D5A62' }}>
+            <div className="quad-left" style={{ display: 'flex', flexDirection: 'column', gap: 20, justifyContent: 'space-between', fontSize: 18, lineHeight: 1.6, color: '#3D5A62' }}>
               <p style={{ margin: 0 }}>
                 I didn&apos;t start BellAveGo because AI was trending &mdash; I started it because I watched hardworking people lose money while doing the actual work. One afternoon, I was helping my friend Joe with a garage project when his phone rang four different times in under an hour. He ignored two calls because his hands were full, answered one just to say <em>&ldquo;I&rsquo;ll call you back,&rdquo;</em> and had to completely stop working just to schedule an appointment. Standing there watching it happen in real time, it hit me: thousands of home-service businesses are losing revenue every single day simply because they&rsquo;re too busy working to manage everything happening around them.
               </p>
@@ -83,7 +83,7 @@ export default function FounderPage() {
 
             {/* RIGHT column — paragraph 3 on top, video below */}
             <div className="quad-right" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-              <p style={{ margin: 0, fontSize: 16, lineHeight: 1.65, color: '#3D5A62' }}>
+              <p style={{ margin: 0, fontSize: 18, lineHeight: 1.6, color: '#3D5A62' }}>
                 Behind the scenes, BellAveGo runs a network of <span style={{ color: '#C84B26', fontWeight: 800 }}>over 30 specialized agentic AI systems</span> that continuously analyze call behavior, local market trends, competitor positioning, booking inefficiencies, customer intent, and missed revenue opportunities across each client&rsquo;s service area. Those systems help generate BellAveGo consulting reports, which are then manually reviewed and refined by our team to turn raw AI analysis into real-world business strategy. We genuinely believe <strong>every single home-service business in the world could increase yearly revenue by 30%+ using BellAveGo</strong> &mdash; simply by capturing more leads, reducing missed opportunities, automating scheduling, saving time on the job, and identifying market opportunities they otherwise would never see. BellAveGo was never built to replace hardworking people &mdash; it was built to give smaller teams access to the kind of automation, operational intelligence, and market analysis that used to only exist inside large companies.
               </p>
 
