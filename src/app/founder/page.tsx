@@ -78,17 +78,18 @@ export default function FounderPage() {
                 feel detached from P1. */}
             <div className="quad-left" style={{ display: 'flex', flexDirection: 'column', gap: 32, fontSize: 18, lineHeight: 1.72, color: '#3D5A62' }}>
               <p style={{ margin: 0 }}>
-                I didn&apos;t start BellAveGo because AI was trending &mdash; I started it because I watched hardworking people lose money while doing the actual work. One afternoon, I was helping my friend Joe with a garage project when his phone rang four different times in under an hour. He ignored two calls because his hands were full, answered one just to say <em>&ldquo;I&rsquo;ll call you back,&rdquo;</em> and had to completely stop working just to schedule an appointment. Standing there watching it happen in real time, it hit me: thousands of home-service businesses are losing revenue every single day simply because they&rsquo;re too busy working to manage everything happening around them.
+                I didn&apos;t start BellAveGo because AI was trending &mdash; I started it after watching hardworking home-service businesses lose revenue simply because they were too busy doing the actual work. One afternoon helping my friend Joe on a garage project, his phone rang four times in under an hour. He ignored some calls because his hands were full, answered one just to say <em>&ldquo;I&rsquo;ll call you back,&rdquo;</em> and had to stop working entirely just to schedule an appointment. That moment made me realize thousands of home-service businesses lose customers every day due to missed calls, delayed responses, and operational overload.
               </p>
               <p style={{ margin: 0 }}>
-                My team and I have spent years deep in the world of LLMs, voice AI, agentic workflows, retrieval systems, automation pipelines, and conversational inference systems &mdash; not just experimenting with AI, but learning how to deploy it in ways that actually solve operational problems for real businesses. That&rsquo;s why we built BellAveGo: an AI receptionist and operational intelligence platform designed specifically for home-service teams with anywhere from one to fifteen employees. BellAveGo answers missed calls, books appointments, captures leads, analyzes neighborhood demand patterns, identifies revenue opportunities, and helps owners stop losing business while they&rsquo;re physically on the job.
+                My team and I have spent years studying and building with LLMs, voice AI, agentic workflows, automation systems, retrieval pipelines, and conversational intelligence tools. We built BellAveGo to apply those technologies to a real operational problem. BellAveGo is an AI receptionist and operational intelligence platform built specifically for home-service businesses. It answers missed calls, books appointments, captures leads, analyzes local demand trends, identifies revenue opportunities, and helps owners stop losing business while they&rsquo;re physically on the job.
               </p>
             </div>
 
-            {/* RIGHT column — paragraph 3 on top, video below. */}
+            {/* RIGHT column — paragraph 3 on top, video in the middle,
+                short closing beat (paragraph 4) below the video. */}
             <div className="quad-right" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
               <p style={{ margin: 0, fontSize: 18, lineHeight: 1.72, color: '#3D5A62' }}>
-                Behind the scenes, BellAveGo runs a network of <span style={{ color: '#C84B26', fontWeight: 800 }}>over 30 specialized agentic AI systems</span> that continuously analyze call behavior, local market trends, competitor positioning, booking inefficiencies, customer intent, and missed revenue opportunities across each client&rsquo;s service area. Those systems help generate BellAveGo consulting reports, which are then manually reviewed and refined by our team to turn raw AI analysis into real-world business strategy. We genuinely believe <strong>every single home-service business in the world could increase yearly revenue by 30%+ using BellAveGo</strong> &mdash; simply by capturing more leads, reducing missed opportunities, automating scheduling, saving time on the job, and identifying market opportunities they otherwise would never see. BellAveGo was never built to replace hardworking people &mdash; it was built to give smaller teams access to the kind of automation, operational intelligence, and market analysis that used to only exist inside large companies.
+                Behind the scenes, BellAveGo uses a network of <span style={{ color: '#C84B26', fontWeight: 800 }}>specialized AI agents</span> that continuously analyze call behavior, booking inefficiencies, customer intent, competitor positioning, and local market opportunities across each client&rsquo;s service area. Those insights help generate BellAveGo consulting reports, which are then manually reviewed and refined by our team into actionable business strategy. We believe <strong>many home-service businesses could increase yearly revenue by 30%+</strong> through faster lead response times, reduced missed opportunities, automated scheduling, and AI-driven operational insights powered by BellAveGo.
               </p>
 
               {/* VIDEO PLACEHOLDER — "Why I founded BellAveGo" */}
@@ -180,6 +181,22 @@ export default function FounderPage() {
               </div>
             </div>
           </div>
+
+              {/* Closing beat — short pull-quote-style paragraph that
+                  anchors the bottom of the right column under the video.
+                  Subtle sunset-orange left rule + italic-adjacent weight
+                  marks it as the thesis statement, not body copy. */}
+              <p style={{
+                margin: 0,
+                paddingLeft: 18,
+                borderLeft: '3px solid rgba(232,116,43,0.55)',
+                fontSize: 17,
+                lineHeight: 1.7,
+                color: '#3D5A62',
+                fontWeight: 500,
+              }}>
+                BellAveGo was never built to replace hardworking people &mdash; it was built to give smaller teams access to the kind of automation, operational intelligence, and market analysis that historically only large companies could afford.
+              </p>
             </div>{/* /quad-right */}
           </div>{/* /founder-quad */}
 
