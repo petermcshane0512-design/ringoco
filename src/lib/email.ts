@@ -139,6 +139,85 @@ export function renderLeadAlertEmail(args: LeadAlertEmailArgs): { subject: strin
   return { subject, html, text }
 }
 
+/**
+ * Contractor-facing lead-alert email — sent directly to the BellAveGo customer
+ * (the contractor) every time their AI receptionist captures a callback.
+ * Built as an SMS-replacement while A2P 10DLC is in registration: carriers
+ * routinely drop our outbound SMS (error 30034), so the contractor gets the
+ * same lead details via email and can tap-to-call back from their phone.
+ *
+ * Visually differentiated from the Peter-forward email: no "forward to" row,
+ * primary CTA is tap-to-call the customer, secondary CTA is the dashboard.
+ */
+export type ContractorLeadEmailArgs = {
+  toEmail: string
+  contractorBusinessName: string
+  callerName: string
+  callerPhone: string | null
+  callerMessage: string
+  urgency: 'emergency' | 'soon' | 'whenever' | string
+  callTimeISO: string
+  smartInsight?: string | null
+  dashboardUrl: string
+}
+
+export function renderContractorLeadEmail(args: ContractorLeadEmailArgs): { subject: string; html: string; text: string } {
+  const urgencyIcon = args.urgency === 'emergency' ? '🚨' : args.urgency === 'soon' ? '⚡' : '🕓'
+  const urgencyLabel = args.urgency === 'emergency' ? 'EMERGENCY' : args.urgency === 'soon' ? 'Soon' : 'Whenever'
+  const callerPhonePretty = args.callerPhone ? formatUSPhone(args.callerPhone) : 'no phone'
+  const time = new Date(args.callTimeISO).toLocaleString('en-US', {
+    timeZone: 'America/Chicago',
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+
+  const subject = `${urgencyIcon} New lead — ${args.callerName} (${urgencyLabel})`
+
+  const text =
+    `${urgencyIcon} New lead via BellAveGo\n\n` +
+    `Caller: ${args.callerName}\n` +
+    `Caller phone: ${callerPhonePretty}\n` +
+    `Message: ${args.callerMessage}\n` +
+    `Urgency: ${urgencyLabel}\n` +
+    `Time: ${time}\n` +
+    (args.smartInsight ? `\n${args.smartInsight}\n` : '') +
+    (args.callerPhone ? `\nTap to call back: ${args.callerPhone}\n` : '') +
+    `\nDashboard: ${args.dashboardUrl}\n` +
+    `\n— BellAveGo`
+
+  const html = `
+<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#F2F9F5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0B1F3A;">
+  <div style="max-width:560px;margin:0 auto;padding:24px 16px;">
+    <div style="background:#fff;border:1px solid rgba(10,168,159,0.18);border-radius:16px;overflow:hidden;box-shadow:0 4px 22px rgba(11,31,58,0.08);">
+      <div style="background:linear-gradient(135deg,#0AA89F 0%,#0D8F87 100%);padding:18px 22px;color:#fff;">
+        <div style="font-size:11px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;opacity:0.9;">New Lead via BellAveGo</div>
+        <div style="font-size:22px;font-weight:900;letter-spacing:-0.4px;margin-top:6px;">${escapeHtml(args.callerName)}</div>
+        <div style="font-size:13px;opacity:0.92;margin-top:4px;">${urgencyIcon} ${urgencyLabel} · ${time}</div>
+      </div>
+      <div style="padding:22px;">
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;" width="120">Phone</td><td style="padding:8px 0;"><a href="tel:${escapeHtml(args.callerPhone || '')}" style="color:#0AA89F;font-weight:700;text-decoration:none;">${callerPhonePretty}</a></td></tr>
+          <tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;vertical-align:top;">Message</td><td style="padding:8px 0;line-height:1.5;">${escapeHtml(args.callerMessage)}</td></tr>
+          <tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">Urgency</td><td style="padding:8px 0;font-weight:700;">${urgencyIcon} ${urgencyLabel}</td></tr>
+          ${args.smartInsight ? `<tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;vertical-align:top;">Smart insight</td><td style="padding:8px 0;line-height:1.5;color:#0B1F3A;">${escapeHtml(args.smartInsight)}</td></tr>` : ''}
+        </table>
+        <div style="margin-top:22px;padding-top:18px;border-top:1px solid rgba(10,168,159,0.16);text-align:center;">
+          ${args.callerPhone ? `<a href="tel:${escapeHtml(args.callerPhone)}" style="display:inline-block;padding:12px 28px;border-radius:10px;background:linear-gradient(135deg,#0AA89F,#0D8F87);color:#fff;font-weight:800;font-size:14px;text-decoration:none;box-shadow:0 6px 18px rgba(10,168,159,0.32);">📞 Call ${escapeHtml(args.callerName)} back</a>` : ''}
+          <div style="margin-top:12px;"><a href="${escapeHtml(args.dashboardUrl)}" style="color:#7AAAB2;font-size:12px;font-weight:600;text-decoration:none;">Open in dashboard →</a></div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:11px;color:#7AAAB2;margin-top:18px;">${escapeHtml(args.contractorBusinessName)} · Sent by BellAveGo</div>
+  </div>
+</body></html>`.trim()
+
+  return { subject, html, text }
+}
+
 function formatUSPhone(p: string | null): string {
   if (!p) return ''
   const d = p.replace(/\D/g, '')

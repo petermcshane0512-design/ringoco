@@ -79,7 +79,7 @@ export async function notifyArtifactReady(args: {
   return { sms: smsOk, email: emailOk }
 }
 
-async function lookupOwnerEmail(userId: string): Promise<string | null> {
+export async function lookupOwnerEmail(userId: string): Promise<string | null> {
   // Lazy-import Clerk to keep this util cheap when called from Vercel functions
   try {
     const { clerkClient } = await import('@clerk/nextjs/server')

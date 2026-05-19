@@ -4,7 +4,8 @@ import twilio from 'twilio'
 import Anthropic from '@anthropic-ai/sdk'
 import { OFFICE_MGR_TIERS } from '@/lib/pricing'
 import { verifyVapiSignature } from '@/lib/vapi'
-import { sendEmail, renderLeadAlertEmail } from '@/lib/email'
+import { sendEmail, renderLeadAlertEmail, renderContractorLeadEmail } from '@/lib/email'
+import { lookupOwnerEmail } from '@/lib/notify'
 import { estimateJobTicket } from '@/lib/consultingMetrics'
 
 const supabase = createClient(
@@ -360,6 +361,36 @@ async function takeMessage(opts: {
     } catch (e) {
       console.error('peter alert email failed:', e)
     }
+  }
+
+  // 4d. EMAIL ALERT TO CONTRACTOR (BellAveGo customer) — direct replacement
+  // for SMS-to-contractor while A2P 10DLC is registering. Goes to the email
+  // on their Clerk account so they get the lead instantly in their inbox and
+  // can tap-to-call back. Best-effort; failure does not block the call flow.
+  try {
+    const contractorEmail = await lookupOwnerEmail(tenant.user_id)
+    if (contractorEmail) {
+      const appUrl =
+        (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost'))
+          ? process.env.NEXT_PUBLIC_APP_URL
+          : 'https://www.bellavego.com'
+      const { subject, html, text } = renderContractorLeadEmail({
+        toEmail: contractorEmail,
+        contractorBusinessName: tenant.business_name || 'your business',
+        callerName: args.customer_name,
+        callerPhone: phone,
+        callerMessage: args.reason,
+        urgency: args.urgency,
+        callTimeISO: new Date().toISOString(),
+        smartInsight: smartInsight || null,
+        dashboardUrl: `${appUrl}/dashboard`,
+      })
+      await sendEmail({ to: contractorEmail, subject, html, text })
+    } else {
+      console.warn('contractor lead email skipped — no Clerk email for', tenant.user_id)
+    }
+  } catch (e) {
+    console.error('contractor lead email failed:', e)
   }
 
   // 4b. EMERGENCY ESCALATION — for urgency=emergency, also place an outbound
