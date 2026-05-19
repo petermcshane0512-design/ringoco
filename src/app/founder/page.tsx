@@ -63,12 +63,16 @@ export default function FounderPage() {
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
               gap: 36,
-              alignItems: 'start',
+              alignItems: 'stretch',
               marginBottom: 36,
             }}
           >
-            {/* LEFT column — paragraphs 1 + 2 stacked */}
-            <div className="quad-left" style={{ display: 'flex', flexDirection: 'column', gap: 18, fontSize: 16, lineHeight: 1.65, color: '#3D5A62' }}>
+            {/* LEFT column — paragraphs 1 + 2 stacked, justified so the bottom
+                of paragraph 2 hugs the bottom of the column (aligning with the
+                bottom of the video card in the right column). The video makes
+                the right column naturally taller — stretching the left column
+                + pushing P2 to the bottom keeps the four corners in a clean box. */}
+            <div className="quad-left" style={{ display: 'flex', flexDirection: 'column', gap: 18, justifyContent: 'space-between', fontSize: 16, lineHeight: 1.65, color: '#3D5A62' }}>
               <p style={{ margin: 0 }}>
                 I didn&apos;t start BellAveGo because AI was trending &mdash; I started it because I watched hardworking people lose money while doing the actual work. One afternoon, I was helping my friend Joe with a garage project when his phone rang four different times in under an hour. He ignored two calls because his hands were full, answered one just to say <em>&ldquo;I&rsquo;ll call you back,&rdquo;</em> and had to completely stop working just to schedule an appointment. Standing there watching it happen in real time, it hit me: thousands of home-service businesses are losing revenue every single day simply because they&rsquo;re too busy working to manage everything happening around them.
               </p>
