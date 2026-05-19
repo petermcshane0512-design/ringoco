@@ -224,15 +224,14 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
           position: 'relative', zIndex: 2,
           borderRadius: 24,
           overflow: 'hidden',
-          // Subtle baseline 3D tilt — gives the dashboard a "floating slab"
-          // feel at rest. NO whole-dashboard hover effect — individual
-          // sections inside lift on hover instead (see .dp-hover-lift CSS).
-          perspective: 1400,
+          // 2D tilt matching the iPhone mockup elsewhere on the landing page
+          // (rotate(4deg) — same direction, same magnitude). NO whole-dashboard
+          // hover effect — individual sections lift on hover via .dp-hover-lift.
           boxShadow: '0 32px 80px rgba(11,31,58,0.14), 0 8px 32px rgba(232,116,43,0.10), 0 0 0 1px rgba(232,116,43,0.16)',
           background: '#ffffff',
           opacity: visible ? 1 : 0,
-          transform: 'rotateX(-5deg) rotateY(2deg)',
-          transformStyle: 'preserve-3d',
+          transform: 'rotate(4deg)',
+          transformOrigin: 'center',
           transition: 'opacity 0.7s ease',
           isolation: 'isolate',
         }}
