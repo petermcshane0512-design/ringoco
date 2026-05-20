@@ -5,11 +5,14 @@ import { useAuth } from '@clerk/nextjs'
 import RoiCalculator from '@/components/RoiCalculator'
 
 /**
- * Meet the Founder — Sunset Mission Control aesthetic.
+ * Founder story — Sunset Mission Control aesthetic.
  *
- * Right rail is a "Why I founded BellAveGo" video placeholder card (video
- * not recorded yet — sits there ready). Left rail is short emotional headline
- * + condensed founder summary + premium founder ID card.
+ * Single emotional hook headline (Joe gets 4 calls in an hour) anchors the
+ * page; the two-column body splits the origin story (left) from the thesis
+ * (right). ROI calculator below lets the reader plug in their own numbers,
+ * then a sharp "trust the AI, not me" CTA closes. Algorithm-tightened:
+ * the prior video placeholder + shipped-features grid were deleted because
+ * neither was finished work — placeholder content is anti-conversion.
  */
 export default function FounderPage() {
   const { isSignedIn } = useAuth()
@@ -53,10 +56,18 @@ export default function FounderPage() {
             }
           `}</style>
 
-          {/* Headline — full-width banner above the body grid. */}
-          <h1 className="mc-slide-up" style={{ fontSize: 'clamp(44px, 5.8vw, 72px)', fontWeight: 900, letterSpacing: '-0.045em', lineHeight: 1.02, marginBottom: 40, color: '#0B1F3A', maxWidth: 980 }}>
-            Hi, I&apos;m Peter.<br />
-            I founded <span style={{ background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', filter: 'drop-shadow(0 2px 10px rgba(232,116,43,0.32))' }}>BellAveGo.</span>
+          {/* Eyebrow — names the author of the page, replaces the generic
+              "Hi I'm Peter" placeholder headline. */}
+          <p className="mc-slide-up" style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.22em', textTransform: 'uppercase', margin: '0 0 18px', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ width: 22, height: 1, background: 'linear-gradient(90deg, #E8742B, transparent)' }} />
+            Founder story · Peter McShane
+          </p>
+
+          {/* Headline — emotional hook, not a placeholder. Specific numbers
+              (four calls, one hour) earn the read. The dropped-jobs framing
+              is the story arc compressed into a single sentence. */}
+          <h1 className="mc-slide-up" style={{ fontSize: 'clamp(40px, 5.4vw, 64px)', fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.04, marginBottom: 40, color: '#0B1F3A', maxWidth: 1020 }}>
+            My friend Joe got <span style={{ background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', filter: 'drop-shadow(0 2px 10px rgba(232,116,43,0.32))' }}>four calls in an hour.</span> He answered one. That night I started building <span style={{ background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', filter: 'drop-shadow(0 2px 10px rgba(232,116,43,0.32))' }}>BellAveGo.</span>
           </h1>
 
           {/* Story pair — the two photos that previously lived on the homepage.
@@ -128,130 +139,44 @@ export default function FounderPage() {
               marginBottom: 64,
             }}
           >
-            {/* LEFT column — paragraphs 1 + 2 with generous paragraph
-                spacing. Natural flow (top-down) replaces the prior
-                space-between justification, which had been making P2
-                feel detached from P1. */}
-            <div className="quad-left" style={{ display: 'flex', flexDirection: 'column', gap: 32, fontSize: 18, lineHeight: 1.72, color: '#3D5A62' }}>
+            {/* LEFT column — the story, with specifics. The math at the end
+                converts the anecdote into a problem-statement contractors
+                can recognize as their own. */}
+            <div className="quad-left" style={{ display: 'flex', flexDirection: 'column', gap: 28, fontSize: 18, lineHeight: 1.72, color: '#3D5A62' }}>
               <p style={{ margin: 0 }}>
-                I didn&apos;t start BellAveGo because AI was trending &mdash; I started it after watching hardworking home-service businesses lose revenue simply because they were too busy doing the actual work. One afternoon helping my friend Joe on a garage project, his phone rang four times in under an hour. He ignored some calls because his hands were full, answered one just to say <em>&ldquo;I&rsquo;ll call you back,&rdquo;</em> and had to stop working entirely just to schedule an appointment. That moment made me realize thousands of home-service businesses lose customers every day due to missed calls, delayed responses, and operational overload.
+                It was a Saturday and I was helping Joe finish a garage. His phone rang four times in under an hour. Two went to voicemail because his hands were buried in drywall. One he caught long enough to say <em>&ldquo;I&rsquo;ll call you back&rdquo;</em> &mdash; then forgot. The fourth he answered, but he had to stop working to schedule it. By the time we cleaned up he was three jobs lighter than he should&rsquo;ve been, and he wasn&rsquo;t sure which calls he&rsquo;d lost.
               </p>
               <p style={{ margin: 0 }}>
-                My team and I have spent years studying and building with LLMs, voice AI, agentic workflows, automation systems, retrieval pipelines, and conversational intelligence tools. We built BellAveGo to apply those technologies to a real operational problem. BellAveGo is an AI receptionist and operational intelligence platform built specifically for home-service businesses. It answers missed calls, books appointments, captures leads, analyzes local demand trends, identifies revenue opportunities, and helps owners stop losing business while they&rsquo;re physically on the job.
+                I went home that night and started building. Every contractor I&rsquo;ve talked to since tells the same story. The math is brutal &mdash; at a <strong style={{ color: '#0B1F3A' }}>$480 average ticket</strong> and a <strong style={{ color: '#0B1F3A' }}>35% close rate</strong>, eight missed calls a week is roughly <strong style={{ color: '#C84B26' }}>$5,800 walking out the door every month.</strong>
               </p>
             </div>
 
-            {/* RIGHT column — paragraph 3 on top, video in the middle,
-                short closing beat (paragraph 4) below the video. */}
-            <div className="quad-right" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+            {/* RIGHT column — the belief that justifies the company's
+                existence. This is the thesis: receptionist is the data
+                collection layer, the real product is the intelligence on
+                top. Closes with the thesis pull quote. */}
+            <div className="quad-right" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
               <p style={{ margin: 0, fontSize: 18, lineHeight: 1.72, color: '#3D5A62' }}>
-                Behind the scenes, BellAveGo uses a network of <span style={{ color: '#C84B26', fontWeight: 800 }}>specialized AI agents</span> that continuously analyze call behavior, booking inefficiencies, customer intent, competitor positioning, and local market opportunities across each client&rsquo;s service area. Those insights help generate BellAveGo consulting reports, which are then manually reviewed and refined by our team into actionable business strategy. We believe <strong>many home-service businesses could increase yearly revenue by 30%+</strong> through faster lead response times, reduced missed opportunities, automated scheduling, and AI-driven operational insights powered by BellAveGo.
+                Most AI receptionist startups think the product is call answering. It isn&rsquo;t. Call answering is how we <em>collect the data.</em>
+              </p>
+              <p style={{ margin: 0, fontSize: 18, lineHeight: 1.72, color: '#3D5A62' }}>
+                The real product is what BellAveGo does with that data &mdash; finds the patterns, scores the opportunities, and tells you in dollars exactly where your business is leaking revenue. Every customer gets a free diagnostic report on day one. That&rsquo;s the part nobody else is building, and it&rsquo;s the only reason BellAveGo will exist in five years.
               </p>
 
-              {/* VIDEO PLACEHOLDER — "Why I founded BellAveGo" */}
-          {/* Video isn't recorded yet. When it is, swap the inner play-button
-              block for an <iframe> (Loom / YouTube / mux-player). The card
-              dimensions, glow, and tap target are already set. */}
-          <div
-            role="button"
-            tabIndex={0}
-            aria-label="Why I founded BellAveGo — video coming soon"
-            style={{
-              position: 'relative',
-              aspectRatio: '16/10',
-              borderRadius: 22,
-              overflow: 'hidden',
-              cursor: 'pointer',
-              background:
-                'radial-gradient(circle at 30% 25%, rgba(255,157,90,0.30), transparent 55%),' +
-                'radial-gradient(circle at 80% 75%, rgba(20,184,166,0.28), transparent 60%),' +
-                'linear-gradient(135deg, #050E1F 0%, #0B1F3A 50%, #112C4A 100%)',
-              border: '1px solid rgba(94,234,212,0.32)',
-              boxShadow:
-                '0 30px 70px rgba(11,31,58,0.30),' +
-                '0 0 0 1px rgba(232,116,43,0.18),' +
-                '0 0 80px rgba(232,116,43,0.20)',
-              transition: 'transform 0.32s ease, box-shadow 0.32s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-3px)'
-              e.currentTarget.style.boxShadow =
-                '0 40px 90px rgba(11,31,58,0.36), 0 0 0 1px rgba(94,234,212,0.45), 0 0 110px rgba(232,116,43,0.32)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow =
-                '0 30px 70px rgba(11,31,58,0.30), 0 0 0 1px rgba(232,116,43,0.18), 0 0 80px rgba(232,116,43,0.20)'
-            }}
-          >
-            <style>{`
-              @keyframes founderPlayPulse {
-                0%, 100% { box-shadow: 0 18px 40px rgba(232,116,43,0.55), 0 0 0 0 rgba(255,217,168,0.6); }
-                50%      { box-shadow: 0 22px 50px rgba(232,116,43,0.7),  0 0 0 18px rgba(255,217,168,0); }
-              }
-              .founder-play { animation: founderPlayPulse 2.4s ease-in-out infinite; }
-            `}</style>
-
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: 22 }}>
-              {/* Top meta — coming-soon tag + duration */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '4px 11px', borderRadius: 99,
-                  background: 'rgba(94,234,212,0.14)',
-                  border: '1px solid rgba(94,234,212,0.40)',
-                  fontSize: 10, fontWeight: 800, color: '#5EEAD4',
-                  letterSpacing: '0.16em', textTransform: 'uppercase',
-                }}>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#E8742B', boxShadow: '0 0 8px rgba(232,116,43,0.7)' }} />
-                  Founder story
-                </span>
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.62)', letterSpacing: '0.04em' }}>
-                  Coming soon
-                </span>
-              </div>
-
-              {/* Center play button */}
-              <div className="founder-play" style={{
-                margin: 'auto',
-                width: 96, height: 96,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #FFD9A8 0%, #FF9D5A 50%, #E8742B 100%)',
-                border: '4px solid rgba(255,255,255,0.92)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#0B1F3A',
-              }}>
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </div>
-
-              {/* Bottom title */}
-              <div style={{ textAlign: 'center', color: '#fff' }}>
-                <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.3px', marginBottom: 5 }}>
-                  Why I founded BellAveGo
-                </div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(94,234,212,0.85)', letterSpacing: '0.04em' }}>
-                  Video drops soon &middot; ~3&nbsp;min watch
-                </div>
-              </div>
-            </div>
-          </div>
-
-              {/* Closing beat — short pull-quote-style paragraph that
-                  anchors the bottom of the right column under the video.
-                  Subtle sunset-orange left rule + italic-adjacent weight
-                  marks it as the thesis statement, not body copy. */}
+              {/* Thesis pull quote — the company in one sentence. Replaces
+                  the prior "never built to replace hardworking people"
+                  framing, which read like a press release. */}
               <p style={{
-                margin: 0,
-                paddingLeft: 18,
-                borderLeft: '3px solid rgba(232,116,43,0.55)',
-                fontSize: 17,
-                lineHeight: 1.7,
-                color: '#3D5A62',
-                fontWeight: 500,
+                margin: '8px 0 0',
+                paddingLeft: 20,
+                borderLeft: '3px solid rgba(232,116,43,0.75)',
+                fontSize: 19,
+                lineHeight: 1.55,
+                color: '#0B1F3A',
+                fontWeight: 700,
+                letterSpacing: '-0.2px',
               }}>
-                BellAveGo was never built to replace hardworking people &mdash; it was built to give smaller teams access to the kind of automation, operational intelligence, and market analysis that historically only large companies could afford.
+                &ldquo;The receptionist is how we get the data. The product is knowing &mdash; in dollars &mdash; exactly which call you should have answered first.&rdquo;
               </p>
             </div>{/* /quad-right */}
           </div>{/* /founder-quad */}
@@ -288,61 +213,30 @@ export default function FounderPage() {
                 <div style={{ position: 'relative', width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', color: '#0B1F3A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, boxShadow: '0 8px 20px rgba(232,116,43,0.42)', border: '2px solid #fff' }}>P</div>
               </div>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.2px' }}>The BellAveGo Team</div>
-                <div style={{ fontSize: 12, color: '#C84B26', fontWeight: 700, marginTop: 2 }}>Software &amp; Finance Team</div>
-                <div style={{ fontSize: 11.5, color: '#7AAAB2', fontWeight: 500, marginTop: 2 }}>Building AI tools for home-service businesses</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.2px' }}>Peter McShane</div>
+                <div style={{ fontSize: 12, color: '#C84B26', fontWeight: 700, marginTop: 2 }}>Founder, BellAveGo</div>
+                <div style={{ fontSize: 11.5, color: '#7AAAB2', fontWeight: 500, marginTop: 2 }}>Building software to give contractors their nights back</div>
               </div>
             </div>
           </div>
         </div>{/* /outer hero wrapper */}
       </section>
 
-      {/* WHAT'S BUILT — proof rows */}
-      <section style={{ position: 'relative', padding: '40px 32px 64px' }}>
-        <div className="mc-glow-teal" style={{ width: 600, height: 600, bottom: '0', right: '-15%' }} />
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 1080, margin: '0 auto' }}>
-          <p style={{ fontSize: 11, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 14, textAlign: 'center' }}>What&apos;s already built</p>
-          <h2 style={{ fontSize: 'clamp(26px, 3.4vw, 38px)', fontWeight: 900, letterSpacing: '-0.03em', textAlign: 'center', color: '#0B1F3A', marginBottom: 12, lineHeight: 1.1 }}>
-            This isn&apos;t a pitch deck. <span style={{ background: 'linear-gradient(135deg, #FF9D5A, #E8742B 60%, #C84B26)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>It&apos;s shipping software.</span>
-          </h2>
-          <p style={{ fontSize: 15, color: '#3D5A62', textAlign: 'center', maxWidth: 580, margin: '0 auto 36px', lineHeight: 1.6 }}>
-            Every feature below works today. Call <a href="tel:+16514677829" style={{ color: '#C84B26', fontWeight: 700, textDecoration: 'none' }}>(651) 467-7829</a> to hear it yourself.
-          </p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
-            {[
-              { title: 'Auto-provisioned local number',     desc: 'Every customer gets a local AI number in their area code the moment they pay.', tone: 'orange' },
-              { title: 'Stripe billing',          desc: 'Three-tier subscription, auto-suspend on payment failure.', tone: 'teal' },
-              { title: 'AI receptionist',  desc: 'Sub-second latency, real natural voice. Captures the lead in under 60 seconds.', tone: 'orange' },
-              { title: 'Quote Hunter',            desc: 'Auto-follow-up SMS day 2 / 7 / 14 on open quotes.', tone: 'teal' },
-              { title: 'AI Collections',          desc: 'Auto-chases past-due invoices with Stripe pay-by-text links.', tone: 'orange' },
-              { title: 'AI Consulting reports',   desc: 'Pulls your data, ranks revenue opportunities by addressable monthly $.', tone: 'teal' },
-            ].map(x => (
-              <div key={x.title} className={`mc-card mc-card-${x.tone}`} style={{ padding: 20 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <span className="mc-live-dot" />
-                  <span style={{ fontSize: 10, fontWeight: 800, color: '#15803D', letterSpacing: '0.14em', textTransform: 'uppercase' }}>Shipped</span>
-                </div>
-                <h3 style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A', margin: '0 0 6px', letterSpacing: '-0.2px' }}>{x.title}</h3>
-                <p style={{ fontSize: 13, color: '#4A6670', margin: 0, lineHeight: 1.55 }}>{x.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ROI CALCULATOR — pre-CTA conversion lever (moved from homepage) */}
+      {/* ROI CALCULATOR — Peter showing the math to the contractor reading
+          the founder page. The two-paragraph story upstream set the stakes
+          ($5,800/mo at 8 missed calls/wk); this lets them plug in their
+          own numbers and feel it. Conversion lever moved from homepage. */}
       <RoiCalculator />
 
       {/* CTA */}
       <section style={{ position: 'relative', padding: '72px 32px', textAlign: 'center', overflow: 'hidden' }}>
         <div className="mc-glow-orange" style={{ width: 900, height: 900, top: '-60%', left: '50%', transform: 'translateX(-50%)' }} />
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 640, margin: '0 auto' }}>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: 680, margin: '0 auto' }}>
           <h2 style={{ fontSize: 'clamp(28px, 3.8vw, 42px)', fontWeight: 900, marginBottom: 14, color: '#0B1F3A', letterSpacing: '-0.04em', lineHeight: 1.1 }}>
-            Try it before you trust it.
+            You don&apos;t have to trust me. Trust the AI.
           </h2>
           <p style={{ color: '#3D5A62', fontSize: 17, margin: '0 auto 32px', lineHeight: 1.55 }}>
-            Call the demo. Hear the AI. Then decide. <span style={{ color: '#C84B26', fontWeight: 800 }}>30-day money-back if it doesn&apos;t earn its keep.</span>
+            Call <a href="tel:+16514677829" style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>(651) 467-7829</a>. Tell it your AC is broken. If the AI doesn&rsquo;t capture the lead in 60 seconds and text the dispatcher, <span style={{ color: '#C84B26', fontWeight: 800 }}>BellAveGo isn&rsquo;t ready for you.</span>
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <a href="tel:+16514677829" className="mc-btn-orange">
@@ -359,7 +253,7 @@ export default function FounderPage() {
       {/* Footer */}
       <footer style={{ padding: '32px 40px', background: '#FFF7EE', borderTop: '1px solid rgba(232,116,43,0.18)', textAlign: 'center' }}>
         <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>
-          BellAveGo · Built by the BellAveGo software &amp; finance team · <a href="mailto:peter@bellavego.com" style={{ color: '#C84B26', textDecoration: 'none', fontWeight: 700 }}>peter@bellavego.com</a>
+          BellAveGo · Built by Peter McShane · <a href="mailto:peter@bellavego.com" style={{ color: '#C84B26', textDecoration: 'none', fontWeight: 700 }}>peter@bellavego.com</a>
         </p>
       </footer>
     </main>

@@ -582,7 +582,7 @@ export default function HomePage() {
                   gets a short scannable one. Both Pads use the same .hero-sub
                   base styles; .dt-only / .mb-only-block control visibility. */}
               <p className="hero-sub dt-only-block">
-                BellAveGo answers when you can&apos;t, captures the lead, and texts you a summary with the caller&apos;s name, problem, and times they&apos;re available. Pays for itself in one booked job — built for home service teams of 1–15.
+                BellAveGo answers when you can&apos;t, captures the job, and texts you the details in 20 seconds. One booked job pays for the month.
               </p>
               <p className="hero-sub mb-only-block">
                 BellAveGo answers missed calls, captures the job, and texts you the next step in seconds.
@@ -615,16 +615,16 @@ export default function HomePage() {
 
               <div className="hero-trust">
                 <div className="hero-trust-item">
-                  <span className="hero-trust-num">✓</span>
-                  <span className="hero-trust-lab">Beats voicemail</span>
+                  <span className="hero-trust-num">100%</span>
+                  <span className="hero-trust-lab">Calls answered</span>
+                </div>
+                <div className="hero-trust-item">
+                  <span className="hero-trust-num">20s</span>
+                  <span className="hero-trust-lab">Text summary</span>
                 </div>
                 <div className="hero-trust-item">
                   <span className="hero-trust-num">24/7</span>
                   <span className="hero-trust-lab">Always on</span>
-                </div>
-                <div className="hero-trust-item">
-                  <span className="hero-trust-num">100%</span>
-                  <span className="hero-trust-lab">Calls answered</span>
                 </div>
                 <div className="hero-trust-item">
                   <span className="hero-trust-num">30‑day</span>
@@ -1271,8 +1271,8 @@ export default function HomePage() {
           ))}
         </div>
         <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 16, lineHeight: 1.6 }}>
-          Month-to-month . 30-day money-back . 17% off annual.<br />
-          <span style={{ fontWeight: 700, color: '#0AA89F' }}>Typical $1M HVAC shop sees $18K/mo lift from the 5-AI bundle</span> — 23x return on $797.<br />
+          Month-to-month · 30-day money-back · 17% off annual.<br />
+          <span style={{ fontWeight: 700, color: '#0AA89F' }}>Most contractors recover the month on their first booked job.</span><br />
           90-day money-back if we don&apos;t add at least 5 booked jobs.
         </p>
       </section>
@@ -1283,7 +1283,7 @@ export default function HomePage() {
           Stop letting missed calls<br />become missed jobs.
         </h2>
         <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 17, maxWidth: 460, margin: '0 auto 40px', lineHeight: 1.8 }}>
-          Set up BellAveGo in 15 minutes and let the AI answer, book, and text your next customer.
+          Sign up in 5 minutes. The AI is live before you finish your next job.
         </p>
         <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
           {isSignedIn ? (
@@ -1306,7 +1306,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <Image src="/logo.png" alt="BellAveGo" width={300} height={100} style={{ objectFit: 'contain' }} />
           <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
-          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>The best AI implementation for teams of 1–15 · From $397/mo · 30-day money-back · Cancel anytime</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>AI receptionist for home service pros · From $397/mo · 30-day money-back · Cancel anytime</p>
         </div>
       </footer>
 
