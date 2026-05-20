@@ -35,7 +35,7 @@ const PLANS: Plan[] = [
     name: 'Mission Control',
     monthly: 397,
     annual: 330,
-    setup: 250,
+    setup: 0,
     tagline: 'AI answers every call. You close it in one tap.',
     popular: false,
     features: [
@@ -59,7 +59,7 @@ const PLANS: Plan[] = [
     name: 'Operator',
     monthly: 797,
     annual: 662,
-    setup: 500,
+    setup: 0,
     tagline: 'Five AIs running your back office while you turn wrenches.',
     popular: true,
     features: [
@@ -79,7 +79,7 @@ const PLANS: Plan[] = [
     name: 'Concierge',
     monthly: 1997,
     annual: 1660,
-    setup: 1000,
+    setup: 0,
     tagline: 'AI runs your back office AND your marketing. You just close the work.',
     popular: false,
     features: [
@@ -513,6 +513,13 @@ export default function PricingPage() {
 
       <footer style={{ padding: '36px 40px', background: '#0B1F3A', textAlign: 'center' }}>
         <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>BellAveGo · AI Receptionist + AI Marketing for home services pros · 30-day money-back · Cancel anytime</p>
+        <p style={{ margin: '8px 0 0', fontSize: 11, color: '#3D5A62' }}>
+          <Link href="/privacy" style={{ color: '#7AAAB2', textDecoration: 'none' }}>Privacy</Link>
+          {' · '}
+          <Link href="/terms" style={{ color: '#7AAAB2', textDecoration: 'none' }}>Terms</Link>
+          {' · '}
+          © 2026 BellAveGo
+        </p>
       </footer>
     </main>
   )

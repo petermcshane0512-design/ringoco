@@ -1307,6 +1307,13 @@ export default function HomePage() {
           <Image src="/logo.png" alt="BellAveGo" width={300} height={100} style={{ objectFit: 'contain' }} />
           <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
           <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>AI receptionist for home service pros · From $397/mo · 30-day money-back · Cancel anytime</p>
+          <p style={{ margin: '8px 0 0', fontSize: 11, color: '#3D5A62' }}>
+            <Link href="/privacy" style={{ color: '#7AAAB2', textDecoration: 'none' }}>Privacy</Link>
+            {' · '}
+            <Link href="/terms" style={{ color: '#7AAAB2', textDecoration: 'none' }}>Terms</Link>
+            {' · '}
+            © 2026 BellAveGo
+          </p>
         </div>
       </footer>
 
