@@ -87,65 +87,56 @@ export default function FounderPage() {
           filter: drop-shadow(0 2px 14px rgba(232,116,43,0.28));
         }
 
-        /* Cinematic founder card — same approach as before, refined.
-           Dark navy gradient with two drifting glows; /peter.png covers
-           via objectFit when present, hidden via onError otherwise. */
+        /* Founder portrait card — light cream/sunset placeholder that
+           blends with the cream page background. Two soft drifting
+           glows give it life without going dark. When /peter.png is
+           uploaded, the image covers everything via objectFit:cover. */
         .fv3-portrait {
           position: relative;
           aspect-ratio: 4/5;
-          max-width: 460px;
+          max-width: 440px;
           margin: 0 auto;
-          border-radius: 28px;
+          border-radius: 26px;
           overflow: hidden;
           background:
-            radial-gradient(circle at 25% 18%, rgba(255,157,90,0.28), transparent 55%),
-            radial-gradient(circle at 78% 82%, rgba(20,184,166,0.22), transparent 60%),
-            linear-gradient(140deg, #050E1F 0%, #0B1F3A 45%, #112C4A 100%);
-          border: 1px solid rgba(232,116,43,0.32);
+            radial-gradient(circle at 30% 22%, rgba(255,217,168,0.85), transparent 60%),
+            radial-gradient(circle at 75% 78%, rgba(255,233,200,0.55), transparent 65%),
+            linear-gradient(160deg, #FFF1E2 0%, #FFE5C7 55%, #FFD9A8 100%);
+          border: 1px solid rgba(232,116,43,0.22);
           box-shadow:
-            0 50px 100px -20px rgba(11,31,58,0.55),
-            0 0 0 1px rgba(232,116,43,0.10),
-            0 0 120px -10px rgba(232,116,43,0.30);
+            0 30px 70px -20px rgba(11,31,58,0.18),
+            0 0 0 1px rgba(232,116,43,0.08),
+            inset 0 1px 0 rgba(255,255,255,0.65);
         }
         .fv3-portrait::before {
           content: '';
           position: absolute;
-          top: -20%; left: -10%;
-          width: 60%; height: 60%;
+          top: -15%; left: -10%;
+          width: 55%; height: 55%;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(255,157,90,0.35), transparent 60%);
-          filter: blur(40px);
+          background: radial-gradient(circle, rgba(255,157,90,0.38), transparent 60%);
+          filter: blur(38px);
           animation: fv3DriftA 11s ease-in-out infinite alternate;
           pointer-events: none;
         }
         .fv3-portrait::after {
           content: '';
           position: absolute;
-          bottom: -20%; right: -15%;
-          width: 65%; height: 65%;
+          bottom: -18%; right: -12%;
+          width: 60%; height: 60%;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(20,184,166,0.30), transparent 65%);
-          filter: blur(45px);
+          background: radial-gradient(circle, rgba(232,116,43,0.22), transparent 65%);
+          filter: blur(42px);
           animation: fv3DriftB 13s ease-in-out infinite alternate;
           pointer-events: none;
         }
         @keyframes fv3DriftA {
           0%   { transform: translate(0,0) scale(1); opacity: 0.65; }
-          100% { transform: translate(40px, 30px) scale(1.18); opacity: 0.9; }
+          100% { transform: translate(36px, 26px) scale(1.16); opacity: 0.92; }
         }
         @keyframes fv3DriftB {
           0%   { transform: translate(0,0) scale(1); opacity: 0.6; }
-          100% { transform: translate(-30px, -40px) scale(1.15); opacity: 0.88; }
-        }
-        .fv3-portrait-grid {
-          position: absolute; inset: 0;
-          background-image:
-            linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
-          background-size: 32px 32px;
-          mask-image: radial-gradient(circle at center, #000 30%, transparent 80%);
-          -webkit-mask-image: radial-gradient(circle at center, #000 30%, transparent 80%);
-          pointer-events: none;
+          100% { transform: translate(-26px, -32px) scale(1.14); opacity: 0.88; }
         }
         .fv3-portrait img {
           position: absolute; inset: 0;
@@ -153,28 +144,33 @@ export default function FounderPage() {
           z-index: 2;
         }
 
-        /* ── SCENES — two product-context photos ────────────── */
+        /* ── SCENES — two product-context photos, sized to align
+           with the prose column below for visual cohesion ────── */
         .fv3-scenes {
-          padding: 32px 0 24px;
+          padding: 8px 0 0;
         }
         .fv3-scenes-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 28px;
+          gap: 20px;
+          max-width: 860px;
+          margin: 0 auto;
         }
         .fv3-scene {
           position: relative;
-          aspect-ratio: 3/2;
-          border-radius: 22px;
+          aspect-ratio: 4/3;
+          border-radius: 18px;
           overflow: hidden;
           border: 1px solid rgba(232,116,43,0.18);
-          box-shadow: 0 24px 60px -16px rgba(11,31,58,0.20);
-          background: #0B1F3A;
+          box-shadow: 0 20px 48px -16px rgba(11,31,58,0.18);
+          background: #FFE9D0;
         }
 
-        /* ── ESSAY — long-form prose ─────────────────────────── */
+        /* ── ESSAY — long-form prose. Padding tightened so the
+           scene photos read as a continuation of the essay, not a
+           separate slab. ──────────────────────────────────────── */
         .fv3-essay {
-          padding: 72px 0 104px;
+          padding: 56px 0 104px;
         }
         .fv3-prose {
           max-width: 720px;
@@ -266,7 +262,6 @@ export default function FounderPage() {
 
             <div>
               <div className="fv3-portrait">
-                <div className="fv3-portrait-grid" aria-hidden />
                 <Image
                   src="/peter.png"
                   alt="Peter McShane, founder of BellAveGo"
