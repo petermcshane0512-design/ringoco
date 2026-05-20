@@ -49,14 +49,70 @@ export default function FounderPage() {
               .founder-quad .quad-left,
               .founder-quad .quad-right { gap: 26px !important; }
               .founder-meta { flex-direction: column !important; align-items: flex-start !important; gap: 28px !important; }
+              .founder-story-pair { grid-template-columns: 1fr !important; gap: 20px !important; }
             }
           `}</style>
 
           {/* Headline — full-width banner above the body grid. */}
-          <h1 className="mc-slide-up" style={{ fontSize: 'clamp(44px, 5.8vw, 72px)', fontWeight: 900, letterSpacing: '-0.045em', lineHeight: 1.02, marginBottom: 64, color: '#0B1F3A', maxWidth: 980 }}>
+          <h1 className="mc-slide-up" style={{ fontSize: 'clamp(44px, 5.8vw, 72px)', fontWeight: 900, letterSpacing: '-0.045em', lineHeight: 1.02, marginBottom: 40, color: '#0B1F3A', maxWidth: 980 }}>
             Hi, I&apos;m Peter.<br />
             I founded <span style={{ background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', filter: 'drop-shadow(0 2px 10px rgba(232,116,43,0.32))' }}>BellAveGo.</span>
           </h1>
+
+          {/* Story pair — the two photos that previously lived on the homepage.
+              Visually anchors the Joe-on-the-job paragraph below: customer
+              calls the AI receptionist while the contractor stays focused on
+              the job, both get a clean notification. Stacks 1-col on mobile. */}
+          <div
+            className="founder-story-pair mc-slide-up"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: 28,
+              marginBottom: 64,
+            }}
+          >
+            <div
+              style={{
+                position: 'relative',
+                borderRadius: 22,
+                overflow: 'hidden',
+                border: '1px solid rgba(232,116,43,0.18)',
+                boxShadow: '0 24px 60px rgba(11,31,58,0.18), 0 0 0 1px rgba(232,116,43,0.08)',
+                aspectRatio: '3/2',
+                background: '#0B1F3A',
+              }}
+            >
+              <Image
+                src="/customer.png"
+                alt="Homeowner on the phone with BellAveGo's AI receptionist, getting a confirmation notification"
+                fill
+                sizes="(max-width: 960px) 100vw, 50vw"
+                style={{ objectFit: 'cover' }}
+                priority
+              />
+            </div>
+            <div
+              style={{
+                position: 'relative',
+                borderRadius: 22,
+                overflow: 'hidden',
+                border: '1px solid rgba(94,234,212,0.22)',
+                boxShadow: '0 24px 60px rgba(11,31,58,0.18), 0 0 0 1px rgba(10,168,159,0.08)',
+                aspectRatio: '3/2',
+                background: '#0B1F3A',
+              }}
+            >
+              <Image
+                src="/electrician.png"
+                alt="Electrician on the job getting an SMS from BellAveGo with a new appointment request"
+                fill
+                sizes="(max-width: 960px) 100vw, 50vw"
+                style={{ objectFit: 'cover' }}
+                priority
+              />
+            </div>
+          </div>
 
           {/* Body grid — slightly wider left (text) column than right
               (visual) column. Large column gap creates the editorial
