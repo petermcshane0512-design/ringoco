@@ -6,13 +6,14 @@ import { useAuth } from '@clerk/nextjs'
 /**
  * Founder story — cinematic editorial layout (v2).
  *
- * Six sections that break the wall-of-text into skimmable moments:
- *   1. HERO ............ 55/45 split, headline + cinematic founder card
- *   2. MOMENT .......... three staggered story cards + premium stat block
- *   3. MANIFESTO ....... dark, oversized "why we exist" type
- *   4. HOW IT WORKS .... 3-column process with icons
- *   5. VISION .......... short founder mission, signed
- *   6. CTA ............. close
+ * Seven sections that break the wall-of-text into skimmable moments:
+ *   1. HERO .............. 55/45 split, headline + cinematic founder card
+ *   2. MOMENT ............ three staggered story cards + premium stat block
+ *   3. MANIFESTO ......... dark, oversized "why we exist" type
+ *   4. HOW IT WORKS ...... 3-column process with icons
+ *   5. INSIDE THE REPORT . operational/market/competitive intel surfaces
+ *   6. VISION ............ short founder mission, signed
+ *   7. CTA ............... close
  *
  * The hero card is a dark navy gradient with animated orange + teal
  * glows. If /peter.png exists in /public, the image fills the card via
@@ -693,6 +694,151 @@ export default function FounderPage() {
         }
         .fv2-cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
+        /* ── 4.5 INSIDE THE REPORT — market intelligence section ─── */
+        .fv2-inside {
+          position: relative;
+          padding: 112px 0 104px;
+          background: linear-gradient(180deg, #FFF1E2 0%, #FFF8F0 100%);
+          overflow: hidden;
+        }
+        .fv2-inside::before {
+          content: '';
+          position: absolute;
+          top: -20%; right: -10%;
+          width: 60%; height: 70%;
+          background: radial-gradient(circle, rgba(255,157,90,0.18), transparent 65%);
+          filter: blur(70px);
+          pointer-events: none;
+        }
+        .fv2-inside::after {
+          content: '';
+          position: absolute;
+          bottom: -20%; left: -10%;
+          width: 50%; height: 65%;
+          background: radial-gradient(circle, rgba(10,168,159,0.12), transparent 65%);
+          filter: blur(70px);
+          pointer-events: none;
+        }
+        .fv2-inside-head { text-align: center; max-width: 760px; margin: 0 auto 56px; }
+        .fv2-inside-h2 {
+          font-size: clamp(34px, 4.2vw, 50px);
+          font-weight: 900;
+          letter-spacing: -0.035em;
+          line-height: 1.05;
+          color: #0B1F3A;
+          margin: 12px 0 14px;
+        }
+        .fv2-inside-h2 .accent {
+          background: linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+        }
+        .fv2-inside-sub {
+          font-size: 16px;
+          color: #4A6670;
+          line-height: 1.6;
+          margin: 0;
+        }
+        .fv2-inside-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 20px;
+        }
+        .fv2-inside-card {
+          position: relative;
+          padding: 28px 26px 24px;
+          background: #fff;
+          border-radius: 20px;
+          border: 1px solid rgba(232,116,43,0.16);
+          box-shadow: 0 18px 44px -16px rgba(11,31,58,0.16);
+          transition: transform 0.32s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.32s, border-color 0.32s;
+        }
+        .fv2-inside-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 28px 60px -16px rgba(11,31,58,0.22);
+          border-color: rgba(232,116,43,0.40);
+        }
+        .fv2-inside-card-head {
+          display: flex; align-items: center; gap: 12px;
+          margin-bottom: 6px;
+        }
+        .fv2-inside-icon {
+          width: 38px; height: 38px;
+          display: inline-flex; align-items: center; justify-content: center;
+          border-radius: 11px;
+          background: linear-gradient(135deg, rgba(255,157,90,0.16), rgba(232,116,43,0.08));
+          border: 1px solid rgba(232,116,43,0.30);
+          color: #C84B26;
+        }
+        .fv2-inside-title {
+          font-size: 16px; font-weight: 900;
+          letter-spacing: 0.06em; text-transform: uppercase;
+          color: #0B1F3A;
+          margin: 0;
+        }
+        .fv2-inside-card-sub {
+          font-size: 13px;
+          color: #7AAAB2;
+          font-weight: 600;
+          margin: 0 0 22px;
+          line-height: 1.45;
+        }
+        .fv2-inside-rows {
+          display: flex; flex-direction: column;
+          border-top: 1px solid rgba(11,31,58,0.06);
+        }
+        .fv2-inside-row {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 11px 0;
+          border-bottom: 1px solid rgba(11,31,58,0.06);
+        }
+        .fv2-inside-row-k {
+          font-size: 13px; color: #4A6670; font-weight: 600;
+          letter-spacing: -0.1px;
+        }
+        .fv2-inside-row-v {
+          font-size: 13.5px; color: #0B1F3A; font-weight: 800;
+          font-variant-numeric: tabular-nums;
+          letter-spacing: -0.2px;
+        }
+        .fv2-inside-row-v.up   { color: #15803D; }
+        .fv2-inside-row-v.warn { color: #C84B26; }
+        .fv2-inside-card-foot {
+          display: flex; align-items: center; gap: 8px;
+          margin-top: 18px;
+          padding: 10px 12px;
+          background: linear-gradient(135deg, rgba(255,157,90,0.10), rgba(232,116,43,0.04));
+          border: 1px solid rgba(232,116,43,0.20);
+          border-radius: 10px;
+          font-size: 12.5px;
+          color: #C84B26;
+          font-weight: 700;
+          line-height: 1.4;
+        }
+        .fv2-inside-card-foot::before {
+          content: ''; flex-shrink: 0;
+          width: 5px; height: 5px; border-radius: 50%;
+          background: #E8742B;
+          box-shadow: 0 0 8px rgba(232,116,43,0.7);
+        }
+        .fv2-inside-banner {
+          margin: 56px auto 0;
+          max-width: 880px;
+          padding: 22px 28px;
+          text-align: center;
+          background: rgba(255,255,255,0.6);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          border: 1px solid rgba(232,116,43,0.22);
+          border-radius: 16px;
+          font-size: 15px;
+          color: #3D5A62;
+          font-weight: 600;
+          line-height: 1.55;
+        }
+        .fv2-inside-banner strong { color: #0B1F3A; }
+
         /* ── Responsive ───────────────────────────────────────── */
         @media (max-width: 1024px) {
           .fv2-hero-grid { grid-template-columns: 1fr; gap: 56px; }
@@ -726,6 +872,11 @@ export default function FounderPage() {
           .fv2-how-head { margin-bottom: 36px; }
           .fv2-how-grid { grid-template-columns: 1fr; gap: 14px; }
           .fv2-how-grid::before { display: none; }
+
+          .fv2-inside { padding: 72px 0 80px; }
+          .fv2-inside-head { margin-bottom: 36px; }
+          .fv2-inside-grid { grid-template-columns: 1fr; gap: 14px; }
+          .fv2-inside-banner { margin-top: 36px; padding: 18px 20px; font-size: 14px; }
 
           .fv2-vision { padding: 80px 0; }
           .fv2-cta { padding: 64px 0 76px; }
@@ -963,7 +1114,107 @@ export default function FounderPage() {
         </div>
       </section>
 
-      {/* ═════════ 5. VISION ═════════ */}
+      {/* ═════════ 5. INSIDE THE REPORT ═════════
+          The differentiator section — shows what BellAveGo actually
+          DOES with the data it collects on every call. Three intel
+          surfaces (operational / market / competitive) with real
+          sample data points pulled from the sample-report. */}
+      <section className="fv2-inside">
+        <div className="fv2-shell">
+          <div className="fv2-inside-head">
+            <p className="fv2-eyebrow light" style={{ justifyContent: 'center', display: 'inline-flex' }}>Inside the consulting report</p>
+            <h2 className="fv2-inside-h2">
+              Every call becomes a data point.<br />
+              <span className="accent">Every quarter becomes a diagnostic.</span>
+            </h2>
+            <p className="fv2-inside-sub">
+              BellAveGo pulls signals from your call data, your local market, and your competitors &mdash; then ranks the revenue opportunities by dollar value.
+            </p>
+          </div>
+
+          <div className="fv2-inside-grid">
+
+            {/* OPERATIONAL — your own data */}
+            <article className="fv2-inside-card">
+              <div className="fv2-inside-card-head">
+                <span className="fv2-inside-icon" aria-hidden>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"/>
+                    <line x1="12" y1="20" x2="12" y2="4"/>
+                    <line x1="6"  y1="20" x2="6"  y2="14"/>
+                  </svg>
+                </span>
+                <h3 className="fv2-inside-title">Operational</h3>
+              </div>
+              <p className="fv2-inside-card-sub">From your call logs, jobs, and revenue.</p>
+              <div className="fv2-inside-rows">
+                <div className="fv2-inside-row"><span className="fv2-inside-row-k">Answer rate</span><span className="fv2-inside-row-v">81%</span></div>
+                <div className="fv2-inside-row"><span className="fv2-inside-row-k">After-hours calls</span><span className="fv2-inside-row-v warn">65 / mo</span></div>
+                <div className="fv2-inside-row"><span className="fv2-inside-row-k">Booking conversion</span><span className="fv2-inside-row-v up">+27% QoQ</span></div>
+                <div className="fv2-inside-row"><span className="fv2-inside-row-k">Avg ticket</span><span className="fv2-inside-row-v up">+4%</span></div>
+              </div>
+              <div className="fv2-inside-card-foot">
+                Sat 10am&ndash;2pm gap &middot; +$1,800/mo opportunity
+              </div>
+            </article>
+
+            {/* MARKET — service area data */}
+            <article className="fv2-inside-card">
+              <div className="fv2-inside-card-head">
+                <span className="fv2-inside-icon" aria-hidden>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                  </svg>
+                </span>
+                <h3 className="fv2-inside-title">Market</h3>
+              </div>
+              <p className="fv2-inside-card-sub">From Census, Google Places, permits, and severe-weather signals.</p>
+              <div className="fv2-inside-rows">
+                <div className="fv2-inside-row"><span className="fv2-inside-row-k">Homeowners in area</span><span className="fv2-inside-row-v">12,847</span></div>
+                <div className="fv2-inside-row"><span className="fv2-inside-row-k">Median income</span><span className="fv2-inside-row-v">$89.4K</span></div>
+                <div className="fv2-inside-row"><span className="fv2-inside-row-k">Homes w/ aging HVAC</span><span className="fv2-inside-row-v warn">24%</span></div>
+                <div className="fv2-inside-row"><span className="fv2-inside-row-k">Addressable TAM</span><span className="fv2-inside-row-v up">$482K / mo</span></div>
+              </div>
+              <div className="fv2-inside-card-foot">
+                5 commercial outreach targets identified this quarter
+              </div>
+            </article>
+
+            {/* COMPETITIVE — local competitor data */}
+            <article className="fv2-inside-card">
+              <div className="fv2-inside-card-head">
+                <span className="fv2-inside-icon" aria-hidden>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <circle cx="12" cy="12" r="6"/>
+                    <circle cx="12" cy="12" r="2"/>
+                  </svg>
+                </span>
+                <h3 className="fv2-inside-title">Competitive</h3>
+              </div>
+              <p className="fv2-inside-card-sub">Five competitors in your service area, monitored weekly.</p>
+              <div className="fv2-inside-rows">
+                <div className="fv2-inside-row"><span className="fv2-inside-row-k">Market avg rating</span><span className="fv2-inside-row-v">4.4 ★</span></div>
+                <div className="fv2-inside-row"><span className="fv2-inside-row-k">Your rating</span><span className="fv2-inside-row-v up">4.8 ★ (best)</span></div>
+                <div className="fv2-inside-row"><span className="fv2-inside-row-k">Review volume gap</span><span className="fv2-inside-row-v warn">1 / 10 of leader</span></div>
+                <div className="fv2-inside-row"><span className="fv2-inside-row-k">Service gaps</span><span className="fv2-inside-row-v">3 vs. nearest comp</span></div>
+              </div>
+              <div className="fv2-inside-card-foot">
+                Highest rating in service area &middot; review-volume gap to close
+              </div>
+            </article>
+
+          </div>
+
+          {/* Bottom banner — what it all rolls up to */}
+          <p className="fv2-inside-banner">
+            All synthesized into a <strong>ranked 90-day action plan</strong> with dollar-quantified opportunities, delivered to your inbox <strong>every month, quarter, or week</strong> depending on your tier.
+          </p>
+        </div>
+      </section>
+
+      {/* ═════════ 6. VISION ═════════ */}
       <section className="fv2-vision">
         <div className="fv2-shell">
           <div className="fv2-vision-inner">
@@ -985,7 +1236,7 @@ export default function FounderPage() {
         </div>
       </section>
 
-      {/* ═════════ 6. CTA ═════════ */}
+      {/* ═════════ 7. CTA ═════════ */}
       <section className="fv2-cta">
         <div className="fv2-shell">
           <h2 className="fv2-cta-h2">You don&rsquo;t have to trust me. Trust the AI.</h2>
