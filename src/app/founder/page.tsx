@@ -88,7 +88,27 @@ export default function FounderPage() {
             0 24px 50px -18px rgba(11,31,58,0.18),
             0 0 0 1px rgba(232,116,43,0.08),
             inset 0 1px 0 rgba(255,255,255,0.65);
+          transition:
+            transform 0.45s cubic-bezier(0.34,1.56,0.64,1),
+            box-shadow 0.45s ease,
+            border-color 0.45s ease,
+            filter 0.45s ease;
+          will-change: transform;
         }
+        .fv4-portrait:hover {
+          transform: scale(1.035) translateY(-5px);
+          border-color: rgba(232,116,43,0.42);
+          box-shadow:
+            0 38px 72px -18px rgba(11,31,58,0.26),
+            0 0 0 1px rgba(232,116,43,0.20),
+            0 0 80px -10px rgba(232,116,43,0.35),
+            inset 0 1px 0 rgba(255,255,255,0.75);
+          filter: brightness(1.04);
+        }
+        /* Speed up the inner glow drift on hover for a subtle
+           "the picture is alive" reaction. */
+        .fv4-portrait:hover::before { animation-duration: 5s; }
+        .fv4-portrait:hover::after  { animation-duration: 6s; }
         .fv4-portrait::before {
           content: '';
           position: absolute;
@@ -182,7 +202,22 @@ export default function FounderPage() {
           overflow: hidden;
           border: 1px solid rgba(232,116,43,0.18);
           box-shadow: 0 18px 40px -16px rgba(11,31,58,0.16);
-          background: #FFE9D0;
+          background:
+            radial-gradient(circle at 30% 25%, rgba(255,217,168,0.55), transparent 60%),
+            linear-gradient(160deg, #FFF1E2 0%, #FFE9D0 55%, #FFD9A8 100%);
+          transition:
+            transform 0.45s cubic-bezier(0.34,1.56,0.64,1),
+            box-shadow 0.45s ease,
+            border-color 0.45s ease;
+          will-change: transform;
+        }
+        .fv4-scene:hover {
+          transform: scale(1.04) translateY(-5px);
+          border-color: rgba(232,116,43,0.42);
+          box-shadow:
+            0 30px 60px -16px rgba(11,31,58,0.24),
+            0 0 0 1px rgba(232,116,43,0.24),
+            0 0 60px -10px rgba(232,116,43,0.32);
         }
 
         @media (max-width: 720px) {
@@ -235,13 +270,13 @@ export default function FounderPage() {
             I didn&rsquo;t start BellAveGo because AI was trending &mdash; I started it because I watched hardworking people lose money while doing the actual work. One afternoon, I was helping my friend Joe with a garage project when his phone rang four different times in under an hour. He ignored two calls because his hands were full, answered one just to say <em>&ldquo;I&rsquo;ll call you back,&rdquo;</em> and had to completely stop working just to schedule an appointment. Standing there watching it happen in real time, it hit me: thousands of home-service businesses are losing revenue every single day simply because they&rsquo;re too busy working to manage everything happening around them.
           </p>
           <p>
-            That&rsquo;s why I built BellAveGo &mdash; an AI receptionist built specifically for home-service teams of one to fifteen people. It answers the calls you can&rsquo;t get to, books appointments, captures leads, and quietly does the front-office work so you can stay on the job. But <strong>the receptionist is only half of what BellAveGo does.</strong>
+            That&rsquo;s why we built BellAveGo &mdash; an AI receptionist built specifically for home-service teams of one to fifteen people. It answers the calls you can&rsquo;t get to, books appointments, captures leads, and quietly does the front-office work so you can stay on the job. But <strong>the receptionist is only half of what BellAveGo does.</strong>
           </p>
           <p>
-            The other half is what makes BellAveGo different from anything else on the market. While the AI handles your phones, our team is actively scanning your service area for opportunities and threats you&rsquo;d never see on your own &mdash; new construction permits pulled in your zip code, neighborhoods with aging HVAC units coming due for replacement, competitors raising prices or going quiet, seasonal demand spikes hitting two weeks early, storm damage clusters, commercial buildings switching providers. Every signal gets turned into a plain-English report with a list of leads to chase and threats to defend against. <strong>Not a dashboard you have to interpret. A strategy you can run on Monday morning.</strong>
+            The other half is the part we&rsquo;re most proud of. While the AI handles your phones, our team is actively scanning your service area for opportunities and threats you&rsquo;d never see on your own &mdash; new construction and remodel permits pulled in your zip code, neighborhoods with aging systems coming due for replacement or repair, competitors raising prices or going quiet, seasonal demand spikes hitting two weeks early, storm and weather damage clusters, commercial accounts switching providers, and new homeowners moving into your service area. Every signal gets turned into a plain-English report with a list of leads to chase and threats to defend against. <strong>Not a dashboard you have to interpret. A strategy you can run on Monday morning.</strong>
           </p>
           <p>
-            That&rsquo;s the part nobody else is doing. Plenty of companies will sell you an AI that answers the phone. We&rsquo;re the only ones pairing it with the kind of market intelligence and human strategy work that used to cost five figures a month from a real consulting firm &mdash; built into a product priced for a small crew, not a corporation.
+            That&rsquo;s the real reason we built this. Small home-service crews have always been the backbone of their neighborhoods, but they&rsquo;ve never had access to the kind of market intelligence and strategy work that big companies pay consulting firms five figures a month for. BellAveGo changes that &mdash; built into a product priced for a small crew, not a corporation.
           </p>
           <p>
             BellAveGo was never built to replace hardworking people. It was built to give smaller teams the kind of automation and intelligence that used to only exist inside large companies &mdash; so the next time the phone rings while you&rsquo;re under a sink, you don&rsquo;t lose the job, and you actually know exactly where the next ten are coming from.
@@ -265,7 +300,7 @@ export default function FounderPage() {
             alt="A homeowner calls — BellAveGo's AI answers, captures the job, and texts the contractor"
             fill
             sizes="(max-width: 720px) 50vw, 410px"
-            style={{ objectFit: 'cover' }}
+            style={{ objectFit: 'contain' }}
           />
         </div>
         <div className="fv4-scene">
@@ -274,7 +309,7 @@ export default function FounderPage() {
             alt="An electrician on the job gets a text from BellAveGo with a new appointment — never has to stop working"
             fill
             sizes="(max-width: 720px) 50vw, 410px"
-            style={{ objectFit: 'cover' }}
+            style={{ objectFit: 'contain' }}
           />
         </div>
       </section>
