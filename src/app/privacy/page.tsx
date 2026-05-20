@@ -10,7 +10,7 @@ import { useAuth } from '@clerk/nextjs'
  *
  * Update "lastUpdated" any time the substance changes.
  */
-const LAST_UPDATED = 'May 17, 2026'
+const LAST_UPDATED = 'May 20, 2026'
 
 export default function PrivacyPage() {
   const { isSignedIn } = useAuth()
@@ -89,7 +89,17 @@ export default function PrivacyPage() {
           </ul>
         </Section>
 
-        <Section title="5. Call recording + transcripts">
+        <Section title="5. SMS communications">
+          <p>BellAveGo sends SMS messages on behalf of contractors to their customers (callers/leads) and to contractors themselves. These messages include appointment confirmations, scheduling and rescheduling requests, quote and approval requests, job status updates, post-job follow-ups, and message summaries.</p>
+          <p><strong>Opt-in:</strong> end users opt in to receive SMS by calling a contractor&apos;s BellAveGo-powered business line, submitting their phone number through a contractor&apos;s website, or texting the business number directly. Opting in is voluntary and is not a condition of any purchase.</p>
+          <p><strong>Message frequency:</strong> message frequency varies based on the customer&apos;s active service requests, appointments, and job activity. Customers typically receive between 1 and 10 messages per service interaction.</p>
+          <p><strong>Carrier fees:</strong> message and data rates may apply. BellAveGo does not charge end users for SMS messages, but standard carrier rates from the user&apos;s wireless provider may apply.</p>
+          <p><strong>Opt-out:</strong> end users can opt out at any time by replying STOP, STOPALL, UNSUBSCRIBE, CANCEL, END, or QUIT to any message. Once opted out, no further SMS messages will be sent to that number unless the user opts back in by replying START.</p>
+          <p><strong>Help:</strong> end users can reply HELP to any message to receive support contact information.</p>
+          <p><strong>Non-sharing:</strong> mobile phone numbers and SMS opt-in consent are never shared with third parties or affiliates for their marketing purposes. Phone numbers are only shared with the infrastructure providers listed in Section 4 of this policy strictly for the purpose of delivering SMS messages on behalf of contractors. <strong>No mobile information will be shared with third parties or affiliates for marketing or promotional purposes.</strong></p>
+        </Section>
+
+        <Section title="6. Call recording + transcripts">
           <p>Every inbound call to your BellAveGo number is recorded and transcribed so we can ship you the message summary, store searchable history in your dashboard, and improve service quality. You and your callers should understand:</p>
           <ul style={listStyle}>
             <li>The AI receptionist identifies itself as AI when asked</li>
@@ -99,7 +109,7 @@ export default function PrivacyPage() {
           </ul>
         </Section>
 
-        <Section title="6. Data retention">
+        <Section title="7. Data retention">
           <ul style={listStyle}>
             <li>Active account data — kept while your subscription is active</li>
             <li>Call recordings + transcripts — 12 months, then auto-purged</li>
@@ -108,7 +118,7 @@ export default function PrivacyPage() {
           </ul>
         </Section>
 
-        <Section title="7. Your rights">
+        <Section title="8. Your rights">
           <p>You can:</p>
           <ul style={listStyle}>
             <li>Access all data we hold about you or your business</li>
@@ -120,19 +130,19 @@ export default function PrivacyPage() {
           <p>To exercise any of these, email <a href="mailto:bellavegollc@gmail.com" style={{ color: '#0AA89F', fontWeight: 700 }}>bellavegollc@gmail.com</a>. We respond within 7 business days.</p>
         </Section>
 
-        <Section title="8. Security">
+        <Section title="9. Security">
           <p>We use industry-standard security practices: TLS encryption in transit, encrypted at rest in Supabase, OAuth tokens encrypted with rotating keys, service-role isolation between tenants, no shared databases. If you suspect a security issue, email <a href="mailto:bellavegollc@gmail.com" style={{ color: '#0AA89F', fontWeight: 700 }}>bellavegollc@gmail.com</a> with &quot;SECURITY&quot; in the subject line.</p>
         </Section>
 
-        <Section title="9. Children">
+        <Section title="10. Children">
           <p>BellAveGo is a B2B service for licensed home-service contractors. We do not knowingly collect data from anyone under 18. If you believe we have, contact us and we will delete it immediately.</p>
         </Section>
 
-        <Section title="10. Changes to this policy">
+        <Section title="11. Changes to this policy">
           <p>We may update this policy as the service evolves. Material changes are emailed to all active contractors at least 30 days in advance. The &quot;Last updated&quot; date at the top reflects the most recent change.</p>
         </Section>
 
-        <Section title="11. Contact">
+        <Section title="12. Contact">
           <p>BellAveGo<br/>Email: <a href="mailto:bellavegollc@gmail.com" style={{ color: '#0AA89F', fontWeight: 700 }}>bellavegollc@gmail.com</a><br/>Founder: Peter McShane</p>
         </Section>
 
