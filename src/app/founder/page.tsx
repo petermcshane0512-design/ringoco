@@ -5,14 +5,13 @@ import { useAuth } from '@clerk/nextjs'
 import RoiCalculator from '@/components/RoiCalculator'
 
 /**
- * Founder story — Sunset Mission Control aesthetic.
+ * Founder story — editorial single-column layout.
  *
- * Single emotional hook headline (Joe gets 4 calls in an hour) anchors the
- * page; the two-column body splits the origin story (left) from the thesis
- * (right). ROI calculator below lets the reader plug in their own numbers,
- * then a sharp "trust the AI, not me" CTA closes. Algorithm-tightened:
- * the prior video placeholder + shipped-features grid were deleted because
- * neither was finished work — placeholder content is anti-conversion.
+ * Five stacked sections: (1) hero with H1 + founder portrait, (2) origin
+ * story prose + small inline scene-photo pair, (3) thesis prose + big
+ * pull quote, (4) ROI calculator, (5) "trust the AI" CTA. The hero
+ * portrait references /peter.png — drop the file into /public and it
+ * replaces the gradient + "P" initial placeholder automatically.
  */
 export default function FounderPage() {
   const { isSignedIn } = useAuth()
@@ -34,192 +33,263 @@ export default function FounderPage() {
         </div>
       </nav>
 
-      {/* HERO — emotional headline + live AI demo card.
-          Spacing/typography retuned for a premium SaaS founder-story
-          feel (Stripe/Ramp/Linear cadence). Wider content area, large
-          column gap, looser line-height, stronger vertical rhythm. */}
-      <section style={{ position: 'relative', padding: '104px 40px 120px', overflow: 'hidden' }}>
-        <div className="mc-glow-orange" style={{ width: 600, height: 600, top: '-20%', right: '-10%', opacity: 0.65 }} />
-        <div className="mc-glow-teal" style={{ width: 700, height: 700, bottom: '-40%', left: '-12%' }} />
+      {/* Shared media-query rules + portrait styling. Defined once at the
+          top of <main>. The .founder-portrait gradient is also the
+          fallback that shows through if /peter.png hasn't been uploaded
+          yet — drop the file into /public and it just works. */}
+      <style>{`
+        .founder-shell { max-width: 1180px; margin: 0 auto; padding: 0 40px; }
+        .founder-prose { max-width: 720px; margin: 0 auto; font-size: 18px; line-height: 1.72; color: #3D5A62; }
+        .founder-prose p { margin: 0 0 22px; }
+        .founder-prose p:last-child { margin-bottom: 0; }
+        .founder-prose strong { color: #0B1F3A; }
+        .founder-eyebrow {
+          display: inline-flex; align-items: center; gap: 10px;
+          font-size: 11px; font-weight: 800; color: #C84B26;
+          letter-spacing: 0.22em; text-transform: uppercase;
+          margin: 0 0 18px;
+        }
+        .founder-eyebrow::before {
+          content: ''; width: 22px; height: 1px;
+          background: linear-gradient(90deg, #E8742B, transparent);
+        }
 
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 1320, margin: '0 auto' }}>
-          <style>{`
-            @media (max-width: 1100px) {
-              .founder-quad { column-gap: 56px !important; }
-            }
-            @media (max-width: 960px) {
-              .founder-quad { grid-template-columns: 1fr !important; column-gap: 0 !important; row-gap: 36px !important; }
-              .founder-quad .quad-left,
-              .founder-quad .quad-right { gap: 26px !important; }
-              .founder-meta { flex-direction: column !important; align-items: flex-start !important; gap: 28px !important; }
-              .founder-story-pair { grid-template-columns: 1fr !important; gap: 20px !important; }
-            }
-          `}</style>
+        /* Hero portrait — fallback gradient shows the "P" initial if the
+           image is missing; image (when present) covers via objectFit. */
+        .founder-portrait {
+          position: relative;
+          width: 100%;
+          max-width: 420px;
+          aspect-ratio: 4/5;
+          margin: 0 auto;
+          border-radius: 28px;
+          overflow: hidden;
+          background:
+            radial-gradient(circle at 30% 25%, rgba(255,217,168,0.45), transparent 55%),
+            radial-gradient(circle at 75% 80%, rgba(20,184,166,0.25), transparent 60%),
+            linear-gradient(135deg, #FF9D5A 0%, #E8742B 50%, #C84B26 100%);
+          border: 1px solid rgba(232,116,43,0.4);
+          box-shadow:
+            0 36px 80px rgba(11,31,58,0.30),
+            0 0 0 1px rgba(232,116,43,0.18),
+            0 0 100px rgba(232,116,43,0.18);
+        }
+        .founder-portrait::after {
+          /* Placeholder "P" — hidden once the image loads on top */
+          content: 'P';
+          position: absolute; inset: 0;
+          display: flex; align-items: center; justify-content: center;
+          font-size: clamp(120px, 14vw, 200px);
+          font-weight: 900; color: rgba(255,255,255,0.55);
+          letter-spacing: -0.05em;
+          text-shadow: 0 8px 30px rgba(11,31,58,0.25);
+          pointer-events: none;
+          z-index: 0;
+        }
+        .founder-portrait img {
+          position: relative;
+          z-index: 1;
+          object-fit: cover;
+        }
 
-          {/* Eyebrow — names the author of the page, replaces the generic
-              "Hi I'm Peter" placeholder headline. */}
-          <p className="mc-slide-up" style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.22em', textTransform: 'uppercase', margin: '0 0 18px', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ width: 22, height: 1, background: 'linear-gradient(90deg, #E8742B, transparent)' }} />
-            Founder story · Peter McShane
+        /* Small inline photo pair — much smaller than before. */
+        .founder-scene-pair {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+          max-width: 640px;
+          margin: 36px auto 0;
+        }
+        .founder-scene {
+          position: relative;
+          aspect-ratio: 3/2;
+          border-radius: 14px;
+          overflow: hidden;
+          border: 1px solid rgba(232,116,43,0.18);
+          box-shadow: 0 14px 36px rgba(11,31,58,0.14);
+          background: #0B1F3A;
+        }
+        .founder-scene-caption {
+          margin-top: 10px;
+          font-size: 12px;
+          color: #7AAAB2;
+          font-weight: 600;
+          letter-spacing: 0.04em;
+          text-align: center;
+        }
+
+        /* Pull quote — centered, big, branded */
+        .founder-pullquote {
+          max-width: 880px;
+          margin: 64px auto 0;
+          padding: 0 20px;
+          text-align: center;
+          font-size: clamp(22px, 2.4vw, 30px);
+          font-weight: 800;
+          letter-spacing: -0.02em;
+          line-height: 1.35;
+          color: #0B1F3A;
+        }
+        .founder-pullquote .accent {
+          background: linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+        }
+        .founder-pullquote::before {
+          content: '“';
+          display: block;
+          font-size: 64px;
+          line-height: 1;
+          color: rgba(232,116,43,0.5);
+          margin-bottom: 4px;
+          font-family: 'Georgia', serif;
+        }
+
+        @media (max-width: 920px) {
+          .founder-shell { padding: 0 22px; }
+          .founder-hero-grid { grid-template-columns: 1fr !important; gap: 36px !important; }
+          .founder-hero-grid .founder-hero-text { order: 2; }
+          .founder-hero-grid .founder-hero-photo { order: 1; }
+          .founder-portrait { max-width: 320px; }
+          .founder-scene-pair { gap: 12px; }
+          .founder-pullquote { margin-top: 44px; }
+        }
+      `}</style>
+
+      {/* ── 1. HERO — H1 + founder portrait ────────────────────────────── */}
+      <section style={{ position: 'relative', padding: '88px 0 64px', overflow: 'hidden' }}>
+        <div className="mc-glow-orange" style={{ width: 600, height: 600, top: '-25%', right: '-12%', opacity: 0.55 }} />
+        <div className="mc-glow-teal" style={{ width: 600, height: 600, bottom: '-50%', left: '-10%' }} />
+
+        <div className="founder-shell" style={{ position: 'relative', zIndex: 1 }}>
+          <div
+            className="founder-hero-grid mc-slide-up"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1.15fr 1fr',
+              gap: 64,
+              alignItems: 'center',
+            }}
+          >
+            {/* Left — eyebrow, H1, sub, CTAs */}
+            <div className="founder-hero-text">
+              <p className="founder-eyebrow">Founder story · Peter McShane</p>
+
+              <h1 style={{ fontSize: 'clamp(40px, 5.4vw, 64px)', fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.04, margin: '0 0 22px', color: '#0B1F3A' }}>
+                Hi, I&rsquo;m Peter,<br />
+                and I founded{' '}
+                <span style={{ background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', filter: 'drop-shadow(0 2px 10px rgba(232,116,43,0.32))' }}>
+                  BellAveGo.
+                </span>
+              </h1>
+
+              <p style={{ fontSize: 19, lineHeight: 1.55, color: '#3D5A62', margin: '0 0 30px', maxWidth: 520 }}>
+                I built this company because of one Saturday afternoon in my friend Joe&rsquo;s garage. Four phone calls in under an hour. He answered one. That night I went home and started writing code.
+              </p>
+
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <Link href="/pricing" className="mc-btn-orange">
+                  Try BellAveGo
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </Link>
+                <a href="tel:+16514677829" className="mc-btn-ghost">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  Hear the AI · (651) 467-7829
+                </a>
+              </div>
+            </div>
+
+            {/* Right — founder portrait. Drop /public/peter.png to fill;
+                gradient + "P" initial shows through until then. The
+                onError handler hides the broken-image icon during the
+                pre-upload state so the placeholder looks intentional. */}
+            <div className="founder-hero-photo">
+              <div className="founder-portrait">
+                <Image
+                  src="/peter.png"
+                  alt="Peter McShane, founder of BellAveGo"
+                  fill
+                  sizes="(max-width: 920px) 320px, 420px"
+                  priority
+                  onError={(e) => { e.currentTarget.style.display = 'none' }}
+                />
+              </div>
+              <p style={{ textAlign: 'center', margin: '14px 0 0', fontSize: 13, color: '#7AAAB2', fontWeight: 600, letterSpacing: '0.04em' }}>
+                Peter McShane &middot; Founder, BellAveGo
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 2. ORIGIN STORY — centered prose + small inline photo pair ── */}
+      <section style={{ position: 'relative', padding: '64px 0 80px' }}>
+        <div className="founder-shell">
+          <p className="founder-eyebrow" style={{ justifyContent: 'center', display: 'flex', maxWidth: 720, margin: '0 auto 18px' }}>
+            The moment
           </p>
 
-          {/* Headline — emotional hook, not a placeholder. Specific numbers
-              (four calls, one hour) earn the read. The dropped-jobs framing
-              is the story arc compressed into a single sentence. */}
-          <h1 className="mc-slide-up" style={{ fontSize: 'clamp(40px, 5.4vw, 64px)', fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.04, marginBottom: 40, color: '#0B1F3A', maxWidth: 1020 }}>
-            My friend Joe got <span style={{ background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', filter: 'drop-shadow(0 2px 10px rgba(232,116,43,0.32))' }}>four calls in an hour.</span> He answered one. That night I started building <span style={{ background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', filter: 'drop-shadow(0 2px 10px rgba(232,116,43,0.32))' }}>BellAveGo.</span>
-          </h1>
-
-          {/* Story pair — the two photos that previously lived on the homepage.
-              Visually anchors the Joe-on-the-job paragraph below: customer
-              calls the AI receptionist while the contractor stays focused on
-              the job, both get a clean notification. Stacks 1-col on mobile. */}
-          <div
-            className="founder-story-pair mc-slide-up"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 28,
-              marginBottom: 64,
-            }}
-          >
-            <div
-              style={{
-                position: 'relative',
-                borderRadius: 22,
-                overflow: 'hidden',
-                border: '1px solid rgba(232,116,43,0.18)',
-                boxShadow: '0 24px 60px rgba(11,31,58,0.18), 0 0 0 1px rgba(232,116,43,0.08)',
-                aspectRatio: '3/2',
-                background: '#0B1F3A',
-              }}
-            >
-              <Image
-                src="/customer.png"
-                alt="Homeowner on the phone with BellAveGo's AI receptionist, getting a confirmation notification"
-                fill
-                sizes="(max-width: 960px) 100vw, 50vw"
-                style={{ objectFit: 'cover' }}
-                priority
-              />
-            </div>
-            <div
-              style={{
-                position: 'relative',
-                borderRadius: 22,
-                overflow: 'hidden',
-                border: '1px solid rgba(94,234,212,0.22)',
-                boxShadow: '0 24px 60px rgba(11,31,58,0.18), 0 0 0 1px rgba(10,168,159,0.08)',
-                aspectRatio: '3/2',
-                background: '#0B1F3A',
-              }}
-            >
-              <Image
-                src="/electrician.png"
-                alt="Electrician on the job getting an SMS from BellAveGo with a new appointment request"
-                fill
-                sizes="(max-width: 960px) 100vw, 50vw"
-                style={{ objectFit: 'cover' }}
-                priority
-              />
-            </div>
+          <div className="founder-prose">
+            <p>
+              It was a Saturday and I was helping Joe finish a garage. His phone rang four times in under an hour. Two went to voicemail because his hands were buried in drywall. One he caught long enough to say <em>&ldquo;I&rsquo;ll call you back&rdquo;</em> &mdash; then forgot. The fourth he answered, but he had to stop working to schedule it. By the time we cleaned up he was three jobs lighter than he should&rsquo;ve been, and he wasn&rsquo;t sure which calls he&rsquo;d lost.
+            </p>
+            <p>
+              I went home that night and started building. Every contractor I&rsquo;ve talked to since tells the same story. The math is brutal &mdash; at a <strong>$480 average ticket</strong> and a <strong>35% close rate</strong>, eight missed calls a week is roughly <strong style={{ color: '#C84B26' }}>$5,800 walking out the door every month.</strong>
+            </p>
           </div>
 
-          {/* Body grid — slightly wider left (text) column than right
-              (visual) column. Large column gap creates the editorial
-              breathing room; both columns flow top-down naturally. */}
-          <div
-            className="founder-quad mc-slide-up"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1.12fr 1fr',
-              columnGap: 88,
-              rowGap: 40,
-              alignItems: 'start',
-              marginBottom: 64,
-            }}
-          >
-            {/* LEFT column — the story, with specifics. The math at the end
-                converts the anecdote into a problem-statement contractors
-                can recognize as their own. */}
-            <div className="quad-left" style={{ display: 'flex', flexDirection: 'column', gap: 28, fontSize: 18, lineHeight: 1.72, color: '#3D5A62' }}>
-              <p style={{ margin: 0 }}>
-                It was a Saturday and I was helping Joe finish a garage. His phone rang four times in under an hour. Two went to voicemail because his hands were buried in drywall. One he caught long enough to say <em>&ldquo;I&rsquo;ll call you back&rdquo;</em> &mdash; then forgot. The fourth he answered, but he had to stop working to schedule it. By the time we cleaned up he was three jobs lighter than he should&rsquo;ve been, and he wasn&rsquo;t sure which calls he&rsquo;d lost.
-              </p>
-              <p style={{ margin: 0 }}>
-                I went home that night and started building. Every contractor I&rsquo;ve talked to since tells the same story. The math is brutal &mdash; at a <strong style={{ color: '#0B1F3A' }}>$480 average ticket</strong> and a <strong style={{ color: '#0B1F3A' }}>35% close rate</strong>, eight missed calls a week is roughly <strong style={{ color: '#C84B26' }}>$5,800 walking out the door every month.</strong>
-              </p>
-            </div>
-
-            {/* RIGHT column — the belief that justifies the company's
-                existence. This is the thesis: receptionist is the data
-                collection layer, the real product is the intelligence on
-                top. Closes with the thesis pull quote. */}
-            <div className="quad-right" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-              <p style={{ margin: 0, fontSize: 18, lineHeight: 1.72, color: '#3D5A62' }}>
-                Most AI receptionist startups think the product is call answering. It isn&rsquo;t. Call answering is how we <em>collect the data.</em>
-              </p>
-              <p style={{ margin: 0, fontSize: 18, lineHeight: 1.72, color: '#3D5A62' }}>
-                The real product is what BellAveGo does with that data &mdash; finds the patterns, scores the opportunities, and tells you in dollars exactly where your business is leaking revenue. Every customer gets a free diagnostic report on day one. That&rsquo;s the part nobody else is building, and it&rsquo;s the only reason BellAveGo will exist in five years.
-              </p>
-
-              {/* Thesis pull quote — the company in one sentence. Replaces
-                  the prior "never built to replace hardworking people"
-                  framing, which read like a press release. */}
-              <p style={{
-                margin: '8px 0 0',
-                paddingLeft: 20,
-                borderLeft: '3px solid rgba(232,116,43,0.75)',
-                fontSize: 19,
-                lineHeight: 1.55,
-                color: '#0B1F3A',
-                fontWeight: 700,
-                letterSpacing: '-0.2px',
-              }}>
-                &ldquo;The receptionist is how we get the data. The product is knowing &mdash; in dollars &mdash; exactly which call you should have answered first.&rdquo;
-              </p>
-            </div>{/* /quad-right */}
-          </div>{/* /founder-quad */}
-
-          {/* CTAs (left) + Founder ID card (right) on the same row, with
-              a soft top divider that visually re-anchors them to the
-              story above. On mobile this stacks via the .founder-meta
-              media query in the <style> block above. */}
-          <div
-            className="founder-meta"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 40,
-              paddingTop: 44,
-              borderTop: '1px solid rgba(232,116,43,0.16)',
-            }}
-          >
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-              <Link href="/pricing" className="mc-btn-orange">
-                Try BellAveGo
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-              </Link>
-              <a href="tel:+16514677829" className="mc-btn-ghost">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                Hear the AI live · (651) 467-7829
-              </a>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
-                <div style={{ position: 'absolute', inset: -6, borderRadius: '50%', background: 'radial-gradient(circle, rgba(232,116,43,0.45), transparent 70%)', filter: 'blur(12px)' }} />
-                <div style={{ position: 'relative', width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', color: '#0B1F3A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, boxShadow: '0 8px 20px rgba(232,116,43,0.42)', border: '2px solid #fff' }}>P</div>
+          {/* Small inline photo pair — visual rest between paragraphs. */}
+          <div className="founder-scene-pair">
+            <div>
+              <div className="founder-scene">
+                <Image
+                  src="/customer.png"
+                  alt="Homeowner calling — BellAveGo's AI receptionist picks up and confirms the booking by text"
+                  fill
+                  sizes="(max-width: 920px) 50vw, 310px"
+                  style={{ objectFit: 'cover' }}
+                />
               </div>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.2px' }}>Peter McShane</div>
-                <div style={{ fontSize: 12, color: '#C84B26', fontWeight: 700, marginTop: 2 }}>Founder, BellAveGo</div>
-                <div style={{ fontSize: 11.5, color: '#7AAAB2', fontWeight: 500, marginTop: 2 }}>Building software to give contractors their nights back</div>
+              <p className="founder-scene-caption">The homeowner gets answered.</p>
+            </div>
+            <div>
+              <div className="founder-scene">
+                <Image
+                  src="/electrician.png"
+                  alt="Contractor on the job — BellAveGo texts him the appointment so he never stops working"
+                  fill
+                  sizes="(max-width: 920px) 50vw, 310px"
+                  style={{ objectFit: 'cover' }}
+                />
               </div>
+              <p className="founder-scene-caption">The contractor stays on the job.</p>
             </div>
           </div>
-        </div>{/* /outer hero wrapper */}
+        </div>
+      </section>
+
+      {/* ── 3. THESIS — centered prose + big pull quote ─────────────────── */}
+      <section style={{ position: 'relative', padding: '40px 0 96px' }}>
+        <div className="mc-glow-teal" style={{ width: 600, height: 600, top: '0', right: '-15%', opacity: 0.45 }} />
+        <div className="founder-shell" style={{ position: 'relative', zIndex: 1 }}>
+          <p className="founder-eyebrow" style={{ justifyContent: 'center', display: 'flex', maxWidth: 720, margin: '0 auto 18px' }}>
+            Why we exist
+          </p>
+
+          <div className="founder-prose">
+            <p>
+              Most AI receptionist startups think the product is call answering. It isn&rsquo;t. Call answering is how we <em>collect the data.</em>
+            </p>
+            <p>
+              The real product is what BellAveGo does with that data &mdash; finds the patterns, scores the opportunities, and tells you in dollars exactly where your business is leaking revenue. Every customer gets a free diagnostic report on day one. That&rsquo;s the part nobody else is building, and it&rsquo;s the only reason BellAveGo will exist in five years.
+            </p>
+          </div>
+
+          <blockquote className="founder-pullquote">
+            The receptionist is how we get the data. <span className="accent">The product is knowing &mdash; in dollars &mdash; exactly which call you should have answered first.</span>
+          </blockquote>
+        </div>
       </section>
 
       {/* ROI CALCULATOR — Peter showing the math to the contractor reading
