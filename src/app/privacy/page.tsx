@@ -143,13 +143,13 @@ export default function PrivacyPage() {
         </Section>
 
         <Section title="12. Contact">
-          <p>BellAveGo<br/>Email: <a href="mailto:bellavegollc@gmail.com" style={{ color: '#0AA89F', fontWeight: 700 }}>bellavegollc@gmail.com</a><br/>Founder: Peter McShane</p>
+          <p>BellAveGo LLC<br/>Email: <a href="mailto:bellavegollc@gmail.com" style={{ color: '#0AA89F', fontWeight: 700 }}>bellavegollc@gmail.com</a><br/>Founder: Peter McShane</p>
         </Section>
 
       </article>
 
       <footer style={{ padding: '40px 32px', background: '#0B1F3A', textAlign: 'center', color: 'rgba(255,255,255,0.55)', fontSize: 12 }}>
-        <p>© {new Date().getFullYear()} BellAveGo. <Link href="/terms" style={{ color: '#5EEAD4', textDecoration: 'none', marginLeft: 12 }}>Terms of Service</Link></p>
+        <p>© {new Date().getFullYear()} BellAveGo LLC. <Link href="/terms" style={{ color: '#5EEAD4', textDecoration: 'none', marginLeft: 12 }}>Terms of Service</Link></p>
       </footer>
     </main>
   )

@@ -1312,7 +1312,7 @@ export default function HomePage() {
             {' · '}
             <Link href="/terms" style={{ color: '#7AAAB2', textDecoration: 'none' }}>Terms</Link>
             {' · '}
-            © 2026 BellAveGo
+            © 2026 BellAveGo LLC
           </p>
         </div>
       </footer>

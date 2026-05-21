@@ -565,7 +565,7 @@ export default function PricingPage() {
           {' · '}
           <Link href="/terms" style={{ color: '#7AAAB2', textDecoration: 'none' }}>Terms</Link>
           {' · '}
-          © 2026 BellAveGo
+          © 2026 BellAveGo LLC
         </p>
       </footer>
     </main>

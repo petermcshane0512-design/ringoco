@@ -317,14 +317,12 @@ export default function FounderPage() {
       {/* Footer */}
       <footer style={{ padding: '28px 40px', background: '#FFF7EE', borderTop: '1px solid rgba(232,116,43,0.18)', textAlign: 'center' }}>
         <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>
-          BellAveGo &middot; Built by Peter McShane &middot; <a href="mailto:peter@bellavego.com" style={{ color: '#C84B26', textDecoration: 'none', fontWeight: 700 }}>peter@bellavego.com</a>
+          © 2026 BellAveGo LLC &middot; Built by Peter McShane &middot; <a href="mailto:peter@bellavego.com" style={{ color: '#C84B26', textDecoration: 'none', fontWeight: 700 }}>peter@bellavego.com</a>
         </p>
         <p style={{ margin: '8px 0 0', fontSize: 11, color: '#7AAAB2' }}>
           <Link href="/privacy" style={{ color: 'inherit', textDecoration: 'none' }}>Privacy</Link>
           {' · '}
           <Link href="/terms" style={{ color: 'inherit', textDecoration: 'none' }}>Terms</Link>
-          {' · '}
-          © 2026 BellAveGo
         </p>
       </footer>
     </main>
