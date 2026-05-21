@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth, clerkClient } from '@clerk/nextjs/server'
+import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { provisionNumberForUser } from '@/lib/provisionNumber'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
-
-const ADMIN_EMAILS = ['pmcshane@fordham.edu', 'peter@bellavego.com']
 
 /**
  * Admin-only: grant the calling user any tier instantly, no Stripe checkout.
@@ -18,7 +17,7 @@ const ADMIN_EMAILS = ['pmcshane@fordham.edu', 'peter@bellavego.com']
  * POST /api/admin/grant-tier
  * Body: { tier: 'receptionist' | 'officemgr' | 'concierge', provisionNumber?: boolean }
  *
- * Auth: must be signed in with an email in ADMIN_EMAILS.
+ * Auth: requireAdmin (Clerk session w/ admin email OR x-admin-secret header).
  *
  * Activates the profile (is_active = true), sets plan_tier, optionally provisions a Twilio
  * number, and marks onboarding_complete + setup_complete so the customer flow opens straight
@@ -28,22 +27,16 @@ const ADMIN_EMAILS = ['pmcshane@fordham.edu', 'peter@bellavego.com']
 type Tier = 'receptionist' | 'officemgr' | 'concierge'
 
 export async function POST(req: NextRequest) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const gate = await requireAdmin()
+  if (!gate.ok) return gate.res
 
-  // Verify caller is admin
-  let email = ''
-  try {
-    const client = await clerkClient()
-    const user = await client.users.getUser(userId)
-    email = user.emailAddresses?.[0]?.emailAddress?.toLowerCase() ?? ''
-  } catch (e) {
-    console.error('admin/grant-tier: clerk user lookup failed', e)
-    return NextResponse.json({ error: 'Lookup failed' }, { status: 500 })
+  // grant-tier writes to the caller's own profile, so it requires a Clerk session
+  // (a header-secret call has no userId to grant against).
+  const { userId } = await auth()
+  if (!userId) {
+    return NextResponse.json({ error: 'grant-tier requires a Clerk session — caller userId unknown' }, { status: 400 })
   }
-  if (!ADMIN_EMAILS.includes(email)) {
-    return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-  }
+  const email = gate.email ?? ''
 
   const body = (await req.json().catch(() => ({}))) as { tier?: Tier; provisionNumber?: boolean }
   const tier: Tier = body.tier ?? 'officemgr'

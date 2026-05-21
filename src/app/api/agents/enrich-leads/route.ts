@@ -4,13 +4,12 @@ import { searchApolloLeads, enrichWithPlaces } from '@/lib/leadEnrichment'
 import { personalizeBatch } from '@/lib/personalizeEmail'
 import { pushLeadsToInstantly } from '@/lib/instantly'
 import type { Trade, InstantlyLeadPayload } from '@/lib/leadTypes'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
-
-const ADMIN_SECRET = process.env.ADMIN_API_SECRET
 
 type EnrichRequest = {
   cities: { city: string; state: string }[]
@@ -34,14 +33,14 @@ type EnrichRequest = {
  *   5. Push to Instantly campaign
  *   6. Insert into outreach_leads + log to agent_runs
  *
- * Auth: header `x-admin-secret: $ADMIN_API_SECRET`. Tighter auth deferred —
- * Peter is the only operator until customer #5.
+ * Auth: requireAdmin — accepts `x-admin-secret: $ADMIN_API_SECRET` (cron/scripts)
+ * or a Clerk session with an admin email (interactive use from /admin UI).
+ * Fail-closed: previously the secret check only ran if ADMIN_API_SECRET was set,
+ * which made this route fully public in any environment that forgot the env var.
  */
 export async function POST(req: NextRequest) {
-  // Auth gate
-  if (ADMIN_SECRET && req.headers.get('x-admin-secret') !== ADMIN_SECRET) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const gate = await requireAdmin()
+  if (!gate.ok) return gate.res
 
   let body: EnrichRequest
   try {

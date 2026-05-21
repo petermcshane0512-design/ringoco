@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
 import { provisionNumberForUser } from '@/lib/provisionNumber'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
-
-const ADMIN_EMAILS = new Set(['pmcshane@fordham.edu', 'peter@bellavego.com'])
 
 /**
  * POST /api/admin/queue/action — single endpoint that handles every action
@@ -29,16 +27,8 @@ const ADMIN_EMAILS = new Set(['pmcshane@fordham.edu', 'peter@bellavego.com'])
  *   kind="provisioning" action="dismiss" — marks resolved (e.g. Peter handled manually).
  */
 export async function POST(req: NextRequest) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const { clerkClient } = await import('@clerk/nextjs/server')
-  const client = await clerkClient()
-  const me = await client.users.getUser(userId)
-  const email = me.emailAddresses?.[0]?.emailAddress?.toLowerCase()
-  if (!email || !ADMIN_EMAILS.has(email)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+  const gate = await requireAdmin()
+  if (!gate.ok) return gate.res
 
   const { kind, id, action, payload } = (await req.json()) as {
     kind: 'prompt' | 'review' | 'provisioning'

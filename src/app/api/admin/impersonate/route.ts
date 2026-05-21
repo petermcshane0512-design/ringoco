@@ -3,6 +3,7 @@ import { auth, clerkClient } from '@clerk/nextjs/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { ADMIN_EMAIL_SET, IMPERSONATE_COOKIE_NAME } from '@/lib/effectiveAuth'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,18 +11,6 @@ const supabase = createClient(
 )
 
 const COOKIE_MAX_AGE_SECONDS = 4 * 60 * 60 // 4 hours
-
-async function requireAdmin(): Promise<{ ok: true; email: string } | { ok: false; res: NextResponse }> {
-  const { userId } = await auth()
-  if (!userId) return { ok: false, res: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
-  const cc = await clerkClient()
-  const me = await cc.users.getUser(userId).catch(() => null)
-  const email = me?.emailAddresses?.[0]?.emailAddress?.toLowerCase() ?? ''
-  if (!ADMIN_EMAIL_SET.has(email)) {
-    return { ok: false, res: NextResponse.json({ error: 'Admin only' }, { status: 403 }) }
-  }
-  return { ok: true, email }
-}
 
 // POST /api/admin/impersonate  body: { userId: string }
 // Sets the impersonation cookie. Admin only. Verifies the target user actually exists in profiles.

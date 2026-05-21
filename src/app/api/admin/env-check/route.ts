@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth, clerkClient } from '@clerk/nextjs/server'
-
-const ADMIN_EMAILS = new Set(['pmcshane@fordham.edu', 'peter@bellavego.com'])
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 /**
  * Admin-only env-var presence check. Returns whether key env vars are set
@@ -11,15 +9,8 @@ const ADMIN_EMAILS = new Set(['pmcshane@fordham.edu', 'peter@bellavego.com'])
  * GET /api/admin/env-check → { GOOGLE_PLACES_API_KEY_set: true, ... }
  */
 export async function GET() {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const cc = await clerkClient()
-  const me = await cc.users.getUser(userId).catch(() => null)
-  const email = me?.emailAddresses?.[0]?.emailAddress?.toLowerCase() ?? ''
-  if (!ADMIN_EMAILS.has(email)) {
-    return NextResponse.json({ error: 'Admin only' }, { status: 403 })
-  }
+  const gate = await requireAdmin()
+  if (!gate.ok) return gate.res
 
   const present = (name: string): boolean => {
     const v = process.env[name]

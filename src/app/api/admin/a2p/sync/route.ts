@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
-import { auth, currentUser } from '@clerk/nextjs/server'
 import { syncExistingNumbersToCampaign } from '@/lib/a2p'
-
-const ADMIN_EMAILS = new Set(['pmcshane@fordham.edu', 'peter@bellavego.com'])
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 /**
  * POST /api/admin/a2p/sync
@@ -14,13 +12,8 @@ const ADMIN_EMAILS = new Set(['pmcshane@fordham.edu', 'peter@bellavego.com'])
  * Run after `bootstrap` once Twilio approves your campaign.
  */
 export async function POST() {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const user = await currentUser()
-  const email = user?.primaryEmailAddress?.emailAddress?.toLowerCase() || ''
-  if (!ADMIN_EMAILS.has(email)) {
-    return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
-  }
+  const gate = await requireAdmin()
+  if (!gate.ok) return gate.res
 
   const result = await syncExistingNumbersToCampaign()
   return NextResponse.json({ ok: true, ...result })

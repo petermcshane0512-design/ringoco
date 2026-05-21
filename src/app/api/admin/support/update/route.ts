@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth, clerkClient } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,18 +9,11 @@ const supabase = createClient(
 )
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
 
-const ADMIN_EMAILS = ['pmcshane@fordham.edu', 'peter@bellavego.com']
 const VALID_STATUS = new Set(['new', 'triaged', 'in_progress', 'resolved', 'closed'])
 
 export async function POST(req: NextRequest) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const client = await clerkClient()
-  const me = await client.users.getUser(userId).catch(() => null)
-  const email = me?.emailAddresses?.[0]?.emailAddress?.toLowerCase() ?? ''
-  if (!ADMIN_EMAILS.includes(email)) {
-    return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
-  }
+  const gate = await requireAdmin()
+  if (!gate.ok) return gate.res
 
   const { id, status, reply } = (await req.json().catch(() => ({}))) as {
     id?: string

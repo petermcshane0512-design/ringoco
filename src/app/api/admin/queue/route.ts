@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
-
-const ADMIN_EMAILS = new Set(['pmcshane@fordham.edu', 'peter@bellavego.com'])
 
 /**
  * GET /api/admin/queue — returns everything Peter needs to act on:
@@ -19,16 +17,8 @@ const ADMIN_EMAILS = new Set(['pmcshane@fordham.edu', 'peter@bellavego.com'])
  * are joined client-side from a small profiles batch lookup.
  */
 export async function GET() {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const { clerkClient } = await import('@clerk/nextjs/server')
-  const client = await clerkClient()
-  const me = await client.users.getUser(userId)
-  const email = me.emailAddresses?.[0]?.emailAddress?.toLowerCase()
-  if (!email || !ADMIN_EMAILS.has(email)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+  const gate = await requireAdmin()
+  if (!gate.ok) return gate.res
 
   const [prompts, reviews, provFailures] = await Promise.all([
     supabase

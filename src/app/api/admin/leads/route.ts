@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
-
-const ADMIN_EMAILS = new Set(['pmcshane@fordham.edu', 'peter@bellavego.com'])
 
 /**
  * GET /api/admin/leads
@@ -20,13 +18,8 @@ const ADMIN_EMAILS = new Set(['pmcshane@fordham.edu', 'peter@bellavego.com'])
  * a formatted lead message.
  */
 export async function GET(req: Request) {
-  const { userId, sessionClaims } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const email = (sessionClaims?.email as string | undefined)?.toLowerCase()
-  if (!email || !ADMIN_EMAILS.has(email)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+  const gate = await requireAdmin()
+  if (!gate.ok) return gate.res
 
   const url = new URL(req.url)
   const hoursBack = parseInt(url.searchParams.get('hours') || '48', 10)

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import type { ConsultingReport, Confidence } from '@/lib/consultingReport'
 import { SAMPLE_REPORT } from '@/lib/consultingReport'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -38,6 +39,9 @@ const RESPONSE_SHAPE = `{
 }`
 
 export async function POST(req: NextRequest) {
+  const gate = await requireAdmin()
+  if (!gate.ok) return gate.res
+
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 })
   }

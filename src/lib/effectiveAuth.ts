@@ -1,7 +1,7 @@
 import { auth, clerkClient } from '@clerk/nextjs/server'
 import { cookies } from 'next/headers'
+import { ADMIN_EMAIL_SET as CENTRAL_ADMIN_EMAIL_SET } from '@/lib/auth/requireAdmin'
 
-const ADMIN_EMAILS = new Set(['pmcshane@fordham.edu', 'peter@bellavego.com'])
 const IMPERSONATE_COOKIE = 'bav_impersonate_uid'
 
 export type EffectiveAuth = {
@@ -35,17 +35,27 @@ export async function effectiveAuth(): Promise<EffectiveAuth> {
     return { userId: null, realUserId: null, isImpersonating: false, isAdmin: false, email: '' }
   }
 
-  let email = ''
+  // Match against every VERIFIED email on the user — see requireAdmin.ts for
+  // why [0]-indexing into emailAddresses is unsafe. Keeps this file consistent
+  // with the central admin gate so a multi-email Clerk user behaves identically
+  // here and in /api/admin/* routes.
+  let verifiedEmails: string[] = []
   try {
     const cc = await clerkClient()
     const user = await cc.users.getUser(realUserId)
-    email = user?.emailAddresses?.[0]?.emailAddress?.toLowerCase() ?? ''
+    verifiedEmails = (user?.emailAddresses ?? [])
+      .filter(e => e.verification?.status === 'verified')
+      .map(e => e.emailAddress.toLowerCase())
   } catch {
     // If Clerk lookup fails, fall back to non-admin path — safer than granting impersonation
     return { userId: realUserId, realUserId, isImpersonating: false, isAdmin: false, email: '' }
   }
 
-  const isAdmin = ADMIN_EMAILS.has(email)
+  const matchedAdminEmail = verifiedEmails.find(e => CENTRAL_ADMIN_EMAIL_SET.has(e))
+  const isAdmin = !!matchedAdminEmail
+  // Surface the matched admin email when admin, else the first verified one for diagnostics.
+  const email = matchedAdminEmail ?? verifiedEmails[0] ?? ''
+
   if (!isAdmin) {
     return { userId: realUserId, realUserId, isImpersonating: false, isAdmin: false, email }
   }
@@ -60,4 +70,6 @@ export async function effectiveAuth(): Promise<EffectiveAuth> {
 }
 
 export const IMPERSONATE_COOKIE_NAME = IMPERSONATE_COOKIE
-export const ADMIN_EMAIL_SET = ADMIN_EMAILS
+// Re-exported for callers that already import ADMIN_EMAIL_SET from this file.
+// Source of truth lives in src/lib/auth/requireAdmin.ts.
+export const ADMIN_EMAIL_SET = CENTRAL_ADMIN_EMAIL_SET
