@@ -6,6 +6,7 @@ import { provisionNumberForUser } from '@/lib/provisionNumber'
 import { PRICE_TO_TIER } from '@/lib/pricing'
 import { applyLedgerEntry } from '@/lib/marketing/growth-wallet'
 import { recordPendingReferral, applyPendingReferralCredit, voidPendingReferral } from '@/lib/referrals'
+import { sendEmail } from '@/lib/email'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
@@ -220,7 +221,7 @@ export async function POST(req: NextRequest) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('user_id')
+      .select('user_id, business_name, owner_phone, twilio_number, plan_tier')
       .eq('stripe_customer_id', customerId)
       .single()
 
@@ -233,6 +234,41 @@ export async function POST(req: NextRequest) {
       }).eq('user_id', profile.user_id)
 
       console.log(`Subscription cancelled for user ${profile.user_id}`)
+
+      // Email Peter to manually release the Twilio + Vapi resources.
+      // Auto-release is risky (race conditions, undo windows); manual at
+      // current volume. Automate after 10+ cancellations/mo become routine.
+      if (profile.twilio_number) {
+        try {
+          const consoleUrl = `https://console.twilio.com/us1/develop/phone-numbers/manage/active?query=${encodeURIComponent(profile.twilio_number)}`
+          const ownerEmail = process.env.FALLBACK_OWNER_EMAIL || 'bellavegollc@gmail.com'
+          await sendEmail({
+            to: ownerEmail,
+            subject: `⚠️ Cancellation — release ${profile.twilio_number} for ${profile.business_name ?? 'unknown'}`,
+            html: `<div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0B1F3A;">
+<h2 style="margin:0 0 12px;font-size:20px;font-weight:900;">Customer cancelled — manual cleanup needed</h2>
+<table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:14px;">
+  <tr><td style="padding:6px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;width:140px;">Business</td><td style="padding:6px 0;font-weight:700;">${profile.business_name ?? '(unknown)'}</td></tr>
+  <tr><td style="padding:6px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">Owner phone</td><td style="padding:6px 0;">${profile.owner_phone ?? '(none)'}</td></tr>
+  <tr><td style="padding:6px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">Twilio number</td><td style="padding:6px 0;font-family:'SF Mono',Monaco,monospace;font-weight:700;">${profile.twilio_number}</td></tr>
+  <tr><td style="padding:6px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">Tier at cancel</td><td style="padding:6px 0;">${profile.plan_tier ?? '(unknown)'}</td></tr>
+</table>
+<div style="margin-top:22px;padding:16px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;">
+  <div style="font-weight:800;margin-bottom:8px;">Action — 2 minutes:</div>
+  <ol style="margin:0;padding-left:20px;line-height:1.6;">
+    <li><a href="${consoleUrl}" style="color:#C84B26;font-weight:700;">Open the number in Twilio Console</a></li>
+    <li>Bottom of page → <strong>"Release this number"</strong> → confirm</li>
+    <li><a href="https://dashboard.vapi.ai/phone-numbers" style="color:#C84B26;font-weight:700;">Delete the matching number in Vapi dashboard</a></li>
+  </ol>
+</div>
+<p style="margin-top:20px;font-size:12px;color:#7AAAB2;">Skipping this costs ~$1.15/mo per orphaned number on Twilio + a Vapi line item.</p>
+</div>`,
+            text: `Customer ${profile.business_name ?? 'unknown'} (owner ${profile.owner_phone ?? 'no phone'}, tier ${profile.plan_tier ?? 'unknown'}) cancelled. Release Twilio number ${profile.twilio_number} via console: ${consoleUrl} — then delete the matching Vapi import at https://dashboard.vapi.ai/phone-numbers. Skipping costs ~$1.15/mo per orphan.`,
+          })
+        } catch (e) {
+          console.error('cancellation cleanup email failed:', e)
+        }
+      }
     }
 
     // Void any pending referral tied to this subscription so the referrer
