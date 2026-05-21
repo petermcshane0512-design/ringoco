@@ -87,8 +87,12 @@ export async function GET(req: NextRequest) {
       results.push({ job_id: job.id, status: 'skipped', reason: 'tier-gated' })
       continue
     }
-    if (p.review_request_enabled === false) {
-      results.push({ job_id: job.id, status: 'skipped', reason: 'opted out' })
+    // Explicit opt-in only. NULL / undefined / false all skip. The column
+    // default flipped to FALSE in sql/2026-05-21-review-request-opt-in.sql;
+    // this !== true check is belt-and-suspenders against any future migration
+    // tool that leaves the column nullable on new rows.
+    if (p.review_request_enabled !== true) {
+      results.push({ job_id: job.id, status: 'skipped', reason: 'not opted in' })
       continue
     }
     if (!p.twilio_number) {
