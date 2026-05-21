@@ -456,12 +456,15 @@ export default function PricingPage() {
                 </div>
               ))}
             </div>
-            <Link
-              href="/waitlist?tier=multi_location"
+            <a
+              href="mailto:peter@bellavego.com?subject=Multi-Location%20BellAveGo&body=Hi%20Peter%2C%0A%0AI%27m%20looking%20at%20Multi-Location%20BellAveGo%20for%3A%0A%0ACompany%3A%20%0ANumber%20of%20locations%3A%20%0AIndustry%2Fbrand%3A%20%0ABest%20time%20to%20talk%3A%20%0A%0AThanks."
               style={{ display: 'inline-block', padding: '14px 28px', background: '#5EEAD4', color: '#0B1F3A', fontWeight: 900, fontSize: 14, borderRadius: 10, textDecoration: 'none' }}
             >
-              Join waitlist · Limited spots →
-            </Link>
+              Book a 20-min intro call →
+            </a>
+            <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.55)', marginTop: 10, fontWeight: 500 }}>
+              Founder-led. Direct line: <a href="mailto:peter@bellavego.com" style={{ color: '#5EEAD4', textDecoration: 'none', fontWeight: 700 }}>peter@bellavego.com</a>
+            </p>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(94, 234, 212, 0.2)', borderRadius: 16, padding: '32px 28px', textAlign: 'center' }}>
             <p style={{ fontSize: 12, color: 'rgba(94, 234, 212, 0.85)', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>Starts at</p>
@@ -490,6 +493,50 @@ export default function PricingPage() {
               The only time a human at BellAveGo touches your account is if you email support — answered in &lt;24 hrs (Operator) or &lt;4 hrs (Concierge).
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* Common questions — single concise block, no accordion. Five
+          load-bearing answers contractors ask before signing up. */}
+      <section style={{ padding: '60px 24px', background: '#F2F9F5', borderTop: '1px solid #DCE9E2' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <h2 style={{ fontSize: 28, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.8px', marginBottom: 24, textAlign: 'center' }}>Common questions</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            {[
+              {
+                q: 'Can I keep my current business number?',
+                a: 'Yes. You forward your existing line to the BellAveGo number we auto-provision at signup. Customers still call your old number — BellAveGo answers anything you can\'t pick up. Two-minute setup, walked-through on screen.',
+              },
+              {
+                q: 'What if the AI says something wrong?',
+                a: 'Every call is recorded + transcribed in your dashboard. You can customize Emma\'s instructions (services, hours, tone) at any time. 30-day full-refund guarantee if she\'s not pulling her weight — no questions asked.',
+              },
+              {
+                q: 'Do I have to sign a contract?',
+                a: 'No. Month-to-month, cancel anytime from your Stripe billing portal. Annual plans save 17% but are not required.',
+              },
+              {
+                q: 'How fast is setup?',
+                a: 'About 5 minutes. Sign up → pay → we auto-buy your local number → you forward your existing line → AI is live answering calls in your business name. We walk you through each step.',
+              },
+              {
+                q: 'Will it auto-book appointments without my approval?',
+                a: 'Only if you turn auto-booking ON. Default is OFF — Emma takes a message and texts/emails it to you. When you opt in, you can also restrict the AI to only book inside a time window (e.g. "only after 5pm").',
+              },
+              {
+                q: 'Who owns my data?',
+                a: 'You do. We never sell, share, or use your call data to train third-party AI models. Full details in our privacy policy.',
+              },
+            ].map(({ q, a }) => (
+              <div key={q} style={{ background: '#fff', border: '1px solid #DCE9E2', borderRadius: 14, padding: '20px 22px' }}>
+                <h3 style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.2px', margin: '0 0 8px' }}>{q}</h3>
+                <p style={{ fontSize: 13.5, color: '#4A6670', lineHeight: 1.6, margin: 0 }}>{a}</p>
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: 13, color: '#7AAAB2', textAlign: 'center', marginTop: 22 }}>
+            Other questions? Email <a href="mailto:peter@bellavego.com" style={{ color: '#C84B26', fontWeight: 700, textDecoration: 'none' }}>peter@bellavego.com</a> or call the demo line at <a href="tel:+16514677829" style={{ color: '#C84B26', fontWeight: 700, textDecoration: 'none' }}>(651) 467-7829</a>.
+          </p>
         </div>
       </section>
 

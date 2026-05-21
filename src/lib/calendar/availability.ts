@@ -46,6 +46,16 @@ export async function findAvailableSlots(args: {
   durationMin?: number
   maxSlots?: number
   earliestHoursOut?: number   // skip "in 30min" — at least N hours of lead time
+  /**
+   * Optional AI-booking window (local hours 0-23). When set, generated
+   * slots whose START hour (in the connection's local timezone) falls
+   * outside this window are filtered out — e.g. minHourLocal=17 means
+   * the AI only offers slots at or after 5pm local. Null = unrestricted.
+   * These are layered on TOP of the contractor's business_hours, not
+   * a replacement.
+   */
+  minHourLocal?: number | null
+  maxHourLocal?: number | null
 }): Promise<AvailabilitySummary> {
   const daysAhead = args.daysAhead ?? 14
   const maxSlots = args.maxSlots ?? 6
@@ -117,6 +127,21 @@ export async function findAvailableSlots(args: {
 
       if (slotStart < windowStart) continue
       if (slotEnd > windowEnd) break
+
+      // AI booking window filter (separate from business hours — this is
+      // the contractor's "I only let the AI book inside these hours" rule).
+      // Read the slot's local-hour in the connection timezone so DST is
+      // handled correctly.
+      if (args.minHourLocal != null || args.maxHourLocal != null) {
+        const localHourStr = slotStart.toLocaleString('en-US', {
+          timeZone: timezone, hour: 'numeric', hour12: false,
+        })
+        const localHour = parseInt(localHourStr, 10)
+        if (Number.isFinite(localHour)) {
+          if (args.minHourLocal != null && localHour < args.minHourLocal) continue
+          if (args.maxHourLocal != null && localHour >= args.maxHourLocal) continue
+        }
+      }
 
       // Conflict check: any busy block overlap (with buffer)
       const bufferedStart = new Date(slotStart.getTime() - bufferMin * 60 * 1000)

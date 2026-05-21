@@ -5,15 +5,14 @@
  * to console) so dev environments and pre-Resend-signup states don't
  * crash. As soon as the env var lands, emails start delivering.
  *
- * Sender note: until DNS for bellavego.com is verified in Resend, all
- * emails go FROM `onboarding@resend.dev` (Resend's test-allowed sender).
- * Reply-to is set to bellavegollc@gmail.com so contractors hitting Reply
- * reach a real inbox. After DNS verification, swap FROM to
- * `alerts@bellavego.com`.
+ * Sender: bellavego.com is the verified Resend domain (verified 2026-05-21).
+ * All transactional email goes FROM `alerts@bellavego.com`. Override the
+ * default by setting RESEND_FROM_EMAIL. Reply-to is bellavegollc@gmail.com
+ * so contractors hitting Reply reach a real inbox.
  */
 
 const RESEND_KEY = process.env.RESEND_API_KEY
-const DEFAULT_FROM = process.env.RESEND_FROM_EMAIL || 'BellAveGo Alerts <onboarding@resend.dev>'
+const DEFAULT_FROM = process.env.RESEND_FROM_EMAIL || 'BellAveGo <alerts@bellavego.com>'
 const REPLY_TO = process.env.RESEND_REPLY_TO || 'bellavegollc@gmail.com'
 
 export type SendEmailArgs = {
@@ -212,6 +211,82 @@ export function renderContractorLeadEmail(args: ContractorLeadEmailArgs): { subj
       </div>
     </div>
     <div style="text-align:center;font-size:11px;color:#7AAAB2;margin-top:18px;">${escapeHtml(args.contractorBusinessName)} · Sent by BellAveGo</div>
+  </div>
+</body></html>`.trim()
+
+  return { subject, html, text }
+}
+
+/**
+ * Appointment-booked email template. Sent to the CONTRACTOR (BellAveGo customer)
+ * the moment Emma successfully books an appointment in their calendar via the
+ * book_appointment tool. Distinct visual treatment from the callback-request
+ * email — green "BOOKED" header, calendar emoji, slot time prominent.
+ *
+ * Sent in addition to the SMS confirmation so the contractor has a permanent
+ * record in their inbox even when Twilio drops the SMS (A2P 10DLC issues).
+ */
+export type AppointmentBookedEmailArgs = {
+  toEmail: string
+  contractorBusinessName: string
+  callerName: string
+  callerPhone: string | null
+  serviceSummary: string
+  slotLabel: string                 // "Tuesday, May 21, 2:00 PM"
+  callTimeISO: string               // when the booking actually happened
+  calendarEventUrl?: string | null  // Google Calendar / Cronofy link if available
+  dashboardUrl: string
+}
+
+export function renderAppointmentBookedEmail(args: AppointmentBookedEmailArgs): { subject: string; html: string; text: string } {
+  const callerPhonePretty = args.callerPhone ? formatUSPhone(args.callerPhone) : 'no phone'
+  const bookedAt = new Date(args.callTimeISO).toLocaleString('en-US', {
+    timeZone: 'America/Chicago',
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+
+  const subject = `📅 BOOKED: ${args.callerName} — ${args.slotLabel}`
+
+  const text =
+    `📅 APPOINTMENT BOOKED via BellAveGo\n\n` +
+    `Customer: ${args.callerName}\n` +
+    `Phone: ${callerPhonePretty}\n` +
+    `Service: ${args.serviceSummary}\n` +
+    `When: ${args.slotLabel}\n` +
+    `Booked: ${bookedAt}\n\n` +
+    (args.calendarEventUrl ? `Calendar event: ${args.calendarEventUrl}\n` : '') +
+    `Dashboard: ${args.dashboardUrl}\n` +
+    `\n— BellAveGo`
+
+  const html = `
+<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#F2F9F5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0B1F3A;">
+  <div style="max-width:560px;margin:0 auto;padding:24px 16px;">
+    <div style="background:#fff;border:1px solid rgba(34,197,94,0.22);border-radius:16px;overflow:hidden;box-shadow:0 4px 22px rgba(11,31,58,0.08);">
+      <div style="background:linear-gradient(135deg,#15803D 0%,#22C55E 100%);padding:18px 22px;color:#fff;">
+        <div style="font-size:11px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;opacity:0.9;">📅 Appointment Booked</div>
+        <div style="font-size:24px;font-weight:900;letter-spacing:-0.4px;margin-top:6px;">${escapeHtml(args.slotLabel)}</div>
+        <div style="font-size:13px;opacity:0.92;margin-top:4px;">${escapeHtml(args.callerName)} · ${escapeHtml(args.serviceSummary)}</div>
+      </div>
+      <div style="padding:22px;">
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;" width="120">Customer</td><td style="padding:8px 0;font-weight:700;">${escapeHtml(args.callerName)}</td></tr>
+          <tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">Phone</td><td style="padding:8px 0;"><a href="tel:${escapeHtml(args.callerPhone || '')}" style="color:#15803D;font-weight:700;text-decoration:none;">${callerPhonePretty}</a></td></tr>
+          <tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;vertical-align:top;">Service</td><td style="padding:8px 0;line-height:1.5;">${escapeHtml(args.serviceSummary)}</td></tr>
+          <tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">When</td><td style="padding:8px 0;font-weight:800;color:#15803D;">${escapeHtml(args.slotLabel)}</td></tr>
+          <tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">Booked</td><td style="padding:8px 0;color:#4A6670;">${escapeHtml(bookedAt)}</td></tr>
+        </table>
+        <div style="margin-top:22px;padding-top:18px;border-top:1px solid rgba(34,197,94,0.18);text-align:center;">
+          ${args.calendarEventUrl ? `<a href="${escapeHtml(args.calendarEventUrl)}" style="display:inline-block;padding:12px 24px;border-radius:10px;background:linear-gradient(135deg,#15803D,#22C55E);color:#fff;font-weight:800;font-size:14px;text-decoration:none;box-shadow:0 6px 18px rgba(34,197,94,0.32);margin-right:8px;">📅 Open in Calendar</a>` : ''}
+          <a href="${escapeHtml(args.dashboardUrl)}" style="display:inline-block;padding:12px 24px;border-radius:10px;background:rgba(11,31,58,0.04);color:#0B1F3A;font-weight:700;font-size:13px;text-decoration:none;border:1px solid rgba(11,31,58,0.12);">View in dashboard</a>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:11px;color:#7AAAB2;margin-top:18px;">${escapeHtml(args.contractorBusinessName)} · Booked by BellAveGo AI</div>
   </div>
 </body></html>`.trim()
 

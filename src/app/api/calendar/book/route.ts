@@ -5,6 +5,8 @@ import { verifyVapiSignature } from '@/lib/vapi'
 import { findAvailableSlots } from '@/lib/calendar/availability'
 import { createGoogleEvent, type CalendarConnectionRow } from '@/lib/calendar/google'
 import { createCronofyEvent } from '@/lib/calendar/cronofy'
+import { sendEmail, renderAppointmentBookedEmail, renderLeadAlertEmail } from '@/lib/email'
+import { lookupOwnerEmail } from '@/lib/notify'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -101,6 +103,51 @@ export async function POST(req: NextRequest) {
     }
     const durationMin = args.duration_min ?? 90
     const endDate = new Date(startDate.getTime() + durationMin * 60 * 1000)
+
+    // ── Auto-booking policy guard (defense-in-depth) ──
+    // The check_availability tool already filters by these values, but we
+    // re-enforce here so a misbehaving model that fabricates an out-of-window
+    // ISO can't slip past. Source of truth = profiles row, not Vapi metadata.
+    const { data: policyRow } = await supabase
+      .from('profiles')
+      .select('auto_booking_enabled, auto_booking_min_hour, auto_booking_max_hour')
+      .eq('user_id', userId)
+      .maybeSingle()
+    const policy = (policyRow as {
+      auto_booking_enabled?: boolean | null
+      auto_booking_min_hour?: number | null
+      auto_booking_max_hour?: number | null
+    } | null)
+    if (policy?.auto_booking_enabled !== true) {
+      results.push({
+        toolCallId: tc.id,
+        result: 'Auto-booking is off for this contractor — take a message and the owner will call back.',
+      })
+      continue
+    }
+    if (policy.auto_booking_min_hour != null || policy.auto_booking_max_hour != null) {
+      // Read slot hour in the connection timezone (defaults handled later).
+      // We do this BEFORE loading the calendar connection so we fail fast.
+      const tz = 'America/Chicago' // refined to conn.timezone below; this is a safe pre-check
+      const localHourStr = startDate.toLocaleString('en-US', { timeZone: tz, hour: 'numeric', hour12: false })
+      const localHour = parseInt(localHourStr, 10)
+      if (Number.isFinite(localHour)) {
+        if (policy.auto_booking_min_hour != null && localHour < policy.auto_booking_min_hour) {
+          results.push({
+            toolCallId: tc.id,
+            result: `That time is outside the booking window for this contractor. Offer a slot at or after ${policy.auto_booking_min_hour}:00 instead, or take a message.`,
+          })
+          continue
+        }
+        if (policy.auto_booking_max_hour != null && localHour >= policy.auto_booking_max_hour) {
+          results.push({
+            toolCallId: tc.id,
+            result: `That time is outside the booking window for this contractor. Offer a slot before ${policy.auto_booking_max_hour}:00 instead, or take a message.`,
+          })
+          continue
+        }
+      }
+    }
 
     // ── Race protection — re-check availability for this exact slot ──
     const avail = await findAvailableSlots({
@@ -283,6 +330,66 @@ export async function POST(req: NextRequest) {
         })
       } catch (e) {
         console.error('contractor booking alert SMS failed:', e)
+      }
+    }
+
+    // ── EMAIL the contractor (BellAveGo customer) — booking confirmation ──
+    // Resilient channel: SMS to contractor often blocked by carriers during
+    // A2P 10DLC registration. Email gives them a permanent searchable record
+    // of every AI-booked appointment in their inbox.
+    const appUrl =
+      (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost'))
+        ? process.env.NEXT_PUBLIC_APP_URL
+        : 'https://www.bellavego.com'
+    try {
+      const contractorEmail = await lookupOwnerEmail(userId)
+      if (contractorEmail) {
+        const { subject, html, text } = renderAppointmentBookedEmail({
+          toEmail: contractorEmail,
+          contractorBusinessName: businessName,
+          callerName: args.customer_name,
+          callerPhone,
+          serviceSummary: args.service_summary || 'Appointment',
+          slotLabel,
+          callTimeISO: new Date().toISOString(),
+          calendarEventUrl: eventResult.htmlLink || null,
+          dashboardUrl: `${appUrl}/dashboard`,
+        })
+        await sendEmail({ to: contractorEmail, subject, html, text })
+      } else {
+        console.warn('book_appointment: no Clerk email for', userId, '— skipped contractor confirmation email')
+      }
+    } catch (e) {
+      console.error('book_appointment: contractor confirmation email failed:', e)
+    }
+
+    // ── EMAIL Peter — operational visibility on every booking ──
+    // Mirrors the lead-alert pattern from end-of-call-report. Subject uses
+    // the BOOKED prefix so Peter's inbox makes it clear what happened.
+    const peterAlertEmail = process.env.FALLBACK_OWNER_EMAIL || 'bellavegollc@gmail.com'
+    if (peterAlertEmail) {
+      try {
+        const { html, text } = renderLeadAlertEmail({
+          toEmail: peterAlertEmail,
+          contractorBusinessName: businessName,
+          contractorOwnerName: 'the owner',
+          contractorPhone: ownerPhone,
+          callerName: args.customer_name,
+          callerPhone,
+          callerMessage: `BOOKED for ${slotLabel} — ${args.service_summary || 'Appointment'}`,
+          urgency: 'soon',
+          twilioNumberCalled: tenantTwilioNumber || null,
+          callTimeISO: new Date().toISOString(),
+          forwardPageUrl: `${appUrl}/admin/forward`,
+        })
+        await sendEmail({
+          to: peterAlertEmail,
+          subject: `📅 BOOKED · ${businessName} — ${args.customer_name} · ${slotLabel}`,
+          html,
+          text,
+        })
+      } catch (e) {
+        console.error('book_appointment: peter alert email failed:', e)
       }
     }
 

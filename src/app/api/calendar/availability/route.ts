@@ -1,6 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { verifyVapiSignature } from '@/lib/vapi'
 import { findAvailableSlots } from '@/lib/calendar/availability'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+)
+
+/**
+ * Read the contractor's auto-booking window from profiles. Returns
+ * { enabled, minHour, maxHour }. enabled=false → caller should bail out
+ * with a "take a message" result before hitting findAvailableSlots.
+ */
+async function loadAutoBookingPolicy(userId: string): Promise<{
+  enabled: boolean
+  minHour: number | null
+  maxHour: number | null
+}> {
+  const { data } = await supabase
+    .from('profiles')
+    .select('auto_booking_enabled, auto_booking_min_hour, auto_booking_max_hour')
+    .eq('user_id', userId)
+    .maybeSingle()
+  const row = (data as {
+    auto_booking_enabled?: boolean | null
+    auto_booking_min_hour?: number | null
+    auto_booking_max_hour?: number | null
+  } | null)
+  return {
+    enabled: row?.auto_booking_enabled === true,
+    minHour: row?.auto_booking_min_hour ?? null,
+    maxHour: row?.auto_booking_max_hour ?? null,
+  }
+}
 
 /**
  * Vapi tool endpoint — called by the AI receptionist mid-conversation when
@@ -92,10 +125,26 @@ async function handleVapiToolCall(payload: VapiServerMessage) {
     }
 
     const args = parseToolArgs(tc.function.arguments)
+
+    // Auto-booking policy guard. If the contractor hasn't opted into
+    // AI-initiated bookings, tell Emma to take a message instead — even
+    // if a calendar is connected for the contractor's own visibility.
+    const policy = await loadAutoBookingPolicy(userId)
+    if (!policy.enabled) {
+      results.push({
+        toolCallId: tc.id,
+        result:
+          "Auto-booking is off for this contractor. Just take a message — the owner will call back to schedule.",
+      })
+      continue
+    }
+
     const summary = await findAvailableSlots({
       userId,
       durationMin: args.duration_min,
       daysAhead: args.days_ahead,
+      minHourLocal: policy.minHour,
+      maxHourLocal: policy.maxHour,
     })
 
     if (!summary.connected) {

@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
   const { data: profile } = await supabase
     .from('profiles')
     .select(
-      'user_id, business_name, owner_first_name, owner_phone, services, service_area, ai_tone, ai_language, ai_voice_id, backup_owner_phone, custom_prompt_notes, plan_tier, is_active, twilio_number, forwarding_test_started_at',
+      'user_id, business_name, owner_first_name, owner_phone, services, service_area, ai_tone, ai_language, ai_voice_id, backup_owner_phone, custom_prompt_notes, plan_tier, is_active, twilio_number, forwarding_test_started_at, auto_booking_enabled, auto_booking_min_hour, auto_booking_max_hour',
     )
     .eq('twilio_number', calledNumber)
     .maybeSingle()
@@ -186,10 +186,17 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Check calendar connection (Google / Outlook / etc.) — when connected the
-  // AI's prompt gains the check_availability playbook and may offer specific
-  // slots instead of just taking a callback message.
-  const calendarConnected = await hasCalendarConnected(profile.user_id).catch(() => false)
+  // Calendar-mode is layered: the AI only switches into book-appointments
+  // mode when BOTH (a) a calendar is actually connected AND (b) the
+  // contractor has opted into AI-initiated bookings via the
+  // auto_booking_enabled flag. A connected calendar without the flag means
+  // the contractor uses it for their own visibility but doesn't want the
+  // AI to write to it — Emma stays in take-message mode.
+  const autoBookingEnabled =
+    (profile as { auto_booking_enabled?: boolean | null }).auto_booking_enabled === true
+  const calendarConnected = autoBookingEnabled
+    ? await hasCalendarConnected(profile.user_id).catch(() => false)
+    : false
 
   // Build the per-tenant override
   const tenant: TenantContext = {

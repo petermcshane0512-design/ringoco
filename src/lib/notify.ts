@@ -9,6 +9,7 @@
 
 import twilio from 'twilio'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { sendEmail } from './email'
 
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
 
@@ -48,32 +49,15 @@ export async function notifyArtifactReady(args: {
   // Email (best-effort, may be skipped)
   let emailOk = false
   const ownerEmail = await lookupOwnerEmail(args.userId)
-  if (process.env.RESEND_API_KEY && ownerEmail) {
-    try {
-      const html = renderEmailHtml({
-        title: args.title,
-        body: args.shortBody,
-        url: args.publicUrl,
-        businessName: profile.business_name ?? 'your business',
-      })
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: 'BellAveGo <reports@bellavego.com>',
-          to: ownerEmail,
-          subject: args.title,
-          html,
-        }),
-      })
-      emailOk = res.ok
-      if (!res.ok) console.error('[notify] resend failed:', await res.text())
-    } catch (e) {
-      console.error('[notify] email error:', e)
-    }
+  if (ownerEmail) {
+    const html = renderEmailHtml({
+      title: args.title,
+      body: args.shortBody,
+      url: args.publicUrl,
+      businessName: profile.business_name ?? 'your business',
+    })
+    const result = await sendEmail({ to: ownerEmail, subject: args.title, html })
+    emailOk = result.ok
   }
 
   return { sms: smsOk, email: emailOk }
