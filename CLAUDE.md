@@ -215,6 +215,22 @@ Every one of these has been embedded as an assumption. Challenge them before act
 - **RLS is disabled on `profiles`, `jobs`, `customers`, and most tables** — intentional. Isolation is enforced by `auth()` + `.eq('user_id', userId)` in **server routes only**. Client pages MUST NOT use the anon Supabase key for tenant-scoped reads — they leak across tenants. Use server API routes (see `/api/jobs/list`, `/api/customers/list` pattern).
 - **Profile saves go through `/api/profile`** using Supabase service role key, not user JWT
 - **All Stripe price IDs + tier-gate sets centralized in `src/lib/pricing.ts`** — DO NOT inline `new Set(['officemgr', ...])` in route files. Import `OFFICE_MGR_TIERS`, `RECEPTIONIST_TIERS`, `REVIEW_TIERS`, `PRICE_IDS`, `PRICE_TO_TIER` from there.
+- **All `/api/admin/*` and `/api/agents/*` routes MUST start with `await requireAdmin()` from `src/lib/auth/requireAdmin.ts`** — never inline an `auth() + clerkClient + email allowlist` block. The helper accepts two auth modes and fails closed; a hand-rolled check is the exact footgun this exists to prevent (enrich-leads was fail-open for months because the inline check skipped when `ADMIN_API_SECRET` was unset). Pattern:
+  ```ts
+  import { requireAdmin } from '@/lib/auth/requireAdmin'
+  export async function POST(req: NextRequest) {
+    const gate = await requireAdmin()
+    if (!gate.ok) return gate.res
+    // ... handler
+  }
+  ```
+- **Dual-auth contract for admin routes:** `requireAdmin` accepts EITHER (a) `x-admin-secret: $ADMIN_API_SECRET` header — for cron, scripts, curl, CI; compared timing-safe; fails closed if env var unset — OR (b) a Clerk session whose **verified** email is in `ADMIN_EMAIL_SET`. Header path is checked first. Every successful auth logs `[requireAdmin] authorized mode=admin_secret` or `mode=clerk_session email=…` so usage can be audited from Vercel logs.
+- **Admin allowlist lives in `process.env.ADMIN_EMAILS`** (comma-separated, lowercased). Source of truth is `src/lib/auth/requireAdmin.ts`; `effectiveAuth.ts` re-exports `ADMIN_EMAIL_SET` from there for back-compat. DO NOT hardcode `['pmcshane@fordham.edu', ...]` in any new file — import or read the env var. The Clerk-session path checks against EVERY verified email on the user, not `emailAddresses[0]` (Clerk's array order isn't contractually primary-first).
+- **`/api/admin/sample-report` is intentionally public** — it's a sales artifact, sent to prospects as a PDF over cold calls. Do not add `requireAdmin()` to it. The doc-comment at the top of the route documents this contract.
+- **Security env vars** (all stored in Vercel → Settings → Environment Variables → Production+Preview+Development):
+  - `ADMIN_API_SECRET` — 48-char hex, generated via `crypto.randomBytes(24).toString('hex')`. Rotate if leaked.
+  - `ADMIN_EMAILS` — comma-separated, e.g. `pmcshane@fordham.edu,peter@bellavego.com`. Falls back to hardcoded default if unset, with a `console.warn` visible in Vercel logs.
+  - `CLERK_WEBHOOK_SECRET` — `whsec_…` from Clerk dashboard → Configure → Webhooks → endpoint detail → Signing Secret. Verified via `svix` in `/api/webhooks/clerk` (already correct as of 2026-05-21, do not strip).
 - **Image files with spaces in filenames** (e.g. `workflow 0.png`) may not render in Next.js — rename to `workflow-0.png` style or URL-encode references
 
 ---
