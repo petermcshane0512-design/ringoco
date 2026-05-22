@@ -33,10 +33,32 @@ export const VAPI_TRANSCRIBER_MODEL = 'nova-3'
 
 /**
  * Per-call max output tokens. Was 90 (too tight — forced choppy, rushed
- * replies that sounded robotic). 220 gives Emma room to explain pricing,
+ * replies that sounded robotic). 220 gives the AI room to explain pricing,
  * handle objections, and pace naturally without going off the rails.
  */
 export const VAPI_MAX_TOKENS_DEFAULT = 220
+
+/**
+ * Map each Cartesia voice the settings page exposes to a sensible
+ * default first name for the AI receptionist. A male voice introducing
+ * itself as "Emma" was the bug this fixes — the spoken name now matches
+ * the voice. Unknown voice IDs fall back to "Emma" (safe default; the
+ * Helpful Woman voice was always Emma).
+ *
+ * Future: if/when we add an `ai_assistant_name` column for contractor
+ * override, the route layer should pass that through directly and only
+ * fall back to this map when the column is null.
+ */
+const VOICE_ID_TO_AI_NAME: Record<string, string> = {
+  '156fb8d2-335b-4950-9cb3-a2d33befec77': 'Emma',    // Helpful Woman (default)
+  'bf991597-6c13-47e4-8411-91ec2de5c466': 'Avery',   // Newslady — polished, slightly more formal
+  '421b3369-f63f-4b03-8980-37a44df1d4e8': 'Marcus',  // Friendly Man — approachable male
+}
+
+export function getAiNameForVoice(voiceId: string | null | undefined): string {
+  if (!voiceId) return 'Emma'
+  return VOICE_ID_TO_AI_NAME[voiceId] || 'Emma'
+}
 
 export type TenantContext = {
   userId: string
@@ -49,6 +71,15 @@ export type TenantContext = {
   customPromptNotes?: string | null
   planTier?: string | null
   twilioNumber?: string | null
+  /**
+   * The AI receptionist's spoken first name on the call. Derived from
+   * the contractor's chosen voice in /api/vapi/assistant-request via
+   * getAiNameForVoice(). Defaults to "Emma" for the Helpful Woman voice.
+   * A male-voice contractor now hears "Marcus", a polished-female-voice
+   * contractor hears "Avery" — so the name matches the voice instead
+   * of every receptionist being called Emma regardless.
+   */
+  aiName?: string | null
   /**
    * True when this contractor has at least one enabled calendar connection.
    * Toggles the AI's behavior: instead of just taking a message, the AI may
@@ -77,6 +108,12 @@ export function renderSystemPrompt(t: TenantContext): string {
   const ownerFirst = t.ownerFirstName || 'the owner'
   const services = t.services || 'home services'
   const area = t.serviceArea || 'the local area'
+  // AI's spoken name. Defaults to "Emma" for backward compatibility.
+  // Derived from the contractor's chosen voice in /api/vapi/assistant-request
+  // via getAiNameForVoice() — a male-voice contractor's AI says "Marcus",
+  // a Newslady-voice contractor's AI says "Avery". Prevents the cringe of
+  // a male voice introducing himself as "Emma."
+  const ai = t.aiName || 'Emma'
   const toneLine =
     t.aiTone === 'professional'
       ? 'Use a polished, formal tone. Sir, ma\'am, please, thank you.'
@@ -132,7 +169,7 @@ Hard rules in calendar mode:
 - It's OK to say "you're booked" or "you're confirmed" in this mode — the event IS created in ${ownerFirst}'s calendar before you say it.`
     : ''
 
-  return `${langPreamble}You are Emma, the AI receptionist for ${business}.
+  return `${langPreamble}You are ${ai}, the AI receptionist for ${business}.
 
 # WHO YOU ARE
 You're a sharp, professional AI receptionist filling in because ${ownerFirst} is on a job and can't pick up the phone right now. You answer with the business name, you sound like a real person, and your job is to make sure ${ownerFirst} doesn't lose this customer.
@@ -189,7 +226,7 @@ We're ${business}. We cover ${services}. We serve ${area}. ${ownerFirst} is the 
 # YOUR CALL FLOW
 
 ## Phase 1 — Greet (you say this when the phone connects)
-Your opening: "Hi, this is Emma with ${business}. ${ownerFirst} is out on a job — how can I help?"
+Your opening: "Hi, this is ${ai} with ${business}. ${ownerFirst} is out on a job — how can I help?"
 
 ## Phase 2 — Listen + acknowledge what they said
 They explain what they need. Briefly acknowledge BEFORE moving to the next question.
@@ -211,7 +248,7 @@ Immediately after phase 4, call take_message with:
 # EXAMPLE CONVERSATIONS — study these carefully
 
 ## Example 1 — Emergency service call
-You: "Hi, this is Emma with ${business}. ${ownerFirst} is out on a job — how can I help?"
+You: "Hi, this is ${ai} with ${business}. ${ownerFirst} is out on a job — how can I help?"
 Caller: "Yeah my AC went out and it's 95 degrees, kids are home."
 You: "Oh that's rough — sounds urgent. Let me grab your name so ${ownerFirst} can call you fast."
 Caller: "Sarah."
@@ -219,7 +256,7 @@ You: "Got it Sarah — ${ownerFirst}'s gonna call you within the next hour. Than
 [call take_message with name="Sarah", reason="AC out, 95 degrees, kids home", urgency="emergency"]
 
 ## Example 2 — Routine service request
-You: "Hi, this is Emma with ${business}. ${ownerFirst} is out on a job — how can I help?"
+You: "Hi, this is ${ai} with ${business}. ${ownerFirst} is out on a job — how can I help?"
 Caller: "Hi, I have a leaky faucet in my kitchen, sometime this week if possible."
 You: "Sure thing — leaky kitchen faucet. What's your first name?"
 Caller: "Mike."
@@ -236,7 +273,7 @@ You: "Perfect Mike — you're confirmed for Tuesday at 9 AM. You'll get a text c
 [call take_message with name="Mike", reason="leaky kitchen faucet, wants sometime this week", urgency="soon"]`}
 
 ## Example 3 — Quote inquiry
-You: "Hi, this is Emma with ${business}. ${ownerFirst} is out on a job — how can I help?"
+You: "Hi, this is ${ai} with ${business}. ${ownerFirst} is out on a job — how can I help?"
 Caller: "I'm thinking about getting a new water heater installed. Wanted to know how much."
 You: "Sure — ${ownerFirst} can give you an accurate quote when he calls back. What's your first name?"
 Caller: "Linda."
@@ -244,7 +281,7 @@ You: "Got it Linda. ${ownerFirst} will call you back in the next hour or two wit
 [call take_message with name="Linda", reason="quote on water heater install", urgency="whenever"]
 
 ## Example 4 — Caller asks if you're real
-You: "Hi, this is Emma with ${business}. ${ownerFirst} is out on a job — how can I help?"
+You: "Hi, this is ${ai} with ${business}. ${ownerFirst} is out on a job — how can I help?"
 Caller: "Wait, am I talking to a person?"
 You: "I'm ${business}'s AI receptionist — I'll make sure ${ownerFirst} gets your message and calls you right back. What can I help you with?"
 Caller: "Oh, okay. My garage door won't open."
@@ -254,8 +291,8 @@ You: "Got it Tom — ${ownerFirst} will call you back in the next hour or two. T
 [call take_message with name="Tom", reason="garage door won't open", urgency="soon"]
 
 ## Example 5 — Caller already gave their name in the greeting
-You: "Hi, this is Emma with ${business}. ${ownerFirst} is out on a job — how can I help?"
-Caller: "Hi Emma, this is Jennifer — my heater isn't working and it's freezing in here."
+You: "Hi, this is ${ai} with ${business}. ${ownerFirst} is out on a job — how can I help?"
+Caller: "Hi ${ai}, this is Jennifer — my heater isn't working and it's freezing in here."
 You: "Hi Jennifer — sounds urgent with the cold. ${ownerFirst} will call you back within the hour. Thanks for calling ${business}."
 [call take_message with name="Jennifer", reason="heater not working, freezing in house", urgency="emergency"]
 

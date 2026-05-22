@@ -7,6 +7,7 @@ import {
   verifyVapiSignature,
   VAPI_VOICE_PROVIDER,
   VAPI_VOICE_ID_DEFAULT,
+  getAiNameForVoice,
   type TenantContext,
 } from '@/lib/vapi'
 import { hasCalendarConnected } from '@/lib/calendar/availability'
@@ -198,6 +199,17 @@ export async function POST(req: NextRequest) {
     ? await hasCalendarConnected(profile.user_id).catch(() => false)
     : false
 
+  // Resolve the voice ID first — it drives the AI's spoken name. A male
+  // voice introducing himself as "Emma" was the bug we're fixing here.
+  // getAiNameForVoice maps the contractor's chosen Cartesia voice to a
+  // sensible default name (Helpful Woman → Emma, Newslady → Avery,
+  // Friendly Man → Marcus). Unknown voice IDs fall back to "Emma".
+  const resolvedVoiceId =
+    (profile as { ai_voice_id?: string | null }).ai_voice_id ||
+    process.env.VAPI_VOICE_ID ||
+    VAPI_VOICE_ID_DEFAULT
+  const aiName = getAiNameForVoice(resolvedVoiceId)
+
   // Build the per-tenant override
   const tenant: TenantContext = {
     userId: profile.user_id,
@@ -210,21 +222,23 @@ export async function POST(req: NextRequest) {
     customPromptNotes: (profile as { custom_prompt_notes?: string | null }).custom_prompt_notes,
     planTier: profile.plan_tier,
     twilioNumber: profile.twilio_number,
+    aiName,
     hasCalendarConnected: calendarConnected,
   }
 
   const firstMessage =
     tenant.aiLanguage === 'es'
-      ? `Hola, soy Emma con ${tenant.businessName}. ${tenant.ownerFirstName || 'El dueño'} está en un trabajo — ¿en qué le puedo ayudar?`
-      : `Hi, this is Emma with ${tenant.businessName}. ${tenant.ownerFirstName || 'The owner'} is out on a job — how can I help?`
+      ? `Hola, soy ${aiName} con ${tenant.businessName}. ${tenant.ownerFirstName || 'El dueño'} está en un trabajo — ¿en qué le puedo ayudar?`
+      : `Hi, this is ${aiName} with ${tenant.businessName}. ${tenant.ownerFirstName || 'The owner'} is out on a job — how can I help?`
 
   return NextResponse.json({
     assistantOverrides: {
       firstMessage,
       model: {
-        // Bumped maxTokens so Emma has room for natural responses — the base
-        // Vapi assistant was created with 90 which forces choppy/robotic replies.
-        // Per-call override here means we don't need to re-deploy the base assistant.
+        // Bumped maxTokens so the AI has room for natural responses — the
+        // base Vapi assistant was created with 90 which forces choppy/robotic
+        // replies. Per-call override here means we don't need to re-deploy
+        // the base assistant.
         maxTokens: 220,
         temperature: 0.6,
         messages: [
@@ -236,10 +250,7 @@ export async function POST(req: NextRequest) {
       },
       voice: {
         provider: VAPI_VOICE_PROVIDER,
-        voiceId:
-          (profile as { ai_voice_id?: string | null }).ai_voice_id ||
-          process.env.VAPI_VOICE_ID ||
-          VAPI_VOICE_ID_DEFAULT,
+        voiceId: resolvedVoiceId,
       },
       // Metadata travels to the end-of-call-report webhook so we know which
       // tenant the call belonged to without a second DB lookup.
