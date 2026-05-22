@@ -17,15 +17,54 @@ const supabase = createClient(
 )
 
 /**
- * Vapi calls this on every inbound call to a number imported under our account.
- * Event type: "assistant-request". Vapi sends us the called number and expects
- * us to respond with the per-tenant assistant overrides (system prompt with
- * their business name + services, voice tweaks if any, metadata so the
- * end-of-call webhook knows which tenant the call belonged to).
+ * ⚠️ PARKED — NOT IN THE LIVE REQUEST PATH (2026-05-22)
  *
- * Tenant lookup: profiles.twilio_number == call.customer.number (the called
- * Twilio number). Multi-tenant safety: same pattern as the legacy /api/twilio/voice
- * route — service-role read, .eq('twilio_number', ...) filter, no RLS.
+ * This route was designed to handle Vapi's `assistant-request` event:
+ * Vapi POSTs here when an inbound call lands; we respond with per-call
+ * `assistantOverrides` that personalize Emma for the tenant. The route
+ * works (verified by curl: 200 OK with full payload, ~500ms response).
+ *
+ * BUT Vapi does not actually apply our response. After hours of debugging
+ * we confirmed via Vapi's `/call` API that `call.assistantOverrides`
+ * comes back empty on every inbound call — the override never reaches
+ * the conversation. We tried every payload shape, both with and without
+ * the phone number's `assistantId` bound, with and without signatures,
+ * with and without the nested `server` object. Nothing convinced Vapi
+ * to apply the override.
+ *
+ * We pivoted to a per-tenant assistant architecture: one Vapi assistant
+ * per contractor, created at signup, with the personalized prompt baked
+ * in directly. The contractor's phone number is bound to their assistant.
+ * No webhook overrides needed. See:
+ *
+ *   docs/architecture/vapi-tenant-provisioning.md
+ *   scripts/provision-tenant.mjs (skeleton)
+ *
+ * THIS ROUTE STAYS for three reasons:
+ *   1. If Vapi fixes their override pipeline later, this is half the
+ *      work to resume the simpler shared-assistant pattern.
+ *   2. The tenant-lookup logic (Supabase query, fallback patterns,
+ *      forwarding-verification handshake) is useful reference.
+ *   3. The phone number's `serverUrl` still points here. Removing the
+ *      route would leave it 404-ing — cheaper to leave it returning
+ *      a benign 200 / {ok: true} for now.
+ *
+ * If you're reading this because Vapi changed something or you found
+ * a way to make overrides apply: great, but also check what changed
+ * in the per-tenant flow before re-wiring this back in. The two
+ * patterns can coexist (tenants on their own assistants, demo line
+ * on a shared one) but the demo line currently uses a BAKED prompt
+ * (scripts/bake-sales-prompt-into-assistant.mjs) not a webhook
+ * override.
+ *
+ * Original intent (kept for reference):
+ *   Vapi calls this on every inbound call to a number imported under our
+ *   account. Event type: "assistant-request". We respond with per-tenant
+ *   assistant overrides — system prompt with their business name + services,
+ *   voice tweaks, metadata for the end-of-call webhook.
+ *
+ *   Tenant lookup: profiles.twilio_number == call.customer.number. Multi-
+ *   tenant safety: service-role read, .eq('twilio_number', ...) filter, no RLS.
  */
 export async function POST(req: NextRequest) {
   const raw = await req.text()
