@@ -516,7 +516,13 @@ export function buildAssistantConfig(opts: {
 }) {
   return {
     name: 'BellAveGo Emma',
-    firstMessage: 'Thanks for calling. How can we help you today?',
+    // Branded fallback first message. Should normally be OVERRIDDEN by
+    // assistantOverrides.firstMessage from /api/vapi/assistant-request
+    // (which knows the contractor's business name or the demo branch).
+    // If the override path is broken — as happened when the phone-number
+    // serverUrl pointed at localhost — at least Emma still identifies as
+    // BellAveGo and the demo line stays branded.
+    firstMessage: 'Hi, this is Emma with BellAveGo. How can I help?',
     firstMessageMode: 'assistant-speaks-first' as const,
 
     model: {
@@ -526,11 +532,23 @@ export function buildAssistantConfig(opts: {
       maxTokens: VAPI_MAX_TOKENS_DEFAULT,
       messages: [
         {
+          // Branded fallback system prompt. The per-call override from
+          // /api/vapi/assistant-request replaces this with either
+          // renderSalesAgentPrompt() (demo line) or renderSystemPrompt(t)
+          // (contractor line). If the override path fails for ANY reason,
+          // Emma reads this and produces a short, BellAveGo-branded
+          // message-take instead of impersonating a generic home-service
+          // business — which is what was leaking to callers before the
+          // phone-number serverUrl was fixed.
           role: 'system',
           content:
-            'You are Emma, the AI receptionist for a home-service business. ' +
-            'Per-call business context + the full personality + rules + examples are injected via assistantOverrides — follow the override prompt exactly. ' +
-            'Default tools: take_message (always), check_availability (only when system prompt says calendar is connected).',
+            'You are Emma, the AI receptionist for BellAveGo, an AI platform for home-service contractors. ' +
+            'Per-call business context is normally injected via assistantOverrides. If you are reading this default prompt, ' +
+            'the override path may have failed — keep it short and BellAveGo-branded. ' +
+            'Open with "Hi, this is Emma with BellAveGo — how can I help?". Listen, take the caller\'s first name + a one-sentence reason for calling, ' +
+            'then call take_message with name + reason + urgency (emergency / soon / whenever). ' +
+            'Do not invent business names. Do not promise specific appointment times. Do not say "home-service business" as a stand-in for a real name. ' +
+            'Tools available: take_message (always), check_availability + book_appointment (only when an overriding system prompt says a calendar is connected).',
         },
       ],
       tools: [

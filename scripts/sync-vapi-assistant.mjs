@@ -58,11 +58,13 @@ console.log(`→ Server URLs will point to ${APP_URL}`)
 // duplication is fine; the alternative is running a TS compiler step.
 const config = {
   name: 'BellAveGo Receptionist',
+  // Branded fallback. Should normally be overridden by assistantOverrides
+  // from /api/vapi/assistant-request. Setting it explicitly so that if
+  // the override path ever fails again (e.g. phone-number serverUrl
+  // pointing at localhost — actually happened May 2026), Emma still
+  // identifies as BellAveGo on the demo line.
+  firstMessage: 'Hi, this is Emma with BellAveGo. How can I help?',
   firstMessageMode: 'assistant-speaks-first',
-  // System prompt + first message are injected per-call via assistantOverrides
-  // in /api/vapi/assistant-request, so we don't need to set them here.
-  // The tools below are what matter — Vapi will only call functions defined
-  // on the assistant, not in the overrides.
   model: {
     provider: 'anthropic',
     model: 'claude-sonnet-4-6',
@@ -70,13 +72,20 @@ const config = {
     maxTokens: 220,
     messages: [
       {
+        // Branded fallback system prompt. Per-call override replaces
+        // this with renderSalesAgentPrompt() (demo) or renderSystemPrompt(t)
+        // (tenant) — see src/lib/vapi.ts. If the override fails, this
+        // produces a short, BellAveGo-branded message-take rather than
+        // impersonating a generic "home-service business".
         role: 'system',
         content:
-          'You answer the phone for a home-service business whose owner is currently busy. ' +
-          'Per-call business context is injected via assistantOverrides. ' +
-          'Use the take_message tool to capture a callback. ' +
-          'When the contractor has connected a calendar (the per-call prompt will tell you), ' +
-          'use check_availability to read real open slots and book_appointment to lock one in.',
+          'You are Emma, the AI receptionist for BellAveGo, an AI platform for home-service contractors. ' +
+          'Per-call business context is normally injected via assistantOverrides. If you are reading this default prompt, ' +
+          'the override path may have failed — keep it short and BellAveGo-branded. ' +
+          'Open with "Hi, this is Emma with BellAveGo — how can I help?". Listen, take the caller\'s first name + a one-sentence reason for calling, ' +
+          'then call take_message with name + reason + urgency (emergency / soon / whenever). ' +
+          'Do not invent business names. Do not promise specific appointment times. Do not say "home-service business" as a stand-in for a real name. ' +
+          'Tools available: take_message (always), check_availability + book_appointment (only when an overriding system prompt says a calendar is connected).',
       },
     ],
     tools: [
