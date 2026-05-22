@@ -350,7 +350,7 @@ export default function DashboardPage() {
           </div>
           <div style={{ fontSize: 13, color: "#4A6670", marginTop: 4 }}>Live operational view of your AI receptionist — every call, job, and dollar.</div>
         </div>
-        {isAdmin && (
+        {isAdmin ? (
           <div style={{
             display: "flex", alignItems: "center", gap: 6,
             padding: "5px 8px 5px 12px",
@@ -383,6 +383,46 @@ export default function DashboardPage() {
             <Link href="/admin/customers" style={{ padding: "4px 10px", borderRadius: 99, color: "rgba(255,255,255,0.7)", fontSize: 11, fontWeight: 700, textDecoration: "none" }}>
               Cust →
             </Link>
+          </div>
+        ) : profile?.plan_tier && (TIER_METADATA[profile.plan_tier as Tier]) && (
+          // Customer-facing tier badge — shows ONLY their tier, plus an Upgrade
+          // button to /pricing unless they're already on the top tier. No
+          // sibling-tier names visible to customers (those were leaking the
+          // admin tier switcher's vocabulary, e.g. "Mission Control / Operator /
+          // Concierge" all at once which made customers think they had access
+          // to features they hadn't bought).
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "6px 14px",
+              background: "#FFF7EE", borderRadius: 99,
+              border: "1px solid rgba(232,116,43,0.22)",
+            }}>
+              <span style={{
+                fontSize: 9, fontWeight: 800, color: "#C84B26",
+                letterSpacing: "0.12em", textTransform: "uppercase",
+              }}>
+                Your plan
+              </span>
+              <span style={{ fontSize: 13, fontWeight: 800, color: "#0B1F3A", letterSpacing: "-0.2px" }}>
+                {TIER_METADATA[profile.plan_tier as Tier].name}
+              </span>
+            </div>
+            {profile.plan_tier !== 'concierge' && (
+              <Link
+                href="/pricing"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 5,
+                  padding: "6px 14px", borderRadius: 99,
+                  background: "linear-gradient(135deg, #FF9D5A 0%, #E8742B 100%)",
+                  color: "#fff", fontSize: 12, fontWeight: 800,
+                  textDecoration: "none",
+                  boxShadow: "0 4px 12px rgba(232,116,43,0.32)",
+                }}
+              >
+                Upgrade plan →
+              </Link>
+            )}
           </div>
         )}
       </div>

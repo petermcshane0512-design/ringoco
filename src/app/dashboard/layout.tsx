@@ -1,10 +1,12 @@
 'use client'
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
-import { UserButton } from '@clerk/nextjs'
+import { usePathname, useRouter } from 'next/navigation'
+import { UserButton, useUser } from '@clerk/nextjs'
 import { useEffect, useState } from 'react'
 import ImpersonationBanner from '@/components/ImpersonationBanner'
+
+const ADMIN_EMAILS = new Set(['pmcshane@fordham.edu', 'peter@bellavego.com'])
 
 const nav = [
   { label: 'Command Center', href: '/dashboard' },
@@ -24,6 +26,10 @@ function formatUS(num: string) {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const path = usePathname()
+  const router = useRouter()
+  const { user } = useUser()
+  const isAdmin = !!user?.primaryEmailAddress?.emailAddress &&
+    ADMIN_EMAILS.has(user.primaryEmailAddress.emailAddress.toLowerCase())
   const [twilioNumber, setTwilioNumber] = useState<string | null>(null)
   const [isActiveSub, setIsActiveSub] = useState<boolean | null>(null)
   // Mobile drawer state — sidebar is hidden by default on small screens
@@ -39,6 +45,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }
     }).catch(() => {})
   }, [])
+
+  // Hard gate: any signed-in user with no active subscription gets
+  // bounced to /pricing on every dashboard load. Admins are exempt so
+  // Peter can still poke around as himself or impersonate an inactive
+  // customer for debugging. Runs after the profile fetch resolves so
+  // we don't redirect during the loading flicker.
+  useEffect(() => {
+    if (isActiveSub === false && !isAdmin) {
+      router.replace('/pricing?subscribe=1')
+    }
+  }, [isActiveSub, isAdmin, router])
 
   // Auto-close drawer on route change
   useEffect(() => { setSidebarOpen(false) }, [path])
