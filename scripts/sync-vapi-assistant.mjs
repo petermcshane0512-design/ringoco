@@ -182,7 +182,10 @@ const config = {
   recordingEnabled: true,
   serverUrl: `${APP_URL}/api/vapi/end-of-call-report`,
   ...(VAPI_WEBHOOK_SECRET ? { serverUrlSecret: VAPI_WEBHOOK_SECRET } : {}),
-  serverMessages: ['end-of-call-report', 'tool-calls'],
+  // status-update added so we receive live hangup events (caller bailed vs
+  // Emma ended the call vs error) — feeds future lost-call recovery cron
+  // and gives clean analytics on call abandonment vs completion.
+  serverMessages: ['end-of-call-report', 'tool-calls', 'status-update'],
 }
 
 const res = await fetch(`https://api.vapi.ai/assistant/${VAPI_ASSISTANT_ID}`, {
