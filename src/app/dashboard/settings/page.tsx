@@ -528,6 +528,7 @@ export default function SettingsPage() {
                 return (
                   <button
                     key={String(o.v)}
+                    type="button"
                     onClick={() => setAutoBookingEnabled(o.v)}
                     style={{
                       padding: '9px 16px',
@@ -551,7 +552,7 @@ export default function SettingsPage() {
             {/* Booking window — only shows when auto-booking is ON. Hours are
                 stored 0-23 in the local time zone (handled in the voice route).
                 Both null = book any time of day. */}
-            {autoBookingEnabled && (
+            {autoBookingEnabled === true && (
               <div style={{
                 marginTop: 14,
                 padding: '14px 16px',
@@ -625,6 +626,7 @@ export default function SettingsPage() {
                 return (
                   <button
                     key={String(o.v)}
+                    type="button"
                     onClick={() => setReviewRequestEnabled(o.v)}
                     style={{
                       padding: '9px 16px',
