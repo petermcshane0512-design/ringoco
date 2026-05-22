@@ -302,13 +302,20 @@ export async function POST(req: NextRequest) {
     }
 
     // ── SMS the caller (confirmation) ──
+    //
+    // TCPA posture: caller actively scheduled an appointment via Emma
+    // on the live call — that's the strongest safe-harbor scenario
+    // (transactional confirmation of consumer-initiated action). We
+    // still include a visible STOP opt-out per CTIA best practices and
+    // for defense-in-depth against any aggressive carrier filter that
+    // wants an explicit unsubscribe phrase in the body.
     const slotLabel = formatSlotForHumans(startDate, conn.timezone || 'America/Chicago')
     if (callerPhone) {
       try {
         await twilioClient.messages.create({
           body:
             `Hi ${args.customer_name}! Confirmed: ${args.service_summary || 'your appointment'} on ${slotLabel} with ${businessName}. ` +
-            `Reply to this text to reschedule. — BellAveGo`,
+            `Reply to this text to reschedule. — BellAveGo. Reply STOP to opt out.`,
           from: tenantTwilioNumber,
           to: callerPhone,
         })
