@@ -125,10 +125,19 @@ export async function POST(req: NextRequest) {
   // when TWILIO_DEMO_NUMBER env var hasn't been set in production yet.
   // The env var lookup is preferred (configurable in dashboard) but we
   // never want a missing env to break the sales line.
+  // Assistant ID — passed back in EVERY response so Vapi has the full
+  // "use this assistant with these overrides" instruction even when the
+  // phone number isn't bound. Hardcoded fallback because env may not be set.
+  const ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID || 'cccc9db9-7a6b-4211-b6b1-a68de8e21458'
+
   const DEMO_NUMBER_FALLBACK = '+16514677829'
   if (calledNumber === (process.env.TWILIO_DEMO_NUMBER || DEMO_NUMBER_FALLBACK)) {
     console.log('[vapi/assistant-request] demo branch matched for', calledNumber)
     return NextResponse.json({
+      // Returning assistantId alongside overrides gives Vapi the complete
+      // "use this assistant + apply these overrides" instruction —
+      // works whether or not the phone number has its own assistantId binding.
+      assistantId: ASSISTANT_ID,
       assistantOverrides: {
         firstMessage: `Hi, this is Emma with BellAveGo. I know you're checking out our AI receptionist for home-service businesses — how can I help?`,
         model: {
@@ -291,6 +300,7 @@ export async function POST(req: NextRequest) {
       : `Hi, this is ${aiName} with ${tenant.businessName}. ${tenant.ownerFirstName || 'The owner'} is out on a job — how can I help?`
 
   return NextResponse.json({
+    assistantId: ASSISTANT_ID,
     assistantOverrides: {
       firstMessage,
       model: {
