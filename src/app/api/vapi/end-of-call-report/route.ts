@@ -693,8 +693,15 @@ function extractTenant(message: VapiServerMessage['message']): TenantMeta {
   const calledNumber =
     (message?.call as { phoneNumber?: { number?: string }; customer?: { number?: string } })?.phoneNumber?.number ??
     null
-  const demoEnv = process.env.TWILIO_DEMO_NUMBER
-  const isDemoByNumber = !!(demoEnv && calledNumber && calledNumber === demoEnv)
+  // Demo number fallback — env var preferred but a missing env should
+  // never block the lead-capture pipeline on the demo line. After we
+  // baked the sales prompt directly into the Vapi assistant (skipping
+  // the override path), assistantOverrides.metadata.is_demo is never
+  // set per-call → the env-or-literal match is the ONLY way demo
+  // detection works at this point.
+  const DEMO_NUMBER_FALLBACK = '+16514677829'
+  const demoEnv = process.env.TWILIO_DEMO_NUMBER || DEMO_NUMBER_FALLBACK
+  const isDemoByNumber = !!(calledNumber && calledNumber === demoEnv)
   const isDemo = md.is_demo === true || isDemoByNumber
 
   // Surface in logs whenever the fallback rescues us so we can spot the
