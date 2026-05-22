@@ -1,44 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { provisionNumberForUser } from '@/lib/provisionNumber'
 
 /**
  * Admin-only dry-run endpoint for per-tenant provisioning. NOT exposed in
- * any UI. Used by Peter to test the provisioning pipeline (Vapi assistant
- * creation + Twilio number purchase + binding + DB persist) end-to-end
- * against a test profile BEFORE the first paying customer triggers it
- * via the Stripe webhook.
+ * any UI. Used by Peter (or by Claude on Peter's behalf via the admin
+ * secret) to test the provisioning pipeline end-to-end against a test
+ * profile BEFORE the first paying customer triggers it via the Stripe
+ * webhook.
  *
- * USAGE
+ * AUTH — dual-mode via requireAdmin() (see src/lib/auth/requireAdmin.ts):
+ *   (a) x-admin-secret: $ADMIN_API_SECRET   — for curl / scripts / Claude
+ *   (b) Clerk session with admin email      — for browser usage
+ *
+ * USAGE (Claude / server-side)
  *   curl -X POST https://www.bellavego.com/api/internal/test-provision \
- *     -H "Cookie: __session=<peter's-clerk-session>" \
+ *     -H "x-admin-secret: $ADMIN_API_SECRET" \
  *     -H "Content-Type: application/json" \
  *     -d '{"user_id":"user_xxxxx"}'
  *
  * SAFETY
- *   - Hardcoded admin gate (ADMIN_USER_ID below). Returns 403 for anyone
- *     else, including authenticated non-admin Clerk users.
- *   - The underlying provisionNumberForUser is idempotent — if the target
- *     profile already has all three resources (twilio_number,
- *     vapi_assistant_id, vapi_phone_number_id), it returns reused without
- *     spending money or creating duplicates.
- *   - First-run on a clean profile WILL spend ~$1.15/mo on a real Twilio
- *     number and create a real Vapi assistant. Do not run against random
- *     user_ids.
+ *   - requireAdmin() fails closed if ADMIN_API_SECRET is unset AND the
+ *     caller has no admin Clerk session. No fail-open path.
+ *   - provisionNumberForUser is idempotent — re-running on a fully
+ *     provisioned profile is a no-op (returns reused). First-run on a
+ *     clean profile WILL spend ~$1.15/mo on a Twilio number and create
+ *     a real Vapi assistant. Do not run against random user_ids.
  */
-
-// HARDCODED admin user_id — Peter (pmcshane@fordham.edu / bellavegollc@gmail.com).
-// Verified live by Peter on 2026-05-22.
-const ADMIN_USER_ID = 'user_3DGWtNcz6phakI4omRf7e1ZSbPz'
-
 export async function POST(req: NextRequest) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  }
-  if (userId !== ADMIN_USER_ID) {
-    return NextResponse.json({ error: 'forbidden' }, { status: 403 })
-  }
+  const gate = await requireAdmin()
+  if (!gate.ok) return gate.res
 
   let body: { user_id?: unknown } = {}
   try {
@@ -53,7 +44,7 @@ export async function POST(req: NextRequest) {
   }
 
   console.log(
-    `[/api/internal/test-provision] caller=${userId} target=${targetUserId} — invoking provisionNumberForUser`,
+    `[/api/internal/test-provision] mode=${gate.mode} caller=${gate.email ?? gate.userId ?? 'secret'} target=${targetUserId} — invoking provisionNumberForUser`,
   )
   const result = await provisionNumberForUser(targetUserId)
   console.log(
