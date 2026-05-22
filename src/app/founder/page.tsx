@@ -287,7 +287,6 @@ export default function FounderPage() {
               Try BellAveGo
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </Link>
-            <span>or hear the AI live &middot; <a href="tel:+16514677829" className="call">(651) 467-7829</a></span>
           </div>
         </div>
       </article>
