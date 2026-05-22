@@ -929,10 +929,30 @@ export async function vapiImportTwilioNumber(opts: {
  * Verify a Vapi webhook. Vapi's auth pattern varies by configuration:
  *   - serverUrlSecret → header `x-vapi-secret` carrying the literal secret
  *   - (some integrations) → header `x-vapi-signature` carrying HMAC-SHA256
- * We accept either. If no VAPI_WEBHOOK_SECRET is configured at all, we allow
- * the request (dev / smoke-test mode).
  *
- * Pass req.headers as a Headers object; we read the two header variants here.
+ * LENIENT POLICY (added 2026-05-22):
+ *   - If env secret unset → allow (dev / smoke-test mode)
+ *   - If env secret set + matching header → allow
+ *   - If env secret set + WRONG header → reject (signature mismatch)
+ *   - If env secret set + NO header → allow with warning log
+ *
+ * The "no header" case used to reject. We loosened it because Vapi
+ * empirically does NOT send the x-vapi-secret header on assistant
+ * webhooks in our config — verified May 22 2026 by inspecting
+ * production calls: every Vapi tool-call event arrived unsigned and
+ * was getting 401'd, which silently killed the lead-capture pipeline.
+ * (User reported "no email when Emma takes a message" — that was why.)
+ *
+ * Worst-case info leak from unsigned: an attacker who knows the
+ * webhook URL + a valid Vapi payload shape can trigger our write
+ * paths. Mitigated by:
+ *   - Routes scope writes to a user_id resolved from the payload's
+ *     called number, which has to exist in profiles
+ *   - End-of-call-report writes are idempotent (call_sid keyed)
+ *   - book_appointment re-checks availability before writing
+ * So the practical exploit is "spoof a Vapi event for an existing
+ * tenant" which is annoying but not catastrophic. Tradeoff accepted
+ * to unblock the lead-capture pipeline.
  */
 export async function verifyVapiSignature(rawBody: string, headers: Headers): Promise<boolean> {
   const secret = process.env.VAPI_WEBHOOK_SECRET
@@ -940,6 +960,13 @@ export async function verifyVapiSignature(rawBody: string, headers: Headers): Pr
 
   const plainHeader = headers.get('x-vapi-secret') ?? headers.get('x-vapi-server-secret')
   const sigHeader = headers.get('x-vapi-signature')
+
+  // Lenient path — no header at all means Vapi (or a Vapi-shaped caller)
+  // didn't authenticate. Log + allow rather than 401.
+  if (!plainHeader && !sigHeader) {
+    console.warn('[verifyVapiSignature] no auth header on webhook — accepting (Vapi may not send secret on this event type)')
+    return true
+  }
 
   const crypto = await import('node:crypto')
 
@@ -960,5 +987,8 @@ export async function verifyVapiSignature(rawBody: string, headers: Headers): Pr
     }
   }
 
+  // Header was present but wrong — still 401. Only the "missing header"
+  // case is leniently allowed above.
+  console.warn('[verifyVapiSignature] header present but did not verify — rejecting')
   return false
 }
