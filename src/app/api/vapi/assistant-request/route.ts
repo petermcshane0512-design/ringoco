@@ -4,7 +4,6 @@ import { RECEPTIONIST_TIERS, RECEPTIONIST_CALL_CAP } from '@/lib/pricing'
 import {
   renderSystemPrompt,
   renderSalesAgentPrompt,
-  verifyVapiSignature,
   VAPI_VOICE_PROVIDER,
   VAPI_VOICE_ID_DEFAULT,
   getAiNameForVoice,
@@ -30,9 +29,28 @@ const supabase = createClient(
  */
 export async function POST(req: NextRequest) {
   const raw = await req.text()
-  if (!(await verifyVapiSignature(raw, req.headers))) {
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
-  }
+
+  // ── SIGNATURE NOTE ──
+  // Vapi's phone-number webhooks (assistant-request) do NOT support a
+  // serverUrlSecret — verified May 2026 by PATCHing the phone number with
+  // both flat (serverUrlSecret) and nested (server.secret) shapes; Vapi
+  // accepts the field but persists nothing. So Vapi posts here unsigned
+  // every time. Verifying breaks the demo line: every inbound call would
+  // 401 → Vapi falls back to the base assistant config → Emma reads the
+  // generic "take a message" fallback prompt instead of the per-tenant
+  // override. Confirmed via /call API: every recent call had no override
+  // applied.
+  //
+  // This route is effectively read-only (returns per-call AI config, no
+  // DB writes), so dropping signature is an acceptable trade-off. Other
+  // Vapi routes that DO write (end-of-call-report, calendar/book,
+  // calendar/availability) still call verifyVapiSignature.
+  //
+  // Worst-case info leak from skipping: an attacker can POST a phone
+  // number to confirm whether it's registered with BellAveGo. No write,
+  // no exfiltration. The route already returns "isn't configured yet"
+  // for unknown numbers, so attackers learn nothing beyond what they
+  // could get from Twilio number ownership lookups.
 
   let payload: VapiAssistantRequest
   try {
