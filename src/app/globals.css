@@ -238,6 +238,117 @@ html { overflow-x: hidden; }
   }
 }
 
+/* ── Dashboard mobile — sidebar drawer + grid collapse ──
+   The dashboard's 300px-wide aside is the #1 reason every dashboard
+   subpage looks broken on iPhone: at 375px viewport the sidebar
+   eats 80% of the screen and content gets ~75px. This block:
+
+     1. Turns the sidebar into a slide-in drawer (translateX off-screen
+        by default, brought on by .is-open which the layout flips when
+        the hamburger is tapped).
+     2. Shows a backdrop behind the open drawer.
+     3. Renders the hamburger button only on mobile (hidden desktop).
+     4. Hides the "← Back to home" pill on mobile to save room — users
+        get back to home by tapping the logo inside the drawer.
+     5. Aggressively collapses every inline grid inside .dash-main to a
+        single column on mobile. This is intentional and broad: dashboard
+        subpages use inline gridTemplateColumns extensively (repeat(4,1fr)
+        etc), all of which overflow on phones. One rule fixes them all.
+        Subpages that want a different mobile layout can override with a
+        higher-specificity inline media query. */
+
+/* Hamburger is hidden on desktop by default */
+.dash-burger { display: none; }
+/* Hide the "back to home" pill is desktop-only by default — no change */
+
+@media (max-width: 820px) {
+  .dash-sidebar {
+    position: fixed !important;
+    top: 0; bottom: 0; left: 0;
+    z-index: 200;
+    width: 280px !important;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 50px rgba(11,31,58,0.30);
+  }
+  .dash-sidebar.is-open {
+    transform: translateX(0);
+  }
+  .dash-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    background: rgba(11,31,58,0.55);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+  /* Topbar: tighter padding, show hamburger, hide back-to-home pill */
+  .dash-topbar {
+    padding: 0 12px !important;
+    gap: 6px !important;
+  }
+  .dash-topbar .dash-back-home { display: none !important; }
+  .dash-burger {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 38px; height: 38px;
+    background: #FFF7EE;
+    border: 1px solid rgba(232,116,43,0.25);
+    border-radius: 9px;
+    color: #C84B26;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .dash-burger:active { background: #FFE9D0; }
+
+  /* Collapse every inline grid in dashboard content to single column.
+     Catches gridTemplateColumns="repeat(4,1fr)", "1fr 310px", etc. */
+  .dash-main [style*="gridTemplateColumns"],
+  .dash-main [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Force any inline fixed-pixel widths in dashboard content to fluid.
+     Catches sidebar-style 310/320/360 etc panels. */
+  .dash-main [style*="width: 310px"],
+  .dash-main [style*="width: 320px"],
+  .dash-main [style*="width: 360px"],
+  .dash-main [style*="width: 400px"],
+  .dash-main [style*="width:310"],
+  .dash-main [style*="width:320"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Min-touch-target for tappable elements inside dashboard content.
+     iOS HIG = 44px; we go 40 to keep visual density tolerable. */
+  .dash-main button,
+  .dash-main a[role="button"] {
+    min-height: 40px;
+  }
+}
+
+/* ── Onboarding flow (/onboarding) — mobile tightening ──
+   Standalone route (not under /dashboard) so it doesn't pick up the
+   .dash-main grid-collapse rule. Same idea here: tighten outer
+   padding and collapse the 2-col business-type/first-name grid so
+   inputs stop being cramped at iPhone width. */
+@media (max-width: 720px) {
+  .onb-shell {
+    padding: 16px 12px !important;
+    justify-content: flex-start !important;
+    padding-top: 24px !important;
+  }
+  /* Any inline 2-col grid inside the onboarding card → 1 column.
+     Catches the Business Type + First Name pair and the trades grid. */
+  .onb-shell [style*="gridTemplateColumns"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* ── Sign-in / Sign-up — mobile stack with logo on top
    Desktop is side-by-side (logo left half, form right half). On phones
    the 500px-wide form column overflows, so we drop to a column with

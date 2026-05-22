@@ -26,6 +26,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const path = usePathname()
   const [twilioNumber, setTwilioNumber] = useState<string | null>(null)
   const [isActiveSub, setIsActiveSub] = useState<boolean | null>(null)
+  // Mobile drawer state — sidebar is hidden by default on small screens
+  // and slides in from the left when the hamburger is tapped. Closes
+  // automatically on every route change so taps on nav links Just Work.
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     fetch('/api/profile').then(r => r.json()).then(p => {
@@ -36,17 +40,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }).catch(() => {})
   }, [])
 
+  // Auto-close drawer on route change
+  useEffect(() => { setSidebarOpen(false) }, [path])
+
   const isActive = (href: string) => href === '/dashboard' ? path === href : path === href || path.startsWith(href + '/')
 
   return (
-    <div className="mc-page" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div className="mc-page dash-shell" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: "'Inter', system-ui, sans-serif" }}>
 
       <ImpersonationBanner />
 
-      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+      <div style={{ display: 'flex', flex: 1, minHeight: 0, position: 'relative' }}>
 
-      {/* ── SIDEBAR — warm white, sunset-orange accents ── */}
-      <aside style={{ width: 300, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)', borderRight: '1px solid rgba(232,116,43,0.12)', display: 'flex', flexDirection: 'column', padding: '24px 16px 18px', flexShrink: 0, boxShadow: '4px 0 24px rgba(232,116,43,0.05), 4px 0 12px rgba(11,31,58,0.04)' }}>
+      {/* Backdrop — only renders + visible on mobile via .dash-backdrop CSS */}
+      {sidebarOpen && (
+        <div
+          className="dash-backdrop"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden
+        />
+      )}
+
+      {/* ── SIDEBAR — warm white, sunset-orange accents ──
+          On mobile (<= 820px) becomes a slide-in drawer via .dash-sidebar
+          styles in globals.css. Desktop layout is unchanged. */}
+      <aside className={`dash-sidebar${sidebarOpen ? ' is-open' : ''}`} style={{ width: 300, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)', borderRight: '1px solid rgba(232,116,43,0.12)', display: 'flex', flexDirection: 'column', padding: '24px 16px 18px', flexShrink: 0, boxShadow: '4px 0 24px rgba(232,116,43,0.05), 4px 0 12px rgba(11,31,58,0.04)' }}>
 
         {/* Logo — original BellAveGo brand, no filters */}
         <div style={{ padding: '4px 0 22px', borderBottom: '1px solid rgba(232,116,43,0.10)', marginBottom: 22 }}>
@@ -141,15 +159,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* ── MAIN AREA ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <div className="dash-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 
         {/* Topbar — warm white with sunset border accent */}
-        <div style={{ height: 54, background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(232,116,43,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Link href="/" style={{ padding: '7px 14px', borderRadius: 9, border: '1px solid rgba(232,116,43,0.18)', background: '#FFF7EE', color: '#C84B26', textDecoration: 'none', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>
+        <div className="dash-topbar" style={{ height: 54, background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(232,116,43,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+            {/* Hamburger — mobile only, opens the sidebar drawer */}
+            <button
+              type="button"
+              className="dash-burger"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open menu"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <line x1="3" y1="6"  x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+            </button>
+            <Link href="/" className="dash-back-home" style={{ padding: '7px 14px', borderRadius: 9, border: '1px solid rgba(232,116,43,0.18)', background: '#FFF7EE', color: '#C84B26', textDecoration: 'none', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>
               ← Back to home
             </Link>
-            <div style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.1px' }}>
+            <div className="dash-page-title" style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>
               {nav.find(n => path === n.href || path.startsWith(n.href + '/'))?.label ?? 'Dashboard'}
             </div>
           </div>

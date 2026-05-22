@@ -145,7 +145,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div style={{
+    <div className="onb-shell" style={{
       minHeight: '100vh',
       background: 'linear-gradient(145deg, #F5FCFA 0%, #EBF7F3 50%, #F0FAF7 100%)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
