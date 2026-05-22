@@ -331,7 +331,7 @@ export default function PricingPage() {
 
       {/* Multi-Location enterprise card */}
       <section style={{ padding: '0 24px 80px' }}>
-        <div style={{
+        <div className="pricing-multiloc" style={{
           maxWidth: 1200,
           margin: '0 auto',
           background: 'linear-gradient(135deg, #0B1F3A 0%, #1E3A5F 100%)',
@@ -418,7 +418,7 @@ export default function PricingPage() {
       <section style={{ padding: '60px 24px', background: '#F2F9F5', borderTop: '1px solid #DCE9E2' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <h2 style={{ fontSize: 28, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.8px', marginBottom: 24, textAlign: 'center' }}>Common questions</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div className="pricing-faq" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             {[
               {
                 q: 'Can I keep my current business number?',

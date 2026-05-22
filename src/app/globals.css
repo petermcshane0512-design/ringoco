@@ -223,18 +223,31 @@ html { overflow-x: hidden; }
   }
 }
 
-/* ── Pricing tier grid on mobile (the full /pricing page)
-   2-column layout so Mission Control + Operator sit side-by-side;
-   Concierge (3rd card) spans both columns on row 2. Desktop's
-   inline `gridTemplateColumns: repeat(auto-fit, minmax(300px, 1fr))`
-   keeps its 3-column desktop behavior — this only overrides on phones. */
+/* ── Pricing page mobile — stack everything to 1 column on phones.
+   Earlier this used 2-col + Concierge-spans-row-2, but the feature
+   lists are dense and the cards became ~175px wide / ~900px tall on
+   iPhone, which is unreadable. Single column gives each card the
+   full screen so users can actually skim the bullets. */
 @media (max-width: 720px) {
+  /* Tier cards (Mission Control / Operator / Concierge) */
   .pricing-tier-grid {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 10px !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
   }
-  .pricing-tier-grid > :nth-child(3) {
-    grid-column: 1 / -1;
+  /* Tighten outer section padding on the page */
+  .pricing-page-section { padding-left: 16px !important; padding-right: 16px !important; }
+
+  /* Multi-Location enterprise section — collapses 1.4fr / 1fr to 1-col,
+     drops the giant 48/56 padding to phone-friendly 28/22. */
+  .pricing-multiloc {
+    grid-template-columns: 1fr !important;
+    gap: 22px !important;
+    padding: 28px 22px !important;
+  }
+  /* Common questions — 6 cards in 1-col on mobile (was 2-col) */
+  .pricing-faq {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
   }
 }
 

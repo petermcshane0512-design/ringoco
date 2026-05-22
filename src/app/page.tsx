@@ -480,29 +480,15 @@ export default function HomePage() {
               .hero-trust-num { font-size: 22px; }
               .hero-trust-lab { font-size: 10.5px; }
 
-              /* Dashboard preview — bigger on mobile (~0.62 scale), tight
-                 margin so the cream consulting section starts immediately
-                 below instead of trailing dark blue dead space. */
-              .hero-stage {
-                display: block !important;
-                position: relative;
-                min-height: 0 !important;
-                width: 100%;
-                margin: 4px 0 0;
-                overflow: hidden;
-                border-radius: 18px;
-              }
-              .hero-stage-dash {
-                position: relative !important;
-                inset: auto !important;
-                padding-right: 0 !important;
-                transform: scale(0.62) !important;
-                transform-origin: top left !important;
-                width: 161.3% !important;     /* 100 / 0.62 */
-                margin-bottom: -38% !important;
-                display: block !important;
-                align-items: initial !important;
-              }
+              /* Dashboard preview + floating phone — HIDDEN on mobile.
+                 The earlier scale(0.62) + margin-bottom: -38% hack made
+                 the dashboard preview overlap the consulting section
+                 below. The hero already carries the load: H1 + sub +
+                 CTAs + trust badges. Dropping the decorative preview
+                 keeps the hero clean and the page scrolls quicker into
+                 the value props. */
+              .hero-stage { display: none !important; }
+              .hero-stage-dash,
               .hero-stage-phone { display: none !important; }
 
               /* Hero container — kill the desktop min-height: 640px so the
@@ -740,45 +726,43 @@ export default function HomePage() {
             .appt-section { padding: 56px 18px !important; }
             .appt-grid { gap: 18px; }
           }
-          /* Phone-specific tightening: keep both cards side-by-side per
-             Peter's request, but skinnier/smaller — shrink internal
-             mockups via CSS zoom so the inline-styled phone + Google
-             Calendar contents scale together. */
+          /* Phone-specific layout — STACK the two mode cards vertically
+             instead of squeezing them into 175px-wide columns with a
+             zoom: 0.62 hack. Each card gets the full screen width so
+             the iPhone-mockup messages are actually readable. */
           @media (max-width: 720px) {
-            .appt-section { padding: 44px 10px !important; }
+            .appt-section { padding: 48px 16px !important; }
             .appt-grid {
-              grid-template-columns: 1fr 1fr !important;
-              gap: 8px !important;
+              grid-template-columns: 1fr !important;
+              gap: 16px !important;
+              margin-bottom: 28px !important;
             }
             .appt-card {
-              padding: 14px 10px 12px !important;
-              gap: 10px !important;
-              border-radius: 14px !important;
+              padding: 22px 18px 18px !important;
+              gap: 16px !important;
+              border-radius: 18px !important;
             }
-            .appt-card header h3 { font-size: 14px !important; line-height: 1.2 !important; margin: 0 0 5px !important; }
-            .appt-card header p  { font-size: 10.5px !important; line-height: 1.4 !important; }
+            .appt-card header h3 { font-size: 19px !important; line-height: 1.2 !important; margin: 0 0 6px !important; }
+            .appt-card header p  { font-size: 13px !important; line-height: 1.5 !important; }
             .appt-chip {
-              font-size: 8.5px !important;
-              padding: 3px 7px !important;
-              margin-bottom: 7px !important;
-              letter-spacing: 0.10em !important;
-            }
-            /* Shrink the inline-styled iPhone frame + Google Calendar card.
-               CSS zoom (now standard) proportionally scales every nested
-               pixel value — fonts, padding, borders — without us touching
-               the inline styles. */
-            .appt-phone,
-            .appt-card-auto > div:nth-of-type(2) {
-              zoom: 0.62;
-            }
-            .appt-card ol { gap: 6px !important; }
-            .appt-card ol li { font-size: 10.5px !important; line-height: 1.4 !important; }
-            .appt-step-num {
-              width: 18px !important;
-              height: 18px !important;
-              border-radius: 5px !important;
               font-size: 9.5px !important;
+              padding: 4px 9px !important;
+              margin-bottom: 10px !important;
             }
+            /* Phone mockup is full-width inside the now-stacked card, so
+               drop the zoom hack and let it render at native size. */
+            .appt-phone {
+              max-width: 320px !important;
+              margin: 0 auto !important;
+            }
+            .appt-card-auto > div:nth-of-type(2) {
+              max-width: 320px !important;
+              margin: 0 auto !important;
+            }
+            .appt-card ol { gap: 8px !important; }
+            .appt-card ol li { font-size: 13px !important; line-height: 1.5 !important; }
+            /* Two-mode toggle visual gets pushed down a bit on mobile too */
+            .appt-toggle { transform: scale(0.92); transform-origin: center; }
           }
         `}</style>
 
