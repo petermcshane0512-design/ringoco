@@ -28,6 +28,8 @@ const SAFE_PROFILE_COLUMNS = new Set([
   // ── added by AI agent build (May 2026) ────────────────────────────
   'ai_voice_id', 'backup_owner_phone', 'onboarding_day3_at', 'onboarding_day7_at',
   'vapi_phone_number_id',
+  // ── auto-booking controls (sql/2026-05-21-auto-booking-controls.sql) ──
+  'auto_booking_enabled', 'auto_booking_min_hour', 'auto_booking_max_hour',
 ])
 
 export async function POST(req: NextRequest) {

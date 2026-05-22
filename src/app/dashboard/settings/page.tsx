@@ -42,6 +42,15 @@ const input: React.CSSProperties = {
 }
 const row: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }
 
+// 24h → 12h labels for the auto-booking window dropdowns. Hours map directly
+// to the smallint stored in profiles.auto_booking_min_hour / _max_hour.
+function hour12Label(h: number): string {
+  if (h === 0) return '12:00 AM (midnight)'
+  if (h === 12) return '12:00 PM (noon)'
+  if (h < 12) return `${h}:00 AM`
+  return `${h - 12}:00 PM`
+}
+
 const TIER_LABELS: Record<string, { label: string; calls: string; price: string }> = {
   // v7 active (May 12 2026)
   receptionist: { label: 'Mission Control',   calls: '250 calls/mo',     price: '$397/mo' },
@@ -68,6 +77,13 @@ export default function SettingsPage() {
   const [aiLanguage, setAiLanguage] = useState<'en' | 'es'>('en')
   const [aiVoiceId, setAiVoiceId] = useState<string>('156fb8d2-335b-4950-9cb3-a2d33befec77')
   const [backupOwnerPhone, setBackupOwnerPhone] = useState('')
+  // Auto-booking + review-request opt-ins. Both default OFF after the
+  // 2026-05-21 migrations (TCPA safety + explicit consent). Schema lives
+  // in sql/2026-05-21-auto-booking-controls.sql + sql/2026-05-21-review-request-opt-in.sql.
+  const [autoBookingEnabled, setAutoBookingEnabled] = useState(false)
+  const [autoBookingMinHour, setAutoBookingMinHour] = useState<number | null>(null)
+  const [autoBookingMaxHour, setAutoBookingMaxHour] = useState<number | null>(null)
+  const [reviewRequestEnabled, setReviewRequestEnabled] = useState(false)
   const [testCallStatus, setTestCallStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [saving, setSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle')
@@ -93,6 +109,10 @@ export default function SettingsPage() {
     setAiLanguage((data?.ai_language as 'en' | 'es') || 'en')
     setAiVoiceId(data?.ai_voice_id || '156fb8d2-335b-4950-9cb3-a2d33befec77')
     setBackupOwnerPhone(data?.backup_owner_phone || '')
+    setAutoBookingEnabled(!!data?.auto_booking_enabled)
+    setAutoBookingMinHour(typeof data?.auto_booking_min_hour === 'number' ? data.auto_booking_min_hour : null)
+    setAutoBookingMaxHour(typeof data?.auto_booking_max_hour === 'number' ? data.auto_booking_max_hour : null)
+    setReviewRequestEnabled(!!data?.review_request_enabled)
   }
 
   async function triggerTestCall() {
@@ -122,6 +142,12 @@ export default function SettingsPage() {
         ai_language: aiLanguage,
         ai_voice_id: aiVoiceId,
         backup_owner_phone: backupOwnerPhone || null,
+        auto_booking_enabled: autoBookingEnabled,
+        // When auto-booking is OFF, null out the window so stale values
+        // don't surprise a contractor who later flips it back on.
+        auto_booking_min_hour: autoBookingEnabled ? autoBookingMinHour : null,
+        auto_booking_max_hour: autoBookingEnabled ? autoBookingMaxHour : null,
+        review_request_enabled: reviewRequestEnabled,
       }),
     })
     setSaving(false)
@@ -469,6 +495,157 @@ export default function SettingsPage() {
           <div style={{ fontSize: 11, color: '#7AAAB2', marginTop: 8 }}>
             Tip: one rule per line. The AI is told to <strong style={{ color: '#0AA89F' }}>always follow</strong> these.
           </div>
+        </div>
+      </div>
+
+      {/* Automation & customer notifications */}
+      <div style={card}>
+        <div style={cardHead}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#0B1F3A' }}>Automation & customer notifications</div>
+          <span style={{
+            fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+            background: 'rgba(232,116,43,0.08)', color: '#C84B26',
+            border: '1px solid rgba(232,116,43,0.22)', textTransform: 'uppercase', letterSpacing: '0.06em',
+          }}>
+            Opt-in
+          </span>
+        </div>
+        <div style={cardBody}>
+
+          {/* Auto-booking toggle */}
+          <div style={{ marginBottom: 20 }}>
+            <span style={label}>Auto-book appointments to your calendar</span>
+            <p style={{ fontSize: 13, color: '#4A7A80', margin: '0 0 10px', lineHeight: 1.5 }}>
+              When ON, Emma offers real calendar slots and books the job during the call. When OFF,
+              Emma only takes a callback message — even if your calendar is connected. Off by default.
+            </p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {([
+                { v: true,  l: 'On',  d: 'Emma books slots' },
+                { v: false, l: 'Off', d: 'Emma takes messages' },
+              ] as const).map((o) => {
+                const active = autoBookingEnabled === o.v
+                return (
+                  <button
+                    key={String(o.v)}
+                    onClick={() => setAutoBookingEnabled(o.v)}
+                    style={{
+                      padding: '9px 16px',
+                      borderRadius: 9,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: `1.5px solid ${active ? '#0AA89F' : 'rgba(10,168,159,0.2)'}`,
+                      background: active ? 'rgba(10,168,159,0.08)' : '#F5FDFB',
+                      color: active ? '#0AA89F' : '#4A7A80',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    {active ? '✓ ' : ''}{o.l}
+                    <span style={{ display: 'block', fontSize: 10, fontWeight: 500, color: active ? '#0AA89F' : '#7AAAB2', marginTop: 2 }}>{o.d}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Booking window — only shows when auto-booking is ON. Hours are
+                stored 0-23 in the local time zone (handled in the voice route).
+                Both null = book any time of day. */}
+            {autoBookingEnabled && (
+              <div style={{
+                marginTop: 14,
+                padding: '14px 16px',
+                background: 'rgba(10,168,159,0.04)',
+                border: '1px solid rgba(10,168,159,0.16)',
+                borderRadius: 10,
+              }}>
+                <span style={label}>Booking window (when Emma is allowed to book)</span>
+                <p style={{ fontSize: 12, color: '#4A7A80', margin: '0 0 10px', lineHeight: 1.5 }}>
+                  Outside this window the AI will only take a callback message — no slots offered.
+                  Leave both as &ldquo;No limit&rdquo; to let Emma book 24/7.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <span style={label}>Earliest</span>
+                    <select
+                      style={input}
+                      value={autoBookingMinHour ?? ''}
+                      onChange={(e) => setAutoBookingMinHour(e.target.value === '' ? null : parseInt(e.target.value, 10))}
+                    >
+                      <option value="">No limit (any time)</option>
+                      {Array.from({ length: 24 }, (_, h) => (
+                        <option key={h} value={h}>{hour12Label(h)}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <span style={label}>Latest</span>
+                    <select
+                      style={input}
+                      value={autoBookingMaxHour ?? ''}
+                      onChange={(e) => setAutoBookingMaxHour(e.target.value === '' ? null : parseInt(e.target.value, 10))}
+                    >
+                      <option value="">No limit (any time)</option>
+                      {Array.from({ length: 24 }, (_, h) => (
+                        <option key={h} value={h}>{hour12Label(h)}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                {autoBookingMinHour !== null && autoBookingMaxHour !== null && autoBookingMinHour >= autoBookingMaxHour && (
+                  <div style={{ marginTop: 10, fontSize: 11, color: '#C84B26', fontWeight: 600 }}>
+                    Heads up: Earliest is at or after Latest. Emma won&apos;t book any slots until this is fixed.
+                  </div>
+                )}
+                <div style={{ marginTop: 10, fontSize: 11, color: '#7AAAB2', lineHeight: 1.5 }}>
+                  Example: set Earliest to 5:00 PM and leave Latest as &ldquo;No limit&rdquo; if you only want Emma
+                  booking after-hours jobs. Earlier calls during the day will still be answered and summarized.
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: 1, background: 'rgba(10,168,159,0.10)', margin: '4px 0 20px' }} />
+
+          {/* Google review request SMS toggle */}
+          <div>
+            <span style={label}>Google review request SMS</span>
+            <p style={{ fontSize: 13, color: '#4A7A80', margin: '0 0 10px', lineHeight: 1.5 }}>
+              ~4 hours after a job is marked completed, text the customer a link asking for a Google review.
+              Off by default for TCPA / opt-in safety — turn on only after confirming your customers
+              expect post-service messages.
+            </p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {([
+                { v: true,  l: 'On',  d: 'Auto-send review SMS' },
+                { v: false, l: 'Off', d: 'No review SMS' },
+              ] as const).map((o) => {
+                const active = reviewRequestEnabled === o.v
+                return (
+                  <button
+                    key={String(o.v)}
+                    onClick={() => setReviewRequestEnabled(o.v)}
+                    style={{
+                      padding: '9px 16px',
+                      borderRadius: 9,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: `1.5px solid ${active ? '#0AA89F' : 'rgba(10,168,159,0.2)'}`,
+                      background: active ? 'rgba(10,168,159,0.08)' : '#F5FDFB',
+                      color: active ? '#0AA89F' : '#4A7A80',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    {active ? '✓ ' : ''}{o.l}
+                    <span style={{ display: 'block', fontSize: 10, fontWeight: 500, color: active ? '#0AA89F' : '#7AAAB2', marginTop: 2 }}>{o.d}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
         </div>
       </div>
 
