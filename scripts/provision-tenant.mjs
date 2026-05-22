@@ -1,5 +1,18 @@
 #!/usr/bin/env node
 /**
+ * ⚠️ SUPERSEDED 2026-05-22
+ *
+ * The real per-tenant provisioning pipeline now lives in
+ * `provisionNumberForUser()` at src/lib/provisionNumber.ts. It runs
+ * automatically on Stripe checkout.session.completed (no script
+ * invocation needed) and is invokable for dry-runs via
+ * /api/internal/test-provision (admin-gated).
+ *
+ * This file stays in the repo as architectural reference for what the
+ * provisioning flow looks like in plain Node (no TS, no Next.js, no
+ * Supabase client) — useful if we ever need to reprovision tenants
+ * from a one-off CLI context. Do NOT call it in production.
+ *
  * provision-tenant.mjs — SKELETON
  *
  * Provisions Vapi + Twilio resources for a paying contractor. Creates
