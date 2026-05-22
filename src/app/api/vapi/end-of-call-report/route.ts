@@ -366,21 +366,53 @@ async function takeMessage(opts: {
   }
 
   // 4. SMS contractor — tap-to-call link, no YES/NO
+  //
+  // FROM-NUMBER STRATEGY (May 2026, A2P transition window):
+  //   Sends FROM the centralized BellAveGo demo number, NOT the
+  //   contractor's own BellAveGo number. The demo line has historical
+  //   carrier acceptance and SMS reliably delivers; the contractor's
+  //   own number is in A2P 10DLC review and gets ~30% carrier-blocked
+  //   (error 30034) until their brand approves.
+  //
+  //   Trade-off: Mike sees +16514677829 in his contacts instead of his
+  //   own number. We mitigate by prefixing the body with "🤖 BellAveGo
+  //   for [Mike's HVAC]" so he knows which business this lead is for.
+  //
+  //   The caller-confirmation SMS (Sarah's "we'll call you back") still
+  //   sends FROM the contractor's number — that's by design, since Mike
+  //   wants Sarah to see his business's phone number on her end. Some
+  //   of those caller SMSes will be filtered until A2P clears, but the
+  //   contractor still gets the lead via email + this SMS, which is the
+  //   mission-critical path.
+  //
+  //   When a contractor's a2p_brand_status === 'approved', we can flip
+  //   their `from` back to tenant.twilio_number for personalization.
+  //   Not added yet — current customers are all pre-A2P.
   const ownerPhone = tenant.owner_phone ?? process.env.FALLBACK_OWNER_PHONE
-  const fromNumber = calledNumber || tenant.twilio_number || process.env.TWILIO_PHONE_NUMBER!
+  const calledTenantNumber = calledNumber || tenant.twilio_number || process.env.TWILIO_PHONE_NUMBER!
+  const contractorAlertFrom =
+    process.env.TWILIO_DEMO_NUMBER || '+16514677829'
   if (ownerPhone) {
     try {
       const insightLine = smartInsight ? `\n\n${smartInsight}` : ''
       const telLink = phone ? `\n\n📲 Tap to call: ${phone}` : ''
+      const businessLine = tenant.business_name
+        ? `🤖 BellAveGo for ${tenant.business_name}\n`
+        : `🤖 BellAveGo lead\n`
       await twilioClient.messages.create({
-        body: `${urgencyEmoji} New callback via BellAveGo\n\n👤 ${args.customer_name}\n📞 ${phone}\n💬 ${args.reason}\n⚡ Urgency: ${args.urgency}${insightLine}${telLink}\n\nView at bellavego.com/dashboard`,
-        from: fromNumber,
+        body: `${businessLine}${urgencyEmoji} New callback\n\n👤 ${args.customer_name}\n📞 ${phone}\n💬 ${args.reason}\n⚡ Urgency: ${args.urgency}${insightLine}${telLink}\n\nView at bellavego.com/dashboard`,
+        from: contractorAlertFrom,
         to: ownerPhone,
       })
     } catch (e) {
       logTwilioSmsError('contractor SMS', e)
     }
   }
+
+  // Original from-number kept as `fromNumber` for downstream blocks
+  // (emergency outbound voice call, caller-confirmation SMS) that
+  // legitimately use the tenant's own BellAveGo number.
+  const fromNumber = calledTenantNumber
 
   // 4c. EMAIL ALERT TO PETER — during A2P registration period, SMS to
   // contractor is often blocked by carriers (error 30034). Email-to-Peter
@@ -492,7 +524,10 @@ async function takeMessage(opts: {
               `${args.customer_name} just called your business line and Emma captured the lead. ` +
               `From now on, every missed call gets answered, captured, and texted to you in 20 seconds. ` +
               `Welcome to receptionist-on-autopilot.\n\n— Peter, BellAveGo`,
-            from: fromNumber,
+            // Use the centralized BellAveGo demo number — same A2P
+            // workaround as the regular contractor lead SMS above. The
+            // celebration SMS is too important to lose to carrier filtering.
+            from: contractorAlertFrom,
             to: ownerPhone,
           })
         } catch (e) {
