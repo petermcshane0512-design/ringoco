@@ -158,6 +158,9 @@ export type ContractorLeadEmailArgs = {
   callTimeISO: string
   smartInsight?: string | null
   dashboardUrl: string
+  /** IANA timezone for the contractor — used to render callTimeISO in their wall clock.
+   *  Defaults to America/Chicago when missing (matches the SQL backfill default). */
+  contractorTimezone?: string | null
 }
 
 export function renderContractorLeadEmail(args: ContractorLeadEmailArgs): { subject: string; html: string; text: string } {
@@ -165,7 +168,7 @@ export function renderContractorLeadEmail(args: ContractorLeadEmailArgs): { subj
   const urgencyLabel = args.urgency === 'emergency' ? 'EMERGENCY' : args.urgency === 'soon' ? 'Soon' : 'Whenever'
   const callerPhonePretty = args.callerPhone ? formatUSPhone(args.callerPhone) : 'no phone'
   const time = new Date(args.callTimeISO).toLocaleString('en-US', {
-    timeZone: 'America/Chicago',
+    timeZone: args.contractorTimezone || 'America/Chicago',
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -218,6 +221,84 @@ export function renderContractorLeadEmail(args: ContractorLeadEmailArgs): { subj
 }
 
 /**
+ * First-call celebration email. Sent ONCE, the moment Emma takes the
+ * contractor's very first inbound call. Distinct sunset-gradient
+ * header, party copy. Designed to create an emotional anchor — the
+ * contractor sees their AI actually working for the first time, and
+ * the email shows up alongside the regular lead alert as proof.
+ *
+ * Fired from /api/vapi/end-of-call-report/route.ts after an atomic
+ * UPDATE on profiles.first_call_at (which can succeed at most once).
+ */
+export type FirstCallCelebrationEmailArgs = {
+  toEmail: string
+  contractorBusinessName: string
+  ownerFirstName: string
+  callerName: string
+  callerPhone: string | null
+  callerMessage: string
+  dashboardUrl: string
+}
+
+export function renderFirstCallCelebrationEmail(args: FirstCallCelebrationEmailArgs): { subject: string; html: string; text: string } {
+  const callerPhonePretty = args.callerPhone ? formatUSPhone(args.callerPhone) : 'no phone'
+  const subject = `🎉 Your first BellAveGo call just landed — ${args.callerName}`
+
+  const text =
+    `🎉 ${args.ownerFirstName} — that was your FIRST BellAveGo call.\n\n` +
+    `${args.callerName} called your AI receptionist and Emma captured the lead.\n\n` +
+    `Caller: ${args.callerName}\n` +
+    `Phone: ${callerPhonePretty}\n` +
+    `What they need: ${args.callerMessage}\n\n` +
+    (args.callerPhone ? `Tap to call back: ${args.callerPhone}\n\n` : '') +
+    `From now on, every missed call gets answered, captured, and texted to you in 20 seconds.\n` +
+    `This is the part we built BellAveGo for. Welcome to the receptionist-on-autopilot life.\n\n` +
+    `Open your dashboard: ${args.dashboardUrl}\n\n` +
+    `— Peter (founder, BellAveGo)`
+
+  const html = `
+<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#FFF8F0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0B1F3A;">
+  <div style="max-width:580px;margin:0 auto;padding:28px 16px;">
+    <div style="background:#fff;border:1px solid rgba(232,116,43,0.30);border-radius:18px;overflow:hidden;box-shadow:0 18px 50px rgba(232,116,43,0.20);">
+      <div style="background:linear-gradient(135deg,#FFD9A8 0%,#FF9D5A 40%,#E8742B 100%);padding:30px 28px;text-align:center;color:#fff;">
+        <div style="font-size:48px;line-height:1;margin-bottom:8px;">🎉</div>
+        <div style="font-size:12px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;opacity:0.92;">First Call</div>
+        <div style="font-size:26px;font-weight:900;letter-spacing:-0.4px;margin-top:8px;">Emma just answered your first one.</div>
+      </div>
+      <div style="padding:26px 28px;">
+        <p style="font-size:16px;line-height:1.6;margin:0 0 18px;color:#0B1F3A;">
+          ${escapeHtml(args.ownerFirstName)} — this is the moment we built BellAveGo for. While you were on a job,
+          <strong>${escapeHtml(args.callerName)}</strong> called your business line and Emma captured the lead.
+        </p>
+        <div style="background:#FFF7EE;border:1px solid rgba(232,116,43,0.22);border-radius:12px;padding:16px 18px;margin-bottom:22px;">
+          <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <tr><td style="padding:5px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;" width="100">Caller</td><td style="padding:5px 0;font-weight:700;">${escapeHtml(args.callerName)}</td></tr>
+            <tr><td style="padding:5px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">Phone</td><td style="padding:5px 0;"><a href="tel:${escapeHtml(args.callerPhone || '')}" style="color:#C84B26;font-weight:700;text-decoration:none;">${callerPhonePretty}</a></td></tr>
+            <tr><td style="padding:5px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;vertical-align:top;">Needs</td><td style="padding:5px 0;line-height:1.5;">${escapeHtml(args.callerMessage)}</td></tr>
+          </table>
+        </div>
+        <p style="font-size:14px;line-height:1.55;color:#3D5A62;margin:0 0 22px;">
+          From here on, every missed call gets answered, captured, and texted to you in 20 seconds — even when your hands are full.
+          This is what your $397/mo (and up) is buying. Welcome to receptionist-on-autopilot.
+        </p>
+        <div style="text-align:center;">
+          ${args.callerPhone ? `<a href="tel:${escapeHtml(args.callerPhone)}" style="display:inline-block;padding:13px 26px;border-radius:11px;background:linear-gradient(135deg,#FF9D5A,#E8742B);color:#fff;font-weight:800;font-size:14px;text-decoration:none;box-shadow:0 8px 22px rgba(232,116,43,0.40);">📞 Call ${escapeHtml(args.callerName)} back</a>` : ''}
+          <div style="margin-top:14px;"><a href="${escapeHtml(args.dashboardUrl)}" style="color:#7AAAB2;font-size:13px;font-weight:600;text-decoration:none;">Open dashboard →</a></div>
+        </div>
+        <div style="margin-top:24px;padding-top:18px;border-top:1px solid rgba(232,116,43,0.16);font-size:13px;color:#7AAAB2;font-style:italic;text-align:center;">
+          — Peter, founder, BellAveGo
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:11px;color:#7AAAB2;margin-top:18px;">${escapeHtml(args.contractorBusinessName)} · Powered by BellAveGo</div>
+  </div>
+</body></html>`.trim()
+
+  return { subject, html, text }
+}
+
+/**
  * Appointment-booked email template. Sent to the CONTRACTOR (BellAveGo customer)
  * the moment Emma successfully books an appointment in their calendar via the
  * book_appointment tool. Distinct visual treatment from the callback-request
@@ -232,16 +313,19 @@ export type AppointmentBookedEmailArgs = {
   callerName: string
   callerPhone: string | null
   serviceSummary: string
-  slotLabel: string                 // "Tuesday, May 21, 2:00 PM"
+  slotLabel: string                 // "Tuesday, May 21, 2:00 PM" — already formatted by caller
   callTimeISO: string               // when the booking actually happened
   calendarEventUrl?: string | null  // Google Calendar / Cronofy link if available
   dashboardUrl: string
+  /** IANA timezone for the contractor — used to render callTimeISO in their wall clock.
+   *  Defaults to America/Chicago when missing (matches the SQL backfill default). */
+  contractorTimezone?: string | null
 }
 
 export function renderAppointmentBookedEmail(args: AppointmentBookedEmailArgs): { subject: string; html: string; text: string } {
   const callerPhonePretty = args.callerPhone ? formatUSPhone(args.callerPhone) : 'no phone'
   const bookedAt = new Date(args.callTimeISO).toLocaleString('en-US', {
-    timeZone: 'America/Chicago',
+    timeZone: args.contractorTimezone || 'America/Chicago',
     weekday: 'short',
     month: 'short',
     day: 'numeric',

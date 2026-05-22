@@ -84,6 +84,10 @@ export default function SettingsPage() {
   const [autoBookingMinHour, setAutoBookingMinHour] = useState<number | null>(null)
   const [autoBookingMaxHour, setAutoBookingMaxHour] = useState<number | null>(null)
   const [reviewRequestEnabled, setReviewRequestEnabled] = useState(false)
+  // IANA timezone (e.g. America/Chicago). Authoritative for booking-window
+  // enforcement and contractor-facing email render times. Backfilled to
+  // America/Chicago by sql/2026-05-22-timezone-default.sql so this is never null.
+  const [timezone, setTimezoneState] = useState<string>('America/Chicago')
   const [testCallStatus, setTestCallStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [saving, setSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle')
@@ -113,6 +117,7 @@ export default function SettingsPage() {
     setAutoBookingMinHour(typeof data?.auto_booking_min_hour === 'number' ? data.auto_booking_min_hour : null)
     setAutoBookingMaxHour(typeof data?.auto_booking_max_hour === 'number' ? data.auto_booking_max_hour : null)
     setReviewRequestEnabled(!!data?.review_request_enabled)
+    setTimezoneState(typeof data?.timezone === 'string' && data.timezone ? data.timezone : 'America/Chicago')
   }
 
   async function triggerTestCall() {
@@ -148,6 +153,7 @@ export default function SettingsPage() {
         auto_booking_min_hour: autoBookingEnabled ? autoBookingMinHour : null,
         auto_booking_max_hour: autoBookingEnabled ? autoBookingMaxHour : null,
         review_request_enabled: reviewRequestEnabled,
+        timezone,
       }),
     })
     setSaving(false)
@@ -511,6 +517,30 @@ export default function SettingsPage() {
           </span>
         </div>
         <div style={cardBody}>
+
+          {/* Timezone — scopes everything below. Booking-window hours, review-request
+              schedule, and emailed call times all render in this zone. Defaults to
+              America/Chicago via the SQL backfill so an unset value never surfaces. */}
+          <div style={{ marginBottom: 22, paddingBottom: 18, borderBottom: '1px solid rgba(10,168,159,0.10)' }}>
+            <span style={label}>Your business timezone</span>
+            <p style={{ fontSize: 13, color: '#4A7A80', margin: '0 0 10px', lineHeight: 1.5 }}>
+              Sets your wall clock for everything below — the auto-book window, review
+              request scheduling, and emailed call times all use this zone.
+            </p>
+            <select
+              style={{ ...input, maxWidth: 360 }}
+              value={timezone}
+              onChange={(e) => setTimezoneState(e.target.value)}
+            >
+              <option value="America/New_York">Eastern Time (New York)</option>
+              <option value="America/Chicago">Central Time (Chicago)</option>
+              <option value="America/Denver">Mountain Time (Denver)</option>
+              <option value="America/Phoenix">Mountain Time — no DST (Phoenix)</option>
+              <option value="America/Los_Angeles">Pacific Time (Los Angeles)</option>
+              <option value="America/Anchorage">Alaska Time (Anchorage)</option>
+              <option value="Pacific/Honolulu">Hawaii Time (Honolulu)</option>
+            </select>
+          </div>
 
           {/* Auto-booking toggle */}
           <div style={{ marginBottom: 20 }}>

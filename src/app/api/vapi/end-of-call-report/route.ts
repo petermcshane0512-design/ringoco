@@ -424,6 +424,16 @@ async function takeMessage(opts: {
         (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost'))
           ? process.env.NEXT_PUBLIC_APP_URL
           : 'https://www.bellavego.com'
+      // Look up the contractor's timezone so the call-time renders in
+      // their wall clock — a Phoenix shop should see "1:30 PM" not "3:30 PM".
+      // profile.timezone is authoritative; backfilled to America/Chicago by
+      // sql/2026-05-22-timezone-default.sql so this lookup never returns null.
+      const { data: tzRow } = await supabase
+        .from('profiles')
+        .select('timezone')
+        .eq('user_id', tenant.user_id)
+        .maybeSingle()
+      const contractorTz = (tzRow as { timezone?: string | null } | null)?.timezone ?? null
       const { subject, html, text } = renderContractorLeadEmail({
         toEmail: contractorEmail,
         contractorBusinessName: tenant.business_name || 'your business',
@@ -434,6 +444,7 @@ async function takeMessage(opts: {
         callTimeISO: new Date().toISOString(),
         smartInsight: smartInsight || null,
         dashboardUrl: `${appUrl}/dashboard`,
+        contractorTimezone: contractorTz,
       })
       await sendEmail({ to: contractorEmail, subject, html, text })
     } else {

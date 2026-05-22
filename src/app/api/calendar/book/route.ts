@@ -110,13 +110,14 @@ export async function POST(req: NextRequest) {
     // ISO can't slip past. Source of truth = profiles row, not Vapi metadata.
     const { data: policyRow } = await supabase
       .from('profiles')
-      .select('auto_booking_enabled, auto_booking_min_hour, auto_booking_max_hour')
+      .select('auto_booking_enabled, auto_booking_min_hour, auto_booking_max_hour, timezone')
       .eq('user_id', userId)
       .maybeSingle()
     const policy = (policyRow as {
       auto_booking_enabled?: boolean | null
       auto_booking_min_hour?: number | null
       auto_booking_max_hour?: number | null
+      timezone?: string | null
     } | null)
     if (policy?.auto_booking_enabled !== true) {
       results.push({
@@ -126,9 +127,11 @@ export async function POST(req: NextRequest) {
       continue
     }
     if (policy.auto_booking_min_hour != null || policy.auto_booking_max_hour != null) {
-      // Read slot hour in the connection timezone (defaults handled later).
-      // We do this BEFORE loading the calendar connection so we fail fast.
-      const tz = 'America/Chicago' // refined to conn.timezone below; this is a safe pre-check
+      // Read slot hour in the contractor's local timezone (NOT hardcoded
+      // Chicago — a Phoenix or LA contractor's 5pm window must run against
+      // their wall clock). profile.timezone is authoritative; backfilled to
+      // America/Chicago by sql/2026-05-22-timezone-default.sql.
+      const tz = policy.timezone || 'America/Chicago'
       const localHourStr = startDate.toLocaleString('en-US', { timeZone: tz, hour: 'numeric', hour12: false })
       const localHour = parseInt(localHourStr, 10)
       if (Number.isFinite(localHour)) {
@@ -354,6 +357,9 @@ export async function POST(req: NextRequest) {
           callTimeISO: new Date().toISOString(),
           calendarEventUrl: eventResult.htmlLink || null,
           dashboardUrl: `${appUrl}/dashboard`,
+          // Render "Booked at" in the contractor's wall clock — policy.timezone
+          // comes from the same SELECT used to enforce the booking window above.
+          contractorTimezone: policy?.timezone ?? conn.timezone ?? null,
         })
         await sendEmail({ to: contractorEmail, subject, html, text })
       } else {
