@@ -3,6 +3,8 @@ import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 import twilio from 'twilio'
+import { sendEmail, renderInvoiceEmail } from '@/lib/email'
+import { lookupOwnerEmail } from '@/lib/notify'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -66,15 +68,55 @@ export async function POST(req: NextRequest) {
 
     if (error) throw error
 
-    if (customer_phone) {
-      await twilioClient.messages.create({
-        body: `Hi ${customer_name}, you have an invoice for ${service_type} — $${parsedAmount.toFixed(2)}. Pay securely here: ${paymentLink.url} — ${businessName}`,
-        from: fromNumber,
-        to: customer_phone,
-      })
+    // Deliver the payment link via SMS + email in parallel. Each channel is
+    // isolated in its own try/catch — Twilio A2P carrier blocks (error 30034)
+    // must not kill the email path, and a Resend hiccup must not kill the SMS.
+    // The Stripe invoice + DB row are already committed before this point.
+    const channels: { sms: boolean; email: boolean; smsError?: string; emailError?: string } = {
+      sms: false, email: false,
     }
 
-    return NextResponse.json({ ok: true, invoice })
+    if (customer_phone) {
+      try {
+        await twilioClient.messages.create({
+          body: `Hi ${customer_name}, you have an invoice for ${service_type} — $${parsedAmount.toFixed(2)}. Pay securely here: ${paymentLink.url} — ${businessName}`,
+          from: fromNumber,
+          to: customer_phone,
+        })
+        channels.sms = true
+      } catch (e) {
+        channels.smsError = e instanceof Error ? e.message : String(e)
+        console.error('[invoices/send] sms failed:', channels.smsError)
+      }
+    }
+
+    if (customer_email) {
+      try {
+        const contractorEmail = await lookupOwnerEmail(userId)
+        const { subject, html, text } = renderInvoiceEmail({
+          toEmail: customer_email,
+          customerName: customer_name,
+          contractorBusinessName: businessName,
+          serviceType: service_type,
+          amount: parsedAmount,
+          paymentLinkUrl: paymentLink.url,
+        })
+        const result = await sendEmail({
+          to: customer_email,
+          subject,
+          html,
+          text,
+          replyTo: contractorEmail ?? undefined,
+        })
+        channels.email = result.ok
+        if (!result.ok) channels.emailError = result.error
+      } catch (e) {
+        channels.emailError = e instanceof Error ? e.message : String(e)
+        console.error('[invoices/send] email failed:', channels.emailError)
+      }
+    }
+
+    return NextResponse.json({ ok: true, invoice, channels })
   } catch (err: any) {
     console.error('Invoice error:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })

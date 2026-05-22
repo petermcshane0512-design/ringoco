@@ -293,6 +293,61 @@ export function renderAppointmentBookedEmail(args: AppointmentBookedEmailArgs): 
   return { subject, html, text }
 }
 
+/**
+ * Invoice / payment-link email — sent to the HOMEOWNER alongside the Twilio
+ * SMS that carries the same Stripe payment link. Acts as the A2P-blocked-SMS
+ * fallback so customers can pay even when carrier filters drop the SMS.
+ *
+ * Reply-to should be the contractor's email (passed in `replyTo` at the
+ * sendEmail call site) so a customer's "what's this charge?" goes to the
+ * actual seller, not to BellAveGo's catch-all inbox.
+ */
+export type InvoiceEmailArgs = {
+  toEmail: string
+  customerName: string
+  contractorBusinessName: string
+  serviceType: string
+  amount: number               // dollars, not cents
+  paymentLinkUrl: string
+}
+
+export function renderInvoiceEmail(args: InvoiceEmailArgs): { subject: string; html: string; text: string } {
+  const amountPretty = `$${args.amount.toFixed(2)}`
+  const subject = `Invoice from ${args.contractorBusinessName} — ${amountPretty} for ${args.serviceType}`
+
+  const text =
+    `Hi ${args.customerName},\n\n` +
+    `Your invoice from ${args.contractorBusinessName} is ready:\n\n` +
+    `Service: ${args.serviceType}\n` +
+    `Amount: ${amountPretty}\n\n` +
+    `Pay securely: ${args.paymentLinkUrl}\n\n` +
+    `— ${args.contractorBusinessName} (via BellAveGo)`
+
+  const html = `
+<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#F2F9F5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0B1F3A;">
+  <div style="max-width:560px;margin:0 auto;padding:24px 16px;">
+    <div style="background:#fff;border:1px solid rgba(10,168,159,0.18);border-radius:16px;overflow:hidden;box-shadow:0 4px 22px rgba(11,31,58,0.08);">
+      <div style="background:linear-gradient(135deg,#0AA89F 0%,#0D8F87 100%);padding:20px 22px;color:#fff;">
+        <div style="font-size:11px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;opacity:0.9;">Invoice from ${escapeHtml(args.contractorBusinessName)}</div>
+        <div style="font-size:30px;font-weight:900;letter-spacing:-0.6px;margin-top:6px;">${amountPretty}</div>
+        <div style="font-size:13px;opacity:0.92;margin-top:4px;">${escapeHtml(args.serviceType)}</div>
+      </div>
+      <div style="padding:24px;">
+        <p style="margin:0 0 18px;font-size:14px;line-height:1.55;color:#3D5A62;">Hi ${escapeHtml(args.customerName)} — your invoice is ready. Tap the button below to pay securely.</p>
+        <div style="text-align:center;margin:24px 0 12px;">
+          <a href="${escapeHtml(args.paymentLinkUrl)}" style="display:inline-block;padding:14px 32px;border-radius:10px;background:linear-gradient(135deg,#0AA89F,#0D8F87);color:#fff;font-weight:800;font-size:15px;text-decoration:none;box-shadow:0 6px 18px rgba(10,168,159,0.32);">Pay ${amountPretty} →</a>
+        </div>
+        <p style="margin:18px 0 0;font-size:11px;color:#7AAAB2;text-align:center;line-height:1.5;">Secured by Stripe · Reply to this email to reach ${escapeHtml(args.contractorBusinessName)} directly.</p>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:11px;color:#7AAAB2;margin-top:18px;">${escapeHtml(args.contractorBusinessName)} · Sent via BellAveGo</div>
+  </div>
+</body></html>`.trim()
+
+  return { subject, html, text }
+}
+
 function formatUSPhone(p: string | null): string {
   if (!p) return ''
   const d = p.replace(/\D/g, '')
