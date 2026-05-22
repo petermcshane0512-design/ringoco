@@ -135,7 +135,12 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
       if (callerNumber) {
         try {
           await twilioClient.messages.create({
-            body: `Hi ${args.customer_name}! Thanks for checking out BellAveGo. Peter (founder) will call you back in the next hour or two to answer anything Emma couldn't. — BellAveGo`,
+            // TCPA posture: demo caller called OUR own line about OUR
+            // product, so we have stronger express-consent standing
+            // (inbound-inquiry exception). Body is strictly
+            // transactional confirmation language + visible STOP
+            // opt-out per CTIA best practices.
+            body: `Hi ${args.customer_name} — confirming Peter from BellAveGo will call you back in the next 1-2 hours at this number. Reply STOP to opt out.`,
             from: fromNumber,
             to: callerNumber,
           })
@@ -624,19 +629,24 @@ async function takeMessage(opts: {
     }
   }
 
-  // 5. SMS the caller — "we'll call you back" reassurance
-  if (phone) {
-    try {
-      const businessName = tenant.business_name || 'us'
-      await twilioClient.messages.create({
-        body: `Hi ${args.customer_name}, thanks for calling ${businessName}! We got your message about "${args.reason}". The owner will call you back in the next hour or two. - ${businessName}`,
-        from: fromNumber,
-        to: phone,
-      })
-    } catch (e) {
-      logTwilioSmsError('caller confirmation SMS', e)
-    }
-  }
+  // 5. ❌ Caller-facing "we'll call you back" SMS — REMOVED 2026-05-22.
+  //
+  // TCPA: the inbound caller (e.g. Sarah calling Mike's HVAC) has not
+  // given explicit opt-in consent to receive automated SMS from us.
+  // Inbound voice does NOT imply SMS consent — TCPA requires "prior
+  // express written consent" for marketing or "prior express consent"
+  // (verbal or written) for transactional/informational. Without a
+  // verbal opt-in step on the call, this SMS exposed every contractor
+  // to TCPA liability ($500–$1,500 per violation).
+  //
+  // Caller now learns Mike will call back via Emma's verbal close on
+  // the line: "Mike will call you back in the next hour or two."
+  // That's the caller-facing confirmation. Mike still gets the lead
+  // alert SMS + email so the callback actually happens.
+  //
+  // To re-enable later: add a verbal opt-in step to take_message
+  // ("Is it okay if we text you a confirmation?") + capture the
+  // explicit yes/no on the call_log row. Only send SMS if consent=true.
 
   // 6. Upsert call_logs (powers Receptionist tier monthly call cap counter)
   try {

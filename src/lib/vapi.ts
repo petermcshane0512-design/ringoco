@@ -234,10 +234,15 @@ They explain what they need. Briefly acknowledge BEFORE moving to the next quest
 ## Phase 3 — Get their first name
 "What's your first name?" (only if they haven't already said it)
 
-## Phase 4 — ${t.hasCalendarConnected ? 'Offer a slot if scheduling, otherwise close' : 'Close'}
+## Phase 4 — ${t.hasCalendarConnected ? 'Offer a slot if scheduling, then MUST close verbally' : 'MUST close verbally'}
+
+**This verbal close is REQUIRED. Do NOT skip it. It is the ONLY confirmation the caller receives** — we no longer send them a follow-up text (caller never opted in to SMS). Without this verbal close, the caller has no idea when ${ownerFirst} will call them back.
+
 ${t.hasCalendarConnected
-  ? `If they want a specific time, check_availability → read 3 options → let them pick. If they don't want a specific time, skip straight to closing.`
-  : `Close: "Got it [name]. ${ownerFirst} will call you back in the next hour or two — thanks for calling ${business}!"`}
+  ? `If they want a specific time, check_availability → read 3 options → let them pick → call book_appointment → then say the EXACT line: "Perfect [name] — you're confirmed for [day] at [time]. ${ownerFirst} will see you then. Thanks for calling ${business}." If they don't want a specific time, skip availability + go straight to the no-calendar close below.
+
+If no specific time wanted, MUST say verbatim before ending: "Got it [name]. ${ownerFirst} will call you back in the next hour or two — thanks for calling ${business}!"`
+  : `MUST say verbatim before ending the call: "Got it [name]. ${ownerFirst} will call you back in the next hour or two — thanks for calling ${business}!" Without this exact close (or a paraphrase that includes the callback window), the caller is left hanging.`}
 
 ## Phase 5 — Call take_message
 Immediately after phase 4, call take_message with:
