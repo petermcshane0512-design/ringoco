@@ -484,6 +484,30 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Forwarding-not-verified banner — single most common "looks fine
+          but isn't" state. Contractor paid + got a Twilio number + got
+          welcomed, but never actually dialed *72/their carrier code to
+          forward their business line. Until they do, Emma waits silently
+          and nothing happens. Sticky warning until forwarding_verified_at
+          is stamped (set by /api/onboarding/verify-forwarding when our
+          test call lands on Vapi within 90s). */}
+      {profile?.is_active && profile.twilio_number && !((profile as { forwarding_verified_at?: string | null }).forwarding_verified_at) && (
+        <div style={{ marginBottom: 22, padding: "16px 22px", background: "linear-gradient(135deg, #FFF7EE 0%, #FEF3C7 100%)", border: "1px solid rgba(232,116,43,0.40)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, boxShadow: "0 8px 24px rgba(232,116,43,0.10)" }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: "#C84B26", display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 16 }}>⚠️</span>
+              Call forwarding isn&apos;t set up yet — Emma can&apos;t answer your calls
+            </div>
+            <div style={{ fontSize: 12, color: "#92400E", marginTop: 4, lineHeight: 1.55 }}>
+              Your AI number ({profile.twilio_number}) is live, but your business line still rings your old voicemail. Forward your line to Emma so missed calls actually reach her — 2-minute walkthrough.
+            </div>
+          </div>
+          <Link href="/dashboard/forwarding" style={{ padding: "10px 20px", borderRadius: 10, fontSize: 12, fontWeight: 800, background: "linear-gradient(135deg, #FF9D5A, #E8742B)", color: "#fff", textDecoration: "none", whiteSpace: "nowrap", boxShadow: "0 6px 18px rgba(232,116,43,0.32)", flexShrink: 0 }}>
+            Set up forwarding →
+          </Link>
+        </div>
+      )}
+
       {/* Dashboard shell — always rendered. Pre-activation users see empty
           state behind the activation banner above (sells with desire, not a wall). */}
       <>

@@ -4,7 +4,7 @@ import twilio from 'twilio'
 import Anthropic from '@anthropic-ai/sdk'
 import { OFFICE_MGR_TIERS } from '@/lib/pricing'
 import { verifyVapiSignature } from '@/lib/vapi'
-import { sendEmail, renderLeadAlertEmail, renderContractorLeadEmail } from '@/lib/email'
+import { sendEmail, renderLeadAlertEmail, renderContractorLeadEmail, renderFirstCallCelebrationEmail } from '@/lib/email'
 import { lookupOwnerEmail } from '@/lib/notify'
 import { estimateJobTicket } from '@/lib/consultingMetrics'
 
@@ -452,6 +452,80 @@ async function takeMessage(opts: {
     }
   } catch (e) {
     console.error('contractor lead email failed:', e)
+  }
+
+  // 4e. FIRST-CALL CELEBRATION — fires exactly once per contractor.
+  //
+  // The atomic UPDATE ... WHERE first_call_at IS NULL pattern means
+  // only the first concurrent call wins the claim (no race conditions).
+  // Subsequent calls find first_call_at already set and the update
+  // matches zero rows, so firstClaim is null and the block is skipped.
+  //
+  // Goal: emotional anchor + retention signal. Contractor sees the AI
+  // working for the very first time, gets a personalized "your first
+  // one just came in" email + SMS. Free dopamine; saves week-1 churn.
+  try {
+    const { data: firstClaim } = await supabase
+      .from('profiles')
+      .update({ first_call_at: new Date().toISOString() })
+      .eq('user_id', tenant.user_id)
+      .is('first_call_at', null)
+      .select('user_id')
+      .maybeSingle()
+
+    if (firstClaim) {
+      const appUrl =
+        (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost'))
+          ? process.env.NEXT_PUBLIC_APP_URL
+          : 'https://www.bellavego.com'
+      const ownerFirst = (tenant as { owner_first_name?: string | null }).owner_first_name || 'there'
+
+      // Celebration SMS — separate from the regular contractor alert so the
+      // contractor's phone lights up with both: "you have a lead" + "🎉 it's
+      // your first one." During A2P registration this SMS may be carrier-
+      // blocked (error 30034); the email below is the reliable channel.
+      if (ownerPhone) {
+        try {
+          await twilioClient.messages.create({
+            body:
+              `🎉 ${ownerFirst} — that was your FIRST BellAveGo call!\n\n` +
+              `${args.customer_name} just called your business line and Emma captured the lead. ` +
+              `From now on, every missed call gets answered, captured, and texted to you in 20 seconds. ` +
+              `Welcome to receptionist-on-autopilot.\n\n— Peter, BellAveGo`,
+            from: fromNumber,
+            to: ownerPhone,
+          })
+        } catch (e) {
+          logTwilioSmsError('first-call celebration SMS', e)
+        }
+      }
+
+      // Celebration email — high-impact visual, always delivered (Resend
+      // domain verified). Lands alongside the regular lead email.
+      try {
+        const contractorEmail = await lookupOwnerEmail(tenant.user_id)
+        if (contractorEmail) {
+          const { subject, html, text } = renderFirstCallCelebrationEmail({
+            toEmail: contractorEmail,
+            contractorBusinessName: tenant.business_name || 'your business',
+            ownerFirstName: ownerFirst,
+            callerName: args.customer_name,
+            callerPhone: phone,
+            callerMessage: args.reason,
+            dashboardUrl: `${appUrl}/dashboard`,
+          })
+          await sendEmail({ to: contractorEmail, subject, html, text })
+        }
+      } catch (e) {
+        console.error('first-call celebration email failed:', e)
+      }
+    }
+  } catch (e) {
+    // Non-fatal — if the first_call_at claim throws (e.g. column doesn't
+    // exist because migration hasn't run yet) we just skip the celebration.
+    // Regular lead notifications above still fire. Log so we can see if
+    // the migration ever lags behind a deploy.
+    console.error('first-call celebration block threw:', e)
   }
 
   // 4b. EMERGENCY ESCALATION — for urgency=emergency, also place an outbound
