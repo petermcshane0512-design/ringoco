@@ -27,16 +27,9 @@ import { provisionNumberForUser } from '@/lib/provisionNumber'
  *     user_ids.
  */
 
-// HARDCODED admin user_id. Replace before first use.
-//
-// To find your Clerk user_id:
-//   1. Visit clerk.com/dashboard → BellAveGo → Users
-//   2. Click your row (pmcshane@fordham.edu / bellavegollc@gmail.com)
-//   3. Copy "User ID" (format: user_2a1b2c3d4e5f6g7h8i9j0k)
-//
-// Until this is filled in with a real ID, the route always returns 403,
-// which is the safe default.
-const ADMIN_USER_ID = 'user_REPLACE_WITH_PETERS_CLERK_ID'
+// HARDCODED admin user_id — Peter (pmcshane@fordham.edu / bellavegollc@gmail.com).
+// Verified live by Peter on 2026-05-22.
+const ADMIN_USER_ID = 'user_3DGWtNcz6phakI4omRf7e1ZSbPz'
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth()
