@@ -59,34 +59,75 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const msg = payload.message
-  if (msg?.type !== 'assistant-request') {
-    // Not the event we handle here. Acknowledge so Vapi doesn't retry.
-    return NextResponse.json({ ok: true })
-  }
+  // EPHEMERAL DEBUG LOGGING — capture exactly what Vapi sends so we can
+  // see why the override was being silently dropped on the last 8+ calls.
+  // Strip this once override application is verified in /call API.
+  try {
+    const dbgShape = {
+      keys: Object.keys(payload || {}),
+      message_keys: Object.keys((payload as { message?: unknown }).message || {}),
+      message_type: (payload as { message?: { type?: string } }).message?.type,
+      called_via_phoneNumber: (payload as { message?: { call?: { phoneNumber?: { number?: string } } } }).message?.call?.phoneNumber?.number,
+      called_via_customer:    (payload as { message?: { call?: { customer?: { number?: string } } } }).message?.call?.customer?.number,
+      env_TWILIO_DEMO_NUMBER_set: !!process.env.TWILIO_DEMO_NUMBER,
+    }
+    console.log('[vapi/assistant-request] incoming', JSON.stringify(dbgShape))
+  } catch { /* never block on logging */ }
 
-  // Vapi puts the inbound call data under message.call.
-  // The number the homeowner dialed (our customer's BellAveGo number) is on
-  // message.call.phoneNumber.number (for imported numbers) or message.call.customer.number.
+  const msg = payload.message
+
+  // PERMISSIVE TYPE CHECK — Vapi may send "assistant-request" today, may
+  // rename to "assistantRequest" or wrap differently tomorrow. If we have
+  // a called-number we can resolve a tenant for, we return overrides
+  // regardless of the literal type field. The cost of returning an
+  // override on a non-assistant-request event is essentially zero (Vapi
+  // ignores it). The cost of NOT returning one on the real event is
+  // every demo call gets the base prompt — which is exactly the bug we
+  // spent the last hour chasing.
+
+  // Vapi puts the inbound call data under message.call. The number the
+  // homeowner dialed (our customer's BellAveGo number) is on
+  // message.call.phoneNumber.number for imported numbers, or sometimes
+  // surfaced under message.call.customer.number on legacy shapes. We
+  // also check a few additional locations seen in recent Vapi payload
+  // mutations to future-proof against further drift.
+  type LooseCall = {
+    phoneNumber?: { number?: string; phoneNumber?: string }
+    customer?: { number?: string }
+    to?: string
+    toNumber?: string
+  }
+  const call = (msg?.call ?? {}) as LooseCall
   const calledNumber =
-    msg.call?.phoneNumber?.number ??
-    msg.call?.customer?.number ??
+    call.phoneNumber?.number ??
+    call.phoneNumber?.phoneNumber ??
+    call.to ??
+    call.toNumber ??
+    call.customer?.number ??
     null
   if (!calledNumber) {
-    return NextResponse.json({ error: 'No called number in payload' }, { status: 400 })
+    console.warn('[vapi/assistant-request] no called number in payload')
+    return NextResponse.json({ ok: true })
   }
 
   // The caller's phone (homeowner dialing in normally, OR our office line if
   // this is a forwarding-verification test call). On Vapi imported numbers
   // the caller is on message.call.customer.number.
-  const callerNumber = msg.call?.customer?.number ?? null
+  const callerNumber = (call.customer?.number) ?? null
 
   // ── Public landing-page demo number ──
   // Emma — BellAveGo's AI sales receptionist. Answers prospect questions about
   // the product accurately AND demonstrates the AI quality they'd get if they
   // signed up (the conversation IS the product demo). Captures lead → on
   // take_message, end-of-call-report SMSes Peter directly with the lead info.
-  if (process.env.TWILIO_DEMO_NUMBER && calledNumber === process.env.TWILIO_DEMO_NUMBER) {
+  //
+  // Fallback: hardcoded literal +16514677829 catches the demo line even
+  // when TWILIO_DEMO_NUMBER env var hasn't been set in production yet.
+  // The env var lookup is preferred (configurable in dashboard) but we
+  // never want a missing env to break the sales line.
+  const DEMO_NUMBER_FALLBACK = '+16514677829'
+  if (calledNumber === (process.env.TWILIO_DEMO_NUMBER || DEMO_NUMBER_FALLBACK)) {
+    console.log('[vapi/assistant-request] demo branch matched for', calledNumber)
     return NextResponse.json({
       assistantOverrides: {
         firstMessage: `Hi, this is Emma with BellAveGo. I know you're checking out our AI receptionist for home-service businesses — how can I help?`,
