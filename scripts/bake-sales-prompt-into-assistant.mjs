@@ -56,6 +56,92 @@ console.log(`First 100 chars: ${SALES_PROMPT.slice(0, 100)}`)
 console.log(`Last 100 chars:  ${SALES_PROMPT.slice(-100)}`)
 console.log()
 
+// IMPORTANT: PATCH on Vapi's model object REPLACES the whole thing —
+// it doesn't merge. So we must re-send tools every time we PATCH the
+// model. Without this, the assistant ends up with 0 tools and Emma
+// can't call take_message → no lead emails fire when calls end.
+// Bug observed in production May 22 2026 — first call after the bake
+// closed the sale but never captured the lead because tools were wiped.
+const APP_URL = 'https://www.bellavego.com'
+const WEBHOOK_SECRET = process.env.VAPI_WEBHOOK_SECRET // optional
+
+const tools = [
+  {
+    type: 'function',
+    function: {
+      name: 'take_message',
+      description:
+        "Call this after you've captured the caller's first name AND one-sentence reason for the call. " +
+        "In SALES MODE on the demo line, call AFTER answering their questions AND capturing first name + business name. " +
+        "Phone is captured from caller ID — do NOT ask the caller for it.",
+      parameters: {
+        type: 'object',
+        properties: {
+          customer_name: { type: 'string', description: "Caller's first name." },
+          reason: {
+            type: 'string',
+            description:
+              "ONE plain-language sentence describing what they want. Sales-mode examples: " +
+              "'Mike\\'s Plumbing — ready to sign up for Operator $797', 'Tom\\'s HVAC — asked about pricing, leaning Mission Control'.",
+          },
+          urgency: { type: 'string', enum: ['emergency', 'soon', 'whenever'] },
+          customer_phone: { type: 'string', description: "OPTIONAL — only if caller volunteers a different callback number." },
+        },
+        required: ['customer_name', 'reason', 'urgency'],
+      },
+    },
+    server: {
+      url: `${APP_URL}/api/vapi/end-of-call-report`,
+      ...(WEBHOOK_SECRET ? { secret: WEBHOOK_SECRET } : {}),
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'check_availability',
+      description:
+        "Call this ONLY when the per-call system prompt says the contractor has a connected calendar AND the caller wants a specific appointment time. " +
+        "Returns 3-4 real open slots. If no calendar is connected, do NOT call this — just take a message.",
+      parameters: {
+        type: 'object',
+        properties: {
+          duration_min: { type: 'number', description: 'Service call=60, install/quote=90, big install=120-180. Default 90.' },
+          days_ahead: { type: 'number', description: "Default 14. 'This week' = 7. 'Next week' = 10." },
+        },
+        required: [],
+      },
+    },
+    server: {
+      url: `${APP_URL}/api/calendar/availability`,
+      ...(WEBHOOK_SECRET ? { secret: WEBHOOK_SECRET } : {}),
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'book_appointment',
+      description:
+        "Call IMMEDIATELY after the caller picks one of the slots check_availability returned. " +
+        "DO NOT call without first calling check_availability. " +
+        "DO NOT call if no calendar is connected.",
+      parameters: {
+        type: 'object',
+        properties: {
+          start_iso: { type: 'string', description: 'EXACT ISO-8601 timestamp from the slot the caller picked — use verbatim.' },
+          duration_min: { type: 'number', description: 'Same value passed to check_availability. Default 90.' },
+          customer_name: { type: 'string', description: "Caller's first name." },
+          service_summary: { type: 'string', description: "ONE sentence describing the job." },
+        },
+        required: ['start_iso', 'customer_name', 'service_summary'],
+      },
+    },
+    server: {
+      url: `${APP_URL}/api/calendar/book`,
+      ...(WEBHOOK_SECRET ? { secret: WEBHOOK_SECRET } : {}),
+    },
+  },
+]
+
 const config = {
   firstMessage: "Hi, this is Emma with BellAveGo. I know you're checking out our AI receptionist for home-service businesses — how can I help?",
   model: {
@@ -64,6 +150,7 @@ const config = {
     temperature: 0.6,
     maxTokens: 260,
     messages: [{ role: 'system', content: SALES_PROMPT }],
+    tools,
   },
 }
 
