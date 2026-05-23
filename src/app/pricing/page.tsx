@@ -44,6 +44,8 @@ const PLANS: Plan[] = [
     tagline: 'AI answers every call. You close it in one tap.',
     popular: false,
     features: [
+      { label: 'YOUR OWN dedicated AI receptionist — not a shared bot. Yours is trained on your business name, services, and rules from day one. (Most competitors run every customer through one shared assistant.)', auto: true },
+      { label: 'A2P 10DLC SMS compliance done for you — we register your brand with the carriers so your customer texts actually deliver. Most platforms leave you to figure out the 1–14 day Twilio setup yourself.', auto: true },
       { label: '6 AI Consulting Reports / year — bi-monthly revenue intelligence: missed calls, top services, quote-to-close ratio, what to fix. ($5K–$15K value if you hired a consultant.)', auto: true },
       { label: '24/7 AI call answering — never miss a job again', auto: true },
       { label: 'Unlimited inbound calls', auto: true },
@@ -68,6 +70,7 @@ const PLANS: Plan[] = [
     popular: true,
     features: [
       { label: 'Everything in Starter, plus:', auto: false },
+      { label: 'Dual-channel lead alerts — every lead arrives as SMS AND email. You won\'t miss a job because your phone died, you were on vacation, or your carrier filtered the text.', auto: true },
       { label: '12 AI Consulting Reports / year — monthly revenue intelligence: sales coaching from your actual call transcripts, lead-source attribution, customer lifetime value trends, AI-recommended price increases.', auto: true },
       { label: 'Unlimited inbound calls', auto: true },
       { label: 'AI Quote Hunter — auto follow-up SMS day 2 / 7 / 14 on every open quote you log', auto: true },

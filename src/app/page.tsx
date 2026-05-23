@@ -1139,6 +1139,8 @@ export default function HomePage() {
               name: 'Starter', price: 147, setup: 0, tier: 'receptionist', calls: 'Unlimited', comingSoon: false,
               desc: 'AI answers every call. You close it in one tap — confirm, send a pay-by-text Stripe link, call back, or just acknowledge. Includes 6 AI revenue reports per year.',
               features: [
+                'YOUR OWN dedicated AI receptionist — not a shared bot. Trained on your business name, services, and rules from day one. (Most competitors run every customer through one shared assistant.)',
+                'A2P 10DLC SMS compliance done for you — we register your brand with the carriers so your customer texts deliver. Most platforms leave you to figure out the 1–14 day Twilio setup yourself.',
                 '6 AI Consulting Reports / year — bi-monthly revenue intelligence: missed calls, top services, quote-to-close, what to fix. ($5K–$15K value if you hired a consultant.)',
                 '24/7 AI call answering — never miss a job',
                 'Unlimited inbound calls',
@@ -1159,6 +1161,7 @@ export default function HomePage() {
               desc: 'Your back-office, on autopilot. Five AIs that answer calls, chase quotes, recover invoices, draft review replies, and ask past customers for new reviews.',
               features: [
                 'Everything in Starter, plus:',
+                'Dual-channel lead alerts — every lead arrives as SMS AND email. Never miss a job because your phone died, you were on vacation, or your carrier filtered the text.',
                 '12 AI Consulting Reports / year — monthly revenue intelligence: sales coaching from your actual call transcripts, lead-source attribution, customer lifetime value trends, AI-recommended price increases.',
                 'Unlimited inbound calls',
                 'AI Quote Hunter — auto follow-up SMS day 2 / 7 / 14 on every open quote you log',
