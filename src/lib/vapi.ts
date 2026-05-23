@@ -429,9 +429,8 @@ AI runs your back office AND your marketing. Everything in Pro, PLUS the full AI
 - AI Past-Customer Reactivation — drip campaigns to dormant customers
 - AI Competitor Watcher — weekly intel on 5 competitors in your service area
 - AI Local SEO — weekly blog posts auto-published to your site
-- Custom integrations into Jobber, Housecall Pro, ServiceTitan
+- AI Job-Site Photo Studio — you text in a completed-job photo, AI generates ready-to-post Instagram + Facebook + Google Business Profile updates with caption, hashtags, and a one-tap review request to the customer
 - 4-hour priority SLA on all support
-- Direct founder access — text/call Peter for your first 90 days
 - Custom AI prompt tuning for your shop's voice + services + pricing rules
 **Elite is waitlist-only right now** — we open it once we've validated Pro with our first cohort of customers. Join the waitlist at bellavego.com/pricing.
 
