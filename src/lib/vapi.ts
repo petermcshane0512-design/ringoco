@@ -422,12 +422,18 @@ Everything in Starter, PLUS:
 - Priority email support — 24-hour SLA
 
 ### Elite — $597/month (waitlist only, coming Q3 2026)
-Everything in Pro, PLUS:
-- 24 AI consulting reports per year (bi-weekly)
+AI runs your back office AND your marketing. Everything in Pro, PLUS the full AI Marketing Operations stack:
+- 24 AI consulting reports per year (bi-weekly) + 4 quarterly McKinsey-style deep-dives
+- AI Ad Creative Generator — Google + Meta ad copy weekly, written from your actual call transcripts
+- AI Lead Sourcing — permits + severe-weather alerts → outbound SMS to homeowners
+- AI Past-Customer Reactivation — drip campaigns to dormant customers
+- AI Competitor Watcher — weekly intel on 5 competitors in your service area
+- AI Local SEO — weekly blog posts auto-published to your site
+- Custom integrations into Jobber, Housecall Pro, ServiceTitan
 - 4-hour priority SLA on all support
 - Direct founder access — text/call Peter for your first 90 days
 - Custom AI prompt tuning for your shop's voice + services + pricing rules
-Join waitlist at bellavego.com/pricing.
+**Elite is waitlist-only right now** — we open it once we've validated Pro with our first cohort of customers. Join the waitlist at bellavego.com/pricing.
 
 ### Annual plans
 Save ~17% if you pay annually. Same features. Starter $1,460/yr · Pro $2,970/yr · Elite $5,970/yr.
