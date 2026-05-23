@@ -25,10 +25,10 @@ if (!KEY) { console.error('VAPI_API_KEY required'); process.exit(1) }
 
 // Read the renderSalesAgentPrompt() return string out of lib/vapi.ts.
 // Hacky but avoids needing to compile TS or duplicate the prompt. Looks
-// for the start marker ("You are Emma, an AI sales representative") and
-// reads to the closing backtick before "}".
+// for the start marker (the first line of the prompt template literal)
+// and reads to the closing backtick before "}".
 const vapiSrc = fs.readFileSync(path.resolve(process.cwd(), 'src/lib/vapi.ts'), 'utf8')
-const startMarker = 'return `You are Emma, an AI sales representative for BellAveGo.'
+const startMarker = 'return `You are Emma — the AI on BellAveGo\'s public demo line.'
 const startIdx = vapiSrc.indexOf(startMarker)
 if (startIdx < 0) {
   console.error('Could not locate renderSalesAgentPrompt() start in src/lib/vapi.ts')
@@ -143,7 +143,7 @@ const tools = [
 ]
 
 const config = {
-  firstMessage: "Hi, this is Emma with BellAveGo. I know you're checking out our AI receptionist for home-service businesses — how can I help?",
+  firstMessage: "Hi, this is Emma with BellAveGo — thanks for checking us out! Would you like to hear about our software, or hear how I'd answer your customers' phone calls?",
   model: {
     provider: 'anthropic',
     model: 'claude-sonnet-4-6',
