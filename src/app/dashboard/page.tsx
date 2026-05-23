@@ -11,9 +11,9 @@ const ADMIN_EMAILS = new Set(["pmcshane@fordham.edu", "peter@bellavego.com"]);
 // Activation-banner copy. Prices come from TIER_METADATA in src/lib/pricing.ts
 // (single source of truth — if pricing changes, this banner updates automatically).
 const TIER_BANNER_COPY: Record<Tier, string> = {
-  receptionist: "AI answers every call · 250 bookings/mo · 6 AI consulting reports/yr",
-  officemgr:    "Mission Control + Quote Hunter + Collections + Reviews + Reputation + 12 reports/yr",
-  concierge:    "Operator + AI Marketing Operations (ad creatives, lead sourcing, SEO, weekly strategy reports)",
+  receptionist: "AI answers every call · unlimited inbound · 6 AI consulting reports/yr",
+  officemgr:    "Starter + Quote Hunter + Collections + Reviews + Reputation + 12 reports/yr",
+  concierge:    "Pro + custom integrations + bi-weekly reports + 4-hr SLA + direct founder access",
 };
 
 // NOTE: This page previously read jobs/customers/reports directly from
@@ -360,13 +360,13 @@ export default function DashboardPage() {
             <span style={{ color: "#7AAAB2", letterSpacing: "0.06em", textTransform: "uppercase", marginRight: 2 }}>Admin</span>
             {(["receptionist", "officemgr", "concierge"] as const).map(t => {
               const isCurrent = profile?.plan_tier === t;
-              const label = t === "receptionist" ? "Mission Control" : t === "officemgr" ? "Operator" : "Concierge";
+              const label = t === "receptionist" ? "Starter" : t === "officemgr" ? "Pro" : "Elite";
               return (
                 <button
                   key={t}
                   onClick={() => adminSwitchTier(t)}
                   disabled={adminSwitching !== null || isCurrent}
-                  title={t === "receptionist" ? "Mission Control" : t === "officemgr" ? "Operator" : "Concierge"}
+                  title={t === "receptionist" ? "Starter" : t === "officemgr" ? "Pro" : "Elite"}
                   style={{
                     padding: "4px 10px", borderRadius: 99, border: "none",
                     background: isCurrent ? "#22C55E" : "transparent",
@@ -474,7 +474,7 @@ export default function DashboardPage() {
               {tierKeys.map((k) => {
                 const t = TIER_METADATA[k];
                 const perMonth = billingCycle === "monthly" ? t.monthly : t.annual;
-                const callsLine = k === "receptionist" ? "250 calls/mo" : "Unlimited calls";
+                const callsLine = "Unlimited calls";
                 const setupLine = t.setup > 0 ? ` · +$${t.setup} setup` : "";
                 const active = tier === k;
                 return (

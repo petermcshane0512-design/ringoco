@@ -111,7 +111,7 @@ export const SUPPORT_FAQ: FaqEntry[] = [
       "report still pending",
     ],
     answer:
-      `Reports run on your plan's cadence: Mission Control = bi-monthly (6/yr), Operator = monthly (12/yr), Concierge = weekly + quarterly deep-dive. ` +
+      `Reports run on your plan's cadence: Starter = bi-monthly (6/yr), Pro = monthly (12/yr), Elite = bi-weekly (24/yr). ` +
       `Your welcome report fires the day after activation. All reports live at https://www.bellavego.com/dashboard/reports. ` +
       `If your activation was less than 24 hours ago, the welcome report is still queueing — it'll land by tomorrow morning.`,
   },
@@ -135,8 +135,8 @@ export const SUPPORT_FAQ: FaqEntry[] = [
       'what happens if I hit the cap',
     ],
     answer:
-      `Mission Control tier = 250 calls/month. Operator and Concierge = unlimited. When Mission Control hits 250 in a month, the AI plays a polite "we've hit capacity this month" message until the 1st. ` +
-      `If you're consistently near the cap, upgrading to Operator ($797/mo) pays for itself in 2-3 captured leads. Reply UPGRADE to switch.`,
+      `All v2 tiers (Starter / Pro / Elite) include UNLIMITED inbound calls — no monthly cap. ` +
+      `Legacy customers on Mission Control ($397) still have the 250-call cap their plan was sold with; everyone else is unlimited.`,
   },
   {
     topic: 'export_data',

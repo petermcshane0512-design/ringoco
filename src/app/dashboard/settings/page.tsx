@@ -52,16 +52,18 @@ function hour12Label(h: number): string {
 }
 
 const TIER_LABELS: Record<string, { label: string; calls: string; price: string }> = {
-  // v7 active (May 12 2026)
-  receptionist: { label: 'Mission Control',   calls: '250 calls/mo',     price: '$397/mo' },
-  officemgr:    { label: 'Operator',          calls: 'Unlimited calls',  price: '$797/mo' },
-  concierge:    { label: 'Concierge',         calls: 'Unlimited calls',  price: '$1,997/mo' },
+  // v8 active (May 23 2026)
+  receptionist: { label: 'Starter', calls: 'Unlimited calls', price: '$147/mo' },
+  officemgr:    { label: 'Pro',     calls: 'Unlimited calls', price: '$297/mo' },
+  concierge:    { label: 'Elite',   calls: 'Unlimited calls', price: '$597/mo' },
   cancelled:    { label: 'Cancelled', calls: '—', price: '—' },
-  // Legacy tiers (existing customers — keep for back-compat)
-  foundation:   { label: 'Foundation (legacy)', calls: 'Unlimited', price: '$79/mo or $129/mo' },
-  growth:       { label: 'Growth (legacy)',     calls: 'Unlimited', price: '$179/mo or $279/mo' },
-  premium:      { label: 'Premium (legacy)',    calls: 'Unlimited', price: '$499/mo' },
-  multiloc:     { label: 'Multi-location (legacy)', calls: 'Custom', price: 'Custom' },
+  // Legacy tier labels — kept for any grandfathered customers still on these
+  // plan_tier strings. The label reads "(legacy $X/mo)" so they know what
+  // they're on without confusing them about current marketing prices.
+  foundation:   { label: 'Foundation (legacy)',         calls: 'Unlimited',       price: '$79/mo or $129/mo' },
+  growth:       { label: 'Growth (legacy)',             calls: 'Unlimited',       price: '$179/mo or $279/mo' },
+  premium:      { label: 'Premium (legacy)',            calls: 'Unlimited',       price: '$499/mo' },
+  multiloc:     { label: 'Multi-location (legacy)',     calls: 'Custom',          price: 'Custom' },
   solo:         { label: 'Solo (legacy)',       calls: '150 calls/mo',   price: '$147/mo' },
   scale:        { label: 'Scale (legacy)',      calls: '1,500 calls/mo', price: '$597/mo' },
   starter:      { label: 'Starter (legacy)',    calls: '200 calls/mo',   price: '$49/mo' },

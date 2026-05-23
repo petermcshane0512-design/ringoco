@@ -52,9 +52,9 @@ function disableCode(carrier: CarrierKey) {
 
 function tierMeta(tier: Tier | undefined) {
   const t = tier || "receptionist";
-  if (t === "concierge") return { label: "Concierge", isOfficeMgr: true, isConcierge: true };
-  if (t === "officemgr" || t === "premium" || t === "growth") return { label: "Operator", isOfficeMgr: true, isConcierge: false };
-  return { label: "Mission Control", isOfficeMgr: false, isConcierge: false };
+  if (t === "concierge") return { label: "Elite", isOfficeMgr: true, isConcierge: true };
+  if (t === "officemgr" || t === "premium" || t === "growth") return { label: "Pro", isOfficeMgr: true, isConcierge: false };
+  return { label: "Starter", isOfficeMgr: false, isConcierge: false };
 }
 
 export default function SetupWizard() {

@@ -1,5 +1,5 @@
 /**
- * Marketing Ops Agent — the orchestrator for the Concierge tier weekly run.
+ * Marketing Ops Agent — the orchestrator for the Elite tier (slug 'concierge') weekly run.
  *
  * Deterministic by design (not a Claude tool-use loop). Each underlying skill
  * uses Claude where reasoning is needed; this file is the choreographer: it
@@ -259,8 +259,9 @@ export async function runMarketingOpsForCustomer(args: {
   })
 
   // 7b. Quarterly deep-dive — fires only on the first Monday of Jan / Apr / Jul / Oct.
-  // Concierge customers get the 52 weeklies AND 4 of these strategic 90-day deep-dives
-  // per year. Different prompt, 90-day data window, McKinsey-senior-partner voice.
+  // Elite customers (slug 'concierge') get the bi-weekly cadence AND 4 of these
+  // strategic 90-day deep-dives per year. Different prompt, 90-day data window,
+  // McKinsey-senior-partner voice.
   let quarterlyUrl: string | undefined
   const now = new Date()
   const isFirstMonday = now.getUTCDate() <= 7 && now.getUTCDay() === 1

@@ -1,5 +1,5 @@
 /**
- * Weekly strategy report generator. The crown jewel of the Concierge tier.
+ * Weekly strategy report generator. The crown jewel of the Elite tier.
  *
  * Pulls 7 days of data across calls, jobs, campaigns, leads, competitors, GBP,
  * SEO posts, and weather events. Sends to Claude with a McKinsey-style system
@@ -36,7 +36,7 @@ Rules:
 - Output ONLY the JSON. No markdown, no commentary.`
 
 const QUARTERLY_PROMPT = `You are a McKinsey Senior Partner writing a quarterly business review for a home-services SMB owner.
-This is the quarterly deep-dive — the customer pays $1,997/mo and expects a real strategic artifact, not a weekly summary.
+This is the quarterly deep-dive — the customer is an Elite-tier subscriber ($597/mo) and expects a real strategic artifact, not a weekly summary.
 
 Tone: senior advisor. Strategic horizon: 90 days. Reference 90-day patterns, not single-week noise. Identify the 2-3 bets that will define the next quarter.
 

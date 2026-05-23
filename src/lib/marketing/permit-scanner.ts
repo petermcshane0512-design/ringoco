@@ -107,7 +107,7 @@ async function fetchLa(sinceIso: string): Promise<PermitRecord[]> {
 async function fetchAtlanta(sinceIso: string): Promise<PermitRecord[]> {
   // ArcGIS query: where=ISSUEDATE > 'YYYY-MM-DD', outFields=*, f=json
   // Field names below are best-guess from common Atlanta DPCD schemas. Will need a
-  // pass when a Concierge customer in Atlanta activates and we see live data.
+  // pass when an Elite-tier customer in Atlanta activates and we see live data.
   const sinceDate = sinceIso.split('T')[0]
   const url = `${ATLANTA_PERMITS_ARCGIS}?where=${encodeURIComponent(`ISSUEDATE > DATE '${sinceDate}'`)}&outFields=*&resultRecordCount=500&orderByFields=${encodeURIComponent('ISSUEDATE DESC')}&f=json`
   let res

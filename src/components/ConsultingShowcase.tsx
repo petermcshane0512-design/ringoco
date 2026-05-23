@@ -729,7 +729,7 @@ export default function ConsultingShowcase() {
             </svg>
           </Link>
           <Link href="/pricing" className="cs-cta-secondary">
-            See plans · From $397/mo
+            See plans · From $147/mo
           </Link>
         </div>
       </div>

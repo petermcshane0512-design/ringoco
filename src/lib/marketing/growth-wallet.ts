@@ -1,5 +1,5 @@
 /**
- * Growth Wallet — pre-funded ad-spend budget for Concierge customers.
+ * Growth Wallet — pre-funded ad-spend budget for Elite-tier customers (slug 'concierge').
  * Customer tops up via Stripe Checkout (one-time payment). Each ad spend
  * deducts from the balance + adds a 15% management fee line.
  *

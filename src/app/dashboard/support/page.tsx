@@ -59,7 +59,7 @@ export default function SupportPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 900, color: '#0B1F3A', margin: 0, letterSpacing: '-0.5px' }}>Support</h1>
-          <p style={{ fontSize: 13, color: '#64748B', margin: '4px 0 0' }}>Direct line to Peter. Responses within 24 hours (4 hours on Concierge).</p>
+          <p style={{ fontSize: 13, color: '#64748B', margin: '4px 0 0' }}>Direct line to Peter. Responses within 24 hours (4 hours on Elite).</p>
         </div>
         <button onClick={() => setShowForm(!showForm)} style={{ padding: '11px 22px', background: 'linear-gradient(135deg, #0AA89F, #0D8F87)', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer', fontWeight: 800, fontSize: 13 }}>
           {showForm ? 'Cancel' : '+ New ticket'}

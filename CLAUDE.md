@@ -191,20 +191,23 @@ Every one of these has been embedded as an assumption. Challenge them before act
 | **Phase 4 — Automate Ops** | Self-serve onboarding, churn alerts, auto-renewal. | Months 6-12 |
 | **Phase 5 — Scale** | 342 customers at ~$97 avg = $400K ARR. 800 customers = $1M ARR. | Year 2 |
 
-**Pricing model (v7, May 12 2026 — defined in `src/lib/pricing.ts`):**
-- **Receptionist: $397/mo** → 250 calls/month, $250 setup, 6 AI consulting reports/yr
-- **Office Manager: $797/mo** → unlimited calls, $500 setup, 12 reports/yr + Quote Hunter / Collections / Reviews / Reputation / Smart Insights
-- **Concierge: $1,997/mo** → unlimited calls, $1,000 setup, 52 weekly strategy reports + 4 quarterly deep-dives, full AI Marketing Operations agent (ad creatives, lead sourcing, SEO, GBP watching, competitor intel, account manager)
-- **Multi-Location: $2,497/loc + $25K setup** — enterprise, founder-led sale
-- **Stripe price IDs**: `src/lib/pricing.ts` holds v7 IDs ($397/$797/$1,997 created May 12 2026 by `scripts/create-v7-prices.mjs`). v6 IDs ($179/$497/$997) preserved in `PRICE_TO_TIER` reverse map so any grandfathered subscribers still resolve correctly. Old self-serve page preserved at `/pricing-legacy` for rollback.
-- Consulting reports cadence in `src/lib/reportCadence.ts`: Receptionist 6/yr, OfficeMgr 12/yr, Concierge 4/yr quarterly (weekly handled by marketing-ops-weekly cron)
+**Pricing model (v8, May 23 2026 — defined in `src/lib/pricing.ts`):**
+- **Starter: $147/mo** (slug `receptionist`) → UNLIMITED calls, $0 setup, 6 AI consulting reports/yr
+- **Pro: $297/mo** (slug `officemgr`) → unlimited calls, $0 setup, 12 reports/yr + Quote Hunter / Collections / Reviews / Reputation / Smart Insights
+- **Elite: $597/mo** (slug `concierge`) → unlimited calls, $0 setup, 24 bi-weekly consulting reports + custom integrations (Jobber/Housecall Pro/ServiceTitan) + 4-hour priority SLA + direct founder access for first 90 days. **Waitlist-only until 3 Pro customers exist.**
+- **Multi-Location: $2,497/loc + $25K setup** — enterprise, founder-led sale (unchanged)
+- **Annual plans**: ~17% off (Starter $1,460/yr · Pro $2,970/yr · Elite $5,970/yr)
+- **Tier slugs UNCHANGED**: `receptionist`, `officemgr`, `concierge`. Only display labels + prices changed. Zero data migration needed.
+- **Stripe price IDs**: v8 (`price_1TaJOc...` family) hardcoded in `PRICE_IDS_V2`. v7 ($397/$797/$1,997) preserved in `PRICE_IDS_V1` + `PRICE_TO_TIER` for grandfathered subscribers. v6 ($179/$497/$997) also still in `PRICE_TO_TIER`. Old self-serve page preserved at `/pricing-legacy`.
+- **Feature flag**: `PRICING_VERSION` env var ('v1_legacy' | 'v2_new', default v2_new). Flip to v1_legacy in Vercel to roll back. See `docs/pricing-rollback.md` for the full procedure.
+- Consulting reports cadence in `src/lib/reportCadence.ts`: Starter 6/yr, Pro 12/yr, Elite 24/yr bi-weekly (cadence still keyed off slug)
 
 ### Five Things That Matter (Everything Else is Noise)
 
 1. Multi-tenant Twilio — ✅ shipped May 2026, auto-provisioned on Stripe checkout via `provisionNumberForUser`
 2. Stripe billing live — ✅ shipped, three-tier subscription + auto-suspend on payment failure
 3. AI-generated revenue intelligence report — this IS the moat, not the call answering
-4. AI Marketing Operations agent (Concierge tier) — Phase 1 of build, see tasks #1–#12
+4. AI Marketing Operations agent (Elite tier) — Phase 1 of build, see tasks #1–#12
 5. 70% of time selling, not coding, until 10 paying customers exist
 
 ---

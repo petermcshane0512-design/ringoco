@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: "%s · BellAveGo",
   },
   description:
-    "AI answers every call, books the job, follows up on quotes, recovers past-due invoices, and runs your marketing — automatically. Built for home service contractors of 1–15. From $397/mo. 30-day money-back.",
+    "AI answers every call, books the job, follows up on quotes, recovers past-due invoices, and runs your marketing — automatically. Built for home service contractors of 1–15. From $147/mo. 30-day money-back.",
   applicationName: "BellAveGo",
   keywords: [
     "AI receptionist",
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "BellAveGo — AI Receptionist + AI Marketing for home service pros",
     description:
-      "AI answers every call, books the job, runs your marketing. Built for home service contractors. From $397/mo.",
+      "AI answers every call, books the job, runs your marketing. Built for home service contractors. From $147/mo.",
     images: [OG_IMAGE],
   },
   robots: {
@@ -120,9 +120,9 @@ const softwareJsonLd = {
   description:
     "AI Receptionist + AI Marketing platform for home service contractors. 24/7 call answering, automated booking, AI-powered marketing operations.",
   offers: [
-    { "@type": "Offer", name: "Mission Control", price: "397",  priceCurrency: "USD" },
-    { "@type": "Offer", name: "Operator",        price: "797",  priceCurrency: "USD" },
-    { "@type": "Offer", name: "Concierge",       price: "1997", priceCurrency: "USD" },
+    { "@type": "Offer", name: "Starter", price: "147", priceCurrency: "USD" },
+    { "@type": "Offer", name: "Pro",     price: "297", priceCurrency: "USD" },
+    { "@type": "Offer", name: "Elite",   price: "597", priceCurrency: "USD" },
   ],
   aggregateRating: undefined,  // add once we have published reviews
 };

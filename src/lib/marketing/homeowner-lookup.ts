@@ -1,6 +1,6 @@
 /**
  * Homeowner lookup skill — finds NEW homeowners (recent property transfers)
- * in a Concierge customer's service area. New homeowners are the highest-converting
+ * in an Elite-tier customer's service area. New homeowners are the highest-converting
  * lead source for home services: they just made the biggest purchase of their life,
  * have budget, are urgently shopping for contractors, and have zero existing
  * vendor relationships.

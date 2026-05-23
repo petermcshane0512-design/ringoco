@@ -55,7 +55,7 @@ export default function ConciergeOnboarding() {
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '40px 24px' }}>
-      <p style={{ fontSize: 12, fontWeight: 800, color: '#0AA89F', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 10 }}>Concierge Setup · Step {step} of 4</p>
+      <p style={{ fontSize: 12, fontWeight: 800, color: '#0AA89F', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 10 }}>Elite Setup · Step {step} of 4</p>
       <h1 style={{ fontSize: 28, fontWeight: 900, marginBottom: 8, letterSpacing: '-0.6px' }}>
         {step === 1 && 'Where do you serve?'}
         {step === 2 && 'Who are your top competitors?'}

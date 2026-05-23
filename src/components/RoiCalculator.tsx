@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 
-const TIER_COST = 397 // Receptionist entry tier — anchor for "Net after $X/mo" ROI display
+const TIER_COST = 147 // Starter (entry tier) — anchor for "Net after $X/mo" ROI display
 const WEEKS_PER_MONTH = 4.33
 
 export default function RoiCalculator() {
@@ -346,7 +346,7 @@ export default function RoiCalculator() {
                 <div className="val">{Math.round(calc.roi)}×</div>
               </div>
               <div className="roi-meta-tile">
-                <div className="lab">Net after $397/mo</div>
+                <div className="lab">Net after $147/mo</div>
                 <div className="val">+${calc.netMonthly.toLocaleString()}</div>
               </div>
             </div>

@@ -4,8 +4,8 @@
  * own customers' words. This is the moat: competitors guess at copy, we use the real
  * language callers used when they were ready to buy.
  *
- * Generates pending_approval creatives. Concierge customers with auto-confirm enabled
- * can flip ad-creatives to live without review.
+ * Generates pending_approval creatives. Elite-tier customers (slug 'concierge')
+ * with auto-confirm enabled can flip ad-creatives to live without review.
  */
 
 import Anthropic from '@anthropic-ai/sdk'

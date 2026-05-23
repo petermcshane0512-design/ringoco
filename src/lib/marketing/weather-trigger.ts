@@ -6,7 +6,7 @@
  * Writes each matching alert to weather_triggers, idempotent on (user_id, noaa_alert_id).
  *
  * Called by:
- *  - api/crons/marketing-ops-weekly (per Concierge customer)
+ *  - api/crons/marketing-ops-weekly (per Elite-tier customer)
  *  - agents/marketing-ops-agent (on-demand)
  *
  * NWS requires a contact User-Agent. Do not remove the header.

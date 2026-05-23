@@ -1133,14 +1133,15 @@ export default function HomePage() {
         <p style={{ color: '#4A6670', fontSize: 16, marginBottom: 48 }}>Your first booked job pays for the whole month.</p>
 
         <div className="home-pricing-grid" style={{ gap: 20, maxWidth: 1180, margin: '0 auto 20px' }}>
-          {/* Homepage tier cards — Mission Control + Operator live, Concierge waitlist-only. */}
+          {/* Homepage tier cards — Starter + Pro live, Elite waitlist-only. */}
           {[
             {
-              name: 'Mission Control', price: 397, setup: 0, tier: 'receptionist', calls: 'Up to 250 / mo', comingSoon: false,
+              name: 'Starter', price: 147, setup: 0, tier: 'receptionist', calls: 'Unlimited', comingSoon: false,
               desc: 'AI answers every call. You close it in one tap — confirm, send a pay-by-text Stripe link, call back, or just acknowledge. Includes 6 AI revenue reports per year.',
               features: [
                 '6 AI Consulting Reports / year — bi-monthly revenue intelligence: missed calls, top services, quote-to-close, what to fix. ($5K–$15K value if you hired a consultant.)',
                 '24/7 AI call answering — never miss a job',
+                'Unlimited inbound calls',
                 '📅 Live calendar booking — Emma auto-books to your Google Calendar, Outlook, or Calendly with travel buffer baked in (when connected)',
                 'Auto-provisioned local number in your area code (~30 seconds at signup)',
                 'Captures name · callback # · what they need · preferred time (if mentioned) · urgency',
@@ -1155,10 +1156,10 @@ export default function HomePage() {
               popular: false, customCta: false,
             },
             {
-              name: 'Operator', price: 797, setup: 0, tier: 'officemgr', calls: 'Unlimited',
+              name: 'Pro', price: 297, setup: 0, tier: 'officemgr', calls: 'Unlimited',
               desc: 'Your back-office, on autopilot. Five AIs that answer calls, chase quotes, recover invoices, draft review replies, and ask past customers for new reviews.',
               features: [
-                'Everything in Mission Control, plus:',
+                'Everything in Starter, plus:',
                 '12 AI Consulting Reports / year — monthly revenue intelligence: sales coaching from your actual call transcripts, lead-source attribution, customer lifetime value trends, AI-recommended price increases.',
                 'Unlimited inbound calls',
                 'AI Quote Hunter — auto follow-up SMS day 2 / 7 / 14 on every open quote',
@@ -1171,17 +1172,15 @@ export default function HomePage() {
               popular: true, customCta: false, comingSoon: false,
             },
             {
-              name: 'Concierge', price: 1997, setup: 0, tier: 'concierge', calls: 'Unlimited',
-              desc: 'AI runs your back office AND your marketing. Ad creative writing, lead sourcing from permits + storms, competitor monitoring, weekly SEO blog posts, plus quarterly McKinsey-style deep-dives.',
+              name: 'Elite', price: 597, setup: 0, tier: 'concierge', calls: 'Unlimited',
+              desc: 'White-glove AI operations. Custom integrations, bi-weekly reports, 4-hour priority SLA, and direct founder access for your first 90 days.',
               features: [
-                'Everything in Operator, plus:',
-                '26 AI Strategy Reports / year (bi-weekly) + 4 quarterly McKinsey-style deep-dives',
-                'AI Ad Creative Generator — Google + Meta ad copy weekly from your call transcripts',
-                'AI Lead Sourcing — permits + severe-weather alerts → outbound SMS',
-                'AI Past-Customer Reactivation — drip campaigns to dormant customers',
-                'AI Competitor Watcher — weekly intel on 5 competitors in your service area',
-                'AI Local SEO — weekly blog posts auto-published to your site',
-                'AI Account Manager — weekly briefings + 4-hour priority SLA',
+                'Everything in Pro, plus:',
+                '24 AI Consulting Reports / year (bi-weekly cadence)',
+                'Custom integrations — Jobber, Housecall Pro, ServiceTitan',
+                '4-hour priority SLA on all support tickets',
+                'Direct founder access — text/call Peter for the first 90 days',
+                'Custom AI prompt tuning for your shop’s voice + service catalog + pricing rules',
               ],
               popular: false, customCta: false, comingSoon: true,
             },
@@ -1290,7 +1289,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <Image src="/logo.png" alt="BellAveGo" width={300} height={100} style={{ objectFit: 'contain' }} />
           <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
-          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>AI receptionist for home service pros · From $397/mo · 30-day money-back · Cancel anytime</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>AI receptionist for home service pros · From $147/mo · 30-day money-back · Cancel anytime</p>
           <p style={{ margin: '8px 0 0', fontSize: 11, color: '#3D5A62' }}>
             <Link href="/privacy" style={{ color: '#7AAAB2', textDecoration: 'none' }}>Privacy</Link>
             {' · '}

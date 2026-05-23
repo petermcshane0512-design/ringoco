@@ -280,7 +280,7 @@ export function renderFirstCallCelebrationEmail(args: FirstCallCelebrationEmailA
         </div>
         <p style="font-size:14px;line-height:1.55;color:#3D5A62;margin:0 0 22px;">
           From here on, every missed call gets answered, captured, and texted to you in 20 seconds — even when your hands are full.
-          This is what your $397/mo (and up) is buying. Welcome to receptionist-on-autopilot.
+          This is what your $147/mo (and up) is buying. Welcome to receptionist-on-autopilot.
         </p>
         <div style="text-align:center;">
           ${args.callerPhone ? `<a href="tel:${escapeHtml(args.callerPhone)}" style="display:inline-block;padding:13px 26px;border-radius:11px;background:linear-gradient(135deg,#FF9D5A,#E8742B);color:#fff;font-weight:800;font-size:14px;text-decoration:none;box-shadow:0 8px 22px rgba(232,116,43,0.40);">📞 Call ${escapeHtml(args.callerName)} back</a>` : ''}

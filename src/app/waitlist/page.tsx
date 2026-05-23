@@ -31,10 +31,10 @@ function WaitlistForm() {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const tierLabel = tier === 'multi_location' ? 'Multi-Location' : 'Concierge'
+  const tierLabel = tier === 'multi_location' ? 'Multi-Location' : 'Elite'
   const tierBlurb = tier === 'multi_location'
     ? 'Enterprise multi-location ($2,497/loc/mo + $25K setup). For franchises and 3+ location operators.'
-    : 'AI runs your back office AND your marketing — weekly strategy reports, ad creatives from your call transcripts, lead sourcing, competitor intel, SEO. $1,997/mo.'
+    : 'Everything in Pro, plus: 24 AI consulting reports/yr (bi-weekly), custom integrations into Jobber/Housecall Pro/ServiceTitan, 4-hour priority SLA, and direct founder access for the first 90 days. $597/mo — waitlist-only until we validate Pro with 3 paying customers.'
 
   useEffect(() => {
     document.title = `Join the ${tierLabel} waitlist · BellAveGo`
@@ -99,7 +99,7 @@ function WaitlistForm() {
               Our team will personally reach out within 24 hours to chat about your business and lock in early-access pricing for {tierLabel}.
             </p>
             <p style={{ fontSize: 13, color: '#7AAAB2', lineHeight: 1.55, marginBottom: 24 }}>
-              In the meantime, want to see what BellAveGo can do today? Mission Control + Operator are available right now.
+              In the meantime, want to see what BellAveGo can do today? Starter + Pro are available right now.
             </p>
             <Link href="/pricing" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 11, background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', color: '#fff', fontWeight: 800, fontSize: 14, textDecoration: 'none', boxShadow: '0 6px 18px rgba(10,168,159,0.32)' }}>
               See pricing →

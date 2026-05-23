@@ -53,7 +53,7 @@ export default function ConciergeDashboard() {
   if (needsOnboarding) {
     return (
       <div style={{ padding: 40, maxWidth: 720, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 900, marginBottom: 10 }}>Welcome to Concierge.</h1>
+        <h1 style={{ fontSize: 28, fontWeight: 900, marginBottom: 10 }}>Welcome to Elite.</h1>
         <p style={{ fontSize: 16, color: '#64748B', marginBottom: 28 }}>
           Tell us about your service area, your competitors, and your website. Takes about 4 minutes. After that, our AI runs your marketing on autopilot — you just close the work.
         </p>
@@ -74,7 +74,7 @@ export default function ConciergeDashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 900, color: '#0B1F3A', margin: 0, letterSpacing: '-0.6px' }}>AI Marketing Operations</h1>
-          <p style={{ ...subText, marginTop: 4 }}>{data.businessName} · Concierge tier</p>
+          <p style={{ ...subText, marginTop: 4 }}>{data.businessName} · Elite tier</p>
         </div>
         <Link href="/dashboard/concierge/onboarding" style={{ fontSize: 13, color: '#0AA89F', fontWeight: 700, textDecoration: 'none' }}>Settings →</Link>
       </div>

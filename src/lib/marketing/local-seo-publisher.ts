@@ -1,5 +1,5 @@
 /**
- * Local SEO post generator + publisher. Once a week per Concierge customer,
+ * Local SEO post generator + publisher. Once a week per Elite-tier customer,
  * generates a 600-900 word blog post targeting "best [trade] [city]" type
  * queries, publishes to customer's WordPress or Webflow.
  *
@@ -104,7 +104,7 @@ Write the post.`,
       publishedUrl = await publishToWordPress(args.websiteUrl, args.websiteApiToken, post)
     } else if (args.websiteProvider === 'webflow') {
       if (!args.websiteCollectionId) {
-        throw new Error('Webflow CMS Collection ID required — collect during Concierge onboarding')
+        throw new Error('Webflow CMS Collection ID required — collect during Elite onboarding')
       }
       publishedUrl = await publishToWebflow(args.websiteUrl, args.websiteApiToken, args.websiteCollectionId, post)
     } else {

@@ -273,7 +273,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
             {[
               { label: 'Command Center',     dot: false },
               { label: 'AI Receptionist',    dot: true  },
-              { label: 'Operator',           dot: false },
+              { label: 'Pro',                dot: false },
               { label: 'Invoicing',          dot: false },
               { label: 'Consulting Reports', dot: false },
               { label: 'Call Forwarding',    dot: false },
@@ -490,12 +490,12 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
             </div>
           )}
 
-          {/* == OPERATOR TAB == */}
-          {activeTab === 'Operator' && (
+          {/* == PRO TAB == */}
+          {activeTab === 'Pro' && (
             <div>
               <div style={{ background: 'linear-gradient(135deg, rgba(232,116,43,0.06), rgba(232,116,43,0.02))', border: '1px solid rgba(232,116,43,0.22)', borderRadius: 11, padding: '12px 14px', marginBottom: 11 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <span style={{ fontSize: 7.5, fontWeight: 800, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '2px 7px', borderRadius: 99, background: 'rgba(232,116,43,0.12)', border: '1px solid rgba(232,116,43,0.30)' }}>Operator</span>
+                  <span style={{ fontSize: 7.5, fontWeight: 800, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '2px 7px', borderRadius: 99, background: 'rgba(232,116,43,0.12)', border: '1px solid rgba(232,116,43,0.30)' }}>Pro</span>
                   <div style={{ fontSize: 10.5, fontWeight: 800, color: '#0B1F3A' }}>Your AI office manager</div>
                 </div>
                 <div style={{ fontSize: 9, color: '#4A6670', lineHeight: 1.55 }}>Chases stale quotes day 2 / 7 / 14, recovers past-due invoices, requests Google reviews on completed jobs, watches reputation.</div>

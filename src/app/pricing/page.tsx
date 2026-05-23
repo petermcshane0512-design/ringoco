@@ -1,12 +1,17 @@
 'use client'
 
 /**
- * Live pricing page — v7 ($397 / $797 / $1,997 / $2,497-per-location).
+ * Live pricing page — v8 (Starter $147 / Pro $297 / Elite $597 / Multi-Loc $2,497/loc).
  *
- * SMB tier CTAs invoke /api/stripe/checkout against the v7 price IDs in
- * src/lib/pricing.ts. Multi-Location remains mailto (enterprise sale, founder-led).
+ * Display + price values come from this file directly but are wired to the
+ * v8 Stripe prices via src/lib/pricing.ts (PRICE_IDS_V2).
  *
- * Old $179/$497/$997 page preserved at /pricing-legacy for rollback or reference.
+ * Rollback: set PRICING_VERSION=v1_legacy in Vercel + redeploy.
+ * That flips the underlying price IDs back to v7 ($397/$797/$1,997). For
+ * full label rollback (Mission Control / Operator / Concierge), this page
+ * needs a manual edit — see docs/pricing-rollback.md.
+ *
+ * Older $179/$497/$997 page preserved at /pricing-legacy for deeper reference.
  */
 
 import { useState, useEffect } from 'react'
@@ -32,16 +37,16 @@ type Plan = {
 const PLANS: Plan[] = [
   {
     tier: 'receptionist',
-    name: 'Mission Control',
-    monthly: 397,
-    annual: 330,
+    name: 'Starter',
+    monthly: 147,
+    annual: 122,
     setup: 0,
     tagline: 'AI answers every call. You close it in one tap.',
     popular: false,
     features: [
       { label: '6 AI Consulting Reports / year — bi-monthly revenue intelligence: missed calls, top services, quote-to-close ratio, what to fix. ($5K–$15K value if you hired a consultant.)', auto: true },
       { label: '24/7 AI call answering — never miss a job again', auto: true },
-      { label: 'Up to 250 inbound calls / month', auto: true },
+      { label: 'Unlimited inbound calls', auto: true },
       { label: '📅 Live calendar booking — Emma auto-books to your Google Calendar, Outlook, or Calendly with travel buffer baked in (when connected)', auto: true },
       { label: 'Auto-provisioned local number in your area code (~30 seconds at signup)', auto: true },
       { label: 'AI captures name · callback # · what they need · preferred time (if mentioned) · urgency', auto: true },
@@ -56,14 +61,14 @@ const PLANS: Plan[] = [
   },
   {
     tier: 'officemgr',
-    name: 'Operator',
-    monthly: 797,
-    annual: 662,
+    name: 'Pro',
+    monthly: 297,
+    annual: 248,
     setup: 0,
     tagline: 'Five AIs running your back office while you turn wrenches.',
     popular: true,
     features: [
-      { label: 'Everything in Mission Control, plus:', auto: false },
+      { label: 'Everything in Starter, plus:', auto: false },
       { label: '12 AI Consulting Reports / year — monthly revenue intelligence: sales coaching from your actual call transcripts, lead-source attribution, customer lifetime value trends, AI-recommended price increases.', auto: true },
       { label: 'Unlimited inbound calls', auto: true },
       { label: 'AI Quote Hunter — auto follow-up SMS day 2 / 7 / 14 on every open quote', auto: true },
@@ -76,24 +81,19 @@ const PLANS: Plan[] = [
   },
   {
     tier: 'concierge',
-    name: 'Concierge',
-    monthly: 1997,
-    annual: 1660,
+    name: 'Elite',
+    monthly: 597,
+    annual: 498,
     setup: 0,
-    tagline: 'AI runs your back office AND your marketing. You just close the work.',
+    tagline: 'White-glove AI operations. Direct founder access. Custom integrations.',
     popular: false,
     features: [
-      { label: 'Everything in Operator, plus:', auto: false },
-      { label: '26 AI Strategy Reports / year (bi-weekly) + 4 quarterly McKinsey-style deep-dives', auto: true },
-      { label: 'AI Marketing Operations — the full growth stack:', auto: false },
-      { label: 'AI Ad Creative Generator — Google + Meta ad copy weekly from your own call transcripts', auto: true },
-      { label: 'AI Lead Sourcing — permits + severe-weather alerts → outbound SMS', auto: true },
-      { label: 'AI Past-Customer Reactivation — drip campaigns to dormant customers', auto: true },
-      { label: 'AI Google Business Profile monitoring + auto-drafted review replies', auto: true },
-      { label: 'AI Competitor Watcher — weekly intel on 5 competitors in your service area', auto: true },
-      { label: 'AI Local SEO — weekly blog posts auto-published to your WordPress site', auto: true },
+      { label: 'Everything in Pro, plus:', auto: false },
+      { label: '24 AI Consulting Reports / year (bi-weekly cadence)', auto: true },
+      { label: 'Custom integrations — Jobber, Housecall Pro, ServiceTitan', auto: true },
+      { label: '4-hour priority SLA on all support tickets', auto: true },
+      { label: 'Direct founder access — text/call Peter for the first 90 days', auto: true },
       { label: 'Custom AI prompt tuning — your shop’s voice, service catalog, pricing rules', auto: true },
-      { label: 'AI Account Manager — weekly briefings + 4-hour priority SLA', auto: true },
     ],
   },
 ]
@@ -323,8 +323,8 @@ export default function PricingPage() {
         {/* Availability disclaimer right under the tier cards */}
         <div style={{ maxWidth: 1080, margin: '24px auto 0', padding: '0 24px' }}>
           <div style={{ textAlign: 'center', fontSize: 12.5, color: '#4A7A80', lineHeight: 1.6, padding: '14px 18px', background: 'rgba(255,251,235,0.6)', border: '1px solid rgba(232,116,43,0.18)', borderRadius: 12 }}>
-            <strong style={{ color: '#0B1F3A' }}>Mission Control + Operator available now.</strong>{' '}
-            Concierge and Multi-Location launch <strong>Q3 2026</strong>. <Link href="/waitlist?tier=concierge" style={{ color: '#C84B26', fontWeight: 700, textDecoration: 'underline' }}>Join the waitlist for early-access pricing →</Link>
+            <strong style={{ color: '#0B1F3A' }}>Starter + Pro available now.</strong>{' '}
+            Elite and Multi-Location launch <strong>Q3 2026</strong>. <Link href="/waitlist?tier=concierge" style={{ color: '#C84B26', fontWeight: 700, textDecoration: 'underline' }}>Join the waitlist for early-access pricing →</Link>
           </div>
         </div>
       </section>
@@ -407,7 +407,7 @@ export default function PricingPage() {
               No "Slack with the founder" tax. No "monthly call with the founder" charade. From the moment your card hits Stripe, every part of BellAveGo runs itself — call answering, bookings, follow-ups, collections, reviews, ads, lead-gen. The AI does the work. You do the close.
             </p>
             <p style={{ fontSize: 13, color: '#4A7A80', fontStyle: 'italic', margin: 0 }}>
-              The only time a human at BellAveGo touches your account is if you email support — answered in &lt;24 hrs (Operator) or &lt;4 hrs (Concierge).
+              The only time a human at BellAveGo touches your account is if you email support — answered in &lt;24 hrs (Pro) or &lt;4 hrs (Elite).
             </p>
           </div>
         </div>
@@ -457,20 +457,17 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* What's live today vs roadmap — transparency footer */}
+      {/* Elite waitlist — transparency about what's available now */}
       <section style={{ padding: '60px 24px', background: '#F2F9F5', borderTop: '1px solid #DCE9E2' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 24, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.5px', marginBottom: 8, textAlign: 'center' }}>Built today vs. on the roadmap</h2>
+          <h2 style={{ fontSize: 24, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.5px', marginBottom: 8, textAlign: 'center' }}>What's live today</h2>
           <p style={{ fontSize: 14, color: '#4A6670', textAlign: 'center', marginBottom: 24, maxWidth: 620, marginLeft: 'auto', marginRight: 'auto' }}>
-            Radical transparency. Every Concierge feature above is live as of today, with these scoped exceptions launching this summer:
+            Radical transparency. Every Starter and Pro feature listed above is shipping today — sign up and you'll be live in 5 minutes.
           </p>
           <div style={{ background: '#fff', border: '1px solid #DCE9E2', borderRadius: 14, padding: '24px 28px' }}>
-            <ul style={{ margin: 0, paddingLeft: 22, color: '#0B1F3A', fontSize: 14, lineHeight: 1.75 }}>
-              <li><strong>Live Google + Meta ad activation</strong> — creatives generate today, sit in your approval queue. Live spend activates the day Google Ads MCC + Meta Business Manager approvals land (we're already in the queue).</li>
-              <li><strong>New-homeowner database</strong> — lead sourcing covers permits + severe-weather alerts today. PropStream homeowner data layer adds Q3 2026.</li>
-              <li><strong>Auto-reply on Google Business Profile reviews</strong> — we read + track today. Posting and auto-replies require Google Business Profile API OAuth (Q3 2026).</li>
-              <li><strong>Webflow SEO publishing</strong> — WordPress sites publish today. Webflow auto-publish Q3 2026 (manual copy/paste workflow until then).</li>
-            </ul>
+            <p style={{ fontSize: 14, color: '#0B1F3A', lineHeight: 1.75, margin: 0 }}>
+              <strong>Elite is on the waitlist</strong> until we've validated Pro with 3 paying customers. When it opens: custom integrations into Jobber, Housecall Pro, and ServiceTitan; bi-weekly AI consulting reports; 4-hour priority SLA; and direct founder text/call access for your first 90 days. <Link href="/waitlist?tier=concierge" style={{ color: '#C84B26', fontWeight: 700, textDecoration: 'underline' }}>Join the Elite waitlist →</Link>
+            </p>
           </div>
         </div>
       </section>
