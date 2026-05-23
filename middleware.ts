@@ -35,6 +35,10 @@ const isPublicRoute = createRouteMatcher([
   "/api/sample-report(.*)",
   // OG image generator — public, called by social-media scrapers.
   "/api/og(.*)",
+  // Internal admin endpoints — own auth via requireAdmin() (x-admin-secret
+  // header or admin Clerk session). Clerk middleware would otherwise 404
+  // these before they reach the route handler, blocking curl/script use.
+  "/api/internal(.*)",
 ]);
 
 /**
