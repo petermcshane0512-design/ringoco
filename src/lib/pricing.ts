@@ -17,9 +17,9 @@
  * Slugs are unchanged ('receptionist' / 'officemgr' / 'concierge') — only displayed
  * labels and prices changed. The slug-based gates and DB columns continue to work.
  *
- *   Mission Control ($397) → Starter ($147), unlimited calls
- *   Operator        ($797) → Pro     ($297)
- *   Concierge      ($1997) → Elite   ($597) — waitlist-only until 3 Pro customers
+ *   Mission Control ($397) → Starter ($147), 60 calls/mo cap
+ *   Operator        ($797) → Pro     ($297), 300 calls/mo cap
+ *   Concierge      ($1997) → Elite   ($597), UNLIMITED — waitlist-only until 3 Pro customers
  *
  * The PRICING_VERSION env var ('v1_legacy' | 'v2_new', default v2_new) controls
  * which display + price ID set the pricing page advertises. Both sets of price IDs
@@ -96,12 +96,12 @@ export const PRICE_IDS: Record<Tier, { monthly: string; annual: string; setup: s
 // stay on v1 calls cap (250 for receptionist). New v2 customers get unlimited.
 export const PRICE_TO_TIER: Record<string, { tier: Tier; calls: number }> = {
   // v2 active (May 23 2026 — Starter $147 / Pro $297 / Elite $597)
-  'price_1TaJOcGrkP7VQmUj8qSiEx2b': { tier: 'receptionist', calls: 99999 }, // Starter monthly — UNLIMITED
-  'price_1TaJOcGrkP7VQmUj4AMGChWp': { tier: 'receptionist', calls: 99999 }, // Starter annual  — UNLIMITED
-  'price_1TaJOdGrkP7VQmUjVLsHnueB': { tier: 'officemgr',    calls: 99999 }, // Pro monthly
-  'price_1TaJOdGrkP7VQmUjwJuIdiKA': { tier: 'officemgr',    calls: 99999 }, // Pro annual
-  'price_1TaJOdGrkP7VQmUjrLltX596': { tier: 'concierge',    calls: 99999 }, // Elite monthly
-  'price_1TaJOdGrkP7VQmUja2CDmocA': { tier: 'concierge',    calls: 99999 }, // Elite annual
+  'price_1TaJOcGrkP7VQmUj8qSiEx2b': { tier: 'receptionist', calls: 60 },    // Starter monthly — 60/mo cap (forces upgrade to Pro)
+  'price_1TaJOcGrkP7VQmUj4AMGChWp': { tier: 'receptionist', calls: 60 },    // Starter annual  — 60/mo cap
+  'price_1TaJOdGrkP7VQmUjVLsHnueB': { tier: 'officemgr',    calls: 300 },   // Pro monthly — 300/mo cap (Elite for unlimited)
+  'price_1TaJOdGrkP7VQmUjwJuIdiKA': { tier: 'officemgr',    calls: 300 },   // Pro annual  — 300/mo cap
+  'price_1TaJOdGrkP7VQmUjrLltX596': { tier: 'concierge',    calls: 99999 }, // Elite monthly — UNLIMITED
+  'price_1TaJOdGrkP7VQmUja2CDmocA': { tier: 'concierge',    calls: 99999 }, // Elite annual  — UNLIMITED
   // v1 legacy (May 12 2026 — $397/$797/$1997)
   'price_1TWTwsGrkP7VQmUjYdnvv7ZU': { tier: 'receptionist', calls: 250 },   // Mission Control monthly — CAPPED
   'price_1TWTwsGrkP7VQmUjVH673Rny': { tier: 'receptionist', calls: 250 },   // Mission Control annual  — CAPPED
@@ -129,12 +129,12 @@ export const REVIEW_TIERS       = new Set<string>(['officemgr', 'concierge', 'gr
 
 // Cap on calls received per month for Receptionist tier.
 // v1 (Mission Control $397): 250 calls/mo — preserved for grandfathered customers
-// v2 (Starter $147):           unlimited — explicit product promise
+// v2 (Starter $147):           60 calls/mo — entry-tier cap drives upgrade to Pro (unlimited)
 // The active value reflects what NEW signups would experience based on
 // CURRENT_PRICING_VERSION. Per-customer enforcement should prefer reading
 // PRICE_TO_TIER[their_stripe_price_id].calls for accurate per-tier limits.
 export const RECEPTIONIST_CALL_CAP: number =
-  CURRENT_PRICING_VERSION === 'v1_legacy' ? 250 : Number.POSITIVE_INFINITY
+  CURRENT_PRICING_VERSION === 'v1_legacy' ? 250 : 60
 
 // ── Public tier metadata for /pricing page + dashboard + emails ──
 // Two metadata sets — TIER_METADATA_V1 (legacy display) and TIER_METADATA_V2

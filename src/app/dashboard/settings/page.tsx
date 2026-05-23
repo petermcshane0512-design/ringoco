@@ -53,8 +53,8 @@ function hour12Label(h: number): string {
 
 const TIER_LABELS: Record<string, { label: string; calls: string; price: string }> = {
   // v8 active (May 23 2026)
-  receptionist: { label: 'Starter', calls: 'Unlimited calls', price: '$147/mo' },
-  officemgr:    { label: 'Pro',     calls: 'Unlimited calls', price: '$297/mo' },
+  receptionist: { label: 'Starter', calls: '60 calls/mo', price: '$147/mo' },
+  officemgr:    { label: 'Pro',     calls: '300 calls/mo',    price: '$297/mo' },
   concierge:    { label: 'Elite',   calls: 'Unlimited calls', price: '$597/mo' },
   cancelled:    { label: 'Cancelled', calls: '—', price: '—' },
   // Legacy tier labels — kept for any grandfathered customers still on these

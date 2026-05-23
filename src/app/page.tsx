@@ -1136,15 +1136,15 @@ export default function HomePage() {
           {/* Homepage tier cards — Starter + Pro live, Elite waitlist-only. */}
           {[
             {
-              name: 'Starter', price: 147, setup: 0, tier: 'receptionist', calls: 'Unlimited', comingSoon: false,
+              name: 'Starter', price: 147, setup: 0, tier: 'receptionist', calls: '60/mo', comingSoon: false,
               desc: 'AI answers every call. You close it in one tap — confirm, send a pay-by-text Stripe link, call back, or just acknowledge. Includes 6 AI revenue reports per year.',
               features: [
                 'YOUR OWN dedicated AI receptionist — not a shared bot. Trained on your business name, services, and rules from day one. (Most competitors run every customer through one shared assistant.)',
-                'A2P 10DLC SMS compliance done for you — we register your brand with the carriers so your customer texts deliver. Most platforms leave you to figure out the 1–14 day Twilio setup yourself.',
+                'A2P 10DLC SMS compliance done for you — we register your brand with the carriers so your customer texts deliver. Most platforms leave you to figure out the 1–14 day carrier setup yourself.',
                 '6 AI Consulting Reports / year — bi-monthly revenue intelligence: missed calls, top services, quote-to-close, what to fix. ($5K–$15K value if you hired a consultant.)',
                 '24/7 AI call answering — never miss a job',
-                'Unlimited inbound calls',
-                '📅 Live calendar booking — Emma auto-books to your Google Calendar, Outlook, or Calendly with travel buffer baked in (when connected)',
+                'Up to 60 inbound calls / month (≈2 per day) — upgrade to Pro for unlimited when you outgrow it',
+                '📅 Live calendar booking — your AI auto-books to your Google Calendar, Outlook, or Calendly with travel buffer baked in (when connected)',
                 'Auto-provisioned local number in your area code (~30 seconds at signup)',
                 'Captures name · callback # · what they need · preferred time (if mentioned) · urgency',
                 'Instant text summary to your phone in 20 seconds',
@@ -1157,13 +1157,13 @@ export default function HomePage() {
               popular: false, customCta: false,
             },
             {
-              name: 'Pro', price: 297, setup: 0, tier: 'officemgr', calls: 'Unlimited',
+              name: 'Pro', price: 297, setup: 0, tier: 'officemgr', calls: '300/mo',
               desc: 'Your back-office, on autopilot. Five AIs that answer calls, chase quotes, recover invoices, draft review replies, and ask past customers for new reviews.',
               features: [
                 'Everything in Starter, plus:',
                 'Dual-channel lead alerts — every lead arrives as SMS AND email. Never miss a job because your phone died, you were on vacation, or your carrier filtered the text.',
                 '12 AI Consulting Reports / year — monthly revenue intelligence: sales coaching from your actual call transcripts, lead-source attribution, customer lifetime value trends, AI-recommended price increases.',
-                'Unlimited inbound calls',
+                'Up to 300 inbound calls / month (≈10 per day) — fits the vast majority of multi-truck operations',
                 'AI Quote Hunter — auto follow-up SMS day 2 / 7 / 14 on every open quote you log',
                 'AI Collections — auto-chase past-due invoices you flag, with pay-by-text Stripe links auto-generated',
                 'AI Reputation — auto-SMS past customers asking for Google reviews (Google Business Profile link required)',
@@ -1177,6 +1177,7 @@ export default function HomePage() {
               desc: 'AI runs your back office AND your marketing. Ad creative writing, lead sourcing from permits + storms, competitor monitoring, weekly SEO blog posts, plus quarterly McKinsey-style deep-dives.',
               features: [
                 'Everything in Pro, plus:',
+                'Unlimited inbound calls — no monthly cap',
                 '24 AI Consulting Reports / year (bi-weekly) + 4 quarterly McKinsey-style deep-dives',
                 'AI Marketing Operations — the full growth stack:',
                 'AI Ad Creative Generator — Google + Meta ad copy weekly from your call transcripts',
