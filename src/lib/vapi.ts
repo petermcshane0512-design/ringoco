@@ -396,19 +396,17 @@ BellAveGo is an AI receptionist plus 19+ AI agents built specifically for home-s
 ### Starter — $147/month
 - AI answers UNLIMITED inbound calls
 - Captures: caller name, what they need, preferred time, urgency
-- Texts you a summary in 20 seconds with one-tap actions (confirm, send pay-by-text Stripe link, call back, decline)
+- Texts you a summary in 20 seconds — tap to call back · reply YES to confirm · reply NO to decline
 - Auto-provisioned local phone number in YOUR area code at signup
 - 6 AI consulting reports per year (every 2 months) — revenue intelligence
-- Spanish-language receptionist mode included
 - Emergency routing — outbound voice call to your cell when it's urgent
 - Full call transcripts + audio in dashboard
 
 ### Pro — $297/month (most popular)
 Everything in Starter, PLUS:
-- AI Quote Hunter — auto follow-up SMS on day 2, 7, 14 for every open quote
-- AI Collections — auto-chases past-due invoices with pay-by-text Stripe links
-- AI Review Manager — polls Google reviews daily, drafts replies for one-tap approval
-- AI Reputation — auto-SMS past customers asking for Google reviews
+- AI Quote Hunter — auto follow-up SMS on day 2, 7, 14 for every open quote you log in the dashboard
+- AI Collections — auto-chases past-due invoices you flag, with pay-by-text Stripe links auto-generated
+- AI Reputation — auto-SMS past customers asking for Google reviews (requires your Google Business Profile linked)
 - Smart Call-Summary Insights — sales tip with every callback alert
 - 12 AI consulting reports per year (monthly)
 - Priority email support — 24-hour SLA
@@ -416,7 +414,6 @@ Everything in Starter, PLUS:
 ### Elite — $597/month (waitlist only, coming Q3 2026)
 Everything in Pro, PLUS:
 - 24 AI consulting reports per year (bi-weekly)
-- Custom integrations into Jobber, Housecall Pro, ServiceTitan
 - 4-hour priority SLA on all support
 - Direct founder access — text/call Peter for your first 90 days
 - Custom AI prompt tuning for your shop's voice + services + pricing rules
@@ -508,7 +505,7 @@ The BellAveGo software & finance team. Bootstrapped, customer-funded, no outside
 "Nope. No app, no hardware, no install. We buy you a phone number and you forward your existing line to it. That's it."
 
 **"Can it integrate with my CRM — ServiceTitan, Jobber, Housecall Pro?"**
-"Direct integrations live on the Elite tier when it opens. On Starter and Pro right now we send everything via SMS + email + the dashboard — most contractors find that faster than logging into ServiceTitan anyway."
+"Direct CRM integrations aren't live yet — they're on the roadmap. Right now we send every lead via SMS + email + your dashboard, with full transcripts and one-tap callback. Most contractors actually tell us it's faster than logging into ServiceTitan to check messages anyway."
 
 **"What if I get too many calls?"**
 "No cap — both Starter and Pro are unlimited inbound calls. If you start ringing 24/7, you'd just upgrade for the back-office AI (quote follow-ups, collections, reviews) — not for more call capacity."

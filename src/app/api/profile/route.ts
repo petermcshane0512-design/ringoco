@@ -2,6 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { auth } from '@clerk/nextjs/server'
 import { effectiveAuth } from '@/lib/effectiveAuth'
+import { repatchPerTenantAssistant } from '@/lib/provisionNumber'
+
+// Profile fields that, when changed, require re-PATCHing the contractor's
+// per-tenant Vapi assistant — otherwise the dashboard save lands in
+// Supabase but the live AI assistant keeps the OLD prompt until next
+// provision. Fire-and-forget after the save succeeds.
+const VAPI_PROMPT_RELEVANT_FIELDS = new Set([
+  'business_name',
+  'owner_first_name',
+  'services',
+  'service_area',
+  'ai_tone',
+  'ai_voice_id',
+  'ai_language',
+  'custom_prompt_notes',
+])
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -93,6 +109,24 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  // Settings save succeeded — if any prompt-relevant field changed, fire a
+  // background re-PATCH of the contractor's Vapi assistant so their next call
+  // uses the new prompt. NOT awaited (we don't want to delay the 200 response
+  // while Vapi round-trips). Errors logged inside the helper, never thrown.
+  const touchedPromptField = Object.keys(filtered).some((k) =>
+    VAPI_PROMPT_RELEVANT_FIELDS.has(k),
+  )
+  if (touchedPromptField) {
+    repatchPerTenantAssistant(userId)
+      .then((r) =>
+        r.ok
+          ? console.log(`[profile POST] Vapi assistant ${r.assistantId} re-PATCHed for ${userId}`)
+          : console.warn(`[profile POST] Vapi re-PATCH skipped for ${userId}: ${r.reason}`),
+      )
+      .catch((e) => console.error(`[profile POST] Vapi re-PATCH threw for ${userId}:`, e))
+  }
+
   return NextResponse.json({ ok: true })
 }
 

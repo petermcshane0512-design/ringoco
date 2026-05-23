@@ -187,6 +187,134 @@ async function createPerTenantAssistant(profile: ProvisionableProfile): Promise<
 }
 
 /**
+ * Re-PATCH an existing per-tenant Vapi assistant with the latest profile data.
+ * Used when a contractor edits their dashboard settings (business name,
+ * services, ai_tone, ai_voice_id, ai_language, custom_prompt_notes) — without
+ * this, the saved fields hit Supabase but the live Vapi assistant still uses
+ * the prompt baked in at provision time. Their NEXT call would still hear the
+ * OLD prompt until manual re-bake.
+ *
+ * Fire-and-forget from /api/profile POST. Caller doesn't await the result —
+ * we don't want a slow Vapi round-trip to delay the settings-save UX.
+ *
+ * Idempotent: re-running with the same profile data is a no-op for the AI
+ * (same prompt) and consumes one Vapi API call. Cheap.
+ *
+ * Returns { ok: true } when the PATCH succeeds, { ok: false, reason } when
+ * skipped (no assistant yet, no API key) or failed (network / Vapi error).
+ * Errors are logged but never thrown — settings save must not break on Vapi
+ * outage.
+ */
+export async function repatchPerTenantAssistant(
+  userId: string,
+): Promise<{ ok: true; assistantId: string } | { ok: false; reason: string }> {
+  if (!process.env.VAPI_API_KEY) {
+    return { ok: false, reason: 'VAPI_API_KEY not set' }
+  }
+
+  // Load fresh profile — same column set as provisionNumberForUser uses.
+  const { data: profile, error: pErr } = await supabase
+    .from('profiles')
+    .select(
+      'user_id, twilio_number, owner_phone, owner_first_name, business_name, ' +
+        'services, service_area, ai_voice_id, ai_tone, ai_language, ' +
+        'custom_prompt_notes, plan_tier, vapi_phone_number_id, ' +
+        'vapi_assistant_id, vapi_import_failed_at',
+    )
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (pErr || !profile) {
+    return { ok: false, reason: pErr?.message || 'profile not found' }
+  }
+  const p = profile as unknown as ProvisionableProfile
+  if (!p.vapi_assistant_id) {
+    // No assistant yet — nothing to repatch. Will be picked up the next time
+    // provisionNumberForUser runs (Stripe webhook, manual provision, or
+    // provision-retry cron).
+    return { ok: false, reason: 'no vapi_assistant_id on profile yet' }
+  }
+
+  // Build the same config createPerTenantAssistant builds — but for an
+  // existing assistant we send only the mutable fields to keep the PATCH
+  // surface narrow. tools + transcriber + serverUrl etc. are unchanged
+  // by a settings edit and don't need to be re-sent.
+  const voiceId = p.ai_voice_id || VAPI_VOICE_ID_DEFAULT
+  const aiName = getAiNameForVoice(voiceId)
+  const tenant: TenantContext = {
+    userId: p.user_id,
+    businessName: p.business_name || 'the business',
+    ownerFirstName: p.owner_first_name,
+    services: p.services,
+    serviceArea: p.service_area,
+    aiTone: p.ai_tone,
+    aiLanguage: p.ai_language,
+    customPromptNotes: p.custom_prompt_notes,
+    planTier: p.plan_tier,
+    twilioNumber: p.twilio_number,
+    aiName,
+    hasCalendarConnected: false,
+  }
+  const systemPrompt = renderSystemPrompt(tenant)
+  const business = tenant.businessName
+  const owner = tenant.ownerFirstName || 'the owner'
+  const firstMessage =
+    tenant.aiLanguage === 'es'
+      ? `Hola, soy ${aiName} con ${business}. ${owner} está en un trabajo — ¿en qué le puedo ayudar?`
+      : `Hi, this is ${aiName} with ${business}. ${owner} is out on a job — how can I help?`
+
+  // Vapi PATCH REPLACES nested objects (model, voice). We only PATCH the fields
+  // that depend on profile data — name, firstMessage, model.messages (system
+  // prompt), voice, metadata. Tools live on model.tools so when we PATCH model
+  // we MUST include the tools array or they'll be wiped (verified bug — see
+  // scripts/bake-sales-prompt-into-assistant.mjs comment).
+  const baseConfig = buildAssistantConfig({
+    appBaseUrl: APP_URL,
+    webhookSecret: process.env.VAPI_WEBHOOK_SECRET,
+  })
+  const patchBody = {
+    name: `BellAveGo · ${tenant.businessName}`,
+    firstMessage,
+    model: {
+      ...baseConfig.model,
+      messages: [{ role: 'system' as const, content: systemPrompt }],
+    },
+    voice: {
+      provider: VAPI_VOICE_PROVIDER,
+      voiceId,
+      model: 'sonic-english',
+    },
+    metadata: {
+      user_id: p.user_id,
+      business_name: tenant.businessName,
+      plan_tier: tenant.planTier ?? null,
+    },
+  }
+
+  try {
+    const res = await fetch(`https://api.vapi.ai/assistant/${p.vapi_assistant_id}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${process.env.VAPI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(patchBody),
+    })
+    if (!res.ok) {
+      const body = await res.text()
+      const msg = `Vapi assistant PATCH failed (${res.status}): ${body.slice(0, 200)}`
+      console.error(`repatchPerTenantAssistant for ${userId}:`, msg)
+      return { ok: false, reason: msg }
+    }
+    return { ok: true, assistantId: p.vapi_assistant_id }
+  } catch (e) {
+    const msg = (e as Error).message
+    console.error(`repatchPerTenantAssistant for ${userId} threw:`, msg)
+    return { ok: false, reason: msg }
+  }
+}
+
+/**
  * Idempotent per-tenant provisioning. Operation order (per Peter's spec):
  *
  *   1. Create per-tenant Vapi assistant FIRST (cheapest step that can fail)
