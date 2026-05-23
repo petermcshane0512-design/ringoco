@@ -671,6 +671,15 @@ async function takeMessage(opts: {
 }
 
 // ── end-of-call-report (analytics + cap counter for non-booked calls) ──
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 async function handleEndOfCallReport(message: VapiServerMessage['message']) {
   if (!message) return NextResponse.json({ ok: true })
   const tenant = extractTenant(message)
@@ -682,9 +691,63 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
     (tc) => tc.function?.name === 'take_message',
   )
 
-  // Demo calls don't write to DB.
+  // Demo calls don't write to DB — but we DO email Peter a summary of
+  // every demo call regardless of whether take_message fired. Otherwise
+  // when Emma roleplays a Sunset Air call and never reaches the bridge-
+  // back-to-sales close (caller hung up, mode-switch mid-call, etc.),
+  // Peter has zero visibility into what was discussed. He needs to see
+  // every prospect interaction so he can follow up manually.
   if (tenant.is_demo) {
-    return NextResponse.json({ ok: true, demo: true })
+    // If take_message DID fire, the handleToolCalls path already emailed
+    // Peter with the structured lead. Skip the summary email here to
+    // avoid duplicate notifications for the same call.
+    if (messageCaptured) {
+      return NextResponse.json({ ok: true, demo: true, already_emailed_via_tool_call: true })
+    }
+
+    const peterAlertEmail = process.env.FALLBACK_OWNER_EMAIL || 'bellavegollc@gmail.com'
+    const transcriptText =
+      typeof transcript === 'string' ? transcript : transcript ? JSON.stringify(transcript) : '(no transcript)'
+    // Vapi's end-of-call-report message includes timestamps + endedReason
+    // that aren't in our typed VapiServerMessage shape. Cast locally.
+    const m = message as unknown as { startedAt?: string; endedAt?: string; endedReason?: string }
+    const durationSec =
+      m.endedAt && m.startedAt
+        ? Math.round((new Date(m.endedAt).getTime() - new Date(m.startedAt).getTime()) / 1000)
+        : null
+    const endedReason = m.endedReason ?? null
+
+    try {
+      const subject = `📞 Demo call summary — no lead captured${durationSec ? ` (${durationSec}s)` : ''}`
+      const html =
+        `<div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;padding:20px;">` +
+        `<h2 style="color:#0B1F3A;margin:0 0 8px;">📞 Demo call ended without take_message</h2>` +
+        `<p style="color:#4A6670;margin:0 0 16px;font-size:14px;">A prospect just called the demo line. Emma didn't capture a structured lead (call ended early, mode switch, or caller hung up mid-flow). Full transcript + AI summary below so you can follow up manually if there's anything actionable.</p>` +
+        `<table style="font-size:13px;color:#0B1F3A;margin-bottom:16px;border-collapse:collapse;">` +
+        `<tr><td style="padding:4px 8px 4px 0;color:#4A6670;">Caller</td><td>${callerPhone ?? '(unknown)'}</td></tr>` +
+        (durationSec ? `<tr><td style="padding:4px 8px 4px 0;color:#4A6670;">Duration</td><td>${durationSec}s</td></tr>` : '') +
+        (endedReason ? `<tr><td style="padding:4px 8px 4px 0;color:#4A6670;">Ended reason</td><td>${endedReason}</td></tr>` : '') +
+        `<tr><td style="padding:4px 8px 4px 0;color:#4A6670;">Call ID</td><td style="font-family:monospace;font-size:11px;">${callSid}</td></tr>` +
+        `</table>` +
+        (summary
+          ? `<h3 style="color:#0B1F3A;margin:16px 0 6px;font-size:14px;">AI summary</h3><p style="background:#F5F1EA;padding:12px;border-radius:8px;font-size:13px;color:#0B1F3A;margin:0 0 16px;">${escapeHtml(summary)}</p>`
+          : '') +
+        `<h3 style="color:#0B1F3A;margin:16px 0 6px;font-size:14px;">Full transcript</h3>` +
+        `<pre style="background:#F5F1EA;padding:12px;border-radius:8px;font-size:12px;white-space:pre-wrap;color:#0B1F3A;margin:0;">${escapeHtml(transcriptText)}</pre>` +
+        `</div>`
+      const text =
+        `Demo call ended without take_message\n\n` +
+        `Caller: ${callerPhone ?? '(unknown)'}\n` +
+        (durationSec ? `Duration: ${durationSec}s\n` : '') +
+        (endedReason ? `Ended reason: ${endedReason}\n` : '') +
+        `Call ID: ${callSid}\n\n` +
+        (summary ? `AI summary:\n${summary}\n\n` : '') +
+        `Transcript:\n${transcriptText}\n`
+      await sendEmail({ to: peterAlertEmail, subject, html, text })
+    } catch (e) {
+      console.error('demo call summary email failed:', e)
+    }
+    return NextResponse.json({ ok: true, demo: true, summary_emailed: true })
   }
 
   if (!tenant.user_id) {
