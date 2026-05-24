@@ -248,6 +248,24 @@ export async function GET() {
         ? Math.round((realCostRows.length / callsThisMonth) * 100)
         : null,
     },
+    // Most-recent 20 calls for the live activity feed in the nucleus. Tiny
+    // payload (~3kb), shipped on every poll so the feed stays in sync.
+    recentCalls: await (async () => {
+      const { data: recent } = await supabase
+        .from('call_logs')
+        .select('user_id, call_sid, caller_phone, created_at, job_created, cost_usd')
+        .order('created_at', { ascending: false })
+        .limit(20)
+      const customerNameById = new Map(customers.map((c) => [c.user_id, c.business_name]))
+      return (recent || []).map((r) => ({
+        user_id: r.user_id,
+        business_name: customerNameById.get(r.user_id) ?? '(unknown)',
+        caller_phone: r.caller_phone,
+        created_at: r.created_at,
+        lead_captured: !!r.job_created,
+        cost_usd: r.cost_usd ?? null,
+      }))
+    })(),
     customers,
   })
 }

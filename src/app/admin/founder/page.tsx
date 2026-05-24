@@ -14,9 +14,10 @@
  * Refresh: SWR polls every 5 minutes. Manual refresh button in corner.
  */
 
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import useSWR from 'swr'
 import { ReactFlow, Background, MarkerType, type Node, type Edge } from '@xyflow/react'
+import { motion, AnimatePresence } from 'framer-motion'
 import '@xyflow/react/dist/style.css'
 
 type FounderSummary = {
@@ -59,6 +60,14 @@ type FounderSummary = {
     created_at: string
     health: 'green' | 'yellow' | 'red'
     health_note: string | null
+  }>
+  recentCalls?: Array<{
+    user_id: string
+    business_name: string
+    caller_phone: string | null
+    created_at: string
+    lead_captured: boolean
+    cost_usd: number | null
   }>
 }
 
@@ -115,17 +124,27 @@ function ringPositions(count: number, radius: number): Array<{ x: number; y: num
   return positions
 }
 
-// ── Custom node renderers (passed as children inside default nodes) ──
+// ── Custom node renderers — Jarvis-style with breathing + hover effects ──
 function CoreNode({ data }: { data: { mrr: number; arr: number; customers: number; tierBreakdown: Record<string, number> } }) {
   return (
-    <div
+    <motion.div
+      // Continuous breathing — subtle pulse to make the core feel alive
+      animate={{
+        scale: [1, 1.04, 1],
+        boxShadow: [
+          `0 0 60px ${COLORS.accentGlow}, 0 0 120px ${COLORS.accentGlow}`,
+          `0 0 100px ${COLORS.accentGlow}, 0 0 200px ${COLORS.accentGlow}`,
+          `0 0 60px ${COLORS.accentGlow}, 0 0 120px ${COLORS.accentGlow}`,
+        ],
+      }}
+      transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
+      whileHover={{ scale: 1.12, transition: { type: 'spring', stiffness: 260, damping: 18 } }}
       style={{
         width: 260,
         height: 260,
         borderRadius: '50%',
         background: `radial-gradient(circle at 30% 30%, ${COLORS.accentGlow} 0%, ${COLORS.panel} 60%)`,
         border: `2px solid ${COLORS.accent}`,
-        boxShadow: `0 0 60px ${COLORS.accentGlow}, 0 0 120px ${COLORS.accentGlow}`,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -133,14 +152,48 @@ function CoreNode({ data }: { data: { mrr: number; arr: number; customers: numbe
         color: COLORS.text,
         textAlign: 'center',
         padding: 24,
+        position: 'relative',
+        cursor: 'pointer',
       }}
     >
+      {/* Rotating outer ring — gives the core a "scanning" Iron-Man feel */}
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
+        style={{
+          position: 'absolute',
+          inset: -14,
+          borderRadius: '50%',
+          border: `1px dashed ${COLORS.accent}`,
+          opacity: 0.35,
+          pointerEvents: 'none',
+        }}
+      />
+      <motion.div
+        animate={{ rotate: -360 }}
+        transition={{ duration: 42, repeat: Infinity, ease: 'linear' }}
+        style={{
+          position: 'absolute',
+          inset: -26,
+          borderRadius: '50%',
+          border: `1px dotted ${COLORS.accent}`,
+          opacity: 0.18,
+          pointerEvents: 'none',
+        }}
+      />
       <div style={{ fontSize: 9, fontWeight: 800, color: COLORS.accent, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 8 }}>
         BellAveGo Core
       </div>
-      <div style={{ fontSize: 42, fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 4 }}>
+      <motion.div
+        // Pulse the MRR number on update by re-keying
+        key={data.mrr}
+        initial={{ scale: 0.85, opacity: 0.5 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        style={{ fontSize: 42, fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 4 }}
+      >
         {fmtMoney(data.mrr)}
-      </div>
+      </motion.div>
       <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 14 }}>MRR · {fmtMoney(data.arr, true)} ARR</div>
       <div style={{ fontSize: 28, fontWeight: 800, color: COLORS.text }}>
         {data.customers}
@@ -161,21 +214,34 @@ function CoreNode({ data }: { data: { mrr: number; arr: number; customers: numbe
           )}
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }
 
 function MetricNode({ data }: { data: { label: string; value: string; sub?: string; health?: 'green' | 'yellow' | 'red' } }) {
   const h = data.health || 'green'
   return (
-    <div
+    <motion.div
+      // Subtle continuous pulse — different phase per node so they don't sync
+      animate={{
+        boxShadow: [
+          `0 0 24px ${healthGlow(h)}`,
+          `0 0 42px ${healthGlow(h)}`,
+          `0 0 24px ${healthGlow(h)}`,
+        ],
+      }}
+      transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: Math.random() * 2 }}
+      whileHover={{
+        scale: 1.28,
+        zIndex: 999,
+        transition: { type: 'spring', stiffness: 320, damping: 16 },
+      }}
       style={{
         width: 140,
         height: 140,
         borderRadius: '50%',
         background: COLORS.panel,
         border: `1.5px solid ${healthBorder(h)}`,
-        boxShadow: `0 0 24px ${healthGlow(h)}`,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -183,33 +249,61 @@ function MetricNode({ data }: { data: { label: string; value: string; sub?: stri
         color: COLORS.text,
         textAlign: 'center',
         padding: 14,
+        cursor: 'pointer',
       }}
     >
       <div style={{ fontSize: 8.5, fontWeight: 800, color: healthBorder(h), letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 6 }}>
         {data.label}
       </div>
-      <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>
+      <motion.div
+        key={data.value}
+        initial={{ scale: 0.7, opacity: 0.4 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.45, ease: 'backOut' }}
+        style={{ fontSize: 22, fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}
+      >
         {data.value}
-      </div>
+      </motion.div>
       {data.sub && (
         <div style={{ fontSize: 9.5, color: COLORS.textMuted, marginTop: 6, lineHeight: 1.3 }}>{data.sub}</div>
       )}
-    </div>
+    </motion.div>
   )
 }
 
 function CustomerNode({ data }: { data: { name: string; calls: number; tier: string; mrr: number; health: 'green' | 'yellow' | 'red'; note: string | null } }) {
   const h = data.health
+  // Red customers pulse aggressively to demand attention
+  const isRed = h === 'red'
   return (
-    <div
+    <motion.div
       title={data.note || ''}
+      animate={isRed ? {
+        boxShadow: [
+          `0 0 14px ${healthGlow(h)}`,
+          `0 0 38px ${healthGlow(h)}`,
+          `0 0 14px ${healthGlow(h)}`,
+        ],
+        scale: [1, 1.06, 1],
+      } : {
+        boxShadow: [
+          `0 0 14px ${healthGlow(h)}`,
+          `0 0 22px ${healthGlow(h)}`,
+          `0 0 14px ${healthGlow(h)}`,
+        ],
+      }}
+      transition={{ duration: isRed ? 1.2 : 3.2, repeat: Infinity, ease: 'easeInOut', delay: Math.random() * 2 }}
+      whileHover={{
+        scale: 1.4,
+        zIndex: 999,
+        transition: { type: 'spring', stiffness: 360, damping: 14 },
+      }}
       style={{
         width: 110,
         minHeight: 80,
         borderRadius: 14,
         background: COLORS.panel,
         border: `1.5px solid ${healthBorder(h)}`,
-        boxShadow: `0 0 14px ${healthGlow(h)}`,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -217,7 +311,7 @@ function CustomerNode({ data }: { data: { name: string; calls: number; tier: str
         color: COLORS.text,
         textAlign: 'center',
         padding: '10px 8px',
-        cursor: 'help',
+        cursor: 'pointer',
       }}
     >
       <div style={{ fontSize: 8.5, fontWeight: 800, color: healthBorder(h), letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 4 }}>
@@ -229,7 +323,7 @@ function CustomerNode({ data }: { data: { name: string; calls: number; tier: str
       <div style={{ fontSize: 9.5, color: COLORS.textMuted }}>
         {data.calls} calls · {fmtMoney(data.mrr)}/mo
       </div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -239,6 +333,194 @@ const nodeTypes = {
   metric: MetricNode,
   customer: CustomerNode,
 } as never
+
+// ── Live counters strip — Jarvis HUD on top of the canvas ──
+function LiveCountersStrip({ data }: { data: FounderSummary | undefined }) {
+  const [now, setNow] = useState(Date.now())
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [])
+
+  if (!data) return null
+
+  // Time since the most recent call (across the whole platform)
+  const lastCallIso = data.recentCalls?.[0]?.created_at
+  const secsSinceLastCall = lastCallIso
+    ? Math.max(0, Math.floor((now - new Date(lastCallIso).getTime()) / 1000))
+    : null
+  const lastCallDisplay = secsSinceLastCall == null
+    ? '—'
+    : secsSinceLastCall < 60
+    ? `${secsSinceLastCall}s ago`
+    : secsSinceLastCall < 3600
+    ? `${Math.floor(secsSinceLastCall / 60)}m ${secsSinceLastCall % 60}s ago`
+    : `${Math.floor(secsSinceLastCall / 3600)}h ago`
+
+  // Calls per hour rolling rate (over today's data)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const hoursElapsedToday = Math.max(0.5, (now - today.getTime()) / 1000 / 3600)
+  const callsPerHour = data.activity.callsToday > 0
+    ? (data.activity.callsToday / hoursElapsedToday).toFixed(1)
+    : '0.0'
+
+  const cells: Array<{ label: string; value: string; color: string; pulse?: boolean }> = [
+    {
+      label: 'Calls today',
+      value: String(data.activity.callsToday),
+      color: COLORS.accent,
+      pulse: secsSinceLastCall != null && secsSinceLastCall < 30,
+    },
+    { label: 'Calls / hr', value: callsPerHour, color: '#5EEAD4' },
+    {
+      label: 'Spend today',
+      value: data.economics.costToday != null ? `$${data.economics.costToday.toFixed(2)}` : '—',
+      color: '#F59E0B',
+    },
+    { label: 'Last call', value: lastCallDisplay, color: COLORS.textMuted },
+  ]
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 84,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        display: 'flex',
+        gap: 0,
+        background: 'rgba(15,26,46,0.85)',
+        backdropFilter: 'blur(8px)',
+        border: `1px solid rgba(122,170,178,0.25)`,
+        borderRadius: 14,
+        padding: '4px 4px',
+        zIndex: 10,
+        boxShadow: `0 8px 32px rgba(0,0,0,0.45)`,
+      }}
+    >
+      {cells.map((c, i) => (
+        <div key={c.label} style={{ position: 'relative', padding: '10px 22px', borderRight: i < cells.length - 1 ? `1px solid rgba(122,170,178,0.12)` : 'none', textAlign: 'center', minWidth: 110 }}>
+          {c.pulse && (
+            <motion.div
+              animate={{ scale: [1, 1.5, 1], opacity: [0.7, 0, 0.7] }}
+              transition={{ duration: 1.4, repeat: Infinity }}
+              style={{ position: 'absolute', top: 8, right: 8, width: 8, height: 8, borderRadius: '50%', background: c.color, boxShadow: `0 0 12px ${c.color}` }}
+            />
+          )}
+          <div style={{ fontSize: 9, fontWeight: 800, color: c.color, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>
+            {c.label}
+          </div>
+          <motion.div
+            key={c.value}
+            initial={{ scale: 0.7, opacity: 0.4 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.35, ease: 'backOut' }}
+            style={{ fontSize: 18, fontWeight: 900, color: COLORS.text, letterSpacing: '-0.03em' }}
+          >
+            {c.value}
+          </motion.div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Activity feed — bottom-right ticker of recent calls ──
+function ActivityFeed({ calls }: { calls: FounderSummary['recentCalls'] }) {
+  if (!calls || calls.length === 0) {
+    return (
+      <div style={feedShellStyle}>
+        <div style={feedHeaderStyle}>Activity Feed</div>
+        <div style={{ padding: 18, fontSize: 11, color: COLORS.textDim }}>
+          Waiting for the next call…
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={feedShellStyle}>
+      <div style={feedHeaderStyle}>
+        <span>Activity Feed</span>
+        <motion.span
+          animate={{ opacity: [1, 0.3, 1] }}
+          transition={{ duration: 1.6, repeat: Infinity }}
+          style={{ width: 8, height: 8, borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 8px #22C55E' }}
+        />
+      </div>
+      <div style={{ maxHeight: 260, overflowY: 'auto' }}>
+        <AnimatePresence initial={false}>
+          {calls.slice(0, 12).map((c, i) => {
+            const secsAgo = Math.max(0, Math.floor((Date.now() - new Date(c.created_at).getTime()) / 1000))
+            const ago = secsAgo < 60 ? `${secsAgo}s` : secsAgo < 3600 ? `${Math.floor(secsAgo / 60)}m` : `${Math.floor(secsAgo / 3600)}h`
+            return (
+              <motion.div
+                key={`${c.user_id}-${c.created_at}`}
+                initial={{ opacity: 0, x: 30, scale: 0.95 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ delay: i * 0.03, duration: 0.3, ease: 'easeOut' }}
+                style={{
+                  padding: '9px 14px',
+                  borderTop: i > 0 ? '1px solid rgba(122,170,178,0.08)' : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  fontSize: 11,
+                }}
+              >
+                <span style={{
+                  width: 7, height: 7, borderRadius: '50%',
+                  background: c.lead_captured ? '#22C55E' : '#F59E0B',
+                  boxShadow: `0 0 6px ${c.lead_captured ? '#22C55E' : '#F59E0B'}`,
+                  flexShrink: 0,
+                }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ color: COLORS.text, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {c.business_name}
+                  </div>
+                  <div style={{ color: COLORS.textMuted, fontSize: 10 }}>
+                    {c.caller_phone ?? 'no number'} · {c.lead_captured ? 'lead captured' : 'no message'}
+                    {c.cost_usd != null && ` · $${c.cost_usd.toFixed(3)}`}
+                  </div>
+                </div>
+                <span style={{ color: COLORS.textDim, fontSize: 10, flexShrink: 0 }}>{ago}</span>
+              </motion.div>
+            )
+          })}
+        </AnimatePresence>
+      </div>
+    </div>
+  )
+}
+
+const feedShellStyle: React.CSSProperties = {
+  position: 'absolute',
+  bottom: 36,
+  right: 24,
+  width: 320,
+  background: 'rgba(15,26,46,0.92)',
+  backdropFilter: 'blur(10px)',
+  border: `1px solid rgba(122,170,178,0.22)`,
+  borderRadius: 14,
+  zIndex: 10,
+  boxShadow: `0 12px 40px rgba(0,0,0,0.6)`,
+  overflow: 'hidden',
+}
+
+const feedHeaderStyle: React.CSSProperties = {
+  padding: '11px 14px',
+  fontSize: 10,
+  fontWeight: 800,
+  color: COLORS.accent,
+  letterSpacing: '0.16em',
+  textTransform: 'uppercase',
+  borderBottom: '1px solid rgba(122,170,178,0.12)',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+}
 
 // ── Main page ──────────────────────────────────────────────────
 export default function FounderDashboard() {
@@ -339,8 +621,8 @@ export default function FounderDashboard() {
         id: `core-${m.id}`,
         source: 'core',
         target: m.id,
-        style: { stroke: COLORS.edge, strokeWidth: 1.2 },
-        animated: false,
+        style: { stroke: COLORS.accent, strokeWidth: 1.4, opacity: 0.55 },
+        animated: true,
       })
     })
 
@@ -368,8 +650,13 @@ export default function FounderDashboard() {
           id: `core-cust-${c.user_id}`,
           source: 'core',
           target: `cust-${c.user_id}`,
-          style: { stroke: COLORS.edge, strokeWidth: 0.8, strokeDasharray: '3 3' },
-          animated: false,
+          style: {
+            stroke: c.health === 'red' ? COLORS.red : c.health === 'yellow' ? COLORS.yellow : COLORS.edge,
+            strokeWidth: c.health === 'red' ? 1.2 : 0.8,
+            strokeDasharray: '3 3',
+            opacity: c.health === 'green' ? 0.5 : 0.9,
+          },
+          animated: c.health !== 'green',
         })
       })
     }
@@ -461,6 +748,23 @@ export default function FounderDashboard() {
         </div>
       )}
 
+      {/* Scanning line — sweeps top-to-bottom every 8s like a Jarvis HUD */}
+      <motion.div
+        animate={{ y: ['-2%', '102%'] }}
+        transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          height: 2,
+          background: `linear-gradient(90deg, transparent 0%, ${COLORS.accent} 50%, transparent 100%)`,
+          opacity: 0.35,
+          boxShadow: `0 0 24px ${COLORS.accent}`,
+          pointerEvents: 'none',
+          zIndex: 5,
+        }}
+      />
+
       {/* Main canvas */}
       <ReactFlow
         nodes={nodes}
@@ -478,6 +782,12 @@ export default function FounderDashboard() {
       >
         <Background color="rgba(122,170,178,0.08)" gap={32} size={1} />
       </ReactFlow>
+
+      {/* Live counters strip — top-center overlay */}
+      <LiveCountersStrip data={data} />
+
+      {/* Activity feed — bottom-right overlay */}
+      <ActivityFeed calls={data?.recentCalls} />
 
       {/* Bottom hint */}
       <div
