@@ -43,6 +43,9 @@ type FounderSummary = {
     grossProfit: number
     grossMarginPct: number | null
     idiotIndex: number | null
+    costToday?: number
+    avgCostPerCall?: number | null
+    realCostCoverage?: number | null
   }
   customers: Array<{
     user_id: string
@@ -288,6 +291,15 @@ export default function FounderDashboard() {
         value: fmtMoney(data.economics.cogsTotal),
         sub: `$${data.economics.cogsCallUsage} calls + $${data.economics.cogsTwilioRental} #s`,
         health: (data.economics.grossMarginPct ?? 100) < 50 ? 'red' : (data.economics.grossMarginPct ?? 100) < 70 ? 'yellow' : 'green',
+      },
+      {
+        id: 'cost-today',
+        label: 'Spend today',
+        value: fmtMoney(data.economics.costToday ?? 0),
+        sub: data.economics.avgCostPerCall != null
+          ? `$${data.economics.avgCostPerCall.toFixed(3)} avg/call`
+          : 'no calls yet',
+        health: 'green' as const,
       },
       {
         id: 'margin',

@@ -810,6 +810,10 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
         summary,
         job_created: messageCaptured,
         booking_completed: messageCaptured,
+        // Vapi reports actual COGS per call in message.cost — capture it so
+        // the founder dashboard can show real-time spend instead of an
+        // estimate. Column added in sql/2026-05-24-call-logs-cost.sql.
+        cost_usd: (message as unknown as { cost?: number })?.cost ?? null,
       },
       { onConflict: 'call_sid' },
     )

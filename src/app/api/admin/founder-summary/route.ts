@@ -78,14 +78,20 @@ export async function GET() {
   )
 
   // ── Calls + leads + bookings ────────────────────────────────
+  // Pull cost_usd on the month-scoped query AND today-scoped query so we
+  // can compute real spend instead of falling back to the $0.30/call
+  // estimate. Per-call cost comes from Vapi's message.cost (bundled
+  // STT + LLM + TTS spend). For old rows where cost_usd is null
+  // (pre-migration), we still fall back to the estimate so totals don't
+  // suddenly collapse.
   const [callsAll, callsToday, callsWeek, leadsMonth, bookingsMonth] = await Promise.all([
     supabase
       .from('call_logs')
-      .select('user_id, created_at', { count: 'exact', head: false })
+      .select('user_id, created_at, cost_usd')
       .gte('created_at', monthStart),
     supabase
       .from('call_logs')
-      .select('id', { count: 'exact', head: true })
+      .select('cost_usd')
       .gte('created_at', todayStart),
     supabase
       .from('call_logs')
@@ -102,11 +108,32 @@ export async function GET() {
       .eq('booking_completed', true),
   ])
 
-  const callsThisMonth = callsAll.data?.length ?? callsAll.count ?? 0
-  const callsTodayCount = callsToday.count ?? 0
+  const callsThisMonth = callsAll.data?.length ?? 0
+  const callsTodayCount = callsToday.data?.length ?? 0
   const callsWeekCount = callsWeek.count ?? 0
   const leadsCapturedMonth = leadsMonth.count ?? 0
   const bookingsMonthCount = bookingsMonth.count ?? 0
+
+  // Real Vapi-reported spend (with $0.30 fallback for pre-migration rows).
+  function rowCost(r: { cost_usd?: number | null }): number {
+    return typeof r.cost_usd === 'number' ? r.cost_usd : COGS_PER_CALL_USD
+  }
+  const costToday = (callsToday.data || []).reduce((s, r) => s + rowCost(r as { cost_usd?: number | null }), 0)
+  const costMonthFromActuals = (callsAll.data || []).reduce(
+    (s, r) => s + rowCost(r as { cost_usd?: number | null }),
+    0,
+  )
+  // Per-call avg (only over rows that have a real cost_usd)
+  const realCostRows = (callsAll.data || []).filter(
+    (r) => typeof (r as { cost_usd?: number | null }).cost_usd === 'number',
+  )
+  const avgCostPerCall =
+    realCostRows.length > 0
+      ? realCostRows.reduce(
+          (s, r) => s + ((r as { cost_usd?: number }).cost_usd ?? 0),
+          0,
+        ) / realCostRows.length
+      : null
 
   // ── Per-customer call counts (for the customer ring nodes) ──
   const callsByUser = new Map<string, number>()
@@ -122,8 +149,12 @@ export async function GET() {
   }
   const arr = mrr * 12
 
-  // ── COGS estimate ───────────────────────────────────────────
-  const cogsCallUsage = callsThisMonth * COGS_PER_CALL_USD
+  // ── COGS (real where we have it, estimate where we don't) ──
+  // cogsCallUsage uses actual Vapi cost from cost_usd when present.
+  // For old rows (pre-migration) and any rows where Vapi didn't report
+  // cost, fall back to the $0.30/call estimate. Once all rows have
+  // cost_usd populated, this becomes 100% truth-source.
+  const cogsCallUsage = costMonthFromActuals
   const cogsTwilioRental = activeCustomers.length * TWILIO_NUMBER_RENTAL_USD
   const cogsTotal = cogsCallUsage + cogsTwilioRental
   const grossProfit = mrr - cogsTotal
@@ -210,6 +241,12 @@ export async function GET() {
       grossProfit: Math.round(grossProfit * 100) / 100,
       grossMarginPct,
       idiotIndex: cogsTotal > 0 ? Math.round((mrr / cogsTotal) * 10) / 10 : null,
+      // New live-spend fields
+      costToday: Math.round(costToday * 100) / 100,
+      avgCostPerCall: avgCostPerCall != null ? Math.round(avgCostPerCall * 1000) / 1000 : null,
+      realCostCoverage: callsThisMonth > 0
+        ? Math.round((realCostRows.length / callsThisMonth) * 100)
+        : null,
     },
     customers,
   })

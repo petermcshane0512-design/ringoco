@@ -140,6 +140,7 @@ export async function POST(req: NextRequest) {
       // are nice-to-haves that we drop here for backfill resilience.
       void transcript
       void summary
+      const vapiCost = typeof c.cost === 'number' ? c.cost : null
       const { error: insErr } = await supabase.from('call_logs').insert({
         user_id: p.user_id,
         profile_id: p.user_id,
@@ -148,6 +149,7 @@ export async function POST(req: NextRequest) {
         job_created: tookMessage,
         booking_completed: tookMessage,
         created_at: createdAt,
+        cost_usd: vapiCost,
       })
       if (insErr) {
         failed++
