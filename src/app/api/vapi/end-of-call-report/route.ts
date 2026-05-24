@@ -221,6 +221,7 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
             contractorPhone: peterPhone || '',
             callerName: args.customer_name,
             callerPhone: callerNumber,
+            callerAddress: args.customer_address ?? null,
             callerMessage: args.reason,
             urgency: args.urgency,
             twilioNumberCalled: process.env.TWILIO_DEMO_NUMBER ?? null,
@@ -284,7 +285,9 @@ async function takeMessage(opts: {
   const phone = args.customer_phone || callerPhone
   const urgencyEmoji = args.urgency === 'emergency' ? '🚨' : args.urgency === 'soon' ? '⚡' : '🕓'
 
-  // 1. Upsert customer (no address — the AI doesn't capture it anymore)
+  // 1. Upsert customer (Emma now captures service address — see take_message
+  // tool. Only set on insert; we don't overwrite an existing customer's
+  // address on subsequent calls because they may have updated it manually).
   let customerId: string | undefined
   if (phone) {
     const { data: existing } = await supabase
@@ -302,6 +305,7 @@ async function takeMessage(opts: {
           user_id: tenant.user_id,
           name: args.customer_name,
           phone,
+          ...(args.customer_address ? { address: args.customer_address } : {}),
         })
         .select('id')
         .single()
@@ -339,6 +343,7 @@ async function takeMessage(opts: {
       customer_id: customerId,
       customer_name: args.customer_name,
       customer_phone: phone,
+      ...(args.customer_address ? { address: args.customer_address } : {}),
       job_type: args.reason,
       scheduled_time: 'callback requested',
       title: `Callback: ${args.customer_name} — ${args.reason}`,
@@ -435,11 +440,12 @@ async function takeMessage(opts: {
     try {
       const insightLine = smartInsight ? `\n\n${smartInsight}` : ''
       const telLink = phone ? `\n\n📲 Tap to call: ${phone}` : ''
+      const addressLine = args.customer_address ? `\n📍 ${args.customer_address}` : ''
       const businessLine = tenant.business_name
         ? `🤖 BellAveGo for ${tenant.business_name}\n`
         : `🤖 BellAveGo lead\n`
       await twilioClient.messages.create({
-        body: `${businessLine}${urgencyEmoji} New callback\n\n👤 ${args.customer_name}\n📞 ${phone}\n💬 ${args.reason}\n⚡ Urgency: ${args.urgency}${insightLine}${telLink}\n\nView at bellavego.com/dashboard`,
+        body: `${businessLine}${urgencyEmoji} New callback\n\n👤 ${args.customer_name}\n📞 ${phone}${addressLine}\n💬 ${args.reason}\n⚡ Urgency: ${args.urgency}${insightLine}${telLink}\n\nView at bellavego.com/dashboard`,
         from: contractorAlertFrom,
         to: ownerPhone,
       })
@@ -472,6 +478,7 @@ async function takeMessage(opts: {
         contractorPhone: ownerPhone,
         callerName: args.customer_name,
         callerPhone: phone,
+        callerAddress: args.customer_address ?? null,
         callerMessage: args.reason,
         urgency: args.urgency,
         twilioNumberCalled: calledNumber,
@@ -510,6 +517,7 @@ async function takeMessage(opts: {
         contractorBusinessName: tenant.business_name || 'your business',
         callerName: args.customer_name,
         callerPhone: phone,
+        callerAddress: args.customer_address ?? null,
         callerMessage: args.reason,
         urgency: args.urgency,
         callTimeISO: new Date().toISOString(),
@@ -1009,6 +1017,7 @@ function extractTenant(message: VapiServerMessage['message']): TenantMeta {
 type TakeMessageArgs = {
   customer_name: string
   customer_phone: string
+  customer_address?: string
   reason: string
   urgency: 'emergency' | 'soon' | 'whenever' | string
 }

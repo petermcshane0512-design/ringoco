@@ -72,6 +72,7 @@ export type LeadAlertEmailArgs = {
   contractorPhone: string
   callerName: string
   callerPhone: string | null
+  callerAddress?: string | null    // service address (Emma captures when given)
   callerMessage: string
   urgency: 'emergency' | 'soon' | 'whenever' | string
   twilioNumberCalled: string | null
@@ -99,6 +100,7 @@ export function renderLeadAlertEmail(args: LeadAlertEmailArgs): { subject: strin
     `${urgencyIcon} BellAveGo lead — ${args.contractorBusinessName}\n\n` +
     `Caller: ${args.callerName}\n` +
     `Caller phone: ${callerPhonePretty}\n` +
+    (args.callerAddress ? `Service address: ${args.callerAddress}\n` : '') +
     `Message: ${args.callerMessage}\n` +
     `Urgency: ${urgencyLabel}\n` +
     `Time: ${time}\n\n` +
@@ -120,6 +122,7 @@ export function renderLeadAlertEmail(args: LeadAlertEmailArgs): { subject: strin
         <table style="width:100%;border-collapse:collapse;font-size:14px;">
           <tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;" width="120">Caller</td><td style="padding:8px 0;font-weight:700;">${escapeHtml(args.callerName)}</td></tr>
           <tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">Caller phone</td><td style="padding:8px 0;"><a href="tel:${escapeHtml(args.callerPhone || '')}" style="color:#0AA89F;font-weight:700;text-decoration:none;">${callerPhonePretty}</a></td></tr>
+          ${args.callerAddress ? `<tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;vertical-align:top;">Address</td><td style="padding:8px 0;line-height:1.5;">📍 <a href="https://maps.google.com/?q=${encodeURIComponent(args.callerAddress)}" style="color:#0AA89F;font-weight:700;text-decoration:none;">${escapeHtml(args.callerAddress)}</a></td></tr>` : ''}
           <tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;vertical-align:top;">Message</td><td style="padding:8px 0;line-height:1.5;">${escapeHtml(args.callerMessage)}</td></tr>
           <tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">Forward to</td><td style="padding:8px 0;">${escapeHtml(args.contractorOwnerName)} at <a href="tel:${escapeHtml(args.contractorPhone)}" style="color:#0AA89F;font-weight:700;text-decoration:none;">${contractorPhonePretty}</a></td></tr>
         </table>
@@ -153,6 +156,7 @@ export type ContractorLeadEmailArgs = {
   contractorBusinessName: string
   callerName: string
   callerPhone: string | null
+  callerAddress?: string | null
   callerMessage: string
   urgency: 'emergency' | 'soon' | 'whenever' | string
   callTimeISO: string
@@ -182,6 +186,7 @@ export function renderContractorLeadEmail(args: ContractorLeadEmailArgs): { subj
     `${urgencyIcon} New lead via BellAveGo\n\n` +
     `Caller: ${args.callerName}\n` +
     `Caller phone: ${callerPhonePretty}\n` +
+    (args.callerAddress ? `Service address: ${args.callerAddress}\n` : '') +
     `Message: ${args.callerMessage}\n` +
     `Urgency: ${urgencyLabel}\n` +
     `Time: ${time}\n` +
@@ -203,6 +208,7 @@ export function renderContractorLeadEmail(args: ContractorLeadEmailArgs): { subj
       <div style="padding:22px;">
         <table style="width:100%;border-collapse:collapse;font-size:14px;">
           <tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;" width="120">Phone</td><td style="padding:8px 0;"><a href="tel:${escapeHtml(args.callerPhone || '')}" style="color:#0AA89F;font-weight:700;text-decoration:none;">${callerPhonePretty}</a></td></tr>
+          ${args.callerAddress ? `<tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;vertical-align:top;">Address</td><td style="padding:8px 0;line-height:1.5;">📍 <a href="https://maps.google.com/?q=${encodeURIComponent(args.callerAddress)}" style="color:#0AA89F;font-weight:700;text-decoration:none;">${escapeHtml(args.callerAddress)}</a></td></tr>` : ''}
           <tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;vertical-align:top;">Message</td><td style="padding:8px 0;line-height:1.5;">${escapeHtml(args.callerMessage)}</td></tr>
           <tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">Urgency</td><td style="padding:8px 0;font-weight:700;">${urgencyIcon} ${urgencyLabel}</td></tr>
           ${args.smartInsight ? `<tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;vertical-align:top;">Smart insight</td><td style="padding:8px 0;line-height:1.5;color:#0B1F3A;">${escapeHtml(args.smartInsight)}</td></tr>` : ''}

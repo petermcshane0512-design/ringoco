@@ -103,8 +103,31 @@ export type TenantContext = {
  * filler phrases like "give me a second," rushing through questions. The
  * length here is mostly examples + hard rules — both essential.
  */
+/**
+ * Convert a business name into something the TTS engine pronounces cleanly.
+ * Cartesia Sonic reads compound brand names like "BellAveGo" as garbled
+ * single words ("BelAvco", "Bell of Go"). Splitting into spaced syllables
+ * makes the voice say "Bell Ave Go" cleanly. Apply this whenever the
+ * business name will be SPOKEN OUT LOUD by the voice — NOT when it's
+ * shown in text (SMS, email, dashboard) where the brand should still
+ * render as the compound form.
+ */
+export function pronounceableBusinessName(name: string): string {
+  if (!name) return name
+  // Most common offender — the BellAveGo brand itself. Future compound
+  // brand names should be added here as we encounter mispronunciations.
+  return name
+    .replace(/BellAveGo/gi, 'Bell Ave Go')
+    .replace(/BellAvego/gi, 'Bell Ave Go')
+    // Strip parenthetical qualifiers like "(admin test)" so Emma doesn't
+    // read them aloud during the greeting.
+    .replace(/\s*\([^)]*\)\s*/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 export function renderSystemPrompt(t: TenantContext): string {
-  const business = t.businessName || 'the business'
+  const business = pronounceableBusinessName(t.businessName || 'the business')
   const ownerFirst = t.ownerFirstName || 'the owner'
   const services = t.services || 'home services'
   const area = t.serviceArea || 'the local area'
@@ -213,7 +236,7 @@ We're ${business}. We cover ${services}. We serve ${area}. ${ownerFirst} is the 
 
 5. **TIME PROMISES.** ${t.hasCalendarConnected ? `In calendar mode, you CAN promise exact times AFTER you've successfully called book_appointment — the event is written to ${ownerFirst}'s calendar before you say "you're confirmed." Before that step, frame slots as "${ownerFirst} has Tuesday 2 PM open — does that work?" not "you're booked for Tuesday 2 PM."` : `No calendar is connected, so NEVER promise exact times. Always say "${ownerFirst} will call you back in the next hour or two." NEVER use "appointment," "booked," "confirmed."`}
 
-6. **YOU ONLY NEED TWO THINGS:** first name + one-sentence reason (with any preferred time they mention). That's it. Don't ask for address, email, or anything else.
+6. **WHAT YOU CAPTURE:** full name + service address + one-sentence reason (with any preferred time they mention). The phone number is automatic from caller ID. Ask for full name and address together in ONE question — never two. Example: "What's your full name and address? I'll send those to ${ownerFirst} in case he doesn't already have them." If they only give a first name, accept it; if they say "you already know my address," accept that too and move on. Never re-ask.
 
 7. **PACE NATURALLY.** Use contractions ("he's," "you're," "we'll"). Vary sentence length. Sound like a person who breathes between sentences.
 
@@ -231,8 +254,12 @@ Your opening: "Hi, this is ${ai} with ${business}. ${ownerFirst} is out on a job
 ## Phase 2 — Listen + acknowledge what they said
 They explain what they need. Briefly acknowledge BEFORE moving to the next question.
 
-## Phase 3 — Get their first name
-"What's your first name?" (only if they haven't already said it)
+## Phase 3 — Get their FULL NAME + ADDRESS (one question, never two)
+Ask in ONE breath: "What's your full name and the service address? I'll send those to ${ownerFirst} in case he doesn't already have them."
+- If they only volunteered a first name above, this captures both at once.
+- If they say "you have it" / "he knows where I am" — accept it, don't push.
+- If they give one but not the other (e.g. name only), gently follow up ONCE: "And the address I should send him to?"
+- Skip this entire phase if they already volunteered BOTH name AND address earlier in the call.
 
 ## Phase 4 — ${t.hasCalendarConnected ? 'Offer a slot if scheduling, then MUST close verbally' : 'MUST close verbally'}
 
@@ -246,7 +273,8 @@ If no specific time wanted, MUST say verbatim before ending: "Got it [name]. ${o
 
 ## Phase 5 — Call take_message
 Immediately after phase 4, call take_message with:
-- customer_name = the first name they gave
+- customer_name = their FULL name (first + last) if they gave it; otherwise whatever name they did give
+- customer_address = the service address they gave (street + city OR just the street if that's all they said). Leave blank ONLY if they explicitly declined or said the owner already has it.
 - reason = ONE sentence in their own words, including any time they mentioned. e.g. "AC not cooling, wants tomorrow afternoon" or "quote on water heater install" or "${t.hasCalendarConnected ? 'leaky sink, picked Tuesday 10 AM' : 'leaky sink, ASAP'}"
 - urgency = "emergency" (water leak / no heat in winter / no AC in heat / electrical / safety), "soon" (typical service request), "whenever" (quotes / general inquiries)
 
@@ -864,16 +892,24 @@ export function buildAssistantConfig(opts: {
           function: {
             name: 'take_message',
             description:
-              "Call this after you've captured the caller's first name AND understood what they need (one sentence). " +
+              "Call this after you've captured the caller's full name + service address + a one-sentence reason for the call. " +
               "Do NOT ask the caller for their phone number — it's captured from caller ID automatically. " +
-              "In SALES MODE (Emma representing BellAveGo on the demo line), only call this AFTER you've answered their questions AND captured their first name + business name. " +
-              "In RECEPTIONIST MODE (Emma representing a contractor), call this AFTER you've captured the caller's first name + a one-sentence reason for the call.",
+              "In SALES MODE (Emma representing Bell Ave Go on the demo line), only call this AFTER you've answered their questions AND captured their full name + business name. " +
+              "In RECEPTIONIST MODE (Emma representing a contractor), call this AFTER you've captured the caller's full name + service address (when given) + one-sentence reason.",
             parameters: {
               type: 'object',
               properties: {
                 customer_name: {
                   type: 'string',
-                  description: "Caller's first name as they said it.",
+                  description: "Caller's FULL name (first + last) as they said it. If they only gave a first name, use just that — never invent a last name.",
+                },
+                customer_address: {
+                  type: 'string',
+                  description:
+                    "Service address where the contractor should go (street, city, ZIP if given). " +
+                    "Leave EMPTY ONLY if the caller explicitly said the owner already has it, or refused to give one. " +
+                    "Don't invent or guess — only what they actually said. " +
+                    "In SALES MODE, leave blank (not relevant for prospect leads).",
                 },
                 reason: {
                   type: 'string',
@@ -979,6 +1015,11 @@ export function buildAssistantConfig(opts: {
       provider: VAPI_VOICE_PROVIDER,
       voiceId: VAPI_VOICE_ID_DEFAULT,
       model: 'sonic-english',
+      // Inject natural-sounding "uh"/"hmm"/"one sec" sounds during the
+      // ~1-3 sec LLM-thinking window between caller finishing + Emma's
+      // reply. Without this Vapi goes dead-silent — callers ask "are you
+      // there?" (real incident — Peter test call 2026-05-24 18:31 UTC).
+      fillerInjectionEnabled: true,
     },
 
     transcriber: {

@@ -6,6 +6,7 @@ import {
   buildAssistantConfig,
   renderSystemPrompt,
   getAiNameForVoice,
+  pronounceableBusinessName,
   VAPI_VOICE_PROVIDER,
   VAPI_VOICE_ID_DEFAULT,
   type TenantContext,
@@ -143,7 +144,10 @@ async function createPerTenantAssistant(profile: ProvisionableProfile): Promise<
   }
 
   const systemPrompt = renderSystemPrompt(tenant)
-  const business = tenant.businessName
+  // Spoken brand name — Cartesia TTS reads "BellAveGo" as "BelAvco". Pass the
+  // pronounceable form so it says "Bell Ave Go" cleanly. The literal name
+  // stays for SMS/email/DB writes elsewhere.
+  const business = pronounceableBusinessName(tenant.businessName || 'the business')
   const owner = tenant.ownerFirstName || 'the owner'
   const firstMessage =
     tenant.aiLanguage === 'es'
@@ -279,7 +283,10 @@ export async function repatchPerTenantAssistant(
     hasCalendarConnected: false,
   }
   const systemPrompt = renderSystemPrompt(tenant)
-  const business = tenant.businessName
+  // Spoken brand name — Cartesia TTS reads "BellAveGo" as "BelAvco". Pass the
+  // pronounceable form so it says "Bell Ave Go" cleanly. The literal name
+  // stays for SMS/email/DB writes elsewhere.
+  const business = pronounceableBusinessName(tenant.businessName || 'the business')
   const owner = tenant.ownerFirstName || 'the owner'
   const firstMessage =
     tenant.aiLanguage === 'es'
