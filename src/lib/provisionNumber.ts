@@ -302,6 +302,11 @@ export async function repatchPerTenantAssistant(
     appBaseUrl: APP_URL,
     webhookSecret: process.env.VAPI_WEBHOOK_SECRET,
   })
+  // Spread baseConfig.voice so all new voice flags (fillerInjectionEnabled,
+  // future ones) propagate to existing assistants on repatch — without this,
+  // editing a contractor's profile would update the prompt but leave the
+  // voice config frozen at whatever was baked in when the assistant was
+  // first created.
   const patchBody = {
     name: `BellAveGo · ${tenant.businessName}`,
     firstMessage,
@@ -310,9 +315,8 @@ export async function repatchPerTenantAssistant(
       messages: [{ role: 'system' as const, content: systemPrompt }],
     },
     voice: {
-      provider: VAPI_VOICE_PROVIDER,
-      voiceId,
-      model: 'sonic-english',
+      ...baseConfig.voice,
+      voiceId, // tenant-specific override
     },
     metadata: {
       user_id: p.user_id,
