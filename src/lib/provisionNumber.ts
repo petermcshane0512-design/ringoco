@@ -21,9 +21,19 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+// CRITICAL: must resolve to www.bellavego.com — the apex `bellavego.com`
+// 307-redirects all requests to www, and Vapi (like most webhook senders)
+// drops the request on a 307 redirect for POST. This silently broke every
+// tool-call + end-of-call-report webhook from per-tenant assistants whose
+// serverUrl baked in the non-www URL. We force `www.` regardless of what
+// the env var says so a misconfigured Vercel env can never reintroduce
+// the same outage.
+function forceWww(url: string): string {
+  return url.replace(/^https?:\/\/(?!www\.)(bellavego\.com)/i, 'https://www.$1')
+}
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost')
-    ? process.env.NEXT_PUBLIC_APP_URL
+    ? forceWww(process.env.NEXT_PUBLIC_APP_URL)
     : 'https://www.bellavego.com'
 
 function extractAreaCode(phone: string | null | undefined): string | undefined {
