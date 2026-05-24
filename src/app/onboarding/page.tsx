@@ -108,7 +108,18 @@ export default function OnboardingPage() {
         ai_language: 'en',
         revenue_range: '',
         team_size: '',
-        services: 'Call answering, Appointment booking, SMS confirmations',
+        // CRITICAL: services is what Emma reads aloud — "We cover X" in
+        // her prompt. Use the actual trades the contractor selected.
+        // Previously hardcoded to BellAveGo's product features
+        // ("Call answering, Appointment booking, SMS confirmations")
+        // which made Emma tell callers we cover SaaS features instead
+        // of HVAC/plumbing. Fall back to business_type if no trades
+        // selected, then a generic phrase. (Audit 2026-05-24)
+        services: form.trades.length > 0
+          ? form.trades.join(', ')
+          : form.businessType
+          ? `${form.businessType} services`
+          : 'home services',
         hours_open: '8:00 AM',
         hours_close: '6:00 PM',
         onboarding_complete: true,

@@ -100,8 +100,16 @@ export default function SetupWizard() {
           router.replace("/dashboard")
           return
         }
-        if (p.is_active) {
-          // Webhook landed — render the wizard.
+        // Gate on BOTH is_active AND twilio_number. The Stripe webhook
+        // sets is_active=true BEFORE calling provisionNumberForUser, so
+        // is_active flips ~5-10s before the Twilio number actually
+        // exists. Without the twilio_number gate, the wizard renders
+        // Step 1 with the dial-button hidden (because the button is
+        // gated on profile.twilio_number) and the user is stuck on
+        // a screen that says "Provisioning…" with no path forward
+        // until they manually refresh. (Audit 2026-05-24)
+        if (p.is_active && p.twilio_number) {
+          // Webhook landed AND number is provisioned — render the wizard.
           setProfile(p)
           setStep(p.setup_step && p.setup_step > 1 ? p.setup_step : 1)
           setCrm(p.crm_provider || "")

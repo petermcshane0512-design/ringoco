@@ -56,8 +56,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    // Get subscription details to find the price/tier
-    let planTier = 'starter'
+    // Get subscription details to find the price/tier.
+    // Default to 'receptionist' (the lowest paying tier) so a price ID we
+    // don't recognize still produces a VALID tier slug — 'starter' was
+    // the previous fallback but isn't in TIER_METADATA, so any unknown
+    // price would break dashboard tier lookups downstream. (Audit 2026-05-24)
+    let planTier: string = 'receptionist'
     let meteredItemId: string | null = null
 
     if (subscriptionId) {
@@ -65,15 +69,24 @@ export async function POST(req: NextRequest) {
         expand: ['items.data.price'],
       })
 
+      let matchedPrice = false
       for (const item of subscription.items.data) {
         const priceId = item.price.id
         if (PRICE_TO_TIER[priceId]) {
           planTier = PRICE_TO_TIER[priceId].tier
+          matchedPrice = true
         }
         // Metered item has no_periods usage type
         if (item.price.recurring?.usage_type === 'metered') {
           meteredItemId = item.id
         }
+      }
+      if (!matchedPrice) {
+        console.error(
+          `[stripe webhook] Subscription ${subscriptionId} has price IDs not in PRICE_TO_TIER: ` +
+            subscription.items.data.map((i) => i.price.id).join(', ') +
+            ` — defaulted to 'receptionist'. Update src/lib/pricing.ts PRICE_TO_TIER.`,
+        )
       }
     }
 
