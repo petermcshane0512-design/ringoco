@@ -134,13 +134,17 @@ export async function POST(req: NextRequest) {
       )
       const createdAt = (c.createdAt as string) ?? new Date().toISOString()
 
+      // Use a minimal row — call_logs schema in production doesn't include
+      // every column the live webhook writes (some were never migrated).
+      // Counts + flags are what the dashboard reads; transcript/summary
+      // are nice-to-haves that we drop here for backfill resilience.
+      void transcript
+      void summary
       const { error: insErr } = await supabase.from('call_logs').insert({
         user_id: p.user_id,
         profile_id: p.user_id,
         call_sid: callSid,
         caller_phone: callerPhone,
-        transcript,
-        summary,
         job_created: tookMessage,
         booking_completed: tookMessage,
         created_at: createdAt,
