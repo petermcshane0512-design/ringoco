@@ -192,6 +192,29 @@ export function tierForPriceId(priceId: string): Tier | undefined {
 }
 
 /**
+ * Monthly inbound call cap for a given plan_tier slug.
+ *
+ * Returns the v2 caps: Starter 60 / Pro 300 / Elite unlimited (999999).
+ *
+ * For legacy plan_tier values (foundation, growth, premium, multiloc),
+ * inherits the v2 cap of their effective tier set so grandfathered
+ * customers don't get punished by lower caps than current marketing.
+ *
+ * Used by /api/vapi/end-of-call-report to detect when a contractor has
+ * crossed their monthly cap and needs their assistant swapped into
+ * capacity mode. See sql/2026-05-24-capacity-mode-tracking.sql.
+ */
+export function callCapForTier(planTier: string | null | undefined): number {
+  const t = (planTier || '').toLowerCase()
+  if (RECEPTIONIST_TIERS.has(t)) return 60       // Starter
+  if (t === 'officemgr' || t === 'growth' || t === 'premium') return 300  // Pro
+  if (t === 'concierge') return 999999           // Elite — unlimited
+  if (t === 'multiloc') return 999999            // enterprise — unlimited
+  // Unknown tier — be permissive (don't accidentally cap a paying customer).
+  return 999999
+}
+
+/**
  * Display name for a tier slug, version-aware.
  *   v1 → 'Mission Control' | 'Operator' | 'Concierge'
  *   v2 → 'Starter'         | 'Pro'      | 'Elite'

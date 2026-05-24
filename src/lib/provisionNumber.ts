@@ -315,6 +315,139 @@ export async function repatchPerTenantAssistant(
 }
 
 /**
+ * Switch a contractor's per-tenant Vapi assistant into "capacity mode"
+ * because they've crossed their monthly call cap. Sends a polite hangup
+ * message instead of running the full receptionist flow.
+ *
+ * Mechanism: PATCH the assistant's firstMessage + system prompt +
+ * maxDurationSeconds + endCallFunctionEnabled. Tools array MUST be
+ * re-included in model.tools because Vapi PATCH replaces nested objects
+ * (we discovered this earlier — see bake-sales-prompt-into-assistant.mjs).
+ *
+ * Called from /api/vapi/end-of-call-report after a call ends and the
+ * contractor's month-to-date count crosses their cap. Also stamps
+ * profiles.capacity_mode_at so /api/crons/reset-monthly-caps knows to
+ * restore this assistant on the 1st of next month.
+ *
+ * Idempotent: calling on an already-capacity-mode assistant just sends
+ * the same PATCH again. Cheap. Safe.
+ */
+export async function switchToCapacityMode(
+  userId: string,
+): Promise<{ ok: true; assistantId: string } | { ok: false; reason: string }> {
+  if (!process.env.VAPI_API_KEY) {
+    return { ok: false, reason: 'VAPI_API_KEY not set' }
+  }
+
+  const { data: profile, error: pErr } = await supabase
+    .from('profiles')
+    .select('user_id, business_name, owner_first_name, vapi_assistant_id')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (pErr || !profile) {
+    return { ok: false, reason: pErr?.message || 'profile not found' }
+  }
+  const p = profile as unknown as {
+    user_id: string
+    business_name: string | null
+    owner_first_name: string | null
+    vapi_assistant_id: string | null
+  }
+  if (!p.vapi_assistant_id) {
+    return { ok: false, reason: 'no vapi_assistant_id' }
+  }
+
+  const business = p.business_name || 'us'
+  const owner = p.owner_first_name || 'the owner'
+
+  // Inherit tools + transcriber + guardrails from baseConfig so we
+  // don't wipe the tools array (Vapi PATCH replaces nested objects).
+  const baseConfig = buildAssistantConfig({
+    appBaseUrl: APP_URL,
+    webhookSecret: process.env.VAPI_WEBHOOK_SECRET,
+  })
+
+  const capacityPrompt =
+    `You are Emma, the AI receptionist for ${business}. ` +
+    `${owner} has reached the monthly call capacity for our AI receptionist service. ` +
+    `Your ONLY job on this call:\n\n` +
+    `1. Politely tell the caller: "Hi, this is Emma with ${business}. ${owner} has hit ` +
+    `our monthly call capacity for AI receptionist service. Please call back after the ` +
+    `1st of the month, or text this number if it's truly urgent. Thanks for calling."\n` +
+    `2. End the call. Do NOT take a message, do NOT offer to book, do NOT ask questions. ` +
+    `Just deliver the message and hang up.\n\n` +
+    `HARD RULES:\n` +
+    `- Do not call take_message under any circumstances.\n` +
+    `- Do not call check_availability or book_appointment.\n` +
+    `- Keep your response under 20 seconds of speaking.`
+
+  const patchBody = {
+    firstMessage:
+      `Hi, this is Emma with ${business}. ${owner} has hit our monthly call capacity for AI ` +
+      `receptionist service. Please call back after the 1st of the month, or text this ` +
+      `number if it's urgent. Thanks for calling.`,
+    model: {
+      ...baseConfig.model,
+      messages: [{ role: 'system' as const, content: capacityPrompt }],
+    },
+    maxDurationSeconds: 30,
+    silenceTimeoutSeconds: 8,
+    endCallFunctionEnabled: false,
+    endCallMessage: 'Thanks for calling — goodbye.',
+  }
+
+  try {
+    const res = await fetch(`https://api.vapi.ai/assistant/${p.vapi_assistant_id}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${process.env.VAPI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(patchBody),
+    })
+    if (!res.ok) {
+      const body = await res.text()
+      const msg = `Vapi PATCH (capacity mode) failed (${res.status}): ${body.slice(0, 200)}`
+      console.error(`switchToCapacityMode for ${userId}:`, msg)
+      return { ok: false, reason: msg }
+    }
+    // Stamp the column so the reset cron knows to restore later.
+    await supabase
+      .from('profiles')
+      .update({ capacity_mode_at: new Date().toISOString() })
+      .eq('user_id', userId)
+    console.log(`[capacity-mode] ${userId} → switched to capacity mode (assistant ${p.vapi_assistant_id})`)
+    return { ok: true, assistantId: p.vapi_assistant_id }
+  } catch (e) {
+    const msg = (e as Error).message
+    console.error(`switchToCapacityMode for ${userId} threw:`, msg)
+    return { ok: false, reason: msg }
+  }
+}
+
+/**
+ * Restore a contractor's assistant from capacity mode back to normal.
+ * Re-runs renderSystemPrompt(tenant) via repatchPerTenantAssistant
+ * (which already exists), then clears profiles.capacity_mode_at.
+ *
+ * Called by /api/crons/reset-monthly-caps on the 1st of each month.
+ */
+export async function restoreFromCapacityMode(
+  userId: string,
+): Promise<{ ok: true; assistantId: string } | { ok: false; reason: string }> {
+  const repatch = await repatchPerTenantAssistant(userId)
+  if (!repatch.ok) {
+    return { ok: false, reason: repatch.reason }
+  }
+  await supabase
+    .from('profiles')
+    .update({ capacity_mode_at: null })
+    .eq('user_id', userId)
+  console.log(`[capacity-mode] ${userId} → restored to normal mode (assistant ${repatch.assistantId})`)
+  return repatch
+}
+
+/**
  * Idempotent per-tenant provisioning. Operation order (per Peter's spec):
  *
  *   1. Create per-tenant Vapi assistant FIRST (cheapest step that can fail)

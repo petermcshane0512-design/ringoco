@@ -404,7 +404,7 @@ Use these when a caller asks "how is this different from [competitor]" or "won't
 ## Pricing — three tiers (monthly, no setup fees, 30-day money-back)
 
 ### Starter — $147/month
-- AI answers up to **60 inbound calls / month** (≈2 per day — fits solo and 1-3-person operators). Heavier callers upgrade to Pro.
+- AI answers up to **60 inbound calls / month** (≈2 per day — fits solo and 1-3-person operators). At cap, calls hear a polite "we're at capacity this month, please call back after the 1st" message. Heavier callers upgrade to Pro ($297, 300/mo) or Elite ($597, unlimited).
 - Captures: caller name, what they need, preferred time, urgency
 - Texts you a summary in 20 seconds — tap to call back · reply YES to confirm · reply NO to decline
 - Auto-provisioned local phone number in YOUR area code at signup
@@ -414,7 +414,7 @@ Use these when a caller asks "how is this different from [competitor]" or "won't
 
 ### Pro — $297/month (most popular)
 Everything in Starter, PLUS:
-- **Up to 300 inbound calls / month** (≈10 per day — fits the vast majority of multi-truck operations). Scale past it, upgrade to Elite for unlimited.
+- **Up to 300 inbound calls / month** (≈10 per day — fits the vast majority of multi-truck operations). At cap, calls hear the same polite capacity message. Scale past it, upgrade to Elite ($597) for unlimited.
 - AI Quote Hunter — auto follow-up SMS on day 2, 7, 14 for every open quote you log in the dashboard
 - AI Collections — auto-chases past-due invoices you flag, with pay-by-text Stripe links auto-generated
 - AI Reputation — auto-SMS past customers asking for Google reviews (requires your Google Business Profile linked)

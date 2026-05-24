@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
 import Anthropic from '@anthropic-ai/sdk'
-import { OFFICE_MGR_TIERS } from '@/lib/pricing'
+import { OFFICE_MGR_TIERS, callCapForTier } from '@/lib/pricing'
 import { verifyVapiSignature } from '@/lib/vapi'
+import { switchToCapacityMode } from '@/lib/provisionNumber'
 import { sendEmail, renderLeadAlertEmail, renderContractorLeadEmail, renderFirstCallCelebrationEmail } from '@/lib/email'
 import { lookupOwnerEmail } from '@/lib/notify'
 import { estimateJobTicket } from '@/lib/consultingMetrics'
@@ -667,6 +668,14 @@ async function takeMessage(opts: {
     console.error('call_logs upsert failed:', e)
   }
 
+  // 7. Cap check — if this call crossed the tenant's monthly cap, swap
+  // their Vapi assistant into capacity mode so call N+1 hears a polite
+  // "we've hit capacity" hangup instead of a full receptionist flow.
+  // Fire-and-forget — must not block returning to Vapi.
+  enforceCapIfCrossed(tenant.user_id, tenant.plan_tier).catch((e) =>
+    console.error(`enforceCapIfCrossed (toolCalls path) for ${tenant.user_id}:`, e),
+  )
+
   return { success: true }
 }
 
@@ -775,7 +784,60 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
     console.error('end-of-call call_logs upsert failed:', e)
   }
 
+  // Cap check — same fire-and-forget pattern as the toolCalls path so
+  // a hangup-only call (no take_message) still counts toward the cap.
+  // Without this, a caller who hits then hangs up wouldn't trigger
+  // the capacity-mode swap even though the call already cost us money.
+  enforceCapIfCrossed(tenant.user_id, tenant.plan_tier).catch((e) =>
+    console.error(`enforceCapIfCrossed (endOfCall path) for ${tenant.user_id}:`, e),
+  )
+
   return NextResponse.json({ ok: true })
+}
+
+// ── Cap enforcement ─────────────────────────────────────────────
+/**
+ * After a call ends, count this tenant's month-to-date inbound calls.
+ * If they've crossed their plan_tier cap AND aren't already in capacity
+ * mode, PATCH their Vapi assistant to "capacity mode" so the NEXT call
+ * hears a polite hangup instead of running the full receptionist flow.
+ *
+ * Idempotent — short-circuits if already in capacity mode (no double-PATCH).
+ *
+ * Cost note: there's a small race window where calls N+1, N+2 might
+ * land within ~2 seconds of N triggering the swap. Those still hear the
+ * normal Emma. Acceptable — worst case is ~$1 in extra calls before the
+ * swap propagates.
+ */
+async function enforceCapIfCrossed(userId: string, planTier: string | null | undefined) {
+  if (!userId) return
+  const cap = callCapForTier(planTier)
+  if (cap >= 999999) return  // unlimited tier — never swap
+
+  // Count month-to-date calls
+  const monthStart = new Date()
+  monthStart.setDate(1)
+  monthStart.setHours(0, 0, 0, 0)
+  const { count } = await supabase
+    .from('call_logs')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .gte('created_at', monthStart.toISOString())
+  const calls = count ?? 0
+
+  if (calls < cap) return  // under cap — nothing to do
+
+  // Already in capacity mode? Short-circuit.
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('capacity_mode_at')
+    .eq('user_id', userId)
+    .maybeSingle()
+  const alreadyCapped = !!(profile as unknown as { capacity_mode_at?: string | null })?.capacity_mode_at
+  if (alreadyCapped) return
+
+  console.log(`[cap-enforce] ${userId} hit cap (${calls}/${cap}) — switching to capacity mode`)
+  await switchToCapacityMode(userId)
 }
 
 // ── helpers ─────────────────────────────────────────────────────
