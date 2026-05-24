@@ -66,7 +66,11 @@ export async function POST() {
           'Hey Mike — your BellAveGo AI hasn\'t received any calls yet. Usually means call forwarding isn\'t set up on your business cell. Reply HELP for the 60-second setup or visit bellavego.com/dashboard. Reply STOP to opt out.',
           '🎉 Mike — that was your FIRST BellAveGo call! Sarah just called your business line and Emma captured the lead. From now on, every missed call gets answered, captured, and texted to you in 20 seconds. — Peter, BellAveGo',
         ],
-        usAppToPersonUsecase: 'MIXED',
+        // Sole-prop brands MUST use the SOLE_PROPRIETOR campaign use case
+        // (Twilio rejects any other value with HTTP 400). It supports up to
+        // ~3,000 SMS segments/day across all attached numbers — plenty for
+        // BellAveGo's lead-alert volume in the first 100 customers.
+        usAppToPersonUsecase: 'SOLE_PROPRIETOR',
         hasEmbeddedLinks: true,
         hasEmbeddedPhone: true,
         messageFlow:
