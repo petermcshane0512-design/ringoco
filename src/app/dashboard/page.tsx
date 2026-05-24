@@ -11,9 +11,9 @@ const ADMIN_EMAILS = new Set(["pmcshane@fordham.edu", "peter@bellavego.com"]);
 // Activation-banner copy. Prices come from TIER_METADATA in src/lib/pricing.ts
 // (single source of truth — if pricing changes, this banner updates automatically).
 const TIER_BANNER_COPY: Record<Tier, string> = {
-  receptionist: "AI answers every call · unlimited inbound · 6 AI consulting reports/yr",
-  officemgr:    "Starter + Quote Hunter + Collections + Reviews + Reputation + 12 reports/yr",
-  concierge:    "Pro + custom integrations + bi-weekly reports + 4-hr SLA + direct founder access",
+  receptionist: "AI answers every call · 60 calls/mo · 6 AI consulting reports/yr",
+  officemgr:    "Starter + 300 calls/mo + Quote Hunter + Collections + Reviews + Reputation + 12 reports/yr",
+  concierge:    "Pro + unlimited calls + custom integrations + bi-weekly reports + 4-hr SLA + direct founder access",
 };
 
 // NOTE: This page previously read jobs/customers/reports directly from
@@ -303,13 +303,13 @@ export default function DashboardPage() {
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   }
 
+  // Stripped to two metrics that actually reflect the AI's work: calls
+  // answered today + this week. Revenue + Total Customers cards removed
+  // 2026-05-24 — revenue moved into the consulting reports (estimated
+  // there with proper trade-average context); "Total Customers" was
+  // confusing because it counted contact rows AI created, not paying
+  // accounts. Less noise, more signal.
   const metrics = [
-    {
-      label: "BellAveGo Revenue · This Month", value: `$${counts.revenue.toLocaleString()}`,
-      sub: counts.revenue > 0 ? "From completed jobs" : "Booked jobs you mark complete will land here",
-      iconBg: "#ECFDF5", iconColor: "#059669", accentColor: "#22C55E",
-      icon: <><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" /></>,
-    },
     {
       label: "BellAveGo Calls Answered Today", value: String(callsToday),
       sub: callsToday > 0 ? `${callsToday} call${callsToday === 1 ? "" : "s"} the AI handled today` : "No calls yet today",
@@ -321,12 +321,6 @@ export default function DashboardPage() {
       sub: callsThisWeek > 0 ? `${callsThisWeek} call${callsThisWeek === 1 ? "" : "s"} since Monday` : "No calls this week yet",
       iconBg: "#EFF6FF", iconColor: "#2563EB", accentColor: "#3B82F6",
       icon: <><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></>,
-    },
-    {
-      label: "Total Customers", value: String(counts.customers),
-      sub: counts.customers > 0 ? `${counts.customers} contact${counts.customers !== 1 ? "s" : ""}` : "AI will add them as calls come in",
-      iconBg: "rgba(10,168,159,0.1)", iconColor: "#0AA89F", accentColor: "#0AA89F",
-      icon: <><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></>,
     },
   ];
 
@@ -382,6 +376,9 @@ export default function DashboardPage() {
             })}
             <Link href="/admin/customers" style={{ padding: "4px 10px", borderRadius: 99, color: "rgba(255,255,255,0.7)", fontSize: 11, fontWeight: 700, textDecoration: "none" }}>
               Cust →
+            </Link>
+            <Link href="/admin/founder" style={{ padding: "4px 10px", borderRadius: 99, background: "rgba(10,168,159,0.18)", color: "#5EEAD4", fontSize: 11, fontWeight: 700, textDecoration: "none" }}>
+              Nucleus →
             </Link>
           </div>
         ) : profile?.plan_tier && (TIER_METADATA[profile.plan_tier as Tier]) && (
