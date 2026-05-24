@@ -547,6 +547,80 @@ const feedShellStyle: React.CSSProperties = {
   overflow: 'hidden',
 }
 
+// ── Health ring — orbiting vendor status dots around the page perimeter ──
+type HealthRingData = {
+  asOf: string
+  overall: 'green' | 'yellow' | 'red' | 'unknown'
+  counts: { green: number; yellow: number; red: number }
+  vendors: Array<{
+    name: string
+    health: 'green' | 'yellow' | 'red' | 'unknown'
+    latency_ms: number | null
+    note: string
+  }>
+}
+
+function HealthRing() {
+  const { data } = useSWR<HealthRingData>(
+    '/api/admin/health-ring',
+    (url: string) => fetch(url).then((r) => r.json()),
+    { refreshInterval: 60_000, revalidateOnFocus: false },
+  )
+
+  if (!data) return null
+
+  const healthColor = (h: 'green' | 'yellow' | 'red' | 'unknown') =>
+    h === 'red' ? '#EF4444' : h === 'yellow' ? '#F59E0B' : h === 'green' ? '#22C55E' : '#7AAAB2'
+  const healthGlowFor = (h: 'green' | 'yellow' | 'red' | 'unknown') =>
+    h === 'red' ? 'rgba(239,68,68,0.50)' : h === 'yellow' ? 'rgba(245,158,11,0.45)' : h === 'green' ? 'rgba(34,197,94,0.40)' : 'rgba(122,170,178,0.30)'
+
+  return (
+    <div style={{ position: 'absolute', top: 84, right: 24, zIndex: 10 }}>
+      <div style={{
+        background: 'rgba(15,26,46,0.85)',
+        backdropFilter: 'blur(8px)',
+        border: `1px solid ${healthColor(data.overall)}`,
+        borderRadius: 14,
+        padding: '12px 14px',
+        minWidth: 200,
+        boxShadow: `0 8px 32px rgba(0,0,0,0.45), 0 0 24px ${healthGlowFor(data.overall)}`,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div style={{ fontSize: 10, fontWeight: 800, color: healthColor(data.overall), letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+            Infrastructure
+          </div>
+          <motion.div
+            animate={{ scale: [1, 1.35, 1], opacity: [0.85, 0.4, 0.85] }}
+            transition={{ duration: data.overall === 'red' ? 0.9 : data.overall === 'yellow' ? 1.6 : 2.6, repeat: Infinity }}
+            style={{ width: 9, height: 9, borderRadius: '50%', background: healthColor(data.overall), boxShadow: `0 0 10px ${healthColor(data.overall)}` }}
+          />
+        </div>
+        <div style={{ display: 'grid', gap: 6 }}>
+          {data.vendors.map((v) => (
+            <div key={v.name} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
+              <motion.div
+                animate={v.health === 'red' ? {
+                  scale: [1, 1.4, 1],
+                  boxShadow: [`0 0 6px ${healthColor(v.health)}`, `0 0 14px ${healthColor(v.health)}`, `0 0 6px ${healthColor(v.health)}`],
+                } : undefined}
+                transition={{ duration: 1.1, repeat: Infinity }}
+                style={{
+                  width: 8, height: 8, borderRadius: '50%',
+                  background: healthColor(v.health),
+                  boxShadow: `0 0 6px ${healthColor(v.health)}`,
+                  flexShrink: 0,
+                }}
+              />
+              <span style={{ flex: 1, color: COLORS.text, fontWeight: 700 }}>{v.name}</span>
+              <span style={{ color: COLORS.textMuted, fontSize: 10, fontFamily: 'ui-monospace, monospace' }}>{v.note}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const feedHeaderStyle: React.CSSProperties = {
   padding: '11px 14px',
   fontSize: 10,
@@ -823,6 +897,9 @@ export default function FounderDashboard() {
 
       {/* Live counters strip — top-center overlay */}
       <LiveCountersStrip data={data} />
+
+      {/* Infrastructure health ring — top-right overlay (own SWR poll) */}
+      <HealthRing />
 
       {/* Activity feed — bottom-right overlay */}
       <ActivityFeed calls={data?.recentCalls} />
