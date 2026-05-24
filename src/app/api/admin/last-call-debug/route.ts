@@ -28,9 +28,26 @@ export async function GET(req: NextRequest) {
   const gate = await requireAdmin()
   if (!gate.ok) return gate.res
 
-  const userId = new URL(req.url).searchParams.get('user_id')
+  const params = new URL(req.url).searchParams
+  let userId = params.get('user_id')
+  const twilioNumber = params.get('twilio_number')
+
+  // Allow lookup by twilio_number too — saves having to dig up the Clerk
+  // user_id when diagnosing a specific tenant number.
+  if (!userId && twilioNumber) {
+    const { data: byNum } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('twilio_number', twilioNumber)
+      .maybeSingle()
+    if (byNum?.user_id) userId = byNum.user_id
+  }
+
   if (!userId) {
-    return NextResponse.json({ error: 'missing user_id query param' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'missing user_id (or twilio_number) query param' },
+      { status: 400 },
+    )
   }
 
   // Pull profile + most recent call_log + most recent job in parallel.
