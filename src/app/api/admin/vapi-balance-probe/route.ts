@@ -42,27 +42,27 @@ export async function GET() {
     '/teams',
   ]
 
+  const privateKey = process.env.VAPI_PRIVATE_KEY
   const results: Array<{ path: string; auth: string; status: number; bodyPreview: string }> = []
   for (const p of candidates) {
-    // Try with Bearer first
+    // Try with PUBLIC key first (current VAPI_API_KEY)
     try {
       const r = await fetch(`https://api.vapi.ai${p}`, {
         headers: { Authorization: `Bearer ${process.env.VAPI_API_KEY}` },
       })
       const text = (await r.text()).slice(0, 300)
-      results.push({ path: p, auth: 'Bearer', status: r.status, bodyPreview: text })
+      results.push({ path: p, auth: 'Bearer (public)', status: r.status, bodyPreview: text })
     } catch (e) {
-      results.push({ path: p, auth: 'Bearer', status: 0, bodyPreview: `THREW: ${(e as Error).message}` })
+      results.push({ path: p, auth: 'Bearer (public)', status: 0, bodyPreview: `THREW: ${(e as Error).message}` })
     }
-    // For 401s, try with x-api-key as fallback
-    const last = results[results.length - 1]
-    if (last.status === 401) {
+    // Then try with PRIVATE key — org-level endpoints need this
+    if (privateKey) {
       try {
         const r2 = await fetch(`https://api.vapi.ai${p}`, {
-          headers: { 'x-api-key': process.env.VAPI_API_KEY! },
+          headers: { Authorization: `Bearer ${privateKey}` },
         })
         const text2 = (await r2.text()).slice(0, 300)
-        results.push({ path: p, auth: 'x-api-key', status: r2.status, bodyPreview: text2 })
+        results.push({ path: p, auth: 'Bearer (private)', status: r2.status, bodyPreview: text2 })
       } catch {}
     }
   }
