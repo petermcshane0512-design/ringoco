@@ -152,7 +152,7 @@ async function handleOwnerHelp(args: { from: string; to: string; profile: Profil
     verizon: 'Verizon: dial *71 + your BellAveGo number from your business cell.',
     att: 'AT&T: dial **61* + your BellAveGo number + *11*15# from your business cell.',
     tmobile: 'T-Mobile: dial **61* + your BellAveGo number + *11*15# from your business cell.',
-    sprint: 'US Cellular/Cricket/Boost: dial *73 + your BellAveGo number.',
+    sprint: 'US Cellular/Cricket/Boost: dial **61* + your BellAveGo number + *11*15# (forwards only on no-answer after 15s).',
     unknown: 'Open your phone\'s settings → Phone → Call Forwarding (or use the dial code on the page below).',
   }
   const carrierTip = carrierTipMap[carrier] || carrierTipMap.unknown

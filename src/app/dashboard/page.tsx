@@ -474,7 +474,7 @@ export default function DashboardPage() {
               {tierKeys.map((k) => {
                 const t = TIER_METADATA[k];
                 const perMonth = billingCycle === "monthly" ? t.monthly : t.annual;
-                const callsLine = "Unlimited calls";
+                const callsLine = k === "receptionist" ? "60 calls/mo" : k === "officemgr" ? "300 calls/mo" : "Unlimited calls";
                 const setupLine = t.setup > 0 ? ` · +$${t.setup} setup` : "";
                 const active = tier === k;
                 return (
@@ -526,8 +526,9 @@ export default function DashboardPage() {
 
       {/* Forwarding-not-verified banner — single most common "looks fine
           but isn't" state. Contractor paid + got a Twilio number + got
-          welcomed, but never actually dialed *72/their carrier code to
-          forward their business line. Until they do, Emma waits silently
+          welcomed, but never actually dialed their carrier's conditional-
+          forward code (**61*…*11*15# on GSM, *71… on Verizon) to forward
+          their business line. Until they do, Emma waits silently
           and nothing happens. Sticky warning until forwarding_verified_at
           is stamped (set by /api/onboarding/verify-forwarding when our
           test call lands on Vapi within 90s). */}

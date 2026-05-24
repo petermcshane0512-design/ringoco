@@ -456,7 +456,7 @@ Save ~17% if you pay annually. Same features. Starter $1,460/yr · Pro $2,970/yr
 
 **Post-checkout setup wizard (~3-5 minutes):**
 - Confirms their AI number is provisioned and working.
-- Walks them through call forwarding setup with their carrier's exact code (*72 on Verizon, **21* on AT&T, etc. — we detect their carrier and show the right code).
+- Walks them through CONDITIONAL call forwarding so their phone still rings first and only routes to BellAveGo after ~15 seconds of no answer (*71 + number on Verizon, **61*number*11*15# on AT&T/T-Mobile and most GSM carriers — we detect their carrier and show the right code). Never unconditional *72.
 - Test call: we ring their landline, watch it forward to our number, confirm Emma picks up. Stamps "verified" the moment it works.
 - A2P 10DLC SMS verification gets submitted to Twilio for compliance — 1-14 day review window. Meanwhile lead emails fly fine.
 - Optional: connect Google Calendar / Outlook / Apple iCloud (Cronofy handles all providers in one OAuth flow) so the AI can offer real open slots and auto-book.

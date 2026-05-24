@@ -84,15 +84,19 @@ const CARRIERS: Record<CarrierKey, CarrierDef> = {
     label: "US Cellular / Cricket / Boost",
     color: "#FECB30",
     badge: "U",
-    dial: (n) => `*73${digits(n)}`,
-    disable: "*740",
+    // Cricket runs on AT&T, Boost on T-Mobile, US Cellular's roaming partners
+    // are also GSM. So the same conditional-forward code as AT&T/T-Mobile
+    // works on virtually all of them. The legacy Sprint *73 was unconditional-
+    // looking on some phones and skipped the no-answer delay we need.
+    dial: (n) => `**61*${digits(n)}*11*15#`,
+    disable: "##61#",
     steps: [
       { title: "Open your Phone app keypad", body: "Anywhere you'd dial a phone number." },
-      { title: "Type the forward code", body: "*73 then your BellAveGo number digits." },
-      { title: "Press call", body: "You'll hear two short beeps confirming activation." },
-      { title: "Test it", body: "Call your business number from another phone, don't answer for ~15s." },
+      { title: "Type the conditional-forward code", body: "**61* then your BellAveGo number digits, then *11*15# at the end. The 15 = wait 15 seconds before forwarding." },
+      { title: "Press call", body: "You'll see 'Service code complete' or hear two short beeps." },
+      { title: "Test it", body: "Call your business number from another phone, don't answer for ~15s — BellAveGo picks up." },
     ],
-    note: "If *73 doesn't work, your carrier may use a different code. Call them and ask: 'How do I forward unanswered calls to {your BellAveGo number}?' They'll set it up free.",
+    note: "Cricket runs on AT&T, Boost runs on T-Mobile, and US Cellular's GSM partners accept this code too. If it rejects, call your carrier and say: 'Set up conditional call forwarding to (your BellAveGo number) after 15 seconds of no answer.' It's free.",
   },
   iphone: {
     key: "iphone",
@@ -133,16 +137,32 @@ const CARRIERS: Record<CarrierKey, CarrierDef> = {
     label: "Other carrier",
     color: "#7AAAB2",
     badge: "?",
-    dial: (n) => `*72${digits(n)}`,
-    disable: "*73",
+    // GSM conditional-forward (no-answer, 15s). NEVER fall back to *72 —
+    // that's unconditional and routes every call instantly, so the owner
+    // never gets to pick up first. Almost every modern US carrier (Cricket,
+    // Mint, Boost, Google Fi, Visible, etc.) is on a GSM core and accepts
+    // this code.
+    dial: (n) => `**61*${digits(n)}*11*15#`,
+    disable: "##61#",
     steps: [
-      { title: "Call your carrier's support line", body: "Tell them: 'I need to set up conditional call forwarding to {your BellAveGo number} when I don't answer.'" },
-      { title: "Or try the universal code", body: "*72 then your BellAveGo number digits. Works on many smaller carriers." },
-      { title: "Test it", body: "Call your business number from another phone, don't answer for ~15s." },
+      { title: "Open your Phone app keypad", body: "Same place you'd dial a normal number." },
+      { title: "Tap the conditional-forward code above", body: "Most modern carriers (Cricket, Mint, Visible, Google Fi, Boost, etc.) accept this. The 15 at the end = wait 15 seconds before forwarding." },
+      { title: "Press call", body: "You'll usually see 'Service code complete' or hear two short beeps." },
+      { title: "Test it", body: "Call your business number from another phone, don't answer for ~15s. The AI should pick up." },
+      { title: "If the code rejects, call your carrier", body: "Tell them: 'Please set up conditional call forwarding to (your BellAveGo number) when I don't answer for 15 seconds.' It's free." },
     ],
-    note: "Most carriers support this for free. If yours doesn't, text Peter at (773) 710-9565 and we'll figure out an alternative.",
+    note: "If you have an old prepaid plan that rejects the code, text Peter at (773) 710-9565 and we'll arrange it with your carrier directly.",
   },
 };
+
+// Universal "wipe any existing forwarding" code. Run BEFORE setting a new
+// rule — prevents the bug where a leftover *72 from years ago sends every
+// call to a number that no longer exists. ##002# clears every forward
+// type (busy, no-answer, unconditional) on GSM carriers. Verizon uses *73.
+function clearAllForwardingCode(carrier: CarrierKey): string {
+  if (carrier === "verizon") return "*73";
+  return "##002#";
+}
 
 // ── Helpers ─────────────────────────────────────────────────────
 function formatUS(num: string) {
@@ -230,10 +250,38 @@ export default function ForwardingPage() {
         </div>
       )}
 
+      {/* STEP 0 — clear any existing forwarding before setting up new rule.
+          Without this, a leftover *72 from years ago can route every call
+          to a dead number (real bug Peter hit himself May 2026). */}
+      <div style={{ background: "#FFF7ED", border: "2px solid #FED7AA", borderRadius: 18, padding: 22, marginBottom: 18 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+          <span style={{ fontSize: 11, fontWeight: 800, color: "#fff", background: "#EA580C", padding: "4px 10px", borderRadius: 20, letterSpacing: "0.08em", textTransform: "uppercase" }}>Step 0 · Do this first</span>
+          <span style={{ fontSize: 11, color: "#9A3412", fontWeight: 700 }}>~ 10 seconds</span>
+        </div>
+        <h2 style={{ fontSize: 18, fontWeight: 900, color: "#7C2D12", marginTop: 4, marginBottom: 6 }}>Wipe any old call-forwarding first</h2>
+        <p style={{ fontSize: 13, color: "#7C2D12", marginBottom: 14, lineHeight: 1.55 }}>
+          If you&apos;ve <strong>ever</strong> set up call forwarding before — even years ago, even from a different job — clear it now. Otherwise the new forward may not stick, or worse, your calls could keep going to a dead number.
+        </p>
+        <a href={`tel:${encodeURIComponent(clearAllForwardingCode(carrier))}`} style={{
+          display: "inline-flex", alignItems: "center", gap: 10,
+          padding: "14px 22px", background: "linear-gradient(135deg, #EA580C 0%, #C2410C 100%)",
+          color: "#fff", textDecoration: "none", borderRadius: 14,
+          fontSize: 18, fontWeight: 800, letterSpacing: "0.5px",
+          fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+          boxShadow: "0 8px 24px rgba(234,88,12,0.32)",
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          Tap to dial {clearAllForwardingCode(carrier)}
+        </a>
+        <p style={{ fontSize: 12, color: "#9A3412", marginTop: 12, lineHeight: 1.55 }}>
+          You&apos;ll hear <strong>&quot;Erasure successful&quot;</strong> or two short beeps. That means it worked — keep going below.
+        </p>
+      </div>
+
       {/* Carrier picker */}
       <div style={{ marginBottom: 18 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: "#7AAAB2", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>
-          Pick your carrier {detected && (<span style={{ marginLeft: 8, color: "#0AA89F", fontWeight: 800 }}>· Auto-detected: {detected}</span>)}
+          <strong style={{ color: "#0AA89F" }}>Step 1 ·</strong> Pick your carrier {detected && (<span style={{ marginLeft: 8, color: "#0AA89F", fontWeight: 800 }}>· Auto-detected: {detected}</span>)}
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {(["verizon", "att", "tmobile", "sprint", "other"] as CarrierKey[]).map((k) => {
@@ -261,12 +309,12 @@ export default function ForwardingPage() {
       {/* Method A: Tap-to-dial card (fastest, works on every carrier) */}
       <div style={{ background: "#fff", border: `2px solid ${def.color}`, borderRadius: 18, padding: 22, marginBottom: 18, boxShadow: "0 8px 28px rgba(7,27,58,0.08)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-          <span style={{ fontSize: 10, fontWeight: 800, color: "#fff", background: def.color, padding: "3px 9px", borderRadius: 20, letterSpacing: "0.06em", textTransform: "uppercase" }}>Fastest method</span>
+          <span style={{ fontSize: 10, fontWeight: 800, color: "#fff", background: def.color, padding: "3px 9px", borderRadius: 20, letterSpacing: "0.06em", textTransform: "uppercase" }}>Step 2 · Fastest method</span>
           <span style={{ fontSize: 11, color: "#7AAAB2", fontWeight: 600 }}>~ 20 seconds</span>
         </div>
         <h2 style={{ fontSize: 18, fontWeight: 900, color: "#0B1F3A", marginTop: 8, marginBottom: 6 }}>Tap this code on your business cell</h2>
         <p style={{ fontSize: 13, color: "#4A7A80", marginBottom: 14, lineHeight: 1.55 }}>
-          Open this page on the phone you want to forward, then tap the green button below. Your phone will dial a special carrier code that turns on forwarding.
+          Open this page on the phone you want to forward, then tap the green button below. This dials a special carrier code that turns on <strong>conditional forwarding</strong> — calls only route to BellAveGo when you don&apos;t answer within ~15 seconds.
         </p>
 
         {/* The big dial button */}
@@ -371,7 +419,8 @@ export default function ForwardingPage() {
 
       {/* Verification */}
       <div style={{ background: "linear-gradient(135deg, #ECFDF5 0%, #F0FAF7 100%)", border: "1px solid #A7F3D0", borderRadius: 18, padding: 22 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 900, color: "#065F46", marginBottom: 6 }}>Confirm it&apos;s working</h2>
+        <div style={{ fontSize: 11, fontWeight: 800, color: "#fff", background: "#10B981", padding: "4px 10px", borderRadius: 20, letterSpacing: "0.08em", textTransform: "uppercase", display: "inline-block", marginBottom: 8 }}>Step 3 · Confirm it works</div>
+        <h2 style={{ fontSize: 16, fontWeight: 900, color: "#065F46", marginBottom: 6 }}>Test with a real call</h2>
         <p style={{ fontSize: 13, color: "#047857", marginBottom: 14, lineHeight: 1.55 }}>
           Once forwarding is on, have a friend (or your own second phone) call your <strong>business number</strong>. Don&apos;t pick up. After ~15 seconds the call rings BellAveGo and the AI greets the caller in your business name.
         </p>

@@ -38,16 +38,22 @@ const CARRIER_LABEL: Record<CarrierKey, string> = {
 function fwdCode(carrier: CarrierKey, bagNumber: string) {
   const digits = (bagNumber || "").replace(/\D/g, "");
   if (carrier === "verizon") return `*71${digits}`;
-  if (carrier === "att" || carrier === "tmobile") return `**61*${digits}*11*15#`;
-  if (carrier === "sprint") return `*73${digits}`;
-  return `*72${digits}`; // generic universal-ish fallback
+  // GSM conditional-forward (no-answer, 15s) — safe for AT&T, T-Mobile, and
+  // every GSM MVNO. Never use *72 (unconditional) as a fallback — that
+  // forwards every call instantly so the owner can never pick up first.
+  return `**61*${digits}*11*15#`;
 }
 
 function disableCode(carrier: CarrierKey) {
   if (carrier === "verizon") return "*73";
-  if (carrier === "att" || carrier === "tmobile") return "##61#";
-  if (carrier === "sprint") return "*740";
-  return "*73";
+  return "##61#";
+}
+
+// Universal "wipe any leftover forwarding" — runs BEFORE the new code so a
+// stale *72 from yesterday can't send every call to a dead number.
+function clearAllForwardingCode(carrier: CarrierKey) {
+  if (carrier === "verizon") return "*73";
+  return "##002#";
 }
 
 function tierMeta(tier: Tier | undefined) {
@@ -303,12 +309,37 @@ export default function SetupWizard() {
               <h2 style={titleStyle}>Forward your business cell here.</h2>
               <p style={subStyle}>
                 When your phone can&apos;t pick up after about 15 seconds, calls will route to BellAveGo automatically.
+                You still answer normally — BellAveGo only picks up if you don&apos;t.
                 {carrierDetected ? (
                   <> We detected your carrier as <strong style={{ color: "#0AA89F" }}>{CARRIER_LABEL[carrier]}</strong>.</>
                 ) : (
                   <> Pick your carrier:</>
                 )}
               </p>
+
+              {/* STEP 0 — wipe any leftover forwarding from a previous setup.
+                  This prevents the "stale *72 from yesterday" bug where every
+                  call goes to a number that no longer exists. Always shown. */}
+              <div style={{ marginBottom: 16, padding: "14px 16px", background: "#FFF7ED", border: "1.5px solid #FED7AA", borderRadius: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <span style={{ fontSize: 10, fontWeight: 800, color: "#fff", background: "#EA580C", padding: "3px 8px", borderRadius: 6, letterSpacing: "0.08em" }}>DO THIS FIRST</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "#9A3412", letterSpacing: "0.04em", textTransform: "uppercase" }}>Wipe any old forwarding (10 sec)</span>
+                </div>
+                <div style={{ fontSize: 12, color: "#7C2D12", lineHeight: 1.55, marginBottom: 10 }}>
+                  If you&apos;ve <strong>ever</strong> forwarded calls before — even years ago — clear it now. Otherwise the new forward may not stick.
+                </div>
+                <a href={`tel:${encodeURIComponent(clearAllForwardingCode(carrier))}`} style={{
+                  display: "inline-block", padding: "10px 18px", background: "#EA580C", color: "#fff",
+                  borderRadius: 10, textDecoration: "none", fontSize: 14, fontWeight: 800,
+                  fontFamily: "'JetBrains Mono', ui-monospace, monospace", letterSpacing: "0.5px",
+                  boxShadow: "0 4px 12px rgba(234,88,12,0.32)",
+                }}>
+                  Tap to dial {clearAllForwardingCode(carrier)}
+                </a>
+                <div style={{ fontSize: 11, color: "#9A3412", marginTop: 8, lineHeight: 1.5 }}>
+                  You&apos;ll hear &quot;Erasure successful&quot; or two beeps. Then continue below.
+                </div>
+              </div>
 
               {/* Carrier override (collapsed by default if detected) */}
               {(showAllCarriers || !carrierDetected) && (
