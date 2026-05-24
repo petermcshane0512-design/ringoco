@@ -167,6 +167,67 @@ export async function GET(req: NextRequest) {
     },
   }
 
+  // Query Vapi for actual call history on this assistant. If a call hit Vapi
+  // but we have no call_logs row, the webhook never reached us (signature
+  // failure, env mismatch, etc.). Vapi truth-source vs our DB will pinpoint
+  // the gap. Limited to 5 most recent so we don't burn the budget.
+  let vapiCalls: unknown = null
+  let vapiAssistantConfig: unknown = null
+  const vapiAssistantId = (profile as { vapi_assistant_id?: string | null }).vapi_assistant_id
+  if (vapiAssistantId && process.env.VAPI_API_KEY) {
+    try {
+      const [callsRes, assistantRes] = await Promise.all([
+        fetch(`https://api.vapi.ai/call?assistantId=${vapiAssistantId}&limit=5`, {
+          headers: { Authorization: `Bearer ${process.env.VAPI_API_KEY}` },
+        }),
+        fetch(`https://api.vapi.ai/assistant/${vapiAssistantId}`, {
+          headers: { Authorization: `Bearer ${process.env.VAPI_API_KEY}` },
+        }),
+      ])
+      if (callsRes.ok) {
+        const arr = (await callsRes.json()) as Array<Record<string, unknown>>
+        vapiCalls = arr.slice(0, 5).map((c) => ({
+          id: c.id,
+          createdAt: c.createdAt,
+          endedAt: c.endedAt,
+          endedReason: c.endedReason,
+          phoneNumber: (c.phoneNumber as { number?: string } | undefined)?.number,
+          customer: (c.customer as { number?: string } | undefined)?.number,
+          cost: c.cost,
+          summary: (c.summary as string | undefined)?.slice(0, 200),
+          messages_count: Array.isArray(c.messages) ? c.messages.length : null,
+          tool_call_count: Array.isArray(c.messages)
+            ? c.messages.filter((m) =>
+                (m as { toolCalls?: unknown[]; role?: string }).toolCalls ||
+                (m as { role?: string }).role === 'tool_calls',
+              ).length
+            : null,
+          assistantOverrides_metadata: (c.assistantOverrides as { metadata?: unknown } | undefined)?.metadata,
+        }))
+      } else {
+        vapiCalls = { error: `Vapi /call HTTP ${callsRes.status}`, body: (await callsRes.text()).slice(0, 200) }
+      }
+      if (assistantRes.ok) {
+        const a = (await assistantRes.json()) as Record<string, unknown>
+        vapiAssistantConfig = {
+          id: a.id,
+          name: a.name,
+          metadata: a.metadata,
+          firstMessage_preview: (a.firstMessage as string | undefined)?.slice(0, 100),
+          tool_names: ((a.model as { tools?: Array<{ function?: { name?: string } }> } | undefined)?.tools ?? [])
+            .map((t) => t.function?.name),
+          serverUrl: a.serverUrl,
+          serverMessages: a.serverMessages,
+          has_server_secret: !!(a.serverUrlSecret || (a.server as { secret?: string } | undefined)?.secret),
+        }
+      } else {
+        vapiAssistantConfig = { error: `Vapi /assistant HTTP ${assistantRes.status}` }
+      }
+    } catch (e) {
+      vapiCalls = { threw: (e as Error).message }
+    }
+  }
+
   return NextResponse.json({
     profile: {
       user_id: profile.user_id,
@@ -201,5 +262,9 @@ export async function GET(req: NextRequest) {
       TWILIO_DEMO_NUMBER: twilioDemoNumber,
     },
     would_have_fired: wouldHaveFired,
+    vapi_truth_source: {
+      assistant: vapiAssistantConfig,
+      recent_calls: vapiCalls,
+    },
   })
 }
