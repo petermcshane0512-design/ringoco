@@ -52,14 +52,13 @@ export async function GET() {
     welcomed_at: string | null
     first_call_at: string | null
   }
+  // Use select('*') so any optional column whose migration hasn't been
+  // run yet (e.g. first_call_at) doesn't crash the whole endpoint with
+  // "column profiles.X does not exist". We fall back to null for missing
+  // fields downstream — far better than the dashboard going 500.
   const { data: profilesRaw, error: pErr } = await supabase
     .from('profiles')
-    .select(
-      'user_id, business_name, plan_tier, is_active, twilio_number, ' +
-        'vapi_assistant_id, vapi_phone_number_id, vapi_import_failed_at, ' +
-        'vapi_assistant_creation_error, forwarding_verified_at, ' +
-        'created_at, welcomed_at, first_call_at',
-    )
+    .select('*')
 
   if (pErr) {
     return NextResponse.json({ error: pErr.message }, { status: 500 })

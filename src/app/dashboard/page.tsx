@@ -92,7 +92,19 @@ export default function DashboardPage() {
     }
   }
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => {
+    fetchAll();
+    // Auto-refresh every 15s so calls + jobs + revenue counters update in
+    // near-real-time without the contractor having to reload the page.
+    // 15s = fast enough that a missed call "feels" instant when their
+    // phone buzzes with the SMS alert, slow enough to avoid hammering
+    // the summary API (4 reads × 4/min × 100 contractors = manageable).
+    // Pauses when the tab is hidden so background tabs don't burn quota.
+    const tick = setInterval(() => {
+      if (document.visibilityState === "visible") fetchAll();
+    }, 15_000);
+    return () => clearInterval(tick);
+  }, []);
 
   async function fetchAll() {
     const profileRes = await fetch("/api/profile").then((r) => r.json()).catch(() => null);
