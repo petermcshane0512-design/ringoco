@@ -51,16 +51,17 @@ export async function GET(req: NextRequest) {
   }
 
   // Pull profile + most recent call_log + most recent job in parallel.
+  // Use `select('*')` on profiles so missing columns (e.g. first_call_at if
+  // its migration hasn't been run) don't error the whole endpoint — we'd
+  // rather get back what we have than fail closed during a debug session.
   const [
-    { data: profile },
-    { data: lastCall },
-    { data: lastJob },
+    { data: profile, error: profErr },
+    { data: lastCall, error: callErr },
+    { data: lastJob, error: jobErr },
   ] = await Promise.all([
     supabase
       .from('profiles')
-      .select(
-        'user_id, business_name, owner_first_name, owner_phone, backup_owner_phone, twilio_number, plan_tier, is_active, vapi_assistant_id, vapi_phone_number_id, first_call_at, forwarding_verified_at',
-      )
+      .select('*')
       .eq('user_id', userId)
       .maybeSingle(),
     supabase
@@ -80,7 +81,13 @@ export async function GET(req: NextRequest) {
   ])
 
   if (!profile) {
-    return NextResponse.json({ error: `no profile for user_id=${userId}` }, { status: 404 })
+    return NextResponse.json(
+      {
+        error: `no profile for user_id=${userId}`,
+        debug: { profErr, callErr, jobErr },
+      },
+      { status: 404 },
+    )
   }
 
   // Pull Clerk primary email to confirm where the contractor-lead email
