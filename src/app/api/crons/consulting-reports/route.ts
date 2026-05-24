@@ -16,8 +16,12 @@ const supabase = createClient(
  * 12/yr, Concierge = 4/yr quarterly deep-dive only; Concierge weekly handled by
  * marketing-ops-weekly cron). Cadences defined in src/lib/reportCadence.ts.
  *
- * Cap of 25 reports per run protects against burst spend on Claude/Twilio/Storage.
- * At scale we'll spread bursts across the day, but at 100 customers this is fine.
+ * Cap of 50 reports per run protects against burst spend on Claude/Twilio/Storage
+ * AND keeps each invocation comfortably inside maxDuration=300s (at ~3-5s per report
+ * dominated by the Claude call). Cron runs every 6h (vercel.json), so daily throughput
+ * is 4 × 50 = 200 reports/day — enough headroom for ~1,000 active customers blended
+ * across Receptionist (6/yr), Office-Mgr (12/yr), and Concierge (bi-weekly + quarterly).
+ * Leftover work rolls to the next 6h run.
  */
 export async function GET(req: NextRequest) {
   const cronSecret = process.env.CRON_SECRET
@@ -55,8 +59,8 @@ export async function GET(req: NextRequest) {
     if (due) dueList.push({ profile: p, type: due })
   }
 
-  // Cap per-run burst
-  const BURST_CAP = 25
+  // Cap per-run burst — 50/run × 4 runs/day = 200/day, sized for ~1,000 customers.
+  const BURST_CAP = 50
   const work = dueList.slice(0, BURST_CAP)
 
   const results: Awaited<ReturnType<typeof generateAndDeliverReport>>[] = []

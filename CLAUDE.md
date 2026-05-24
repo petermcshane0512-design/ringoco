@@ -192,8 +192,8 @@ Every one of these has been embedded as an assumption. Challenge them before act
 | **Phase 5 — Scale** | 342 customers at ~$97 avg = $400K ARR. 800 customers = $1M ARR. | Year 2 |
 
 **Pricing model (v8, May 23 2026 — defined in `src/lib/pricing.ts`):**
-- **Starter: $147/mo** (slug `receptionist`) → UNLIMITED calls, $0 setup, 6 AI consulting reports/yr
-- **Pro: $297/mo** (slug `officemgr`) → unlimited calls, $0 setup, 12 reports/yr + Quote Hunter / Collections / Reviews / Reputation / Smart Insights
+- **Starter: $147/mo** (slug `receptionist`) → **60 calls/mo cap**, $0 setup, 6 AI consulting reports/yr. Cap is the upgrade pump to Pro.
+- **Pro: $297/mo** (slug `officemgr`) → **300 calls/mo cap**, $0 setup, 12 reports/yr + Quote Hunter / Collections / Reviews / Reputation / Smart Insights
 - **Elite: $597/mo** (slug `concierge`) → unlimited calls, $0 setup, 24 bi-weekly consulting reports + custom integrations (Jobber/Housecall Pro/ServiceTitan) + 4-hour priority SLA + direct founder access for first 90 days. **Waitlist-only until 3 Pro customers exist.**
 - **Multi-Location: $2,497/loc + $25K setup** — enterprise, founder-led sale (unchanged)
 - **Annual plans**: ~17% off (Starter $1,460/yr · Pro $2,970/yr · Elite $5,970/yr)

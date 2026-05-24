@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { SAMPLE_REPORT } from '@/lib/consultingReport'
 
 type Step = {
   text: string
@@ -504,11 +503,8 @@ export default function ConsultingShowcase() {
 
         /* Mobile — both CTAs stack to full-width and center cleanly so
            they don't get clipped at narrow viewports. Matches the hero
-           CTA mobile pattern on page.tsx. Also hides the dense §4/§5/§6
-           preview card row + methodology ribbon — too cramped on phones
-           and not load-bearing for the conversion (Peter's call). */
+           CTA mobile pattern on page.tsx. */
         @media (max-width: 720px) {
-          .cs-cards { display: none !important; }
           .cs-cta-row {
             flex-direction: column !important;
             align-items: stretch !important;
@@ -640,68 +636,6 @@ export default function ConsultingShowcase() {
           </div>
         </div>
 
-        {/* 3 preview cards */}
-        <div className="cs-cards">
-          {/* Card 1: Top opportunity */}
-          <div className="cs-card">
-            <span className="cs-card-tag">§4 · Top Opportunity</span>
-            <h3 className="cs-card-title">{SAMPLE_REPORT.opportunities[0].title}</h3>
-            <p className="cs-card-meta">{SAMPLE_REPORT.opportunities[0].pattern}</p>
-            <div className="cs-card-stat">
-              <span className="num">+${SAMPLE_REPORT.opportunities[0].monthlyValue.toLocaleString()}</span>
-              <span className="lab">/ month</span>
-            </div>
-            <div className="cs-card-foot">
-              <span className="pip">High confidence</span>
-              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>52% close rate</span>
-            </div>
-          </div>
-
-          {/* Card 2: Service area map — self-contained SVG roadmap that
-              ALWAYS renders. Uses Mercator projection to plot real competitor
-              lat/lng coordinates on a Google-Maps-style background. No external
-              dependency, no API key needed. Real customer PDFs still use the
-              Google Static Maps proxy (which requires Maps Static API enabled
-              on Google Cloud), but the homepage always works regardless. */}
-          <div className="cs-card">
-            <span className="cs-card-tag">§5 · Service Area Map</span>
-            <h3 className="cs-card-title">{SAMPLE_REPORT.meta.metroLabel}</h3>
-            <p className="cs-card-meta">{SAMPLE_REPORT.marketScan.homeownersInArea.toLocaleString()} homeowners · {SAMPLE_REPORT.meta.serviceArea.length} ZIPs</p>
-            <div className="cs-mini-map" style={{ position: 'relative', overflow: 'hidden', borderRadius: 10 }}>
-              <ServiceAreaPreviewMap />
-              <div style={{ position: 'absolute', left: 8, right: 8, bottom: 6, display: 'flex', gap: 10, justifyContent: 'center', alignItems: 'center', fontSize: 9.5, fontWeight: 700, color: '#fff', letterSpacing: '0.04em', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#0AA89F', boxShadow: '0 0 0 1.5px #fff' }} /> You
-                </span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#F59E0B', boxShadow: '0 0 0 1.5px #fff' }} /> Top 5 real competitors
-                </span>
-              </div>
-            </div>
-            <div className="cs-card-foot">
-              <span className="pip">{(SAMPLE_REPORT.marketScan.pctHvacOver15Yrs * 100).toFixed(0)}% HVAC &gt; 15 yrs</span>
-              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>${(SAMPLE_REPORT.marketScan.addressableRevenueMonthly / 1000).toFixed(0)}K/mo addressable</span>
-            </div>
-          </div>
-
-          {/* Card 3: Outreach targets */}
-          <div className="cs-card">
-            <span className="cs-card-tag">§6 · Outreach Targets</span>
-            <h3 className="cs-card-title">5 commercial leads · TCPA-safe</h3>
-            <p className="cs-card-meta" style={{ marginBottom: 10 }}>Property managers, retail, real-estate brokers — legal to call.</p>
-            {SAMPLE_REPORT.outreachTargets.slice(0, 3).map(t => (
-              <div key={t.business} className="cs-out-row">
-                <span className="cs-out-name">{t.business}</span>
-                <span className="cs-out-phone">{t.phone}</span>
-              </div>
-            ))}
-            <div className="cs-card-foot">
-              <span className="pip">+2 more in report</span>
-              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>Avg LTV 4–6×</span>
-            </div>
-          </div>
-        </div>
-
         {/* University ribbon */}
         <div className="cs-ribbon">
           <div className="cs-rib-ico">
@@ -734,149 +668,5 @@ export default function ConsultingShowcase() {
         </div>
       </div>
     </section>
-  )
-}
-
-// ─────────────────────────────────────────────────────────────────
-// ServiceAreaPreviewMap
-// A self-contained SVG rendition of a Google-Maps-style roadmap centered on
-// St. Louis Park, MN with five real HVAC competitor pinpoints projected from
-// real lat/lng via Web Mercator. NO external API dependency — always renders.
-// Real customer PDFs use the actual Google Static Maps proxy; this is the
-// public marketing surface that needs to bulletproof.
-// ─────────────────────────────────────────────────────────────────
-function ServiceAreaPreviewMap() {
-  // SVG canvas dimensions (viewBox)
-  const W = 600
-  const H = 260
-  // Map center + zoom — St. Louis Park, MN (fictional demo business location)
-  const centerLat = 44.9489
-  const centerLng = -93.3479
-  const zoom = 12
-
-  // Web Mercator projection — same math Google Static Maps uses internally.
-  // Returns pixel offset from canvas center.
-  function project(lat: number, lng: number) {
-    const scale = (256 * Math.pow(2, zoom)) / (2 * Math.PI)
-    const px = scale * ((lng * Math.PI) / 180 + Math.PI)
-    const py = scale * (Math.PI - Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360)))
-    return { x: px, y: py }
-  }
-  const c = project(centerLat, centerLng)
-  function toScreen(lat: number, lng: number) {
-    const p = project(lat, lng)
-    return { x: p.x - c.x + W / 2, y: p.y - c.y + H / 2 }
-  }
-
-  // Real competitor coordinates (HVAC businesses in/around St. Louis Park, MN)
-  const pins: { lat: number; lng: number; kind: 'you' | 'competitor'; label: string }[] = [
-    { lat: 44.9489, lng: -93.3479, kind: 'you',        label: 'Y' },
-    { lat: 44.9357, lng: -93.3186, kind: 'competitor', label: '1' },
-    { lat: 44.9621, lng: -93.3645, kind: 'competitor', label: '2' },
-    { lat: 44.9285, lng: -93.3779, kind: 'competitor', label: '3' },
-    { lat: 44.9542, lng: -93.3097, kind: 'competitor', label: '4' },
-    { lat: 44.9389, lng: -93.3920, kind: 'competitor', label: '5' },
-  ]
-
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" style={{ width: '100%', height: '100%', display: 'block' }}>
-      {/* Google-Roadmap-style base: cream background */}
-      <rect x="0" y="0" width={W} height={H} fill="#F4EFE6" />
-
-      {/* Subtle parchment grain */}
-      <defs>
-        <pattern id="grain" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-          <rect width="40" height="40" fill="transparent" />
-          <circle cx="10" cy="10" r="0.5" fill="rgba(120,90,60,0.06)" />
-          <circle cx="28" cy="22" r="0.5" fill="rgba(120,90,60,0.06)" />
-        </pattern>
-        {/* Pin drop shadow */}
-        <filter id="pinShadowGM" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="2.5" />
-          <feOffset dy="2" />
-          <feComponentTransfer><feFuncA type="linear" slope="0.55" /></feComponentTransfer>
-          <feMerge><feMergeNode /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-      </defs>
-      <rect x="0" y="0" width={W} height={H} fill="url(#grain)" />
-
-      {/* Park splotches (light green) — evoke Bde Maka Ska / Wirth Park */}
-      <ellipse cx="180" cy="170" rx="55" ry="32" fill="#CFE5C9" opacity="0.85" />
-      <ellipse cx="430" cy="90"  rx="42" ry="26" fill="#CFE5C9" opacity="0.80" />
-      <ellipse cx="510" cy="200" rx="35" ry="20" fill="#CFE5C9" opacity="0.75" />
-
-      {/* Water bodies — light blue (chain of lakes are real to this area) */}
-      <ellipse cx="260" cy="60"  rx="34" ry="18" fill="#B3D9F2" opacity="0.85" />
-      <ellipse cx="120" cy="220" rx="28" ry="14" fill="#B3D9F2" opacity="0.85" />
-      <ellipse cx="340" cy="220" rx="22" ry="12" fill="#B3D9F2" opacity="0.80" />
-
-      {/* Major arterial roads — Google-style white with light gray border */}
-      <g stroke="#D8D2C6" strokeWidth="6" fill="none" strokeLinecap="round">
-        <path d="M0,140 C 150,135 280,155 420,145 S 580,135 600,138" />
-        <path d="M0,200 C 130,195 240,210 380,205 S 560,200 600,205" />
-        <path d="M180,0 C 195,80 175,160 200,260" />
-        <path d="M440,0 C 455,90 435,180 460,260" />
-      </g>
-      <g stroke="#FFFFFF" strokeWidth="3.5" fill="none" strokeLinecap="round">
-        <path d="M0,140 C 150,135 280,155 420,145 S 580,135 600,138" />
-        <path d="M0,200 C 130,195 240,210 380,205 S 560,200 600,205" />
-        <path d="M180,0 C 195,80 175,160 200,260" />
-        <path d="M440,0 C 455,90 435,180 460,260" />
-      </g>
-
-      {/* Side streets — subtle grid */}
-      <g stroke="#E8E2D4" strokeWidth="1.5" fill="none">
-        <path d="M0,80 L600,80" />
-        <path d="M0,110 L600,110" />
-        <path d="M0,170 L600,170" />
-        <path d="M0,230 L600,230" />
-        <path d="M80,0 L80,260" />
-        <path d="M260,0 L260,260" />
-        <path d="M340,0 L340,260" />
-        <path d="M520,0 L520,260" />
-      </g>
-
-      {/* "St. Louis Park" label */}
-      <text x={W / 2} y={28} textAnchor="middle" fontSize="11" fontWeight="700" fill="rgba(80,60,30,0.55)" letterSpacing="0.18em" style={{ textTransform: 'uppercase' }}>
-        St. Louis Park · Minneapolis Metro
-      </text>
-
-      {/* Pins — projected from real lat/lng */}
-      {pins.map((p, i) => {
-        const { x, y } = toScreen(p.lat, p.lng)
-        const isYou = p.kind === 'you'
-        const fill = isYou ? '#0AA89F' : '#F59E0B'
-        const ring = isYou ? '#5EEAD4' : '#FCD34D'
-        const r = isYou ? 17 : 14
-        return (
-          <g key={i} filter="url(#pinShadowGM)">
-            {/* Outer ring glow */}
-            <circle cx={x} cy={y} r={r + 5} fill={ring} opacity="0.35" />
-            {/* Pin body */}
-            <circle cx={x} cy={y} r={r} fill={fill} stroke="#fff" strokeWidth="2.5" />
-            {/* Label */}
-            <text x={x} y={y + 4} textAnchor="middle" fontSize={isYou ? 12 : 11} fontWeight="800" fill="#fff" fontFamily="system-ui, sans-serif">
-              {p.label}
-            </text>
-          </g>
-        )
-      })}
-
-      {/* Compass rose — tiny detail in top right */}
-      <g transform={`translate(${W - 28}, 28)`} opacity="0.5">
-        <circle cx="0" cy="0" r="10" fill="rgba(255,255,255,0.75)" stroke="rgba(80,60,30,0.3)" strokeWidth="1" />
-        <path d="M0,-7 L2,0 L0,7 L-2,0 Z" fill="rgba(80,60,30,0.7)" />
-        <text x="0" y="-12" textAnchor="middle" fontSize="7" fontWeight="800" fill="rgba(80,60,30,0.7)">N</text>
-      </g>
-
-      {/* Subtle bottom shade for legend readability */}
-      <rect x="0" y={H - 36} width={W} height="36" fill="url(#fadeBottom)" />
-      <defs>
-        <linearGradient id="fadeBottom" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="rgba(7,22,42,0)" />
-          <stop offset="100%" stopColor="rgba(7,22,42,0.55)" />
-        </linearGradient>
-      </defs>
-    </svg>
   )
 }

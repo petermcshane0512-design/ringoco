@@ -50,3 +50,16 @@ next-env.d.ts
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# ── Local-only artifacts not for the public repo ──
+# Temp JSON dumps from debug scripts (Twilio account info, Vapi transcripts)
+.tmp-*.json
+# Scraped/enriched business leads (real PII — local only)
+/leads/
+/.leads-tmp/
+# LLC paperwork
+/BELLAVEGOLLC
+# Playwright MCP cache
+/.playwright-mcp/
+# Page snapshots from local dev
+/*-snapshot.md

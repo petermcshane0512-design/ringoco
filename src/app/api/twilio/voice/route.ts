@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
-import { RECEPTIONIST_TIERS, OFFICE_MGR_TIERS, RECEPTIONIST_CALL_CAP } from '@/lib/pricing'
+import { OFFICE_MGR_TIERS, TIER_CALL_CAP } from '@/lib/pricing'
 
 const client = new Anthropic()
 const supabase = createClient(
@@ -196,22 +196,24 @@ export async function POST(req: NextRequest) {
   const voiceName = aiLang === 'es' ? 'Polly.Lupe-Neural' : 'Polly.Joanna-Neural'
   const speechLang = aiLang === 'es' ? 'es-US' : 'en-US'
 
-  // ── Receptionist tier: monthly call cap ──
-  // Tier sets + cap centralized in src/lib/pricing.ts (legacy 'foundation' included).
+  // ── Per-tier monthly call cap ──
+  // Cap value per plan_tier centralized in src/lib/pricing.ts (TIER_CALL_CAP).
   // Demo number is exempt (always full experience for prospects).
+  // Tiers with Infinity caps (Elite, legacy foundation/growth/premium/multiloc) skip the check.
   const profileWithTier = profile as (typeof profile & { plan_tier?: string; user_id?: string }) | null
-  if (!isDemo && RECEPTIONIST_TIERS.has(profileWithTier?.plan_tier ?? '') && profileWithTier?.user_id) {
+  const tierCap = TIER_CALL_CAP[profileWithTier?.plan_tier ?? ''] ?? Number.POSITIVE_INFINITY
+  if (!isDemo && Number.isFinite(tierCap) && profileWithTier?.user_id) {
     const monthStart = new Date()
     monthStart.setDate(1)
     monthStart.setHours(0, 0, 0, 0)
     // Count distinct calls received this month (call_logs.call_sid is the inception marker
-    // we insert for every call below). Falls back to jobs count if call_logs is empty.
+    // we insert for every call below).
     const { count } = await supabase
       .from('call_logs')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', profileWithTier.user_id)
       .gte('created_at', monthStart.toISOString())
-    if ((count ?? 0) >= RECEPTIONIST_CALL_CAP) {
+    if ((count ?? 0) >= tierCap) {
       const VR = (await import('twilio')).twiml.VoiceResponse
       const capTwiml = new VR()
       capTwiml.say(

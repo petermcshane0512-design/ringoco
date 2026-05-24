@@ -127,14 +127,29 @@ export const OFFICE_MGR_TIERS   = new Set<string>(['officemgr', 'concierge', 'gr
 export const CONCIERGE_TIERS    = new Set<string>(['concierge'])
 export const REVIEW_TIERS       = new Set<string>(['officemgr', 'concierge', 'growth', 'premium', 'multiloc'])
 
-// Cap on calls received per month for Receptionist tier.
-// v1 (Mission Control $397): 250 calls/mo — preserved for grandfathered customers
-// v2 (Starter $147):           60 calls/mo — entry-tier cap drives upgrade to Pro (unlimited)
-// The active value reflects what NEW signups would experience based on
-// CURRENT_PRICING_VERSION. Per-customer enforcement should prefer reading
-// PRICE_TO_TIER[their_stripe_price_id].calls for accurate per-tier limits.
+// Legacy cap export — preserved because /api/twilio/sms still imports it.
+// New code should read from TIER_CALL_CAP below for per-tier accuracy.
 export const RECEPTIONIST_CALL_CAP: number =
   CURRENT_PRICING_VERSION === 'v1_legacy' ? 250 : 60
+
+// Per-tier monthly call cap keyed by plan_tier slug. Single source of truth
+// for runtime enforcement in /api/twilio/voice and /api/vapi/assistant-request.
+// Infinity = no cap. Legacy slugs preserved at their original marketed caps
+// so grandfathered customers don't get downgraded.
+export const TIER_CALL_CAP: Record<string, number> = {
+  // v2 active (May 23 2026)
+  receptionist: CURRENT_PRICING_VERSION === 'v1_legacy' ? 250 : 60, // Starter $147
+  officemgr:    300,                                                 // Pro $297
+  concierge:    Number.POSITIVE_INFINITY,                            // Elite $597
+  // Legacy plan_tier strings — keep generous for grandfathered customers.
+  foundation:   Number.POSITIVE_INFINITY, // legacy $79 unlimited
+  growth:       Number.POSITIVE_INFINITY, // legacy $179 unlimited
+  premium:      Number.POSITIVE_INFINITY, // legacy $499 unlimited
+  multiloc:     Number.POSITIVE_INFINITY, // legacy custom
+  solo:         150,  // legacy v3 receptionist 150-call tier
+  scale:        1500, // legacy v3 office-mgr 1500-call tier
+  starter:      200,  // legacy v0 $49 starter
+}
 
 // ── Public tier metadata for /pricing page + dashboard + emails ──
 // Two metadata sets — TIER_METADATA_V1 (legacy display) and TIER_METADATA_V2
@@ -206,12 +221,9 @@ export function tierForPriceId(priceId: string): Tier | undefined {
  */
 export function callCapForTier(planTier: string | null | undefined): number {
   const t = (planTier || '').toLowerCase()
-  if (RECEPTIONIST_TIERS.has(t)) return 60       // Starter
-  if (t === 'officemgr' || t === 'growth' || t === 'premium') return 300  // Pro
-  if (t === 'concierge') return 999999           // Elite — unlimited
-  if (t === 'multiloc') return 999999            // enterprise — unlimited
-  // Unknown tier — be permissive (don't accidentally cap a paying customer).
-  return 999999
+  const cap = TIER_CALL_CAP[t]
+  if (cap === undefined) return 999999 // Unknown tier — permissive default.
+  return Number.isFinite(cap) ? cap : 999999
 }
 
 /**

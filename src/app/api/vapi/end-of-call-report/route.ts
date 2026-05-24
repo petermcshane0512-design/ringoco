@@ -353,9 +353,12 @@ async function takeMessage(opts: {
     console.error('amount_estimated lookup failed:', e)
   }
 
-  // jobs insert — same two-step defense as customers. Address column may
-  // not exist on jobs in older schemas; we don't want a missing column to
-  // drop the whole lead.
+  // jobs insert — TWO-STEP defense. ONLY include columns guaranteed to exist
+  // in the base schema. Any column added by a later migration (address,
+  // amount_estimated, revenue_source, etc.) is applied via a best-effort
+  // follow-up UPDATE so a missing/unapplied migration can NEVER kill lead
+  // capture again (this was the bug May 24 2026 — migration 018 wasn't
+  // applied to prod, so every take_message returned "I couldn't save that").
   const { data: jobRow, error: jobErr } = await supabase
     .from('jobs')
     .insert({
@@ -367,8 +370,6 @@ async function takeMessage(opts: {
       scheduled_time: 'callback requested',
       title: `Callback: ${args.customer_name} — ${args.reason}`,
       status: 'pending_approval',
-      amount_estimated: estimatedAmount,
-      revenue_source: estimatedAmount != null ? 'estimated' : null,
     })
     .select('id')
     .single()
@@ -378,6 +379,8 @@ async function takeMessage(opts: {
     return { success: false, error: 'database write failed' }
   }
 
+  // Best-effort follow-up updates for columns added by later migrations.
+  // Each wrapped independently so one missing column can't skip the rest.
   if (jobRow?.id && args.customer_address) {
     try {
       const { error: addrErr } = await supabase
@@ -389,6 +392,20 @@ async function takeMessage(opts: {
       }
     } catch (e) {
       console.warn('jobs.address update threw:', (e as Error).message)
+    }
+  }
+
+  if (jobRow?.id && estimatedAmount != null) {
+    try {
+      const { error: revErr } = await supabase
+        .from('jobs')
+        .update({ amount_estimated: estimatedAmount, revenue_source: 'estimated' })
+        .eq('id', jobRow.id)
+      if (revErr) {
+        console.warn('jobs.amount_estimated update skipped (migration 018 may not be applied):', revErr.message)
+      }
+    } catch (e) {
+      console.warn('jobs.amount_estimated update threw:', (e as Error).message)
     }
   }
 

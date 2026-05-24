@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { RECEPTIONIST_TIERS, RECEPTIONIST_CALL_CAP } from '@/lib/pricing'
+import { TIER_CALL_CAP } from '@/lib/pricing'
 import {
   renderSystemPrompt,
   renderSalesAgentPrompt,
@@ -272,8 +272,10 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  // Receptionist tier monthly call cap
-  if (RECEPTIONIST_TIERS.has(profile.plan_tier ?? '')) {
+  // Per-tier monthly call cap — Starter 60, Pro 300, Elite unlimited (see TIER_CALL_CAP).
+  // Tiers with Infinity caps skip the check.
+  const tierCap = TIER_CALL_CAP[profile.plan_tier ?? ''] ?? Number.POSITIVE_INFINITY
+  if (Number.isFinite(tierCap)) {
     const monthStart = new Date()
     monthStart.setDate(1)
     monthStart.setHours(0, 0, 0, 0)
@@ -282,7 +284,7 @@ export async function POST(req: NextRequest) {
       .select('id', { count: 'exact', head: true })
       .eq('user_id', profile.user_id)
       .gte('created_at', monthStart.toISOString())
-    if ((count ?? 0) >= RECEPTIONIST_CALL_CAP) {
+    if ((count ?? 0) >= tierCap) {
       return NextResponse.json({
         assistantOverrides: {
           firstMessage: `Hi, thanks for calling ${profile.business_name || 'us'}. We've reached our call capacity for this month. Please call back next month, or text us if it's urgent. Thank you.`,

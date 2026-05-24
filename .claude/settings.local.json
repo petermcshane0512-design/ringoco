@@ -18,7 +18,8 @@
       "PowerShell(git add src/app/page.tsx)",
       "PowerShell(git add \"public/Landing Page 1.png\")",
       "Bash(ls -la \"C:\\\\Users\\\\peter\\\\ringoco\\\\\" | grep -i middleware)",
-      "Read(//c/Users/peter/**)"
+      "Read(//c/Users/peter/**)",
+      "bypassPermissions"
     ]
   }
 }
