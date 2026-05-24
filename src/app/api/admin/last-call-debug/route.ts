@@ -1,0 +1,181 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
+import { lookupOwnerEmail } from '@/lib/notify'
+
+/**
+ * Diagnostic — returns the most recent call_logs row for a user_id and
+ * tells you what notifications SHOULD have fired (and which would have
+ * been skipped because of missing data).
+ *
+ * Built specifically to debug "I called my number and didn't get an
+ * SMS/email" reports. Read what came back and compare against what the
+ * /api/vapi/end-of-call-report code path actually runs.
+ *
+ * Auth: requireAdmin() (x-admin-secret header OR admin Clerk session).
+ *
+ * USAGE
+ *   GET /api/admin/last-call-debug?user_id=user_xxxxx
+ *   curl -H "x-admin-secret: $ADMIN_API_SECRET" \
+ *     "https://www.bellavego.com/api/admin/last-call-debug?user_id=user_xxxxx"
+ */
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+)
+
+export async function GET(req: NextRequest) {
+  const gate = await requireAdmin()
+  if (!gate.ok) return gate.res
+
+  const userId = new URL(req.url).searchParams.get('user_id')
+  if (!userId) {
+    return NextResponse.json({ error: 'missing user_id query param' }, { status: 400 })
+  }
+
+  // Pull profile + most recent call_log + most recent job in parallel.
+  const [
+    { data: profile },
+    { data: lastCall },
+    { data: lastJob },
+  ] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select(
+        'user_id, business_name, owner_first_name, owner_phone, backup_owner_phone, twilio_number, plan_tier, is_active, vapi_assistant_id, vapi_phone_number_id, first_call_at, forwarding_verified_at',
+      )
+      .eq('user_id', userId)
+      .maybeSingle(),
+    supabase
+      .from('call_logs')
+      .select('id, call_sid, caller_phone, created_at, job_created, booking_completed, summary, transcript')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('jobs')
+      .select('id, customer_name, customer_phone, job_type, status, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ])
+
+  if (!profile) {
+    return NextResponse.json({ error: `no profile for user_id=${userId}` }, { status: 404 })
+  }
+
+  // Pull Clerk primary email to confirm where the contractor-lead email
+  // SHOULD have landed. Wrapped in try because Clerk lookup can throw.
+  let clerkEmail: string | null = null
+  let clerkLookupError: string | null = null
+  try {
+    clerkEmail = await lookupOwnerEmail(userId)
+  } catch (e) {
+    clerkLookupError = (e as Error).message
+  }
+
+  // Diagnose: what would the end-of-call webhook have done?
+  const fallbackOwnerPhone = process.env.FALLBACK_OWNER_PHONE ?? null
+  const fallbackOwnerEmail = process.env.FALLBACK_OWNER_EMAIL || 'bellavegollc@gmail.com'
+  const resendKeyPresent = !!process.env.RESEND_API_KEY
+  const twilioDemoNumber = process.env.TWILIO_DEMO_NUMBER || '+16514677829'
+
+  const p = profile as {
+    owner_phone?: string | null
+    business_name?: string | null
+  }
+  const c = lastCall as {
+    created_at?: string
+    job_created?: boolean | null
+    booking_completed?: boolean | null
+    summary?: string | null
+    transcript?: string | null
+  } | null
+
+  const messageCaptured = !!c?.job_created
+  const ownerPhoneResolved = p.owner_phone || fallbackOwnerPhone
+
+  const wouldHaveFired = {
+    contractor_sms_to_ownerPhone: {
+      would_send: !!ownerPhoneResolved,
+      to: ownerPhoneResolved ?? '(no number — SMS skipped)',
+      from: twilioDemoNumber,
+      gated_on: 'tenant.owner_phone || FALLBACK_OWNER_PHONE env',
+      note: !p.owner_phone && fallbackOwnerPhone
+        ? '⚠️ profile.owner_phone is empty — SMS would go to FALLBACK_OWNER_PHONE (Peter\'s cell), not contractor'
+        : !p.owner_phone
+        ? '❌ profile.owner_phone is empty AND FALLBACK_OWNER_PHONE not set — SMS would be SKIPPED'
+        : '✓ profile.owner_phone present',
+    },
+    peter_alert_email: {
+      would_send: !!(fallbackOwnerEmail && ownerPhoneResolved && resendKeyPresent),
+      to: fallbackOwnerEmail,
+      gated_on: 'FALLBACK_OWNER_EMAIL + ownerPhone + RESEND_API_KEY',
+      resend_configured: resendKeyPresent,
+      note: !resendKeyPresent
+        ? '❌ RESEND_API_KEY not set — Resend rejects all sends, ALL emails skipped silently'
+        : !ownerPhoneResolved
+        ? '❌ ownerPhone falsy — Peter alert email is gated on it'
+        : '✓ would send',
+    },
+    contractor_lead_email: {
+      would_send: !!(clerkEmail && resendKeyPresent && messageCaptured),
+      to: clerkEmail ?? '(Clerk lookup returned null)',
+      gated_on: 'Clerk primary email + RESEND_API_KEY + take_message fired',
+      clerk_lookup_error: clerkLookupError,
+      note: clerkLookupError
+        ? `❌ Clerk lookup threw: ${clerkLookupError}`
+        : !clerkEmail
+        ? '❌ Clerk returned no email for this user_id'
+        : !resendKeyPresent
+        ? '❌ RESEND_API_KEY not set'
+        : !messageCaptured
+        ? '⚠️ take_message did NOT fire — only the missed-info email path runs'
+        : '✓ would send',
+    },
+    first_call_celebration: {
+      already_fired: !!(profile as { first_call_at?: string | null }).first_call_at,
+      note: (profile as { first_call_at?: string | null }).first_call_at
+        ? `Already stamped at ${(profile as { first_call_at?: string }).first_call_at} — celebration only fires ONCE per profile`
+        : 'Not yet fired — next take_message that wins the atomic claim will trigger it',
+    },
+  }
+
+  return NextResponse.json({
+    profile: {
+      user_id: profile.user_id,
+      business_name: profile.business_name,
+      owner_first_name: (profile as { owner_first_name?: string | null }).owner_first_name,
+      owner_phone: profile.owner_phone,
+      backup_owner_phone: (profile as { backup_owner_phone?: string | null }).backup_owner_phone,
+      twilio_number: profile.twilio_number,
+      plan_tier: profile.plan_tier,
+      is_active: profile.is_active,
+      vapi_assistant_id: (profile as { vapi_assistant_id?: string | null }).vapi_assistant_id,
+      vapi_phone_number_id: (profile as { vapi_phone_number_id?: string | null }).vapi_phone_number_id,
+      first_call_at: (profile as { first_call_at?: string | null }).first_call_at,
+      forwarding_verified_at: (profile as { forwarding_verified_at?: string | null }).forwarding_verified_at,
+    },
+    clerk_primary_email: clerkEmail,
+    last_call: c
+      ? {
+          created_at: c.created_at,
+          job_created: c.job_created,
+          booking_completed: c.booking_completed,
+          take_message_fired: messageCaptured,
+          summary_preview: c.summary?.slice(0, 300),
+          transcript_preview: c.transcript?.slice(0, 500),
+        }
+      : null,
+    last_job: lastJob,
+    env_snapshot: {
+      RESEND_API_KEY_set: resendKeyPresent,
+      FALLBACK_OWNER_PHONE: fallbackOwnerPhone ?? '(not set)',
+      FALLBACK_OWNER_EMAIL: fallbackOwnerEmail,
+      TWILIO_DEMO_NUMBER: twilioDemoNumber,
+    },
+    would_have_fired: wouldHaveFired,
+  })
+}

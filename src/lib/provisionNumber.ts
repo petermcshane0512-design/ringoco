@@ -66,6 +66,7 @@ type ProvisionableProfile = {
   user_id: string
   twilio_number: string | null
   owner_phone: string | null
+  backup_owner_phone: string | null
   owner_first_name: string | null
   business_name: string | null
   services: string | null
@@ -164,10 +165,22 @@ async function createPerTenantAssistant(profile: ProvisionableProfile): Promise<
     // user_id in metadata is how /api/vapi/end-of-call-report routes
     // tool calls back to the right tenant — Vapi includes assistant.metadata
     // in every server webhook. Survives the override-pipeline bug.
+    //
+    // owner_phone + backup_owner_phone + owner_first_name MUST be baked here
+    // — without them, takeMessage() falls back to FALLBACK_OWNER_PHONE env
+    // (Peter's cell), so EVERY tenant's lead-alert SMS would land on Peter's
+    // phone instead of the actual contractor. Owner cell + business name +
+    // tier are the four facts the webhook needs and they don't change call-
+    // to-call. (If owner edits cell later, /api/profile fires
+    // repatchPerTenantAssistant which mirrors this metadata.)
     metadata: {
       user_id: profile.user_id,
       business_name: tenant.businessName,
       plan_tier: tenant.planTier ?? null,
+      owner_phone: profile.owner_phone ?? null,
+      backup_owner_phone: (profile as { backup_owner_phone?: string | null }).backup_owner_phone ?? null,
+      owner_first_name: profile.owner_first_name ?? null,
+      twilio_number: profile.twilio_number ?? null,
     },
   }
 
@@ -216,7 +229,7 @@ export async function repatchPerTenantAssistant(
   const { data: profile, error: pErr } = await supabase
     .from('profiles')
     .select(
-      'user_id, twilio_number, owner_phone, owner_first_name, business_name, ' +
+      'user_id, twilio_number, owner_phone, backup_owner_phone, owner_first_name, business_name, ' +
         'services, service_area, ai_voice_id, ai_tone, ai_language, ' +
         'custom_prompt_notes, plan_tier, vapi_phone_number_id, ' +
         'vapi_assistant_id, vapi_import_failed_at',
@@ -288,6 +301,16 @@ export async function repatchPerTenantAssistant(
       user_id: p.user_id,
       business_name: tenant.businessName,
       plan_tier: tenant.planTier ?? null,
+      // Keep owner_phone / backup_owner_phone / owner_first_name in sync —
+      // if the contractor edits any of these on /dashboard/settings, repatch
+      // mirrors them into the baked assistant metadata so the next call's
+      // webhook routes SMS to the updated cell. Mirror of createPerTenantAssistant
+      // (provisionNumber.ts lines ~167-175) — drift between the two would cause
+      // /api/profile updates to silently lag the call-routing behavior.
+      owner_phone: p.owner_phone ?? null,
+      backup_owner_phone: p.backup_owner_phone ?? null,
+      owner_first_name: p.owner_first_name ?? null,
+      twilio_number: p.twilio_number ?? null,
     },
   }
 
@@ -482,7 +505,7 @@ export async function provisionNumberForUser(userId: string): Promise<ProvisionR
   const { data: profile, error: pErr } = await supabase
     .from('profiles')
     .select(
-      'user_id, twilio_number, owner_phone, owner_first_name, business_name, ' +
+      'user_id, twilio_number, owner_phone, backup_owner_phone, owner_first_name, business_name, ' +
         'services, service_area, ai_voice_id, ai_tone, ai_language, ' +
         'custom_prompt_notes, plan_tier, vapi_phone_number_id, ' +
         'vapi_assistant_id, vapi_import_failed_at',

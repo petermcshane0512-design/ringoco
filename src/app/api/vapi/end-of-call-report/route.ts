@@ -104,7 +104,7 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
         try {
           const { data: recovered } = await supabase
             .from('profiles')
-            .select('user_id, business_name, owner_phone, backup_owner_phone, plan_tier, twilio_number')
+            .select('user_id, business_name, owner_phone, backup_owner_phone, owner_first_name, plan_tier, twilio_number')
             .eq('twilio_number', calledNumber)
             .maybeSingle()
           if (recovered?.user_id) {
@@ -116,12 +116,45 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
             tenant.owner_phone = recovered.owner_phone ?? tenant.owner_phone
             tenant.backup_owner_phone =
               (recovered as { backup_owner_phone?: string | null }).backup_owner_phone ?? tenant.backup_owner_phone
+            ;(tenant as { owner_first_name?: string | null }).owner_first_name =
+              (recovered as { owner_first_name?: string | null }).owner_first_name ?? null
             tenant.plan_tier = recovered.plan_tier ?? tenant.plan_tier
             tenant.twilio_number = recovered.twilio_number ?? tenant.twilio_number
           }
         } catch (e) {
           console.error('handleToolCalls fallback tenant lookup failed:', e)
         }
+      }
+    }
+
+    // Lazy self-heal: assistant metadata may include user_id but be MISSING
+    // owner_phone (assistants created before commit "fix missing owner_phone
+    // in per-tenant Vapi metadata" don't have it baked in). Without this
+    // fallback the lead SMS would route to FALLBACK_OWNER_PHONE (Peter's
+    // cell) instead of the actual contractor. Fetching one row from profiles
+    // is cheap (~10ms) and only fires when we genuinely need it.
+    if (!tenant.is_demo && tenant.user_id && !tenant.owner_phone) {
+      try {
+        const { data: filled } = await supabase
+          .from('profiles')
+          .select('owner_phone, backup_owner_phone, owner_first_name, twilio_number, business_name, plan_tier')
+          .eq('user_id', tenant.user_id)
+          .maybeSingle()
+        if (filled) {
+          tenant.owner_phone = filled.owner_phone ?? tenant.owner_phone
+          tenant.backup_owner_phone =
+            (filled as { backup_owner_phone?: string | null }).backup_owner_phone ?? tenant.backup_owner_phone
+          ;(tenant as { owner_first_name?: string | null }).owner_first_name =
+            (filled as { owner_first_name?: string | null }).owner_first_name ?? null
+          tenant.twilio_number = filled.twilio_number ?? tenant.twilio_number
+          tenant.business_name = filled.business_name ?? tenant.business_name
+          tenant.plan_tier = filled.plan_tier ?? tenant.plan_tier
+          console.log(
+            `handleToolCalls: lazy-healed missing owner_phone for tenant ${tenant.user_id} (assistant metadata is stale — repatch on next /api/profile save)`,
+          )
+        }
+      } catch (e) {
+        console.error('handleToolCalls lazy-heal lookup failed:', e)
       }
     }
 
@@ -784,6 +817,82 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
     console.error('end-of-call call_logs upsert failed:', e)
   }
 
+  // Silent-failure safety net: if take_message DIDN'T fire on a tenant
+  // call (caller hung up early, Emma chatted but never captured, tool
+  // arguments failed JSON-parse, etc.), the contractor would get ZERO
+  // notification of what happened. They paid for a receptionist; even a
+  // "missed half-conversation" deserves an alert. Mirror the demo branch.
+  //
+  // Skipped when messageCaptured=true because handleToolCalls already sent
+  // the structured lead emails + SMS — second email would be duplicate.
+  if (!messageCaptured) {
+    try {
+      // Fetch contractor email + identifying info. Cheap (~10ms).
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('business_name, owner_first_name, owner_phone, timezone')
+        .eq('user_id', tenant.user_id)
+        .maybeSingle()
+      const contractorEmail = await lookupOwnerEmail(tenant.user_id)
+      // Also email Peter so he sees the gap during the early-customer phase.
+      const peterAlertEmail = process.env.FALLBACK_OWNER_EMAIL || 'bellavegollc@gmail.com'
+
+      const businessName = (prof as { business_name?: string | null } | null)?.business_name || 'your business'
+      const m = message as unknown as { startedAt?: string; endedAt?: string; endedReason?: string }
+      const durationSec =
+        m.endedAt && m.startedAt
+          ? Math.round((new Date(m.endedAt).getTime() - new Date(m.startedAt).getTime()) / 1000)
+          : null
+      const endedReason = m.endedReason ?? null
+      const transcriptText =
+        typeof transcript === 'string'
+          ? transcript
+          : transcript
+          ? JSON.stringify(transcript)
+          : '(no transcript)'
+
+      const subject = `📞 Missed-info call to ${businessName}${durationSec ? ` (${durationSec}s)` : ''}`
+      const html =
+        `<div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;padding:20px;">` +
+        `<h2 style="color:#0B1F3A;margin:0 0 8px;">📞 Call answered but no message captured</h2>` +
+        `<p style="color:#4A6670;margin:0 0 16px;font-size:14px;">A caller reached your BellAveGo receptionist but Emma didn't capture a structured lead — they probably hung up early, didn't share enough to act on, or Emma got cut off. Transcript + summary below so you can follow up if it's actionable.</p>` +
+        `<table style="font-size:13px;color:#0B1F3A;margin-bottom:16px;border-collapse:collapse;">` +
+        `<tr><td style="padding:4px 8px 4px 0;color:#4A6670;">Caller</td><td>${callerPhone ?? '(unknown)'}</td></tr>` +
+        (durationSec ? `<tr><td style="padding:4px 8px 4px 0;color:#4A6670;">Duration</td><td>${durationSec}s</td></tr>` : '') +
+        (endedReason ? `<tr><td style="padding:4px 8px 4px 0;color:#4A6670;">Ended reason</td><td>${endedReason}</td></tr>` : '') +
+        `<tr><td style="padding:4px 8px 4px 0;color:#4A6670;">Call ID</td><td style="font-family:monospace;font-size:11px;">${callSid}</td></tr>` +
+        `</table>` +
+        (summary
+          ? `<h3 style="color:#0B1F3A;margin:16px 0 6px;font-size:14px;">AI summary</h3><p style="background:#F5F1EA;padding:12px;border-radius:8px;font-size:13px;color:#0B1F3A;margin:0 0 16px;">${escapeHtml(summary)}</p>`
+          : '') +
+        `<h3 style="color:#0B1F3A;margin:16px 0 6px;font-size:14px;">Transcript</h3>` +
+        `<pre style="background:#F5F1EA;padding:12px;border-radius:8px;font-size:12px;white-space:pre-wrap;color:#0B1F3A;margin:0;">${escapeHtml(transcriptText)}</pre>` +
+        (callerPhone ? `<p style="margin:20px 0 0;"><a href="tel:${callerPhone}" style="display:inline-block;padding:12px 20px;background:#0AA89F;color:#fff;text-decoration:none;border-radius:10px;font-weight:800;font-size:14px;">📲 Call back ${callerPhone}</a></p>` : '') +
+        `</div>`
+      const text =
+        `Call answered but no message captured\n\n` +
+        `Caller: ${callerPhone ?? '(unknown)'}\n` +
+        (durationSec ? `Duration: ${durationSec}s\n` : '') +
+        (endedReason ? `Ended reason: ${endedReason}\n` : '') +
+        `Call ID: ${callSid}\n\n` +
+        (summary ? `AI summary:\n${summary}\n\n` : '') +
+        `Transcript:\n${transcriptText}\n`
+
+      // Send to contractor (their Clerk primary email) AND to Peter so he
+      // sees the silent-failure shape during early-customer phase.
+      const recipients: string[] = []
+      if (contractorEmail) recipients.push(contractorEmail)
+      if (peterAlertEmail && peterAlertEmail !== contractorEmail) recipients.push(peterAlertEmail)
+      if (recipients.length > 0) {
+        await sendEmail({ to: recipients, subject, html, text })
+      } else {
+        console.warn('end-of-call: no recipients for missed-info email (tenant', tenant.user_id, ')')
+      }
+    } catch (e) {
+      console.error('tenant missed-info email failed:', e)
+    }
+  }
+
   // Cap check — same fire-and-forget pattern as the toolCalls path so
   // a hangup-only call (no take_message) still counts toward the cap.
   // Without this, a caller who hits then hangs up wouldn't trigger
@@ -847,6 +956,7 @@ type TenantMeta = {
   business_name?: string | null
   owner_phone?: string | null
   backup_owner_phone?: string | null
+  owner_first_name?: string | null
   plan_tier?: string | null
   twilio_number?: string | null
   is_demo?: boolean
@@ -887,6 +997,7 @@ function extractTenant(message: VapiServerMessage['message']): TenantMeta {
     twilio_number: (md.twilio_number as string) ?? calledNumber ?? null,
     owner_phone: (md.owner_phone as string) ?? null,
     backup_owner_phone: (md.backup_owner_phone as string) ?? null,
+    owner_first_name: (md.owner_first_name as string) ?? null,
     is_demo: isDemo,
   }
 }
