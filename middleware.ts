@@ -39,6 +39,12 @@ const isPublicRoute = createRouteMatcher([
   // header or admin Clerk session). Clerk middleware would otherwise 404
   // these before they reach the route handler, blocking curl/script use.
   "/api/internal(.*)",
+  // Admin endpoints — same pattern: every /api/admin/* route starts with
+  // `await requireAdmin()` (CLAUDE.md contract). Marking public here lets
+  // the dual-auth (x-admin-secret OR Clerk session) work for curl/scripts.
+  // Without this, Clerk middleware redirects unauthenticated curl to a
+  // sign-in HTML page before requireAdmin can verify the header.
+  "/api/admin(.*)",
 ]);
 
 /**
