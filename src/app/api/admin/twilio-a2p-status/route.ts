@@ -75,7 +75,7 @@ export async function GET() {
         return {
           sid: s.sid,
           friendly_name: s.friendlyName,
-          use_case: s.useCase,
+          use_case: (s as unknown as { usecase?: string }).usecase,
           status_callback: s.statusCallback,
           numbers,
           campaigns,
