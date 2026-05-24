@@ -285,9 +285,10 @@ async function takeMessage(opts: {
   const phone = args.customer_phone || callerPhone
   const urgencyEmoji = args.urgency === 'emergency' ? '🚨' : args.urgency === 'soon' ? '⚡' : '🕓'
 
-  // 1. Upsert customer (Emma now captures service address — see take_message
-  // tool. Only set on insert; we don't overwrite an existing customer's
-  // address on subsequent calls because they may have updated it manually).
+  // 1. Upsert customer — TWO-STEP insert so a missing `address` column
+  // doesn't bring down the entire lead-capture flow (Postgres bails the
+  // whole insert if any column is unknown). Step A: minimum-viable row
+  // we know the schema accepts. Step B: best-effort UPDATE for address.
   let customerId: string | undefined
   if (phone) {
     const { data: existing } = await supabase
@@ -299,17 +300,33 @@ async function takeMessage(opts: {
     if (existing) {
       customerId = existing.id
     } else {
-      const { data: created } = await supabase
+      const { data: created, error: custErr } = await supabase
         .from('customers')
         .insert({
           user_id: tenant.user_id,
           name: args.customer_name,
           phone,
-          ...(args.customer_address ? { address: args.customer_address } : {}),
         })
         .select('id')
         .single()
+      if (custErr) {
+        console.error('vapi take_message: customer insert failed', custErr)
+      }
       customerId = created?.id
+      // Best-effort address update — non-fatal if column missing.
+      if (customerId && args.customer_address) {
+        try {
+          const { error: addrErr } = await supabase
+            .from('customers')
+            .update({ address: args.customer_address })
+            .eq('id', customerId)
+          if (addrErr) {
+            console.warn('customers.address update skipped (column may not exist):', addrErr.message)
+          }
+        } catch (e) {
+          console.warn('customers.address update threw:', (e as Error).message)
+        }
+      }
     }
   }
 
@@ -336,6 +353,9 @@ async function takeMessage(opts: {
     console.error('amount_estimated lookup failed:', e)
   }
 
+  // jobs insert — same two-step defense as customers. Address column may
+  // not exist on jobs in older schemas; we don't want a missing column to
+  // drop the whole lead.
   const { data: jobRow, error: jobErr } = await supabase
     .from('jobs')
     .insert({
@@ -343,7 +363,6 @@ async function takeMessage(opts: {
       customer_id: customerId,
       customer_name: args.customer_name,
       customer_phone: phone,
-      ...(args.customer_address ? { address: args.customer_address } : {}),
       job_type: args.reason,
       scheduled_time: 'callback requested',
       title: `Callback: ${args.customer_name} — ${args.reason}`,
@@ -357,6 +376,20 @@ async function takeMessage(opts: {
   if (jobErr) {
     console.error('vapi take_message: job insert failed', jobErr)
     return { success: false, error: 'database write failed' }
+  }
+
+  if (jobRow?.id && args.customer_address) {
+    try {
+      const { error: addrErr } = await supabase
+        .from('jobs')
+        .update({ address: args.customer_address })
+        .eq('id', jobRow.id)
+      if (addrErr) {
+        console.warn('jobs.address update skipped (column may not exist):', addrErr.message)
+      }
+    } catch (e) {
+      console.warn('jobs.address update threw:', (e as Error).message)
+    }
   }
 
   // 2b. Seed quote_followups so Quote Hunter chases the lead if the contractor
@@ -804,9 +837,24 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
     return NextResponse.json({ ok: true, note: 'no tenant metadata' })
   }
 
-  // Upsert call_logs — if booking already finalized this row via tool-call,
-  // we just merge transcript + summary. Otherwise (caller hung up early)
-  // we create an inception row so the tier cap counts the attempt.
+  // Check if handleToolCalls already finalized this call (job_created=true
+  // from the earlier tool-calls event). If so, end-of-call should ONLY merge
+  // transcript + summary + cost — must NOT clobber job_created/booking_completed
+  // back to false. Vapi's tool-calls event arrives first; end-of-call comes
+  // ~1-2s later.
+  let priorJobCreated = false
+  try {
+    const { data: priorRow } = await supabase
+      .from('call_logs')
+      .select('job_created, booking_completed')
+      .eq('call_sid', callSid)
+      .maybeSingle()
+    priorJobCreated = !!(priorRow as { job_created?: boolean } | null)?.job_created
+  } catch (e) {
+    console.warn('end-of-call call_logs prior-row lookup failed:', e)
+  }
+  const effectiveMessageCaptured = messageCaptured || priorJobCreated
+
   try {
     await supabase.from('call_logs').upsert(
       {
@@ -816,8 +864,8 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
         caller_phone: callerPhone,
         transcript: typeof transcript === 'string' ? transcript : transcript ? JSON.stringify(transcript) : null,
         summary,
-        job_created: messageCaptured,
-        booking_completed: messageCaptured,
+        job_created: effectiveMessageCaptured,
+        booking_completed: effectiveMessageCaptured,
         // Vapi reports actual COGS per call in message.cost — capture it so
         // the founder dashboard can show real-time spend instead of an
         // estimate. Column added in sql/2026-05-24-call-logs-cost.sql.
@@ -835,9 +883,11 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
   // notification of what happened. They paid for a receptionist; even a
   // "missed half-conversation" deserves an alert. Mirror the demo branch.
   //
-  // Skipped when messageCaptured=true because handleToolCalls already sent
-  // the structured lead emails + SMS — second email would be duplicate.
-  if (!messageCaptured) {
+  // Skipped when EITHER messageCaptured (this event) OR priorJobCreated
+  // (handleToolCalls already finalized in the earlier tool-calls event)
+  // — second email would be a duplicate AND incorrectly tell the
+  // contractor "no message captured" when one actually was.
+  if (!effectiveMessageCaptured) {
     try {
       // Fetch contractor email + identifying info. Cheap (~10ms).
       const { data: prof } = await supabase
