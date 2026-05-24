@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
       .maybeSingle(),
     supabase
       .from('call_logs')
-      .select('id, call_sid, caller_phone, created_at, job_created, booking_completed, summary, transcript')
+      .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(1)
