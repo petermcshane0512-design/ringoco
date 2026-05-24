@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import twilio from 'twilio'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { TIER_METADATA, type Tier, isValidTier } from '@/lib/pricing'
 
@@ -248,6 +249,45 @@ export async function GET() {
         ? Math.round((realCostRows.length / callsThisMonth) * 100)
         : null,
     },
+    // Infrastructure account balances — Twilio (live API) + Vapi (live API
+    // when available, else null). Shown in nucleus HUD so Peter can see
+    // 'days of runway' at a glance. Wrapped in try/catch so a vendor outage
+    // doesn't 500 the whole dashboard.
+    infrastructure: await (async () => {
+      let twilioBalance: number | null = null
+      let twilioError: string | null = null
+      try {
+        if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+          const tc = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+          const b = await tc.balance.fetch()
+          twilioBalance = parseFloat(b.balance)
+        }
+      } catch (e) {
+        twilioError = (e as Error).message
+      }
+
+      // Vapi doesn't expose a public balance/credit API today. Best we can
+      // do is show MTD spend (sum of cost_usd from call_logs this month)
+      // so Peter can eyeball burn rate. If Vapi exposes /billing or
+      // /credit later, swap to truth-source here.
+      const vapiMtdSpend = costMonthFromActuals
+
+      return {
+        twilio: {
+          balance_usd: twilioBalance,
+          error: twilioError,
+          // Days of runway estimate — burn rate $0.10/call * calls/day
+          days_of_runway: twilioBalance != null && callsThisMonth > 0
+            ? Math.round((twilioBalance / Math.max(0.5, (callsThisMonth / now.getDate()) * 0.10)))
+            : null,
+        },
+        vapi: {
+          mtd_spend_usd: Math.round(vapiMtdSpend * 100) / 100,
+          balance_usd: null, // Vapi doesn't expose this via public API
+          note: 'Vapi balance not exposed via API — check vapi.ai dashboard',
+        },
+      }
+    })(),
     // Most-recent 20 calls for the live activity feed in the nucleus. Tiny
     // payload (~3kb), shipped on every poll so the feed stays in sync.
     recentCalls: await (async () => {

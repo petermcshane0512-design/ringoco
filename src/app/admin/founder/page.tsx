@@ -69,6 +69,18 @@ type FounderSummary = {
     lead_captured: boolean
     cost_usd: number | null
   }>
+  infrastructure?: {
+    twilio: {
+      balance_usd: number | null
+      error: string | null
+      days_of_runway: number | null
+    }
+    vapi: {
+      mtd_spend_usd: number
+      balance_usd: number | null
+      note: string
+    }
+  }
 }
 
 const fetcher = (url: string) =>
@@ -365,7 +377,13 @@ function LiveCountersStrip({ data }: { data: FounderSummary | undefined }) {
     ? (data.activity.callsToday / hoursElapsedToday).toFixed(1)
     : '0.0'
 
-  const cells: Array<{ label: string; value: string; color: string; pulse?: boolean }> = [
+  // Infrastructure balance cells with red-pulse warnings when running low.
+  const twilioBalance = data.infrastructure?.twilio.balance_usd ?? null
+  const vapiSpend = data.infrastructure?.vapi.mtd_spend_usd ?? 0
+  const twilioLow = twilioBalance != null && twilioBalance < 20
+  const twilioCritical = twilioBalance != null && twilioBalance < 5
+
+  const cells: Array<{ label: string; value: string; color: string; pulse?: boolean; sub?: string }> = [
     {
       label: 'Calls today',
       value: String(data.activity.callsToday),
@@ -379,6 +397,21 @@ function LiveCountersStrip({ data }: { data: FounderSummary | undefined }) {
       color: '#F59E0B',
     },
     { label: 'Last call', value: lastCallDisplay, color: COLORS.textMuted },
+    {
+      label: 'Twilio',
+      value: twilioBalance != null ? `$${twilioBalance.toFixed(2)}` : '—',
+      color: twilioCritical ? '#EF4444' : twilioLow ? '#F59E0B' : '#22C55E',
+      pulse: twilioCritical,
+      sub: data.infrastructure?.twilio.days_of_runway != null
+        ? `~${data.infrastructure.twilio.days_of_runway}d runway`
+        : undefined,
+    },
+    {
+      label: 'Vapi MTD',
+      value: `$${vapiSpend.toFixed(2)}`,
+      color: '#8B5CF6',
+      sub: 'check dashboard for bal',
+    },
   ]
 
   return (
@@ -400,7 +433,7 @@ function LiveCountersStrip({ data }: { data: FounderSummary | undefined }) {
       }}
     >
       {cells.map((c, i) => (
-        <div key={c.label} style={{ position: 'relative', padding: '10px 22px', borderRight: i < cells.length - 1 ? `1px solid rgba(122,170,178,0.12)` : 'none', textAlign: 'center', minWidth: 110 }}>
+        <div key={c.label} style={{ position: 'relative', padding: '10px 18px', borderRight: i < cells.length - 1 ? `1px solid rgba(122,170,178,0.12)` : 'none', textAlign: 'center', minWidth: 96 }}>
           {c.pulse && (
             <motion.div
               animate={{ scale: [1, 1.5, 1], opacity: [0.7, 0, 0.7] }}
@@ -420,6 +453,11 @@ function LiveCountersStrip({ data }: { data: FounderSummary | undefined }) {
           >
             {c.value}
           </motion.div>
+          {c.sub && (
+            <div style={{ fontSize: 8.5, color: COLORS.textDim, marginTop: 2, letterSpacing: '0.04em' }}>
+              {c.sub}
+            </div>
+          )}
         </div>
       ))}
     </div>
