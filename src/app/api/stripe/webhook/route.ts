@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
-import { provisionNumberForUser } from '@/lib/provisionNumber'
+import { provisionNumberForUser, deprovisionForUser } from '@/lib/provisionNumber'
 import { PRICE_TO_TIER } from '@/lib/pricing'
 import { applyLedgerEntry } from '@/lib/marketing/growth-wallet'
 import { recordPendingReferral, applyPendingReferralCredit, voidPendingReferral } from '@/lib/referrals'
@@ -235,18 +235,38 @@ export async function POST(req: NextRequest) {
 
       console.log(`Subscription cancelled for user ${profile.user_id}`)
 
-      // Email Peter to manually release the Twilio + Vapi resources.
-      // Auto-release is risky (race conditions, undo windows); manual at
-      // current volume. Automate after 10+ cancellations/mo become routine.
-      if (profile.twilio_number) {
+      // Auto-deprovision: release Twilio number + delete Vapi assistant +
+      // phone-number binding immediately. Stops the $1.15/mo Twilio rental
+      // and Vapi rental from continuing on cancelled accounts.
+      let deprovisionFailed = false
+      let deprovisionErrors: string[] = []
+      try {
+        const result = await deprovisionForUser(profile.user_id)
+        deprovisionFailed = !result.ok
+        deprovisionErrors = result.errors
+        console.log(
+          `[cancel] auto-deprovision for ${profile.user_id}: ok=${result.ok} ` +
+            `vapi-pn=${result.vapiPhoneNumberDeleted} vapi-asst=${result.vapiAssistantDeleted} ` +
+            `twilio=${result.twilioNumberReleased}`,
+        )
+      } catch (e) {
+        deprovisionFailed = true
+        deprovisionErrors = [`deprovisionForUser threw: ${(e as Error).message}`]
+        console.error('auto-deprovision failed:', e)
+      }
+
+      // Fallback email — ONLY when auto-deprovision didn't fully complete.
+      // If everything released cleanly, no email needed.
+      if (deprovisionFailed && profile.twilio_number) {
         try {
           const consoleUrl = `https://console.twilio.com/us1/develop/phone-numbers/manage/active?query=${encodeURIComponent(profile.twilio_number)}`
           const ownerEmail = process.env.FALLBACK_OWNER_EMAIL || 'bellavegollc@gmail.com'
           await sendEmail({
             to: ownerEmail,
-            subject: `⚠️ Cancellation — release ${profile.twilio_number} for ${profile.business_name ?? 'unknown'}`,
+            subject: `⚠️ Cancellation — auto-deprovision FAILED for ${profile.business_name ?? 'unknown'}`,
             html: `<div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0B1F3A;">
-<h2 style="margin:0 0 12px;font-size:20px;font-weight:900;">Customer cancelled — manual cleanup needed</h2>
+<h2 style="margin:0 0 12px;font-size:20px;font-weight:900;">Auto-deprovision failed — manual cleanup needed</h2>
+<p style="margin:0 0 14px;color:#7C2D12;font-size:13px;">Errors: ${deprovisionErrors.join('; ').slice(0, 400)}</p>
 <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:14px;">
   <tr><td style="padding:6px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;width:140px;">Business</td><td style="padding:6px 0;font-weight:700;">${profile.business_name ?? '(unknown)'}</td></tr>
   <tr><td style="padding:6px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">Owner phone</td><td style="padding:6px 0;">${profile.owner_phone ?? '(none)'}</td></tr>

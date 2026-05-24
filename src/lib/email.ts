@@ -151,6 +151,66 @@ export function renderLeadAlertEmail(args: LeadAlertEmailArgs): { subject: strin
  * Visually differentiated from the Peter-forward email: no "forward to" row,
  * primary CTA is tap-to-call the customer, secondary CTA is the dashboard.
  */
+/**
+ * Booking-alert email — fires when Emma successfully books an
+ * appointment via calendar mode. Sent in PARALLEL to the SMS booking
+ * alert (which is currently A2P-blocked for most customers). Once SMS
+ * stops 30034-ing this still ships — second channel never hurts.
+ */
+export type BookingAlertEmailArgs = {
+  toEmail: string                 // contractor's email (Clerk primary)
+  contractorBusinessName: string
+  callerName: string
+  callerPhone: string | null
+  serviceSummary: string          // e.g. "AC tune-up", "leaky faucet"
+  slotLabel: string               // human-readable "Tue Jan 14 at 2 PM"
+  calendarEventUrl?: string       // Google Calendar event link
+  dashboardUrl: string
+}
+
+export function renderBookingAlertEmail(args: BookingAlertEmailArgs): { subject: string; html: string; text: string } {
+  const callerPhonePretty = args.callerPhone ? formatUSPhone(args.callerPhone) : 'no phone'
+  const subject = `📅 AI BOOKED · ${args.callerName} · ${args.slotLabel}`
+
+  const text =
+    `📅 AI BOOKED via BellAveGo\n\n` +
+    `Caller: ${args.callerName}\n` +
+    `Phone: ${callerPhonePretty}\n` +
+    `Service: ${args.serviceSummary}\n` +
+    `Time: ${args.slotLabel}\n` +
+    `Event is on your Google Calendar (look for the orange "AI Booked" event).\n` +
+    (args.calendarEventUrl ? `\nCalendar event: ${args.calendarEventUrl}\n` : '') +
+    `\nDashboard: ${args.dashboardUrl}\n— BellAveGo`
+
+  const html = `
+<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#F2F9F5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0B1F3A;">
+  <div style="max-width:560px;margin:0 auto;padding:24px 16px;">
+    <div style="background:#fff;border:1px solid rgba(245,158,11,0.18);border-radius:16px;overflow:hidden;box-shadow:0 4px 22px rgba(11,31,58,0.08);">
+      <div style="background:linear-gradient(135deg,#F59E0B 0%,#D97706 100%);padding:18px 22px;color:#fff;">
+        <div style="font-size:11px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;opacity:0.92;">AI Booked Appointment</div>
+        <div style="font-size:22px;font-weight:900;letter-spacing:-0.4px;margin-top:6px;">${escapeHtml(args.callerName)}</div>
+        <div style="font-size:13px;opacity:0.95;margin-top:4px;">📅 ${escapeHtml(args.slotLabel)}</div>
+      </div>
+      <div style="padding:22px;">
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;" width="120">Phone</td><td style="padding:8px 0;"><a href="tel:${escapeHtml(args.callerPhone || '')}" style="color:#0AA89F;font-weight:700;text-decoration:none;">${callerPhonePretty}</a></td></tr>
+          <tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">Service</td><td style="padding:8px 0;line-height:1.5;">${escapeHtml(args.serviceSummary)}</td></tr>
+          <tr><td style="padding:8px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">Business</td><td style="padding:8px 0;">${escapeHtml(args.contractorBusinessName)}</td></tr>
+        </table>
+        <div style="margin-top:22px;padding-top:18px;border-top:1px solid rgba(245,158,11,0.16);text-align:center;">
+          ${args.calendarEventUrl ? `<a href="${escapeHtml(args.calendarEventUrl)}" style="display:inline-block;padding:12px 28px;border-radius:10px;background:linear-gradient(135deg,#F59E0B,#D97706);color:#fff;font-weight:800;font-size:14px;text-decoration:none;box-shadow:0 6px 18px rgba(245,158,11,0.32);">📅 Open calendar event</a>` : ''}
+          <div style="margin-top:12px;"><a href="${escapeHtml(args.dashboardUrl)}" style="color:#7AAAB2;font-size:12px;font-weight:600;text-decoration:none;">View in dashboard →</a></div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:11px;color:#7AAAB2;margin-top:18px;">BellAveGo · AI Receptionist</div>
+  </div>
+</body></html>`.trim()
+
+  return { subject, html, text }
+}
+
 export type ContractorLeadEmailArgs = {
   toEmail: string
   contractorBusinessName: string

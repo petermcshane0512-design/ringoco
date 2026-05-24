@@ -5,7 +5,7 @@ import { verifyVapiSignature } from '@/lib/vapi'
 import { findAvailableSlots } from '@/lib/calendar/availability'
 import { createGoogleEvent, type CalendarConnectionRow } from '@/lib/calendar/google'
 import { createCronofyEvent } from '@/lib/calendar/cronofy'
-import { sendEmail, renderAppointmentBookedEmail, renderLeadAlertEmail } from '@/lib/email'
+import { sendEmail, renderAppointmentBookedEmail, renderLeadAlertEmail, renderBookingAlertEmail } from '@/lib/email'
 import { lookupOwnerEmail } from '@/lib/notify'
 
 const supabase = createClient(
@@ -341,6 +341,35 @@ export async function POST(req: NextRequest) {
       } catch (e) {
         console.error('contractor booking alert SMS failed:', e)
       }
+    }
+
+    // ── EMAIL the contractor (booking alert) ──
+    // Pairs with the SMS above. During A2P registration the SMS is
+    // carrier-blocked (error 30034); the email is the reliable channel.
+    // Stays in place post-A2P as a second-channel for important bookings.
+    try {
+      const contractorEmail = await lookupOwnerEmail(userId)
+      if (contractorEmail) {
+        const appUrl =
+          (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost'))
+            ? process.env.NEXT_PUBLIC_APP_URL
+            : 'https://www.bellavego.com'
+        const { subject, html, text } = renderBookingAlertEmail({
+          toEmail: contractorEmail,
+          contractorBusinessName: businessName,
+          callerName: args.customer_name,
+          callerPhone,
+          serviceSummary: args.service_summary || 'Appointment',
+          slotLabel,
+          calendarEventUrl: eventResult.htmlLink ?? undefined,
+          dashboardUrl: `${appUrl}/dashboard`,
+        })
+        await sendEmail({ to: contractorEmail, subject, html, text })
+      } else {
+        console.warn('booking alert email skipped — no Clerk email for', userId)
+      }
+    } catch (e) {
+      console.error('booking alert email failed:', e)
     }
 
     // ── EMAIL the contractor (BellAveGo customer) — booking confirmation ──

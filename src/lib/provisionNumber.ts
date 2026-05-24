@@ -470,6 +470,129 @@ export async function switchToCapacityMode(
 }
 
 /**
+ * Auto-deprovision a cancelled contractor — release Twilio number,
+ * delete Vapi assistant + phone-number binding, clear DB columns.
+ *
+ * Called from the Stripe customer.subscription.deleted webhook so we
+ * stop paying ~$1.15/mo Twilio rental + Vapi rental on orphaned
+ * accounts as soon as the customer cancels.
+ *
+ * NOT idempotent on intent — once deprovisioned, the user can't get
+ * the same Twilio number back. If they reactivate within 30 days they
+ * get a fresh number. Acceptable: most cancellations don't return,
+ * and Twilio doesn't reserve released numbers anyway.
+ *
+ * Best-effort across vendors — if Vapi delete fails but Twilio
+ * release succeeds, we still mark the DB clean. Worst case is one
+ * orphan Vapi assistant ($0/mo at rest) that Peter can clean up
+ * manually later.
+ *
+ * Order: Vapi first (free + reversible), Twilio second (costs us
+ * money until released). If Twilio fails, the Vapi delete still
+ * happened, so we email Peter to manually release Twilio.
+ */
+export async function deprovisionForUser(
+  userId: string,
+): Promise<{
+  ok: boolean
+  vapiAssistantDeleted: boolean
+  vapiPhoneNumberDeleted: boolean
+  twilioNumberReleased: boolean
+  errors: string[]
+}> {
+  const errors: string[] = []
+  let vapiAssistantDeleted = false
+  let vapiPhoneNumberDeleted = false
+  let twilioNumberReleased = false
+
+  const { data: profile, error: pErr } = await supabase
+    .from('profiles')
+    .select('user_id, twilio_number, vapi_assistant_id, vapi_phone_number_id')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (pErr || !profile) {
+    return { ok: false, vapiAssistantDeleted, vapiPhoneNumberDeleted, twilioNumberReleased, errors: [pErr?.message || 'profile not found'] }
+  }
+  const p = profile as unknown as {
+    user_id: string
+    twilio_number: string | null
+    vapi_assistant_id: string | null
+    vapi_phone_number_id: string | null
+  }
+
+  // Step 1: delete Vapi phone-number binding (must come before assistant
+  // so we don't orphan a number pointing at a deleted assistant).
+  if (p.vapi_phone_number_id && process.env.VAPI_API_KEY) {
+    try {
+      const r = await fetch(`https://api.vapi.ai/phone-number/${p.vapi_phone_number_id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${process.env.VAPI_API_KEY}` },
+      })
+      if (r.ok || r.status === 404) {
+        vapiPhoneNumberDeleted = true
+      } else {
+        errors.push(`Vapi phone-number DELETE ${r.status}: ${(await r.text()).slice(0, 120)}`)
+      }
+    } catch (e) {
+      errors.push(`Vapi phone-number DELETE threw: ${(e as Error).message}`)
+    }
+  }
+
+  // Step 2: delete Vapi assistant
+  if (p.vapi_assistant_id && process.env.VAPI_API_KEY) {
+    try {
+      const r = await fetch(`https://api.vapi.ai/assistant/${p.vapi_assistant_id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${process.env.VAPI_API_KEY}` },
+      })
+      if (r.ok || r.status === 404) {
+        vapiAssistantDeleted = true
+      } else {
+        errors.push(`Vapi assistant DELETE ${r.status}: ${(await r.text()).slice(0, 120)}`)
+      }
+    } catch (e) {
+      errors.push(`Vapi assistant DELETE threw: ${(e as Error).message}`)
+    }
+  }
+
+  // Step 3: release Twilio number (costs $1.15/mo until released)
+  if (p.twilio_number) {
+    try {
+      const list = await twilioClient.incomingPhoneNumbers.list({ phoneNumber: p.twilio_number, limit: 1 })
+      const sid = list[0]?.sid
+      if (sid) {
+        await twilioClient.incomingPhoneNumbers(sid).remove()
+        twilioNumberReleased = true
+      } else {
+        errors.push(`Twilio number ${p.twilio_number} not found in account (already released?)`)
+        twilioNumberReleased = true // treat as success — nothing to release
+      }
+    } catch (e) {
+      errors.push(`Twilio release threw: ${(e as Error).message}`)
+    }
+  }
+
+  // Step 4: clear DB columns so the user can re-signup cleanly
+  await supabase
+    .from('profiles')
+    .update({
+      twilio_number: null,
+      vapi_assistant_id: null,
+      vapi_phone_number_id: null,
+      vapi_import_failed_at: null,
+      vapi_import_error: null,
+      a2p_messaging_service_sid: null,
+      a2p_brand_status: null,
+    })
+    .eq('user_id', userId)
+
+  const ok = errors.length === 0
+  console.log(`[deprovision] ${userId} → ${ok ? 'OK' : 'PARTIAL'} vapi-pn=${vapiPhoneNumberDeleted} vapi-asst=${vapiAssistantDeleted} twilio=${twilioNumberReleased} errors=${errors.length}`)
+  return { ok, vapiAssistantDeleted, vapiPhoneNumberDeleted, twilioNumberReleased, errors }
+}
+
+/**
  * Restore a contractor's assistant from capacity mode back to normal.
  * Re-runs renderSystemPrompt(tenant) via repatchPerTenantAssistant
  * (which already exists), then clears profiles.capacity_mode_at.
