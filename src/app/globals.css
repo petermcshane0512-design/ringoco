@@ -402,47 +402,56 @@ html { overflow-x: hidden; }
     -webkit-backdrop-filter: blur(2px);
   }
 
-  /* Mobile bottom tab bar — always visible. 6 routes as icon+label pills. */
+  /* Mobile bottom tab bar — taller, bolder, brand-matched palette so it
+     feels like a real native app nav bar instead of a cramped strip. */
   .dash-mobile-tabbar {
     display: flex !important;
     position: fixed;
     bottom: 0; left: 0; right: 0;
     z-index: 100;
-    background: rgba(255,255,255,0.96);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-top: 1px solid rgba(232,116,43,0.18);
-    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(255,247,238,0.98) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1.5px solid rgba(232,116,43,0.22);
+    padding: 10px 4px calc(10px + env(safe-area-inset-bottom));
     justify-content: space-around;
-    align-items: center;
-    box-shadow: 0 -8px 24px rgba(11,31,58,0.10);
+    align-items: stretch;
+    box-shadow: 0 -10px 28px rgba(11,31,58,0.12);
+    min-height: 64px;
   }
   .dash-mtab {
     flex: 1;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 2px;
-    padding: 6px 2px;
+    gap: 4px;
+    padding: 10px 3px;
     text-decoration: none;
-    color: #7AAAB2;
-    font-size: 9.5px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    border-radius: 8px;
-    transition: color 0.15s ease, background 0.15s ease;
+    color: #0B1F3A;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    border-radius: 12px;
+    transition: color 0.18s ease, background 0.18s ease, transform 0.12s ease;
     min-width: 0;
+    line-height: 1.15;
   }
   .dash-mtab span {
-    white-space: nowrap;
+    white-space: normal;            /* allow 2-line labels like "Your Receptionist" */
     overflow: hidden;
-    text-overflow: ellipsis;
     max-width: 100%;
+    text-align: center;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
+  .dash-mtab svg { flex-shrink: 0; }
+  .dash-mtab:active { transform: scale(0.94); }
   .dash-mtab.is-active {
-    color: #C84B26;
-    background: rgba(232,116,43,0.08);
+    color: #fff;
+    background: linear-gradient(135deg, #FF9D5A 0%, #E8742B 100%);
+    box-shadow: 0 4px 14px rgba(232,116,43,0.36);
   }
   /* Push main content above the tab bar so it doesn't get hidden */
-  .dash-main main { padding-bottom: 72px !important; }
+  .dash-main main { padding-bottom: 96px !important; }
 
   /* Topbar: tighter padding, show hamburger, hide back-to-home pill */
   .dash-topbar {
