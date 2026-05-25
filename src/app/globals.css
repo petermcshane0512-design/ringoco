@@ -213,13 +213,13 @@ html { overflow-x: hidden; }
     width: auto !important;
     flex: 0 0 auto !important;
     justify-content: center !important;
-    padding: 8px 11px !important;
-    font-size: 12px !important;
+    padding: 11px 16px !important;   /* was 8px 11px — bigger tap target */
+    font-size: 14px !important;       /* was 12px — more readable */
     min-height: 0 !important;
     letter-spacing: -0.2px !important;
     text-align: center;
     white-space: nowrap;
-    border-radius: 8px !important;
+    border-radius: 9px !important;
   }
 }
 
@@ -351,11 +351,15 @@ html { overflow-x: hidden; }
     50%      { transform: translateY(-50%) translateX(4px); opacity: 1; }
   }
 
-  /* Scale the entire dashboard preview down on mobile so the whole
-     frame (header + content + tab strip) fits within view without
-     horizontal overflow or text clipping. transform-origin keeps it
-     centered. */
-  .mobile-dash-preview > div { transform: scale(0.92); transform-origin: top center; }
+  /* Mobile dashboard preview — full width, no scale. The internal sidebar
+     is hidden + tabs moved to bottom strip so the content naturally fits.
+     (Earlier 0.92 scale made it look like a thumbnail per Peter feedback.) */
+  .mobile-dash-preview { padding: 40px 0 8px !important; }
+  .mobile-dash-preview > div {
+    max-width: 100% !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
 }
 
 /* Swipe-hint is mobile-only */
