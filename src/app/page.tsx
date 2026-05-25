@@ -7,6 +7,7 @@ import DashboardPreview from '@/components/DashboardPreview'
 import ConsultingShowcase from '@/components/ConsultingShowcase'
 import HeroPhone from '@/components/HeroPhone'
 import StickyDemoCta from '@/components/StickyDemoCta'
+import { TIER_METADATA as HOMEPAGE_TIER_META, TIER_FEATURES as HOMEPAGE_TIER_FEATURES } from '@/lib/pricing'
 
 export default function HomePage() {
   const { isSignedIn } = useAuth()
@@ -1156,65 +1157,25 @@ export default function HomePage() {
         <p style={{ color: '#4A6670', fontSize: 16, marginBottom: 48 }}>Your first booked job pays for the whole month.</p>
 
         <div className="home-pricing-grid" style={{ gap: 20, maxWidth: 1180, margin: '0 auto 20px' }}>
-          {/* Homepage tier cards — Starter + Pro live, Elite waitlist-only. */}
-          {[
-            {
-              name: 'Starter', price: 147, setup: 0, tier: 'receptionist', calls: '60/mo', comingSoon: false,
-              desc: 'AI answers every call. You close it in one tap — confirm, send a pay-by-text Stripe link, call back, or just acknowledge. Includes 6 AI revenue reports per year.',
-              features: [
-                'YOUR OWN dedicated AI receptionist — not a shared bot. Trained on your business name, services, and rules from day one. (Most competitors run every customer through one shared assistant.)',
-                'A2P 10DLC SMS compliance handled — we attach you to our verified messaging service at signup and submit your brand to the carriers. During the 1–14 day brand-approval window, lead alerts route through our backup line so you never miss a notification while waiting.',
-                '6 AI Consulting Reports / year — bi-monthly revenue intelligence: missed calls, top services, quote-to-close, what to fix. ($5K–$15K value if you hired a consultant.)',
-                '24/7 AI call answering — never miss a job',
-                'Up to 60 inbound calls / month (≈2 per day) — upgrade to Pro for 300/mo, or Elite for unlimited, when you outgrow it',
-                '📅 Live calendar booking — your AI auto-books to your Google Calendar, Outlook, or Calendly (when connected and auto-booking enabled in settings)',
-                'Auto-provisioned local number in your area code (~30 seconds at signup)',
-                'Captures name · callback # · what they need · preferred time (if mentioned) · urgency',
-                'Instant text summary to your phone in 20 seconds',
-                'One-tap actions on every lead text: tap-to-call back · reply YES to confirm · reply NO to decline',
-                'Emergency routing — outbound voice call to your cell on urgent jobs',
-                'Live dashboard + full call transcripts',
-                'Welcome AI business diagnostic within 24 hours of signup',
-                'Self-serve Stripe billing portal · 30-day money-back if not satisfied',
-              ],
-              popular: false, customCta: false,
-            },
-            {
-              name: 'Pro', price: 297, setup: 0, tier: 'officemgr', calls: '300/mo',
-              desc: 'Your back-office, on autopilot. Five AIs that answer calls, chase quotes, recover invoices, draft review replies, and ask past customers for new reviews.',
-              features: [
-                'Everything in Starter, plus:',
-                'Dual-channel lead alerts — every lead arrives as SMS AND email. Never miss a job because your phone died, you were on vacation, or your carrier filtered the text.',
-                '12 AI Consulting Reports / year — monthly revenue intelligence: sales coaching from your actual call transcripts, lead-source attribution, customer lifetime value trends, AI-recommended price increases.',
-                'Up to 300 inbound calls / month (≈10 per day) — fits the vast majority of multi-truck operations',
-                'AI Quote Hunter — auto follow-up SMS day 2 / 7 / 14 on every open quote you log',
-                'AI Collections — auto-chase past-due invoices you flag, with pay-by-text Stripe links auto-generated',
-                'AI Reputation — auto-SMS past customers asking for Google reviews (Google Business Profile link required)',
-                'Smart Call-Summary Insights — sales tip with every callback alert',
-                'Priority email support — 24-hour SLA',
-              ],
-              popular: true, customCta: false, comingSoon: false,
-            },
-            {
-              name: 'Elite', price: 597, setup: 0, tier: 'concierge', calls: 'Unlimited',
-              desc: 'AI runs your back office AND your marketing. Ad creative writing, lead sourcing from permits + storms, competitor monitoring, weekly SEO blog posts, plus quarterly McKinsey-style deep-dives.',
-              features: [
-                'Everything in Pro, plus:',
-                'Unlimited inbound calls — no monthly cap',
-                '24 AI Consulting Reports / year (bi-weekly) + 4 quarterly McKinsey-style deep-dives',
-                'AI Marketing Operations — the full growth stack:',
-                'AI Ad Creative Generator — Google + Meta ad copy weekly from your call transcripts',
-                'AI Lead Sourcing — permits + severe-weather alerts → outbound SMS',
-                'AI Past-Customer Reactivation — drip campaigns to dormant customers',
-                'AI Competitor Watcher — weekly intel on 5 competitors in your service area',
-                'AI Local SEO — weekly blog posts auto-published to your site',
-                'AI Job-Site Photo Studio — text us a completed-job photo, AI generates Instagram + Facebook + Google Business Profile posts with caption, hashtags, and one-tap review request to the customer',
-                '4-hour priority SLA on all support tickets',
-                'Custom AI prompt tuning for your shop’s voice + service catalog + pricing rules',
-              ],
-              popular: false, customCta: false, comingSoon: true,
-            },
-          ].map(plan => (
+          {/* Homepage tier cards — driven by TIER_FEATURES in src/lib/pricing.ts
+              so they ALWAYS match /pricing and /dashboard/upgrade. Edit features
+              there, not here. */}
+          {(['receptionist', 'officemgr', 'concierge'] as const).map((tier) => {
+            const meta = HOMEPAGE_TIER_META[tier]
+            const features = HOMEPAGE_TIER_FEATURES[tier]
+            return {
+              name: meta.name,
+              price: meta.monthly,
+              setup: meta.setup,
+              tier,
+              calls: features.callCap.replace(' calls/mo', '/mo').replace(' calls', ''),
+              desc: features.tagline,
+              features: features.features,
+              popular: tier === 'officemgr',
+              customCta: false,
+              comingSoon: features.comingSoon,
+            }
+          }).map(plan => (
             <div key={plan.name} style={{
               background: plan.popular ? 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)' : '#fff',
               borderRadius: 20,

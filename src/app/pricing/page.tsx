@@ -19,8 +19,8 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import Link from 'next/link'
 import Image from 'next/image'
+import { TIER_METADATA, TIER_FEATURES, type Tier } from '@/lib/pricing'
 
-type Tier = 'receptionist' | 'officemgr' | 'concierge'
 type Interval = 'monthly' | 'annual'
 
 type Plan = {
@@ -34,76 +34,38 @@ type Plan = {
   features: { label: string; auto: boolean }[]
 }
 
-const PLANS: Plan[] = [
-  {
-    tier: 'receptionist',
-    name: 'Starter',
-    monthly: 147,
-    annual: 122,
-    setup: 0,
-    tagline: 'AI answers every call. You close it in one tap.',
-    popular: false,
-    features: [
-      { label: 'YOUR OWN dedicated AI receptionist — not a shared bot. Yours is trained on your business name, services, and rules from day one. (Most competitors run every customer through one shared assistant.)', auto: true },
-      { label: 'A2P 10DLC SMS compliance handled — we attach you to our verified messaging service at signup and submit your brand to the carriers. During the 1–14 day brand-approval window, lead alerts route through our backup line so you never miss a notification while waiting.', auto: true },
-      { label: '6 AI Consulting Reports / year — bi-monthly revenue intelligence: missed calls, top services, quote-to-close ratio, what to fix. ($5K–$15K value if you hired a consultant.)', auto: true },
-      { label: '24/7 AI call answering — never miss a job again', auto: true },
-      { label: 'Up to 60 inbound calls / month (≈2 per day) — upgrade to Pro for 300/mo, or Elite for unlimited, when you outgrow it', auto: true },
-      { label: '📅 Live calendar booking — your AI auto-books to your Google Calendar, Outlook, or Calendly (when connected and auto-booking enabled in settings)', auto: true },
-      { label: 'Auto-provisioned local number in your area code (~30 seconds at signup)', auto: true },
-      { label: 'AI captures name · callback # · what they need · preferred time (if mentioned) · urgency', auto: true },
-      { label: 'Instant text summary to your phone in 20 seconds', auto: true },
-      { label: 'One-tap actions on every lead text: tap-to-call back · reply YES to confirm · reply NO to decline', auto: true },
-      { label: 'Emergency routing — outbound voice call to your cell on urgent jobs', auto: true },
-      { label: 'Live dashboard with full call transcripts + audio', auto: true },
-      { label: 'Welcome AI business diagnostic within 24 hours of signup', auto: true },
-      { label: 'Self-serve Stripe billing portal · 30-day money-back guarantee', auto: true },
-    ],
-  },
-  {
-    tier: 'officemgr',
-    name: 'Pro',
-    monthly: 297,
-    annual: 248,
-    setup: 0,
-    tagline: 'Five AIs running your back office while you turn wrenches.',
-    popular: true,
-    features: [
-      { label: 'Everything in Starter, plus:', auto: false },
-      { label: 'Dual-channel lead alerts — every lead arrives as SMS AND email. You won\'t miss a job because your phone died, you were on vacation, or your carrier filtered the text.', auto: true },
-      { label: '12 AI Consulting Reports / year — monthly revenue intelligence: sales coaching from your actual call transcripts, lead-source attribution, customer lifetime value trends, AI-recommended price increases.', auto: true },
-      { label: 'Up to 300 inbound calls / month (≈10 per day) — fits the vast majority of multi-truck operations. Upgrade to Elite for unlimited when you scale past it.', auto: true },
-      { label: 'AI Quote Hunter — auto follow-up SMS day 2 / 7 / 14 on every open quote you log', auto: true },
-      { label: 'AI Collections — auto-chase past-due invoices you flag, with pay-by-text Stripe links auto-generated', auto: true },
-      { label: 'AI Reputation — auto-SMS past customers asking for Google reviews (Google Business Profile link required)', auto: true },
-      { label: 'Smart Call-Summary Insights — sales tip with every callback alert', auto: true },
-      { label: 'Priority email support — 24-hour SLA', auto: true },
-    ],
-  },
-  {
-    tier: 'concierge',
-    name: 'Elite',
-    monthly: 597,
-    annual: 498,
-    setup: 0,
-    tagline: 'AI runs your back office AND your marketing. You just close the work.',
-    popular: false,
-    features: [
-      { label: 'Everything in Pro, plus:', auto: false },
-      { label: 'Unlimited inbound calls — no monthly cap', auto: true },
-      { label: '24 AI Consulting Reports / year (bi-weekly) + 4 quarterly McKinsey-style deep-dives', auto: true },
-      { label: 'AI Marketing Operations — the full growth stack:', auto: false },
-      { label: 'AI Ad Creative Generator — Google + Meta ad copy weekly from your own call transcripts', auto: true },
-      { label: 'AI Lead Sourcing — permits + severe-weather alerts → outbound SMS', auto: true },
-      { label: 'AI Past-Customer Reactivation — drip campaigns to dormant customers', auto: true },
-      { label: 'AI Competitor Watcher — weekly intel on 5 competitors in your service area', auto: true },
-      { label: 'AI Local SEO — weekly blog posts auto-published to your site', auto: true },
-      { label: 'AI Job-Site Photo Studio — text us a completed-job photo, AI generates ready-to-post Instagram + Facebook + Google Business Profile updates with caption, hashtags, and a one-tap review request to the customer', auto: true },
-      { label: '4-hour priority SLA on all support tickets', auto: true },
-      { label: 'Custom AI prompt tuning — your shop’s voice, service catalog, pricing rules', auto: true },
-    ],
-  },
-]
+// ─────────────────────────────────────────────────────────────────────
+// PLANS now derives from src/lib/pricing.ts — single source of truth.
+// All tier text, features, taglines, and price metadata live in
+// TIER_METADATA + TIER_FEATURES. Edit ONE place there, pricing page +
+// landing page + dashboard upgrade all update together. No more drift.
+//
+// `popular` is the ONLY display-only flag set here (Pro gets the badge).
+// ─────────────────────────────────────────────────────────────────────
+const POPULAR_TIER: Tier = 'officemgr'
+
+const TIER_ORDER: Tier[] = ['receptionist', 'officemgr', 'concierge']
+
+const PLANS: Plan[] = TIER_ORDER.map((tier) => {
+  const meta = TIER_METADATA[tier]
+  const feat = TIER_FEATURES[tier]
+  return {
+    tier,
+    name: meta.name,
+    monthly: meta.monthly,
+    annual: meta.annual,
+    setup: meta.setup,
+    tagline: feat.tagline,
+    popular: tier === POPULAR_TIER,
+    // Convert TIER_FEATURES string list → {label, auto} shape the render
+    // already expects. Items ending in ":" are treated as section headers
+    // (no checkmark, italic) — same convention used by the landing page.
+    features: feat.features.map((label) => ({
+      label,
+      auto: !label.endsWith(':'),
+    })),
+  }
+})
 
 export default function PricingPage() {
   const { isSignedIn, isLoaded } = useAuth()
