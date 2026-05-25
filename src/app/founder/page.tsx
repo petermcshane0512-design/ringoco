@@ -237,8 +237,18 @@ export default function FounderPage() {
           .fv4-prose { font-size: 16.5px; line-height: 1.68; }
           .fv4-prose p { margin-bottom: 18px; }
 
-          .fv4-scenes { padding: 4px 22px 56px; gap: 12px; }
-          .fv4-scene { border-radius: 12px; }
+          /* Stack scene photos 1-col on mobile so each one is ~2x bigger
+             than the cramped side-by-side 2-col layout. Wider aspect for
+             more screen presence. (Peter feedback 2026-05-24) */
+          .fv4-scenes {
+            grid-template-columns: 1fr;
+            padding: 4px 22px 56px;
+            gap: 18px;
+          }
+          .fv4-scene {
+            border-radius: 14px;
+            aspect-ratio: 5/4;
+          }
         }
       `}</style>
 

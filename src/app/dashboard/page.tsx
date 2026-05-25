@@ -68,6 +68,7 @@ export default function DashboardPage() {
   // `window.setInterval` (which lint rightly flags as a bug magnet).
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("annual");
   const [adminSwitching, setAdminSwitching] = useState<string | null>(null);
+  const [adminBarOpen, setAdminBarOpen] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [callsToday, setCallsToday] = useState(0);
   const [callsThisWeek, setCallsThisWeek] = useState(0);
@@ -365,7 +366,21 @@ export default function DashboardPage() {
             background: "#0B1F3A", borderRadius: 99,
             fontSize: 11, fontWeight: 700,
           }}>
-            <span style={{ color: "#7AAAB2", letterSpacing: "0.06em", textTransform: "uppercase", marginRight: 2 }}>Admin</span>
+            <button
+              onClick={() => setAdminBarOpen((o) => !o)}
+              style={{
+                background: "transparent", border: "none", color: "#7AAAB2",
+                letterSpacing: "0.06em", textTransform: "uppercase",
+                fontSize: 11, fontWeight: 700, cursor: "pointer", padding: 0,
+                fontFamily: "inherit",
+              }}
+              title={adminBarOpen ? "Hide admin tools" : "Show admin tools"}
+            >
+              {adminBarOpen ? "Admin ▴" : "Admin ▾"}
+            </button>
+            {adminBarOpen && (
+              <>
+            <span style={{ color: "#7AAAB2", letterSpacing: "0.06em", textTransform: "uppercase", marginRight: 2 }}>·</span>
             {(["receptionist", "officemgr", "concierge"] as const).map(t => {
               const isCurrent = profile?.plan_tier === t;
               const label = t === "receptionist" ? "Starter" : t === "officemgr" ? "Pro" : "Elite";
@@ -394,6 +409,8 @@ export default function DashboardPage() {
             <Link href="/admin/founder" style={{ padding: "4px 10px", borderRadius: 99, background: "rgba(10,168,159,0.18)", color: "#5EEAD4", fontSize: 11, fontWeight: 700, textDecoration: "none" }}>
               Nucleus →
             </Link>
+              </>
+            )}
           </div>
         ) : profile?.plan_tier && (TIER_METADATA[profile.plan_tier as Tier]) && (
           // Customer-facing tier badge — shows ONLY their tier, plus an Upgrade

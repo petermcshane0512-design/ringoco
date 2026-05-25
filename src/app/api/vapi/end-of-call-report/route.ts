@@ -376,7 +376,30 @@ async function takeMessage(opts: {
 
   if (jobErr) {
     console.error('vapi take_message: job insert failed', jobErr)
-    return { success: false, error: 'database write failed' }
+    // Write the Postgres error to call_logs so it surfaces in last-call-debug
+    // AND in the silent-failure email. Without this, every missing-column
+    // bug looks identical from the outside ("save failed") and we have to
+    // tail Vercel logs to figure out WHICH column. Writing it inline turns
+    // the next failed call into a self-diagnosing artifact.
+    try {
+      const errSummary = `DB_INSERT_FAILED ${(jobErr as { code?: string }).code || ''} ${jobErr.message || ''}`.trim()
+      await supabase.from('call_logs').upsert(
+        {
+          user_id: tenant.user_id,
+          profile_id: tenant.user_id,
+          call_sid: callSid,
+          caller_phone: callerPhone,
+          job_type: args.reason,
+          job_created: false,
+          booking_completed: false,
+          summary: errSummary,
+        },
+        { onConflict: 'call_sid' },
+      )
+    } catch (e) {
+      console.error('failed to stamp jobErr onto call_logs:', e)
+    }
+    return { success: false, error: `database write failed: ${jobErr.message}` }
   }
 
   // Best-effort follow-up updates for columns added by later migrations.
@@ -593,6 +616,24 @@ async function takeMessage(opts: {
   // Goal: emotional anchor + retention signal. Contractor sees the AI
   // working for the very first time, gets a personalized "your first
   // one just came in" email + SMS. Free dopamine; saves week-1 churn.
+  // Auto-stamp forwarding_verified_at on every successful call. If a real
+  // call reached us, forwarding IS WORKING by definition — the user shouldn't
+  // see a "forwarding isn't set up yet" banner on their dashboard. The
+  // explicit /api/onboarding/verify-forwarding test-call path also stamps
+  // this, but most customers never run it; this catches everyone whose
+  // forwarding just-works from a real inbound call. Idempotent: only stamps
+  // when currently null. Wrapped separately so a missing column doesn't
+  // skip the first-call celebration below.
+  try {
+    await supabase
+      .from('profiles')
+      .update({ forwarding_verified_at: new Date().toISOString() })
+      .eq('user_id', tenant.user_id)
+      .is('forwarding_verified_at', null)
+  } catch (e) {
+    console.warn('auto-stamp forwarding_verified_at skipped:', (e as Error).message)
+  }
+
   try {
     const { data: firstClaim } = await supabase
       .from('profiles')
@@ -818,29 +859,23 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
     const endedReason = m.endedReason ?? null
 
     try {
-      const subject = `📞 Demo call summary — no lead captured${durationSec ? ` (${durationSec}s)` : ''}`
+      const subject = `📞 Demo call — ${callerPhone ?? 'unknown'}${durationSec ? ` (${durationSec}s)` : ''}`
       const html =
         `<div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;padding:20px;">` +
-        `<h2 style="color:#0B1F3A;margin:0 0 8px;">📞 Demo call ended without take_message</h2>` +
-        `<p style="color:#4A6670;margin:0 0 16px;font-size:14px;">A prospect just called the demo line. Emma didn't capture a structured lead (call ended early, mode switch, or caller hung up mid-flow). Full transcript + AI summary below so you can follow up manually if there's anything actionable.</p>` +
         `<table style="font-size:13px;color:#0B1F3A;margin-bottom:16px;border-collapse:collapse;">` +
-        `<tr><td style="padding:4px 8px 4px 0;color:#4A6670;">Caller</td><td>${callerPhone ?? '(unknown)'}</td></tr>` +
-        (durationSec ? `<tr><td style="padding:4px 8px 4px 0;color:#4A6670;">Duration</td><td>${durationSec}s</td></tr>` : '') +
-        (endedReason ? `<tr><td style="padding:4px 8px 4px 0;color:#4A6670;">Ended reason</td><td>${endedReason}</td></tr>` : '') +
-        `<tr><td style="padding:4px 8px 4px 0;color:#4A6670;">Call ID</td><td style="font-family:monospace;font-size:11px;">${callSid}</td></tr>` +
+        `<tr><td style="padding:4px 14px 4px 0;color:#4A6670;">Caller</td><td>${callerPhone ?? '(unknown)'}</td></tr>` +
+        (durationSec ? `<tr><td style="padding:4px 14px 4px 0;color:#4A6670;">Duration</td><td>${durationSec}s</td></tr>` : '') +
         `</table>` +
         (summary
           ? `<h3 style="color:#0B1F3A;margin:16px 0 6px;font-size:14px;">AI summary</h3><p style="background:#F5F1EA;padding:12px;border-radius:8px;font-size:13px;color:#0B1F3A;margin:0 0 16px;">${escapeHtml(summary)}</p>`
           : '') +
-        `<h3 style="color:#0B1F3A;margin:16px 0 6px;font-size:14px;">Full transcript</h3>` +
+        `<h3 style="color:#0B1F3A;margin:16px 0 6px;font-size:14px;">Transcript</h3>` +
         `<pre style="background:#F5F1EA;padding:12px;border-radius:8px;font-size:12px;white-space:pre-wrap;color:#0B1F3A;margin:0;">${escapeHtml(transcriptText)}</pre>` +
         `</div>`
       const text =
-        `Demo call ended without take_message\n\n` +
         `Caller: ${callerPhone ?? '(unknown)'}\n` +
         (durationSec ? `Duration: ${durationSec}s\n` : '') +
-        (endedReason ? `Ended reason: ${endedReason}\n` : '') +
-        `Call ID: ${callSid}\n\n` +
+        `\n` +
         (summary ? `AI summary:\n${summary}\n\n` : '') +
         `Transcript:\n${transcriptText}\n`
       await sendEmail({ to: peterAlertEmail, subject, html, text })
@@ -930,18 +965,24 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
           ? JSON.stringify(transcript)
           : '(no transcript)'
 
-      const subject = `📞 Missed-info call to ${businessName}${durationSec ? ` (${durationSec}s)` : ''}`
+      // Surface DB_INSERT_FAILED summaries (written by takeMessage's failure
+      // path) as a distinct DEBUG banner so missing-column bugs are obvious
+      // at a glance instead of looking like generic "caller hung up early".
+      const isDbFailure = typeof summary === 'string' && summary.startsWith('DB_INSERT_FAILED')
+
+      const subject = isDbFailure
+        ? `⚠️ DB save failed — ${businessName}${durationSec ? ` (${durationSec}s)` : ''}`
+        : `📞 Call — ${businessName}${durationSec ? ` (${durationSec}s)` : ''}`
       const html =
         `<div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;padding:20px;">` +
-        `<h2 style="color:#0B1F3A;margin:0 0 8px;">📞 Call answered but no message captured</h2>` +
-        `<p style="color:#4A6670;margin:0 0 16px;font-size:14px;">A caller reached your BellAveGo receptionist but Emma didn't capture a structured lead — they probably hung up early, didn't share enough to act on, or Emma got cut off. Transcript + summary below so you can follow up if it's actionable.</p>` +
+        (isDbFailure
+          ? `<div style="background:#FFF4E5;border-left:4px solid #F59E0B;padding:12px 14px;margin:0 0 16px;border-radius:6px;font-size:13px;color:#7C2D12;"><strong>DEBUG:</strong> Lead capture failed at DB layer. ${escapeHtml(summary)}</div>`
+          : '') +
         `<table style="font-size:13px;color:#0B1F3A;margin-bottom:16px;border-collapse:collapse;">` +
-        `<tr><td style="padding:4px 8px 4px 0;color:#4A6670;">Caller</td><td>${callerPhone ?? '(unknown)'}</td></tr>` +
-        (durationSec ? `<tr><td style="padding:4px 8px 4px 0;color:#4A6670;">Duration</td><td>${durationSec}s</td></tr>` : '') +
-        (endedReason ? `<tr><td style="padding:4px 8px 4px 0;color:#4A6670;">Ended reason</td><td>${endedReason}</td></tr>` : '') +
-        `<tr><td style="padding:4px 8px 4px 0;color:#4A6670;">Call ID</td><td style="font-family:monospace;font-size:11px;">${callSid}</td></tr>` +
+        `<tr><td style="padding:4px 14px 4px 0;color:#4A6670;">Caller</td><td>${callerPhone ?? '(unknown)'}</td></tr>` +
+        (durationSec ? `<tr><td style="padding:4px 14px 4px 0;color:#4A6670;">Duration</td><td>${durationSec}s</td></tr>` : '') +
         `</table>` +
-        (summary
+        (summary && !isDbFailure
           ? `<h3 style="color:#0B1F3A;margin:16px 0 6px;font-size:14px;">AI summary</h3><p style="background:#F5F1EA;padding:12px;border-radius:8px;font-size:13px;color:#0B1F3A;margin:0 0 16px;">${escapeHtml(summary)}</p>`
           : '') +
         `<h3 style="color:#0B1F3A;margin:16px 0 6px;font-size:14px;">Transcript</h3>` +
@@ -949,12 +990,11 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
         (callerPhone ? `<p style="margin:20px 0 0;"><a href="tel:${callerPhone}" style="display:inline-block;padding:12px 20px;background:#0AA89F;color:#fff;text-decoration:none;border-radius:10px;font-weight:800;font-size:14px;">📲 Call back ${callerPhone}</a></p>` : '') +
         `</div>`
       const text =
-        `Call answered but no message captured\n\n` +
+        (isDbFailure ? `DEBUG — DB save failed: ${summary}\n\n` : '') +
         `Caller: ${callerPhone ?? '(unknown)'}\n` +
         (durationSec ? `Duration: ${durationSec}s\n` : '') +
-        (endedReason ? `Ended reason: ${endedReason}\n` : '') +
-        `Call ID: ${callSid}\n\n` +
-        (summary ? `AI summary:\n${summary}\n\n` : '') +
+        `\n` +
+        (summary && !isDbFailure ? `AI summary:\n${summary}\n\n` : '') +
         `Transcript:\n${transcriptText}\n`
 
       // Send to contractor (their Clerk primary email) AND to Peter so he

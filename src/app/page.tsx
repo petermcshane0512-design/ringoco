@@ -379,6 +379,9 @@ export default function HomePage() {
               min-height: 460px;
               min-width: 0;
             }
+            /* Mobile-only dashboard preview — hidden on desktop, overridden
+               to display:block inside the (max-width: 768px) media block */
+            .mobile-dash-preview { display: none; }
             .hero-stage-dash {
               position: absolute;
               inset: 0;
@@ -490,6 +493,9 @@ export default function HomePage() {
               .hero-stage { display: none !important; }
               .hero-stage-dash,
               .hero-stage-phone { display: none !important; }
+              /* Show the mobile-only dashboard preview section
+                 (hidden on desktop where the hero already shows it) */
+              .mobile-dash-preview { display: block !important; padding: 40px 0 8px !important; }
 
               /* Hero container — kill the desktop min-height: 640px so the
                  cream consulting section begins right after the dashboard
@@ -628,6 +634,23 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* MOBILE-ONLY dashboard preview — the desktop hero shows the
+          dashboard at the right of the headline; that block is hidden on
+          mobile (.hero-stage display:none). Surface it here so mobile
+          visitors still see what they're getting before they hit the
+          consulting reports section. CSS class hides this on desktop. */}
+      <section className="mobile-dash-preview">
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px 8px' }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.16em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 10 }}>
+            What you see when you log in
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.6px', textAlign: 'center', marginBottom: 18, lineHeight: 1.18 }}>
+            Every call, lead and dollar — live, in one place.
+          </div>
+          <DashboardPreview compact />
         </div>
       </section>
 
