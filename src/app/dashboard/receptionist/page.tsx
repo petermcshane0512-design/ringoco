@@ -50,7 +50,7 @@ export default function ReceptionistPage() {
   const [twilioNumber, setTwilioNumber] = useState('Provisioning...')
   const [saving, setSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle')
-  const [stats, setStats] = useState({ calls: 0, booked: 0, saved: 0 })
+  const [stats, setStats] = useState({ calls: 0, booked: 0, saved: 0, revenue: 0 })
   const [demoIdx, setDemoIdx] = useState(0)
 
   useEffect(() => {
@@ -87,12 +87,32 @@ export default function ReceptionistPage() {
   }
 
   async function loadStats() {
+    // Pull the same tenant-scoped summary the Command Center page uses, so
+    // these tiles ALWAYS match the dashboard home counts (single source of
+    // truth = /api/dashboard/summary). Previously this was hardcoded to 0
+    // because the summary endpoint hadn't been wired into this page yet.
     try {
-      const res = await fetch('/api/profile')
+      const res = await fetch('/api/dashboard/summary')
       if (!res.ok) return
-      // Stats will be populated from call_logs once migration runs
-      // For now show 0s — they'll update automatically once calls come in
-    } catch (e) {}
+      const s = await res.json() as {
+        jobs?: Array<{ status?: string; amount?: number; amount_estimated?: number }>
+        callsThisWeek?: number
+        leadsThisMonth?: number
+      }
+      const jobs = s.jobs || []
+      const booked = jobs.filter((j) => j.status === 'scheduled' || j.status === 'accepted' || j.status === 'completed').length
+      const revenue = jobs
+        .filter((j) => !['cancelled', 'declined'].includes(j.status || ''))
+        .reduce((sum, j) => sum + (j.amount || j.amount_estimated || 0), 0)
+      setStats({
+        calls: s.callsThisWeek || 0,
+        booked,
+        saved: s.callsThisWeek || 0,  // every answered call = a save vs voicemail
+        revenue,
+      })
+    } catch (e) {
+      console.error('loadStats failed:', e)
+    }
   }
 
   async function handleSave() {
@@ -232,7 +252,7 @@ export default function ReceptionistPage() {
           { label: 'Calls Answered',      value: String(stats.calls),  sub: 'Answered automatically by AI', accent: 'teal' },
           { label: 'Jobs Booked',         value: String(stats.booked), sub: 'Converted from incoming calls', accent: 'teal' },
           { label: 'Missed Calls Saved',  value: String(stats.saved),  sub: 'Would have gone to voicemail', accent: 'teal' },
-          { label: 'Revenue Recovered',   value: '$0',                  sub: 'Estimated from booked jobs',    accent: 'orange' },
+          { label: 'Revenue Recovered',   value: `$${stats.revenue.toLocaleString()}`, sub: 'Estimated from booked jobs',    accent: 'orange' },
         ].map(s => (
           <div key={s.label} className={`mc-card ${s.accent === 'orange' ? 'mc-card-orange' : 'mc-card-teal'}`} style={{ padding: '20px 22px' }}>
             <span style={{ fontSize: 10, fontWeight: 800, color: s.accent === 'orange' ? '#C84B26' : '#0AA89F', textTransform: 'uppercase', letterSpacing: '0.14em' }}>
