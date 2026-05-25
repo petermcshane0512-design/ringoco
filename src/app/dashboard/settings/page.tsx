@@ -111,9 +111,12 @@ export default function SettingsPage() {
     setBusinessName(data?.business_name || '')
     setOwnerPhone(data?.owner_phone || '')
     setCustomPromptNotes(data?.custom_prompt_notes || '')
-    setAiTone((data?.ai_tone as 'friendly' | 'professional' | 'concise') || 'friendly')
+    // Voice + tone locked to Emma / friendly — we only ship/support that
+    // combo right now. Force defaults on load so any legacy non-default
+    // value gets normalized on next save.
+    setAiTone('friendly')
+    setAiVoiceId('156fb8d2-335b-4950-9cb3-a2d33befec77')
     setAiLanguage((data?.ai_language as 'en' | 'es') || 'en')
-    setAiVoiceId(data?.ai_voice_id || '156fb8d2-335b-4950-9cb3-a2d33befec77')
     setBackupOwnerPhone(data?.backup_owner_phone || '')
     setAutoBookingEnabled(!!data?.auto_booking_enabled)
     setAutoBookingMinHour(typeof data?.auto_booking_min_hour === 'number' ? data.auto_booking_min_hour : null)
@@ -322,71 +325,40 @@ export default function SettingsPage() {
             Pick how your AI receptionist sounds. Changes go live within a minute. Tap “Test it” to hear it on your phone before saving.
           </p>
 
-          {/* Voice picker */}
+          {/* Voice — locked to Emma. Backend still supports voice variants
+              (kept for future) but UI exposes the one we ship + support so
+              customers don't get analysis paralysis or weird voice mismatches. */}
           <div style={{ marginBottom: 18 }}>
-            <span style={label}>Voice</span>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
-              {[
-                { id: '156fb8d2-335b-4950-9cb3-a2d33befec77', name: 'Helpful Woman', desc: 'Warm, professional — default' },
-                { id: 'bf991597-6c13-47e4-8411-91ec2de5c466', name: 'Newslady', desc: 'Polished, news-anchor energy' },
-                { id: '421b3369-f63f-4b03-8980-37a44df1d4e8', name: 'Friendly Man', desc: 'Approachable male voice' },
-              ].map((v) => {
-                const active = aiVoiceId === v.id
-                return (
-                  <button
-                    key={v.id}
-                    onClick={() => setAiVoiceId(v.id)}
-                    style={{
-                      textAlign: 'left',
-                      padding: '12px 14px',
-                      borderRadius: 10,
-                      border: `1.5px solid ${active ? '#0AA89F' : 'rgba(10,168,159,0.18)'}`,
-                      background: active ? 'rgba(10,168,159,0.08)' : '#F5FDFB',
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                    }}
-                  >
-                    <div style={{ fontSize: 13, fontWeight: 800, color: active ? '#0AA89F' : '#0B1F3A' }}>
-                      {active ? '✓ ' : ''}{v.name}
-                    </div>
-                    <div style={{ fontSize: 11, color: '#7AAAB2', marginTop: 2 }}>{v.desc}</div>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Tone */}
-          <div style={{ marginBottom: 18 }}>
-            <span style={label}>Tone</span>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {([
-                { v: 'friendly', l: 'Friendly', d: 'Warm, conversational' },
-                { v: 'professional', l: 'Professional', d: 'Polished, formal' },
-                { v: 'concise', l: 'Concise', d: 'Brief, no small talk' },
-              ] as const).map((o) => {
-                const active = aiTone === o.v
-                return (
-                  <button
-                    key={o.v}
-                    onClick={() => setAiTone(o.v)}
-                    style={{
-                      padding: '9px 16px',
-                      borderRadius: 9,
-                      fontSize: 13,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      border: `1.5px solid ${active ? '#0AA89F' : 'rgba(10,168,159,0.2)'}`,
-                      background: active ? 'rgba(10,168,159,0.08)' : '#F5FDFB',
-                      color: active ? '#0AA89F' : '#4A7A80',
-                      fontFamily: 'inherit',
-                    }}
-                  >
-                    {active ? '✓ ' : ''}{o.l}
-                    <span style={{ display: 'block', fontSize: 10, fontWeight: 500, color: active ? '#0AA89F' : '#7AAAB2', marginTop: 2 }}>{o.d}</span>
-                  </button>
-                )
-              })}
+            <span style={label}>Receptionist</span>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '14px 16px',
+                borderRadius: 12,
+                border: '1.5px solid rgba(10,168,159,0.25)',
+                background: 'linear-gradient(135deg, rgba(10,168,159,0.08) 0%, rgba(255,217,168,0.18) 100%)',
+              }}
+            >
+              <div
+                style={{
+                  width: 42, height: 42, borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #0AA89F, #18AFA8)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#fff', fontSize: 16, fontWeight: 900,
+                  flexShrink: 0,
+                  boxShadow: '0 4px 12px rgba(10,168,159,0.32)',
+                }}
+              >
+                E
+              </div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A' }}>Emma</div>
+                <div style={{ fontSize: 12, color: '#4A7A80', marginTop: 2 }}>
+                  Warm, professional, friendly — your AI receptionist
+                </div>
+              </div>
             </div>
           </div>
 
