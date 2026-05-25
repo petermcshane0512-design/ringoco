@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { TIER_METADATA, type Tier } from '@/lib/pricing'
+import { TIER_METADATA, TIER_FEATURES, type Tier } from '@/lib/pricing'
 
 /**
  * Logged-in upgrade flow.
@@ -18,57 +18,9 @@ import { TIER_METADATA, type Tier } from '@/lib/pricing'
  * profile.plan_tier + sends them back here.
  */
 
-const TIER_FEATURES: Record<Tier, {
-  tagline: string
-  highlights: string[]
-  callCap: string
-  reports: string
-  vibe: 'starter' | 'pro' | 'elite'
-}> = {
-  receptionist: {
-    tagline: 'Never miss a call. Capture every lead.',
-    callCap: '60 calls/mo',
-    reports: '6 AI consulting reports/yr',
-    highlights: [
-      '24/7 AI receptionist in your business name',
-      'Lead alerts via email + push within 20 sec',
-      'Tap-to-call back from your phone',
-      'Emergency outbound voice call to your cell',
-      'Full call transcripts + recordings',
-    ],
-    vibe: 'starter',
-  },
-  officemgr: {
-    tagline: 'Receptionist + the full back office, on autopilot.',
-    callCap: '300 calls/mo',
-    reports: '12 AI consulting reports/yr (monthly)',
-    highlights: [
-      'Everything in Starter, plus:',
-      '🎯 AI Quote Hunter — auto-follow-up SMS on day 2, 7, 14',
-      '💰 AI Collections — chases past-due invoices with pay-by-text',
-      '⭐ AI Reputation — auto-asks happy customers for Google reviews',
-      '💡 Smart Call-Summary Insights — sales tips with every alert',
-      'Priority email support — 24-hour SLA',
-    ],
-    vibe: 'pro',
-  },
-  concierge: {
-    tagline: 'AI runs your back office AND your marketing.',
-    callCap: 'UNLIMITED calls',
-    reports: '24 bi-weekly reports + 4 quarterly McKinsey-style deep dives',
-    highlights: [
-      'Everything in Pro, plus:',
-      '🎨 AI Ad Creative Generator — Google + Meta copy weekly',
-      '📡 AI Lead Sourcing — permits + storm alerts → outbound SMS',
-      '🔄 AI Past-Customer Reactivation — drip campaigns to dormant customers',
-      '🕵️ AI Competitor Watcher — weekly intel on 5 local competitors',
-      '🌐 AI Local SEO — weekly blog posts auto-published',
-      '📸 AI Job-Site Photo Studio — text a photo, get social posts',
-      '4-hour priority SLA + direct founder access',
-    ],
-    vibe: 'elite',
-  },
-}
+// TIER_FEATURES is imported from src/lib/pricing.ts — single source of truth.
+// Don't redefine features here; edits MUST go in pricing.ts so every pricing
+// surface (landing, /pricing, this upgrade page) stays in sync automatically.
 
 const TIER_ORDER: Tier[] = ['receptionist', 'officemgr', 'concierge']
 
@@ -298,7 +250,7 @@ export default function UpgradePage() {
                     {features.tagline}
                   </div>
                   <div style={{ fontSize: 12, color: '#4A6670', marginBottom: 16 }}>
-                    {features.callCap} · {features.reports}
+                    {features.callCap} · {features.reportsCadence}
                   </div>
 
                   <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 22px', display: 'flex', flexDirection: 'column', gap: 8 }}>

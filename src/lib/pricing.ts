@@ -189,6 +189,117 @@ export const TIER_METADATA: Record<Tier, {
   setup: number
 }> = CURRENT_PRICING_VERSION === 'v1_legacy' ? TIER_METADATA_V1 : TIER_METADATA_V2
 
+// ── Canonical tier features — single source of truth ──
+//
+// EVERY pricing surface across the site (landing page, /pricing, dashboard
+// upgrade flow, sales decks) imports from this constant. If you change a
+// feature description here, it auto-updates EVERYWHERE — no copy drift.
+//
+// Each tier has:
+//   - tagline:   one-line value prop shown on the card
+//   - callCap:   short call cap label
+//   - reportsCadence: short consulting-report cadence label
+//   - features:  full bulleted feature list (long-form for /pricing + /)
+//   - highlights: 5-7 compressed bullets (for dashboard upgrade cards)
+//   - comingSoon: true means waitlist-only (Elite right now)
+export type TierFeatures = {
+  tagline: string
+  callCap: string
+  reportsCadence: string
+  features: string[]
+  highlights: string[]
+  comingSoon: boolean
+}
+
+export const TIER_FEATURES: Record<Tier, TierFeatures> = {
+  receptionist: {
+    tagline: 'AI answers every call. You close it in one tap.',
+    callCap: '60 calls/mo',
+    reportsCadence: '6 AI Consulting Reports/yr (bi-monthly)',
+    comingSoon: false,
+    highlights: [
+      '24/7 AI receptionist in your business name',
+      'Instant lead alerts via email + push within 20 sec',
+      'Tap-to-call back from your phone',
+      'Live calendar booking (Google/Outlook/Calendly)',
+      'Emergency outbound voice call to your cell',
+      'Full call transcripts + recordings',
+    ],
+    features: [
+      'YOUR OWN dedicated AI receptionist — not a shared bot. Trained on your business name, services, and rules from day one. (Most competitors run every customer through one shared assistant.)',
+      'A2P 10DLC SMS compliance handled — we attach you to our verified messaging service at signup and submit your brand to the carriers. During the 1–14 day brand-approval window, lead alerts route through our backup line so you never miss a notification while waiting.',
+      '6 AI Consulting Reports / year — bi-monthly revenue intelligence: missed calls, top services, quote-to-close, what to fix. ($5K–$15K value if you hired a consultant.)',
+      '24/7 AI call answering — never miss a job',
+      'Up to 60 inbound calls / month (≈2 per day) — upgrade to Pro for 300/mo, or Elite for unlimited, when you outgrow it',
+      '📅 Live calendar booking — your AI auto-books to your Google Calendar, Outlook, or Calendly (when connected and auto-booking enabled in settings)',
+      'Auto-provisioned local number in your area code (~30 seconds at signup)',
+      'Captures name · callback # · what they need · preferred time · urgency',
+      'Instant text summary to your phone in 20 seconds',
+      'One-tap actions on every lead text: tap-to-call back · reply YES to confirm · reply NO to decline',
+      'Emergency routing — outbound voice call to your cell on urgent jobs',
+      'Live dashboard + full call transcripts',
+      'Welcome AI business diagnostic within 24 hours of signup',
+      'Self-serve Stripe billing portal · 30-day money-back if not satisfied',
+    ],
+  },
+  officemgr: {
+    tagline: 'Five AIs running your back office while you turn wrenches.',
+    callCap: '300 calls/mo',
+    reportsCadence: '12 AI Consulting Reports/yr (monthly)',
+    comingSoon: false,
+    highlights: [
+      'Everything in Starter, plus:',
+      '🎯 AI Quote Hunter — auto follow-up SMS day 2/7/14',
+      '💰 AI Collections — chases past-due invoices with pay-by-text',
+      '⭐ AI Reputation — auto-asks happy customers for Google reviews',
+      '💡 Smart Call-Summary Insights — sales tips with every alert',
+      'Dual-channel lead alerts (SMS + email)',
+      'Priority email support — 24-hour SLA',
+    ],
+    features: [
+      'Everything in Starter, plus:',
+      'Dual-channel lead alerts — every lead arrives as SMS AND email. Never miss a job because your phone died, you were on vacation, or your carrier filtered the text.',
+      '12 AI Consulting Reports / year — monthly revenue intelligence: sales coaching from your actual call transcripts, lead-source attribution, customer lifetime value trends, AI-recommended price increases.',
+      'Up to 300 inbound calls / month (≈10 per day) — fits the vast majority of multi-truck operations',
+      'AI Quote Hunter — auto follow-up SMS day 2 / 7 / 14 on every open quote you log',
+      'AI Collections — auto-chase past-due invoices you flag, with pay-by-text Stripe links auto-generated',
+      'AI Reputation — auto-SMS past customers asking for Google reviews (Google Business Profile link required)',
+      'Smart Call-Summary Insights — sales tip with every callback alert',
+      'Priority email support — 24-hour SLA',
+    ],
+  },
+  concierge: {
+    tagline: 'AI runs your back office AND your marketing. You just close the work.',
+    callCap: 'Unlimited calls',
+    reportsCadence: '24 bi-weekly reports + 4 quarterly McKinsey deep-dives',
+    comingSoon: true,
+    highlights: [
+      'Everything in Pro, plus:',
+      '🎨 AI Ad Creative Generator — Google + Meta copy weekly',
+      '📡 AI Lead Sourcing — permits + storm alerts → outbound SMS',
+      '🔄 AI Past-Customer Reactivation — drip campaigns',
+      '🕵️ AI Competitor Watcher — weekly intel on 5 local competitors',
+      '🌐 AI Local SEO — weekly blog posts auto-published',
+      '📸 AI Job-Site Photo Studio — text photo, get social posts',
+      '4-hour priority SLA + direct founder access',
+    ],
+    features: [
+      'Everything in Pro, plus:',
+      'Unlimited inbound calls — no monthly cap',
+      '24 AI Consulting Reports / year (bi-weekly) + 4 quarterly McKinsey-style deep-dives',
+      'AI Marketing Operations — the full growth stack:',
+      'AI Ad Creative Generator — Google + Meta ad copy weekly from your call transcripts',
+      'AI Lead Sourcing — permits + severe-weather alerts → outbound SMS',
+      'AI Past-Customer Reactivation — drip campaigns to dormant customers',
+      'AI Competitor Watcher — weekly intel on 5 competitors in your service area',
+      'AI Local SEO — weekly blog posts auto-published to your site',
+      'AI Job-Site Photo Studio — text us a completed-job photo, AI generates Instagram + Facebook + Google Business Profile posts with caption, hashtags, and one-tap review request',
+      '4-hour priority SLA on all support tickets',
+      'Custom AI prompt tuning for your shop’s voice + service catalog + pricing rules',
+    ],
+  },
+}
+
 // ── Helpers ─────────────────────────────────────────────────────
 export function priceFor(tier: Tier, interval: Interval): string {
   return PRICE_IDS[tier][interval]
