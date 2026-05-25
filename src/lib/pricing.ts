@@ -220,7 +220,7 @@ export const TIER_FEATURES: Record<Tier, TierFeatures> = {
     highlights: [
       '24/7 AI receptionist in your business name',
       '60 calls/month included',
-      'Lead lands on your phone in 20 seconds — push + email',
+      'Lead lands on your phone within 10 seconds — push + email',
       'Auto-books appointments to Google, Outlook, or Calendly',
       'Emergency outbound voice call to your cell',
       '6 AI revenue reports/year',
@@ -228,7 +228,7 @@ export const TIER_FEATURES: Record<Tier, TierFeatures> = {
     features: [
       '24/7 AI receptionist — picks up in your business name, captures every lead',
       '60 calls per month included (approximately 2 per day)',
-      'Lead lands on your phone in 20 seconds — push notification + email with caller, problem, tap-to-call link',
+      'Lead lands on your phone within 10 seconds after the call — push notification + email with caller, problem, tap-to-call link',
       'Auto-books appointments to your Google Calendar, Outlook, or Calendly (you toggle on/off)',
       'Emergency outbound voice call to your cell when caller flags urgency',
       '6 AI revenue reports per year — bi-monthly, shows missed jobs, top services, what to fix',
