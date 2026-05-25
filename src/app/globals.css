@@ -329,26 +329,27 @@ html { overflow-x: hidden; }
     background: linear-gradient(90deg, rgba(255,247,238,0) 0%, rgba(255,247,238,0.95) 60%);
     pointer-events: none;
   }
-  /* Pulsing chevron arrow above the fade — visible swipe indicator */
+  /* Pulsing chevron arrow — moved to BOTTOM-RIGHT corner of the strip
+     so it doesn't overlap the Pro tab tap target. Smaller (18px) and
+     still pulses to draw the eye. (Peter feedback: was intercepting taps.) */
   .dp-swipe-hint {
     display: flex !important;
     position: absolute;
-    right: 6px; top: 50%;
-    transform: translateY(-50%);
-    width: 22px; height: 22px;
+    right: 4px; bottom: 4px;
+    width: 18px; height: 18px;
     align-items: center; justify-content: center;
     background: linear-gradient(135deg, #FF9D5A, #E8742B);
     color: #fff;
-    font-size: 13px; font-weight: 900;
+    font-size: 11px; font-weight: 900;
     border-radius: 999px;
-    box-shadow: 0 3px 10px rgba(232,116,43,0.42);
+    box-shadow: 0 2px 8px rgba(232,116,43,0.40);
     animation: dp-swipe-bounce 1.6s ease-in-out infinite;
     pointer-events: none;
     z-index: 2;
   }
   @keyframes dp-swipe-bounce {
-    0%, 100% { transform: translateY(-50%) translateX(0); opacity: 0.85; }
-    50%      { transform: translateY(-50%) translateX(4px); opacity: 1; }
+    0%, 100% { transform: translateX(0);  opacity: 0.85; }
+    50%      { transform: translateX(4px); opacity: 1; }
   }
 
   /* Mobile dashboard preview — full edge-to-edge width with a 78% scale
@@ -364,11 +365,13 @@ html { overflow-x: hidden; }
     max-width: 100% !important;
     padding: 0 !important;
   }
-  /* Scale just the dashboard preview itself — not the headline above it */
+  /* Scale just the dashboard preview itself — not the headline above it.
+     0.62 = 22% smaller than the previous 0.78 (Peter feedback: consulting
+     tab still had cut-off content; needs more breathing room). */
   .mobile-dash-preview > div > div:last-child {
-    transform: scale(0.78);
+    transform: scale(0.62);
     transform-origin: top center;
-    margin-bottom: -22%;       /* recover the visual space scale stole */
+    margin-bottom: -38%;       /* recover visual space — matches 1-0.62 */
   }
 }
 
