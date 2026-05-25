@@ -895,13 +895,21 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
   // back to false. Vapi's tool-calls event arrives first; end-of-call comes
   // ~1-2s later.
   let priorJobCreated = false
+  let priorDbError: string | null = null
   try {
     const { data: priorRow } = await supabase
       .from('call_logs')
-      .select('job_created, booking_completed')
+      .select('job_created, booking_completed, summary')
       .eq('call_sid', callSid)
       .maybeSingle()
     priorJobCreated = !!(priorRow as { job_created?: boolean } | null)?.job_created
+    // Capture any DB_INSERT_FAILED summary written by takeMessage's failure
+    // path before our upsert overwrites it. Used below to render the
+    // diagnostic banner in the silent-failure email.
+    const priorSummary = (priorRow as { summary?: string | null } | null)?.summary
+    if (priorSummary && priorSummary.startsWith('DB_INSERT_FAILED')) {
+      priorDbError = priorSummary
+    }
   } catch (e) {
     console.warn('end-of-call call_logs prior-row lookup failed:', e)
   }
@@ -915,7 +923,11 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
         call_sid: callSid,
         caller_phone: callerPhone,
         transcript: typeof transcript === 'string' ? transcript : transcript ? JSON.stringify(transcript) : null,
-        summary,
+        // Preserve the DB_INSERT_FAILED error in summary so it shows up in
+        // last-call-debug AND so the email path below can render the DEBUG
+        // banner. Otherwise the AI summary clobbers it and we lose the
+        // column-error diagnostic that we specifically captured.
+        summary: priorDbError ? `${priorDbError}\n\n---AI summary---\n${summary || ''}` : summary,
         job_created: effectiveMessageCaptured,
         booking_completed: effectiveMessageCaptured,
         // Vapi reports actual COGS per call in message.cost — capture it so
@@ -968,7 +980,10 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
       // Surface DB_INSERT_FAILED summaries (written by takeMessage's failure
       // path) as a distinct DEBUG banner so missing-column bugs are obvious
       // at a glance instead of looking like generic "caller hung up early".
-      const isDbFailure = typeof summary === 'string' && summary.startsWith('DB_INSERT_FAILED')
+      // priorDbError is the value captured BEFORE our upsert merged the
+      // AI summary on top — without it we'd lose visibility into which
+      // column broke.
+      const isDbFailure = !!priorDbError
 
       const subject = isDbFailure
         ? `⚠️ DB save failed — ${businessName}${durationSec ? ` (${durationSec}s)` : ''}`
@@ -976,7 +991,7 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
       const html =
         `<div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;padding:20px;">` +
         (isDbFailure
-          ? `<div style="background:#FFF4E5;border-left:4px solid #F59E0B;padding:12px 14px;margin:0 0 16px;border-radius:6px;font-size:13px;color:#7C2D12;"><strong>DEBUG:</strong> Lead capture failed at DB layer. ${escapeHtml(summary)}</div>`
+          ? `<div style="background:#FFF4E5;border-left:4px solid #F59E0B;padding:12px 14px;margin:0 0 16px;border-radius:6px;font-size:13px;color:#7C2D12;"><strong>DEBUG — DB save failed:</strong><br/><code style="background:#FEF3C7;padding:2px 4px;border-radius:3px;font-size:12px;">${escapeHtml(priorDbError || '(unknown)')}</code></div>`
           : '') +
         `<table style="font-size:13px;color:#0B1F3A;margin-bottom:16px;border-collapse:collapse;">` +
         `<tr><td style="padding:4px 14px 4px 0;color:#4A6670;">Caller</td><td>${callerPhone ?? '(unknown)'}</td></tr>` +
@@ -990,11 +1005,11 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
         (callerPhone ? `<p style="margin:20px 0 0;"><a href="tel:${callerPhone}" style="display:inline-block;padding:12px 20px;background:#0AA89F;color:#fff;text-decoration:none;border-radius:10px;font-weight:800;font-size:14px;">📲 Call back ${callerPhone}</a></p>` : '') +
         `</div>`
       const text =
-        (isDbFailure ? `DEBUG — DB save failed: ${summary}\n\n` : '') +
+        (isDbFailure ? `DEBUG — DB save failed: ${priorDbError}\n\n` : '') +
         `Caller: ${callerPhone ?? '(unknown)'}\n` +
         (durationSec ? `Duration: ${durationSec}s\n` : '') +
         `\n` +
-        (summary && !isDbFailure ? `AI summary:\n${summary}\n\n` : '') +
+        (summary ? `AI summary:\n${summary}\n\n` : '') +
         `Transcript:\n${transcriptText}\n`
 
       // Send to contractor (their Clerk primary email) AND to Peter so he
