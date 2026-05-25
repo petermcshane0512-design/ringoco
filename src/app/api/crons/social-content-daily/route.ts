@@ -53,7 +53,8 @@ export async function GET(req: Request) {
   //                  the standard 7AM-8PM CT schedule. Use when you want
   //                  to start posting immediately, not wait until tomorrow.
   const url = new URL(req.url)
-  const count = Math.min(parseInt(url.searchParams.get('count') ?? '5', 10), 12)
+  // Default 8/day per Peter's spec. Override via ?count= up to 12 max.
+  const count = Math.min(parseInt(url.searchParams.get('count') ?? '8', 10), 12)
   const nowMode = url.searchParams.get('now') === 'true'
 
   // Today's date in America/Chicago (the timezone scheduledFor uses)
