@@ -259,9 +259,9 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
           </div>
         </div>
 
-        <div style={{ display: 'flex', minHeight: 488 }}>
-          {/* -- Sidebar -- */}
-          <aside style={{ width: 178, flexShrink: 0, background: '#ffffff', borderRight: '1px solid rgba(10,168,159,0.14)', display: 'flex', flexDirection: 'column', padding: '13px 10px' }}>
+        <div className="dp-flex-wrap" style={{ display: 'flex', minHeight: 488 }}>
+          {/* -- Sidebar (hidden on mobile via CSS; tabs move to bottom strip) -- */}
+          <aside className="dp-sidebar" style={{ width: 178, flexShrink: 0, background: '#ffffff', borderRight: '1px solid rgba(10,168,159,0.14)', display: 'flex', flexDirection: 'column', padding: '13px 10px' }}>
             {/* Logo */}
             <div style={{ padding: '2px 4px 12px', borderBottom: '1px solid rgba(10,168,159,0.1)', marginBottom: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
               <Image src="/logo.png" alt="BellAveGo" width={665} height={210} style={{ height: 38, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(10,168,159,0.32))' }} />
@@ -984,6 +984,43 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
               </div>
             </div>
           </div>}
+          </div>
+
+          {/* Mobile-only tab strip — hidden on desktop via CSS. Replaces the
+              left sidebar (which is display:none on mobile so the data
+              actually fits in the frame). Horizontal scrollable pills,
+              same activeTab state — clicking still flips the mock content. */}
+          <div className="dp-mobile-tabs">
+            {[
+              { label: 'Command Center' },
+              { label: 'AI Receptionist', dot: true },
+              { label: 'Pro' },
+              { label: 'Invoicing' },
+              { label: 'Consulting Reports' },
+              { label: 'Call Forwarding' },
+              { label: 'Calendar Sync' },
+              { label: 'Settings' },
+            ].map(({ label, dot }) => {
+              const active = activeTab === label
+              return (
+                <button
+                  key={label}
+                  onClick={() => setActiveTab(label)}
+                  style={{
+                    padding: '7px 12px', borderRadius: 999, border: 'none',
+                    fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                    background: active ? 'linear-gradient(135deg, #FF9D5A, #E8742B)' : 'rgba(255,255,255,0.7)',
+                    color: active ? '#fff' : '#4A6670',
+                    boxShadow: active ? '0 4px 12px rgba(232,116,43,0.32)' : 'none',
+                    whiteSpace: 'nowrap', flexShrink: 0,
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                  }}
+                >
+                  {label}
+                  {dot && <span style={{ width: 5, height: 5, borderRadius: '50%', background: active ? '#fff' : '#22C55E' }} />}
+                </button>
+              )
+            })}
           </div>
         </div>
       </div>{/* /inner 3D-transformed */}
