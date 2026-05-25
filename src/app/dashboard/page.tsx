@@ -444,7 +444,7 @@ export default function DashboardPage() {
             </div>
             {profile.plan_tier !== 'concierge' && (
               <Link
-                href="/pricing"
+                href="/dashboard/upgrade"
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 5,
                   padding: "6px 14px", borderRadius: 99,

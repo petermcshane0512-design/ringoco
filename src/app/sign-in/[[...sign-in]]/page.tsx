@@ -31,13 +31,14 @@ const clerkAppearance = {
     footerActionLink: { color: '#0AA89F', fontWeight: '600' },
     headerTitle: { color: '#0B1F3A', fontSize: '21px', fontWeight: '800', letterSpacing: '-0.02em' },
     headerSubtitle: { color: '#5A8A92' },
-    socialButtonsBlockButton: {
-      border: '1px solid rgba(11,31,58,0.1)',
-      color: '#0B1F3A',
-      background: '#F8FDFC',
-    },
-    dividerLine: { background: 'rgba(11,31,58,0.08)' },
-    dividerText: { color: '#8ABAB8' },
+    // Hide social-auth (Google) buttons + the "or" divider so sign-in is
+    // email + password only — mirrors the sign-up flow for consistency.
+    socialButtonsBlockButton: { display: 'none' },
+    socialButtons: { display: 'none' },
+    socialButtonsIconButton: { display: 'none' },
+    dividerRow: { display: 'none' },
+    dividerLine: { display: 'none' },
+    dividerText: { display: 'none' },
     formFieldLabel: { color: '#3D6A70', fontWeight: '600' },
     formFieldInput: { color: '#0B1F3A', border: '1.5px solid rgba(10,168,159,0.2)', background: '#F5FDFB' },
     identityPreviewText: { color: '#0B1F3A' },
