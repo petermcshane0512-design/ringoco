@@ -26,6 +26,7 @@ const TIER_BANNER_COPY: Record<Tier, string> = {
 type Job = {
   id: string;
   customer_name: string;
+  customer_phone?: string;
   service?: string;
   job_type?: string;
   address: string;
@@ -705,10 +706,11 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", margin: "0 -8px", padding: "0 8px" }}>
-                <table style={{ width: "100%", minWidth: 560, borderCollapse: "collapse" }}>
+                <table style={{ width: "100%", minWidth: 640, borderCollapse: "collapse" }}>
                   <thead>
                     <tr>
                       <th style={th}>Customer</th>
+                      <th style={th}>Phone</th>
                       <th style={th}>Service</th>
                       <th style={th}>Scheduled</th>
                       <th style={th}>Amount</th>
@@ -719,6 +721,16 @@ export default function DashboardPage() {
                     {jobs.map((job) => (
                       <tr key={job.id}>
                         <td style={{ ...td, fontWeight: 600, color: "#0B1F3A" }}>{job.customer_name}</td>
+                        <td style={td}>
+                          {job.customer_phone ? (
+                            <a
+                              href={`tel:${job.customer_phone}`}
+                              style={{ color: "#0AA89F", fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap" }}
+                            >
+                              📞 {job.customer_phone.replace(/^\+1(\d{3})(\d{3})(\d{4})$/, "($1) $2-$3")}
+                            </a>
+                          ) : "—"}
+                        </td>
                         <td style={td}>{jobService(job)}</td>
                         <td style={td}>{formatDate(jobTime(job))}</td>
                         <td style={{ ...td, fontWeight: 600, color: "#0B1F3A" }}>{job.amount ? `$${job.amount}` : "—"}</td>
