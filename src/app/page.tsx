@@ -16,7 +16,7 @@ export default function HomePage() {
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#F2F9F5', color: '#0B1F3A', minHeight: '100vh', overflowX: 'hidden' }}>
 
       {/* NAV */}
-      <nav className="bavg-top-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 48px', height: 72, background: '#fff', borderBottom: '1px solid #DCE9E2', position: 'sticky', top: 0, left: 0, right: 0, zIndex: 100 }}>
+      <nav className="bavg-top-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 clamp(14px, 4vw, 48px)', height: 72, background: '#fff', borderBottom: '1px solid #DCE9E2', position: 'sticky', top: 0, left: 0, right: 0, zIndex: 100 }}>
         <a
           href="/"
           onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
@@ -780,7 +780,7 @@ export default function HomePage() {
           </div>
 
           {/* Heading */}
-          <h2 style={{ fontSize: 'clamp(30px, 4.2vw, 46px)', fontWeight: 900, letterSpacing: '-1.2px', lineHeight: 1.05, color: '#0B1F3A', textAlign: 'center', maxWidth: 880, margin: '0 auto 14px' }}>
+          <h2 style={{ fontSize: 'clamp(26px, 4.2vw, 46px)', fontWeight: 900, letterSpacing: '-1.2px', lineHeight: 1.05, color: '#0B1F3A', textAlign: 'center', maxWidth: 'min(880px, 100%)', margin: '0 auto 14px', padding: '0 12px' }}>
             You stay in control.{' '}
             <span style={{ background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>BellAveGo handles the call.</span>
           </h2>

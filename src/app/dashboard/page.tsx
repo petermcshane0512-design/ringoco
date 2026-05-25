@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { TIER_METADATA, type Tier } from "@/lib/pricing";
+import { useIsMobile } from "@/lib/useIsMobile";
 
 const ADMIN_EMAILS = new Set(["pmcshane@fordham.edu", "peter@bellavego.com"]);
 
@@ -75,6 +76,7 @@ export default function DashboardPage() {
   const { user } = useUser();
   const isAdmin = !!user?.primaryEmailAddress?.emailAddress &&
     ADMIN_EMAILS.has(user.primaryEmailAddress.emailAddress.toLowerCase());
+  const isMobile = useIsMobile();
 
   async function adminSwitchTier(target: "receptionist" | "officemgr" | "concierge") {
     setAdminSwitching(target);
@@ -337,7 +339,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div style={{ padding: "28px 32px 60px", fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{ padding: isMobile ? "16px 14px 48px" : "28px 32px 60px", fontFamily: "'Inter', system-ui, sans-serif" }}>
 
       {/* CALENDAR SYNC PROMO — top of dashboard, hard to miss. Hides itself
           once the contractor has connected at least one calendar. */}
@@ -520,7 +522,7 @@ export default function DashboardPage() {
 
       {/* Number-pending banner */}
       {profile?.is_active && !profile.twilio_number && (
-        <div style={{ marginBottom: 22, padding: "16px 22px", background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+        <div style={{ marginBottom: 22, padding: isMobile ? "14px 16px" : "16px 22px", background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 14, display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "stretch" : "center", justifyContent: "space-between", gap: isMobile ? 12 : 16 }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 800, color: "#1E40AF" }}>Your AI receptionist number is being provisioned</div>
             <div style={{ fontSize: 12, color: "#1E3A8A", marginTop: 3, lineHeight: 1.5 }}>
@@ -542,7 +544,7 @@ export default function DashboardPage() {
           is stamped (set by /api/onboarding/verify-forwarding when our
           test call lands on Vapi within 90s). */}
       {profile?.is_active && profile.twilio_number && !((profile as { forwarding_verified_at?: string | null }).forwarding_verified_at) && (
-        <div style={{ marginBottom: 22, padding: "16px 22px", background: "linear-gradient(135deg, #FFF7EE 0%, #FEF3C7 100%)", border: "1px solid rgba(232,116,43,0.40)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, boxShadow: "0 8px 24px rgba(232,116,43,0.10)" }}>
+        <div style={{ marginBottom: 22, padding: isMobile ? "14px 16px" : "16px 22px", background: "linear-gradient(135deg, #FFF7EE 0%, #FEF3C7 100%)", border: "1px solid rgba(232,116,43,0.40)", borderRadius: 14, display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "stretch" : "center", justifyContent: "space-between", gap: isMobile ? 12 : 16, boxShadow: "0 8px 24px rgba(232,116,43,0.10)" }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 800, color: "#C84B26", display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ fontSize: 16 }}>⚠️</span>
@@ -563,7 +565,7 @@ export default function DashboardPage() {
       <>
 
       {/* Metric cards — big bold numbers, alternating orange + teal glows */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fit, minmax(180px, 1fr))", gap: isMobile ? 10 : 14, marginBottom: isMobile ? 18 : 24 }}>
         {metrics.map((m, idx) => {
           // Revenue (idx 0) = orange (money); others = teal (AI/operational)
           const tone: "orange" | "teal" = idx === 0 ? "orange" : "teal"
@@ -591,8 +593,9 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* Two-col layout */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 310px", gap: 16, alignItems: "start" }}>
+      {/* Two-col layout — stacks on mobile so the 310px sidebar doesn't
+          overflow under the main content panel */}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 310px", gap: isMobile ? 12 : 16, alignItems: "start" }}>
 
         {/* Left col */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

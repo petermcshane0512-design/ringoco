@@ -244,6 +244,18 @@ html { overflow-x: hidden; }
     gap: 22px !important;
     padding: 28px 22px !important;
   }
+}
+
+/* Multi-Location: also collapse to 1-col in the 720-960px range (large
+   phones landscape + small tablets). At 1.4fr / 1fr with 56px h-padding
+   the right column gets crushed below ~440px which looks bad on iPads
+   and any phone in landscape. */
+@media (min-width: 721px) and (max-width: 960px) {
+  .pricing-multiloc {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+    padding: 32px 28px !important;
+  }
   /* Common questions — 6 cards in 1-col on mobile (was 2-col) */
   .pricing-faq {
     grid-template-columns: 1fr !important;
