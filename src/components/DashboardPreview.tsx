@@ -989,38 +989,44 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
           {/* Mobile-only tab strip — hidden on desktop via CSS. Replaces the
               left sidebar (which is display:none on mobile so the data
               actually fits in the frame). Horizontal scrollable pills,
-              same activeTab state — clicking still flips the mock content. */}
-          <div className="dp-mobile-tabs">
-            {[
-              { label: 'Command Center' },
-              { label: 'AI Receptionist', dot: true },
-              { label: 'Pro' },
-              { label: 'Invoicing' },
-              { label: 'Consulting Reports' },
-              { label: 'Call Forwarding' },
-              { label: 'Calendar Sync' },
-              { label: 'Settings' },
-            ].map(({ label, dot }) => {
-              const active = activeTab === label
-              return (
-                <button
-                  key={label}
-                  onClick={() => setActiveTab(label)}
-                  style={{
-                    padding: '7px 12px', borderRadius: 999, border: 'none',
-                    fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                    background: active ? 'linear-gradient(135deg, #FF9D5A, #E8742B)' : 'rgba(255,255,255,0.7)',
-                    color: active ? '#fff' : '#4A6670',
-                    boxShadow: active ? '0 4px 12px rgba(232,116,43,0.32)' : 'none',
-                    whiteSpace: 'nowrap', flexShrink: 0,
-                    display: 'inline-flex', alignItems: 'center', gap: 5,
-                  }}
-                >
-                  {label}
-                  {dot && <span style={{ width: 5, height: 5, borderRadius: '50%', background: active ? '#fff' : '#22C55E' }} />}
-                </button>
-              )
-            })}
+              same activeTab state — clicking still flips the mock content.
+              Right-edge fade gradient + animated chevron tell the user
+              there's more to swipe through. */}
+          <div className="dp-mobile-tabs-wrap">
+            <div className="dp-mobile-tabs">
+              {[
+                { label: 'Command Center' },
+                { label: 'AI Receptionist', dot: true },
+                { label: 'Pro' },
+                { label: 'Invoicing' },
+                { label: 'Consulting Reports' },
+                { label: 'Call Forwarding' },
+                { label: 'Calendar Sync' },
+                { label: 'Settings' },
+              ].map(({ label, dot }) => {
+                const active = activeTab === label
+                return (
+                  <button
+                    key={label}
+                    onClick={() => setActiveTab(label)}
+                    style={{
+                      padding: '7px 12px', borderRadius: 999, border: 'none',
+                      fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                      background: active ? 'linear-gradient(135deg, #FF9D5A, #E8742B)' : 'rgba(255,255,255,0.7)',
+                      color: active ? '#fff' : '#4A6670',
+                      boxShadow: active ? '0 4px 12px rgba(232,116,43,0.32)' : 'none',
+                      whiteSpace: 'nowrap', flexShrink: 0,
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                    }}
+                  >
+                    {label}
+                    {dot && <span style={{ width: 5, height: 5, borderRadius: '50%', background: active ? '#fff' : '#22C55E' }} />}
+                  </button>
+                )
+              })}
+            </div>
+            {/* Swipe affordance — pulsing right-arrow circle (mobile only via CSS) */}
+            <span className="dp-swipe-hint" aria-hidden>›</span>
           </div>
         </div>
       </div>{/* /inner 3D-transformed */}
