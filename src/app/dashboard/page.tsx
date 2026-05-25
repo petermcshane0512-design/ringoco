@@ -644,7 +644,8 @@ export default function DashboardPage() {
                   <div style={emptySub}>New job requests from your AI receptionist will appear here for approval.</div>
                 </div>
               ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", margin: "0 -8px", padding: "0 8px" }}>
+                <table style={{ width: "100%", minWidth: 560, borderCollapse: "collapse" }}>
                   <thead>
                     <tr>
                       <th style={th}>Customer</th>
@@ -683,6 +684,7 @@ export default function DashboardPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               )}
             </div>
           </div>
@@ -702,7 +704,8 @@ export default function DashboardPage() {
                   <div style={emptySub}>Jobs created by your AI receptionist or manually will appear here.</div>
                 </div>
               ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", margin: "0 -8px", padding: "0 8px" }}>
+                <table style={{ width: "100%", minWidth: 560, borderCollapse: "collapse" }}>
                   <thead>
                     <tr>
                       <th style={th}>Customer</th>
@@ -738,6 +741,7 @@ export default function DashboardPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               )}
             </div>
           </div>
@@ -794,7 +798,8 @@ export default function DashboardPage() {
                   </div>
                 </div>
               ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", margin: "0 -8px", padding: "0 8px" }}>
+                <table style={{ width: "100%", minWidth: 520, borderCollapse: "collapse" }}>
                   <thead>
                     <tr>
                       <th style={{ ...th, color: "#8B5A3D", borderBottom: "1px solid rgba(232,116,43,0.18)" }}>Client</th>
@@ -831,6 +836,7 @@ export default function DashboardPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               )}
             </div>
           </div>

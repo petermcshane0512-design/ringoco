@@ -4,11 +4,10 @@ import "./globals.css";
 
 export const viewport: Viewport = {
   width: "device-width",
-  // Slight default zoom-out on mobile (~10%) so the dense dashboard +
-  // marketing pages don't get clipped on narrow phones. Tradeoff: text
-  // is smaller by default, but the user can pinch-zoom back if needed
-  // (maximumScale: 5 preserves accessibility). Desktop ignores this.
-  initialScale: 0.9,
+  // Aggressive mobile zoom-out (~15%) so dense dashboard tables don't
+  // get clipped on phones. User can pinch-zoom in for accessibility
+  // (maximumScale: 5). Desktop ignores this entirely.
+  initialScale: 0.85,
   maximumScale: 5,
   themeColor: "#0B1F3A",
 };
