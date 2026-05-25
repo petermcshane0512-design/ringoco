@@ -134,7 +134,7 @@ export function renderLeadAlertEmail(args: LeadAlertEmailArgs): { subject: strin
         ` : ''}
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#7AAAB2;margin-top:18px;">BellAveGo · AI receptionist for home-service contractors</div>
+    <div style="text-align:center;font-size:11px;color:#7AAAB2;margin-top:18px;">BellAveGo · AI receptionist and growth platform for home-service businesses</div>
   </div>
 </body></html>`.trim()
 

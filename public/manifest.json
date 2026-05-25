@@ -1,7 +1,7 @@
 {
   "name": "BellAveGo",
   "short_name": "BellAveGo",
-  "description": "AI Receptionist + AI Marketing for home service pros",
+  "description": "AI receptionist and growth platform for home-service businesses",
   "start_url": "/dashboard?source=pwa",
   "scope": "/",
   "display": "standalone",

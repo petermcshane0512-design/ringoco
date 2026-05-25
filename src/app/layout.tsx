@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   manifest: "/manifest.json",
   title: {
-    default: "BellAveGo — AI Receptionist + AI Marketing for home service pros",
+    default: "BellAveGo — AI receptionist and growth platform for home-service businesses",
     template: "%s · BellAveGo",
   },
   description:
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "BellAveGo",
-    title: "BellAveGo — AI Receptionist + AI Marketing for home service pros",
+    title: "BellAveGo — AI receptionist and growth platform for home-service businesses",
     description:
       "AI answers every call, books the job, follows up on quotes, recovers past-due invoices, and runs your marketing — all on autopilot. Built for home service teams of 1–15.",
     url: SITE_URL,
@@ -55,13 +55,13 @@ export const metadata: Metadata = {
         url: OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: "BellAveGo — AI built for home service pros",
+        alt: "BellAveGo — AI receptionist and growth platform for home-service businesses",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "BellAveGo — AI Receptionist + AI Marketing for home service pros",
+    title: "BellAveGo — AI receptionist and growth platform for home-service businesses",
     description:
       "AI answers every call, books the job, runs your marketing. Built for home service contractors. From $147/mo.",
     images: [OG_IMAGE],
@@ -91,7 +91,7 @@ const organizationJsonLd = {
   url: SITE_URL,
   logo: OG_IMAGE,
   description:
-    "AI Receptionist + AI Marketing platform for home service contractors. Answers calls, books jobs, recovers revenue, runs marketing.",
+    "AI receptionist and growth platform for home-service businesses. Answers calls, books jobs, recovers revenue, runs marketing.",
   founder: {
     "@type": "Organization",
     name: "BellAveGo Team",
@@ -122,7 +122,7 @@ const softwareJsonLd = {
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
   description:
-    "AI Receptionist + AI Marketing platform for home service contractors. 24/7 call answering, automated booking, AI-powered marketing operations.",
+    "AI receptionist and growth platform for home-service businesses. 24/7 call answering, automated booking, AI-powered marketing operations.",
   offers: [
     { "@type": "Offer", name: "Starter", price: "147", priceCurrency: "USD" },
     { "@type": "Offer", name: "Pro",     price: "297", priceCurrency: "USD" },

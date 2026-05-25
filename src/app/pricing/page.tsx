@@ -457,7 +457,7 @@ export default function PricingPage() {
       </section>
 
       <footer style={{ padding: '36px 40px', background: '#0B1F3A', textAlign: 'center' }}>
-        <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>BellAveGo · AI Receptionist + AI Marketing for home services pros · 30-day money-back · Cancel anytime</p>
+        <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>BellAveGo · AI receptionist and growth platform for home-service businesses · 30-day money-back · Cancel anytime</p>
         <p style={{ margin: '8px 0 0', fontSize: 11, color: '#3D5A62' }}>
           <Link href="/privacy" style={{ color: '#7AAAB2', textDecoration: 'none' }}>Privacy</Link>
           {' · '}
