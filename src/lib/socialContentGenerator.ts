@@ -147,17 +147,31 @@ Return ONLY the post.`,
 ]
 
 /**
- * Generate a unique image via OpenAI DALL-E 3 (or gpt-image-1 if available)
- * for a theme. Returns the URL (valid ~1 hour from generation — Zernio
- * downloads at queue time so this is fine). Falls back to null on failure
- * so the post still ships text-only to platforms that accept it.
+ * Generate a unique image via OpenAI gpt-image-1 for a theme. The model
+ * returns base64 (no URL response format), so we decode and upload to a
+ * public Supabase Storage bucket and return the public URL. Zernio then
+ * fetches that URL at post-queue time.
+ *
+ * Falls back to null on any failure — caller routes the post to
+ * text-only platforms if image gen failed.
+ *
+ * Cost: ~$0.04/image at high quality, ~$0.02 at medium.
  */
+import { createClient } from '@supabase/supabase-js'
+
+const supaForImages = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
+)
+const SOCIAL_BUCKET = 'social-images'
+
 export async function generateImageForTheme(theme: ContentTheme): Promise<string | null> {
   if (!process.env.OPENAI_API_KEY) {
     console.warn('OPENAI_API_KEY not set — skipping image generation')
     return null
   }
   try {
+    // 1. Call gpt-image-1
     const r = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
@@ -165,19 +179,38 @@ export async function generateImageForTheme(theme: ContentTheme): Promise<string
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'dall-e-3',
+        model: 'gpt-image-1',
         prompt: theme.imagePrompt,
         size: '1024x1024',
-        quality: 'standard',
+        quality: 'high',  // best detail per Peter's request
         n: 1,
       }),
     })
     if (!r.ok) {
-      console.error(`DALL-E ${theme.id} HTTP ${r.status}:`, (await r.text()).slice(0, 200))
+      console.error(`gpt-image-1 ${theme.id} HTTP ${r.status}:`, (await r.text()).slice(0, 200))
       return null
     }
-    const data = (await r.json()) as { data?: Array<{ url?: string }> }
-    return data.data?.[0]?.url ?? null
+    const data = (await r.json()) as { data?: Array<{ b64_json?: string }> }
+    const b64 = data.data?.[0]?.b64_json
+    if (!b64) {
+      console.error(`gpt-image-1 ${theme.id} returned no b64_json`)
+      return null
+    }
+
+    // 2. Decode + upload to Supabase Storage (public bucket)
+    const bytes = Buffer.from(b64, 'base64')
+    const filename = `${theme.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`
+    const { error: upErr } = await supaForImages.storage
+      .from(SOCIAL_BUCKET)
+      .upload(filename, bytes, { contentType: 'image/png', cacheControl: '31536000' })
+    if (upErr) {
+      console.error(`supabase storage upload (${filename}) failed:`, upErr.message)
+      return null
+    }
+
+    // 3. Build the public URL
+    const { data: pub } = supaForImages.storage.from(SOCIAL_BUCKET).getPublicUrl(filename)
+    return pub.publicUrl ?? null
   } catch (e) {
     console.error(`generateImageForTheme(${theme.id}) threw:`, e)
     return null
