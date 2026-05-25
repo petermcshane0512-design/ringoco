@@ -189,6 +189,46 @@ export async function generatePostForTheme(theme: ContentTheme): Promise<string 
 export const POST_SLOTS_CT: string[] = ['07:00', '10:00', '13:00', '16:00', '20:00']
 
 /**
+ * Dynamic slot generator — produces N evenly-spaced post times in
+ * America/Chicago between "now+leadMinutes" and a cutoff hour (default
+ * 21:00 = 9 PM CT). Used when the cron is invoked mid-day (e.g. for
+ * a same-day burst) instead of the morning's default schedule.
+ *
+ * Returns slots as HH:MM strings in CT.
+ */
+export function generateSlotsForRestOfDay(opts: {
+  count: number
+  leadMinutes?: number    // earliest = now + leadMinutes (default 45)
+  cutoffHour?: number     // latest slot hour (default 21 = 9 PM)
+  nowCT?: Date            // override "now" for testing
+}): string[] {
+  const lead = opts.leadMinutes ?? 45
+  const cutoff = opts.cutoffHour ?? 21
+  const nowCT = opts.nowCT ?? new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' }))
+
+  const firstMs = nowCT.getTime() + lead * 60 * 1000
+  const cutoffDate = new Date(nowCT)
+  cutoffDate.setHours(cutoff, 0, 0, 0)
+  const lastMs = cutoffDate.getTime()
+
+  // If we're already past the cutoff, pack everything back-to-back at 20min
+  // intervals starting at lead — better than nothing.
+  if (lastMs <= firstMs) {
+    return Array.from({ length: opts.count }, (_, i) => {
+      const d = new Date(firstMs + i * 20 * 60 * 1000)
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+    })
+  }
+
+  const span = lastMs - firstMs
+  const step = opts.count > 1 ? span / (opts.count - 1) : 0
+  return Array.from({ length: opts.count }, (_, i) => {
+    const d = new Date(firstMs + step * i)
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  })
+}
+
+/**
  * Build N posts for today, scheduled at the POST_SLOTS_CT times.
  * Caller (cron) provides today's date in YYYY-MM-DD and the recent theme
  * IDs to avoid repeating.
@@ -197,14 +237,25 @@ export async function buildPostsForDay(opts: {
   dateYYYYMMDD: string
   recentThemeIds: string[]
   count?: number
+  slots?: string[]         // override POST_SLOTS_CT (HH:MM strings, CT)
 }): Promise<GeneratedPost[]> {
-  const count = opts.count ?? POST_SLOTS_CT.length
-  const themes = pickThemesForToday(opts.recentThemeIds, count)
+  const slots = opts.slots ?? POST_SLOTS_CT
+  const count = opts.count ?? slots.length
+  // When count exceeds the pool of 7 themes, allow repeats (cycle through).
+  const themes = count <= CONTENT_THEMES.length
+    ? pickThemesForToday(opts.recentThemeIds, count)
+    : (() => {
+        // Use all 7 unique themes first, then cycle to fill remaining
+        const base = pickThemesForToday(opts.recentThemeIds, CONTENT_THEMES.length)
+        const filled: ContentTheme[] = []
+        for (let i = 0; i < count; i++) filled.push(base[i % base.length])
+        return filled
+      })()
   const posts: GeneratedPost[] = []
 
   for (let i = 0; i < themes.length; i++) {
     const theme = themes[i]
-    const slot = POST_SLOTS_CT[i % POST_SLOTS_CT.length]
+    const slot = slots[i % slots.length]
     const caption = await generatePostForTheme(theme)
     if (!caption) continue
     posts.push({

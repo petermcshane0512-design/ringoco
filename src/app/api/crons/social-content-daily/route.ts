@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { buildPostsForDay } from '@/lib/socialContentGenerator'
+import { buildPostsForDay, generateSlotsForRestOfDay } from '@/lib/socialContentGenerator'
 
 /**
  * Daily social content cron. Runs at 11:00 UTC = 6 AM CT every day.
@@ -47,6 +47,15 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'ZERNIO_API_KEY not set' }, { status: 500 })
   }
 
+  // Query params for manual mid-day invocations:
+  //   ?count=8     → generate N posts (defaults to 5)
+  //   ?now=true    → distribute slots across the rest of today instead of
+  //                  the standard 7AM-8PM CT schedule. Use when you want
+  //                  to start posting immediately, not wait until tomorrow.
+  const url = new URL(req.url)
+  const count = Math.min(parseInt(url.searchParams.get('count') ?? '5', 10), 12)
+  const nowMode = url.searchParams.get('now') === 'true'
+
   // Today's date in America/Chicago (the timezone scheduledFor uses)
   const nowCT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' }))
   const dateYYYYMMDD = nowCT.toISOString().slice(0, 10)
@@ -59,8 +68,14 @@ export async function GET(req: Request) {
     .gte('created_at', threeDaysAgo)
   const recentThemeIds = (recent ?? []).map((r) => r.theme as string)
 
+  // Slot strategy: if invoked mid-day with ?now=true, spread slots across
+  // remaining hours of today. Otherwise use the default morning schedule.
+  const slots = nowMode
+    ? generateSlotsForRestOfDay({ count, nowCT })
+    : undefined
+
   // 1. Generate posts via Claude
-  const posts = await buildPostsForDay({ dateYYYYMMDD, recentThemeIds })
+  const posts = await buildPostsForDay({ dateYYYYMMDD, recentThemeIds, count, slots })
   if (posts.length === 0) {
     return NextResponse.json({ error: 'Claude generation returned 0 posts' }, { status: 500 })
   }
