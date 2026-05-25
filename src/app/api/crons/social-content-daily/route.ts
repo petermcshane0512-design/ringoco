@@ -96,22 +96,15 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'no active Zernio accounts' }, { status: 400 })
   }
 
-  // Platforms that accept TEXT-ONLY posts (no media required).
-  // Instagram + TikTok require images/video — exclude them when we don't
-  // have a media URL. Once we wire image generation, this filter relaxes.
-  const TEXT_ONLY_OK = new Set(['facebook', 'x', 'twitter', 'linkedin', 'threads', 'bluesky'])
-  const eligibleAccounts = activeAccounts.filter((a) => TEXT_ONLY_OK.has(a.platform.toLowerCase()))
-  if (eligibleAccounts.length === 0) {
-    return NextResponse.json({
-      error: 'no text-compatible accounts active. Connect Facebook/X/LinkedIn or wire image generation.',
-      activePlatforms: activeAccounts.map((a) => a.platform),
-    }, { status: 400 })
-  }
-  const platforms = eligibleAccounts.map((a) => ({ platform: a.platform, accountId: a._id }))
-  const accountIds = eligibleAccounts.map((a) => a._id).join(',')
-  const skippedPlatforms = activeAccounts
-    .filter((a) => !TEXT_ONLY_OK.has(a.platform.toLowerCase()))
-    .map((a) => a.platform)
+  // Platforms that REQUIRE media (image/video). For posts where image
+  // generation succeeded we send to ALL active accounts; if image-gen
+  // failed for a specific post we filter out these platforms on the fly.
+  const REQUIRES_MEDIA = new Set(['instagram', 'tiktok'])
+  const allPlatforms = activeAccounts.map((a) => ({ platform: a.platform, accountId: a._id }))
+  const textOnlyPlatforms = activeAccounts
+    .filter((a) => !REQUIRES_MEDIA.has(a.platform.toLowerCase()))
+    .map((a) => ({ platform: a.platform, accountId: a._id }))
+  const accountIds = activeAccounts.map((a) => a._id).join(',')
 
   // 3. Queue each post via Zernio + log to Supabase
   const results: Array<{
@@ -124,18 +117,23 @@ export async function GET(req: Request) {
 
   for (const p of posts) {
     try {
+      // If this post has an image, target ALL accounts (FB + IG).
+      // If image generation failed, fall back to text-only platforms only.
+      const perPostPlatforms = p.imageUrl ? allPlatforms : textOnlyPlatforms
+      const body: Record<string, unknown> = {
+        content: p.caption,
+        scheduledFor: p.scheduledFor,
+        timezone: p.timezone,
+        platforms: perPostPlatforms,
+      }
+      if (p.imageUrl) body.mediaUrls = [p.imageUrl]
       const r = await fetch(`${ZERNIO_BASE}/posts`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${process.env.ZERNIO_API_KEY}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          content: p.caption,
-          scheduledFor: p.scheduledFor,
-          timezone: p.timezone,
-          platforms,
-        }),
+        body: JSON.stringify(body),
       })
       const text = await r.text()
       let parsed: unknown = null
@@ -181,15 +179,15 @@ export async function GET(req: Request) {
   const queued = results.filter((r) => r.status === 'queued').length
   const failed = results.filter((r) => r.status === 'failed').length
 
+  const postsWithImages = posts.filter((p) => p.imageUrl).length
   return NextResponse.json({
     date: dateYYYYMMDD,
     generated: posts.length,
+    postsWithImages,
+    postsTextOnly: posts.length - postsWithImages,
     queued,
     failed,
-    accountsTargeted: eligibleAccounts.map((a) => `${a.platform}:${a._id.slice(-6)}`),
-    skippedPlatforms: skippedPlatforms.length > 0
-      ? `${skippedPlatforms.join(', ')} (require media — add image gen to include)`
-      : null,
+    accountsActive: activeAccounts.map((a) => `${a.platform}:${a._id.slice(-6)}`),
     results,
   })
 }

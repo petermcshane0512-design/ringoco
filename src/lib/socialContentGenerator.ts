@@ -18,7 +18,12 @@ export type ContentTheme = {
   id: string
   label: string
   promptTemplate: string  // sent to Claude verbatim; must produce caption + hashtags
+  imagePrompt: string     // sent to DALL-E 3 for a unique image per post
 }
+
+// Shared visual identity prompt fragment — appended to every theme's image
+// prompt so the feed has a cohesive look across diverse subjects.
+const BRAND_VISUAL = 'warm sunset-orange (#E8742B) and teal (#0AA89F) color palette, professional but approachable, modern editorial style, no text overlays, no logos'
 
 export const CONTENT_THEMES: ContentTheme[] = [
   {
@@ -36,6 +41,7 @@ Avoid: emojis, jargon, "AI receptionist", "innovative"
 End with 4-6 relevant hashtags on the last line: #HVACBusiness #PlumbingContractor #HomeServicePros #SmallBusinessTips #ContractorLife (pick 4-6).
 
 Return ONLY the post text + hashtags. No preamble, no quotes.`,
+    imagePrompt: `Editorial-style photo of an HVAC technician kneeling under a residential air conditioning unit with a wrench in hand, a smartphone ringing on the ground beside them, blurred suburban garage in background, late-afternoon golden-hour lighting, photorealistic, ${BRAND_VISUAL}`,
   },
   {
     id: 'stat-shock',
@@ -52,6 +58,7 @@ Frame: stat → "do the math on your week" → soft mention BellAveGo answers be
 End with 4-6 hashtags.
 
 Return ONLY the post. No quotes, no preamble.`,
+    imagePrompt: `Modern minimalist infographic-style image showing a large stylized percentage symbol bursting outward, abstract data visualization, dark navy background with bright sunset orange and teal geometric accents, clean editorial business aesthetic, ${BRAND_VISUAL}`,
   },
   {
     id: 'how-it-works',
@@ -67,6 +74,7 @@ No jargon. No "intelligent automation."
 4-6 hashtags at the end.
 
 Return ONLY the post.`,
+    imagePrompt: `Flat-illustration diagram of three connected circles showing the journey of a phone call: homeowner with a phone, a friendly AI voice waveform, then a contractor receiving a text message, connected by glowing arrows, clean modern vector style, ${BRAND_VISUAL}`,
   },
   {
     id: 'comparison',
@@ -83,6 +91,7 @@ Soft sell at the end — BellAveGo is the cheap version of having a real recepti
 4-6 hashtags.
 
 Return ONLY the post.`,
+    imagePrompt: `Split-screen illustration: left half shows a frustrated homeowner holding a phone with a "voicemail" icon and a gray cold color palette, right half shows the same homeowner smiling on the phone with a warm AI assistant waveform glowing, visual contrast between cold-and-warm, modern editorial illustration, ${BRAND_VISUAL}`,
   },
   {
     id: 'behind-the-scenes',
@@ -100,6 +109,7 @@ Light promotion at the end — "if you're a contractor missing calls, we should 
 4-6 hashtags.
 
 Return ONLY the post.`,
+    imagePrompt: `Authentic candid photo of a young founder working on a laptop late at night in a home office, coffee cup beside them, dim warm desk lamp, software code reflecting on glasses, startup-builder aesthetic, photorealistic documentary style, ${BRAND_VISUAL}`,
   },
   {
     id: 'objection-handler',
@@ -117,6 +127,7 @@ End by inviting them to call our demo line at (651) 467-7829 to hear it themselv
 4-6 hashtags.
 
 Return ONLY the post.`,
+    imagePrompt: `Photorealistic image of a contractor and a homeowner shaking hands warmly at the front door of a suburban home, contractor wearing branded work uniform, golden-hour lighting, sense of trust and reassurance, editorial photography style, ${BRAND_VISUAL}`,
   },
   {
     id: 'roi-math',
@@ -131,14 +142,54 @@ End with: "Math doesn't lie. Calls do, when nobody answers."
 4-6 hashtags.
 
 Return ONLY the post.`,
+    imagePrompt: `Modern flat-illustration of an upward arrow climbing through stacks of gold coins, with subtle home-service icons (wrench, calendar, phone) at the base, dark navy background, ${BRAND_VISUAL}`,
   },
 ]
+
+/**
+ * Generate a unique image via OpenAI DALL-E 3 (or gpt-image-1 if available)
+ * for a theme. Returns the URL (valid ~1 hour from generation — Zernio
+ * downloads at queue time so this is fine). Falls back to null on failure
+ * so the post still ships text-only to platforms that accept it.
+ */
+export async function generateImageForTheme(theme: ContentTheme): Promise<string | null> {
+  if (!process.env.OPENAI_API_KEY) {
+    console.warn('OPENAI_API_KEY not set — skipping image generation')
+    return null
+  }
+  try {
+    const r = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'dall-e-3',
+        prompt: theme.imagePrompt,
+        size: '1024x1024',
+        quality: 'standard',
+        n: 1,
+      }),
+    })
+    if (!r.ok) {
+      console.error(`DALL-E ${theme.id} HTTP ${r.status}:`, (await r.text()).slice(0, 200))
+      return null
+    }
+    const data = (await r.json()) as { data?: Array<{ url?: string }> }
+    return data.data?.[0]?.url ?? null
+  } catch (e) {
+    console.error(`generateImageForTheme(${theme.id}) threw:`, e)
+    return null
+  }
+}
 
 export type GeneratedPost = {
   theme: string
   caption: string
   scheduledFor: string  // ISO datetime in America/Chicago
   timezone: string
+  imageUrl?: string | null  // DALL-E URL if generation succeeded
 }
 
 /**
@@ -253,17 +304,25 @@ export async function buildPostsForDay(opts: {
       })()
   const posts: GeneratedPost[] = []
 
-  for (let i = 0; i < themes.length; i++) {
-    const theme = themes[i]
-    const slot = slots[i % slots.length]
-    const caption = await generatePostForTheme(theme)
-    if (!caption) continue
-    posts.push({
-      theme: theme.id,
-      caption,
-      scheduledFor: `${opts.dateYYYYMMDD}T${slot}:00`,
-      timezone: 'America/Chicago',
-    })
-  }
+  // Run caption + image generation in parallel per theme — saves ~30 sec
+  // total when generating 8 posts. Each theme is independent.
+  const results = await Promise.all(
+    themes.map(async (theme, i) => {
+      const slot = slots[i % slots.length]
+      const [caption, imageUrl] = await Promise.all([
+        generatePostForTheme(theme),
+        generateImageForTheme(theme),
+      ])
+      if (!caption) return null
+      return {
+        theme: theme.id,
+        caption,
+        scheduledFor: `${opts.dateYYYYMMDD}T${slot}:00`,
+        timezone: 'America/Chicago',
+        imageUrl,
+      } as GeneratedPost
+    }),
+  )
+  for (const r of results) if (r) posts.push(r)
   return posts
 }
