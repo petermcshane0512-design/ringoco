@@ -352,26 +352,27 @@ html { overflow-x: hidden; }
     50%      { transform: translateX(4px); opacity: 1; }
   }
 
-  /* Mobile dashboard preview — full edge-to-edge width with a 78% scale
-     so all the data + tab strip fit cleanly without anything getting cut
-     off. Negative margin-bottom compensates for the height lost to scale
-     so the page doesn't develop extra blank space below.
-     (Peter feedback 2026-05-25: 92% was still cropping, 100% was too big.) */
+  /* Mobile dashboard preview — drop the transform:scale approach (it
+     visually shrank text to 35% which made the AI Receptionist card on
+     the right unreadable). Instead, render the mockup at NATURAL mobile
+     width and let the .dp-sidebar:none + .dp-flex-wrap:column rules
+     above stack the layout responsively. Tab strip handles section
+     switching on small screens. */
   .mobile-dash-preview {
-    padding: 40px 0 8px !important;
-    overflow: hidden;          /* trim any horizontal slop from scaling */
+    padding: 32px 0 12px !important;
+    overflow: hidden;
   }
   .mobile-dash-preview > div {
     max-width: 100% !important;
-    padding: 0 !important;
+    padding: 0 6px !important;
   }
-  /* Scale just the dashboard preview itself — not the headline above it.
-     0.35 = 25% smaller than the previous 0.47 (Peter feedback: still too
-     big + right side getting cut off on Command Center page). */
+  /* No more transform: scale. The compact prop on DashboardPreview makes
+     it fit parent width, and the dp-sidebar is hidden on mobile via the
+     rule above — content gets the full viewport width. */
   .mobile-dash-preview > div > div:last-child {
-    transform: scale(0.35);
-    transform-origin: top center;
-    margin-bottom: -65%;       /* recover visual space — matches 1-0.35 */
+    transform: none !important;
+    margin-bottom: 0 !important;
+    width: 100% !important;
   }
 }
 
