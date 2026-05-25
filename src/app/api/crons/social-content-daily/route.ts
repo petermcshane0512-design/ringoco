@@ -95,8 +95,23 @@ export async function GET(req: Request) {
   if (activeAccounts.length === 0) {
     return NextResponse.json({ error: 'no active Zernio accounts' }, { status: 400 })
   }
-  const platforms = activeAccounts.map((a) => ({ platform: a.platform, accountId: a._id }))
-  const accountIds = activeAccounts.map((a) => a._id).join(',')
+
+  // Platforms that accept TEXT-ONLY posts (no media required).
+  // Instagram + TikTok require images/video — exclude them when we don't
+  // have a media URL. Once we wire image generation, this filter relaxes.
+  const TEXT_ONLY_OK = new Set(['facebook', 'x', 'twitter', 'linkedin', 'threads', 'bluesky'])
+  const eligibleAccounts = activeAccounts.filter((a) => TEXT_ONLY_OK.has(a.platform.toLowerCase()))
+  if (eligibleAccounts.length === 0) {
+    return NextResponse.json({
+      error: 'no text-compatible accounts active. Connect Facebook/X/LinkedIn or wire image generation.',
+      activePlatforms: activeAccounts.map((a) => a.platform),
+    }, { status: 400 })
+  }
+  const platforms = eligibleAccounts.map((a) => ({ platform: a.platform, accountId: a._id }))
+  const accountIds = eligibleAccounts.map((a) => a._id).join(',')
+  const skippedPlatforms = activeAccounts
+    .filter((a) => !TEXT_ONLY_OK.has(a.platform.toLowerCase()))
+    .map((a) => a.platform)
 
   // 3. Queue each post via Zernio + log to Supabase
   const results: Array<{
@@ -171,7 +186,10 @@ export async function GET(req: Request) {
     generated: posts.length,
     queued,
     failed,
-    accountsTargeted: activeAccounts.map((a) => `${a.platform}:${a._id.slice(-6)}`),
+    accountsTargeted: eligibleAccounts.map((a) => `${a.platform}:${a._id.slice(-6)}`),
+    skippedPlatforms: skippedPlatforms.length > 0
+      ? `${skippedPlatforms.join(', ')} (require media — add image gen to include)`
+      : null,
     results,
   })
 }
