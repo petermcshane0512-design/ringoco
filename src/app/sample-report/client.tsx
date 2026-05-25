@@ -143,6 +143,25 @@ export function ReportView({ report, sample = false, personalized = false }: { r
           color: var(--ink);
           min-height: 100vh;
           line-height: 1.55;
+          overflow-x: hidden;          /* kill horizontal scroll on mobile */
+        }
+        /* Mobile-specific: shrink padding + fix bar labels + reduce hero
+           padding so the right side stops getting clipped on iPhone. */
+        @media (max-width: 720px) {
+          .cr-root { font-size: 14px; }
+          .cr-bar { padding: 10px 12px !important; gap: 8px !important; }
+          .cr-bar-back { padding: 6px 10px !important; font-size: 12px; }
+          .cr-bar-btn { padding: 6px 10px !important; font-size: 11.5px !important; }
+          .cr-layout { padding: 22px 14px 56px !important; }
+          .cr-hero-inner { padding: 0 14px; }
+          .cr-bar-label { width: auto !important; min-width: 0 !important; max-width: 40% !important; }
+          .cr-bar-val { width: 36px !important; }
+          .cr-tablewrap { margin-left: -2px; margin-right: -2px; }
+          /* Section cards: reduce internal padding from 28-32px to 14-18px */
+          .cr-section, .cr-card, .cr-sg-card, .cr-opp, .cr-action, .cr-foot {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+          }
         }
 
         /* Top bar */
