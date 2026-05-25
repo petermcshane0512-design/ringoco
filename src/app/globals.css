@@ -12,6 +12,23 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
+/* ── Hide Clerk social-auth (Google) buttons + "or" divider site-wide.
+   Inline appearance.elements override gets clobbered by Clerk's own
+   higher-specificity stylesheet — only global !important wins reliably.
+   When custom Google OAuth credentials are configured in Clerk dashboard,
+   remove these rules to re-enable. */
+.cl-socialButtons,
+.cl-socialButtonsBlockButton,
+.cl-socialButtonsIconButton,
+.cl-socialButtonsProviderIcon,
+.cl-dividerRow,
+.cl-dividerLine,
+.cl-dividerText,
+.cl-alternativeMethodsBlockButton[data-provider],
+[data-localization-key^="socialButtonsBlockButton"] {
+  display: none !important;
+}
+
 html { overflow-x: hidden; }
 
 /* ── Top-right nav buttons (homepage / pricing / founder)
