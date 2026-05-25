@@ -11,6 +11,9 @@
  * Anti-goals: jargon, AI buzzwords, "leverage", "synergy", emoji-spam
  */
 import Anthropic from '@anthropic-ai/sdk'
+import sharp from 'sharp'
+import fs from 'fs'
+import path from 'path'
 
 const anthropic = new Anthropic()
 
@@ -218,8 +221,68 @@ function buildImagePromptFromStory(opts: {
   const overlay = headline
     ? ` Large bold sans-serif typography overlay positioned in the upper-third negative space, reading exactly: "${headline}". Text must be legible, high-contrast, single short phrase — no extra words, no logos, no watermarks.`
     : ''
+  // Reserve bottom-right for the post-gen logo composite.
+  const reserved = ' IMPORTANT: leave the bottom-right ~20% corner of the image as clean negative space — no text, no critical subject matter there.'
 
-  return `${styleLead} ${scene}.${overlay} ${BRAND_VISUAL}.`
+  return `${styleLead} ${scene}.${overlay}${reserved} ${BRAND_VISUAL}.`
+}
+
+// Logo composite — gpt-image-1 cannot reliably reproduce a real brand mark,
+// so we overlay the actual PNG after generation. Logo is loaded once and
+// cached for the lifetime of the process.
+const LOGO_PATH = path.join(process.cwd(), 'public', 'brand', 'bellavego-logo.png')
+const LOGO_TARGET_WIDTH = 180   // ~17.5% of 1024
+const LOGO_PADDING = 40          // ~4% inset from edges
+
+type CachedLogo = { bytes: Buffer; width: number; height: number }
+let cachedLogo: CachedLogo | null = null
+let logoLoadFailed = false
+
+async function getBrandLogo(): Promise<CachedLogo | null> {
+  if (cachedLogo) return cachedLogo
+  if (logoLoadFailed) return null
+  try {
+    if (!fs.existsSync(LOGO_PATH)) {
+      console.warn(`brand logo not found at ${LOGO_PATH} — posts will ship without logo`)
+      logoLoadFailed = true
+      return null
+    }
+    const raw = await fs.promises.readFile(LOGO_PATH)
+    const resized = await sharp(raw)
+      .resize({ width: LOGO_TARGET_WIDTH, fit: 'inside', withoutEnlargement: false })
+      .png()
+      .toBuffer()
+    const meta = await sharp(resized).metadata()
+    if (!meta.width || !meta.height) {
+      logoLoadFailed = true
+      return null
+    }
+    cachedLogo = { bytes: resized, width: meta.width, height: meta.height }
+    return cachedLogo
+  } catch (e) {
+    console.error('getBrandLogo failed:', e)
+    logoLoadFailed = true
+    return null
+  }
+}
+
+async function compositeBrandLogo(canvas: Buffer, canvasSize = 1024): Promise<Buffer> {
+  const logo = await getBrandLogo()
+  if (!logo) return canvas
+  try {
+    return await sharp(canvas)
+      .composite([{
+        input: logo.bytes,
+        top: canvasSize - logo.height - LOGO_PADDING,
+        left: canvasSize - logo.width - LOGO_PADDING,
+        blend: 'over',
+      }])
+      .png()
+      .toBuffer()
+  } catch (e) {
+    console.error('compositeBrandLogo failed:', e)
+    return canvas
+  }
 }
 
 export async function generateImageForPost(opts: {
@@ -258,7 +321,11 @@ export async function generateImageForPost(opts: {
       return null
     }
 
-    const bytes = Buffer.from(b64, 'base64')
+    const rawBytes = Buffer.from(b64, 'base64')
+    // Overlay actual BellAveGo logo into bottom-right corner. Falls through
+    // to the original bytes if logo file missing or sharp fails.
+    const bytes = await compositeBrandLogo(rawBytes, 1024)
+
     const filename = `${opts.theme.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`
     const { error: upErr } = await supaForImages.storage
       .from(SOCIAL_BUCKET)

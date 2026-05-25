@@ -206,9 +206,19 @@ export default function SetupWizard() {
   }
 
   async function continueAfterTest() {
+    // Forwarding works → step 3 = enable phone alerts + hear your AI.
+    // ALL tiers get this step now (was previously skipped on Starter,
+    // which left contractors without push alerts on their phone). The
+    // CRM + Kickoff steps shift up by 1 for Pro/Elite.
+    await saveStep({ step: 3 });
+    setStep(3);
+  }
+
+  async function continueAfterPhoneStep() {
+    // Phone alerts step done → Starter finishes, Pro/Elite go to CRM (step 4).
     if (meta.isOfficeMgr || meta.isConcierge) {
-      await saveStep({ step: 3 });
-      setStep(3);
+      await saveStep({ step: 4 });
+      setStep(4);
     } else {
       finishReceptionist();
     }
@@ -217,8 +227,8 @@ export default function SetupWizard() {
   async function onPickCrm(provider: string) {
     setCrm(provider);
     if (meta.isConcierge) {
-      await saveStep({ crmProvider: provider, step: 4 });
-      setStep(4);
+      await saveStep({ crmProvider: provider, step: 5 });
+      setStep(5);
     } else {
       await saveStep({ crmProvider: provider, setupComplete: true });
       router.replace("/dashboard");
@@ -254,7 +264,9 @@ export default function SetupWizard() {
     );
   }
 
-  const totalSteps = meta.isConcierge ? 4 : meta.isOfficeMgr ? 3 : 2;
+  // +1 universal step inserted at position 3 (phone alerts + hear-your-AI).
+  // Starter: 3 (forward → test → phone). Pro: 4 (+ CRM). Elite: 5 (+ kickoff).
+  const totalSteps = meta.isConcierge ? 5 : meta.isOfficeMgr ? 4 : 3;
 
   return (
     <div style={pageStyle}>
@@ -492,8 +504,146 @@ export default function SetupWizard() {
             </div>
           )}
 
-          {/* STEP 3 — CRM (Office Mgr + Concierge) */}
-          {step === 3 && (meta.isOfficeMgr || meta.isConcierge) && (
+          {/* STEP 3 — Phone alerts + hear your AI (UNIVERSAL — every tier) */}
+          {step === 3 && (
+            <div className="step-enter">
+              <h2 style={{ ...titleStyle, fontSize: 26 }}>Two last things on your phone.</h2>
+              <p style={{ ...subStyle, fontSize: 15 }}>
+                Get instant alerts every time the AI catches a call, then call your new number to hear how it sounds.
+              </p>
+
+              {/* PART A — Add to home screen + enable alerts */}
+              <div style={{
+                background: "linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 60%)",
+                border: "1.5px solid rgba(232,116,43,0.28)",
+                borderRadius: 14,
+                padding: "18px 18px",
+                marginBottom: 14,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                  <span style={{
+                    fontSize: 11, fontWeight: 900, color: "#fff",
+                    background: "linear-gradient(135deg, #FF9D5A, #E8742B)",
+                    padding: "4px 10px", borderRadius: 99, letterSpacing: "0.08em",
+                  }}>1</span>
+                  <span style={{ fontSize: 16, fontWeight: 900, color: "#0B1F3A" }}>
+                    Add BellAveGo to your phone
+                  </span>
+                </div>
+                <p style={{ fontSize: 14, color: "#4A6670", lineHeight: 1.55, margin: "0 0 12px" }}>
+                  On your phone, open <strong style={{ color: "#0AA89F" }}>bellavego.com/dashboard</strong> in Safari (iPhone) or Chrome (Android). Then:
+                </p>
+                <div style={{ background: "#fff", borderRadius: 10, padding: "12px 14px", border: "1px solid rgba(232,116,43,0.18)", marginBottom: 10 }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: "#0B1F3A", marginBottom: 6 }}>📱 iPhone</div>
+                  <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "#4A6670", lineHeight: 1.7 }}>
+                    <li>Tap the <strong>Share</strong> icon (square with up-arrow)</li>
+                    <li>Scroll → <strong>Add to Home Screen</strong> → <strong>Add</strong></li>
+                    <li>Open BellAveGo from your home screen icon</li>
+                    <li>Tap the big orange &quot;Turn on Lead Alerts&quot; button → Allow</li>
+                  </ol>
+                </div>
+                <div style={{ background: "#fff", borderRadius: 10, padding: "12px 14px", border: "1px solid rgba(232,116,43,0.18)" }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: "#0B1F3A", marginBottom: 6 }}>🤖 Android</div>
+                  <p style={{ margin: 0, fontSize: 13, color: "#4A6670", lineHeight: 1.55 }}>
+                    Chrome shows an &quot;Install&quot; banner when you open the dashboard. Tap it, then tap &quot;Turn on Lead Alerts&quot; → Allow.
+                  </p>
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!profile.owner_phone) {
+                      alert("Add your phone number in settings first so we can text you the link.")
+                      return
+                    }
+                    setBusy(true)
+                    try {
+                      const res = await fetch("/api/push/text-link", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({}),
+                      })
+                      const j = await res.json()
+                      if (!res.ok) {
+                        alert(j.error || "Couldn't send. Open bellavego.com/dashboard on your phone manually.")
+                      } else {
+                        alert(`Sent! Check your phone (${j.sent_to}) for the link.`)
+                      }
+                    } catch (e) {
+                      alert(`Failed: ${(e as Error).message}`)
+                    } finally {
+                      setBusy(false)
+                    }
+                  }}
+                  disabled={busy}
+                  style={{
+                    marginTop: 12, width: "100%",
+                    padding: "12px 18px", borderRadius: 10,
+                    background: "linear-gradient(135deg, #FF9D5A, #E8742B)",
+                    color: "#fff", fontSize: 14, fontWeight: 900, border: "none",
+                    cursor: busy ? "wait" : "pointer", fontFamily: "inherit",
+                    boxShadow: "0 6px 18px rgba(232,116,43,0.32)",
+                  }}
+                >
+                  {busy ? "Sending…" : "📲 Text me the link"}
+                </button>
+              </div>
+
+              {/* PART B — Call your AI to hear it */}
+              <div style={{
+                background: "linear-gradient(135deg, #F0FBF8 0%, #FFFFFF 60%)",
+                border: "1.5px solid rgba(10,168,159,0.28)",
+                borderRadius: 14,
+                padding: "18px 18px",
+                marginBottom: 18,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                  <span style={{
+                    fontSize: 11, fontWeight: 900, color: "#fff",
+                    background: "linear-gradient(135deg, #0AA89F, #088A82)",
+                    padding: "4px 10px", borderRadius: 99, letterSpacing: "0.08em",
+                  }}>2</span>
+                  <span style={{ fontSize: 16, fontWeight: 900, color: "#0B1F3A" }}>
+                    Call your AI and hear it live
+                  </span>
+                </div>
+                <p style={{ fontSize: 14, color: "#4A6670", lineHeight: 1.55, margin: "0 0 14px" }}>
+                  Tap below to call your new BellAveGo number from this phone. You&apos;ll hear what your customers hear when you can&apos;t pick up.
+                </p>
+                {profile.twilio_number && (
+                  <a
+                    href={`tel:${profile.twilio_number}`}
+                    style={{
+                      display: "block", width: "100%",
+                      padding: "18px 22px", borderRadius: 12,
+                      background: "linear-gradient(135deg, #0AA89F, #088A82)",
+                      color: "#fff", textDecoration: "none", textAlign: "center",
+                      boxShadow: "0 8px 24px rgba(10,168,159,0.32)",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    <div style={{ fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.85)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>
+                      📞 Tap to call
+                    </div>
+                    <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 22, fontWeight: 800, letterSpacing: "1px" }}>
+                      {profile.twilio_number}
+                    </div>
+                  </a>
+                )}
+                <p style={{ fontSize: 12, color: "#7AAAB2", margin: "10px 0 0", lineHeight: 1.5, textAlign: "center" }}>
+                  Tip: pretend you&apos;re a customer. Say you have a leak. Hear what happens.
+                </p>
+              </div>
+
+              <button onClick={continueAfterPhoneStep} disabled={busy} style={primaryButton}>
+                {busy ? "Saving…" : meta.isOfficeMgr || meta.isConcierge ? "Continue →" : "🎉 I'm done — open my dashboard →"}
+              </button>
+              <div style={{ fontSize: 12, color: "#A0BCC2", marginTop: 10, textAlign: "center" }}>
+                You can come back to enable phone alerts anytime from the dashboard.
+              </div>
+            </div>
+          )}
+
+          {/* STEP 4 — CRM (Office Mgr + Concierge) */}
+          {step === 4 && (meta.isOfficeMgr || meta.isConcierge) && (
             <div className="step-enter">
               <h2 style={titleStyle}>Connect your CRM.</h2>
               <p style={subStyle}>
@@ -517,8 +667,8 @@ export default function SetupWizard() {
             </div>
           )}
 
-          {/* STEP 4 — Kickoff (Concierge only) */}
-          {step === 4 && meta.isConcierge && (
+          {/* STEP 5 — Kickoff (Concierge only) */}
+          {step === 5 && meta.isConcierge && (
             <div className="step-enter">
               <h2 style={titleStyle}>Schedule your kickoff call.</h2>
               <p style={subStyle}>
