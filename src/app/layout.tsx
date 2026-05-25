@@ -14,6 +14,7 @@ const OG_IMAGE = `${SITE_URL}/logo.png`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  manifest: "/manifest.json",
   title: {
     default: "BellAveGo — AI Receptionist + AI Marketing for home service pros",
     template: "%s · BellAveGo",

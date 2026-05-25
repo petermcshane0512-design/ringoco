@@ -1,0 +1,40 @@
+{
+  "name": "BellAveGo",
+  "short_name": "BellAveGo",
+  "description": "AI Receptionist + AI Marketing for home service pros",
+  "start_url": "/dashboard?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0B1F3A",
+  "background_color": "#F5F1EA",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "New Leads",
+      "short_name": "Leads",
+      "url": "/dashboard?tab=leads",
+      "description": "View today's captured leads"
+    },
+    {
+      "name": "Calendar",
+      "short_name": "Calendar",
+      "url": "/dashboard?tab=calendar",
+      "description": "View scheduled appointments"
+    }
+  ]
+}

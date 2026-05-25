@@ -8,6 +8,7 @@ import { switchToCapacityMode } from '@/lib/provisionNumber'
 import { sendEmail, renderLeadAlertEmail, renderContractorLeadEmail, renderFirstCallCelebrationEmail } from '@/lib/email'
 import { lookupOwnerEmail } from '@/lib/notify'
 import { estimateJobTicket } from '@/lib/consultingMetrics'
+import { firePushAsync } from '@/lib/push'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -780,6 +781,29 @@ async function takeMessage(opts: {
   // To re-enable later: add a verbal opt-in step to take_message
   // ("Is it okay if we text you a confirmation?") + capture the
   // explicit yes/no on the call_log row. Only send SMS if consent=true.
+
+  // 5b. PUSH NOTIFICATION to contractor's PWA.
+  //
+  // Free, ~1-2 sec latency, survives A2P 10DLC blackout entirely. Only
+  // delivered if contractor has installed the PWA + opted in via the
+  // dashboard widget. Silently no-ops if no subscription exists — SMS +
+  // email paths above remain the primary delivery for non-subscribers.
+  //
+  // Urgency=emergency triggers high-urgency push (bypasses device battery
+  // saver) AND vibrate pattern on Android.
+  const urgencyLabel = args.urgency === 'emergency' ? '🚨' : args.urgency === 'soon' ? '⚡' : '🕓'
+  firePushAsync(tenant.user_id, {
+    title: `${urgencyLabel} New lead — ${args.customer_name}`,
+    body:
+      `${args.reason}` +
+      (phone ? `\n📞 ${phone}` : '') +
+      (args.customer_address ? `\n📍 ${args.customer_address}` : ''),
+    url: jobRow?.id ? `/dashboard?job=${jobRow.id}` : '/dashboard',
+    tag: `lead-${jobRow?.id || callSid}`,
+    urgency: args.urgency === 'emergency' ? 'emergency' : 'soon',
+    requireInteraction: args.urgency === 'emergency',
+    data: { job_id: jobRow?.id, caller_phone: phone, urgency: args.urgency },
+  })
 
   // 6. Upsert call_logs (powers Receptionist tier monthly call cap counter)
   try {

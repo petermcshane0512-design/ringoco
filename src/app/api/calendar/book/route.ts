@@ -7,6 +7,7 @@ import { createGoogleEvent, type CalendarConnectionRow } from '@/lib/calendar/go
 import { createCronofyEvent } from '@/lib/calendar/cronofy'
 import { sendEmail, renderAppointmentBookedEmail, renderLeadAlertEmail, renderBookingAlertEmail } from '@/lib/email'
 import { lookupOwnerEmail } from '@/lib/notify'
+import { firePushAsync } from '@/lib/push'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -434,6 +435,23 @@ export async function POST(req: NextRequest) {
         console.error('book_appointment: peter alert email failed:', e)
       }
     }
+
+    // ── PUSH NOTIFICATION to contractor's PWA ──
+    // Fires alongside SMS + email so PWA-installed contractors get instant
+    // banner on their phone. requireInteraction=true keeps the notification
+    // visible until tapped (bookings are high-value events worth not missing).
+    firePushAsync(userId, {
+      title: `📅 AI booked — ${args.customer_name}`,
+      body:
+        `${args.service_summary || 'Appointment'}\n` +
+        `🕐 ${slotLabel}` +
+        (callerPhone ? `\n📞 ${callerPhone}` : ''),
+      url: `/dashboard?job=${provisionalJobId}`,
+      tag: `booking-${provisionalJobId}`,
+      urgency: 'soon',
+      requireInteraction: true,
+      data: { job_id: provisionalJobId, caller_phone: callerPhone, event_url: eventResult.htmlLink },
+    })
 
     results.push({
       toolCallId: tc.id,

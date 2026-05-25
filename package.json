@@ -27,13 +27,15 @@
     "stripe": "^22.1.0",
     "svix": "^1.93.0",
     "swr": "^2.4.1",
-    "twilio": "^6.0.0"
+    "twilio": "^6.0.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "tailwindcss": "^4",

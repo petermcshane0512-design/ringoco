@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { TIER_METADATA, type Tier } from "@/lib/pricing";
 import { useIsMobile } from "@/lib/useIsMobile";
+import PushNotificationSetup from "@/components/PushNotificationSetup";
 
 const ADMIN_EMAILS = new Set(["pmcshane@fordham.edu", "peter@bellavego.com"]);
 
@@ -345,6 +346,10 @@ export default function DashboardPage() {
       {/* CALENDAR SYNC PROMO — top of dashboard, hard to miss. Hides itself
           once the contractor has connected at least one calendar. */}
       <CalendarSyncBanner />
+
+      {/* PUSH NOTIFICATION OPT-IN — auto-hides if subscribed/unsupported.
+          Replaces SMS for contractor lead alerts; survives A2P 10DLC blackout. */}
+      <PushNotificationSetup />
 
       {/* Header — admin switcher inlined as a compact pill so it doesn't dominate */}
       <div style={{ marginBottom: 26, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
