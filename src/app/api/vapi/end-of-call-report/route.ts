@@ -369,6 +369,14 @@ async function takeMessage(opts: {
       customer_phone: phone,
       job_type: args.reason,
       scheduled_time: 'callback requested',
+      // scheduled_at: timestamp version of scheduled_time for any
+      // jobs.scheduled_at NOT NULL constraint. Defaults to "now + 2 hours"
+      // as a placeholder representing the expected callback window. The
+      // contractor updates this when they actually book the job.
+      // Without this, the entire insert errors with 23502 (NOT NULL
+      // violation) — root cause of the "DB_INSERT_FAILED" call_logs rows
+      // observed 2026-05-25.
+      scheduled_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
       title: `Callback: ${args.customer_name} — ${args.reason}`,
       status: 'pending_approval',
     })

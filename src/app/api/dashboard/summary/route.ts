@@ -31,12 +31,11 @@ export async function GET() {
   const startOfMonth = new Date()
   startOfMonth.setDate(1)
   startOfMonth.setHours(0, 0, 0, 0)
-  // Start of THIS week (Monday) — typical for contractors who plan weekly
-  const startOfWeek = new Date()
-  startOfWeek.setHours(0, 0, 0, 0)
-  const dayOfWeek = startOfWeek.getDay() // 0=Sun, 1=Mon, ... 6=Sat
-  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
-  startOfWeek.setDate(startOfWeek.getDate() - daysSinceMonday)
+  // "This week" = rolling 7 days back (NOT Monday-start). Peter feedback
+  // 2026-05-25: Monday-start was confusing — when today IS Monday, the
+  // "this week" count equals today's count and last week's calls
+  // vanish. Rolling 7d matches typical user mental model.
+  const startOfWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
   const [
     jobsRes,
@@ -68,26 +67,30 @@ export async function GET() {
       .order('created_at', { ascending: false })
       .limit(10),
     // Calls received today — drives the "BellAveGo Calls Answered Today" stat
+    // Excludes DB-error rows (system failures, not real customer calls).
     supabase
       .from('call_logs')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
-      .gte('created_at', startOfToday.toISOString()),
-    // Calls received this week (since Monday) — drives "BellAveGo Calls Answered This Week"
+      .gte('created_at', startOfToday.toISOString())
+      .or('summary.is.null,summary.not.ilike.DB_INSERT_FAILED%'),
+    // Calls received in the last 7 days — drives "BellAveGo Calls Answered This Week"
     supabase
       .from('call_logs')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
-      .gte('created_at', startOfWeek.toISOString()),
+      .gte('created_at', startOfWeek.toISOString())
+      .or('summary.is.null,summary.not.ilike.DB_INSERT_FAILED%'),
     // Leads captured this month — drives the "Leads captured" sidebar metric.
     // A "lead" = a call_log row where the AI booked a job (booking_completed=true).
-    // Falls back to total call_logs this month if the booking_completed column is empty.
+    // Excludes DB-error rows.
     supabase
       .from('call_logs')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('booking_completed', true)
-      .gte('created_at', startOfMonth.toISOString()),
+      .gte('created_at', startOfMonth.toISOString())
+      .or('summary.is.null,summary.not.ilike.DB_INSERT_FAILED%'),
   ])
 
   if (jobsRes.error) return NextResponse.json({ error: jobsRes.error.message }, { status: 500 })

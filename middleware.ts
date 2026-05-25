@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
   "/",
+  // PWA manifest — must be publicly fetchable so install banner works
+  // for signed-in AND anonymous visitors. The middleware matcher excludes
+  // .js but NOT .json (due to the (?!on) lookahead), so without this
+  // entry Clerk blocks /manifest.json → PWA install fails silently.
+  "/manifest.json",
   "/sample-report(.*)",
   "/pricing(.*)",
   "/demo(.*)",

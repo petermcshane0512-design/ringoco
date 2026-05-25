@@ -64,14 +64,24 @@ export default function PushNotificationSetup() {
       return
     }
 
-    // Check if already subscribed
-    navigator.serviceWorker.ready.then(async (reg) => {
-      const sub = await reg.pushManager.getSubscription()
-      setStatus(sub ? 'subscribed' : 'unsubscribed')
-    }).catch(() => {
-      // Service worker not yet registered — treat as unsubscribed
-      setStatus('unsubscribed')
-    })
+    // Register SW eagerly on mount so navigator.serviceWorker.ready resolves
+    // immediately. Without this, .ready hangs forever when no SW is
+    // registered yet (it doesn't reject — it just never settles), leaving
+    // the component stuck in `loading` and rendering nothing.
+    ;(async () => {
+      try {
+        await navigator.serviceWorker.register('/sw.js')
+        const reg = await navigator.serviceWorker.ready
+        const sub = await reg.pushManager.getSubscription()
+        setStatus(sub ? 'subscribed' : 'unsubscribed')
+      } catch (e) {
+        // SW registration can fail under odd conditions (HTTPS missing,
+        // path 404, restrictive CSP). Treat as unsubscribed so the UI
+        // still renders the CTA — user click will retry registration.
+        console.warn('push: SW registration failed on mount:', e)
+        setStatus('unsubscribed')
+      }
+    })()
   }, [])
 
   async function enable() {
@@ -139,56 +149,109 @@ export default function PushNotificationSetup() {
 
   if (status === 'loading') return null
 
-  const cardStyle: React.CSSProperties = {
-    background: '#fff',
-    border: '1px solid #E8DFCF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    fontFamily: 'system-ui, sans-serif',
-  }
-  const btnPrimary: React.CSSProperties = {
-    background: '#0AA89F',
-    color: '#fff',
-    border: 'none',
-    padding: '10px 16px',
-    borderRadius: 8,
-    fontWeight: 700,
-    fontSize: 14,
-    cursor: 'pointer',
-  }
-  const btnGhost: React.CSSProperties = {
-    background: 'transparent',
-    color: '#4A6670',
-    border: '1px solid #E8DFCF',
-    padding: '8px 12px',
-    borderRadius: 8,
-    fontSize: 13,
-    cursor: 'pointer',
-    marginLeft: 8,
-  }
-
-  if (status === 'unsupported') {
+  // ── HERO state (unsubscribed) — massive, hard-to-miss until they enable.
+  //    Once subscribed we collapse to a tiny pill that lives quietly in the
+  //    corner so it's never obnoxious for active users.
+  if (status === 'unsubscribed' || status === 'subscribing') {
+    const heroStyle: React.CSSProperties = {
+      background: 'linear-gradient(135deg, #0AA89F 0%, #088A82 60%, #FF9D5A 100%)',
+      borderRadius: 20,
+      padding: '32px 28px',
+      marginBottom: 22,
+      color: '#fff',
+      fontFamily: 'system-ui, sans-serif',
+      boxShadow: '0 12px 32px rgba(10, 168, 159, 0.28)',
+      position: 'relative',
+      overflow: 'hidden',
+    }
+    const headlineStyle: React.CSSProperties = {
+      fontSize: 28,
+      fontWeight: 900,
+      letterSpacing: '-0.02em',
+      lineHeight: 1.15,
+      marginBottom: 10,
+    }
+    const subStyle: React.CSSProperties = {
+      fontSize: 16,
+      lineHeight: 1.4,
+      opacity: 0.95,
+      marginBottom: 22,
+      maxWidth: 560,
+    }
+    const ctaStyle: React.CSSProperties = {
+      background: '#fff',
+      color: '#0B1F3A',
+      border: 'none',
+      padding: '18px 32px',
+      borderRadius: 14,
+      fontWeight: 900,
+      fontSize: 18,
+      cursor: status === 'subscribing' ? 'wait' : 'pointer',
+      boxShadow: '0 6px 18px rgba(0,0,0,0.18)',
+      letterSpacing: '-0.01em',
+      transition: 'transform 120ms ease',
+    }
     return (
-      <div style={cardStyle}>
-        <div style={{ color: '#4A6670', fontSize: 13 }}>
-          📵 Push notifications aren't supported in this browser. Use Chrome, Edge, Firefox, or Safari to enable real-time lead alerts.
+      <div style={heroStyle}>
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute', top: -40, right: -40, fontSize: 180,
+            opacity: 0.18, pointerEvents: 'none', userSelect: 'none',
+          }}
+        >
+          🔔
+        </div>
+        <div style={{ position: 'relative' }}>
+          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8, opacity: 0.9 }}>
+            ⚡ ONE-TAP SETUP
+          </div>
+          <div style={headlineStyle}>Get lead alerts on your phone — like a text message.</div>
+          <div style={subStyle}>
+            Every time a customer calls, you&apos;ll get an instant banner on your phone with their name, problem, and a tap-to-call button. Same delivery as a text — without the wait for SMS approval. <strong>Set it up in 5 seconds.</strong>
+          </div>
+          <button
+            style={ctaStyle}
+            onClick={enable}
+            disabled={status === 'subscribing'}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+          >
+            {status === 'subscribing' ? 'Enabling…' : '🔔 Turn on Lead Alerts'}
+          </button>
         </div>
       </div>
     )
   }
 
   if (status === 'needs-pwa-install') {
+    // Big hero on iPhone Safari — they MUST install PWA before alerts work.
     return (
-      <div style={cardStyle}>
-        <div style={{ fontWeight: 700, color: '#0B1F3A', marginBottom: 6 }}>
-          📲 Add BellAveGo to your Home Screen first
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 100%)',
+          borderRadius: 20,
+          padding: '28px 24px',
+          marginBottom: 22,
+          color: '#fff',
+          fontFamily: 'system-ui, sans-serif',
+          boxShadow: '0 12px 32px rgba(232, 116, 43, 0.28)',
+        }}
+      >
+        <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8, opacity: 0.95 }}>
+          📲 ONE-TIME IPHONE SETUP
         </div>
-        <div style={{ color: '#4A6670', fontSize: 13, marginBottom: 4 }}>
-          On iPhone: tap the <strong>Share</strong> icon at the bottom of Safari → <strong>Add to Home Screen</strong>. Then open BellAveGo from your home screen to turn on lead alerts.
+        <div style={{ fontSize: 24, fontWeight: 900, lineHeight: 1.15, marginBottom: 12, letterSpacing: '-0.02em' }}>
+          Add BellAveGo to your Home Screen first
         </div>
-        <div style={{ color: '#4A6670', fontSize: 12, fontStyle: 'italic' }}>
-          (Apple requires this step before push notifications work on iPhone.)
+        <ol style={{ fontSize: 15, lineHeight: 1.55, paddingLeft: 20, margin: '0 0 12px 0' }}>
+          <li>Tap the <strong>Share</strong> icon (square with arrow) at the bottom of Safari</li>
+          <li>Scroll → tap <strong>Add to Home Screen</strong> → tap <strong>Add</strong></li>
+          <li>Close Safari and open BellAveGo from your home screen</li>
+          <li>You&apos;ll see the &quot;Turn on Lead Alerts&quot; button — tap it</li>
+        </ol>
+        <div style={{ fontSize: 12, fontStyle: 'italic', opacity: 0.88 }}>
+          Apple requires this step before push notifications work on iPhone — Android skips it.
         </div>
       </div>
     )
@@ -196,46 +259,119 @@ export default function PushNotificationSetup() {
 
   if (status === 'denied') {
     return (
-      <div style={cardStyle}>
-        <div style={{ fontWeight: 700, color: '#0B1F3A', marginBottom: 6 }}>
-          🔕 Notifications are blocked
+      <div
+        style={{
+          background: '#FEF2F2',
+          border: '2px solid #FCA5A5',
+          borderRadius: 14,
+          padding: 18,
+          marginBottom: 22,
+          fontFamily: 'system-ui, sans-serif',
+        }}
+      >
+        <div style={{ fontWeight: 800, color: '#991B1B', marginBottom: 6, fontSize: 16 }}>
+          🔕 Notifications are blocked for this site
         </div>
-        <div style={{ color: '#4A6670', fontSize: 13 }}>
-          You blocked notifications for this site. Re-enable in your browser settings (lock icon in the address bar → Notifications → Allow), then refresh.
+        <div style={{ color: '#7F1D1D', fontSize: 13, lineHeight: 1.5 }}>
+          You previously blocked notifications. Re-enable them in your browser: click the <strong>lock icon</strong> in the address bar → <strong>Notifications</strong> → <strong>Allow</strong> → refresh this page.
         </div>
       </div>
     )
   }
 
-  if (status === 'subscribed') {
+  if (status === 'unsupported') {
     return (
-      <div style={cardStyle}>
-        <div style={{ fontWeight: 700, color: '#0B1F3A', marginBottom: 6 }}>
-          ✅ Lead alerts are on
-        </div>
-        <div style={{ color: '#4A6670', fontSize: 13, marginBottom: 10 }}>
-          You'll get a push notification every time the AI captures a lead or books an appointment — even when this tab is closed.
-        </div>
-        <button style={btnPrimary} onClick={sendTest} disabled={testing}>
-          {testing ? 'Sending…' : 'Send Test Notification'}
-        </button>
-        <button style={btnGhost} onClick={disable}>Turn off</button>
+      <div
+        style={{
+          background: '#FFF7ED',
+          border: '1px solid #FED7AA',
+          borderRadius: 12,
+          padding: 12,
+          marginBottom: 16,
+          color: '#7C2D12',
+          fontSize: 13,
+          fontFamily: 'system-ui, sans-serif',
+        }}
+      >
+        📵 This browser doesn&apos;t support push notifications. Use Chrome, Edge, Firefox, or Safari to get real-time lead alerts on your phone.
       </div>
     )
   }
 
-  // unsubscribed or subscribing
+  // ── COMPACT PILL state (subscribed) — tucked top-right, never obnoxious.
+  //    Click toggles a small dropdown with Test / Turn off actions.
   return (
-    <div style={cardStyle}>
-      <div style={{ fontWeight: 700, color: '#0B1F3A', marginBottom: 6 }}>
-        🔔 Get instant lead alerts on your phone
-      </div>
-      <div style={{ color: '#4A6670', fontSize: 13, marginBottom: 12 }}>
-        One tap and you'll get a push notification within 2 seconds of every captured lead or booked appointment. No app to install — works in this browser.
-      </div>
-      <button style={btnPrimary} onClick={enable} disabled={status === 'subscribing'}>
-        {status === 'subscribing' ? 'Enabling…' : 'Enable Lead Alerts'}
-      </button>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'flex-end',
+        marginBottom: 12,
+        fontFamily: 'system-ui, sans-serif',
+        position: 'relative',
+      }}
+    >
+      <details
+        style={{
+          background: '#ECFDF5',
+          border: '1px solid #A7F3D0',
+          borderRadius: 999,
+          padding: '6px 14px',
+          fontSize: 12,
+          color: '#065F46',
+          fontWeight: 700,
+          cursor: 'pointer',
+          userSelect: 'none',
+        }}
+      >
+        <summary
+          style={{
+            listStyle: 'none',
+            cursor: 'pointer',
+            outline: 'none',
+          }}
+        >
+          ✅ Lead alerts on
+        </summary>
+        <div
+          style={{
+            position: 'absolute',
+            right: 0,
+            top: 'calc(100% + 6px)',
+            background: '#fff',
+            border: '1px solid #E8DFCF',
+            borderRadius: 12,
+            padding: 12,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+            zIndex: 50,
+            minWidth: 220,
+          }}
+        >
+          <div style={{ fontSize: 12, color: '#4A6670', fontWeight: 500, marginBottom: 10, lineHeight: 1.4 }}>
+            You&apos;ll get a push on your phone for every captured lead and booked appointment — even with the dashboard closed.
+          </div>
+          <button
+            onClick={sendTest}
+            disabled={testing}
+            style={{
+              background: '#0AA89F', color: '#fff', border: 'none',
+              padding: '8px 14px', borderRadius: 8, fontWeight: 700,
+              fontSize: 12, cursor: testing ? 'wait' : 'pointer', width: '100%', marginBottom: 6,
+            }}
+          >
+            {testing ? 'Sending…' : 'Send Test Notification'}
+          </button>
+          <button
+            onClick={disable}
+            style={{
+              background: 'transparent', color: '#4A6670', border: '1px solid #E8DFCF',
+              padding: '8px 14px', borderRadius: 8, fontWeight: 600,
+              fontSize: 12, cursor: 'pointer', width: '100%',
+            }}
+          >
+            Turn off alerts
+          </button>
+        </div>
+      </details>
     </div>
   )
 }
