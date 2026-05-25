@@ -608,11 +608,11 @@ export default function HomePage() {
               <div className="hero-trust">
                 <div className="hero-trust-item">
                   <span className="hero-trust-num">100%</span>
-                  <span className="hero-trust-lab">Calls answered</span>
+                  <span className="hero-trust-lab">Picked up before voicemail</span>
                 </div>
                 <div className="hero-trust-item">
-                  <span className="hero-trust-num">20s</span>
-                  <span className="hero-trust-lab">Text summary</span>
+                  <span className="hero-trust-num">10s</span>
+                  <span className="hero-trust-lab">Call summary after every call</span>
                 </div>
                 <div className="hero-trust-item">
                   <span className="hero-trust-num">24/7</span>
@@ -1175,7 +1175,7 @@ export default function HomePage() {
                 'Emergency routing — outbound voice call to your cell on urgent jobs',
                 'Live dashboard + full call transcripts',
                 'Welcome AI business diagnostic within 24 hours of signup',
-                'Self-serve Stripe billing portal · 30-day money-back guarantee',
+                'Self-serve Stripe billing portal · 30-day money-back if not satisfied',
               ],
               popular: false, customCta: false,
             },
@@ -1247,7 +1247,7 @@ export default function HomePage() {
                 )}
               </div>
               <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.38)' : '#7AAAB2', marginBottom: 6 }}>{plan.customCta ? 'pricing per location' : 'per month · cancel anytime'}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>{plan.customCta ? 'White-glove kickoff included' : '30-day money-back · Cancel anytime'}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>{plan.customCta ? 'White-glove kickoff included' : '30-day money-back if not satisfied · Cancel anytime'}</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: plan.popular ? '#18AFA8' : '#0AA89F', marginBottom: 16 }}>{plan.calls} calls</div>
               <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.6)' : '#4A7A80', marginBottom: 24, lineHeight: 1.6 }}>{plan.desc}</div>
               <div style={{ marginBottom: 24 }}>
@@ -1284,7 +1284,7 @@ export default function HomePage() {
           ))}
         </div>
         <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 16, lineHeight: 1.6 }}>
-          Month-to-month · 30-day money-back · 17% off annual.<br />
+          Month-to-month · 30-day money-back if not satisfied · 17% off annual.<br />
           <span style={{ fontWeight: 700, color: '#0AA89F' }}>Most contractors recover the month on their first booked job.</span><br />
           90-day money-back if we don&apos;t add at least 5 booked jobs.
         </p>
@@ -1319,7 +1319,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <Image src="/logo.png" alt="BellAveGo" width={300} height={100} style={{ objectFit: 'contain' }} />
           <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
-          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>AI receptionist for home service pros · From $147/mo · 30-day money-back · Cancel anytime</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>AI receptionist for home service pros · From $147/mo · 30-day money-back if not satisfied · Cancel anytime</p>
           <p style={{ margin: '8px 0 0', fontSize: 11, color: '#3D5A62' }}>
             <Link href="/privacy" style={{ color: '#7AAAB2', textDecoration: 'none' }}>Privacy</Link>
             {' · '}
