@@ -341,7 +341,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div style={{ padding: isMobile ? "16px 14px 48px" : "28px 32px 60px", fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{ padding: isMobile ? "12px 10px 40px" : "28px 32px 60px", fontFamily: "'Inter', system-ui, sans-serif", fontSize: isMobile ? 13 : undefined }}>
 
       {/* CALENDAR SYNC PROMO — top of dashboard, hard to miss. Hides itself
           once the contractor has connected at least one calendar. */}
