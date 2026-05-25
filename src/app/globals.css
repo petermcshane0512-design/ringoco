@@ -366,12 +366,12 @@ html { overflow-x: hidden; }
     padding: 0 !important;
   }
   /* Scale just the dashboard preview itself — not the headline above it.
-     0.62 = 22% smaller than the previous 0.78 (Peter feedback: consulting
-     tab still had cut-off content; needs more breathing room). */
+     0.47 = 25% smaller than the previous 0.62 (Peter feedback: still too
+     big, every tab page needs to fit cleanly). */
   .mobile-dash-preview > div > div:last-child {
-    transform: scale(0.62);
+    transform: scale(0.47);
     transform-origin: top center;
-    margin-bottom: -38%;       /* recover visual space — matches 1-0.62 */
+    margin-bottom: -53%;       /* recover visual space — matches 1-0.47 */
   }
 }
 
