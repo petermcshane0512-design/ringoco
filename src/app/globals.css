@@ -351,14 +351,24 @@ html { overflow-x: hidden; }
     50%      { transform: translateY(-50%) translateX(4px); opacity: 1; }
   }
 
-  /* Mobile dashboard preview — full width, no scale. The internal sidebar
-     is hidden + tabs moved to bottom strip so the content naturally fits.
-     (Earlier 0.92 scale made it look like a thumbnail per Peter feedback.) */
-  .mobile-dash-preview { padding: 40px 0 8px !important; }
+  /* Mobile dashboard preview — full edge-to-edge width with a 78% scale
+     so all the data + tab strip fit cleanly without anything getting cut
+     off. Negative margin-bottom compensates for the height lost to scale
+     so the page doesn't develop extra blank space below.
+     (Peter feedback 2026-05-25: 92% was still cropping, 100% was too big.) */
+  .mobile-dash-preview {
+    padding: 40px 0 8px !important;
+    overflow: hidden;          /* trim any horizontal slop from scaling */
+  }
   .mobile-dash-preview > div {
     max-width: 100% !important;
-    padding-left: 8px !important;
-    padding-right: 8px !important;
+    padding: 0 !important;
+  }
+  /* Scale just the dashboard preview itself — not the headline above it */
+  .mobile-dash-preview > div > div:last-child {
+    transform: scale(0.78);
+    transform-origin: top center;
+    margin-bottom: -22%;       /* recover the visual space scale stole */
   }
 }
 
