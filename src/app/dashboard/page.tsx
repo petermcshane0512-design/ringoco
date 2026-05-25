@@ -842,8 +842,10 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Right col */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {/* Right col — promoted ABOVE the left col on mobile so AI Receptionist
+            status (the #1 thing contractors check) is the first thing they see,
+            not buried below the jobs + reports tables. Desktop unchanged. */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, order: isMobile ? -1 : 0 }}>
 
           {/* AI Receptionist status */}
           <div style={{ ...card }}>
