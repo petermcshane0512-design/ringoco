@@ -17,13 +17,22 @@ const anthropic = new Anthropic()
 export type ContentTheme = {
   id: string
   label: string
-  promptTemplate: string  // sent to Claude verbatim; must produce caption + hashtags
-  imagePrompt: string     // sent to DALL-E 3 for a unique image per post
+  // Claude prompt — must return JSON: { headline: string, caption: string }
+  //   headline: ≤8 words, punchy, gets baked into the image as text
+  //   caption: the post caption — brand-focused, ~50 words, hashtags at end
+  promptTemplate: string
+  // Visual scene prompt fed to gpt-image-1. The headline gets appended
+  // at runtime with "Bold sans-serif typography overlay reading: '<headline>'"
+  imagePrompt: string
 }
 
 // Shared visual identity prompt fragment — appended to every theme's image
 // prompt so the feed has a cohesive look across diverse subjects.
-const BRAND_VISUAL = 'warm sunset-orange (#E8742B) and teal (#0AA89F) color palette, professional but approachable, modern editorial style, no text overlays, no logos'
+const BRAND_VISUAL = 'warm sunset-orange (#E8742B) and teal (#0AA89F) color palette, professional but approachable, modern editorial style, square 1:1 composition, social-media-optimized'
+
+// Brand-focused caption suffix appended to EVERY post's caption — keeps the
+// caption from being a duplicate of the headline (which is now in the image).
+const BRAND_CAPTION_FOOTER = `\n\nBellAveGo answers your missed calls in your business name, books the job, and texts you the lead in 20 seconds. Built for HVAC, plumbing, electrical, and home-service contractors. Call (651) 467-7829 to hear it yourself.`
 
 export const CONTENT_THEMES: ContentTheme[] = [
   {

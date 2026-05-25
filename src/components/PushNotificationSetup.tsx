@@ -3,21 +3,30 @@
 import { useEffect, useState } from 'react'
 
 /**
- * Push Notification opt-in widget for the dashboard.
+ * Multi-device push notification opt-in widget.
  *
- * Flow:
- *   1. Detect browser support + current permission state
- *   2. Show big "Enable lead alerts" button if not subscribed
- *   3. On click: register /sw.js, request Notification permission,
- *      subscribe to pushManager with VAPID public key, POST to backend
- *   4. After subscribed: show "✅ Notifications on · [Test] [Turn off]"
+ * Renders different UI based on THIS DEVICE's subscription state AND the
+ * total number of devices the user has registered:
  *
- * iOS quirk: must be added to home screen first. Detect via display-mode
- * media query — if not standalone on iOS, show the "Add to Home Screen"
- * instructions instead of the subscribe button.
+ *   - This device subscribed + ≥1 other device     → tiny green pill
+ *   - This device subscribed + no other devices    → green pill + "📱 Also enable on phone" CTA
+ *   - This device NOT subscribed                   → big hero CTA
+ *   - iPhone Safari not yet PWA-installed          → orange "Add to Home Screen" hero
+ *   - Blocked / unsupported                        → warning banner
+ *
+ * Key insight: enabling on a laptop DOES NOT enable on the phone — they're
+ * separate browsers with separate subscriptions. The component nudges
+ * users hard to set up BOTH so leads land on whichever device they're on.
  */
 
-type Status = 'loading' | 'unsupported' | 'needs-pwa-install' | 'denied' | 'unsubscribed' | 'subscribed' | 'subscribing'
+type Status =
+  | 'loading'
+  | 'unsupported'
+  | 'needs-pwa-install'
+  | 'denied'
+  | 'unsubscribed'
+  | 'subscribed'
+  | 'subscribing'
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
 
@@ -33,51 +42,78 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 function detectIosNonStandalone(): boolean {
   if (typeof window === 'undefined') return false
   const ua = window.navigator.userAgent
-  const isIos = /iPhone|iPad|iPod/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua)
+  // iPad on iPadOS 13+ reports as Macintosh — use maxTouchPoints fallback
+  // (Mac desktops report 0, iPads report 5+).
+  const isMacWithTouch = /Macintosh/.test(ua) && (navigator.maxTouchPoints ?? 0) > 1
+  const isIos =
+    (/iPhone|iPad|iPod/.test(ua) || isMacWithTouch) &&
+    !/CriOS|FxiOS|EdgiOS/.test(ua)
   if (!isIos) return false
-  // True PWA mode reports display-mode standalone
-  const standalone = window.matchMedia('(display-mode: standalone)').matches
-    || (window.navigator as { standalone?: boolean }).standalone === true
+  const standalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as { standalone?: boolean }).standalone === true
   return !standalone
 }
+
+function detectMobile(): boolean {
+  if (typeof window === 'undefined') return false
+  return /iPhone|iPad|iPod|Android/.test(window.navigator.userAgent)
+}
+
+type DeviceRow = { device_label: string | null; last_seen_at: string | null }
 
 export default function PushNotificationSetup() {
   const [status, setStatus] = useState<Status>('loading')
   const [testing, setTesting] = useState(false)
+  const [textingLink, setTextingLink] = useState(false)
+  const [devices, setDevices] = useState<DeviceRow[]>([])
+  const [thisEndpoint, setThisEndpoint] = useState<string | null>(null)
+  const isOnMobile = typeof window !== 'undefined' ? detectMobile() : false
+
+  async function refreshDeviceList() {
+    try {
+      const res = await fetch('/api/push/subscribe')
+      if (res.ok) {
+        const j = await res.json()
+        setDevices(j.devices || [])
+      }
+    } catch {
+      // Non-fatal — device list is informational only
+    }
+  }
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    // Feature detection — bail out cleanly on unsupported browsers.
-    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-      setStatus('unsupported')
-      return
-    }
 
-    // iOS Safari requires PWA install before push works.
+    // ORDER MATTERS: check iOS non-standalone BEFORE feature detection.
+    // iOS Safari doesn't expose PushManager until the PWA is added to
+    // the home screen and launched in standalone mode. If we feature-
+    // detect first, every iPhone user sees "browser unsupported"
+    // instead of the actual "add to home screen" instructions — the
+    // exact thing they need to do to make push work.
     if (detectIosNonStandalone()) {
       setStatus('needs-pwa-install')
       return
     }
 
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      setStatus('unsupported')
+      return
+    }
     if (Notification.permission === 'denied') {
       setStatus('denied')
       return
     }
 
-    // Register SW eagerly on mount so navigator.serviceWorker.ready resolves
-    // immediately. Without this, .ready hangs forever when no SW is
-    // registered yet (it doesn't reject — it just never settles), leaving
-    // the component stuck in `loading` and rendering nothing.
     ;(async () => {
       try {
         await navigator.serviceWorker.register('/sw.js')
         const reg = await navigator.serviceWorker.ready
         const sub = await reg.pushManager.getSubscription()
+        setThisEndpoint(sub?.endpoint ?? null)
         setStatus(sub ? 'subscribed' : 'unsubscribed')
+        if (sub) refreshDeviceList()
       } catch (e) {
-        // SW registration can fail under odd conditions (HTTPS missing,
-        // path 404, restrictive CSP). Treat as unsubscribed so the UI
-        // still renders the CTA — user click will retry registration.
         console.warn('push: SW registration failed on mount:', e)
         setStatus('unsubscribed')
       }
@@ -98,8 +134,6 @@ export default function PushNotificationSetup() {
 
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        // BufferSource cast: TS lib.dom signature wants BufferSource but
-        // Uint8Array satisfies it at runtime. Cast keeps strict TS happy.
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as unknown as BufferSource,
       })
 
@@ -112,7 +146,9 @@ export default function PushNotificationSetup() {
         const j = await res.json().catch(() => ({}))
         throw new Error(j.error || `HTTP ${res.status}`)
       }
+      setThisEndpoint(sub.endpoint)
       setStatus('subscribed')
+      await refreshDeviceList()
     } catch (e) {
       console.error('push subscribe failed:', e)
       setStatus('unsubscribed')
@@ -120,13 +156,21 @@ export default function PushNotificationSetup() {
     }
   }
 
-  async function disable() {
+  async function disableThisDevice() {
     try {
       const reg = await navigator.serviceWorker.ready
       const sub = await reg.pushManager.getSubscription()
-      if (sub) await sub.unsubscribe()
-      await fetch('/api/push/subscribe', { method: 'DELETE' })
+      if (sub) {
+        await fetch('/api/push/subscribe', {
+          method: 'DELETE',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        })
+        await sub.unsubscribe()
+      }
+      setThisEndpoint(null)
       setStatus('unsubscribed')
+      await refreshDeviceList()
     } catch (e) {
       alert(`Couldn't disable: ${(e as Error).message}`)
     }
@@ -147,52 +191,45 @@ export default function PushNotificationSetup() {
     }
   }
 
+  async function textMeLink() {
+    setTextingLink(true)
+    try {
+      const res = await fetch('/api/push/text-link', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      const j = await res.json()
+      if (!res.ok) {
+        alert(j.error || 'Could not send link — try copying https://www.bellavego.com/dashboard to your phone manually.')
+      } else {
+        alert(`Sent! Check your phone (${j.sent_to}) and tap the link to set up alerts there.`)
+      }
+    } catch (e) {
+      alert(`Failed: ${(e as Error).message}`)
+    } finally {
+      setTextingLink(false)
+    }
+  }
+
   if (status === 'loading') return null
 
-  // ── HERO state (unsubscribed) — massive, hard-to-miss until they enable.
-  //    Once subscribed we collapse to a tiny pill that lives quietly in the
-  //    corner so it's never obnoxious for active users.
+  // ── HERO state (this device NOT subscribed) ──
   if (status === 'unsubscribed' || status === 'subscribing') {
-    const heroStyle: React.CSSProperties = {
-      background: 'linear-gradient(135deg, #0AA89F 0%, #088A82 60%, #FF9D5A 100%)',
-      borderRadius: 20,
-      padding: '32px 28px',
-      marginBottom: 22,
-      color: '#fff',
-      fontFamily: 'system-ui, sans-serif',
-      boxShadow: '0 12px 32px rgba(10, 168, 159, 0.28)',
-      position: 'relative',
-      overflow: 'hidden',
-    }
-    const headlineStyle: React.CSSProperties = {
-      fontSize: 28,
-      fontWeight: 900,
-      letterSpacing: '-0.02em',
-      lineHeight: 1.15,
-      marginBottom: 10,
-    }
-    const subStyle: React.CSSProperties = {
-      fontSize: 16,
-      lineHeight: 1.4,
-      opacity: 0.95,
-      marginBottom: 22,
-      maxWidth: 560,
-    }
-    const ctaStyle: React.CSSProperties = {
-      background: '#fff',
-      color: '#0B1F3A',
-      border: 'none',
-      padding: '18px 32px',
-      borderRadius: 14,
-      fontWeight: 900,
-      fontSize: 18,
-      cursor: status === 'subscribing' ? 'wait' : 'pointer',
-      boxShadow: '0 6px 18px rgba(0,0,0,0.18)',
-      letterSpacing: '-0.01em',
-      transition: 'transform 120ms ease',
-    }
     return (
-      <div style={heroStyle}>
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #0AA89F 0%, #088A82 60%, #FF9D5A 100%)',
+          borderRadius: 20,
+          padding: '32px 28px',
+          marginBottom: 22,
+          color: '#fff',
+          fontFamily: 'system-ui, sans-serif',
+          boxShadow: '0 12px 32px rgba(10, 168, 159, 0.28)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
         <div
           aria-hidden
           style={{
@@ -206,12 +243,26 @@ export default function PushNotificationSetup() {
           <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8, opacity: 0.9 }}>
             ⚡ ONE-TAP SETUP
           </div>
-          <div style={headlineStyle}>Get lead alerts on your phone — like a text message.</div>
-          <div style={subStyle}>
-            Every time a customer calls, you&apos;ll get an instant banner on your phone with their name, problem, and a tap-to-call button. Same delivery as a text — without the wait for SMS approval. <strong>Set it up in 5 seconds.</strong>
+          <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: '-0.02em', lineHeight: 1.15, marginBottom: 10 }}>
+            Get lead alerts on {isOnMobile ? 'your phone' : 'this device'} — like a text message.
+          </div>
+          <div style={{ fontSize: 16, lineHeight: 1.4, opacity: 0.95, marginBottom: 22, maxWidth: 560 }}>
+            Every time a customer calls, you&apos;ll get an instant banner with their name, problem, and a tap-to-call button. Same delivery as a text — works during our A2P SMS setup. <strong>Set it up in 5 seconds.</strong>
           </div>
           <button
-            style={ctaStyle}
+            style={{
+              background: '#fff',
+              color: '#0B1F3A',
+              border: 'none',
+              padding: '18px 32px',
+              borderRadius: 14,
+              fontWeight: 900,
+              fontSize: 18,
+              cursor: status === 'subscribing' ? 'wait' : 'pointer',
+              boxShadow: '0 6px 18px rgba(0,0,0,0.18)',
+              letterSpacing: '-0.01em',
+              transition: 'transform 120ms ease',
+            }}
             onClick={enable}
             disabled={status === 'subscribing'}
             onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
@@ -219,13 +270,35 @@ export default function PushNotificationSetup() {
           >
             {status === 'subscribing' ? 'Enabling…' : '🔔 Turn on Lead Alerts'}
           </button>
+          {!isOnMobile && (
+            <div style={{ marginTop: 16, fontSize: 13, opacity: 0.88 }}>
+              💡 After enabling here, also turn it on for your phone so you get alerts on the road.
+              <button
+                onClick={textMeLink}
+                disabled={textingLink}
+                style={{
+                  marginLeft: 8,
+                  background: 'rgba(255,255,255,0.18)',
+                  color: '#fff',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  padding: '6px 12px',
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: textingLink ? 'wait' : 'pointer',
+                }}
+              >
+                {textingLink ? 'Texting…' : '📲 Text me the link'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     )
   }
 
+  // ── iPhone needs PWA install ──
   if (status === 'needs-pwa-install') {
-    // Big hero on iPhone Safari — they MUST install PWA before alerts work.
     return (
       <div
         style={{
@@ -257,6 +330,7 @@ export default function PushNotificationSetup() {
     )
   }
 
+  // ── Blocked ──
   if (status === 'denied') {
     return (
       <div
@@ -270,7 +344,7 @@ export default function PushNotificationSetup() {
         }}
       >
         <div style={{ fontWeight: 800, color: '#991B1B', marginBottom: 6, fontSize: 16 }}>
-          🔕 Notifications are blocked for this site
+          🔕 Notifications are blocked on this device
         </div>
         <div style={{ color: '#7F1D1D', fontSize: 13, lineHeight: 1.5 }}>
           You previously blocked notifications. Re-enable them in your browser: click the <strong>lock icon</strong> in the address bar → <strong>Notifications</strong> → <strong>Allow</strong> → refresh this page.
@@ -279,6 +353,7 @@ export default function PushNotificationSetup() {
     )
   }
 
+  // ── Unsupported ──
   if (status === 'unsupported') {
     return (
       <div
@@ -298,8 +373,79 @@ export default function PushNotificationSetup() {
     )
   }
 
-  // ── COMPACT PILL state (subscribed) — tucked top-right, never obnoxious.
-  //    Click toggles a small dropdown with Test / Turn off actions.
+  // ── SUBSCRIBED state ──
+  // Two sub-cases:
+  //   A) Only 1 device subscribed AND we're NOT on mobile → big "set up phone too" prompt
+  //   B) Multiple devices (or just 1 and they're already on mobile) → tiny pill in corner
+  const deviceCount = devices.length || 1
+  const showPhoneNudge = !isOnMobile && deviceCount < 2
+
+  if (showPhoneNudge) {
+    return (
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #ECFDF5 0%, #FEF3C7 100%)',
+          border: '1px solid #A7F3D0',
+          borderRadius: 16,
+          padding: '20px 22px',
+          marginBottom: 22,
+          fontFamily: 'system-ui, sans-serif',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 18,
+          flexWrap: 'wrap',
+        }}
+      >
+        <div style={{ flex: '1 1 320px' }}>
+          <div style={{ fontWeight: 800, color: '#065F46', fontSize: 16, marginBottom: 4 }}>
+            ✅ Lead alerts on for this computer — now set it up on your phone
+          </div>
+          <div style={{ fontSize: 13, color: '#0B1F3A', lineHeight: 1.5 }}>
+            Web Push is per-device. To get alerts when you&apos;re on the road, you need to enable it on your phone too. We&apos;ll text you the link — tap it on your phone, add to Home Screen, tap &quot;Turn on Lead Alerts&quot; there.
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <button
+            onClick={textMeLink}
+            disabled={textingLink}
+            style={{
+              background: '#0AA89F',
+              color: '#fff',
+              border: 'none',
+              padding: '12px 20px',
+              borderRadius: 12,
+              fontWeight: 800,
+              fontSize: 14,
+              cursor: textingLink ? 'wait' : 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {textingLink ? 'Sending…' : '📲 Text me the link'}
+          </button>
+          <button
+            onClick={sendTest}
+            disabled={testing}
+            style={{
+              background: 'transparent',
+              color: '#065F46',
+              border: '1px solid #A7F3D0',
+              padding: '8px 14px',
+              borderRadius: 10,
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: testing ? 'wait' : 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {testing ? 'Sending…' : 'Send Test'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Compact pill (multi-device or mobile-only user) ──
   return (
     <div
       style={{
@@ -323,14 +469,8 @@ export default function PushNotificationSetup() {
           userSelect: 'none',
         }}
       >
-        <summary
-          style={{
-            listStyle: 'none',
-            cursor: 'pointer',
-            outline: 'none',
-          }}
-        >
-          ✅ Lead alerts on
+        <summary style={{ listStyle: 'none', cursor: 'pointer', outline: 'none' }}>
+          ✅ Alerts on · {deviceCount} {deviceCount === 1 ? 'device' : 'devices'}
         </summary>
         <div
           style={{
@@ -340,35 +480,61 @@ export default function PushNotificationSetup() {
             background: '#fff',
             border: '1px solid #E8DFCF',
             borderRadius: 12,
-            padding: 12,
+            padding: 14,
             boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
             zIndex: 50,
-            minWidth: 220,
+            minWidth: 260,
           }}
         >
-          <div style={{ fontSize: 12, color: '#4A6670', fontWeight: 500, marginBottom: 10, lineHeight: 1.4 }}>
-            You&apos;ll get a push on your phone for every captured lead and booked appointment — even with the dashboard closed.
+          <div style={{ fontSize: 11, color: '#4A6670', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+            Subscribed devices
           </div>
+          <div style={{ marginBottom: 12, maxHeight: 140, overflowY: 'auto' }}>
+            {devices.length === 0 ? (
+              <div style={{ fontSize: 12, color: '#4A6670' }}>This device</div>
+            ) : (
+              devices.map((d, i) => (
+                <div key={i} style={{ fontSize: 12, color: '#0B1F3A', padding: '4px 0', fontWeight: 500 }}>
+                  📱 {d.device_label || 'Unknown device'}
+                </div>
+              ))
+            )}
+          </div>
+          {!isOnMobile && (
+            <button
+              onClick={textMeLink}
+              disabled={textingLink}
+              style={{
+                background: '#0AA89F', color: '#fff', border: 'none',
+                padding: '8px 12px', borderRadius: 8, fontWeight: 700,
+                fontSize: 12, cursor: textingLink ? 'wait' : 'pointer',
+                width: '100%', marginBottom: 6,
+              }}
+            >
+              {textingLink ? 'Sending…' : '📲 Text link to another device'}
+            </button>
+          )}
           <button
             onClick={sendTest}
             disabled={testing}
             style={{
               background: '#0AA89F', color: '#fff', border: 'none',
-              padding: '8px 14px', borderRadius: 8, fontWeight: 700,
-              fontSize: 12, cursor: testing ? 'wait' : 'pointer', width: '100%', marginBottom: 6,
+              padding: '8px 12px', borderRadius: 8, fontWeight: 700,
+              fontSize: 12, cursor: testing ? 'wait' : 'pointer',
+              width: '100%', marginBottom: 6,
             }}
           >
             {testing ? 'Sending…' : 'Send Test Notification'}
           </button>
           <button
-            onClick={disable}
+            onClick={disableThisDevice}
             style={{
               background: 'transparent', color: '#4A6670', border: '1px solid #E8DFCF',
-              padding: '8px 14px', borderRadius: 8, fontWeight: 600,
+              padding: '8px 12px', borderRadius: 8, fontWeight: 600,
               fontSize: 12, cursor: 'pointer', width: '100%',
             }}
           >
-            Turn off alerts
+            Turn off on this device
           </button>
         </div>
       </details>
