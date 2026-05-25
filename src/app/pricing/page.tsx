@@ -215,6 +215,21 @@ export default function PricingPage() {
                     ? `Billed once a year as $${(plan.annual * 12).toLocaleString()} · saves $${((plan.monthly - plan.annual) * 12).toLocaleString()}/yr`
                     : 'Billed monthly · No contract'}
                 </div>
+                {/* Prominent call-cap callout — mirrors homepage style so
+                    contractors see "60 calls/month" / "300 calls/month" /
+                    "Unlimited" without scanning the feature list. */}
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '6px 12px',
+                  borderRadius: 999,
+                  background: plan.popular ? 'rgba(255,255,255,0.12)' : 'rgba(10,168,159,0.10)',
+                  border: plan.popular ? '1px solid rgba(255,255,255,0.18)' : '1px solid rgba(10,168,159,0.22)',
+                  marginBottom: 14,
+                }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: plan.popular ? '#fff' : '#0AA89F', letterSpacing: '-0.01em' }}>
+                    📞 {plan.tier === 'concierge' ? 'Unlimited calls/mo' : plan.tier === 'officemgr' ? '300 calls/month' : '60 calls/month'}
+                  </span>
+                </div>
                 <div style={{ fontSize: 14, color: plan.popular ? 'rgba(255,255,255,0.78)' : '#4A7A80', marginBottom: 22, lineHeight: 1.5, fontStyle: 'italic' }}>
                   {plan.tagline}
                 </div>
