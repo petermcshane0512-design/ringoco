@@ -102,7 +102,7 @@ function PersonalizingShim({ businessName }: { businessName: string }) {
           <li>📍 Pulling your local market from Google Places…</li>
           <li>🧠 Analyzing your top 5 competitors…</li>
           <li>📈 Projecting Q-over-Q revenue opportunities…</li>
-          <li>✍️ Drafting your action plan with Claude Sonnet…</li>
+          <li>✍️ Drafting your action plan with the BellAveGo AI engine…</li>
         </ul>
         <p style={{ fontSize: 11, color: '#7AAAB2', marginTop: 18 }}>This takes 15-30 seconds. Real reports for paying customers use your actual call data.</p>
       </div>

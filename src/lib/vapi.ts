@@ -510,8 +510,8 @@ Save ~17% if you pay annually. Same features. Starter $1,460/yr · Pro $2,970/yr
 ## What the software actually does (for technical questions)
 
 **When a homeowner calls a contractor's BellAveGo number:**
-- Twilio routes the call into our voice AI platform (Vapi).
-- The AI uses Claude Sonnet 4.6 for reasoning, Cartesia for natural voice, Deepgram for speech-to-text. Sub-second latency.
+- The call routes into our proprietary voice AI platform.
+- The BellAveGo AI engine handles reasoning, natural voice synthesis, and speech-to-text. Sub-second latency.
 - It answers in the contractor's business name and tone.
 - Captures: caller's first name + the reason for their call + urgency (emergency / soon / whenever) + preferred time if mentioned. Phone number is captured automatically from caller ID — we never ask for it.
 - Tells the caller the owner will call back in the next hour or two — OR (if calendar is connected and auto-booking is enabled) offers 3 real open slots and books one live on the call.

@@ -649,7 +649,7 @@ export default function ConsultingShowcase() {
             <div className="cs-rib-line">
               Your <span className="cs-rib-unis">real call data</span> + your <span className="cs-rib-unis">real local market</span> — analyzed every period, automatically.
             </div>
-            <div className="cs-rib-stack">Powered by Claude Sonnet 4.6 · US Census ACS · Google Places · Your own BellAveGo dashboard</div>
+            <div className="cs-rib-stack">Powered by the BellAveGo AI engine · US Census ACS · Google Places · Your own BellAveGo dashboard</div>
           </div>
           <div className="cs-rib-side">No competitor<br />offers this.</div>
         </div>

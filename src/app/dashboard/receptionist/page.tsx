@@ -41,6 +41,7 @@ const DEMO_TRANSCRIPT: { who: 'ai' | 'caller'; line: string }[] = [
 
 export default function ReceptionistPage() {
   const [isActive, setIsActive] = useState(false)
+  const [hasPlan, setHasPlan] = useState(false)
   const [step, setStep] = useState(1)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [businessName, setBusinessName] = useState('')
@@ -70,13 +71,21 @@ export default function ReceptionistPage() {
     try {
       const res = await fetch('/api/profile')
       if (!res.ok) return
-      const { profile } = await res.json()
-      if (!profile) return
+      // /api/profile returns the profile row FLAT (not nested under `profile`).
+      // Previously `const { profile } = await res.json()` destructured nothing
+      // → page silently rendered defaults regardless of real state.
+      const profile = await res.json()
+      if (!profile || profile.error) return
       setBusinessName(profile.business_name || '')
       setServices(profile.services || '')
       setServiceArea(profile.service_area || '')
       setTone(profile.ai_tone || 'friendly')
       setIsActive(profile.is_active || false)
+      // hasPlan = customer has paid checkout (plan_tier set). Used to hide
+      // the "Activate AI Receptionist" UI for paying customers even if
+      // is_active flag is stale/wrong (e.g. mid-subscription state). Avoids
+      // the confusing "Activate" button showing for someone who already paid.
+      setHasPlan(!!profile.plan_tier)
       if (profile.twilio_number) {
         const n = profile.twilio_number
         setTwilioNumber(`+1 (${n.slice(2,5)}) ${n.slice(5,8)}-${n.slice(8)}`)
@@ -222,27 +231,33 @@ export default function ReceptionistPage() {
           </a>
         </div>
 
-        {/* STATUS PANEL */}
-        <div className={`mc-card ${isActive ? 'mc-card-teal' : ''}`} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* STATUS PANEL — collapses to a confirmation pill for paying customers.
+            Only shows the "Activate" button for users WITHOUT a paid plan_tier
+            (i.e. they signed up but never checked out). Eliminates the confusing
+            "Activate AI Receptionist" CTA that previously rendered for users
+            who'd already paid + were live. */}
+        <div className={`mc-card ${isActive || hasPlan ? 'mc-card-teal' : ''}`} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <div className="mc-eyebrow" style={{ color: isActive ? '#15803D' : '#C84B26' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive ? '#22C55E' : '#FF9D5A', boxShadow: isActive ? '0 0 8px rgba(34,197,94,0.6)' : '0 0 8px rgba(232,116,43,0.6)' }} />
-              {isActive ? 'AI Active' : 'AI Inactive'}
+            <div className="mc-eyebrow" style={{ color: isActive || hasPlan ? '#15803D' : '#C84B26' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive || hasPlan ? '#22C55E' : '#FF9D5A', boxShadow: isActive || hasPlan ? '0 0 8px rgba(34,197,94,0.6)' : '0 0 8px rgba(232,116,43,0.6)' }} />
+              {isActive || hasPlan ? 'AI Active' : 'AI Inactive'}
             </div>
             <div style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.4px', marginBottom: 6 }}>
-              {isActive ? 'Answering every call' : 'Setup needed'}
+              {isActive || hasPlan ? 'Answering every call' : 'Setup needed'}
             </div>
             <div style={{ fontSize: 13, color: '#4A6670', lineHeight: 1.5 }}>
-              {isActive ? 'Calls route through your BellAveGo number. Booked jobs land in your dashboard, your phone, and your CRM.' : 'Forward your business cell to the BellAveGo number, then activate.'}
+              {isActive || hasPlan ? 'Calls route through your BellAveGo number. Booked jobs land in your dashboard, your phone, and your CRM.' : 'Forward your business cell to the BellAveGo number, then activate.'}
             </div>
           </div>
-          <button
-            onClick={handleToggleActive}
-            className={isActive ? 'mc-btn-ghost' : 'mc-btn-orange'}
-            style={{ width: '100%', justifyContent: 'center' }}
-          >
-            {isActive ? 'Deactivate AI' : 'Activate AI Receptionist →'}
-          </button>
+          {!hasPlan && (
+            <button
+              onClick={handleToggleActive}
+              className={isActive ? 'mc-btn-ghost' : 'mc-btn-orange'}
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
+              {isActive ? 'Deactivate AI' : 'Activate AI Receptionist →'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -264,8 +279,10 @@ export default function ReceptionistPage() {
         ))}
       </div>
 
-      {/* ACTIVATION FLOW */}
-      {!isActive && (
+      {/* ACTIVATION FLOW — only for users WITHOUT a paid plan_tier. Paying
+          customers (hasPlan) already went through checkout + onboarding;
+          they don't need the 3-step walkthrough hovering on every visit. */}
+      {!isActive && !hasPlan && (
         <div style={{ ...card, padding: '28px' }}>
           <h2 style={{ fontSize: 18, fontWeight: 800, color: '#0B1F3A', marginBottom: 20, letterSpacing: '-0.2px' }}>Get started in 3 steps</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
