@@ -126,7 +126,10 @@ export async function GET(req: Request) {
         timezone: p.timezone,
         platforms: perPostPlatforms,
       }
-      if (p.imageUrl) body.mediaUrls = [p.imageUrl]
+      // Zernio expects `mediaItems` (array of {type, url}), NOT `mediaUrls`.
+      if (p.imageUrl) {
+        body.mediaItems = [{ type: 'image', url: p.imageUrl, title: `BellAveGo ${p.theme}` }]
+      }
       const r = await fetch(`${ZERNIO_BASE}/posts`, {
         method: 'POST',
         headers: {
