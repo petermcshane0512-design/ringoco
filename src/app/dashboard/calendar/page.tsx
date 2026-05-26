@@ -3,7 +3,9 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import CalendarGrid from '@/components/CalendarGrid'
+import AppointmentModal from '@/components/AppointmentModal'
 
 type Connection = {
   provider: string
@@ -34,6 +36,11 @@ function CalendarPageInner() {
   const [disconnecting, setDisconnecting] = useState(false)
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [eventsLoading, setEventsLoading] = useState(false)
+  // Appointment modal state — controls the "+ Add appointment" + edit flows.
+  // modalMode='create' opens fresh form; 'edit' loads the row by id.
+  const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null)
+  const [modalInitialStart, setModalInitialStart] = useState<string | undefined>(undefined)
+  const [modalAppointmentId, setModalAppointmentId] = useState<string | undefined>(undefined)
   // Appointment settings — saved on profile (migration 021). Used by the AI
   // when booking via the calendar to (a) know how long to block each job
   // and (b) leave travel buffer before/after every existing event.
@@ -87,12 +94,29 @@ function CalendarPageInner() {
       const res = await fetch('/api/calendar/status')
       const j = await res.json()
       setConnections(j.connections || [])
-      // Auto-load events if connected
-      if ((j.connections || []).some((c: Connection) => c.enabled)) {
-        loadEvents()
-      }
     } catch { setConnections([]) }
     finally { setLoading(false) }
+    // Native calendar is always present — load events regardless of any
+    // external connection. The events endpoint returns the contractor's
+    // BellAveGo appointments + any synced external events on top.
+    loadEvents()
+  }
+
+  function openCreateModal(start?: string) {
+    setModalMode('create')
+    setModalInitialStart(start)
+    setModalAppointmentId(undefined)
+  }
+  function openEditModal(id: string) {
+    setModalMode('edit')
+    setModalAppointmentId(id)
+    setModalInitialStart(undefined)
+  }
+  function closeModal(changed: boolean) {
+    setModalMode(null)
+    setModalAppointmentId(undefined)
+    setModalInitialStart(undefined)
+    if (changed) loadEvents()
   }
 
   async function loadEvents() {
@@ -139,17 +163,84 @@ function CalendarPageInner() {
   }
 
   return (
-    <main style={{ maxWidth: 920, margin: '0 auto', padding: '32px 24px 80px', fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <main style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 24px 80px', fontFamily: "'Inter', system-ui, sans-serif" }}>
       <Link href="/dashboard" style={{ fontSize: 12, fontWeight: 700, color: '#0AA89F', textDecoration: 'none' }}>
         ← Back to dashboard
       </Link>
 
-      <h1 style={{ fontSize: 30, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.04em', marginTop: 14, marginBottom: 8 }}>
-        Connect your calendar.
-      </h1>
-      <p style={{ fontSize: 15, color: '#4A6670', lineHeight: 1.55, maxWidth: 680, marginBottom: 24 }}>
-        Give the AI receptionist access to your real-time availability and it&apos;ll <strong>offer specific time slots</strong> during the call — &quot;Mike has Tuesday at 2 PM or Wednesday at 9 AM, which works?&quot; — instead of just taking a message. Auto-booking ships in Phase 2 (Q3 2026).
-      </p>
+      {/* HERO — branded calendar header. This is the contractor's primary
+          workspace after "Dashboard" itself. AI books here, manual entries
+          land here, jobs flow into the agenda below. */}
+      <header style={{
+        marginTop: 14,
+        marginBottom: 22,
+        padding: '24px 28px',
+        background: 'linear-gradient(135deg, #0B1F3A 0%, #163356 60%, #0D8F87 100%)',
+        borderRadius: 20,
+        color: '#fff',
+        boxShadow: '0 14px 40px rgba(7,27,58,0.22)',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* Decorative glow */}
+        <div style={{
+          position: 'absolute',
+          top: -60, right: -60,
+          width: 220, height: 220, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,157,90,0.35) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap', position: 'relative' }}>
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+              <Image
+                src="/brand/bellavego-logo.png"
+                alt="BellAveGo"
+                width={132} height={42}
+                style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+                priority
+              />
+              <span style={{
+                fontSize: 9, fontWeight: 900, letterSpacing: '0.18em', textTransform: 'uppercase',
+                background: 'rgba(255,255,255,0.12)', color: '#5EEAD4',
+                padding: '4px 10px', borderRadius: 99,
+              }}>
+                Calendar
+              </span>
+            </div>
+            <h1 style={{ fontSize: 'clamp(26px, 3.4vw, 38px)', fontWeight: 900, letterSpacing: '-0.04em', margin: 0, marginBottom: 8, color: '#fff' }}>
+              Your jobs, your schedule.
+            </h1>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.78)', lineHeight: 1.55, maxWidth: 580, margin: 0 }}>
+              Every appointment the AI books shows up here instantly. Add the ones you booked manually, block off lunch and vacation, and the AI will only offer time slots that respect what you have planned.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}>
+            <button
+              onClick={() => openCreateModal()}
+              style={{
+                padding: '14px 24px', borderRadius: 12,
+                background: 'linear-gradient(135deg, #FFD9A8 0%, #FF9D5A 50%, #E8742B 100%)',
+                color: '#0B1F3A', border: 'none',
+                fontSize: 14, fontWeight: 900,
+                cursor: 'pointer', fontFamily: 'inherit',
+                boxShadow: '0 10px 28px rgba(232,116,43,0.42)',
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Add appointment
+            </button>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)' }}>
+              {events.length} upcoming · {connections.filter(c => c.enabled && (c.provider === 'google' || c.provider === 'microsoft')).length > 0 ? 'Synced to your phone' : 'BellAveGo only'}
+            </div>
+          </div>
+        </div>
+      </header>
 
       {/* Flash banners from OAuth callback */}
       {flashStatus === 'connected' && (
@@ -479,11 +570,11 @@ function CalendarPageInner() {
         </div>
       )}
 
-      {/* CALENDAR GRID — real month/week/day view of contractor's actual events.
-          Events the AI booked (event_id starts with bellavego_) render in
-          sunset-orange so they pop. Click any event for full details. */}
-      {calendarConnection && (
-        <section style={{ marginTop: 32 }}>
+      {/* CALENDAR GRID — primary surface. Renders ALL appointments from the
+          native BellAveGo calendar + any synced external events. Events the
+          AI booked render in sunset-orange. Click any event to edit, click
+          any empty slot to create a new appointment. */}
+      <section style={{ marginTop: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <h2 style={{ fontSize: 20, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.02em', margin: 0 }}>
               Your calendar
@@ -507,29 +598,65 @@ function CalendarPageInner() {
               <div style={{ padding: 80, textAlign: 'center', color: '#7AAAB2', fontSize: 13 }}>
                 Loading your calendar…
               </div>
+            ) : events.length === 0 ? (
+              <div style={{ padding: '40px 24px', textAlign: 'center' }}>
+                <div style={{ fontSize: 38, marginBottom: 6 }}>📅</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: '#0B1F3A', marginBottom: 6 }}>
+                  No appointments yet.
+                </div>
+                <p style={{ fontSize: 13, color: '#7AAAB2', maxWidth: 380, margin: '0 auto 18px', lineHeight: 1.55 }}>
+                  When the AI books a job during a call, it lands here automatically. Or jump-start your calendar by adding any existing appointments you have on the books.
+                </p>
+                <button
+                  onClick={() => openCreateModal()}
+                  style={{
+                    padding: '11px 22px', borderRadius: 11,
+                    background: 'linear-gradient(135deg, #FFD9A8 0%, #FF9D5A 50%, #E8742B 100%)',
+                    color: '#0B1F3A', border: 'none',
+                    fontSize: 13, fontWeight: 900,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                    boxShadow: '0 8px 22px rgba(232,116,43,0.32)',
+                  }}
+                >
+                  + Add your first appointment
+                </button>
+              </div>
             ) : (
-              <CalendarGrid events={events} onRefresh={loadEvents} />
+              <CalendarGrid
+                events={events}
+                onRefresh={loadEvents}
+                onEventClick={(id) => openEditModal(id)}
+                onSlotClick={(startIso) => openCreateModal(startIso)}
+              />
             )}
           </div>
         </section>
-      )}
 
       {/* How it works */}
       <div style={{ marginTop: 32, padding: '22px 26px', background: '#F0FAF7', border: '1px solid rgba(10,168,159,0.22)', borderRadius: 14 }}>
         <h3 style={{ fontSize: 14, fontWeight: 900, color: '#0B1F3A', marginTop: 0, marginBottom: 10 }}>
-          How calendar-aware booking works
+          How BellAveGo Calendar works
         </h3>
         <ol style={{ paddingLeft: 18, margin: 0, fontSize: 13, color: '#4A6670', lineHeight: 1.7 }}>
-          <li>Click <strong>Connect Google Calendar</strong> or <strong>Connect Microsoft Outlook</strong> → grant access (30 seconds total)</li>
-          <li>Caller asks to schedule. The AI checks your calendar in real time</li>
-          <li>AI offers 3 actual open slots — &quot;Tuesday 2 PM, Wednesday 9 AM, or Thursday 11 AM&quot;</li>
-          <li>Caller picks one. You get an SMS — &quot;Sarah picked Tuesday 2 PM. Reply YES to confirm.&quot;</li>
-          <li>You confirm via YES — auto-create event in your calendar arrives in Phase 2 (Q3 2026)</li>
+          <li><strong>AI bookings land here automatically.</strong> Every appointment Emma captures during a call shows up in orange the moment the call ends.</li>
+          <li><strong>Add manual appointments.</strong> Click any empty time slot — or the &ldquo;+ Add appointment&rdquo; button — to enter jobs you booked yourself.</li>
+          <li><strong>Block time so the AI respects it.</strong> Lunch, vacation, doctor visits. Block once → the AI never offers callers a time during your block.</li>
+          <li><strong>Optional: sync to your phone.</strong> Connect Google Calendar or Microsoft Outlook below and we&apos;ll mirror BellAveGo events to your phone&apos;s calendar app too.</li>
         </ol>
         <p style={{ fontSize: 11.5, color: '#7AAAB2', marginTop: 12, marginBottom: 0, fontStyle: 'italic' }}>
-          Privacy: we only read free/busy windows — never event titles, attendees, or notes. Disconnect anytime. Direct integration with Google Calendar API and Microsoft Graph — no third-party middleware.
+          Privacy: when you connect Google or Outlook, we only read free/busy windows — never event titles, attendees, or notes. Disconnect anytime.
         </p>
       </div>
+
+      {/* Appointment modal — mounted last so it overlays everything */}
+      {modalMode && (
+        <AppointmentModal
+          mode={modalMode}
+          initialStart={modalInitialStart}
+          appointmentId={modalAppointmentId}
+          onClose={closeModal}
+        />
+      )}
     </main>
   )
 }

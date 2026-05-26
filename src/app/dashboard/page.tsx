@@ -1094,21 +1094,31 @@ export default function DashboardPage() {
  * the dashboard's own visual rhythm.
  */
 function CalendarSyncBanner() {
-  const [show, setShow] = useState(true);
+  // Native BellAveGo calendar is the second-tier surface after the main
+  // dashboard metrics. ALWAYS renders — pulls upcoming appointment count
+  // + next-event preview, links straight to /dashboard/calendar.
+  const [upcomingCount, setUpcomingCount] = useState<number>(0);
+  const [nextEventLabel, setNextEventLabel] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetch("/api/calendar/status")
+    fetch("/api/calendar/events?days=30")
       .then((r) => r.json())
-      .then((j: { connections?: Array<{ enabled?: boolean }> }) => {
-        const anyConnected = (j.connections ?? []).some((c) => c.enabled);
-        setShow(!anyConnected);
+      .then((j: { events?: Array<{ start: string; summary: string; isBellaveGo?: boolean }> }) => {
+        const events = (j.events ?? []).filter((e) => new Date(e.start).getTime() > Date.now());
+        setUpcomingCount(events.length);
+        if (events[0]) {
+          const d = new Date(events[0].start);
+          const day = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+          const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+          setNextEventLabel(`${day} · ${time} — ${events[0].summary}`);
+        }
         setLoaded(true);
       })
       .catch(() => setLoaded(true));
   }, []);
 
-  if (!loaded || !show) return null;
+  if (!loaded) return null;
 
   return (
     <Link
@@ -1117,25 +1127,34 @@ function CalendarSyncBanner() {
         display: "block",
         textDecoration: "none",
         marginBottom: 22,
-        padding: "18px 22px",
-        background: "linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 60%)",
-        border: "1.5px solid rgba(232,116,43,0.32)",
-        borderRadius: 14,
-        boxShadow: "0 8px 24px rgba(232,116,43,0.10)",
+        padding: "20px 24px",
+        background: "linear-gradient(135deg, #0B1F3A 0%, #163356 60%, #0D8F87 100%)",
+        border: "1.5px solid rgba(255,157,90,0.42)",
+        borderRadius: 16,
+        boxShadow: "0 12px 30px rgba(7,27,58,0.22)",
         transition: "transform 0.15s ease, box-shadow 0.15s ease",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+      {/* Decorative glow */}
+      <div style={{
+        position: "absolute", top: -40, right: -40,
+        width: 160, height: 160, borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(255,157,90,0.42) 0%, transparent 70%)",
+        pointerEvents: "none",
+      }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 16, position: "relative" }}>
         <div
           style={{
-            width: 44, height: 44, borderRadius: 11,
+            width: 48, height: 48, borderRadius: 12,
             background: "linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)",
             display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0,
-            boxShadow: "0 6px 16px rgba(232,116,43,0.35)",
+            boxShadow: "0 6px 16px rgba(232,116,43,0.42)",
           }}
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" strokeWidth="2.4">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" strokeWidth="2.6">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
             <line x1="16" y1="2" x2="16" y2="6" />
             <line x1="8" y1="2" x2="8" y2="6" />
@@ -1146,31 +1165,34 @@ function CalendarSyncBanner() {
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
             <span
               style={{
-                fontSize: 9, fontWeight: 900, color: "#C84B26",
-                background: "rgba(232,116,43,0.12)", padding: "3px 9px", borderRadius: 99,
+                fontSize: 9, fontWeight: 900, color: "#5EEAD4",
+                background: "rgba(94,234,212,0.14)", padding: "3px 9px", borderRadius: 99,
                 letterSpacing: "0.14em", textTransform: "uppercase",
               }}
             >
-              New
+              BellAveGo Calendar
             </span>
-            <span style={{ fontSize: 16, fontWeight: 900, color: "#0B1F3A", letterSpacing: "-0.02em" }}>
-              Connect your calendar so the AI offers real time slots
+            <span style={{ fontSize: 16, fontWeight: 900, color: "#fff", letterSpacing: "-0.02em" }}>
+              {upcomingCount === 0 ? "No upcoming jobs" : upcomingCount === 1 ? "1 upcoming job" : `${upcomingCount} upcoming jobs`}
             </span>
           </div>
-          <div style={{ fontSize: 13, color: "#4A6670", lineHeight: 1.5 }}>
-            Google Calendar live now &middot; Microsoft Outlook + Calendly available too. The AI checks your real availability before offering appointment times to callers — no double-booking.
+          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.78)", lineHeight: 1.5 }}>
+            {nextEventLabel
+              ? <>Next: <strong style={{ color: "#fff" }}>{nextEventLabel}</strong></>
+              : <>AI bookings land here automatically. Click to view your full schedule + add manual appointments.</>
+            }
           </div>
         </div>
         <div
           style={{
             padding: "10px 18px", borderRadius: 9,
-            background: "linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)",
+            background: "rgba(255,255,255,0.14)",
             color: "#fff", fontSize: 13, fontWeight: 800,
             flexShrink: 0,
-            boxShadow: "0 4px 12px rgba(10,168,159,0.32)",
+            border: "1px solid rgba(255,255,255,0.2)",
           }}
         >
-          Connect →
+          Open →
         </div>
       </div>
     </Link>

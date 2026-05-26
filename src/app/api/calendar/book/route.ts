@@ -5,6 +5,7 @@ import { verifyVapiSignature } from '@/lib/vapi'
 import { findAvailableSlots } from '@/lib/calendar/availability'
 import { createGoogleEvent, type CalendarConnectionRow } from '@/lib/calendar/google'
 import { createMicrosoftEvent } from '@/lib/calendar/microsoft'
+import { createAppointment } from '@/lib/calendar/appointments'
 import { sendEmail, renderAppointmentBookedEmail, renderLeadAlertEmail, renderBookingAlertEmail } from '@/lib/email'
 import { lookupOwnerEmail } from '@/lib/notify'
 import { firePushAsync } from '@/lib/push'
@@ -184,92 +185,28 @@ export async function POST(req: NextRequest) {
       continue
     }
 
-    // ── Load contractor's calendar connection ──
-    // Direct OAuth only as of 2026-05-26 — Cronofy retired in favor of native
-    // Google + Microsoft integrations. We prefer Google if both exist (most
-    // contractors only connect one), then fall back to Microsoft.
-    const { data: connRows } = await supabase
-      .from('calendar_connections')
-      .select('*')
+    // ── NATIVE-FIRST BOOKING (2026-05-26) ──
+    // BellAveGo's own calendar (jobs table) is the source of truth. We
+    // insert the appointment row FIRST so the contractor sees it in their
+    // dashboard immediately, no external calendar required. After the
+    // native row is in place, we OPTIONALLY push a copy to Google /
+    // Microsoft if the contractor has connected one of those — that's
+    // best-effort, sync-out only, never blocks the booking.
+    //
+    // Pull profile timezone for human-readable formatting (replaces the
+    // old "primary connection.timezone" lookup since native users may not
+    // have any external connection).
+    const { data: tzProfile } = await supabase
+      .from('profiles')
+      .select('timezone')
       .eq('user_id', userId)
-      .in('provider', ['google', 'microsoft'])
-      .eq('enabled', true)
-    const googleConn    = (connRows ?? []).find((c) => c.provider === 'google')    as CalendarConnectionRow | undefined
-    const microsoftConn = (connRows ?? []).find((c) => c.provider === 'microsoft') as CalendarConnectionRow | undefined
-    const conn = googleConn || microsoftConn
+      .maybeSingle()
+    const bookingTz = (tzProfile as { timezone?: string | null } | null)?.timezone || 'America/Chicago'
 
-    if (!conn) {
-      results.push({
-        toolCallId: tc.id,
-        result:
-          'No calendar connection for this contractor. Take a message and let the owner call back to confirm a time.',
-      })
-      continue
-    }
-
-    // ── Create the event (Google → Microsoft fallback) ──
-    // Insert the job row FIRST so we have its uuid, then create the calendar
-    // event. The provisional ID is referenced by the event description so the
-    // dashboard can correlate later.
-    const provisionalJobId = crypto.randomUUID()
-
-    const eventSummary = `BellAveGo · ${args.service_summary || 'Appointment'} — ${args.customer_name}`
-    const eventDescription =
-      `Customer: ${args.customer_name}\n` +
-      `Phone: ${callerPhone || '(captured from caller ID)'}\n` +
-      `Service: ${args.service_summary || '(see call summary)'}\n\n` +
-      `Booked via BellAveGo AI on ${new Date().toLocaleString('en-US', { timeZone: conn.timezone || 'America/Chicago' })}.`
-
-    let eventResult: { ok: boolean; error?: string; status?: number; eventId?: string; htmlLink?: string }
-
-    if (googleConn) {
-      const r = await createGoogleEvent({
-        connection: googleConn,
-        event: {
-          summary: eventSummary,
-          description: eventDescription,
-          startISO: startDate.toISOString(),
-          endISO: endDate.toISOString(),
-          timezone: conn.timezone || 'America/Chicago',
-          attendeePhone: callerPhone || undefined,
-        },
-      })
-      eventResult = r
-    } else {
-      // Microsoft path (Outlook / Office 365)
-      const r = await createMicrosoftEvent({
-        connection: microsoftConn!,
-        event: {
-          summary: eventSummary,
-          description: eventDescription,
-          startISO: startDate.toISOString(),
-          endISO: endDate.toISOString(),
-          timezone: conn.timezone || 'America/Chicago',
-          attendeePhone: callerPhone || undefined,
-        },
-      })
-      eventResult = r.ok
-        ? { ok: true, eventId: r.eventId, htmlLink: r.webLink }
-        : { ok: false, error: r.error, status: r.status }
-    }
-
-    if (!eventResult.ok) {
-      console.error('book_appointment: createEvent failed:', eventResult.error)
-      results.push({
-        toolCallId: tc.id,
-        result:
-          eventResult.status === 403
-            ? `Calendar reconnect needed. Take a message instead — let the contractor know they need to reconnect their calendar.`
-            : `Couldn't save the booking — take a message instead and the owner will call back to confirm.`,
-      })
-      continue
-    }
-
-    // ── Insert into jobs table so the dashboard shows it ──
-    try {
-      // Upsert customer first
-      let customerId: string | undefined
-      if (callerPhone) {
+    // Upsert customer (lookup-or-create) so the appointment links cleanly.
+    let customerId: string | undefined
+    if (callerPhone) {
+      try {
         const { data: existing } = await supabase
           .from('customers')
           .select('id')
@@ -286,24 +223,127 @@ export async function POST(req: NextRequest) {
             .single()
           customerId = created?.id
         }
+      } catch (e) {
+        console.error('book_appointment: customer upsert failed', e)
       }
+    }
 
-      await supabase.from('jobs').insert({
-        id: provisionalJobId,
-        user_id: userId,
-        customer_id: customerId,
-        customer_name: args.customer_name,
-        customer_phone: callerPhone,
-        job_type: args.service_summary || 'Appointment',
-        scheduled_time: formatSlotForHumans(startDate, conn.timezone || 'America/Chicago'),
-        title: `${args.service_summary || 'Appointment'}: ${args.customer_name}`,
-        status: 'scheduled',
-        google_event_id: eventResult.eventId,
+    // Native insert via the appointments lib — sets scheduled_at /
+    // scheduled_end_at as proper TIMESTAMPTZ + populates the legacy
+    // scheduled_time text via a separate update so the dashboard agenda
+    // human-readable column stays consistent.
+    const native = await createAppointment({
+      userId,
+      scheduledAt:    startDate.toISOString(),
+      scheduledEndAt: endDate.toISOString(),
+      durationMin,
+      customerId:     customerId ?? null,
+      customerName:   args.customer_name,
+      customerPhone:  callerPhone,
+      jobType:        args.service_summary || 'Appointment',
+      blockType:      'job',
+      createdVia:     'ai',
+      status:         'scheduled',
+    })
+
+    if (!native) {
+      results.push({
+        toolCallId: tc.id,
+        result:
+          'Could not save the booking to our system. Take a message and the owner will call back to confirm.',
       })
-    } catch (e) {
-      // Non-fatal — the calendar event is already in Google. Worst case
-      // the dashboard misses a row. Log and move on.
-      console.error('book_appointment: jobs insert failed', e)
+      continue
+    }
+
+    const provisionalJobId = native.id
+
+    // Backfill the legacy human-readable scheduled_time column so the
+    // dashboard agenda + SMS render the right wall-clock string.
+    try {
+      await supabase
+        .from('jobs')
+        .update({ scheduled_time: formatSlotForHumans(startDate, bookingTz) })
+        .eq('id', provisionalJobId)
+    } catch { /* non-fatal */ }
+
+    // ── OPTIONAL outbound sync (Google + Microsoft) ──
+    // Push the event to the contractor's external calendar so it shows
+    // up on their phone too. Best-effort: a failure here does NOT undo
+    // the native booking — the contractor still sees the appointment in
+    // BellAveGo. We log the external id so future edits can sync.
+    const { data: connRows } = await supabase
+      .from('calendar_connections')
+      .select('*')
+      .eq('user_id', userId)
+      .in('provider', ['google', 'microsoft'])
+      .eq('enabled', true)
+    const googleConn    = (connRows ?? []).find((c) => c.provider === 'google')    as CalendarConnectionRow | undefined
+    const microsoftConn = (connRows ?? []).find((c) => c.provider === 'microsoft') as CalendarConnectionRow | undefined
+
+    const eventSummary = `BellAveGo · ${args.service_summary || 'Appointment'} — ${args.customer_name}`
+    const eventDescription =
+      `Customer: ${args.customer_name}\n` +
+      `Phone: ${callerPhone || '(captured from caller ID)'}\n` +
+      `Service: ${args.service_summary || '(see call summary)'}\n\n` +
+      `Booked via BellAveGo AI on ${new Date().toLocaleString('en-US', { timeZone: bookingTz })}.`
+
+    let externalEventId: string | undefined
+    let externalProvider: 'google' | 'microsoft' | undefined
+
+    if (googleConn) {
+      const r = await createGoogleEvent({
+        connection: googleConn,
+        event: {
+          summary: eventSummary,
+          description: eventDescription,
+          startISO: startDate.toISOString(),
+          endISO: endDate.toISOString(),
+          timezone: bookingTz,
+          attendeePhone: callerPhone || undefined,
+        },
+      })
+      if (r.ok) {
+        externalEventId = r.eventId
+        externalProvider = 'google'
+      } else {
+        console.warn('book_appointment: google sync-out skipped:', r.error)
+      }
+    } else if (microsoftConn) {
+      const r = await createMicrosoftEvent({
+        connection: microsoftConn,
+        event: {
+          summary: eventSummary,
+          description: eventDescription,
+          startISO: startDate.toISOString(),
+          endISO: endDate.toISOString(),
+          timezone: bookingTz,
+          attendeePhone: callerPhone || undefined,
+        },
+      })
+      if (r.ok) {
+        externalEventId = r.eventId
+        externalProvider = 'microsoft'
+      } else {
+        console.warn('book_appointment: microsoft sync-out skipped:', r.error)
+      }
+    }
+
+    // Stamp the external id on the job row for future bidirectional sync
+    // (we'll need it to update / delete the external event when the
+    // contractor reschedules or cancels in BellAveGo).
+    if (externalEventId && externalProvider) {
+      try {
+        await supabase
+          .from('jobs')
+          .update({
+            external_event_id: externalEventId,
+            external_provider: externalProvider,
+            // Keep the legacy google_event_id field populated too so older
+            // dashboard code that reads from it doesn't break.
+            ...(externalProvider === 'google' ? { google_event_id: externalEventId } : {}),
+          })
+          .eq('id', provisionalJobId)
+      } catch { /* non-fatal */ }
     }
 
     // ── SMS the caller (confirmation) ──
@@ -314,7 +354,7 @@ export async function POST(req: NextRequest) {
     // still include a visible STOP opt-out per CTIA best practices and
     // for defense-in-depth against any aggressive carrier filter that
     // wants an explicit unsubscribe phrase in the body.
-    const slotLabel = formatSlotForHumans(startDate, conn.timezone || 'America/Chicago')
+    const slotLabel = formatSlotForHumans(startDate, bookingTz)
     if (callerPhone) {
       try {
         await twilioClient.messages.create({
@@ -339,7 +379,7 @@ export async function POST(req: NextRequest) {
             `📞 ${callerPhone || 'no phone captured'}\n` +
             `🔧 ${args.service_summary || 'Appointment'}\n` +
             `🕐 ${slotLabel}\n\n` +
-            `Already on your calendar (look for the orange "AI Booked" event).${eventResult.htmlLink ? `\n${eventResult.htmlLink}` : ''}`,
+            `Already on your BellAveGo calendar (look for the orange "AI Booked" event). View: https://www.bellavego.com/dashboard/calendar`,
           from: tenantTwilioNumber,
           to: ownerPhone,
         })
@@ -366,7 +406,7 @@ export async function POST(req: NextRequest) {
           callerPhone,
           serviceSummary: args.service_summary || 'Appointment',
           slotLabel,
-          calendarEventUrl: eventResult.htmlLink ?? undefined,
+          calendarEventUrl: `${appUrl}/dashboard/calendar`,
           dashboardUrl: `${appUrl}/dashboard`,
         })
         await sendEmail({ to: contractorEmail, subject, html, text })
@@ -396,11 +436,11 @@ export async function POST(req: NextRequest) {
           serviceSummary: args.service_summary || 'Appointment',
           slotLabel,
           callTimeISO: new Date().toISOString(),
-          calendarEventUrl: eventResult.htmlLink || null,
+          calendarEventUrl: `${appUrl}/dashboard/calendar`,
           dashboardUrl: `${appUrl}/dashboard`,
           // Render "Booked at" in the contractor's wall clock — policy.timezone
           // comes from the same SELECT used to enforce the booking window above.
-          contractorTimezone: policy?.timezone ?? conn.timezone ?? null,
+          contractorTimezone: policy?.timezone ?? bookingTz,
         })
         await sendEmail({ to: contractorEmail, subject, html, text })
       } else {
@@ -454,7 +494,7 @@ export async function POST(req: NextRequest) {
       tag: `booking-${provisionalJobId}`,
       urgency: 'soon',
       requireInteraction: true,
-      data: { job_id: provisionalJobId, caller_phone: callerPhone, event_url: eventResult.htmlLink },
+      data: { job_id: provisionalJobId, caller_phone: callerPhone, event_url: `/dashboard/calendar` },
     })
 
     results.push({

@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { getGoogleBusyBlocks, type CalendarConnectionRow, type FreeBusyBlock } from './google'
 import { getMicrosoftBusyBlocks } from './microsoft'
 import { getCalendlyBusyBlocks } from './calendly'
+import { getNativeBusyBlocks } from './appointments'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -68,37 +69,39 @@ export async function findAvailableSlots(args: {
 
   const conns = (connections ?? []) as CalendarConnectionRow[]
 
-  if (conns.length === 0) {
-    const now = new Date()
-    const end = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000)
-    return {
-      connected: false, providers: [], slots: [],
-      windowStart: now.toISOString(), windowEnd: end.toISOString(),
-      timezone: 'America/Chicago', durationMin: args.durationMin ?? 90,
-    }
-  }
+  // Native BellAveGo calendar is ALWAYS available. External calendars are
+  // optional sync targets. Even with zero external connections the AI can
+  // still compute availability from the contractor's manually-entered
+  // appointments + AI-booked appointments stored in the jobs table.
+  //
+  // "connected" in the response now means "has at least one source of
+  // busy info, native or external". Always true once the contractor has
+  // any appointment on file — defaulting to true so the AI offers slots
+  // even on a fresh account (the contractor hasn't blocked any time yet).
 
-  // Per-connection defaults (use the first connection's preferences if multiple)
-  const primary = conns[0]
-  const timezone = primary.timezone || 'America/Chicago'
+  // Native calendar means a "primary connection" is no longer required.
+  // We pull all defaults from the profile first; per-connection settings
+  // are now a fallback for any contractor still on a legacy connection
+  // that pre-dates the profile-level appointment settings.
+  const primary = conns[0] as CalendarConnectionRow | undefined
 
   // Pull profile-level appointment settings — set during onboarding via
   // /dashboard/calendar Appointment Settings card. These take PRIORITY over
   // per-connection settings so the contractor has one source of truth and
-  // settings exist even before a calendar is connected. Fallback chain:
-  //   profile.default_job_duration_min → connection.default_job_duration_min → 90
-  //   profile.travel_buffer_min        → connection.buffer_min               → 30
+  // settings exist even before a calendar is connected.
   const { data: profileSettings } = await supabase
     .from('profiles')
-    .select('default_job_duration_min, travel_buffer_min')
+    .select('default_job_duration_min, travel_buffer_min, timezone')
     .eq('user_id', args.userId)
     .maybeSingle()
   const profileDur = (profileSettings as { default_job_duration_min?: number | null } | null)?.default_job_duration_min
   const profileBuf = (profileSettings as { travel_buffer_min?: number | null } | null)?.travel_buffer_min
+  const profileTz  = (profileSettings as { timezone?: string | null } | null)?.timezone
 
-  const durationMin = args.durationMin ?? profileDur ?? primary.default_job_duration_min ?? 90
-  const bufferMin = profileBuf ?? primary.buffer_min ?? 30
-  const businessHours = primary.business_hours || {
+  const timezone = profileTz || primary?.timezone || 'America/Chicago'
+  const durationMin = args.durationMin ?? profileDur ?? primary?.default_job_duration_min ?? 90
+  const bufferMin = profileBuf ?? primary?.buffer_min ?? 30
+  const businessHours = primary?.business_hours || {
     mon: [8, 18], tue: [8, 18], wed: [8, 18], thu: [8, 18], fri: [8, 18], sat: [9, 14], sun: null,
   }
 
@@ -106,20 +109,28 @@ export async function findAvailableSlots(args: {
   const windowStart = new Date(Date.now() + earliestHoursOut * 60 * 60 * 1000)
   const windowEnd = new Date(windowStart.getTime() + daysAhead * 24 * 60 * 60 * 1000)
 
-  // Collect busy blocks from every connected provider in parallel
-  const providerBusy = await Promise.all(
-    conns.map(async (c) => {
-      if (c.provider === 'google')    return await getGoogleBusyBlocks({ connection: c, windowStart, windowEnd })
-      if (c.provider === 'microsoft') return await getMicrosoftBusyBlocks({ connection: c, windowStart, windowEnd })
-      if (c.provider === 'calendly')  return await getCalendlyBusyBlocks({ connection: c, windowStart, windowEnd })
-      // Cronofy was deprecated 2026-05-26 in favor of direct Google + Microsoft
-      // OAuth. Any remaining 'cronofy' rows in calendar_connections are stale
-      // and should be deleted manually; we skip them here so they don't appear
-      // in availability lookups.
-      return [] as FreeBusyBlock[]
-    }),
+  // Collect busy blocks from every source in parallel:
+  //   - Native (jobs table — AI bookings + manual entries + block time)
+  //   - Google Calendar  (if connected — optional sync source)
+  //   - Microsoft Outlook (if connected — optional sync source)
+  //   - Calendly        (if connected — optional sync source)
+  // Native is ALWAYS queried; externals are queried only when their
+  // connection row exists. Cronofy was retired 2026-05-26.
+  const externalBusyPromises = conns.map(async (c) => {
+    if (c.provider === 'google')    return await getGoogleBusyBlocks({ connection: c, windowStart, windowEnd })
+    if (c.provider === 'microsoft') return await getMicrosoftBusyBlocks({ connection: c, windowStart, windowEnd })
+    if (c.provider === 'calendly')  return await getCalendlyBusyBlocks({ connection: c, windowStart, windowEnd })
+    return [] as FreeBusyBlock[]
+  })
+
+  const [nativeBusy, ...providerBusy] = await Promise.all([
+    getNativeBusyBlocks({ userId: args.userId, windowStart, windowEnd }),
+    ...externalBusyPromises,
+  ])
+
+  const busy = [...nativeBusy, ...providerBusy.flat()].sort(
+    (a, b) => a.start.getTime() - b.start.getTime(),
   )
-  const busy = providerBusy.flat().sort((a, b) => a.start.getTime() - b.start.getTime())
 
   // Walk through each day, find free slots within business hours
   const slots: FreeSlot[] = []
@@ -182,7 +193,7 @@ export async function findAvailableSlots(args: {
 
   return {
     connected: true,
-    providers: conns.map((c) => c.provider),
+    providers: ['native', ...conns.map((c) => c.provider)],
     slots,
     windowStart: windowStart.toISOString(),
     windowEnd: windowEnd.toISOString(),

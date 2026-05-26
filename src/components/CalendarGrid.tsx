@@ -5,7 +5,8 @@ import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
-import type { EventClickArg, EventInput } from '@fullcalendar/core'
+import type { EventClickArg, EventInput, DateSelectArg } from '@fullcalendar/core'
+import type { DateClickArg } from '@fullcalendar/interaction'
 
 export type CalendarEventLike = {
   id: string
@@ -28,9 +29,16 @@ export type CalendarEventLike = {
  * Powered by FullCalendar (MIT-licensed core + plugins). Click on any event
  * to open a detail card with description + location.
  */
-export default function CalendarGrid({ events, onRefresh }: {
+export default function CalendarGrid({ events, onRefresh, onEventClick, onSlotClick }: {
   events: CalendarEventLike[]
   onRefresh?: () => void
+  /** When provided, clicking an event calls this with the event id and the
+   *  built-in detail popover is suppressed. Use for routing to a full edit
+   *  modal (e.g. AppointmentModal). */
+  onEventClick?: (eventId: string) => void
+  /** When provided, clicking an empty time slot fires with the ISO timestamp
+   *  of that slot. Use to open the "create appointment" modal pre-filled. */
+  onSlotClick?: (startIso: string) => void
 }) {
   const calRef = useRef<FullCalendar | null>(null)
   const [selected, setSelected] = useState<CalendarEventLike | null>(null)
@@ -57,6 +65,13 @@ export default function CalendarGrid({ events, onRefresh }: {
   )
 
   function handleEventClick(arg: EventClickArg) {
+    // If parent passed a click handler, defer to it (e.g. open AppointmentModal
+    // for full edit/reschedule/cancel UX). Otherwise fall back to the built-in
+    // detail popover.
+    if (onEventClick) {
+      onEventClick(arg.event.id)
+      return
+    }
     const ext = arg.event.extendedProps as { isBellaveGo?: boolean; description?: string; location?: string }
     setSelected({
       id: arg.event.id,
@@ -68,6 +83,15 @@ export default function CalendarGrid({ events, onRefresh }: {
       allDay: arg.event.allDay,
       isBellaveGo: !!ext.isBellaveGo,
     })
+  }
+
+  function handleDateClick(arg: DateClickArg) {
+    // Click on a day cell (month view) or time slot (week/day view) → open
+    // create modal with that timestamp prefilled.
+    if (onSlotClick) onSlotClick(arg.date.toISOString())
+  }
+  function handleDateSelect(arg: DateSelectArg) {
+    if (onSlotClick) onSlotClick(arg.start.toISOString())
   }
 
   return (
@@ -125,6 +149,9 @@ export default function CalendarGrid({ events, onRefresh }: {
         buttonText={{ today: 'Today', month: 'Month', week: 'Week', day: 'Day' }}
         events={fcEvents}
         eventClick={handleEventClick}
+        dateClick={onSlotClick ? handleDateClick : undefined}
+        selectable={!!onSlotClick}
+        select={onSlotClick ? handleDateSelect : undefined}
         height="auto"
         contentHeight={620}
         dayMaxEventRows={3}
