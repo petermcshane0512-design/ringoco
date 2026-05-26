@@ -4,10 +4,11 @@ import "./globals.css";
 
 export const viewport: Viewport = {
   width: "device-width",
-  // Mobile zoom-out (~40%) so dashboard cards + tables fit cleanly on
-  // phones. User can pinch-zoom in (maximumScale: 5) for fine reading.
+  // Mobile zoom — bumped 0.6 → 0.66 (~10% larger) per Peter feedback that
+  // 0.6 was too small on the landing page. Dashboard tables still have
+  // their horizontal-scroll wrappers so the slight zoom-up is safe.
   // Desktop ignores this entirely.
-  initialScale: 0.6,
+  initialScale: 0.66,
   maximumScale: 5,
   themeColor: "#0B1F3A",
 };
