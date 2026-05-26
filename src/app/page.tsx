@@ -33,7 +33,9 @@ export default function HomePage() {
             height={210}
             style={{
               objectFit: 'contain',
-              marginTop: 10,
+              height: 52,
+              width: 'auto',
+              marginTop: 8,
               transform: logoHovered ? 'scale(1.08)' : 'scale(1)',
               filter: logoHovered ? 'drop-shadow(0 0 14px rgba(24,175,168,0.55))' : 'none',
               transition: 'transform 0.25s ease, filter 0.25s ease',
@@ -429,14 +431,15 @@ export default function HomePage() {
 
             /* ── Mobile (iOS portrait / cold-email-click experience) ── */
             @media (max-width: 768px) {
-              /* Reduced bottom padding (6px) so the hero ends flush against
-                 the dashboard preview below — both share the same dark navy
-                 bg, this kills any vertical gap and makes them feel like
-                 one continuous block. */
-              .hero-grid { padding: 24px 16px 6px; gap: 18px; grid-template-columns: 1fr; }
-              .hero-eyebrow { font-size: 10.5px; margin-bottom: 14px; padding: 5px 11px; }
-              .hero-h1 { font-size: clamp(40px, 11vw, 48px); line-height: 1.02; margin-bottom: 16px; letter-spacing: -0.03em; }
-              .hero-sub { font-size: 15.5px; line-height: 1.55; margin-bottom: 22px; max-width: 100%; }
+              /* AGGRESSIVE compression so the headline is visible IMMEDIATELY
+                 below the nav (no scroll needed), and the dashboard preview
+                 fits in the same viewport. Everything tight to the top. */
+              .hero-grid { padding: 8px 14px 4px; gap: 12px; grid-template-columns: 1fr; }
+              /* Drop the eyebrow on mobile — it's marketing fluff that pushes
+                 the headline below the fold. The H1 itself is the eyebrow. */
+              .hero-eyebrow { display: none !important; }
+              .hero-h1 { font-size: clamp(34px, 9vw, 42px); line-height: 1.03; margin-bottom: 10px; margin-top: 0; letter-spacing: -0.03em; }
+              .hero-sub { font-size: 14px; line-height: 1.45; margin-bottom: 14px; max-width: 100%; }
 
               /* CTAs become full-width thumb-targets, explicitly centered.
                  The !important on width / box-sizing prevents content from
