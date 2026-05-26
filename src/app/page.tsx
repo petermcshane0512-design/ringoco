@@ -431,7 +431,7 @@ export default function HomePage() {
             @media (max-width: 768px) {
               /* Top-LEFT alignment for hero content. Tight bottom padding
                  (12px) so the hero ends right after the trust strip — no
-                 trailing empty space below "30-day money back". */
+                 trailing empty space below "7-day free trial". */
               .hero-grid {
                 /* TIGHT top + bottom — headline starts immediately under nav,
                  trust strip is the last thing in the dark navy stage. */
@@ -717,8 +717,8 @@ export default function HomePage() {
                   <span className="hero-trust-lab">Always on</span>
                 </div>
                 <div className="hero-trust-item">
-                  <span className="hero-trust-num">30‑day</span>
-                  <span className="hero-trust-lab">Money‑back</span>
+                  <span className="hero-trust-num">7‑day</span>
+                  <span className="hero-trust-lab">Free trial</span>
                 </div>
               </div>
             </div>
@@ -1305,7 +1305,7 @@ export default function HomePage() {
                 )}
               </div>
               <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.38)' : '#7AAAB2', marginBottom: 6 }}>{plan.customCta ? 'pricing per location' : 'per month · cancel anytime'}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>{plan.customCta ? 'White-glove kickoff included' : '30-day money-back if not satisfied · Cancel anytime'}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>{plan.customCta ? 'White-glove kickoff included' : '7-day free trial · Cancel anytime'}</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: plan.popular ? '#18AFA8' : '#0AA89F', marginBottom: 16 }}>{plan.calls} calls</div>
               <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.6)' : '#4A7A80', marginBottom: 24, lineHeight: 1.6 }}>{plan.desc}</div>
               <div style={{ marginBottom: 24 }}>
@@ -1342,9 +1342,8 @@ export default function HomePage() {
           ))}
         </div>
         <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 16, lineHeight: 1.6 }}>
-          Month-to-month · 30-day money-back if not satisfied · 17% off annual.<br />
-          <span style={{ fontWeight: 700, color: '#0AA89F' }}>Most contractors recover the month on their first booked job.</span><br />
-          90-day money-back if we don&apos;t add at least 5 booked jobs.
+          Month-to-month · 7-day free trial · Card collected at signup, first month billed on day 8 if you stay · 17% off annual.<br />
+          <span style={{ fontWeight: 700, color: '#0AA89F' }}>Most contractors book their first new job before the trial even ends.</span>
         </p>
       </section>
 
@@ -1377,7 +1376,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <Image src="/logo.png" alt="BellAveGo" width={300} height={100} style={{ objectFit: 'contain' }} />
           <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
-          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>AI receptionist and growth platform for home-service businesses · From $147/mo · 30-day money-back if not satisfied · Cancel anytime</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>AI receptionist and growth platform for home-service businesses · From $147/mo · 7-day free trial · Cancel anytime</p>
           <p style={{ margin: '8px 0 0', fontSize: 11, color: '#3D5A62' }}>
             <Link href="/privacy" style={{ color: '#7AAAB2', textDecoration: 'none' }}>Privacy</Link>
             {' · '}
