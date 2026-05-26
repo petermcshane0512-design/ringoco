@@ -431,22 +431,21 @@ export default function HomePage() {
 
             /* ── Mobile (iOS portrait / cold-email-click experience) ── */
             @media (max-width: 768px) {
-              /* AGGRESSIVE compression so the headline is visible IMMEDIATELY
-                 below the nav (no scroll needed), and the dashboard preview
-                 fits in the same viewport. Everything tight to the top. */
-              .hero-grid { padding: 8px 14px 4px; gap: 12px; grid-template-columns: 1fr; }
-              /* Drop the eyebrow on mobile — it's marketing fluff that pushes
-                 the headline below the fold. The H1 itself is the eyebrow. */
+              /* Headline + CTAs sit IMMEDIATELY below the nav. Zero top
+                 padding on the grid. Hero content fills the viewport above
+                 the fold without scroll. */
+              .hero-grid { padding: 4px 14px 0 !important; gap: 10px !important; grid-template-columns: 1fr !important; }
+              /* Drop the eyebrow on mobile — pushes headline below the fold. */
               .hero-eyebrow { display: none !important; }
-              .hero-h1 { font-size: clamp(34px, 9vw, 42px); line-height: 1.03; margin-bottom: 10px; margin-top: 0; letter-spacing: -0.03em; }
-              .hero-sub { font-size: 14px; line-height: 1.45; margin-bottom: 14px; max-width: 100%; }
+              .hero-h1 { font-size: clamp(38px, 10.5vw, 50px) !important; line-height: 1.02 !important; margin-bottom: 8px !important; margin-top: 0 !important; letter-spacing: -0.03em !important; }
+              .hero-sub { font-size: 14.5px !important; line-height: 1.45 !important; margin-bottom: 12px !important; max-width: 100% !important; }
 
               /* CTAs become full-width thumb-targets, explicitly centered.
                  The !important on width / box-sizing prevents content from
                  spilling outside the button on narrow viewports. */
               .hero-actions {
-                gap: 10px !important;
-                margin-bottom: 22px !important;
+                gap: 8px !important;
+                margin-bottom: 10px !important;
                 flex-direction: column !important;
                 align-items: stretch !important;
                 width: 100% !important;
