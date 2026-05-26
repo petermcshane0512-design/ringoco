@@ -429,10 +429,29 @@ export default function HomePage() {
 
             /* ── Mobile (iOS portrait / cold-email-click experience) ── */
             @media (max-width: 768px) {
-              .hero-grid { padding: 24px 16px 26px; gap: 18px; grid-template-columns: 1fr; }
-              .hero-eyebrow { font-size: 10.5px; margin-bottom: 14px; padding: 5px 11px; }
-              .hero-h1 { font-size: clamp(40px, 11vw, 48px); line-height: 1.02; margin-bottom: 16px; letter-spacing: -0.03em; }
-              .hero-sub { font-size: 15.5px; line-height: 1.55; margin-bottom: 22px; max-width: 100%; }
+              /* Top-LEFT alignment for hero content. Tight bottom padding
+                 (12px) so the hero ends right after the trust strip — no
+                 trailing empty space below "30-day money back". */
+              .hero-grid {
+                padding: 28px 22px 12px !important;
+                gap: 14px !important;
+                grid-template-columns: 1fr !important;
+                text-align: left !important;
+                align-items: flex-start !important;
+                justify-items: flex-start !important;
+              }
+              .hero-grid > div { text-align: left; width: 100%; }
+              .hero-eyebrow { font-size: 11px; margin-bottom: 12px; padding: 5px 11px; }
+              /* Bigger headline that stretches wider — fills the column. */
+              .hero-h1 {
+                font-size: clamp(46px, 13vw, 60px) !important;
+                line-height: 1.0 !important;
+                margin-bottom: 14px !important;
+                margin-top: 0 !important;
+                letter-spacing: -0.035em !important;
+                text-align: left !important;
+              }
+              .hero-sub { font-size: 15.5px; line-height: 1.45; margin-bottom: 18px; max-width: 100%; text-align: left; }
 
               /* CTAs become full-width thumb-targets, explicitly centered.
                  The !important on width / box-sizing prevents content from
@@ -498,14 +517,17 @@ export default function HomePage() {
                  (hidden on desktop where the hero already shows it) */
               .mobile-dash-preview { display: block !important; padding: 40px 0 8px !important; }
 
-              /* Hero — match the EXACT dark navy + grid mesh of the consulting
-                 section below so they share one continuous dark stage. Tall
-                 enough (min-height: 88vh) to match consulting's vertical
-                 weight. White text + glowing CTAs sit above. */
+              /* Hero — dark navy + grid mesh matching consulting section.
+                 BG bleeds full viewport width (escapes the parent section's
+                 18px padding via negative margin) so it visually matches
+                 the consulting bg width. Content sits at top-LEFT (no
+                 vertical centering, no forced min-height). Hero ends
+                 right after trust strip — no trailing empty space. */
               .hero-wrap {
-                min-height: 88vh !important;
-                display: flex !important;
-                align-items: center !important;
+                margin-left: -18px !important;
+                margin-right: -18px !important;
+                width: calc(100% + 36px) !important;
+                min-height: 0 !important;
                 position: relative;
                 background:
                   radial-gradient(900px 500px at 90% 8%, rgba(232,123,55,0.18), transparent 65%),
