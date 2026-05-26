@@ -498,10 +498,71 @@ export default function HomePage() {
                  (hidden on desktop where the hero already shows it) */
               .mobile-dash-preview { display: block !important; padding: 40px 0 8px !important; }
 
-              /* Hero container — kill the desktop min-height: 640px so the
-                 cream consulting section begins right after the dashboard
-                 (no trailing dark-blue dead space). */
-              .hero-wrap { min-height: 0 !important; }
+              /* Hero — match the EXACT dark navy + grid mesh of the consulting
+                 section below so they share one continuous dark stage. Tall
+                 enough (min-height: 88vh) to match consulting's vertical
+                 weight. White text + glowing CTAs sit above. */
+              .hero-wrap {
+                min-height: 88vh !important;
+                display: flex !important;
+                align-items: center !important;
+                position: relative;
+                background:
+                  radial-gradient(900px 500px at 90% 8%, rgba(232,123,55,0.18), transparent 65%),
+                  radial-gradient(700px 500px at 8% 92%, rgba(94,234,212,0.10), transparent 65%),
+                  linear-gradient(180deg, #050E1F 0%, #0B1F3A 55%, #112C4A 100%) !important;
+                overflow: hidden;
+              }
+              /* Cyan grid mesh — copies .cs-root::before so the texture matches */
+              .hero-wrap::before {
+                content: '' !important;
+                position: absolute !important;
+                inset: 0 !important;
+                background-image:
+                  linear-gradient(rgba(94,234,212,0.045) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(94,234,212,0.045) 1px, transparent 1px) !important;
+                background-size: 60px 60px !important;
+                mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 55%, transparent 100%) !important;
+                -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 55%, transparent 100%) !important;
+                pointer-events: none !important;
+                z-index: 0 !important;
+              }
+              .hero-wrap::after { display: none !important; }
+              .hero-waves { display: none !important; }
+              .hero-wrap > * { position: relative; z-index: 1; }
+              /* White headline + subhead on the dark navy bg */
+              .hero-h1 { color: #fff !important; }
+              .hero-h1 .accent {
+                background: linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B) !important;
+                -webkit-background-clip: text !important;
+                background-clip: text !important;
+                color: transparent !important;
+              }
+              .hero-sub { color: rgba(226, 235, 240, 0.88) !important; }
+              .hero-eyebrow {
+                background: rgba(94,234,212,0.10) !important;
+                color: #5EEAD4 !important;
+                border-color: rgba(94,234,212,0.32) !important;
+              }
+              /* Secondary CTA — strong glow + cyan border so "Call AI Demo"
+                 pops against the dark navy bg per Peter feedback. */
+              .hero-cta-secondary {
+                background: rgba(94,234,212,0.10) !important;
+                border: 1.5px solid rgba(94,234,212,0.55) !important;
+                color: #5EEAD4 !important;
+                box-shadow:
+                  0 0 24px rgba(94,234,212,0.45),
+                  0 0 48px rgba(10,168,159,0.32) !important;
+                animation: heroSecondaryGlow 2.4s ease-in-out infinite !important;
+              }
+              @keyframes heroSecondaryGlow {
+                0%,100% { box-shadow: 0 0 24px rgba(94,234,212,0.45), 0 0 48px rgba(10,168,159,0.32); }
+                50%      { box-shadow: 0 0 36px rgba(94,234,212,0.70), 0 0 64px rgba(10,168,159,0.50); }
+              }
+              .hero-cta-secondary svg { color: #5EEAD4 !important; }
+              /* Trust strip text → light cream for legibility */
+              .hero-trust-num { color: #FFD9A8 !important; }
+              .hero-trust-lab { color: rgba(226,235,240,0.72) !important; }
 
               /* Pricing grid — 1-col stacked (Peter wants each card
                  stretched full-width), tight gaps to kill dead space. */

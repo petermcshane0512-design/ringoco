@@ -206,22 +206,32 @@ html { overflow-x: hidden; }
     width: auto !important;
   }
   .bavg-top-nav-logo img {
-    max-width: 220px !important;   /* was 172 — bigger per Peter mobile feedback */
+    /* MUCH bigger per Peter — was 220px, bumped to ~3x visual weight.
+       320px fills the nav left side on a 390-414px viewport without
+       crowding out the right-side buttons. */
+    max-width: 320px !important;
     width: auto !important;
     height: auto !important;
-    margin-top: -4px !important;   /* sits a touch higher in the bar */
+    margin-top: -4px !important;
   }
-  /* Buttons — right, hugging the logo (no empty space between) */
+  /* Bigger nav row to accommodate the larger logo + buttons. */
+  .bavg-top-nav {
+    min-height: 78px !important;
+  }
+  /* Buttons — right, hugging the right edge of the nav (no empty space). */
   .bavg-top-nav-actions {
-    gap: 5px !important;
+    gap: 6px !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
     justify-content: flex-end !important;
+    margin-left: auto !important;
     width: auto !important;
     flex: 0 1 auto;
     min-width: 0;
   }
+  /* Buttons ~2x size — bigger padding + larger font + stronger glow.
+     Peter wants them to feel substantial and easy to tap. */
   .bavg-top-nav .nav-cta,
   .bavg-top-nav .why-pulse,
   .bavg-top-nav .price-pulse,
@@ -230,13 +240,14 @@ html { overflow-x: hidden; }
     width: auto !important;
     flex: 0 0 auto !important;
     justify-content: center !important;
-    padding: 11px 16px !important;   /* was 8px 11px — bigger tap target */
-    font-size: 14px !important;       /* was 12px — more readable */
+    padding: 14px 22px !important;
+    font-size: 16px !important;
+    font-weight: 900 !important;
     min-height: 0 !important;
     letter-spacing: -0.2px !important;
     text-align: center;
     white-space: nowrap;
-    border-radius: 9px !important;
+    border-radius: 11px !important;
   }
 }
 
