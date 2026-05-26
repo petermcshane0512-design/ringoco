@@ -498,27 +498,44 @@ export default function HomePage() {
                  (hidden on desktop where the hero already shows it) */
               .mobile-dash-preview { display: block !important; padding: 40px 0 8px !important; }
 
-              /* Hero container — kill the desktop min-height + REPLACE the
-                 dark-navy gradient with the exact same teal flowy gradient
-                 used by .mobile-dash-preview below. Result: hero + preview
-                 read as ONE continuous teal beach surface on mobile, no
-                 visible seam. The desktop dark-navy is preserved (this
-                 override only runs inside the mobile @media block). */
+              /* Hero container — kill the desktop min-height + use the EXACT
+                 same dark navy + grid-mesh bg as the dashboard preview AND
+                 the consulting section below it. Hero → preview → consulting
+                 = one continuous dark stage. The teal/orange radial accents
+                 stay so the brand callback still glows through.
+                 Desktop dark-navy version is preserved — this override only
+                 runs inside the mobile @media block. */
               .hero-wrap {
                 min-height: 0 !important;
                 background:
-                  radial-gradient(800px 400px at 88% 8%, rgba(255,157,90,0.18), transparent 60%),
-                  radial-gradient(900px 500px at 72% 28%, rgba(232,116,43,0.12), transparent 65%),
-                  radial-gradient(1100px 600px at 78% 55%, rgba(10,168,159,0.32), transparent 65%),
-                  radial-gradient(900px 700px at 12% 85%, rgba(94,234,212,0.30), transparent 70%),
-                  linear-gradient(180deg, #2D7A92 0%, #1F6885 50%, #1A5A78 100%) !important;
+                  radial-gradient(900px 500px at 90% 8%, rgba(232,123,55,0.18), transparent 65%),
+                  radial-gradient(700px 500px at 8% 92%, rgba(94,234,212,0.10), transparent 65%),
+                  linear-gradient(180deg, #050E1F 0%, #0B1F3A 55%, #112C4A 100%) !important;
+                position: relative;
+                overflow: hidden;
               }
-              /* Hide the dark-bottom-wave silhouette + base wave overlays on
-                 mobile — they were designed to bridge the old dark-navy hero
-                 to the next section; now the hero IS teal so no bridging
-                 needed. Cleaner edge into the preview. */
+              /* Grid mesh overlay — matches .cs-root::before so the hero
+                 carries the same tech texture as the consulting section. */
+              .hero-wrap::before {
+                content: '' !important;
+                position: absolute !important;
+                inset: 0 !important;
+                background-image:
+                  linear-gradient(rgba(94,234,212,0.045) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(94,234,212,0.045) 1px, transparent 1px) !important;
+                background-size: 60px 60px !important;
+                mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 55%, transparent 100%) !important;
+                -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 55%, transparent 100%) !important;
+                pointer-events: none !important;
+                z-index: 0 !important;
+              }
+              /* Hide the bottom-wave silhouette + base wave overlays on mobile
+                 — they were designed to bridge the teal hero; not needed now
+                 that the hero is dark navy. */
               .hero-wrap::after { display: none !important; }
               .hero-waves { display: none !important; }
+              /* Lift hero content above the grid mesh overlay. */
+              .hero-wrap > * { position: relative; z-index: 1; }
 
               /* Pricing grid — 1-col stacked (Peter wants each card
                  stretched full-width), tight gaps to kill dead space. */
