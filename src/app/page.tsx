@@ -433,12 +433,15 @@ export default function HomePage() {
                  (12px) so the hero ends right after the trust strip — no
                  trailing empty space below "30-day money back". */
               .hero-grid {
-                padding: 28px 22px 12px !important;
-                gap: 14px !important;
+                /* TIGHT top + bottom — headline starts immediately under nav,
+                 trust strip is the last thing in the dark navy stage. */
+                padding: 14px 22px 8px !important;
+                gap: 12px !important;
                 grid-template-columns: 1fr !important;
                 text-align: left !important;
                 align-items: flex-start !important;
                 justify-items: flex-start !important;
+                min-height: 0 !important;
               }
               .hero-grid > div { text-align: left; width: 100%; }
               .hero-eyebrow { font-size: 11px; margin-bottom: 12px; padding: 5px 11px; }
@@ -550,8 +553,19 @@ export default function HomePage() {
                 z-index: 0 !important;
               }
               .hero-wrap::after { display: none !important; }
-              .hero-waves { display: none !important; }
+              /* Hide ALL svg overlays + decorative blobs on mobile — they
+                 were creating perceived empty wallpaper between the nav
+                 and the headline. Now hero is dark navy + grid mesh ONLY. */
+              .hero-wrap svg { display: none !important; }
+              .hero-blob { display: none !important; }
               .hero-wrap > * { position: relative; z-index: 1; }
+              /* Force hero-wrap to be content-height only — no inherited
+                 min-height, no auto stretching. Bg ends right at the trust
+                 strip's bottom edge. */
+              .hero-wrap {
+                height: auto !important;
+                max-height: none !important;
+              }
               /* White headline + subhead on the dark navy bg */
               .hero-h1 { color: #fff !important; }
               .hero-h1 .accent {
