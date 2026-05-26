@@ -503,7 +503,7 @@ Save ~17% if you pay annually. Same features. Starter $1,460/yr · Pro $2,970/yr
 - Walks them through CONDITIONAL call forwarding so their phone still rings first and only routes to BellAveGo after ~15 seconds of no answer (*71 + number on Verizon, **61*number*11*15# on AT&T/T-Mobile and most GSM carriers — we detect their carrier and show the right code). Never unconditional *72.
 - Test call: we ring their landline, watch it forward to our number, confirm Emma picks up. Stamps "verified" the moment it works.
 - A2P 10DLC SMS verification gets submitted to Twilio for compliance — 1-14 day review window. Meanwhile lead emails fly fine.
-- Optional: connect Google Calendar / Outlook / Apple iCloud (Cronofy handles all providers in one OAuth flow) so the AI can offer real open slots and auto-book.
+- Optional: connect Google Calendar or Microsoft Outlook (direct OAuth, one click each) so the AI can offer real open slots and auto-book.
 
 **AI is LIVE answering calls in their business name within 5 minutes of payment.** If they get stuck on forwarding (most common drop-off), the dashboard shows a sunset banner reminding them — and our system texts them at day 3 and day 7 if it's still not verified.
 
@@ -531,7 +531,7 @@ Save ~17% if you pay annually. Same features. Starter $1,460/yr · Pro $2,970/yr
 - Self-serve Stripe billing portal — 1-week free trial, cancel anytime before day 8 with zero charge.
 
 ## Calendar integration
-We support Google Calendar, Outlook, Apple iCloud, and Calendly — one OAuth flow via Cronofy covers all of them. When connected, the AI can offer real open slots from the contractor's calendar and the caller picks one on the live call. The event is created in their calendar before the AI says "you're confirmed." If the contractor wants the AI to ONLY book inside certain hours (like "only after 5pm"), they can set that — it's two fields in their settings.
+We support Google Calendar and Microsoft Outlook — direct OAuth integrations, no third-party middleware. When connected, the AI can offer real open slots from the contractor's calendar and the caller picks one on the live call. The event is created in their calendar before the AI says "you're confirmed." If the contractor wants the AI to ONLY book inside certain hours (like "only after 5pm"), they can set that — it's two fields in their settings.
 
 ## Industries we work for
 HVAC, plumbing, electrical, roofing, landscaping, painting, handyman, garage door, pest control, locksmith, cleaning, pool service, lawn care, snow removal, concrete, fencing, gutters, septic, well drilling, irrigation. Basically any home-service business with phones ringing.

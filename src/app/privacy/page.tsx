@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { useAuth } from '@clerk/nextjs'
 
 /**
- * Privacy Policy — required for OAuth verification (Cronofy / Google / Microsoft)
+ * Privacy Policy — required for OAuth verification (Google / Microsoft)
  * and general trust. Plain-language SaaS boilerplate tailored to what BellAveGo
  * actually does (call answering, AI consulting reports, calendar sync).
  *
@@ -83,8 +83,8 @@ export default function PrivacyPage() {
             <li><strong>Stripe</strong> — payment processing and subscription billing</li>
             <li><strong>Supabase</strong> — database and file storage</li>
             <li><strong>Clerk</strong> — authentication and user identity</li>
-            <li><strong>Cronofy</strong> — calendar integration across Google, Microsoft, Apple, Calendly</li>
             <li><strong>Google APIs</strong> — Calendar, Places, Business Profile (when you connect)</li>
+            <li><strong>Microsoft Graph</strong> — Outlook / Microsoft 365 Calendar (when you connect)</li>
             <li><strong>Vercel</strong> — application hosting</li>
           </ul>
         </Section>

@@ -2,7 +2,6 @@ import { createClient } from '@supabase/supabase-js'
 import { getGoogleBusyBlocks, type CalendarConnectionRow, type FreeBusyBlock } from './google'
 import { getMicrosoftBusyBlocks } from './microsoft'
 import { getCalendlyBusyBlocks } from './calendly'
-import { getCronofyBusyBlocks } from './cronofy'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -110,11 +109,13 @@ export async function findAvailableSlots(args: {
   // Collect busy blocks from every connected provider in parallel
   const providerBusy = await Promise.all(
     conns.map(async (c) => {
-      if (c.provider === 'cronofy')   return await getCronofyBusyBlocks({ connection: c, windowStart, windowEnd })
       if (c.provider === 'google')    return await getGoogleBusyBlocks({ connection: c, windowStart, windowEnd })
       if (c.provider === 'microsoft') return await getMicrosoftBusyBlocks({ connection: c, windowStart, windowEnd })
       if (c.provider === 'calendly')  return await getCalendlyBusyBlocks({ connection: c, windowStart, windowEnd })
-      // Other providers will land here when implemented.
+      // Cronofy was deprecated 2026-05-26 in favor of direct Google + Microsoft
+      // OAuth. Any remaining 'cronofy' rows in calendar_connections are stale
+      // and should be deleted manually; we skip them here so they don't appear
+      // in availability lookups.
       return [] as FreeBusyBlock[]
     }),
   )

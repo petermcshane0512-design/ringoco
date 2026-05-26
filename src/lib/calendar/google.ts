@@ -379,6 +379,83 @@ export async function createGoogleEvent(args: {
   }
 }
 
+/**
+ * List the contractor's upcoming Google Calendar events in a window. Used
+ * by the dashboard agenda view. BellAveGo-created events are identified by
+ * the `extendedProperties.shared.bellavego_source` tag set in createGoogleEvent.
+ */
+export type GoogleCalendarEvent = {
+  id: string
+  summary: string
+  description?: string
+  location?: string
+  start: string
+  end: string
+  allDay: boolean
+  status?: 'confirmed' | 'tentative' | 'cancelled'
+  isBellaveGo: boolean
+}
+
+export async function listGoogleEvents(args: {
+  connection: CalendarConnectionRow
+  windowStart: Date
+  windowEnd: Date
+}): Promise<GoogleCalendarEvent[]> {
+  const accessToken = await getValidAccessToken(args.connection)
+  if (!accessToken) return []
+  try {
+    const calendarId = args.connection.calendar_id || 'primary'
+    const params = new URLSearchParams({
+      timeMin: args.windowStart.toISOString(),
+      timeMax: args.windowEnd.toISOString(),
+      singleEvents: 'true',
+      orderBy: 'startTime',
+      maxResults: '250',
+    })
+    const res = await fetch(
+      `${GOOGLE_API_BASE}/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params.toString()}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    )
+    if (!res.ok) {
+      await logCalendarEvent(args.connection.user_id, 'google', 'error', `list events ${res.status}`)
+      return []
+    }
+    const data = (await res.json()) as {
+      items?: Array<{
+        id?: string
+        summary?: string
+        description?: string
+        location?: string
+        start?: { dateTime?: string; date?: string }
+        end?: { dateTime?: string; date?: string }
+        status?: 'confirmed' | 'tentative' | 'cancelled'
+        extendedProperties?: { shared?: Record<string, string> }
+      }>
+    }
+    return (data.items ?? [])
+      .filter((ev) => ev.status !== 'cancelled')
+      .map((ev) => {
+        const startStr = ev.start?.dateTime || ev.start?.date || ''
+        const endStr   = ev.end?.dateTime   || ev.end?.date   || ''
+        const allDay = !!ev.start?.date && !ev.start?.dateTime
+        return {
+          id: ev.id ?? '',
+          summary: ev.summary || '(untitled event)',
+          description: ev.description,
+          location: ev.location,
+          start: allDay ? `${startStr}T00:00:00Z` : startStr,
+          end:   allDay ? `${endStr}T23:59:59Z`   : endStr,
+          allDay,
+          status: ev.status,
+          isBellaveGo: ev.extendedProperties?.shared?.bellavego_source === 'ai_booking',
+        } as GoogleCalendarEvent
+      })
+  } catch (e) {
+    await logCalendarEvent(args.connection.user_id, 'google', 'error', `list events threw: ${(e as Error).message}`)
+    return []
+  }
+}
+
 export async function disconnectGoogleCalendar(userId: string): Promise<{ ok: boolean }> {
   // Best-effort revoke at Google (so the connection vanishes from their account too)
   try {

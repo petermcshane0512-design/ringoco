@@ -4,7 +4,7 @@ import twilio from 'twilio'
 import { verifyVapiSignature } from '@/lib/vapi'
 import { findAvailableSlots } from '@/lib/calendar/availability'
 import { createGoogleEvent, type CalendarConnectionRow } from '@/lib/calendar/google'
-import { createCronofyEvent } from '@/lib/calendar/cronofy'
+import { createMicrosoftEvent } from '@/lib/calendar/microsoft'
 import { sendEmail, renderAppointmentBookedEmail, renderLeadAlertEmail, renderBookingAlertEmail } from '@/lib/email'
 import { lookupOwnerEmail } from '@/lib/notify'
 import { firePushAsync } from '@/lib/push'
@@ -185,18 +185,18 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Load contractor's calendar connection ──
-    // Prefer Cronofy (unified API across Google/Outlook/Apple, what new
-    // customers connect via). Fall back to direct Google OAuth row if they
-    // connected via the legacy /api/calendar/google flow.
+    // Direct OAuth only as of 2026-05-26 — Cronofy retired in favor of native
+    // Google + Microsoft integrations. We prefer Google if both exist (most
+    // contractors only connect one), then fall back to Microsoft.
     const { data: connRows } = await supabase
       .from('calendar_connections')
       .select('*')
       .eq('user_id', userId)
-      .in('provider', ['cronofy', 'google'])
+      .in('provider', ['google', 'microsoft'])
       .eq('enabled', true)
-    const cronofyConn = (connRows ?? []).find((c) => c.provider === 'cronofy') as CalendarConnectionRow | undefined
-    const googleConn  = (connRows ?? []).find((c) => c.provider === 'google')  as CalendarConnectionRow | undefined
-    const conn = cronofyConn || googleConn
+    const googleConn    = (connRows ?? []).find((c) => c.provider === 'google')    as CalendarConnectionRow | undefined
+    const microsoftConn = (connRows ?? []).find((c) => c.provider === 'microsoft') as CalendarConnectionRow | undefined
+    const conn = googleConn || microsoftConn
 
     if (!conn) {
       results.push({
@@ -207,10 +207,10 @@ export async function POST(req: NextRequest) {
       continue
     }
 
-    // ── Create the event (Cronofy → Google fallback) ──
-    // We need a stable jobId for the Cronofy event_id (prefix bellavego_ so
-    // the dashboard agenda highlights it as AI-booked). Insert the job row
-    // FIRST so we have its uuid, then create the calendar event referencing it.
+    // ── Create the event (Google → Microsoft fallback) ──
+    // Insert the job row FIRST so we have its uuid, then create the calendar
+    // event. The provisional ID is referenced by the event description so the
+    // dashboard can correlate later.
     const provisionalJobId = crypto.randomUUID()
 
     const eventSummary = `BellAveGo · ${args.service_summary || 'Appointment'} — ${args.customer_name}`
@@ -222,21 +222,9 @@ export async function POST(req: NextRequest) {
 
     let eventResult: { ok: boolean; error?: string; status?: number; eventId?: string; htmlLink?: string }
 
-    if (cronofyConn) {
-      // Cronofy path — works for Google/Outlook/Apple via one API
-      const r = await createCronofyEvent({
-        connection: cronofyConn,
-        eventId: `bellavego_${provisionalJobId.replace(/-/g, '')}`,
-        summary: eventSummary,
-        description: eventDescription,
-        startIso: startDate.toISOString(),
-        endIso: endDate.toISOString(),
-      })
-      eventResult = { ok: r.ok, error: r.error, eventId: `bellavego_${provisionalJobId.replace(/-/g, '')}` }
-    } else {
-      // Legacy direct-Google path
+    if (googleConn) {
       const r = await createGoogleEvent({
-        connection: googleConn!,
+        connection: googleConn,
         event: {
           summary: eventSummary,
           description: eventDescription,
@@ -247,6 +235,22 @@ export async function POST(req: NextRequest) {
         },
       })
       eventResult = r
+    } else {
+      // Microsoft path (Outlook / Office 365)
+      const r = await createMicrosoftEvent({
+        connection: microsoftConn!,
+        event: {
+          summary: eventSummary,
+          description: eventDescription,
+          startISO: startDate.toISOString(),
+          endISO: endDate.toISOString(),
+          timezone: conn.timezone || 'America/Chicago',
+          attendeePhone: callerPhone || undefined,
+        },
+      })
+      eventResult = r.ok
+        ? { ok: true, eventId: r.eventId, htmlLink: r.webLink }
+        : { ok: false, error: r.error, status: r.status }
     }
 
     if (!eventResult.ok) {

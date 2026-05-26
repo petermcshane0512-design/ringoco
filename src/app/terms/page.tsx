@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { useAuth } from '@clerk/nextjs'
 
 /**
- * Terms of Service — required for OAuth verification (Cronofy / Google / Microsoft)
+ * Terms of Service — required for OAuth verification (Google / Microsoft)
  * and general legal hygiene. Standard SaaS boilerplate tailored to BellAveGo:
  * subscription terms (7-day free trial, no money-back guarantee), acceptable use, liability limits.
  *
@@ -85,7 +85,7 @@ export default function TermsPage() {
         </Section>
 
         <Section title="6. Service availability">
-          <p>We target 99.5% uptime but do not guarantee continuous, uninterrupted access. Scheduled maintenance is announced in advance when feasible. We rely on third-party infrastructure (Twilio, Vapi, Anthropic, Stripe, Supabase, Vercel, Cronofy) and are not liable for outages caused by those providers, though we will make commercially reasonable efforts to restore service.</p>
+          <p>We target 99.5% uptime but do not guarantee continuous, uninterrupted access. Scheduled maintenance is announced in advance when feasible. We rely on third-party infrastructure (Twilio, Vapi, Anthropic, Stripe, Supabase, Vercel, Google Calendar API, Microsoft Graph) and are not liable for outages caused by those providers, though we will make commercially reasonable efforts to restore service.</p>
         </Section>
 
         <Section title="7. Intellectual property">

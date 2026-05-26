@@ -14,7 +14,8 @@ import { requireAdmin } from '@/lib/auth/requireAdmin'
  *   - Stripe (auth)
  *   - Anthropic (auth — minimal token call)
  *   - Resend (no public health endpoint — assume green if API key set)
- *   - Cronofy (no public health endpoint — assume green if env set)
+ *   - Google Calendar API (no auth probe — assume green if env set)
+ *   - Microsoft Graph (no auth probe — assume green if env set)
  *   - Clerk (auth via /me with secret)
  *
  * Each probe has its own try/catch + 5s timeout so a single slow

@@ -107,16 +107,22 @@ function CalendarPageInner() {
     finally { setEventsLoading(false) }
   }
 
-  const cronofyConnection = connections.find((c) => c.provider === 'cronofy' && c.enabled)
+  // Direct integration (Cronofy retired 2026-05-26). Pick the first enabled
+  // Google or Microsoft connection — contractors typically connect one, but
+  // if both are present we prefer Google (most common ICP).
+  const calendarConnection = connections.find(
+    (c) => c.enabled && (c.provider === 'google' || c.provider === 'microsoft'),
+  )
 
   async function disconnect() {
+    if (!calendarConnection) return
     if (!confirm('Disconnect your calendar? The AI will stop offering specific time slots from your calendar.')) return
     setDisconnecting(true)
     try {
       await fetch('/api/calendar/disconnect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: 'cronofy' }),
+        body: JSON.stringify({ provider: calendarConnection.provider }),
       })
       await refresh()
     } finally { setDisconnecting(false) }
@@ -125,13 +131,10 @@ function CalendarPageInner() {
   // Pretty name for the underlying provider on the success banner / connection chip
   const prettyProvider = (raw: string | null | undefined): string => {
     const p = (raw || '').toLowerCase()
-    if (p.includes('google'))    return 'Google Calendar'
-    if (p.includes('office365')) return 'Microsoft 365'
-    if (p.includes('outlook'))   return 'Microsoft Outlook'
-    if (p.includes('exchange'))  return 'Microsoft Exchange'
-    if (p.includes('apple') || p.includes('icloud')) return 'Apple iCloud'
-    if (p.includes('caldav'))    return 'CalDAV'
-    if (p)                       return raw as string
+    if (p === 'google'    || p.includes('google'))                   return 'Google Calendar'
+    if (p === 'microsoft' || p.includes('outlook') || p.includes('office')) return 'Microsoft Outlook'
+    if (p.includes('exchange'))                                       return 'Microsoft Exchange'
+    if (p)                                                             return raw as string
     return 'your calendar'
   }
 
@@ -309,7 +312,7 @@ function CalendarPageInner() {
       </div>
 
       {/* Single Connect-a-Calendar card — Cronofy handles the provider picker */}
-      {cronofyConnection ? (
+      {calendarConnection ? (
         // CONNECTED state
         <div style={{
           background: '#fff',
@@ -334,10 +337,10 @@ function CalendarPageInner() {
                 Calendar connected
               </div>
               <div style={{ fontSize: 17, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.02em' }}>
-                {cronofyConnection.name || prettyProvider(cronofyConnection.provider)}
+                {calendarConnection.name || prettyProvider(calendarConnection.provider)}
               </div>
-              {cronofyConnection.email && (
-                <div style={{ fontSize: 13, color: '#7AAAB2', marginTop: 2 }}>{cronofyConnection.email}</div>
+              {calendarConnection.email && (
+                <div style={{ fontSize: 13, color: '#7AAAB2', marginTop: 2 }}>{calendarConnection.email}</div>
               )}
             </div>
             <button
@@ -359,7 +362,11 @@ function CalendarPageInner() {
           </div>
         </div>
       ) : (
-        // NOT-CONNECTED state — one big Connect button
+        // NOT-CONNECTED state — two provider buttons (Google + Outlook).
+        // Direct OAuth integrations (Cronofy retired 2026-05-26). Each
+        // button goes straight to its provider's consent screen — Google
+        // and Microsoft both show their own standard "BellAveGo wants to
+        // access your calendar" dialog with no third-party warning.
         <div style={{
           background: 'linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 60%)',
           border: '1.5px solid rgba(232,116,43,0.32)',
@@ -379,85 +386,62 @@ function CalendarPageInner() {
           <h2 style={{ fontSize: 20, fontWeight: 900, color: '#0B1F3A', margin: '0 0 8px', letterSpacing: '-0.02em' }}>
             Let the AI offer real appointment times
           </h2>
-          <p style={{ fontSize: 14, color: '#4A6670', lineHeight: 1.55, margin: '0 0 18px' }}>
-            Connect <strong>any</strong> calendar — Google, Microsoft Outlook, Office 365, Apple iCloud, Exchange, or CalDAV — and the AI checks your real availability before offering specific slots to callers. You pick which calendar provider on the next screen.
+          <p style={{ fontSize: 14, color: '#4A6670', lineHeight: 1.55, margin: '0 0 22px' }}>
+            Connect <strong>Google Calendar</strong> or <strong>Microsoft Outlook</strong> and the AI checks your real availability before offering specific slots to callers. We never read event details — only your free/busy windows.
           </p>
-          <a
-            href="/api/calendar/cronofy/connect"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '13px 26px', borderRadius: 11,
-              background: 'linear-gradient(135deg, #FFD9A8 0%, #FF9D5A 50%, #E8742B 100%)',
-              color: '#0B1F3A', fontSize: 14, fontWeight: 900,
-              textDecoration: 'none',
-              boxShadow: '0 8px 22px rgba(232,116,43,0.32)',
-            }}
-          >
-            Connect Calendar
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </a>
 
-          {/* Cronofy verification heads-up — production verification pending
-              with Cronofy as of 2026-05-26. Until they approve, the OAuth
-              consent screen shows "this application has not been verified by
-              Cronofy" which scares contractors into bouncing. This explainer
-              kills that drop-off. Delete this block once Cronofy verifies. */}
-          <div style={{
-            marginTop: 18,
-            padding: '14px 16px',
-            background: '#FFF8EC',
-            border: '1.5px solid #FBD38D',
-            borderRadius: 12,
-            display: 'flex',
-            gap: 12,
-            alignItems: 'flex-start',
-          }}>
-            <div style={{
-              flexShrink: 0,
-              width: 32, height: 32, borderRadius: 8,
-              background: '#F59E0B',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 18,
-            }}>
-              <span role="img" aria-label="heads up" style={{ filter: 'brightness(0) invert(1)' }}>ℹ</span>
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 900, color: '#78350F', marginBottom: 4 }}>
-                Heads up: you&apos;ll see a yellow &quot;not verified by Cronofy&quot; warning
-              </div>
-              <p style={{ fontSize: 13, color: '#6B4317', lineHeight: 1.55, margin: 0 }}>
-                That&apos;s expected and totally safe. Cronofy is the calendar service we use under the hood, and they&apos;re still finishing our verification review (1-2 day process). The warning will disappear in a few days. <strong>Click &quot;Allow&quot; to continue</strong> — your calendar data stays inside Google/Outlook, we only get to read your availability and book the slots you authorize.
-              </p>
-            </div>
+          {/* Two provider buttons — direct OAuth, no middleman */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+            <a
+              href="/api/calendar/google/connect"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                padding: '15px 22px', borderRadius: 11,
+                background: '#fff',
+                border: '1.5px solid #DADCE0',
+                color: '#1F1F1F', fontSize: 14, fontWeight: 700,
+                textDecoration: 'none',
+                boxShadow: '0 1px 3px rgba(60,64,67,0.08)',
+                transition: 'box-shadow 0.18s ease, transform 0.18s ease',
+              }}
+            >
+              {/* Google G logo — official multi-color */}
+              <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+              </svg>
+              Connect Google Calendar
+            </a>
+
+            <a
+              href="/api/calendar/microsoft/connect"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                padding: '15px 22px', borderRadius: 11,
+                background: '#fff',
+                border: '1.5px solid #DADCE0',
+                color: '#1F1F1F', fontSize: 14, fontWeight: 700,
+                textDecoration: 'none',
+                boxShadow: '0 1px 3px rgba(60,64,67,0.08)',
+                transition: 'box-shadow 0.18s ease, transform 0.18s ease',
+              }}
+            >
+              {/* Microsoft 4-square logo */}
+              <svg width="20" height="20" viewBox="0 0 23 23" aria-hidden="true">
+                <rect x="1"  y="1"  width="10" height="10" fill="#F25022"/>
+                <rect x="12" y="1"  width="10" height="10" fill="#7FBA00"/>
+                <rect x="1"  y="12" width="10" height="10" fill="#00A4EF"/>
+                <rect x="12" y="12" width="10" height="10" fill="#FFB900"/>
+              </svg>
+              Connect Microsoft Outlook
+            </a>
           </div>
 
-          {/* Supported providers row */}
-          <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px solid rgba(232,116,43,0.18)' }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: '#7AAAB2', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>
-              Supports
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {[
-                { name: 'Google Calendar', color: '#4285F4' },
-                { name: 'Microsoft 365', color: '#0078D4' },
-                { name: 'Microsoft Outlook', color: '#0078D4' },
-                { name: 'Exchange', color: '#00897B' },
-                { name: 'Apple iCloud', color: '#0B1F3A' },
-                { name: 'CalDAV', color: '#7C3AED' },
-              ].map((p) => (
-                <span key={p.name} style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '6px 12px', borderRadius: 99,
-                  background: '#fff', border: '1px solid rgba(10,168,159,0.18)',
-                  fontSize: 11.5, fontWeight: 700, color: '#0B1F3A',
-                }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: p.color }} />
-                  {p.name}
-                </span>
-              ))}
-            </div>
+          {/* Trust footer */}
+          <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(232,116,43,0.18)', fontSize: 12, color: '#7AAAB2', lineHeight: 1.6 }}>
+            Works with personal Gmail, Google Workspace, Outlook.com, Microsoft 365, and Exchange Online. <strong style={{ color: '#0B1F3A' }}>Read-only free/busy + write access</strong> to create AI-booked appointments. Disconnect anytime.
           </div>
         </div>
       )}
@@ -465,7 +449,7 @@ function CalendarPageInner() {
       {/* CALENDAR GRID — real month/week/day view of contractor's actual events.
           Events the AI booked (event_id starts with bellavego_) render in
           sunset-orange so they pop. Click any event for full details. */}
-      {cronofyConnection && (
+      {calendarConnection && (
         <section style={{ marginTop: 32 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <h2 style={{ fontSize: 20, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.02em', margin: 0 }}>
@@ -503,14 +487,14 @@ function CalendarPageInner() {
           How calendar-aware booking works
         </h3>
         <ol style={{ paddingLeft: 18, margin: 0, fontSize: 13, color: '#4A6670', lineHeight: 1.7 }}>
-          <li>Click <strong>Connect Calendar</strong> → pick your calendar provider → grant access (60 seconds total)</li>
+          <li>Click <strong>Connect Google Calendar</strong> or <strong>Connect Microsoft Outlook</strong> → grant access (30 seconds total)</li>
           <li>Caller asks to schedule. The AI checks your calendar in real time</li>
           <li>AI offers 3 actual open slots — &quot;Tuesday 2 PM, Wednesday 9 AM, or Thursday 11 AM&quot;</li>
           <li>Caller picks one. You get an SMS — &quot;Sarah picked Tuesday 2 PM. Reply YES to confirm.&quot;</li>
           <li>You confirm via YES — auto-create event in your calendar arrives in Phase 2 (Q3 2026)</li>
         </ol>
         <p style={{ fontSize: 11.5, color: '#7AAAB2', marginTop: 12, marginBottom: 0, fontStyle: 'italic' }}>
-          Privacy: we only read free/busy windows — never event titles, attendees, or notes. Disconnect anytime. Powered by Cronofy.
+          Privacy: we only read free/busy windows — never event titles, attendees, or notes. Disconnect anytime. Direct integration with Google Calendar API and Microsoft Graph — no third-party middleware.
         </p>
       </div>
     </main>

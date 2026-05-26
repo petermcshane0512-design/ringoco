@@ -381,7 +381,7 @@ export type AppointmentBookedEmailArgs = {
   serviceSummary: string
   slotLabel: string                 // "Tuesday, May 21, 2:00 PM" — already formatted by caller
   callTimeISO: string               // when the booking actually happened
-  calendarEventUrl?: string | null  // Google Calendar / Cronofy link if available
+  calendarEventUrl?: string | null  // Google Calendar / Outlook event link if available
   dashboardUrl: string
   /** IANA timezone for the contractor — used to render callTimeISO in their wall clock.
    *  Defaults to America/Chicago when missing (matches the SQL backfill default). */

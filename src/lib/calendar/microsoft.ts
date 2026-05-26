@@ -15,8 +15,10 @@ const supabase = createClient(
  * hotmail.com) AND work/school Microsoft 365 accounts via the `common`
  * tenant endpoint. One Azure app registration covers every customer.
  *
- * Scope: `Calendars.Read offline_access User.Read` — read calendar events
- * + refresh token + basic profile (for email/display name).
+ * Scope: `Calendars.ReadWrite offline_access User.Read` — read free/busy,
+ * create + delete events on the contractor's primary calendar, and refresh
+ * the access token. Bumped from Calendars.Read (read-only) on 2026-05-26 so
+ * the AI receptionist can auto-book appointments directly into Outlook.
  *
  * Setup (one-time, in Azure Portal):
  *   1. https://portal.azure.com → Microsoft Entra ID → App registrations → New registration
@@ -27,16 +29,22 @@ const supabase = createClient(
  *   3. After creation, copy the Application (client) ID
  *   4. Certificates & secrets → New client secret → copy the Value
  *   5. API permissions → Microsoft Graph → Delegated:
- *      Calendars.Read, offline_access, User.Read, openid, profile, email
+ *      Calendars.ReadWrite, offline_access, User.Read, openid, profile, email
  *   6. Env vars: MICROSOFT_OAUTH_CLIENT_ID, MICROSOFT_OAUTH_CLIENT_SECRET
+ *
+ * Migration note: contractors who connected BEFORE 2026-05-26 have
+ * Calendars.Read tokens only. Booking attempts fail with 403 — they need to
+ * reconnect to grant ReadWrite. canWriteToMicrosoft() checks scope.
  */
 
 const MS_AUTH_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize'
 const MS_TOKEN_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/token'
 const MS_GRAPH_BASE = 'https://graph.microsoft.com/v1.0'
 
+const SCOPE_EVENTS_WRITE = 'Calendars.ReadWrite'
+
 const SCOPES = [
-  'Calendars.Read',
+  SCOPE_EVENTS_WRITE,
   'User.Read',
   'offline_access',
   'openid',
@@ -282,6 +290,203 @@ export async function getMicrosoftBusyBlocks(args: {
     await logCalendarEvent(args.connection.user_id, 'microsoft', 'error', `calendarView threw: ${(e as Error).message}`)
     return []
   }
+}
+
+/**
+ * Returns true if this connection's token grants Calendars.ReadWrite. Older
+ * read-only connections (pre-2026-05-26) return false — booking code prompts
+ * a reconnect.
+ *
+ * Microsoft Graph stores granted scopes as space-separated case-INSENSITIVE
+ * strings (e.g. "Calendars.ReadWrite User.Read offline_access"). We match
+ * tolerantly.
+ */
+export function canWriteToMicrosoft(connection: CalendarConnectionRow): boolean {
+  if (!connection.scope) return false
+  return connection.scope.split(/\s+/).some((s) => s.toLowerCase() === SCOPE_EVENTS_WRITE.toLowerCase())
+}
+
+export type MicrosoftEventInput = {
+  summary: string
+  description?: string
+  startISO: string
+  endISO: string
+  timezone?: string
+  location?: string
+  attendeePhone?: string
+}
+
+export type MicrosoftEventResult =
+  | { ok: true; eventId: string; webLink?: string }
+  | { ok: false; error: string; status?: number; conflict?: boolean }
+
+/**
+ * Create an event on the contractor's primary Outlook calendar.
+ *
+ * Graph API does not natively reject conflicting writes — the caller must
+ * re-check availability immediately before invoking this (same contract as
+ * createGoogleEvent). We tag every event with `singleValueExtendedProperties`
+ * carrying `bellavego_source=ai_booking` so the dashboard can identify and
+ * style AI-booked events distinctively.
+ */
+export async function createMicrosoftEvent(args: {
+  connection: CalendarConnectionRow
+  event: MicrosoftEventInput
+}): Promise<MicrosoftEventResult> {
+  if (!canWriteToMicrosoft(args.connection)) {
+    return {
+      ok: false,
+      error: 'Outlook connection lacks Calendars.ReadWrite scope — reconnect required.',
+    }
+  }
+
+  const accessToken = await getValidAccessToken(args.connection)
+  if (!accessToken) return { ok: false, error: 'Could not refresh access token.' }
+
+  const tz = args.event.timezone || args.connection.timezone || 'America/Chicago'
+
+  // Microsoft Graph expects a Windows time zone name OR an IANA name in the
+  // `timeZone` field. IANA names (e.g. "America/Chicago") are accepted by
+  // Graph v1.0 endpoints and are what we have stored.
+  const body = {
+    subject: args.event.summary,
+    body: args.event.description
+      ? { contentType: 'text', content: args.event.description }
+      : undefined,
+    location: args.event.location ? { displayName: args.event.location } : undefined,
+    start: { dateTime: stripZ(args.event.startISO), timeZone: tz },
+    end:   { dateTime: stripZ(args.event.endISO),   timeZone: tz },
+    isReminderOn: true,
+    reminderMinutesBeforeStart: 60,
+    showAs: 'busy',
+    // Tag so we can identify BellAveGo-created events in listings.
+    singleValueExtendedProperties: [
+      {
+        // String property in our pseudo-GUID namespace. UUID below was
+        // generated once for BellAveGo; reuse forever so listings can filter.
+        id: 'String {6f80c4f9-5cfb-4a3c-9c61-2c5c7dd2c80c} Name BellAveGoSource',
+        value: 'ai_booking',
+      },
+    ],
+  }
+
+  try {
+    const res = await fetch(`${MS_GRAPH_BASE}/me/events`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '')
+      await logCalendarEvent(args.connection.user_id, 'microsoft', 'event_create_failed', `${res.status} ${txt.slice(0, 200)}`)
+      if (res.status === 403 && /insufficient|permission|scope/i.test(txt)) {
+        return { ok: false, error: 'Missing Calendars.ReadWrite scope — reconnect required.', status: 403 }
+      }
+      return { ok: false, error: `Microsoft Graph ${res.status}: ${txt.slice(0, 200)}`, status: res.status }
+    }
+
+    const j = (await res.json()) as { id?: string; webLink?: string }
+    if (!j.id) return { ok: false, error: 'Microsoft returned no event id.' }
+    await logCalendarEvent(args.connection.user_id, 'microsoft', 'event_created', j.id)
+    return { ok: true, eventId: j.id, webLink: j.webLink }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    await logCalendarEvent(args.connection.user_id, 'microsoft', 'event_create_threw', msg)
+    return { ok: false, error: msg }
+  }
+}
+
+/**
+ * List the contractor's upcoming Outlook calendar events in a window.
+ * Used by the dashboard agenda view. Marks BellAveGo-created events by
+ * looking up the `BellAveGoSource` extended property.
+ */
+export type MicrosoftCalendarEvent = {
+  id: string
+  summary: string
+  description?: string
+  location?: string
+  start: string
+  end: string
+  allDay: boolean
+  status?: 'confirmed' | 'tentative' | 'cancelled'
+  isBellaveGo: boolean
+}
+
+export async function listMicrosoftEvents(args: {
+  connection: CalendarConnectionRow
+  windowStart: Date
+  windowEnd: Date
+}): Promise<MicrosoftCalendarEvent[]> {
+  const accessToken = await getValidAccessToken(args.connection)
+  if (!accessToken) return []
+  try {
+    const params = new URLSearchParams({
+      startDateTime: args.windowStart.toISOString(),
+      endDateTime: args.windowEnd.toISOString(),
+      $select: 'id,subject,body,bodyPreview,start,end,location,isAllDay,isCancelled,showAs,singleValueExtendedProperties',
+      $expand: `singleValueExtendedProperties($filter=id eq 'String {6f80c4f9-5cfb-4a3c-9c61-2c5c7dd2c80c} Name BellAveGoSource')`,
+      $top: '200',
+      $orderby: 'start/dateTime',
+    })
+    const res = await fetch(`${MS_GRAPH_BASE}/me/calendarView?${params.toString()}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Prefer: `outlook.timezone="${args.connection.timezone || 'UTC'}"`,
+      },
+    })
+    if (!res.ok) {
+      await logCalendarEvent(args.connection.user_id, 'microsoft', 'error', `list calendarView ${res.status}`)
+      return []
+    }
+    const data = (await res.json()) as {
+      value?: Array<{
+        id?: string
+        subject?: string
+        bodyPreview?: string
+        body?: { content?: string }
+        start: { dateTime: string; timeZone?: string }
+        end:   { dateTime: string; timeZone?: string }
+        location?: { displayName?: string }
+        isAllDay?: boolean
+        isCancelled?: boolean
+        showAs?: string
+        singleValueExtendedProperties?: Array<{ id?: string; value?: string }>
+      }>
+    }
+    return (data.value ?? [])
+      .filter((ev) => !ev.isCancelled)
+      .map((ev) => {
+        const isBellaveGo = (ev.singleValueExtendedProperties ?? []).some(
+          (p) => (p.value ?? '').toLowerCase().includes('ai_booking'),
+        )
+        const startStr = ev.start.dateTime
+        const endStr   = ev.end.dateTime
+        return {
+          id: ev.id ?? '',
+          summary: ev.subject || '(untitled event)',
+          description: ev.bodyPreview || ev.body?.content || undefined,
+          location: ev.location?.displayName,
+          start: startStr + (startStr.endsWith('Z') ? '' : 'Z'),
+          end:   endStr   + (endStr.endsWith('Z')   ? '' : 'Z'),
+          allDay: !!ev.isAllDay,
+          status: ev.isCancelled ? 'cancelled' : 'confirmed',
+          isBellaveGo,
+        } as MicrosoftCalendarEvent
+      })
+  } catch (e) {
+    await logCalendarEvent(args.connection.user_id, 'microsoft', 'error', `list calendarView threw: ${(e as Error).message}`)
+    return []
+  }
+}
+
+/** Graph wants dateTime without the trailing Z when timeZone is provided. */
+function stripZ(iso: string): string {
+  return iso.endsWith('Z') ? iso.slice(0, -1) : iso
 }
 
 export async function disconnectMicrosoftCalendar(userId: string): Promise<{ ok: boolean }> {
