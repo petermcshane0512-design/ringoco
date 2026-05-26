@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "engage:login:ig": "tsx scripts/social-engage.ts --login --platform=instagram",
+    "engage:login:fb": "tsx scripts/social-engage.ts --login --platform=facebook",
+    "engage:ig": "tsx scripts/social-engage.ts --platform=instagram",
+    "engage:fb": "tsx scripts/social-engage.ts --platform=facebook",
+    "engage:both": "tsx scripts/social-engage.ts --platform=both",
+    "engage:dry": "tsx scripts/social-engage.ts --platform=instagram --max=5 --dry-run --headed"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.90.0",
@@ -39,7 +45,9 @@
     "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "playwright": "^1.60.0",
     "tailwindcss": "^4",
+    "tsx": "^4.22.3",
     "typescript": "^5"
   }
 }

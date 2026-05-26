@@ -61,5 +61,7 @@ next-env.d.ts
 /BELLAVEGOLLC
 # Playwright MCP cache
 /.playwright-mcp/
+# Social engagement bot — saved Meta session cookies (full bearer tokens, NEVER commit)
+/.auth/
 # Page snapshots from local dev
 /*-snapshot.md
