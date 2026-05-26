@@ -80,9 +80,15 @@ export default function HomePage() {
               <Link href="/sign-up" className="nav-cta dt-only"><span className="nav-cta-text">Create Account</span></Link>
             </>
           )}
-          {/* Mobile-only: single Dashboard nav button. Clerk middleware
-              redirects unauthed users to /sign-in automatically. */}
+          {/* Mobile-only: Dashboard + Sign out side-by-side when signed in,
+              else just Dashboard (clerk middleware redirects unauthed to
+              /sign-in automatically). */}
           <Link href="/dashboard" className="nav-cta mb-only"><span className="nav-cta-text">Dashboard</span></Link>
+          {isSignedIn && (
+            <SignOutButton redirectUrl="/">
+              <button className="signout-link mb-only">Sign out</button>
+            </SignOutButton>
+          )}
         </div>
       </nav>
 
@@ -756,7 +762,7 @@ export default function HomePage() {
           <div style={{ fontSize: 11, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.16em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 10 }}>
             What you see when you log in
           </div>
-          <div style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.6px', textAlign: 'center', marginBottom: 18, lineHeight: 1.18 }}>
+          <div style={{ fontSize: 22, fontWeight: 900, color: '#5EEAD4', letterSpacing: '-0.6px', textAlign: 'center', marginBottom: 18, lineHeight: 1.18 }}>
             Every call, lead and dollar — live, in one place.
           </div>
           <DashboardPreview compact />
