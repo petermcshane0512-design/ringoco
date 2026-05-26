@@ -75,6 +75,11 @@ export default function SetupWizard() {
   const [crm, setCrm] = useState<string>("");
   const [promptNotes, setPromptNotes] = useState("");
   const [busy, setBusy] = useState(false);
+  // Appointment rules — set during the new Step 3. Saved to profile so the
+  // AI applies these to every booking attempt. Locked-in: contractor cannot
+  // proceed past Step 3 without saving (clicking continue saves first).
+  const [apptDuration, setApptDuration] = useState<number>(90)
+  const [apptBuffer, setApptBuffer] = useState<number>(30)
 
   // Initial load + carrier auto-detect
   // Webhook race fix: instead of bouncing to /dashboard when !is_active, we
@@ -206,19 +211,42 @@ export default function SetupWizard() {
   }
 
   async function continueAfterTest() {
-    // Forwarding works → step 3 = enable phone alerts + hear your AI.
-    // ALL tiers get this step now (was previously skipped on Starter,
-    // which left contractors without push alerts on their phone). The
-    // CRM + Kickoff steps shift up by 1 for Pro/Elite.
+    // Forwarding works → step 3 = APPOINTMENT RULES (mandatory for every
+    // tier; locks in how long the AI books each job + travel buffer).
     await saveStep({ step: 3 });
     setStep(3);
   }
 
+  async function continueAfterAppointmentRules() {
+    // Save the appointment rules to profile (POST /api/profile) THEN
+    // advance. This is the gate: contractor cannot reach the dashboard
+    // without setting these because the AI legally cannot book without
+    // them. The setting auto-saves on continue so they can't skip.
+    setBusy(true);
+    try {
+      await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          default_job_duration_min: apptDuration,
+          travel_buffer_min: apptBuffer,
+          appointment_settings_at: new Date().toISOString(),
+        }),
+      });
+    } catch (e) {
+      console.error("appointment rules save failed", e);
+    } finally {
+      setBusy(false);
+    }
+    await saveStep({ step: 4 });
+    setStep(4);
+  }
+
   async function continueAfterPhoneStep() {
-    // Phone alerts step done → Starter finishes, Pro/Elite go to CRM (step 4).
+    // Phone alerts step done → Starter finishes, Pro/Elite go to CRM (step 5).
     if (meta.isOfficeMgr || meta.isConcierge) {
-      await saveStep({ step: 4 });
-      setStep(4);
+      await saveStep({ step: 5 });
+      setStep(5);
     } else {
       finishReceptionist();
     }
@@ -227,8 +255,8 @@ export default function SetupWizard() {
   async function onPickCrm(provider: string) {
     setCrm(provider);
     if (meta.isConcierge) {
-      await saveStep({ crmProvider: provider, step: 5 });
-      setStep(5);
+      await saveStep({ crmProvider: provider, step: 6 });
+      setStep(6);
     } else {
       await saveStep({ crmProvider: provider, setupComplete: true });
       router.replace("/dashboard");
@@ -264,9 +292,10 @@ export default function SetupWizard() {
     );
   }
 
-  // +1 universal step inserted at position 3 (phone alerts + hear-your-AI).
-  // Starter: 3 (forward → test → phone). Pro: 4 (+ CRM). Elite: 5 (+ kickoff).
-  const totalSteps = meta.isConcierge ? 5 : meta.isOfficeMgr ? 4 : 3;
+  // 4 steps now — added Appointment Rules at position 3 (mandatory for AI
+  // booking safety). Starter: 4 (forward, test, rules, phone). Pro: 5 (+ CRM).
+  // Elite: 6 (+ kickoff).
+  const totalSteps = meta.isConcierge ? 6 : meta.isOfficeMgr ? 5 : 4;
 
   return (
     <div style={pageStyle}>
@@ -504,8 +533,119 @@ export default function SetupWizard() {
             </div>
           )}
 
-          {/* STEP 3 — Phone alerts + hear your AI (UNIVERSAL — every tier) */}
+          {/* STEP 3 — APPOINTMENT RULES (MANDATORY for every tier).
+              Locks in default job duration + travel buffer so the AI can
+              never book overlapping jobs. Saves to profile on continue. */}
           {step === 3 && (
+            <div className="step-enter">
+              <div style={{
+                display: 'inline-block',
+                fontSize: 10, fontWeight: 900, color: '#fff',
+                background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+                padding: '4px 11px', borderRadius: 99,
+                letterSpacing: '0.14em', textTransform: 'uppercase',
+                marginBottom: 10,
+              }}>
+                Required · 30 seconds
+              </div>
+              <h2 style={{ ...titleStyle, fontSize: 26 }}>Set your appointment rules.</h2>
+              <p style={{ ...subStyle, fontSize: 15 }}>
+                The AI uses these EVERY time it books a job for you. Set them once. Change anytime later.
+              </p>
+
+              {/* Slider 1 — duration */}
+              <div style={{ marginBottom: 22 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A' }}>
+                    🕐 How long is a typical job?
+                  </span>
+                  <span style={{ fontSize: 22, fontWeight: 900, color: '#E8742B', letterSpacing: '-0.02em' }}>
+                    {apptDuration >= 60 ? `${Math.floor(apptDuration / 60)}h${apptDuration % 60 ? ` ${apptDuration % 60}m` : ''}` : `${apptDuration} min`}
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
+                  {[30, 60, 90, 120, 180].map((min) => {
+                    const active = apptDuration === min
+                    return (
+                      <button
+                        key={min}
+                        onClick={() => setApptDuration(min)}
+                        style={{
+                          padding: '12px 6px', borderRadius: 10,
+                          border: active ? '2px solid #E8742B' : '1.5px solid rgba(232,116,43,0.20)',
+                          background: active ? 'linear-gradient(135deg, #FF9D5A, #E8742B)' : '#FFF7EE',
+                          color: active ? '#fff' : '#0B1F3A',
+                          fontSize: 13, fontWeight: 800,
+                          cursor: 'pointer', fontFamily: 'inherit',
+                        }}
+                      >
+                        {min >= 60 ? `${min / 60}h${min % 60 ? `${min % 60}m` : ''}` : `${min}m`}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div style={{ fontSize: 12, color: '#7AAAB2', marginTop: 8, lineHeight: 1.5 }}>
+                  The AI blocks this much time for every booked job. If a caller says &quot;quick fix&quot; or &quot;big install&quot;, the AI adjusts — this is the default.
+                </div>
+              </div>
+
+              {/* Slider 2 — buffer */}
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A' }}>
+                    🚗 Travel time between jobs?
+                  </span>
+                  <span style={{ fontSize: 22, fontWeight: 900, color: '#0AA89F', letterSpacing: '-0.02em' }}>
+                    {apptBuffer === 0 ? 'None' : `${apptBuffer} min`}
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
+                  {[0, 15, 30, 45, 60].map((min) => {
+                    const active = apptBuffer === min
+                    return (
+                      <button
+                        key={min}
+                        onClick={() => setApptBuffer(min)}
+                        style={{
+                          padding: '12px 6px', borderRadius: 10,
+                          border: active ? '2px solid #0AA89F' : '1.5px solid rgba(10,168,159,0.20)',
+                          background: active ? 'linear-gradient(135deg, #0AA89F, #088A82)' : '#F0FBF8',
+                          color: active ? '#fff' : '#0B1F3A',
+                          fontSize: 13, fontWeight: 800,
+                          cursor: 'pointer', fontFamily: 'inherit',
+                        }}
+                      >
+                        {min === 0 ? 'None' : `${min}m`}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div style={{ fontSize: 12, color: '#7AAAB2', marginTop: 8, lineHeight: 1.5 }}>
+                  Space we ALWAYS leave before AND after every existing event on your calendar. Prevents back-to-back bookings.
+                </div>
+              </div>
+
+              {/* Live example */}
+              <div style={{
+                background: '#FFF7ED',
+                border: '1.5px solid rgba(234,88,12,0.18)',
+                borderRadius: 10, padding: '12px 14px',
+                marginBottom: 18, fontSize: 12.5, color: '#0B1F3A', lineHeight: 1.55,
+              }}>
+                <strong style={{ color: '#E8742B' }}>What this means:</strong> Every booked job is {apptDuration >= 60 ? `${Math.floor(apptDuration / 60)}h${apptDuration % 60 ? ` ${apptDuration % 60}m` : ''}` : `${apptDuration} min`} long with {apptBuffer === 0 ? 'no' : `${apptBuffer} min`} buffer on each side. The AI will never book a job that conflicts with this rule.
+              </div>
+
+              <button onClick={continueAfterAppointmentRules} disabled={busy} style={primaryButton}>
+                {busy ? "Saving…" : "Lock in rules → continue"}
+              </button>
+              <div style={{ fontSize: 11, color: "#A0BCC2", marginTop: 10, textAlign: "center" }}>
+                You can change these later anytime in /dashboard/calendar.
+              </div>
+            </div>
+          )}
+
+          {/* STEP 4 — Phone alerts + hear your AI (UNIVERSAL — every tier) */}
+          {step === 4 && (
             <div className="step-enter">
               <h2 style={{ ...titleStyle, fontSize: 26 }}>Two last things on your phone.</h2>
               <p style={{ ...subStyle, fontSize: 15 }}>
@@ -642,8 +782,8 @@ export default function SetupWizard() {
             </div>
           )}
 
-          {/* STEP 4 — CRM (Office Mgr + Concierge) */}
-          {step === 4 && (meta.isOfficeMgr || meta.isConcierge) && (
+          {/* STEP 5 — CRM (Office Mgr + Concierge) */}
+          {step === 5 && (meta.isOfficeMgr || meta.isConcierge) && (
             <div className="step-enter">
               <h2 style={titleStyle}>Connect your CRM.</h2>
               <p style={subStyle}>
@@ -667,8 +807,8 @@ export default function SetupWizard() {
             </div>
           )}
 
-          {/* STEP 5 — Kickoff (Concierge only) */}
-          {step === 5 && meta.isConcierge && (
+          {/* STEP 6 — Kickoff (Concierge only) */}
+          {step === 6 && meta.isConcierge && (
             <div className="step-enter">
               <h2 style={titleStyle}>Schedule your kickoff call.</h2>
               <p style={subStyle}>
