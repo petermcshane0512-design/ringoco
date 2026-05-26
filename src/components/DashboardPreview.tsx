@@ -270,26 +270,32 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
 
             <div style={{ fontSize: 7.5, fontWeight: 800, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '0 5px', marginBottom: 4 }}>Workspace</div>
 
+            {/* Order locked to match real /dashboard sidebar (2026-05-26):
+                Command Center → Calendar → Consulting Reports → Call Forwarding
+                → AI Receptionist → Invoicing → Pro. */}
             {[
               { label: 'Command Center',     dot: false },
-              { label: 'AI Receptionist',    dot: true  },
-              { label: 'Pro',                dot: false },
-              { label: 'Invoicing',          dot: false },
+              { label: 'Calendar',           dot: false },
               { label: 'Consulting Reports', dot: false },
               { label: 'Call Forwarding',    dot: false },
-              { label: 'Calendar Sync',      dot: false },
+              { label: 'AI Receptionist',    dot: true  },
+              { label: 'Invoicing',          dot: false },
+              { label: 'Pro',                dot: false },
             ].map(({ label, dot }) => {
               const active = activeTab === label
               const hovered = hoveredNav === label
               return (
-                <div key={label} onClick={() => setActiveTab(label)} style={{
+                <div key={label}
+                  className={active ? 'dp-nav-active' : undefined}
+                  onClick={() => setActiveTab(label)} style={{
                   display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px',
                   borderRadius: 7, marginBottom: 1, fontSize: 10, cursor: 'pointer',
-                  background: active ? 'linear-gradient(90deg, rgba(232,116,43,0.10), rgba(20,184,166,0.06))' : hovered ? 'rgba(232,116,43,0.05)' : 'transparent',
+                  background: active ? 'linear-gradient(90deg, rgba(232,116,43,0.14), rgba(20,184,166,0.10))' : hovered ? 'rgba(232,116,43,0.05)' : 'transparent',
                   borderLeft: active ? '2.5px solid #E8742B' : '2.5px solid transparent',
                   color: active ? '#C84B26' : hovered ? '#C84B26' : '#4A6670',
-                  fontWeight: active ? 700 : hovered ? 600 : 500,
+                  fontWeight: active ? 800 : hovered ? 600 : 500,
                   transition: 'all 0.15s ease', userSelect: 'none',
+                  boxShadow: active ? '0 4px 14px rgba(232,116,43,0.22), 0 0 0 1px rgba(232,116,43,0.12)' : 'none',
                 }}
                   onMouseEnter={() => setHoveredNav(label)}
                   onMouseLeave={() => setHoveredNav(null)}
@@ -301,13 +307,16 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
             })}
 
             <div style={{ fontSize: 7.5, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '0 5px', margin: '10px 0 4px' }}>Account</div>
-            <div onClick={() => setActiveTab('Settings')} style={{
+            <div
+              className={activeTab === 'Settings' ? 'dp-nav-active' : undefined}
+              onClick={() => setActiveTab('Settings')} style={{
               padding: '6px 8px', borderRadius: 7, fontSize: 10, cursor: 'pointer',
               color: activeTab === 'Settings' ? '#C84B26' : hoveredNav === 'Settings' ? '#C84B26' : '#4A6670',
-              fontWeight: activeTab === 'Settings' ? 700 : hoveredNav === 'Settings' ? 600 : 500,
-              background: activeTab === 'Settings' ? 'linear-gradient(90deg, rgba(232,116,43,0.10), rgba(20,184,166,0.06))' : hoveredNav === 'Settings' ? 'rgba(232,116,43,0.05)' : 'transparent',
+              fontWeight: activeTab === 'Settings' ? 800 : hoveredNav === 'Settings' ? 600 : 500,
+              background: activeTab === 'Settings' ? 'linear-gradient(90deg, rgba(232,116,43,0.14), rgba(20,184,166,0.10))' : hoveredNav === 'Settings' ? 'rgba(232,116,43,0.05)' : 'transparent',
               borderLeft: activeTab === 'Settings' ? '2.5px solid #E8742B' : '2.5px solid transparent',
               transition: 'all 0.15s ease', userSelect: 'none',
+              boxShadow: activeTab === 'Settings' ? '0 4px 14px rgba(232,116,43,0.22), 0 0 0 1px rgba(232,116,43,0.12)' : 'none',
             }}
               onMouseEnter={() => setHoveredNav('Settings')}
               onMouseLeave={() => setHoveredNav(null)}
@@ -588,8 +597,8 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
             </div>
           )}
 
-          {/* == CALENDAR SYNC TAB == */}
-          {activeTab === 'Calendar Sync' && (
+          {/* == CALENDAR TAB == */}
+          {activeTab === 'Calendar' && (
             <div>
               <div style={{ background: 'linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 60%)', border: '1px solid rgba(232,116,43,0.24)', borderRadius: 11, padding: '12px 14px', marginBottom: 11 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -999,14 +1008,17 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                   content panels on these exact strings). Rendered as a
                   2-row × 4-col grid via .dp-mobile-tabs in globals.css —
                   mirrors the real mobile tabbar layout. */}
+              {/* Order locked to match real mobile tabbar (2026-05-26):
+                  Command Center → Calendar → Consulting Reports →
+                  Call Forwarding → AI Receptionist → Invoicing → Pro → Settings */}
               {[
                 { label: 'Command Center' },
-                { label: 'AI Receptionist', dot: true },
-                { label: 'Pro' },
-                { label: 'Invoicing' },
+                { label: 'Calendar' },
                 { label: 'Consulting Reports' },
                 { label: 'Call Forwarding' },
-                { label: 'Calendar Sync' },
+                { label: 'AI Receptionist', dot: true },
+                { label: 'Invoicing' },
+                { label: 'Pro' },
                 { label: 'Settings' },
               ].map(({ label, dot }) => {
                 const active = activeTab === label
@@ -1014,12 +1026,12 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                   <button
                     key={label}
                     onClick={() => setActiveTab(label)}
+                    className={active ? 'dp-mtab-active' : undefined}
                     style={{
                       padding: '7px 12px', borderRadius: 999, border: 'none',
                       fontSize: 11, fontWeight: 700, cursor: 'pointer',
                       background: active ? 'linear-gradient(135deg, #FF9D5A, #E8742B)' : 'rgba(255,255,255,0.7)',
                       color: active ? '#fff' : '#4A6670',
-                      boxShadow: active ? '0 4px 12px rgba(232,116,43,0.32)' : 'none',
                       whiteSpace: 'nowrap', flexShrink: 0,
                       display: 'inline-flex', alignItems: 'center', gap: 5,
                     }}

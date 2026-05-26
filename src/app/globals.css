@@ -317,6 +317,24 @@ html { overflow-x: hidden; }
   50%      { box-shadow: 0 8px 28px rgba(232,116,43,0.36), 0 0 0 2px rgba(232,116,43,0.20); }
 }
 
+/* Same glow on the homepage DashboardPreview mockup — keeps the marketing
+   visual in sync with the real product. Slightly tighter shadow numbers
+   since the preview is rendered at ~70% scale. */
+.dp-nav-active {
+  animation: bavg-preview-glow 2.6s ease-in-out infinite;
+}
+@keyframes bavg-preview-glow {
+  0%, 100% { box-shadow: 0 3px 12px rgba(232,116,43,0.20), 0 0 0 1px rgba(232,116,43,0.10); }
+  50%      { box-shadow: 0 5px 18px rgba(232,116,43,0.32), 0 0 0 2px rgba(232,116,43,0.18); }
+}
+.dp-mtab-active {
+  animation: bavg-preview-pill-glow 2.4s ease-in-out infinite;
+}
+@keyframes bavg-preview-pill-glow {
+  0%, 100% { box-shadow: 0 4px 12px rgba(232,116,43,0.32); }
+  50%      { box-shadow: 0 6px 20px rgba(232,116,43,0.48), 0 0 0 4px rgba(232,116,43,0.12); }
+}
+
 /* Mobile bottom tab bar — hidden on desktop. Shown on mobile inside the
    @media (max-width: 820px) block further down. */
 .dash-mobile-tabbar { display: none; }
