@@ -386,9 +386,42 @@ function CalendarPageInner() {
           <h2 style={{ fontSize: 20, fontWeight: 900, color: '#0B1F3A', margin: '0 0 8px', letterSpacing: '-0.02em' }}>
             Let the AI offer real appointment times
           </h2>
-          <p style={{ fontSize: 14, color: '#4A6670', lineHeight: 1.55, margin: '0 0 22px' }}>
+          <p style={{ fontSize: 14, color: '#4A6670', lineHeight: 1.55, margin: '0 0 18px' }}>
             Connect <strong>Google Calendar</strong> or <strong>Microsoft Outlook</strong> and the AI checks your real availability before offering specific slots to callers. We never read event details — only your free/busy windows.
           </p>
+
+          {/* Pre-verification heads-up — Google + Microsoft verification reviews
+              are in flight (2026-05-26). Until they finish, contractors see a
+              yellow "unverified app" warning during OAuth. This explainer kills
+              the drop-off. DELETE this block once BOTH verifications approve. */}
+          <div style={{
+            marginBottom: 18,
+            padding: '14px 16px',
+            background: '#FFF8EC',
+            border: '1.5px solid #FBD38D',
+            borderRadius: 12,
+            display: 'flex',
+            gap: 12,
+            alignItems: 'flex-start',
+          }}>
+            <div style={{
+              flexShrink: 0,
+              width: 32, height: 32, borderRadius: 8,
+              background: '#F59E0B',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', fontSize: 18, fontWeight: 900,
+            }}>
+              ℹ
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 900, color: '#78350F', marginBottom: 4 }}>
+                You&apos;ll see a yellow &quot;app not verified&quot; warning — that&apos;s expected
+              </div>
+              <p style={{ fontSize: 13, color: '#6B4317', lineHeight: 1.55, margin: 0 }}>
+                Google and Microsoft are still finishing our app verification review (usually 3-5 days). Until then, both providers show a one-time warning when you connect. <strong>Click &quot;Advanced&quot; → &quot;Continue to bellavego.com&quot;</strong> to proceed — it&apos;s safe, your calendar data stays inside Google/Outlook, and we only read free/busy plus create the events the AI books for you.
+              </p>
+            </div>
+          </div>
 
           {/* Two provider buttons — direct OAuth, no middleman */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
