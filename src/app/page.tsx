@@ -1,5 +1,5 @@
 ﻿'use client'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth, SignOutButton } from '@clerk/nextjs'
@@ -12,6 +12,28 @@ import { TIER_METADATA as HOMEPAGE_TIER_META, TIER_FEATURES as HOMEPAGE_TIER_FEA
 export default function HomePage() {
   const { isSignedIn } = useAuth()
   const [logoHovered, setLogoHovered] = useState(false)
+
+  // Bounce-in animation for the mobile dashboard preview. IntersectionObserver
+  // fires once the section scrolls into view and adds .is-revealed → CSS
+  // keyframes do the scale-pop + settle. Only runs once per page load.
+  const mobileDashRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const el = mobileDashRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            el.classList.add('is-revealed')
+            obs.disconnect()
+          }
+        }
+      },
+      { threshold: 0.18 },
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
 
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#F2F9F5', color: '#0B1F3A', minHeight: '100vh', overflowX: 'hidden' }}>
@@ -738,7 +760,7 @@ export default function HomePage() {
           mobile (.hero-stage display:none). Surface it here so mobile
           visitors still see what they're getting before they hit the
           consulting reports section. CSS class hides this on desktop. */}
-      <section className="mobile-dash-preview">
+      <section className="mobile-dash-preview" ref={mobileDashRef}>
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 8px 8px' }}>
           <div style={{ fontSize: 11, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.16em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 10 }}>
             What you see when you log in
