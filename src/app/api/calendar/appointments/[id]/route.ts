@@ -6,6 +6,10 @@ import {
   cancelAppointment,
   type AppointmentInput,
 } from '@/lib/calendar/appointments'
+import {
+  updateExternalForAppointment,
+  deleteExternalForAppointment,
+} from '@/lib/calendar/syncOut'
 
 /**
  * GET /api/calendar/appointments/[id]
@@ -44,6 +48,15 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
 
   const updated = await updateAppointment({ userId, id, patch: body })
   if (!updated) return NextResponse.json({ error: 'Update failed' }, { status: 500 })
+
+  // Best-effort sync to external calendar (Google/Outlook). Falls back
+  // to a fresh push if the appointment was never synced before.
+  try {
+    await updateExternalForAppointment(updated)
+  } catch (e) {
+    console.warn('[appointments PATCH] sync-out threw:', (e as Error).message)
+  }
+
   return NextResponse.json({ appointment: updated })
 }
 
@@ -51,7 +64,21 @@ export async function DELETE(_req: NextRequest, ctx: RouteCtx) {
   const { userId } = await effectiveAuth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await ctx.params
+
+  // Load the row BEFORE cancelling so we still have external_event_id to
+  // delete in the mirror calendar.
+  const existing = await getAppointment(userId, id)
+
   const ok = await cancelAppointment(userId, id)
   if (!ok) return NextResponse.json({ error: 'Cancel failed' }, { status: 500 })
+
+  if (existing) {
+    try {
+      await deleteExternalForAppointment(existing)
+    } catch (e) {
+      console.warn('[appointments DELETE] sync-out threw:', (e as Error).message)
+    }
+  }
+
   return NextResponse.json({ ok: true })
 }

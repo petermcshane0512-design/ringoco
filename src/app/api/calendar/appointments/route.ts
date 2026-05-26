@@ -6,6 +6,7 @@ import {
   type AppointmentInput,
   type BlockType,
 } from '@/lib/calendar/appointments'
+import { pushAppointmentOut } from '@/lib/calendar/syncOut'
 
 /**
  * GET /api/calendar/appointments?from=ISO&to=ISO
@@ -100,5 +101,17 @@ export async function POST(req: NextRequest) {
   if (!created) {
     return NextResponse.json({ error: 'Failed to create appointment' }, { status: 500 })
   }
-  return NextResponse.json({ appointment: created }, { status: 201 })
+
+  // Best-effort outbound sync to Google/Outlook. Failure does not block
+  // the response — the native row is already saved. Sync errors land in
+  // server logs + can be reconciled by a daily cron (TBD).
+  let syncedTo: 'google' | 'microsoft' | undefined
+  try {
+    const r = await pushAppointmentOut(created)
+    if (r.ok && r.provider) syncedTo = r.provider
+  } catch (e) {
+    console.warn('[appointments POST] sync-out threw:', (e as Error).message)
+  }
+
+  return NextResponse.json({ appointment: created, syncedTo }, { status: 201 })
 }

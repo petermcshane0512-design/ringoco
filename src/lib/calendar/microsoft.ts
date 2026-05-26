@@ -489,6 +489,84 @@ function stripZ(iso: string): string {
   return iso.endsWith('Z') ? iso.slice(0, -1) : iso
 }
 
+/**
+ * Update an existing Outlook event. Used by the outbound-sync layer when
+ * a contractor reschedules / edits an appointment in BellAveGo that was
+ * previously mirrored to Microsoft.
+ */
+export async function updateMicrosoftEvent(args: {
+  connection: CalendarConnectionRow
+  eventId: string
+  event: MicrosoftEventInput
+}): Promise<MicrosoftEventResult> {
+  if (!canWriteToMicrosoft(args.connection)) {
+    return { ok: false, error: 'Outlook connection lacks Calendars.ReadWrite scope — reconnect required.' }
+  }
+  const accessToken = await getValidAccessToken(args.connection)
+  if (!accessToken) return { ok: false, error: 'Could not refresh access token.' }
+
+  const tz = args.event.timezone || args.connection.timezone || 'America/Chicago'
+  const body = {
+    subject: args.event.summary,
+    body: args.event.description ? { contentType: 'text', content: args.event.description } : undefined,
+    location: args.event.location ? { displayName: args.event.location } : undefined,
+    start: { dateTime: stripZ(args.event.startISO), timeZone: tz },
+    end:   { dateTime: stripZ(args.event.endISO),   timeZone: tz },
+  }
+
+  try {
+    const res = await fetch(`${MS_GRAPH_BASE}/me/events/${encodeURIComponent(args.eventId)}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '')
+      await logCalendarEvent(args.connection.user_id, 'microsoft', 'event_update_failed', `${res.status} ${txt.slice(0, 200)}`)
+      return { ok: false, error: `Microsoft Graph ${res.status}: ${txt.slice(0, 200)}`, status: res.status }
+    }
+    const j = (await res.json()) as { id?: string; webLink?: string }
+    await logCalendarEvent(args.connection.user_id, 'microsoft', 'event_updated', args.eventId)
+    return { ok: true, eventId: j.id ?? args.eventId, webLink: j.webLink }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * Delete an Outlook event. Idempotent — 404/410 treated as success.
+ */
+export async function deleteMicrosoftEvent(args: {
+  connection: CalendarConnectionRow
+  eventId: string
+}): Promise<{ ok: boolean; error?: string }> {
+  if (!canWriteToMicrosoft(args.connection)) {
+    return { ok: false, error: 'Outlook connection lacks Calendars.ReadWrite scope.' }
+  }
+  const accessToken = await getValidAccessToken(args.connection)
+  if (!accessToken) return { ok: false, error: 'Could not refresh access token.' }
+
+  try {
+    const res = await fetch(`${MS_GRAPH_BASE}/me/events/${encodeURIComponent(args.eventId)}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    if (res.status === 404 || res.status === 410) {
+      await logCalendarEvent(args.connection.user_id, 'microsoft', 'event_delete_noop', args.eventId)
+      return { ok: true }
+    }
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '')
+      await logCalendarEvent(args.connection.user_id, 'microsoft', 'event_delete_failed', `${res.status} ${txt.slice(0, 200)}`)
+      return { ok: false, error: `Microsoft Graph ${res.status}: ${txt.slice(0, 200)}` }
+    }
+    await logCalendarEvent(args.connection.user_id, 'microsoft', 'event_deleted', args.eventId)
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
 export async function disconnectMicrosoftCalendar(userId: string): Promise<{ ok: boolean }> {
   // Microsoft Graph doesn't expose a token-revocation endpoint for delegated
   // permissions (the user can revoke via account.microsoft.com → Privacy →

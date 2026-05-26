@@ -456,6 +456,105 @@ export async function listGoogleEvents(args: {
   }
 }
 
+/**
+ * Update an existing Google Calendar event. Used by the BellAveGo
+ * outbound-sync layer when a contractor reschedules / edits an
+ * appointment that was previously mirrored to Google.
+ *
+ * Returns ok=false with status=404 if the event was deleted in Google
+ * directly (in which case the caller may want to clear external_event_id
+ * and create a fresh one — or accept the desync).
+ */
+export async function updateGoogleEvent(args: {
+  connection: CalendarConnectionRow
+  eventId: string
+  event: GoogleEventInput
+}): Promise<GoogleEventResult> {
+  if (!canWriteToGoogle(args.connection)) {
+    return { ok: false, error: 'Google connection lacks write scope — reconnect required.' }
+  }
+  const accessToken = await getValidAccessToken(args.connection)
+  if (!accessToken) return { ok: false, error: 'Could not refresh access token.' }
+
+  const calendarId = args.connection.calendar_id || 'primary'
+  const tz = args.event.timezone || args.connection.timezone || 'America/Chicago'
+
+  const body = {
+    summary: args.event.summary,
+    description: args.event.description,
+    location: args.event.location,
+    start: { dateTime: args.event.startISO, timeZone: tz },
+    end:   { dateTime: args.event.endISO,   timeZone: tz },
+    extendedProperties: {
+      shared: { bellavego_source: 'ai_booking' },
+    },
+  }
+
+  try {
+    const res = await fetch(
+      `${GOOGLE_API_BASE}/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(args.eventId)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      },
+    )
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '')
+      await logCalendarEvent(args.connection.user_id, 'google', 'event_update_failed', `${res.status} ${txt.slice(0, 200)}`)
+      return { ok: false, error: `Google API ${res.status}: ${txt.slice(0, 200)}`, status: res.status }
+    }
+    const j = (await res.json()) as { id?: string; htmlLink?: string }
+    await logCalendarEvent(args.connection.user_id, 'google', 'event_updated', args.eventId)
+    return { ok: true, eventId: j.id ?? args.eventId, htmlLink: j.htmlLink }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * Delete an event from Google Calendar. Used when a BellAveGo appointment
+ * is cancelled. Idempotent — 404 is treated as success (already gone).
+ */
+export async function deleteGoogleEvent(args: {
+  connection: CalendarConnectionRow
+  eventId: string
+}): Promise<{ ok: boolean; error?: string }> {
+  if (!canWriteToGoogle(args.connection)) {
+    return { ok: false, error: 'Google connection lacks write scope.' }
+  }
+  const accessToken = await getValidAccessToken(args.connection)
+  if (!accessToken) return { ok: false, error: 'Could not refresh access token.' }
+
+  const calendarId = args.connection.calendar_id || 'primary'
+  try {
+    const res = await fetch(
+      `${GOOGLE_API_BASE}/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(args.eventId)}`,
+      {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      },
+    )
+    if (res.status === 404 || res.status === 410) {
+      // Event already deleted in Google — treat as success
+      await logCalendarEvent(args.connection.user_id, 'google', 'event_delete_noop', args.eventId)
+      return { ok: true }
+    }
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '')
+      await logCalendarEvent(args.connection.user_id, 'google', 'event_delete_failed', `${res.status} ${txt.slice(0, 200)}`)
+      return { ok: false, error: `Google API ${res.status}: ${txt.slice(0, 200)}` }
+    }
+    await logCalendarEvent(args.connection.user_id, 'google', 'event_deleted', args.eventId)
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
 export async function disconnectGoogleCalendar(userId: string): Promise<{ ok: boolean }> {
   // Best-effort revoke at Google (so the connection vanishes from their account too)
   try {
