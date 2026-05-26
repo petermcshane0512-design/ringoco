@@ -12,6 +12,111 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   MOBILE LANDING-PAGE REDESIGN (≤820px, public site only)
+   ─────────────────────────────────────────────────────────────────
+   Goal: one continuous dark-navy-to-teal gradient stage with subtle
+   mesh lighting + soft aqua glows. All sections float as glass cards
+   above the shared bg — no hard section breaks. Stripe / Linear /
+   Apple SaaS premium feel.
+
+   Strategy: scoped to `body.bavg-landing` so dashboard + auth pages
+   are untouched. The landing layout adds that class. Mobile-only via
+   @media. Desktop renders the original carefully-designed page.
+   ───────────────────────────────────────────────────────────────── */
+@media (max-width: 820px) {
+  body.bavg-landing {
+    background:
+      radial-gradient(900px 600px at 88% 6%, rgba(255,157,90,0.10), transparent 60%),
+      radial-gradient(1100px 700px at 78% 35%, rgba(10,168,159,0.18), transparent 65%),
+      radial-gradient(1000px 800px at 12% 75%, rgba(94,234,212,0.16), transparent 70%),
+      radial-gradient(800px 600px at 50% 95%, rgba(20,184,166,0.14), transparent 70%),
+      linear-gradient(180deg, #050E1F 0%, #0B1F3A 18%, #0F3454 45%, #1F6885 72%, #2D7A92 100%) fixed !important;
+    background-attachment: fixed !important;
+    color: #E2EBF0 !important;
+  }
+
+  /* Strip every section's own background so the body gradient shows
+     through continuously. Sections become invisible containers. */
+  body.bavg-landing main > section,
+  body.bavg-landing main > div > section,
+  body.bavg-landing section.appt-section,
+  body.bavg-landing section.mobile-dash-preview,
+  body.bavg-landing .hero-wrap,
+  body.bavg-landing .cs-section,
+  body.bavg-landing .cs-rib,
+  body.bavg-landing footer {
+    background: transparent !important;
+    background-color: transparent !important;
+  }
+
+  /* Hide the dark-blue final CTA section's solid bg too — it was a
+     full-bleed navy block that broke the gradient flow. */
+  body.bavg-landing section[style*="0B1F3A"],
+  body.bavg-landing section[style*="050E1F"],
+  body.bavg-landing section[style*="F2F9F5"],
+  body.bavg-landing section[style*="FFF7EE"],
+  body.bavg-landing section[style*="F5F1EA"] {
+    background: transparent !important;
+  }
+
+  /* Universal glassmorphism for any "card" element on the landing page.
+     Targets the common patterns: white bg, light cream bg, white border-
+     radius. Converts to translucent dark glass with backdrop blur. */
+  body.bavg-landing [class*="card"],
+  body.bavg-landing [style*="background: #fff"],
+  body.bavg-landing [style*="background:#fff"],
+  body.bavg-landing [style*="background: white"],
+  body.bavg-landing [style*="background: #ffffff"],
+  body.bavg-landing [style*="background:#ffffff"],
+  body.bavg-landing [style*="background: #FFFFFF"] {
+    background: rgba(255, 255, 255, 0.06) !important;
+    backdrop-filter: blur(18px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(140%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    color: #E2EBF0 !important;
+  }
+
+  /* Text inside the redesigned mobile landing — flip dark navy text to
+     light cream/cyan for contrast against the dark gradient. */
+  body.bavg-landing main h1,
+  body.bavg-landing main h2,
+  body.bavg-landing main h3 {
+    color: #F1F8FB !important;
+  }
+  body.bavg-landing main p,
+  body.bavg-landing main li,
+  body.bavg-landing main span:not(.accent):not([class*="cta"]):not([class*="badge"]):not([class*="pulse"]) {
+    color: rgba(226, 235, 240, 0.84) !important;
+  }
+  body.bavg-landing main a:not([class*="cta"]):not([class*="pulse"]):not(.nav-cta) {
+    color: #5EEAD4 !important;
+  }
+
+  /* CTAs stay vibrant — these are the hierarchy anchors. Don't drown
+     them in the glass treatment. */
+  body.bavg-landing .nav-cta,
+  body.bavg-landing .hero-cta-primary,
+  body.bavg-landing [class*="cta-primary"],
+  body.bavg-landing .price-pulse,
+  body.bavg-landing .why-pulse,
+  body.bavg-landing .dash-pulse {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Top nav becomes translucent dark glass instead of opaque white. */
+  body.bavg-landing .bavg-top-nav {
+    background: rgba(11, 31, 58, 0.55) !important;
+    backdrop-filter: blur(20px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(140%) !important;
+    border-bottom: 1px solid rgba(94, 234, 212, 0.18) !important;
+  }
+}
+
 /* ── Hide Clerk social-auth (Google) buttons + "or" divider site-wide.
    Inline appearance.elements override gets clobbered by Clerk's own
    higher-specificity stylesheet — only global !important wins reliably.

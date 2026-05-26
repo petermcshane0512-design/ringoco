@@ -1,5 +1,5 @@
 ﻿'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth, SignOutButton } from '@clerk/nextjs'
@@ -12,6 +12,14 @@ import { TIER_METADATA as HOMEPAGE_TIER_META, TIER_FEATURES as HOMEPAGE_TIER_FEA
 export default function HomePage() {
   const { isSignedIn } = useAuth()
   const [logoHovered, setLogoHovered] = useState(false)
+
+  // Tag body so the mobile-only redesign CSS in globals.css (scoped to
+  // body.bavg-landing) only runs on the public landing page — never on
+  // dashboard or auth pages. Cleaned up on unmount.
+  useEffect(() => {
+    document.body.classList.add('bavg-landing')
+    return () => { document.body.classList.remove('bavg-landing') }
+  }, [])
 
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#F2F9F5', color: '#0B1F3A', minHeight: '100vh', overflowX: 'hidden' }}>
