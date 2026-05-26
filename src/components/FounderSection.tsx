@@ -223,7 +223,7 @@ export default function FounderSection() {
               BellAveGo is the version contractors actually deserve. Answers like a real receptionist. Texts you the lead. Pays for itself in one booked job. No contracts.
             </p>
             <p>
-              If it doesn&apos;t earn its keep in the first 30 days, you get a full refund and we part on good terms. That&apos;s the deal.
+              Try it free for a week. If it doesn&apos;t earn its keep, cancel before day 8 and you&apos;re never charged. That&apos;s the deal.
             </p>
           </div>
 

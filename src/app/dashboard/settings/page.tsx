@@ -709,8 +709,7 @@ export default function SettingsPage() {
                   Cancel subscription
                 </div>
                 <p style={{ fontSize: 12, color: '#7AAAB2', marginBottom: 10, lineHeight: 1.5 }}>
-                  Within 30 days of signup → full refund. After 30 days → cancellation only.
-                  Your BellAveGo number will be paused.
+                  Cancel during your 1-week free trial (day 1–7) and no charge ever fires. After day 8, cancelling stops your next renewal. Your BellAveGo number will be paused.
                 </p>
                 <button
                   onClick={openCancelModal}
