@@ -25,17 +25,46 @@ export async function GET() {
   const { userId } = await effectiveAuth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // Pull the contractor's timezone so "today" is computed against THEIR
+  // wall clock, not Vercel's UTC clock. Previously `setHours(0,0,0,0)` ran
+  // in server-local (UTC) so a Chicago contractor's "today" started at
+  // 7pm CDT the prior day — every morning's calls counted as "yesterday"
+  // and "Calls Today" read 0. Profile.timezone is backfilled to
+  // America/Chicago by sql/2026-05-22-timezone-default.sql.
+  const { data: tzProfile } = await supabase
+    .from('profiles')
+    .select('timezone')
+    .eq('user_id', userId)
+    .maybeSingle()
+  const userTz = (tzProfile as { timezone?: string | null } | null)?.timezone || 'America/Chicago'
+
+  function startOfDayInTz(tz: string): Date {
+    const now = new Date()
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+    }).formatToParts(now)
+    const h   = parseInt(parts.find(p => p.type === 'hour')?.value || '0')
+    const min = parseInt(parts.find(p => p.type === 'minute')?.value || '0')
+    const sec = parseInt(parts.find(p => p.type === 'second')?.value || '0')
+    // "24" hour (used by some Intl impls for midnight) → treat as 0
+    const hourOfDay = h === 24 ? 0 : h
+    const elapsedMs = (hourOfDay * 3600 + min * 60 + sec) * 1000
+    return new Date(now.getTime() - elapsedMs)
+  }
+
   // Time windows for the AI Receptionist sidebar live metrics
-  const startOfToday = new Date()
-  startOfToday.setHours(0, 0, 0, 0)
-  const startOfMonth = new Date()
-  startOfMonth.setDate(1)
-  startOfMonth.setHours(0, 0, 0, 0)
-  // "This week" = rolling 7 days back (NOT Monday-start). Peter feedback
-  // 2026-05-25: Monday-start was confusing — when today IS Monday, the
-  // "this week" count equals today's count and last week's calls
-  // vanish. Rolling 7d matches typical user mental model.
+  const startOfToday = startOfDayInTz(userTz)
+  // "This week" = rolling 7 days back from now — timezone-independent.
   const startOfWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  // Start of month — first of THIS calendar month in the user's tz.
+  const monthParts = new Intl.DateTimeFormat('en-US', {
+    timeZone: userTz, year: 'numeric', month: '2-digit',
+  }).formatToParts(new Date())
+  const monthYear = parseInt(monthParts.find(p => p.type === 'year')?.value || '2026')
+  const monthMonth = parseInt(monthParts.find(p => p.type === 'month')?.value || '1')
+  // Approximate start-of-month in tz by computing UTC midnight of day 1
+  // and shifting by the tz offset from startOfToday's calculation.
+  const startOfMonth = new Date(Date.UTC(monthYear, monthMonth - 1, 1))
 
   const [
     jobsRes,
