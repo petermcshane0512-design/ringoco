@@ -33,9 +33,7 @@ export default function HomePage() {
             height={210}
             style={{
               objectFit: 'contain',
-              height: 52,
-              width: 'auto',
-              marginTop: 8,
+              marginTop: 10,
               transform: logoHovered ? 'scale(1.08)' : 'scale(1)',
               filter: logoHovered ? 'drop-shadow(0 0 14px rgba(24,175,168,0.55))' : 'none',
               transition: 'transform 0.25s ease, filter 0.25s ease',
@@ -431,21 +429,17 @@ export default function HomePage() {
 
             /* ── Mobile (iOS portrait / cold-email-click experience) ── */
             @media (max-width: 768px) {
-              /* Headline + CTAs sit IMMEDIATELY below the nav. Zero top
-                 padding on the grid. Hero content fills the viewport above
-                 the fold without scroll. */
-              .hero-grid { padding: 4px 14px 0 !important; gap: 10px !important; grid-template-columns: 1fr !important; }
-              /* Drop the eyebrow on mobile — pushes headline below the fold. */
-              .hero-eyebrow { display: none !important; }
-              .hero-h1 { font-size: clamp(38px, 10.5vw, 50px) !important; line-height: 1.02 !important; margin-bottom: 8px !important; margin-top: 0 !important; letter-spacing: -0.03em !important; }
-              .hero-sub { font-size: 14.5px !important; line-height: 1.45 !important; margin-bottom: 12px !important; max-width: 100% !important; }
+              .hero-grid { padding: 24px 16px 26px; gap: 18px; grid-template-columns: 1fr; }
+              .hero-eyebrow { font-size: 10.5px; margin-bottom: 14px; padding: 5px 11px; }
+              .hero-h1 { font-size: clamp(40px, 11vw, 48px); line-height: 1.02; margin-bottom: 16px; letter-spacing: -0.03em; }
+              .hero-sub { font-size: 15.5px; line-height: 1.55; margin-bottom: 22px; max-width: 100%; }
 
               /* CTAs become full-width thumb-targets, explicitly centered.
                  The !important on width / box-sizing prevents content from
                  spilling outside the button on narrow viewports. */
               .hero-actions {
-                gap: 8px !important;
-                margin-bottom: 10px !important;
+                gap: 10px !important;
+                margin-bottom: 22px !important;
                 flex-direction: column !important;
                 align-items: stretch !important;
                 width: 100% !important;
@@ -504,44 +498,10 @@ export default function HomePage() {
                  (hidden on desktop where the hero already shows it) */
               .mobile-dash-preview { display: block !important; padding: 40px 0 8px !important; }
 
-              /* Hero container — kill the desktop min-height + use the EXACT
-                 same dark navy + grid-mesh bg as the dashboard preview AND
-                 the consulting section below it. Hero → preview → consulting
-                 = one continuous dark stage. The teal/orange radial accents
-                 stay so the brand callback still glows through.
-                 Desktop dark-navy version is preserved — this override only
-                 runs inside the mobile @media block. */
-              .hero-wrap {
-                min-height: 0 !important;
-                background:
-                  radial-gradient(900px 500px at 90% 8%, rgba(232,123,55,0.18), transparent 65%),
-                  radial-gradient(700px 500px at 8% 92%, rgba(94,234,212,0.10), transparent 65%),
-                  linear-gradient(180deg, #050E1F 0%, #0B1F3A 55%, #112C4A 100%) !important;
-                position: relative;
-                overflow: hidden;
-              }
-              /* Grid mesh overlay — matches .cs-root::before so the hero
-                 carries the same tech texture as the consulting section. */
-              .hero-wrap::before {
-                content: '' !important;
-                position: absolute !important;
-                inset: 0 !important;
-                background-image:
-                  linear-gradient(rgba(94,234,212,0.045) 1px, transparent 1px),
-                  linear-gradient(90deg, rgba(94,234,212,0.045) 1px, transparent 1px) !important;
-                background-size: 60px 60px !important;
-                mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 55%, transparent 100%) !important;
-                -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 55%, transparent 100%) !important;
-                pointer-events: none !important;
-                z-index: 0 !important;
-              }
-              /* Hide the bottom-wave silhouette + base wave overlays on mobile
-                 — they were designed to bridge the teal hero; not needed now
-                 that the hero is dark navy. */
-              .hero-wrap::after { display: none !important; }
-              .hero-waves { display: none !important; }
-              /* Lift hero content above the grid mesh overlay. */
-              .hero-wrap > * { position: relative; z-index: 1; }
+              /* Hero container — kill the desktop min-height: 640px so the
+                 cream consulting section begins right after the dashboard
+                 (no trailing dark-blue dead space). */
+              .hero-wrap { min-height: 0 !important; }
 
               /* Pricing grid — 1-col stacked (Peter wants each card
                  stretched full-width), tight gaps to kill dead space. */
@@ -660,8 +620,8 @@ export default function HomePage() {
                   <span className="hero-trust-lab">Always on</span>
                 </div>
                 <div className="hero-trust-item">
-                  <span className="hero-trust-num">7‑day</span>
-                  <span className="hero-trust-lab">Free trial</span>
+                  <span className="hero-trust-num">30‑day</span>
+                  <span className="hero-trust-lab">Money‑back</span>
                 </div>
               </div>
             </div>
@@ -1248,7 +1208,7 @@ export default function HomePage() {
                 )}
               </div>
               <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.38)' : '#7AAAB2', marginBottom: 6 }}>{plan.customCta ? 'pricing per location' : 'per month · cancel anytime'}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>{plan.customCta ? 'White-glove kickoff included' : '7-day free trial · Cancel anytime'}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>{plan.customCta ? 'White-glove kickoff included' : '30-day money-back if not satisfied · Cancel anytime'}</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: plan.popular ? '#18AFA8' : '#0AA89F', marginBottom: 16 }}>{plan.calls} calls</div>
               <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.6)' : '#4A7A80', marginBottom: 24, lineHeight: 1.6 }}>{plan.desc}</div>
               <div style={{ marginBottom: 24 }}>
@@ -1285,8 +1245,9 @@ export default function HomePage() {
           ))}
         </div>
         <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 16, lineHeight: 1.6 }}>
-          Month-to-month · 7-day free trial · Card collected at signup, first month billed on day 8 if you stay · 17% off annual.<br />
-          <span style={{ fontWeight: 700, color: '#0AA89F' }}>Most contractors book their first new job before the trial even ends.</span>
+          Month-to-month · 30-day money-back if not satisfied · 17% off annual.<br />
+          <span style={{ fontWeight: 700, color: '#0AA89F' }}>Most contractors recover the month on their first booked job.</span><br />
+          90-day money-back if we don&apos;t add at least 5 booked jobs.
         </p>
       </section>
 
@@ -1319,7 +1280,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <Image src="/logo.png" alt="BellAveGo" width={300} height={100} style={{ objectFit: 'contain' }} />
           <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
-          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>AI receptionist and growth platform for home-service businesses · From $147/mo · 7-day free trial · Cancel anytime</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>AI receptionist and growth platform for home-service businesses · From $147/mo · 30-day money-back if not satisfied · Cancel anytime</p>
           <p style={{ margin: '8px 0 0', fontSize: 11, color: '#3D5A62' }}>
             <Link href="/privacy" style={{ color: '#7AAAB2', textDecoration: 'none' }}>Privacy</Link>
             {' · '}

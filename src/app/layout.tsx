@@ -4,12 +4,10 @@ import "./globals.css";
 
 export const viewport: Viewport = {
   width: "device-width",
-  // Default mobile scale (1.0). Previously dropped to 0.6 to fit dashboard
-  // tables which crushed the landing page's hero proportions — making
-  // content look tiny inside a huge "empty" bg. Dashboard tables now
-  // handle their own horizontal scroll wrappers, so we keep the natural
-  // scale here for proper landing-page sizing.
-  initialScale: 1,
+  // Mobile zoom-out (~40%) so dashboard cards + tables fit cleanly on
+  // phones. User can pinch-zoom in (maximumScale: 5) for fine reading.
+  // Desktop ignores this entirely.
+  initialScale: 0.6,
   maximumScale: 5,
   themeColor: "#0B1F3A",
 };
@@ -25,7 +23,7 @@ export const metadata: Metadata = {
     template: "%s · BellAveGo",
   },
   description:
-    "AI answers every call, books the job, follows up on quotes, recovers past-due invoices, and runs your marketing — automatically. Built for home service contractors of 1–15. From $147/mo. 7-day free trial, cancel anytime.",
+    "AI answers every call, books the job, follows up on quotes, recovers past-due invoices, and runs your marketing — automatically. Built for home service contractors of 1–15. From $147/mo. 30-day money-back.",
   applicationName: "BellAveGo",
   keywords: [
     "AI receptionist",
