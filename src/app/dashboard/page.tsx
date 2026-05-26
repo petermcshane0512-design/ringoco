@@ -75,6 +75,21 @@ export default function DashboardPage() {
   const [callsToday, setCallsToday] = useState(0);
   const [callsThisWeek, setCallsThisWeek] = useState(0);
   const [leadsThisMonth, setLeadsThisMonth] = useState(0);
+  // Activity feed — persistent in-app history of every call. Survives the
+  // OS clearing push notifications + the contractor's inbox burying emails.
+  type ActivityRow = {
+    id: string
+    call_sid: string | null
+    caller_phone: string | null
+    job_type: string | null
+    job_created: boolean | null
+    booking_completed: boolean | null
+    summary: string | null
+    viewed_at: string | null
+    created_at: string
+  }
+  const [activity, setActivity] = useState<ActivityRow[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
   const router = useRouter();
   const { user } = useUser();
   const isAdmin = !!user?.primaryEmailAddress?.emailAddress &&
@@ -180,6 +195,35 @@ export default function DashboardPage() {
     setCallsThisWeek(summary.callsThisWeek || 0);
     setLeadsThisMonth(summary.leadsThisMonth || 0);
     setLoadingJobs(false);
+
+    // Activity feed — separate endpoint, runs in parallel-ish. Errors silently
+    // (the activity panel just hides if it can't load).
+    try {
+      const aRes = await fetch("/api/dashboard/activity?limit=15");
+      if (aRes.ok) {
+        const a = await aRes.json();
+        setActivity(a.activity || []);
+        setUnreadCount(a.unread || 0);
+      }
+    } catch {
+      /* non-fatal */
+    }
+  }
+
+  async function markAllActivityRead() {
+    try {
+      await fetch("/api/dashboard/activity?all=1", { method: "POST" });
+      setActivity((rows) => rows.map((r) => ({ ...r, viewed_at: new Date().toISOString() })));
+      setUnreadCount(0);
+    } catch {}
+  }
+
+  async function markActivityRead(id: string) {
+    try {
+      await fetch(`/api/dashboard/activity?id=${id}`, { method: "POST" });
+      setActivity((rows) => rows.map((r) => (r.id === id ? { ...r, viewed_at: new Date().toISOString() } : r)));
+      setUnreadCount((c) => Math.max(0, c - 1));
+    } catch {}
   }
 
   async function startCheckout() {
@@ -686,6 +730,102 @@ export default function DashboardPage() {
                   </tbody>
                 </table>
                 </div>
+              )}
+            </div>
+          </div>
+
+          {/* Activity feed — persistent history of every call the AI handled.
+              Push notifications expire from the OS; this is the durable in-app
+              log. Unread badge + "Mark all read" button. */}
+          <div style={card}>
+            <div style={{ ...cardHead, alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={cardTitle}>Recent activity</div>
+                {unreadCount > 0 && (
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    minWidth: 22, height: 22, padding: '0 8px',
+                    background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+                    color: '#fff', borderRadius: 99,
+                    fontSize: 11, fontWeight: 900, letterSpacing: '-0.2px',
+                    boxShadow: '0 2px 8px rgba(232,116,43,0.32)',
+                  }}>
+                    {unreadCount} new
+                  </span>
+                )}
+              </div>
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllActivityRead}
+                  style={{ fontSize: 11, fontWeight: 700, color: '#0AA89F', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  Mark all read →
+                </button>
+              )}
+            </div>
+            <div style={{ padding: '0 20px 16px' }}>
+              {activity.length === 0 ? (
+                <div style={emptyBox}>
+                  <div style={emptyTitle}>No activity yet</div>
+                  <div style={emptySub}>Every call the AI handles will show up here — with full transcripts.</div>
+                </div>
+              ) : (
+                <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {activity.map((a) => {
+                    const isUnread = !a.viewed_at
+                    const created = new Date(a.created_at)
+                    const minutesAgo = Math.round((Date.now() - created.getTime()) / 60000)
+                    const timeLabel = minutesAgo < 1 ? 'just now'
+                      : minutesAgo < 60 ? `${minutesAgo}m ago`
+                      : minutesAgo < 1440 ? `${Math.round(minutesAgo / 60)}h ago`
+                      : created.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                    const phonePretty = a.caller_phone
+                      ? a.caller_phone.replace(/^\+1(\d{3})(\d{3})(\d{4})$/, '($1) $2-$3')
+                      : 'unknown caller'
+                    const summaryShort = (a.summary || a.job_type || 'Call received').slice(0, 110)
+                    const isDbFail = a.summary?.startsWith('DB_INSERT_FAILED')
+                    return (
+                      <li
+                        key={a.id}
+                        onClick={() => isUnread && markActivityRead(a.id)}
+                        style={{
+                          padding: '12px 14px',
+                          borderRadius: 10,
+                          background: isUnread ? 'linear-gradient(90deg, rgba(255,157,90,0.08), rgba(255,157,90,0.02))' : '#F8FCFB',
+                          border: `1px solid ${isUnread ? 'rgba(232,116,43,0.22)' : 'rgba(10,168,159,0.10)'}`,
+                          cursor: isUnread ? 'pointer' : 'default',
+                          display: 'flex', alignItems: 'flex-start', gap: 10,
+                          transition: 'background 0.15s ease',
+                        }}
+                      >
+                        {isUnread && (
+                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#E8742B', flexShrink: 0, marginTop: 6, boxShadow: '0 0 0 2px rgba(232,116,43,0.16)' }} />
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 3 }}>
+                            <span style={{ fontSize: 13, fontWeight: 800, color: '#0B1F3A' }}>
+                              {a.booking_completed ? '✅ Booked' : a.job_created ? '📞 Lead captured' : isDbFail ? '⚠️ Save failed' : '📞 Call'}
+                            </span>
+                            <span style={{ fontSize: 11.5, color: '#7AAAB2', fontWeight: 600 }}>{phonePretty}</span>
+                            <span style={{ fontSize: 11, color: '#A0BCC2', marginLeft: 'auto' }}>{timeLabel}</span>
+                          </div>
+                          <div style={{ fontSize: 12.5, color: '#4A6670', lineHeight: 1.45 }}>
+                            {summaryShort}{summaryShort.length === 110 ? '…' : ''}
+                          </div>
+                          {a.caller_phone && (
+                            <a
+                              href={`tel:${a.caller_phone}`}
+                              onClick={(e) => e.stopPropagation()}
+                              style={{ display: 'inline-block', marginTop: 6, fontSize: 11.5, fontWeight: 700, color: '#0AA89F', textDecoration: 'none' }}
+                            >
+                              📲 Tap to call back
+                            </a>
+                          )}
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ul>
               )}
             </div>
           </div>
