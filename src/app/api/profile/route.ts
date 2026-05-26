@@ -46,6 +46,10 @@ const SAFE_PROFILE_COLUMNS = new Set([
   'vapi_phone_number_id',
   // ── auto-booking controls (sql/2026-05-21-auto-booking-controls.sql) ──
   'auto_booking_enabled', 'auto_booking_min_hour', 'auto_booking_max_hour',
+  // ── appointment settings (migration 021) ──────────────────────────
+  // Used by /lib/calendar/availability.ts to decide how long the AI
+  // blocks each booked job + how much travel buffer to leave before/after.
+  'default_job_duration_min', 'travel_buffer_min', 'appointment_settings_at',
 ])
 
 export async function POST(req: NextRequest) {

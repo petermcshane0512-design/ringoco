@@ -82,8 +82,23 @@ export async function findAvailableSlots(args: {
   // Per-connection defaults (use the first connection's preferences if multiple)
   const primary = conns[0]
   const timezone = primary.timezone || 'America/Chicago'
-  const durationMin = args.durationMin ?? primary.default_job_duration_min ?? 90
-  const bufferMin = primary.buffer_min ?? 30
+
+  // Pull profile-level appointment settings — set during onboarding via
+  // /dashboard/calendar Appointment Settings card. These take PRIORITY over
+  // per-connection settings so the contractor has one source of truth and
+  // settings exist even before a calendar is connected. Fallback chain:
+  //   profile.default_job_duration_min → connection.default_job_duration_min → 90
+  //   profile.travel_buffer_min        → connection.buffer_min               → 30
+  const { data: profileSettings } = await supabase
+    .from('profiles')
+    .select('default_job_duration_min, travel_buffer_min')
+    .eq('user_id', args.userId)
+    .maybeSingle()
+  const profileDur = (profileSettings as { default_job_duration_min?: number | null } | null)?.default_job_duration_min
+  const profileBuf = (profileSettings as { travel_buffer_min?: number | null } | null)?.travel_buffer_min
+
+  const durationMin = args.durationMin ?? profileDur ?? primary.default_job_duration_min ?? 90
+  const bufferMin = profileBuf ?? primary.buffer_min ?? 30
   const businessHours = primary.business_hours || {
     mon: [8, 18], tue: [8, 18], wed: [8, 18], thu: [8, 18], fri: [8, 18], sat: [9, 14], sun: null,
   }

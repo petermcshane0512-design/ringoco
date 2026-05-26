@@ -34,6 +34,46 @@ function CalendarPageInner() {
   const [disconnecting, setDisconnecting] = useState(false)
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [eventsLoading, setEventsLoading] = useState(false)
+  // Appointment settings — saved on profile (migration 021). Used by the AI
+  // when booking via the calendar to (a) know how long to block each job
+  // and (b) leave travel buffer before/after every existing event.
+  const [durationMin, setDurationMin] = useState<number>(90)
+  const [bufferMin, setBufferMin] = useState<number>(30)
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
+  const [savingSettings, setSavingSettings] = useState(false)
+  const [savedTick, setSavedTick] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/profile').then(r => r.json()).then((p) => {
+      if (p && !p.error) {
+        if (typeof p.default_job_duration_min === 'number') setDurationMin(p.default_job_duration_min)
+        if (typeof p.travel_buffer_min === 'number') setBufferMin(p.travel_buffer_min)
+      }
+      setSettingsLoaded(true)
+    }).catch(() => setSettingsLoaded(true))
+  }, [])
+
+  async function saveAppointmentSettings() {
+    setSavingSettings(true)
+    setSavedTick(false)
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          default_job_duration_min: durationMin,
+          travel_buffer_min: bufferMin,
+          appointment_settings_at: new Date().toISOString(),
+        }),
+      })
+      if (res.ok) {
+        setSavedTick(true)
+        setTimeout(() => setSavedTick(false), 2400)
+      }
+    } finally {
+      setSavingSettings(false)
+    }
+  }
   const flashStatus = params.get('calendar')
   const flashReason = params.get('reason')
   const flashAccount = params.get('account')
@@ -119,6 +159,154 @@ function CalendarPageInner() {
           Couldn&apos;t connect calendar. {flashReason ? <em>Reason: {flashReason}</em> : null} Try again, or text our team at 773-710-9565.
         </FlashBanner>
       )}
+
+      {/* ── APPOINTMENT SETTINGS — the rules the AI follows when booking.
+            Two sliders. Plain English. Saved to profile (migration 021)
+            so the AI applies these to EVERY booking attempt. ── */}
+      <div style={{
+        background: '#fff',
+        border: '1.5px solid #FF9D5A',
+        borderRadius: 16,
+        padding: '24px 28px',
+        marginBottom: 18,
+        boxShadow: '0 6px 22px rgba(232,116,43,0.10)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+          <span style={{
+            fontSize: 10, fontWeight: 900, color: '#fff',
+            background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+            padding: '3px 10px', borderRadius: 99,
+            letterSpacing: '0.14em', textTransform: 'uppercase',
+          }}>
+            Required first
+          </span>
+          <span style={{ fontSize: 11, color: '#7AAAB2', fontWeight: 600 }}>30 seconds</span>
+        </div>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.02em', margin: 0, marginBottom: 6 }}>
+          Set your appointment rules.
+        </h2>
+        <p style={{ fontSize: 14, color: '#4A6670', lineHeight: 1.55, margin: 0, marginBottom: 22 }}>
+          The AI uses these two numbers EVERY time it books a job for you. Set them once. Change anytime.
+        </p>
+
+        {/* Slider 1 — typical job duration */}
+        <div style={{ marginBottom: 22 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A' }}>
+              🕐 How long is a typical job?
+            </span>
+            <span style={{ fontSize: 22, fontWeight: 900, color: '#E8742B', letterSpacing: '-0.02em' }}>
+              {durationMin >= 60 ? `${Math.floor(durationMin / 60)}h${durationMin % 60 ? ` ${durationMin % 60}m` : ''}` : `${durationMin} min`}
+            </span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
+            {[30, 60, 90, 120, 180].map((min) => {
+              const active = durationMin === min
+              return (
+                <button
+                  key={min}
+                  onClick={() => setDurationMin(min)}
+                  style={{
+                    padding: '12px 6px',
+                    borderRadius: 10,
+                    border: active ? '2px solid #E8742B' : '1.5px solid rgba(232,116,43,0.20)',
+                    background: active ? 'linear-gradient(135deg, #FF9D5A, #E8742B)' : '#FFF7EE',
+                    color: active ? '#fff' : '#0B1F3A',
+                    fontSize: 13, fontWeight: 800,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  {min >= 60 ? `${min / 60}h${min % 60 ? `${min % 60}m` : ''}` : `${min}m`}
+                </button>
+              )
+            })}
+          </div>
+          <div style={{ fontSize: 12, color: '#7AAAB2', marginTop: 8, lineHeight: 1.5 }}>
+            The AI blocks this much time for every booked job. If a caller says &quot;just a quick fix&quot; or &quot;big install&quot;, the AI will adjust — but this is the default.
+          </div>
+        </div>
+
+        {/* Slider 2 — travel buffer */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A' }}>
+              🚗 Travel time between jobs?
+            </span>
+            <span style={{ fontSize: 22, fontWeight: 900, color: '#0AA89F', letterSpacing: '-0.02em' }}>
+              {bufferMin === 0 ? 'None' : `${bufferMin} min`}
+            </span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
+            {[0, 15, 30, 45, 60].map((min) => {
+              const active = bufferMin === min
+              return (
+                <button
+                  key={min}
+                  onClick={() => setBufferMin(min)}
+                  style={{
+                    padding: '12px 6px',
+                    borderRadius: 10,
+                    border: active ? '2px solid #0AA89F' : '1.5px solid rgba(10,168,159,0.20)',
+                    background: active ? 'linear-gradient(135deg, #0AA89F, #088A82)' : '#F0FBF8',
+                    color: active ? '#fff' : '#0B1F3A',
+                    fontSize: 13, fontWeight: 800,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  {min === 0 ? 'None' : `${min}m`}
+                </button>
+              )
+            })}
+          </div>
+          <div style={{ fontSize: 12, color: '#7AAAB2', marginTop: 8, lineHeight: 1.5 }}>
+            We&apos;ll leave this much space BEFORE and AFTER every existing event on your calendar. So a 30-min buffer means we won&apos;t book any job that ends less than 30 min before your next appointment.
+          </div>
+        </div>
+
+        {/* Live example so contractor sees the math */}
+        <div style={{
+          background: '#F5F1EA',
+          borderRadius: 10,
+          padding: '12px 14px',
+          marginBottom: 18,
+          fontSize: 12.5,
+          color: '#0B1F3A',
+          lineHeight: 1.55,
+        }}>
+          <strong style={{ color: '#E8742B' }}>Example:</strong> If you have an appointment at 11:00 AM, the AI won&apos;t book anything ending after {(() => {
+            const start = 11 * 60
+            const earliest = start - bufferMin
+            const h = Math.floor(earliest / 60), m = earliest % 60
+            return `${h % 12 || 12}:${String(m).padStart(2, '0')} AM`
+          })()} OR starting before {(() => {
+            const endOfPrev = 12 * 60 + bufferMin  // assume 11 AM job ends at noon, then add buffer
+            const h = Math.floor(endOfPrev / 60), m = endOfPrev % 60
+            return `${h % 12 || 12}:${String(m).padStart(2, '0')} PM`
+          })()}. Every booked job is {durationMin >= 60 ? `${Math.floor(durationMin / 60)}h${durationMin % 60 ? ` ${durationMin % 60}m` : ''}` : `${durationMin} min`} long with {bufferMin === 0 ? 'no' : `${bufferMin} min`} buffer on each side.
+        </div>
+
+        <button
+          onClick={saveAppointmentSettings}
+          disabled={!settingsLoaded || savingSettings}
+          style={{
+            width: '100%',
+            padding: '13px 18px',
+            borderRadius: 12,
+            border: 'none',
+            background: savedTick
+              ? 'linear-gradient(135deg, #22C55E, #16A34A)'
+              : 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+            color: '#fff',
+            fontSize: 14, fontWeight: 900,
+            cursor: savingSettings ? 'wait' : 'pointer',
+            fontFamily: 'inherit',
+            boxShadow: '0 6px 18px rgba(232,116,43,0.32)',
+            transition: 'background 0.18s ease',
+          }}
+        >
+          {savingSettings ? 'Saving…' : savedTick ? '✓ Saved — AI will use these rules' : 'Save these rules →'}
+        </button>
+      </div>
 
       {/* Single Connect-a-Calendar card — Cronofy handles the provider picker */}
       {cronofyConnection ? (
