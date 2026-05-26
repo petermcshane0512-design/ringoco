@@ -366,13 +366,18 @@ html { overflow-x: hidden; }
     margin-left: -18px !important;
     margin-right: -18px !important;
     width: calc(100% + 36px) !important;
-    /* Continue the hero's teal-blue gradient downward — picks up where the
-       hero ENDS (#2D7A92) and slides into a deeper teal-cyan. Result:
-       hero + dashboard preview = one continuous teal-blue stage. */
+    /* IDENTICAL bg to .hero-wrap above (same gradient stack + same
+       fixed attachment) so hero + preview render as ONE continuous
+       beach surface — the orange/teal/cyan glows continue seamlessly
+       behind both, with no visible boundary between sections. */
     background:
-      radial-gradient(900px 500px at 80% 20%, rgba(10,168,159,0.32), transparent 65%),
-      radial-gradient(800px 500px at 10% 90%, rgba(94,234,212,0.28), transparent 70%),
-      linear-gradient(180deg, #2D7A92 0%, #2A8A9E 50%, #3FA1B0 100%) !important;
+      radial-gradient(800px 400px at 88% 8%, rgba(255,157,90,0.22), transparent 60%),
+      radial-gradient(900px 500px at 72% 28%, rgba(232,116,43,0.16), transparent 65%),
+      radial-gradient(1100px 600px at 78% 55%, rgba(10,168,159,0.26), transparent 65%),
+      radial-gradient(900px 700px at 12% 85%, rgba(94,234,212,0.20), transparent 70%),
+      linear-gradient(180deg, #050E1F 0%, #0B1F3A 35%, #0F3454 78%, #2D7A92 100%) !important;
+    background-attachment: fixed !important;
+    background-size: cover !important;
   }
   .mobile-dash-preview > div {
     max-width: 100% !important;

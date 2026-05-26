@@ -542,10 +542,11 @@ export default function HomePage() {
                  (hidden on desktop where the hero already shows it) */
               .mobile-dash-preview { display: block !important; padding: 40px 0 8px !important; }
 
-              /* Hero — DESKTOP teal-blue gradient applied to mobile too. Same
-                 radial orange + teal + cyan accents over the deep-navy → teal
-                 vertical gradient. Bg bleeds full viewport width (escapes the
-                 parent section's 18px padding). Content sits top-LEFT. */
+              /* Hero — DESKTOP teal-blue gradient applied to mobile too AND
+                 fixed to the viewport so the dashboard-preview section
+                 below can SHARE the exact same backdrop. Result: hero +
+                 preview look like one continuous beach surface, no
+                 visible seam, same orange/teal/cyan glows behind both. */
               .hero-wrap {
                 margin-left: -18px !important;
                 margin-right: -18px !important;
@@ -558,6 +559,8 @@ export default function HomePage() {
                   radial-gradient(1100px 600px at 78% 55%, rgba(10,168,159,0.26), transparent 65%),
                   radial-gradient(900px 700px at 12% 85%, rgba(94,234,212,0.20), transparent 70%),
                   linear-gradient(180deg, #050E1F 0%, #0B1F3A 35%, #0F3454 78%, #2D7A92 100%) !important;
+                background-attachment: fixed !important;
+                background-size: cover !important;
                 overflow: hidden;
               }
               /* No grid-mesh overlay on the teal hero — it muddied the colors. */
