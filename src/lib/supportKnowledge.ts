@@ -80,15 +80,21 @@ export const SUPPORT_FAQ: FaqEntry[] = [
     escalateOnly: true, // Always escalate cancel intent so Peter can save the customer
   },
   {
-    topic: 'request_refund',
+    topic: 'cancel_or_refund_request',
     triggers: [
       'I want a refund',
       'refund my money',
       'this isn\'t working',
       'I want my money back',
+      'I want to cancel',
+      'cancel my subscription',
+      'how do I cancel',
     ],
-    answer: 'Refund requests handled personally — see thread.',
-    escalateOnly: true, // Always escalate refund requests
+    // No money-back guarantee anymore. New customers get a 7-day free trial:
+    // cancel before day 8 = no charge. After billing starts, cancels are at
+    // period-end with no refund. Refund exceptions are handled personally.
+    answer: 'Cancellation handled in-app under Settings → Subscription. During the 7-day free trial, no charge fires. After that, cancellation stops the next renewal; no refund on the current cycle. Exceptions escalated to Peter.',
+    escalateOnly: true,
   },
   {
     topic: 'billing_or_charge_question',

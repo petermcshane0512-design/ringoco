@@ -777,7 +777,7 @@ export default function SettingsPage() {
               <>
                 <div style={{ padding: '22px 26px 14px', borderBottom: '1px solid rgba(10,168,159,0.12)' }}>
                   <div style={{ fontSize: 10, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 6 }}>
-                    30-day money-back guarantee
+                    Cancel anytime — no refunds after trial
                   </div>
                   <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0B1F3A', margin: '0 0 6px', letterSpacing: '-0.3px' }}>
                     Sorry to see you go.

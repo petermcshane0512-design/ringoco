@@ -103,9 +103,9 @@ export async function POST(req: NextRequest) {
     // ── Stage 1: record PENDING referral (anti-abuse) ──
     // If this new customer was referred (profiles.referred_by set from the
     // bavg_ref cookie at signup), record a pending referral row. NO Stripe
-    // credit fires yet — that waits until the referred customer survives past
-    // day 31 (30-day money-back window + 1). The actual credit grant happens
-    // in the invoice.payment_succeeded handler below.
+    // credit fires yet — that waits until the referred customer survives the
+    // 7-day trial AND completes their first full paid month (~day 38). The
+    // actual credit grant happens in the invoice.payment_succeeded handler below.
     try {
       if (subscriptionId) {
         const subForReferral = await stripe.subscriptions.retrieve(subscriptionId)
@@ -213,7 +213,7 @@ export async function POST(req: NextRequest) {
 
         if (contractor?.owner_phone && !contractor.welcomed_at) {
           await twilioClient.messages.create({
-            body: `Welcome to BellAveGo, ${contractor.business_name || 'partner'}! Your AI receptionist is live at ${provisionedNumber}. Next step: set up call forwarding so missed calls ring through — walkthrough: https://www.bellavego.com/dashboard/forwarding. Heads up: full 30-day money-back guarantee if it's not the right fit, no questions asked. — BellAveGo team`,
+            body: `Welcome to BellAveGo, ${contractor.business_name || 'partner'}! Your AI receptionist is live at ${provisionedNumber}. Next step: set up call forwarding so missed calls ring through — walkthrough: https://www.bellavego.com/dashboard/forwarding. You're in your 7-day free trial — first charge hits day 8 unless you cancel. — BellAveGo team`,
             from: provisionedNumber,
             to: contractor.owner_phone,
           })

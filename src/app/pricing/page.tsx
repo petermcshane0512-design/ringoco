@@ -297,7 +297,7 @@ export default function PricingPage() {
                 <p style={{ fontSize: 11, color: plan.popular ? 'rgba(255,255,255,0.45)' : '#7AAAB2', textAlign: 'center', marginTop: 10, marginBottom: 0, fontWeight: 500 }}>
                   {plan.tier === 'concierge'
                     ? 'Launches Q3 2026 · Early-access pricing for waitlist'
-                    : '30-day full refund · Cancel anytime'}
+                    : '7-day free trial · Cancel anytime'}
                 </p>
               </div>
             )
@@ -410,7 +410,7 @@ export default function PricingPage() {
               },
               {
                 q: 'What if the AI says something wrong?',
-                a: 'Every call is recorded + transcribed in your dashboard. You can customize Emma\'s instructions (services, hours, tone) at any time. 30-day full-refund guarantee if she\'s not pulling her weight — no questions asked.',
+                a: 'Every call is recorded + transcribed in your dashboard. You can customize Emma\'s instructions (services, hours, tone) at any time. Start with a 7-day free trial — if she\'s not pulling her weight, cancel before day 8 and no charge ever fires.',
               },
               {
                 q: 'Do I have to sign a contract?',
@@ -457,7 +457,7 @@ export default function PricingPage() {
       </section>
 
       <footer style={{ padding: '36px 40px', background: '#0B1F3A', textAlign: 'center' }}>
-        <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>BellAveGo · AI receptionist and growth platform for home-service businesses · 30-day money-back · Cancel anytime</p>
+        <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>BellAveGo · AI receptionist and growth platform for home-service businesses · 7-day free trial · Cancel anytime</p>
         <p style={{ margin: '8px 0 0', fontSize: 11, color: '#3D5A62' }}>
           <Link href="/privacy" style={{ color: '#7AAAB2', textDecoration: 'none' }}>Privacy</Link>
           {' · '}

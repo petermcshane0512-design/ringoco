@@ -970,18 +970,18 @@ export function ReportView({ report, sample = false, personalized = false }: { r
               <div className="cr-cta-eyebrow">This is a preview. Real reports use YOUR data.</div>
               <h3 className="cr-cta-title">Get this report monthly for {r.meta.businessName}.</h3>
               <p className="cr-cta-body">
-                Real call volume. Real bookings. Real local-market shifts. The AI receptionist answers every missed call, and BellAveGo Consulting compiles your actual numbers into the next report — automatically, on your plan&apos;s cadence. 30-day money-back guarantee.
+                Real call volume. Real bookings. Real local-market shifts. The AI receptionist answers every missed call, and BellAveGo Consulting compiles your actual numbers into the next report — automatically, on your plan&apos;s cadence. 7-day free trial, cancel anytime.
               </p>
               <div className="cr-cta-row">
                 <Link href="/pricing?tier=officemgr&interval=monthly&autocheckout=1" className="cr-cta-pri">
-                  Start 30-day trial →
+                  Start 7-day free trial →
                 </Link>
                 <Link href="/pricing" className="cr-cta-sec">
                   See all 3 plans
                 </Link>
               </div>
               <div className="cr-cta-fineprint">
-                ${TIER_METADATA.officemgr.monthly}/mo for the {TIER_METADATA.officemgr.name} tier (most popular). Cancel within 30 days for a full refund. No credit card needed to talk to Peter first: text (773) 710-9565.
+                ${TIER_METADATA.officemgr.monthly}/mo for the {TIER_METADATA.officemgr.name} tier (most popular) after the 7-day free trial. Cancel anytime during the trial — no charge fires. No credit card needed to talk to Peter first: text (773) 710-9565.
               </div>
             </section>
           )}

@@ -52,13 +52,36 @@ export async function POST(req: NextRequest) {
   ]
 
   try {
+    // ── 7-DAY FREE TRIAL (replaces the legacy 30-day money-back guarantee) ──
+    // Stripe behavior:
+    //   * Card is collected at checkout (Stripe requires payment_method even on
+    //     trials in subscription mode by default — we pin that explicitly with
+    //     payment_method_collection:'always' so test/no-card paths can't slip
+    //     through).
+    //   * First $0 invoice is generated immediately, marked paid.
+    //   * On day 8 the trial ends and Stripe automatically issues the first
+    //     real invoice + charges the card. customer.subscription.trial_will_end
+    //     fires at trial_end - 72h so we can warn the contractor by SMS/email.
+    //   * If the customer cancels (cancel_at_period_end via the portal or our
+    //     /api/subscription/refund route) before day 8, the trial ends and no
+    //     charge ever fires.
+    // Never widen TRIAL_DAYS without re-checking Stripe's free-trial fraud
+    // limits (>14 days requires bank-grade KYC for new merchants).
+    const TRIAL_DAYS = 7
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'subscription',
       line_items,
-      metadata: { userId, tier, interval },
-      subscription_data: { metadata: { userId, tier, interval } },
-      success_url: `${APP_URL}/dashboard/setup?welcome=1`,
+      payment_method_collection: 'always',
+      metadata: { userId, tier, interval, trial_days: String(TRIAL_DAYS) },
+      subscription_data: {
+        trial_period_days: TRIAL_DAYS,
+        trial_settings: {
+          end_behavior: { missing_payment_method: 'cancel' },
+        },
+        metadata: { userId, tier, interval, trial_days: String(TRIAL_DAYS) },
+      },
+      success_url: `${APP_URL}/dashboard/setup?welcome=1&trial=1`,
       cancel_url: `${APP_URL}`,
     })
 

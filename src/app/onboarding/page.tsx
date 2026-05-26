@@ -294,10 +294,10 @@ export default function OnboardingPage() {
                 <div style={{ background: '#F5FDFB', border: '1px solid rgba(10,168,159,0.16)', borderRadius: 12, padding: '14px 16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22C55E' }} />
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#0B1F3A' }}>30-day money-back guarantee</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#0B1F3A' }}>7-day free trial · no charge until day 8</span>
                   </div>
                   <p style={{ fontSize: 11, color: '#7AAAB2', margin: 0, lineHeight: 1.6 }}>
-                    Pick your plan next. Cancel within 30 days for a full subscription refund.
+                    Pick your plan next. We save your card but don&apos;t charge it for 7 days. Cancel anytime during the trial — no charge ever fires.
                   </p>
                 </div>
               </motion.div>

@@ -349,17 +349,35 @@ html { overflow-x: hidden; }
     50%      { transform: translateX(4px); opacity: 1; }
   }
 
-  /* Mobile dashboard preview — sits right under the hero. Continue the
-     hero's teal-navy color downward so the section visually blends into
-     the same "stage" as the headline above it (no awkward white gap).
-     Light text colors below override the dark surface. */
+  /* Mobile dashboard preview — share the hero's exact flowy teal stage.
+     Picks up where the hero gradient ENDS (#2D7A92) and continues the
+     same radial orange/teal/cyan accent stack so the section reads as
+     one continuous beach-vibe surface. Light text below for contrast. */
   .mobile-dash-preview {
     padding: 32px 0 32px !important;
     overflow: hidden;
+    position: relative;
     background:
-      radial-gradient(900px 600px at 78% 25%, rgba(10,168,159,0.22), transparent 65%),
-      radial-gradient(900px 600px at 12% 85%, rgba(94,234,212,0.18), transparent 70%),
-      linear-gradient(180deg, #2D7A92 0%, #1B5A75 45%, #0F3454 100%);
+      radial-gradient(800px 400px at 88% 8%, rgba(255,157,90,0.18), transparent 60%),
+      radial-gradient(900px 500px at 72% 28%, rgba(232,116,43,0.12), transparent 65%),
+      radial-gradient(1100px 600px at 78% 55%, rgba(10,168,159,0.32), transparent 65%),
+      radial-gradient(900px 700px at 12% 85%, rgba(94,234,212,0.30), transparent 70%),
+      linear-gradient(180deg, #2D7A92 0%, #1F6885 50%, #1A5A78 100%);
+  }
+  /* Flowy wave silhouette at top of the preview — echoes the hero's
+     bottom waves so the seam between the two sections disappears. */
+  .mobile-dash-preview::before {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 40px;
+    background:
+      radial-gradient(ellipse 22% 100% at 18% 60%, rgba(94,234,212,0.32), transparent 70%),
+      radial-gradient(ellipse 28% 100% at 52% 50%, rgba(94,234,212,0.22), transparent 70%),
+      radial-gradient(ellipse 24% 100% at 86% 60%, rgba(94,234,212,0.34), transparent 70%);
+    opacity: 0.55;
+    filter: blur(2px);
+    pointer-events: none;
   }
   .mobile-dash-preview > div {
     max-width: 100% !important;

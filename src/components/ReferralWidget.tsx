@@ -146,10 +146,10 @@ export default function ReferralWidget() {
               <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: '#3D5A62', lineHeight: 1.7 }}>
                 <li>Share your link with another home-service contractor</li>
                 <li>They sign up + pick a tier through your link (shows as &quot;In trial&quot; here)</li>
-                <li>When they complete their second month (past the 30-day money-back window), your next BellAveGo bill is on us</li>
+                <li>After they finish the 7-day free trial AND complete their first paid month, your next BellAveGo bill is on us</li>
               </ol>
               <p style={{ fontSize: 11, color: '#7AAAB2', marginTop: 10, marginBottom: 0, fontStyle: 'italic' }}>
-                The 31-day wait protects against refund-and-bail abuse. Credit equals your current monthly tier price. No cap on referrals. Credits apply automatically.
+                The trial-plus-one-month wait protects against signup-and-bail abuse. Credit equals your current monthly tier price. No cap on referrals. Credits apply automatically.
               </p>
             </div>
           </>

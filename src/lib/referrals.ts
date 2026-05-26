@@ -19,35 +19,37 @@ const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_
  * captures the code into a 90-day cookie. When the visitor signs up, we save
  * the cookie value to profiles.referred_by.
  *
- * Two-stage credit flow (anti-abuse v2 — built May 2026):
+ * Two-stage credit flow (anti-abuse v3 — updated for 7-day-trial model):
  *   1. PENDING — on first Stripe checkout, recordPendingReferral() inserts a
- *      'pending' referrals row. NO credit fires yet.
+ *      'pending' referrals row. NO credit fires yet. Note: the first invoice
+ *      is $0 because the customer is in their 7-day free trial.
  *   2. CREDITED — on any subsequent invoice.payment_succeeded for that
  *      subscription, applyPendingReferralCredit() checks if the referred
- *      customer's subscription is >31 days old. If yes (they survived the
- *      30-day money-back window), the referrer gets a Stripe customer-balance
- *      credit equal to their CURRENT tier monthly price.
- *   3. VOIDED — if the referred customer cancels OR refunds before day 31,
- *      voidPendingReferral() marks the referral 'voided' so it never converts.
+ *      customer's subscription is >38 days old (trial 7d + first paid month
+ *      ~30d + 1d buffer). At that age we know they survived both the trial
+ *      AND their first paid cycle, so the referrer's credit is durable.
+ *   3. VOIDED — if the referred customer cancels during the trial OR before
+ *      day 38, voidPendingReferral() marks the referral 'voided' so it never
+ *      converts.
  *
- * Why this matters: without the wait, a single bad actor could sign up under
- * their own friend's referral link, take the 30-day refund, and still leave
- * the friend with a free month. The 31-day gate kills that loop.
+ * Why 38 days: under the new pricing model there is NO refund window — but
+ * there is a 7-day trial. A friend who signs up, completes the trial without
+ * cancelling, then bails mid-first-month would still produce one paid invoice.
+ * We don't want to credit referrers for those (they're closer to a $0 cost
+ * acquisition than a real long-term customer). 38 days = trial + first full
+ * paid month survived.
  *
  * Credit delivery: Stripe customer balance — Stripe automatically deducts
  * the credit from the referrer's next invoice. No manual ops.
  *
- * Anti-abuse v2:
+ * Anti-abuse v3:
  *   - Can't self-refer (same userId blocked)
  *   - One credit per referred user (UNIQUE constraint on referrals.referred_user_id)
  *   - Referrer must still be an active paying customer when credit fires
- *   - Referred subscription must be >31 days old (past refund window)
- *   - Pending referrals voided on subscription cancellation
- *
- * v3 ideas (not built): max credits/year cap per referrer, pattern-based
- * fraud detection, optional double-sided reward (also discount new customer).
+ *   - Referred subscription must be >38 days old (past trial + 1st paid month)
+ *   - Pending referrals voided on subscription cancellation (trial OR paid)
  */
-const QUALIFYING_AGE_DAYS = 31
+const QUALIFYING_AGE_DAYS = 38
 
 const CODE_PREFIX = 'BAVG-'
 const CODE_BODY_LENGTH = 6
@@ -219,7 +221,7 @@ export async function recordPendingReferral(args: {
       await twilioClient.messages.create({
         body:
           `🎉 ${newProfile.business_name ?? 'A new contractor'} just signed up using your BellAveGo referral link! ` +
-          `Once they complete their second month (past the 30-day money-back window), your next bill ($${projectedAmount}) is on us.`,
+          `Once they finish their 7-day free trial AND complete their first paid month, your next bill ($${projectedAmount}) is on us.`,
         from: process.env.TWILIO_PHONE_NUMBER!,
         to: ref.owner_phone,
       })

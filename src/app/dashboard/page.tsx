@@ -493,7 +493,7 @@ export default function DashboardPage() {
               <div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: "#92400E" }}>Activate your AI receptionist</div>
                 <div style={{ fontSize: 12, color: "#78350F", marginTop: 3, lineHeight: 1.5 }}>
-                  Pick a plan. We auto-provision your number, register A2P SMS, and tune your prompt after checkout. 30-day money-back.
+                  Pick a plan. We auto-provision your number, register A2P SMS, and tune your prompt after checkout. 7-day free trial, cancel anytime.
                 </div>
               </div>
               <div style={{ display: "flex", background: "#fff", border: "1px solid #FDE68A", borderRadius: 10, padding: 3, fontSize: 11, fontWeight: 700 }}>

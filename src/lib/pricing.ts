@@ -232,7 +232,7 @@ export const TIER_FEATURES: Record<Tier, TierFeatures> = {
       'Auto-books appointments to your Google Calendar, Outlook, or Calendly (you toggle on/off)',
       'Emergency outbound voice call to your cell when caller flags urgency',
       '6 AI revenue reports per year — bi-monthly, shows missed jobs, top services, what to fix',
-      'No contract · 30-day money-back guarantee',
+      'No contract · 7-day free trial · cancel anytime',
     ],
   },
   officemgr: {

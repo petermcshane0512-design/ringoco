@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: "%s · BellAveGo",
   },
   description:
-    "AI answers every call, books the job, follows up on quotes, recovers past-due invoices, and runs your marketing — automatically. Built for home service contractors of 1–15. From $147/mo. 30-day money-back.",
+    "AI answers every call, books the job, follows up on quotes, recovers past-due invoices, and runs your marketing — automatically. Built for home service contractors of 1–15. From $147/mo. 7-day free trial, cancel anytime.",
   applicationName: "BellAveGo",
   keywords: [
     "AI receptionist",

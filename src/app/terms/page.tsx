@@ -58,11 +58,11 @@ export default function TermsPage() {
           <p>Features available on your account depend on the subscription tier you select.</p>
         </Section>
 
-        <Section title="3. Subscription, billing, and refunds">
+        <Section title="3. Subscription, billing, and trial">
           <p><strong>Tiers + pricing:</strong> current pricing is published at <Link href="/pricing" style={{ color: '#0AA89F', fontWeight: 700 }}>bellavego.com/pricing</Link>. We may change pricing for new subscriptions at any time; existing subscriptions are grandfathered until renewal.</p>
           <p><strong>Billing cycle:</strong> month-to-month or annual, billed in advance via Stripe. Annual plans receive the discount shown on the pricing page.</p>
-          <p><strong>30-day money-back guarantee:</strong> if BellAveGo isn&apos;t a fit, request a refund within 30 days of your initial subscription start date for a full refund of that period. Refunds are processed within 5 business days. Subsequent renewals are not refundable.</p>
-          <p><strong>Cancellation:</strong> you may cancel anytime from your dashboard or by contacting us. Service continues through the end of the paid period; no further charges apply.</p>
+          <p><strong>7-day free trial:</strong> all new subscriptions begin with a 7-day free trial. We collect a payment method at signup but do not charge it during the trial. On day 8, the first month is charged automatically to the saved payment method at the tier&apos;s published price. You may cancel at any point during the 7-day trial from your dashboard or by contacting us — if you cancel before day 8, no charge ever fires.</p>
+          <p><strong>Cancellation after the trial:</strong> you may cancel anytime from your dashboard or by contacting us. Service continues through the end of the paid period; no further charges apply. <strong>No refunds are issued for any already-billed period</strong> — including partial months. Cancel before the next renewal to avoid the next charge.</p>
           <p><strong>Failed payments:</strong> if a payment fails, we will retry for 7 days and notify you. After 7 days the service will be suspended (calls will be answered with a polite &quot;service paused&quot; message). After 30 days of non-payment, the account may be cancelled and data subject to the deletion schedule in our <Link href="/privacy" style={{ color: '#0AA89F', fontWeight: 700 }}>Privacy Policy</Link>.</p>
         </Section>
 
