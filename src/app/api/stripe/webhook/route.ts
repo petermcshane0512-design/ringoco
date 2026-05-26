@@ -476,5 +476,50 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // ── customer.subscription.trial_will_end ───────────────────────────────
+  // Stripe fires this 72 hours before the trial ends. Send the contractor
+  // a heads-up SMS so the first charge isn't a surprise. Stripe also fires
+  // its own default email if email is configured on the customer object.
+  //
+  // Only sent once per subscription (the event itself only fires once at
+  // trial_end - 72h). No idempotency guard needed.
+  if (event.type === 'customer.subscription.trial_will_end') {
+    const subscription = event.data.object as Stripe.Subscription
+    const customerId = subscription.customer as string
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('user_id, business_name, owner_phone, plan_tier')
+      .eq('stripe_customer_id', customerId)
+      .maybeSingle()
+
+    if (profile?.owner_phone) {
+      // Compute the charge date in the contractor's local language. trial_end
+      // is a Unix timestamp in seconds.
+      const trialEnd = subscription.trial_end
+        ? new Date(subscription.trial_end * 1000)
+        : new Date(Date.now() + 72 * 60 * 60 * 1000)
+      const trialEndLabel = trialEnd.toLocaleDateString('en-US', {
+        weekday: 'long', month: 'short', day: 'numeric',
+        timeZone: 'America/Chicago',
+      })
+
+      try {
+        await twilioClient.messages.create({
+          body:
+            `Heads up — your 7-day BellAveGo free trial wraps up ${trialEndLabel}. ` +
+            `Your first month bills automatically that day. ` +
+            `Loving it? Do nothing. Want to cancel? Open your dashboard → Settings → Subscription before then. ` +
+            `Questions: text Peter at (773) 710-9565.`,
+          from: process.env.TWILIO_PHONE_NUMBER!,
+          to: profile.owner_phone,
+        })
+        console.log(`[trial_will_end] notified ${profile.user_id} — trial ends ${trialEndLabel}`)
+      } catch (e) {
+        console.error('trial_will_end SMS failed:', e)
+      }
+    }
+  }
+
   return NextResponse.json({ received: true })
 }

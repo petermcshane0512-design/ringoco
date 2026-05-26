@@ -349,18 +349,18 @@ html { overflow-x: hidden; }
     50%      { transform: translateX(4px); opacity: 1; }
   }
 
-  /* Mobile dashboard preview — share the EXACT same dark navy background
-     as the ConsultingShowcase section directly below it. Same radial
-     orange/teal accents, same linear navy gradient, same grid mesh.
-     Result: preview + consulting reports = one continuous dark stage. */
+  /* Mobile dashboard preview — sits flush below the hero, sharing the
+     same dark navy + grid mesh. Tight top padding (8px) so the preview
+     visually attaches to the hero CTAs above instead of looking like a
+     separate block. */
   .mobile-dash-preview {
-    padding: 32px 0 32px !important;
+    padding: 8px 0 28px !important;
     overflow: hidden;
     position: relative;
     background:
       radial-gradient(900px 500px at 90% 8%, rgba(232,123,55,0.18), transparent 65%),
       radial-gradient(700px 500px at 8% 92%, rgba(94,234,212,0.10), transparent 65%),
-      linear-gradient(180deg, #050E1F 0%, #0B1F3A 55%, #112C4A 100%) !important;
+      linear-gradient(180deg, #112C4A 0%, #0B1F3A 100%) !important;
   }
   /* Grid mesh overlay — copies .cs-root::before so the preview matches
      the consulting section's tech-grid texture. */
