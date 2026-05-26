@@ -447,11 +447,11 @@ export default function HomePage() {
               .hero-eyebrow { font-size: 11px; margin-bottom: 12px; padding: 5px 11px; }
               /* Bigger headline that stretches wider — fills the column. */
               .hero-h1 {
-                font-size: clamp(46px, 13vw, 60px) !important;
+                font-size: clamp(56px, 15.5vw, 76px) !important;
                 line-height: 1.0 !important;
                 margin-bottom: 14px !important;
                 margin-top: 0 !important;
-                letter-spacing: -0.035em !important;
+                letter-spacing: -0.04em !important;
                 text-align: left !important;
               }
               .hero-sub { font-size: 15.5px; line-height: 1.45; margin-bottom: 18px; max-width: 100%; text-align: left; }
@@ -580,22 +580,38 @@ export default function HomePage() {
                 color: #5EEAD4 !important;
                 border-color: rgba(94,234,212,0.32) !important;
               }
-              /* Secondary CTA — strong glow + cyan border so "Call AI Demo"
-                 pops against the dark navy bg per Peter feedback. */
+              /* "Call AI Demo" SECONDARY CTA — solid bright cyan-teal tile
+                 with dark navy text + breathing glow. Pops HARD against
+                 the dark navy hero bg per Peter "make it more popping". */
               .hero-cta-secondary {
-                background: rgba(94,234,212,0.10) !important;
-                border: 1.5px solid rgba(94,234,212,0.55) !important;
-                color: #5EEAD4 !important;
+                background: linear-gradient(135deg, #5EEAD4 0%, #14B8A6 50%, #0AA89F 100%) !important;
+                border: 1.5px solid rgba(255,255,255,0.55) !important;
+                color: #0B1F3A !important;
+                font-weight: 900 !important;
                 box-shadow:
-                  0 0 24px rgba(94,234,212,0.45),
-                  0 0 48px rgba(10,168,159,0.32) !important;
-                animation: heroSecondaryGlow 2.4s ease-in-out infinite !important;
+                  0 0 26px rgba(94,234,212,0.70),
+                  0 0 56px rgba(20,184,166,0.50),
+                  0 6px 22px rgba(10,168,159,0.45) !important;
+                animation: heroSecondaryGlow 2.2s ease-in-out infinite !important;
               }
               @keyframes heroSecondaryGlow {
-                0%,100% { box-shadow: 0 0 24px rgba(94,234,212,0.45), 0 0 48px rgba(10,168,159,0.32); }
-                50%      { box-shadow: 0 0 36px rgba(94,234,212,0.70), 0 0 64px rgba(10,168,159,0.50); }
+                0%,100% {
+                  box-shadow:
+                    0 0 26px rgba(94,234,212,0.70),
+                    0 0 56px rgba(20,184,166,0.50),
+                    0 6px 22px rgba(10,168,159,0.45);
+                  transform: scale(1);
+                }
+                50% {
+                  box-shadow:
+                    0 0 38px rgba(94,234,212,0.95),
+                    0 0 78px rgba(20,184,166,0.70),
+                    0 8px 28px rgba(10,168,159,0.65);
+                  transform: scale(1.015);
+                }
               }
-              .hero-cta-secondary svg { color: #5EEAD4 !important; }
+              .hero-cta-secondary svg { color: #0B1F3A !important; stroke-width: 2.6 !important; }
+              .hero-cta-secondary-line2 { color: rgba(11,31,58,0.78) !important; }
               /* Trust strip text → light cream for legibility */
               .hero-trust-num { color: #FFD9A8 !important; }
               .hero-trust-lab { color: rgba(226,235,240,0.72) !important; }

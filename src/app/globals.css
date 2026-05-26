@@ -187,10 +187,13 @@ html { overflow-x: hidden; }
    is visible without scrolling past a tall nav stack. Desktop layout
    (>720px) is untouched. */
 @media (max-width: 720px) {
+  /* Nav row TIGHTER (~60% of prior height) so it doesn't dominate the
+     top of the landing page. Logo + buttons still get more breathing
+     room via their own size bumps below. */
   .bavg-top-nav {
-    padding: 6px 10px !important;
+    padding: 4px 10px !important;
     height: auto !important;
-    min-height: 56px;
+    min-height: 50px;
     flex-direction: row !important;
     align-items: center !important;
     flex-wrap: wrap !important;
@@ -206,17 +209,11 @@ html { overflow-x: hidden; }
     width: auto !important;
   }
   .bavg-top-nav-logo img {
-    /* MUCH bigger per Peter — was 220px, bumped to ~3x visual weight.
-       320px fills the nav left side on a 390-414px viewport without
-       crowding out the right-side buttons. */
-    max-width: 320px !important;
+    /* Slightly bigger than 320px per Peter "tad bit bigger" feedback. */
+    max-width: 340px !important;
     width: auto !important;
     height: auto !important;
-    margin-top: -4px !important;
-  }
-  /* Bigger nav row to accommodate the larger logo + buttons. */
-  .bavg-top-nav {
-    min-height: 78px !important;
+    margin-top: -2px !important;
   }
   /* Buttons — right, hugging the right edge of the nav (no empty space). */
   .bavg-top-nav-actions {
@@ -230,8 +227,7 @@ html { overflow-x: hidden; }
     flex: 0 1 auto;
     min-width: 0;
   }
-  /* Buttons ~2x size — bigger padding + larger font + stronger glow.
-     Peter wants them to feel substantial and easy to tap. */
+  /* Buttons — bigger per Peter feedback. Tap-friendly, more substantial. */
   .bavg-top-nav .nav-cta,
   .bavg-top-nav .why-pulse,
   .bavg-top-nav .price-pulse,
@@ -240,14 +236,14 @@ html { overflow-x: hidden; }
     width: auto !important;
     flex: 0 0 auto !important;
     justify-content: center !important;
-    padding: 14px 22px !important;
-    font-size: 16px !important;
+    padding: 15px 24px !important;
+    font-size: 18px !important;
     font-weight: 900 !important;
     min-height: 0 !important;
     letter-spacing: -0.2px !important;
     text-align: center;
     white-space: nowrap;
-    border-radius: 11px !important;
+    border-radius: 12px !important;
   }
 }
 
