@@ -25,7 +25,7 @@ export default function FounderPage() {
         </Link>
         <div className="bavg-top-nav-actions" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           {isSignedIn && <Link href="/dashboard" className="nav-cta"><span className="nav-cta-text">Dashboard</span></Link>}
-          <Link href="/founder" className="why-pulse"><span className="why-pulse-text">Why BellAveGo?</span></Link>
+          <Link href="/" className="why-pulse"><span className="why-pulse-text">Back to Home</span></Link>
           <Link href="/pricing" className="price-pulse">Pricing</Link>
           {!isSignedIn && <Link href="/sign-in" className="signin-link">Sign In</Link>}
           {!isSignedIn && <Link href="/sign-up" className="nav-cta"><span className="nav-cta-text">Create Account</span></Link>}

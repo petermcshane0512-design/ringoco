@@ -994,6 +994,11 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
               there's more to swipe through. */}
           <div className="dp-mobile-tabs-wrap">
             <div className="dp-mobile-tabs">
+              {/* 8 tabs matching real /dashboard sections. Labels mirror
+                  the desktop sidebar (activeTab logic in this file gates
+                  content panels on these exact strings). Rendered as a
+                  2-row × 4-col grid via .dp-mobile-tabs in globals.css —
+                  mirrors the real mobile tabbar layout. */}
               {[
                 { label: 'Command Center' },
                 { label: 'AI Receptionist', dot: true },

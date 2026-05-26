@@ -317,53 +317,33 @@ html { overflow-x: hidden; }
   /* Hide the in-mockup sidebar entirely — was 178px which crushed data on phones */
   .dp-sidebar { display: none !important; }
 
-  /* Horizontal scrollable pill strip with swipe affordance:
-     - Right-edge fade gradient hints at more tabs offscreen
-     - Snap-to-pill so tabs feel tappable
-     - Hide native scrollbar */
+  /* 2-row × 4-col grid — mirrors the REAL /dashboard mobile tabbar.
+     Same 8 routes, same vertical layout, same sunset-gradient active
+     pill. Visitors see exactly the nav they'll get post-signup. */
   .dp-mobile-tabs-wrap { position: relative; }
   .dp-mobile-tabs {
-    display: flex !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 1fr;
     gap: 6px;
-    overflow-x: auto;
-    padding: 10px 14px 14px;
-    background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,247,238,0.9) 50%);
-    border-top: 1px solid rgba(232,116,43,0.10);
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    scroll-snap-type: x proximity;
-    scroll-padding-left: 14px;
+    padding: 10px 8px 14px;
+    background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,247,238,0.96) 60%);
+    border-top: 1px solid rgba(232,116,43,0.14);
   }
-  .dp-mobile-tabs > button { scroll-snap-align: start; }
-  .dp-mobile-tabs::-webkit-scrollbar { display: none; }
-
-  /* Right-edge fade — tells the user "more to the right, swipe over" */
-  .dp-mobile-tabs::after {
-    content: '';
-    position: absolute;
-    right: 0; top: 10px; bottom: 14px;
-    width: 36px;
-    background: linear-gradient(90deg, rgba(255,247,238,0) 0%, rgba(255,247,238,0.95) 60%);
-    pointer-events: none;
-  }
-  /* Pulsing chevron arrow — moved to BOTTOM-RIGHT corner of the strip
-     so it doesn't overlap the Pro tab tap target. Smaller (18px) and
-     still pulses to draw the eye. (Peter feedback: was intercepting taps.) */
-  .dp-swipe-hint {
+  .dp-mobile-tabs > button {
+    padding: 8px 4px !important;
+    min-height: 44px;
+    border-radius: 10px !important;
+    font-size: 9.5px !important;
+    line-height: 1.15 !important;
+    white-space: normal !important;
     display: flex !important;
-    position: absolute;
-    right: 4px; bottom: 4px;
-    width: 18px; height: 18px;
-    align-items: center; justify-content: center;
-    background: linear-gradient(135deg, #FF9D5A, #E8742B);
-    color: #fff;
-    font-size: 11px; font-weight: 900;
-    border-radius: 999px;
-    box-shadow: 0 2px 8px rgba(232,116,43,0.40);
-    animation: dp-swipe-bounce 1.6s ease-in-out infinite;
-    pointer-events: none;
-    z-index: 2;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center;
   }
+  /* Legacy swipe-hint chevron — no horizontal scroll anymore. */
+  .dp-swipe-hint { display: none !important; }
   @keyframes dp-swipe-bounce {
     0%, 100% { transform: translateX(0);  opacity: 0.85; }
     50%      { transform: translateX(4px); opacity: 1; }
