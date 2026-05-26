@@ -542,12 +542,10 @@ export default function HomePage() {
                  (hidden on desktop where the hero already shows it) */
               .mobile-dash-preview { display: block !important; padding: 40px 0 8px !important; }
 
-              /* Hero — dark navy + grid mesh matching consulting section.
-                 BG bleeds full viewport width (escapes the parent section's
-                 18px padding via negative margin) so it visually matches
-                 the consulting bg width. Content sits at top-LEFT (no
-                 vertical centering, no forced min-height). Hero ends
-                 right after trust strip — no trailing empty space. */
+              /* Hero — DESKTOP teal-blue gradient applied to mobile too. Same
+                 radial orange + teal + cyan accents over the deep-navy → teal
+                 vertical gradient. Bg bleeds full viewport width (escapes the
+                 parent section's 18px padding). Content sits top-LEFT. */
               .hero-wrap {
                 margin-left: -18px !important;
                 margin-right: -18px !important;
@@ -555,25 +553,15 @@ export default function HomePage() {
                 min-height: 0 !important;
                 position: relative;
                 background:
-                  radial-gradient(900px 500px at 90% 8%, rgba(232,123,55,0.18), transparent 65%),
-                  radial-gradient(700px 500px at 8% 92%, rgba(94,234,212,0.10), transparent 65%),
-                  linear-gradient(180deg, #050E1F 0%, #0B1F3A 55%, #112C4A 100%) !important;
+                  radial-gradient(800px 400px at 88% 8%, rgba(255,157,90,0.22), transparent 60%),
+                  radial-gradient(900px 500px at 72% 28%, rgba(232,116,43,0.16), transparent 65%),
+                  radial-gradient(1100px 600px at 78% 55%, rgba(10,168,159,0.26), transparent 65%),
+                  radial-gradient(900px 700px at 12% 85%, rgba(94,234,212,0.20), transparent 70%),
+                  linear-gradient(180deg, #050E1F 0%, #0B1F3A 35%, #0F3454 78%, #2D7A92 100%) !important;
                 overflow: hidden;
               }
-              /* Cyan grid mesh — copies .cs-root::before so the texture matches */
-              .hero-wrap::before {
-                content: '' !important;
-                position: absolute !important;
-                inset: 0 !important;
-                background-image:
-                  linear-gradient(rgba(94,234,212,0.045) 1px, transparent 1px),
-                  linear-gradient(90deg, rgba(94,234,212,0.045) 1px, transparent 1px) !important;
-                background-size: 60px 60px !important;
-                mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 55%, transparent 100%) !important;
-                -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 55%, transparent 100%) !important;
-                pointer-events: none !important;
-                z-index: 0 !important;
-              }
+              /* No grid-mesh overlay on the teal hero — it muddied the colors. */
+              .hero-wrap::before { display: none !important; }
               .hero-wrap::after { display: none !important; }
               /* Hide ALL svg overlays + decorative blobs on mobile — they
                  were creating perceived empty wallpaper between the nav
