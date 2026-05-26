@@ -349,24 +349,37 @@ html { overflow-x: hidden; }
     50%      { transform: translateX(4px); opacity: 1; }
   }
 
-  /* Mobile dashboard preview — share the hero's exact flowy teal stage.
-     Picks up where the hero gradient ENDS (#2D7A92) and continues the
-     same radial orange/teal/cyan accent stack so the section reads as
-     one continuous beach-vibe surface. Light text below for contrast. */
+  /* Mobile dashboard preview — share the EXACT same dark navy background
+     as the ConsultingShowcase section directly below it. Same radial
+     orange/teal accents, same linear navy gradient, same grid mesh.
+     Result: preview + consulting reports = one continuous dark stage. */
   .mobile-dash-preview {
     padding: 32px 0 32px !important;
     overflow: hidden;
     position: relative;
     background:
-      radial-gradient(800px 400px at 88% 8%, rgba(255,157,90,0.18), transparent 60%),
-      radial-gradient(900px 500px at 72% 28%, rgba(232,116,43,0.12), transparent 65%),
-      radial-gradient(1100px 600px at 78% 55%, rgba(10,168,159,0.32), transparent 65%),
-      radial-gradient(900px 700px at 12% 85%, rgba(94,234,212,0.30), transparent 70%),
-      linear-gradient(180deg, #2D7A92 0%, #1F6885 50%, #1A5A78 100%);
+      radial-gradient(900px 500px at 90% 8%, rgba(232,123,55,0.18), transparent 65%),
+      radial-gradient(700px 500px at 8% 92%, rgba(94,234,212,0.10), transparent 65%),
+      linear-gradient(180deg, #050E1F 0%, #0B1F3A 55%, #112C4A 100%) !important;
   }
-  /* Seam wave removed — the hero now uses the SAME teal flowy bg as the
-     preview (override in app/page.tsx mobile @media), so they read as one
-     continuous surface with no boundary to bridge. */
+  /* Grid mesh overlay — copies .cs-root::before so the preview matches
+     the consulting section's tech-grid texture. */
+  .mobile-dash-preview::after {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(94,234,212,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(94,234,212,0.045) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 55%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 55%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .mobile-dash-preview > div {
+    position: relative;
+    z-index: 1;
+  }
   .mobile-dash-preview > div {
     max-width: 100% !important;
     padding: 0 6px !important;
@@ -376,7 +389,7 @@ html { overflow-x: hidden; }
     margin-bottom: 0 !important;
     width: 100% !important;
   }
-  /* Light the eyebrow + headline so they read on the teal bg. */
+  /* Light the eyebrow + headline so they read on the dark navy bg. */
   .mobile-dash-preview > div > div:nth-child(1) {
     color: #5EEAD4 !important;
   }
