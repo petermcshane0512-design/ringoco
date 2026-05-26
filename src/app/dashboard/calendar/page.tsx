@@ -119,6 +119,38 @@ function CalendarPageInner() {
     if (changed) loadEvents()
   }
 
+  /**
+   * Drag-to-reschedule: contractor dragged an event on the calendar grid
+   * to a new time (or resized to change duration). PATCH the appointment
+   * with the new times; the API route also fires the outbound mirror so
+   * Google/Outlook update automatically.
+   *
+   * Optimistic UI: FullCalendar already moved the event visually before
+   * this fires. On API failure we toast + refetch to revert.
+   */
+  async function handleDragReschedule(eventId: string, startIso: string, endIso: string) {
+    // Only attempt to PATCH native rows. External events (Google/MS
+    // free/busy items merged into the grid) have non-UUID ids and aren't
+    // editable from here — silently revert on next refresh.
+    try {
+      const res = await fetch(`/api/calendar/appointments/${eventId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scheduledAt: startIso, scheduledEndAt: endIso }),
+      })
+      if (!res.ok) {
+        // Snap back to truth (the API rejected it) by refetching
+        await loadEvents()
+        alert('Could not reschedule — refresh + try again. If it keeps failing, text our team at 773-710-9565.')
+      } else {
+        // Refresh so the agenda + status pills reflect the new time
+        await loadEvents()
+      }
+    } catch {
+      await loadEvents()
+    }
+  }
+
   async function loadEvents() {
     setEventsLoading(true)
     try {
@@ -459,6 +491,8 @@ function CalendarPageInner() {
                 onRefresh={loadEvents}
                 onEventClick={(id) => openEditModal(id)}
                 onSlotClick={(startIso) => openCreateModal(startIso)}
+                onEventDrop={handleDragReschedule}
+                onEventResize={handleDragReschedule}
               />
             )}
           </div>

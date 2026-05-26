@@ -6,6 +6,7 @@ import { findAvailableSlots } from '@/lib/calendar/availability'
 import { createGoogleEvent, type CalendarConnectionRow } from '@/lib/calendar/google'
 import { createMicrosoftEvent } from '@/lib/calendar/microsoft'
 import { createAppointment } from '@/lib/calendar/appointments'
+import { signAppointmentToken } from '@/lib/calendar/appointmentTokens'
 import { sendEmail, renderAppointmentBookedEmail, renderLeadAlertEmail, renderBookingAlertEmail } from '@/lib/email'
 import { lookupOwnerEmail } from '@/lib/notify'
 import { firePushAsync } from '@/lib/push'
@@ -355,12 +356,23 @@ export async function POST(req: NextRequest) {
     // for defense-in-depth against any aggressive carrier filter that
     // wants an explicit unsubscribe phrase in the body.
     const slotLabel = formatSlotForHumans(startDate, bookingTz)
+    // Generate a signed public-view token so the caller can open
+    // /appointment/[token] and view their booking, request reschedule,
+    // add to their phone calendar — all without an account.
+    let publicToken: string | null = null
+    try {
+      publicToken = signAppointmentToken(provisionalJobId, 30)
+    } catch (e) {
+      console.warn('appointment token sign failed:', (e as Error).message)
+    }
+    const publicLink = publicToken ? `https://www.bellavego.com/appointment/${publicToken}` : null
     if (callerPhone) {
       try {
         await twilioClient.messages.create({
           body:
-            `Hi ${args.customer_name}! Confirmed: ${args.service_summary || 'your appointment'} on ${slotLabel} with ${businessName}. ` +
-            `Reply to this text to reschedule. — BellAveGo. Reply STOP to opt out.`,
+            `Hi ${args.customer_name}! Confirmed: ${args.service_summary || 'your appointment'} on ${slotLabel} with ${businessName}.` +
+            (publicLink ? ` View / reschedule: ${publicLink}` : ' Reply to this text to reschedule.') +
+            ` — BellAveGo. Reply STOP to opt out.`,
           from: tenantTwilioNumber,
           to: callerPhone,
         })

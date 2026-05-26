@@ -5,8 +5,8 @@ import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
-import type { EventClickArg, EventInput, DateSelectArg } from '@fullcalendar/core'
-import type { DateClickArg } from '@fullcalendar/interaction'
+import type { EventClickArg, EventInput, DateSelectArg, EventDropArg } from '@fullcalendar/core'
+import type { DateClickArg, EventResizeDoneArg } from '@fullcalendar/interaction'
 
 export type CalendarEventLike = {
   id: string
@@ -29,7 +29,7 @@ export type CalendarEventLike = {
  * Powered by FullCalendar (MIT-licensed core + plugins). Click on any event
  * to open a detail card with description + location.
  */
-export default function CalendarGrid({ events, onRefresh, onEventClick, onSlotClick }: {
+export default function CalendarGrid({ events, onRefresh, onEventClick, onSlotClick, onEventDrop, onEventResize }: {
   events: CalendarEventLike[]
   onRefresh?: () => void
   /** When provided, clicking an event calls this with the event id and the
@@ -39,6 +39,11 @@ export default function CalendarGrid({ events, onRefresh, onEventClick, onSlotCl
   /** When provided, clicking an empty time slot fires with the ISO timestamp
    *  of that slot. Use to open the "create appointment" modal pre-filled. */
   onSlotClick?: (startIso: string) => void
+  /** Fires when an event is dragged to a new time. Both start + end already
+   *  reflect the new slot. Use to PATCH /api/calendar/appointments/[id]. */
+  onEventDrop?: (eventId: string, startIso: string, endIso: string) => void
+  /** Fires when an event is resized (changes duration). */
+  onEventResize?: (eventId: string, startIso: string, endIso: string) => void
 }) {
   const calRef = useRef<FullCalendar | null>(null)
   const [selected, setSelected] = useState<CalendarEventLike | null>(null)
@@ -92,6 +97,34 @@ export default function CalendarGrid({ events, onRefresh, onEventClick, onSlotCl
   }
   function handleDateSelect(arg: DateSelectArg) {
     if (onSlotClick) onSlotClick(arg.start.toISOString())
+  }
+
+  function handleEventDrop(arg: EventDropArg) {
+    if (!onEventDrop) {
+      arg.revert()
+      return
+    }
+    const start = arg.event.start
+    const end = arg.event.end ?? (start ? new Date(start.getTime() + 90 * 60 * 1000) : null)
+    if (!start || !end) {
+      arg.revert()
+      return
+    }
+    onEventDrop(arg.event.id, start.toISOString(), end.toISOString())
+  }
+
+  function handleEventResize(arg: EventResizeDoneArg) {
+    if (!onEventResize) {
+      arg.revert()
+      return
+    }
+    const start = arg.event.start
+    const end = arg.event.end
+    if (!start || !end) {
+      arg.revert()
+      return
+    }
+    onEventResize(arg.event.id, start.toISOString(), end.toISOString())
   }
 
   return (
@@ -152,6 +185,11 @@ export default function CalendarGrid({ events, onRefresh, onEventClick, onSlotCl
         dateClick={onSlotClick ? handleDateClick : undefined}
         selectable={!!onSlotClick}
         select={onSlotClick ? handleDateSelect : undefined}
+        editable={!!(onEventDrop || onEventResize)}
+        eventDurationEditable={!!onEventResize}
+        eventStartEditable={!!onEventDrop}
+        eventDrop={onEventDrop ? handleEventDrop : undefined}
+        eventResize={onEventResize ? handleEventResize : undefined}
         height="auto"
         contentHeight={620}
         dayMaxEventRows={3}

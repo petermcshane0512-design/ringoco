@@ -76,6 +76,14 @@ export default function AppointmentModal(props: AppointmentModalProps) {
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sync, setSync] = useState<SyncState>({ google: false, microsoft: false })
+  // Mark-complete + Stripe invoice flow. Two-step:
+  // 1. Click "Mark complete" → reveals the amount input
+  // 2. Confirm amount → PATCH status + send invoice via /api/invoices/send
+  const [completeOpen, setCompleteOpen] = useState(false)
+  const [completeAmount, setCompleteAmount] = useState<string>('')
+  const [completing, setCompleting] = useState(false)
+  // Status of the appointment (only known in edit mode after load).
+  const [status, setStatus] = useState<string>('scheduled')
 
   // Edit mode — load existing appointment
   useEffect(() => {
@@ -107,6 +115,10 @@ export default function AppointmentModal(props: AppointmentModalProps) {
           google:    !!(a.google_event_id as string | null),
           microsoft: !!(a.microsoft_event_id as string | null),
         })
+        setStatus((a.status as string) || 'scheduled')
+        // Pre-fill complete-amount from the estimate so the contractor
+        // can confirm with one click if the job came in at quoted price.
+        if (a.amount_estimated != null) setCompleteAmount(String(a.amount_estimated))
         setLoading(false)
       } catch (e) {
         setError((e as Error).message)
@@ -165,6 +177,62 @@ export default function AppointmentModal(props: AppointmentModalProps) {
     } catch (e) {
       setError((e as Error).message)
       setSaving(false)
+    }
+  }
+
+  async function markComplete() {
+    if (!props.appointmentId) return
+    const amt = parseFloat(completeAmount)
+    if (!Number.isFinite(amt) || amt <= 0) {
+      setError('Enter the final invoice amount before marking complete.')
+      return
+    }
+    setCompleting(true)
+    setError(null)
+    try {
+      // 1. Patch the appointment status + record the final amount on the row.
+      const patchRes = await fetch(`/api/calendar/appointments/${props.appointmentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'completed', amountEstimated: amt }),
+      })
+      if (!patchRes.ok) {
+        const j = await patchRes.json().catch(() => ({}))
+        setError(j.error || 'Could not mark complete')
+        setCompleting(false)
+        return
+      }
+
+      // 2. Fire an invoice — Stripe payment link + SMS + email to customer.
+      //    Pulls customer info from current form state (preserves any edits
+      //    made in the modal even if they haven't been saved yet).
+      if (form.customerName) {
+        const invRes = await fetch('/api/invoices/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer_name:  form.customerName,
+            customer_phone: form.customerPhone || null,
+            customer_email: null,
+            service_type:   form.jobType || 'Service',
+            amount:         amt,
+          }),
+        })
+        if (!invRes.ok) {
+          // Job is already marked complete — just warn about the invoice.
+          const j = await invRes.json().catch(() => ({}))
+          console.warn('[markComplete] invoice send failed:', j.error)
+          setError(`Marked complete, but invoice send failed: ${j.error || 'unknown'}. You can resend from Invoicing.`)
+          setCompleting(false)
+          // Still close so the calendar refreshes.
+          setTimeout(() => props.onClose(true), 1800)
+          return
+        }
+      }
+      props.onClose(true)
+    } catch (e) {
+      setError((e as Error).message)
+      setCompleting(false)
     }
   }
 
@@ -398,6 +466,83 @@ export default function AppointmentModal(props: AppointmentModalProps) {
                 borderRadius: 10, color: '#991B1B', fontSize: 13, fontWeight: 600,
               }}>
                 {error}
+              </div>
+            )}
+
+            {/* Mark-complete + invoice flow — only in edit mode for jobs
+                that haven't been completed yet. Two-step: click button →
+                amount input slides down → "Send invoice" confirms. */}
+            {props.mode === 'edit' && form.blockType === 'job' && status !== 'completed' && (
+              <div style={{ marginTop: 18, padding: '14px 16px', background: '#F0FAF7', border: '1px solid rgba(16,185,129,0.28)', borderRadius: 12 }}>
+                {!completeOpen ? (
+                  <button
+                    onClick={() => setCompleteOpen(true)}
+                    style={{
+                      width: '100%',
+                      padding: '11px 18px', borderRadius: 10,
+                      background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                      color: '#fff', border: 'none',
+                      fontSize: 13, fontWeight: 900, cursor: 'pointer', fontFamily: 'inherit',
+                      boxShadow: '0 6px 18px rgba(16,185,129,0.32)',
+                    }}
+                  >
+                    ✓ Job done — send invoice
+                  </button>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: '#065F46', marginBottom: 8 }}>
+                      Final invoice amount
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <div style={{ position: 'relative', flex: 1 }}>
+                        <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#7AAAB2', fontSize: 14, pointerEvents: 'none' }}>$</span>
+                        <input
+                          type="number"
+                          value={completeAmount}
+                          onChange={(e) => setCompleteAmount(e.target.value)}
+                          placeholder="350"
+                          style={{ ...inputStyle, paddingLeft: 28 }}
+                          min="0"
+                          step="10"
+                          autoFocus
+                        />
+                      </div>
+                      <button
+                        onClick={markComplete}
+                        disabled={completing}
+                        style={{
+                          padding: '11px 18px', borderRadius: 10,
+                          background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                          color: '#fff', border: 'none',
+                          fontSize: 13, fontWeight: 900, cursor: completing ? 'wait' : 'pointer', fontFamily: 'inherit',
+                          boxShadow: '0 6px 18px rgba(16,185,129,0.32)',
+                        }}
+                      >
+                        {completing ? 'Sending…' : 'Send invoice + complete'}
+                      </button>
+                      <button
+                        onClick={() => setCompleteOpen(false)}
+                        disabled={completing}
+                        style={{
+                          padding: '11px 14px', borderRadius: 10,
+                          background: 'transparent', color: '#4A6670',
+                          border: '1px solid rgba(10,168,159,0.18)',
+                          fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    <p style={{ fontSize: 11, color: '#4A7A80', marginTop: 8, marginBottom: 0, lineHeight: 1.55 }}>
+                      Sends {form.customerName || 'the customer'} a Stripe pay-by-text link for ${completeAmount || '0'} and marks the job complete on your calendar.
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+            {props.mode === 'edit' && status === 'completed' && (
+              <div style={{ marginTop: 18, padding: '11px 14px', background: '#ECFDF5', border: '1px solid #6EE7B7', borderRadius: 10, fontSize: 13, fontWeight: 800, color: '#065F46', textAlign: 'center' }}>
+                ✓ Marked complete
               </div>
             )}
 
