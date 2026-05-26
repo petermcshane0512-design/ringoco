@@ -40,8 +40,8 @@ type FormState = {
 }
 
 type SyncState = {
-  provider: 'google' | 'microsoft' | null
-  eventId: string | null
+  google: boolean
+  microsoft: boolean
 }
 
 const DURATION_PRESETS = [30, 60, 90, 120, 180, 240]
@@ -75,7 +75,7 @@ export default function AppointmentModal(props: AppointmentModalProps) {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [sync, setSync] = useState<SyncState>({ provider: null, eventId: null })
+  const [sync, setSync] = useState<SyncState>({ google: false, microsoft: false })
 
   // Edit mode — load existing appointment
   useEffect(() => {
@@ -104,8 +104,8 @@ export default function AppointmentModal(props: AppointmentModalProps) {
           amountEstimated: a.amount_estimated != null ? String(a.amount_estimated) : '',
         })
         setSync({
-          provider: (a.external_provider as 'google' | 'microsoft' | null) ?? null,
-          eventId:  (a.external_event_id as string | null) ?? null,
+          google:    !!(a.google_event_id as string | null),
+          microsoft: !!(a.microsoft_event_id as string | null),
         })
         setLoading(false)
       } catch (e) {
@@ -241,30 +241,12 @@ export default function AppointmentModal(props: AppointmentModalProps) {
           <div style={{ padding: 60, textAlign: 'center', color: '#7AAAB2' }}>Loading…</div>
         ) : (
           <div style={{ padding: '20px 26px' }}>
-            {/* Sync status pill (edit mode only) */}
+            {/* Sync status pills (edit mode only) — one per provider. */}
             {props.mode === 'edit' && (
-              <div style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                {sync.provider ? (
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    padding: '5px 11px', borderRadius: 99,
-                    background: '#ECFDF5', border: '1px solid #A7F3D0',
-                    fontSize: 11, fontWeight: 800, color: '#065F46',
-                  }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981' }} />
-                    Mirrored to {sync.provider === 'google' ? 'Google Calendar' : 'Microsoft Outlook'}
-                  </span>
-                ) : (
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    padding: '5px 11px', borderRadius: 99,
-                    background: '#F1F5F9', border: '1px solid #CBD5E1',
-                    fontSize: 11, fontWeight: 800, color: '#475569',
-                  }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#94A3B8' }} />
-                    BellAveGo only · not mirrored
-                  </span>
-                )}
+              <div style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <SyncPill label="BellAveGo" active={true} kind="native" />
+                <SyncPill label="Google Calendar" active={sync.google} kind="google" />
+                <SyncPill label="Microsoft Outlook" active={sync.microsoft} kind="microsoft" />
               </div>
             )}
 
@@ -473,6 +455,26 @@ export default function AppointmentModal(props: AppointmentModalProps) {
 }
 
 // ─── helpers + sub-components ─────────────────────────────────────────────
+
+function SyncPill({ label, active, kind }: { label: string; active: boolean; kind: 'native' | 'google' | 'microsoft' }) {
+  const colors = active
+    ? kind === 'native'    ? { bg: '#FFF7EE', border: '#FFD9A8', dot: '#E8742B', text: '#9A3412' }
+    : kind === 'google'    ? { bg: '#ECFDF5', border: '#A7F3D0', dot: '#10B981', text: '#065F46' }
+                           : { bg: '#EFF6FF', border: '#BFDBFE', dot: '#3B82F6', text: '#1E40AF' }
+    : { bg: '#F1F5F9', border: '#CBD5E1', dot: '#94A3B8', text: '#64748B' }
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      padding: '5px 11px', borderRadius: 99,
+      background: colors.bg, border: `1px solid ${colors.border}`,
+      fontSize: 11, fontWeight: 800, color: colors.text,
+      opacity: active ? 1 : 0.7,
+    }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: colors.dot }} />
+      {label}{active ? '' : ' · not synced'}
+    </span>
+  )
+}
 
 function Label({ children }: { children: React.ReactNode }) {
   return (

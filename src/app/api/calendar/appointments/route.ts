@@ -105,10 +105,14 @@ export async function POST(req: NextRequest) {
   // Best-effort outbound sync to Google/Outlook. Failure does not block
   // the response — the native row is already saved. Sync errors land in
   // server logs + can be reconciled by a daily cron (TBD).
-  let syncedTo: 'google' | 'microsoft' | undefined
+  //
+  // Multi-provider fanout: pushes to every connected provider. Response
+  // reports per-provider sync status so the UI can render two pills.
+  const syncedTo: { google: boolean; microsoft: boolean } = { google: false, microsoft: false }
   try {
     const r = await pushAppointmentOut(created)
-    if (r.ok && r.provider) syncedTo = r.provider
+    syncedTo.google    = !!(r.google?.ok    && !r.google.skipped)
+    syncedTo.microsoft = !!(r.microsoft?.ok && !r.microsoft.skipped)
   } catch (e) {
     console.warn('[appointments POST] sync-out threw:', (e as Error).message)
   }

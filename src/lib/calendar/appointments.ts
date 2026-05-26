@@ -63,9 +63,13 @@ export type AppointmentRow = {
   status: string
   title: string | null
   scheduled_time: string | null        // legacy human label
+  // Multi-provider sync — populated per-provider when mirror push succeeds.
+  google_event_id: string | null
+  microsoft_event_id: string | null
+  // Legacy single-provider columns — kept for back-compat. New code prefers
+  // the per-provider ids above. These mirror the FIRST provider we synced to.
   external_event_id: string | null
   external_provider: 'google' | 'microsoft' | null
-  google_event_id: string | null       // legacy
   created_at: string
 }
 

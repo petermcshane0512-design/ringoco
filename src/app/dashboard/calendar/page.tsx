@@ -131,22 +131,20 @@ function CalendarPageInner() {
     finally { setEventsLoading(false) }
   }
 
-  // Direct integration (Cronofy retired 2026-05-26). Pick the first enabled
-  // Google or Microsoft connection — contractors typically connect one, but
-  // if both are present we prefer Google (most common ICP).
-  const calendarConnection = connections.find(
-    (c) => c.enabled && (c.provider === 'google' || c.provider === 'microsoft'),
-  )
+  // Multi-provider mirror — find each enabled provider independently so the
+  // contractor can sync to Google AND Outlook simultaneously.
+  const googleConnection    = connections.find((c) => c.enabled && c.provider === 'google')
+  const microsoftConnection = connections.find((c) => c.enabled && c.provider === 'microsoft')
 
-  async function disconnect() {
-    if (!calendarConnection) return
-    if (!confirm('Disconnect your calendar? The AI will stop offering specific time slots from your calendar.')) return
+  async function disconnectProvider(provider: 'google' | 'microsoft') {
+    const label = provider === 'google' ? 'Google Calendar' : 'Microsoft Outlook'
+    if (!confirm(`Stop mirroring BellAveGo jobs to ${label}? Your existing BellAveGo appointments stay — only the phone sync stops.`)) return
     setDisconnecting(true)
     try {
       await fetch('/api/calendar/disconnect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: calendarConnection.provider }),
+        body: JSON.stringify({ provider }),
       })
       await refresh()
     } finally { setDisconnecting(false) }
@@ -402,173 +400,7 @@ function CalendarPageInner() {
         </button>
       </div>
 
-      {/* Single Connect-a-Calendar card — Cronofy handles the provider picker */}
-      {calendarConnection ? (
-        // CONNECTED state
-        <div style={{
-          background: '#fff',
-          border: '1.5px solid #22C55E',
-          borderRadius: 16,
-          padding: '24px 28px',
-          boxShadow: '0 4px 20px rgba(7,27,58,0.04)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14 }}>
-            <div style={{
-              width: 48, height: 48, borderRadius: 12,
-              background: 'linear-gradient(135deg, #22C55E, #16A34A)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 6px 16px rgba(34,197,94,0.32)',
-            }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 9, fontWeight: 900, color: '#16A34A', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>
-                Calendar connected
-              </div>
-              <div style={{ fontSize: 17, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.02em' }}>
-                {calendarConnection.name || prettyProvider(calendarConnection.provider)}
-              </div>
-              {calendarConnection.email && (
-                <div style={{ fontSize: 13, color: '#7AAAB2', marginTop: 2 }}>{calendarConnection.email}</div>
-              )}
-            </div>
-            <button
-              onClick={disconnect}
-              disabled={disconnecting}
-              style={{
-                padding: '10px 18px', borderRadius: 9,
-                background: '#FEF2F2', color: '#991B1B',
-                border: '1px solid #FECACA',
-                fontSize: 12, fontWeight: 800, cursor: 'pointer',
-                fontFamily: 'inherit',
-              }}
-            >
-              {disconnecting ? 'Disconnecting…' : 'Disconnect'}
-            </button>
-          </div>
-          <div style={{ padding: '12px 14px', background: '#F0FAF7', borderRadius: 10, fontSize: 13, color: '#0D8F87' }}>
-            ✓ The AI now checks your real-time availability before offering appointment times on every call.
-          </div>
-        </div>
-      ) : (
-        // NOT-CONNECTED state — two provider buttons (Google + Outlook).
-        // Direct OAuth integrations (Cronofy retired 2026-05-26). Each
-        // button goes straight to its provider's consent screen — Google
-        // and Microsoft both show their own standard "BellAveGo wants to
-        // access your calendar" dialog with no third-party warning.
-        <div style={{
-          background: 'linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 60%)',
-          border: '1.5px solid rgba(232,116,43,0.32)',
-          borderRadius: 16,
-          padding: '28px 32px',
-          boxShadow: '0 8px 32px rgba(232,116,43,0.10)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-            <span style={{
-              fontSize: 9, fontWeight: 900, color: '#C84B26',
-              background: 'rgba(232,116,43,0.12)', padding: '3px 9px', borderRadius: 99,
-              letterSpacing: '0.14em', textTransform: 'uppercase',
-            }}>
-              Recommended · 60 seconds
-            </span>
-          </div>
-          <h2 style={{ fontSize: 20, fontWeight: 900, color: '#0B1F3A', margin: '0 0 8px', letterSpacing: '-0.02em' }}>
-            Let the AI offer real appointment times
-          </h2>
-          <p style={{ fontSize: 14, color: '#4A6670', lineHeight: 1.55, margin: '0 0 18px' }}>
-            Connect <strong>Google Calendar</strong> or <strong>Microsoft Outlook</strong> and the AI checks your real availability before offering specific slots to callers. We never read event details — only your free/busy windows.
-          </p>
-
-          {/* Pre-verification heads-up — Google + Microsoft verification reviews
-              are in flight (2026-05-26). Until they finish, contractors see a
-              yellow "unverified app" warning during OAuth. This explainer kills
-              the drop-off. DELETE this block once BOTH verifications approve. */}
-          <div style={{
-            marginBottom: 18,
-            padding: '14px 16px',
-            background: '#FFF8EC',
-            border: '1.5px solid #FBD38D',
-            borderRadius: 12,
-            display: 'flex',
-            gap: 12,
-            alignItems: 'flex-start',
-          }}>
-            <div style={{
-              flexShrink: 0,
-              width: 32, height: 32, borderRadius: 8,
-              background: '#F59E0B',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', fontSize: 18, fontWeight: 900,
-            }}>
-              ℹ
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 900, color: '#78350F', marginBottom: 4 }}>
-                You&apos;ll see a yellow &quot;app not verified&quot; warning — that&apos;s expected
-              </div>
-              <p style={{ fontSize: 13, color: '#6B4317', lineHeight: 1.55, margin: 0 }}>
-                Google and Microsoft are still finishing our app verification review (usually 3-5 days). Until then, both providers show a one-time warning when you connect. <strong>Click &quot;Advanced&quot; → &quot;Continue to bellavego.com&quot;</strong> to proceed — it&apos;s safe, your calendar data stays inside Google/Outlook, and we only read free/busy plus create the events the AI books for you.
-              </p>
-            </div>
-          </div>
-
-          {/* Two provider buttons — direct OAuth, no middleman */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-            <a
-              href="/api/calendar/google/connect"
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                padding: '15px 22px', borderRadius: 11,
-                background: '#fff',
-                border: '1.5px solid #DADCE0',
-                color: '#1F1F1F', fontSize: 14, fontWeight: 700,
-                textDecoration: 'none',
-                boxShadow: '0 1px 3px rgba(60,64,67,0.08)',
-                transition: 'box-shadow 0.18s ease, transform 0.18s ease',
-              }}
-            >
-              {/* Google G logo — official multi-color */}
-              <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
-                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-              </svg>
-              Connect Google Calendar
-            </a>
-
-            <a
-              href="/api/calendar/microsoft/connect"
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                padding: '15px 22px', borderRadius: 11,
-                background: '#fff',
-                border: '1.5px solid #DADCE0',
-                color: '#1F1F1F', fontSize: 14, fontWeight: 700,
-                textDecoration: 'none',
-                boxShadow: '0 1px 3px rgba(60,64,67,0.08)',
-                transition: 'box-shadow 0.18s ease, transform 0.18s ease',
-              }}
-            >
-              {/* Microsoft 4-square logo */}
-              <svg width="20" height="20" viewBox="0 0 23 23" aria-hidden="true">
-                <rect x="1"  y="1"  width="10" height="10" fill="#F25022"/>
-                <rect x="12" y="1"  width="10" height="10" fill="#7FBA00"/>
-                <rect x="1"  y="12" width="10" height="10" fill="#00A4EF"/>
-                <rect x="12" y="12" width="10" height="10" fill="#FFB900"/>
-              </svg>
-              Connect Microsoft Outlook
-            </a>
-          </div>
-
-          {/* Trust footer */}
-          <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(232,116,43,0.18)', fontSize: 12, color: '#7AAAB2', lineHeight: 1.6 }}>
-            Works with personal Gmail, Google Workspace, Outlook.com, Microsoft 365, and Exchange Online. <strong style={{ color: '#0B1F3A' }}>Read-only free/busy + write access</strong> to create AI-booked appointments. Disconnect anytime.
-          </div>
-        </div>
-      )}
+{/* SYNC PROVIDERS — small secondary section under the calendar grid below */}
 
       {/* CALENDAR GRID — primary surface. Renders ALL appointments from the
           native BellAveGo calendar + any synced external events. Events the
@@ -632,21 +464,104 @@ function CalendarPageInner() {
           </div>
         </section>
 
-      {/* How it works */}
-      <div style={{ marginTop: 32, padding: '22px 26px', background: '#F0FAF7', border: '1px solid rgba(10,168,159,0.22)', borderRadius: 14 }}>
-        <h3 style={{ fontSize: 14, fontWeight: 900, color: '#0B1F3A', marginTop: 0, marginBottom: 10 }}>
-          How BellAveGo Calendar works
-        </h3>
-        <ol style={{ paddingLeft: 18, margin: 0, fontSize: 13, color: '#4A6670', lineHeight: 1.7 }}>
-          <li><strong>AI bookings land here automatically.</strong> Every appointment Emma captures during a call shows up in orange the moment the call ends.</li>
-          <li><strong>Add manual appointments.</strong> Click any empty time slot — or the &ldquo;+ Add appointment&rdquo; button — to enter jobs you booked yourself.</li>
-          <li><strong>Block time so the AI respects it.</strong> Lunch, vacation, doctor visits. Block once → the AI never offers callers a time during your block.</li>
-          <li><strong>Optional: sync to your phone.</strong> Connect Google Calendar or Microsoft Outlook below and we&apos;ll mirror BellAveGo events to your phone&apos;s calendar app too.</li>
-        </ol>
-        <p style={{ fontSize: 11.5, color: '#7AAAB2', marginTop: 12, marginBottom: 0, fontStyle: 'italic' }}>
-          Privacy: when you connect Google or Outlook, we only read free/busy windows — never event titles, attendees, or notes. Disconnect anytime.
+      {/* SYNC TO PHONE — secondary surface explaining how BellAveGo mirrors to
+          the contractor's phone calendars. Hierarchy:
+            BellAveGo Calendar (above)  →  THE calendar
+            Google + Outlook (below)    →  optional outbound mirror
+          Each provider has its own card showing connected/disconnected state. */}
+      <section style={{ marginTop: 36 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+          <span style={{
+            fontSize: 9, fontWeight: 900, color: '#0AA89F',
+            background: 'rgba(10,168,159,0.10)', padding: '3px 10px', borderRadius: 99,
+            letterSpacing: '0.14em', textTransform: 'uppercase',
+          }}>
+            Optional
+          </span>
+        </div>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.03em', margin: '0 0 6px' }}>
+          Send your jobs to your phone
+        </h2>
+        <p style={{ fontSize: 14, color: '#4A6670', lineHeight: 1.55, margin: '0 0 18px', maxWidth: 720 }}>
+          Connect <strong>Google Calendar</strong>, <strong>Microsoft Outlook</strong>, or <strong>both</strong>. Every BellAveGo appointment — AI-booked or manually added — gets mirrored into the calendars you connect, so it shows up in the calendar app on your phone. <strong>BellAveGo stays the boss</strong>: edits and cancellations always flow OUT of here, never back in.
         </p>
-      </div>
+
+        {/* Pre-verification heads-up for Microsoft only (Google is verified now) */}
+        {!microsoftConnection && (
+          <div style={{
+            marginBottom: 16,
+            padding: '12px 14px',
+            background: '#FFF8EC',
+            border: '1.5px solid #FBD38D',
+            borderRadius: 12,
+            display: 'flex', gap: 10, alignItems: 'flex-start',
+            fontSize: 12, color: '#6B4317', lineHeight: 1.55,
+          }}>
+            <span style={{ fontSize: 16, lineHeight: 1 }}>ℹ️</span>
+            <div>
+              <strong style={{ color: '#78350F' }}>Heads up for Outlook:</strong> Microsoft is still finishing our publisher verification (~1-2 days). You&apos;ll see a one-time &quot;unverified publisher&quot; notice during the consent screen — click <strong>Continue</strong> to proceed. Google Calendar is fully verified and shows no warning.
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14 }}>
+          {/* GOOGLE provider card */}
+          <ProviderSyncCard
+            providerKey="google"
+            label="Google Calendar"
+            description="Personal Gmail or Google Workspace"
+            badgeBg="#fff"
+            badgeBorder="#DADCE0"
+            connection={googleConnection}
+            disconnecting={disconnecting}
+            onConnect="/api/calendar/google/connect"
+            onDisconnect={() => disconnectProvider('google')}
+            logo={
+              <svg width="22" height="22" viewBox="0 0 48 48" aria-hidden="true">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+              </svg>
+            }
+          />
+
+          {/* MICROSOFT provider card */}
+          <ProviderSyncCard
+            providerKey="microsoft"
+            label="Microsoft Outlook"
+            description="Outlook.com, Office 365, Exchange"
+            badgeBg="#fff"
+            badgeBorder="#DADCE0"
+            connection={microsoftConnection}
+            disconnecting={disconnecting}
+            onConnect="/api/calendar/microsoft/connect"
+            onDisconnect={() => disconnectProvider('microsoft')}
+            logo={
+              <svg width="22" height="22" viewBox="0 0 23 23" aria-hidden="true">
+                <rect x="1"  y="1"  width="10" height="10" fill="#F25022"/>
+                <rect x="12" y="1"  width="10" height="10" fill="#7FBA00"/>
+                <rect x="1"  y="12" width="10" height="10" fill="#00A4EF"/>
+                <rect x="12" y="12" width="10" height="10" fill="#FFB900"/>
+              </svg>
+            }
+          />
+        </div>
+
+        {/* Privacy + how-it-works summary */}
+        <div style={{ marginTop: 18, padding: '14px 18px', background: '#F0FAF7', border: '1px solid rgba(10,168,159,0.22)', borderRadius: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <span style={{ fontSize: 16 }}>🔒</span>
+            <strong style={{ fontSize: 12, color: '#0B1F3A' }}>What we do (and don&apos;t do) with your phone calendar</strong>
+          </div>
+          <ul style={{ paddingLeft: 22, margin: 0, fontSize: 12, color: '#4A6670', lineHeight: 1.7 }}>
+            <li><strong>OUT</strong>: every BellAveGo appointment is pushed to your connected calendars (so your phone shows it).</li>
+            <li><strong>IN</strong>: we read your free/busy windows so the AI never offers a slot you&apos;re already booked in.</li>
+            <li><strong>NEVER</strong>: we don&apos;t read event titles, attendees, descriptions, or locations from your phone calendar.</li>
+            <li><strong>EDITS</strong>: change a job in BellAveGo → your phone calendar updates. Change it in Google → BellAveGo ignores the change. (Source of truth = BellAveGo.)</li>
+          </ul>
+        </div>
+      </section>
 
       {/* Appointment modal — mounted last so it overlays everything */}
       {modalMode && (
@@ -658,6 +573,102 @@ function CalendarPageInner() {
         />
       )}
     </main>
+  )
+}
+
+/** Single provider sync card — Google or Outlook. Two visual states:
+ *  CONNECTED  → green border, account email shown, Disconnect button
+ *  DISCONNECTED → neutral border, Connect button
+ */
+function ProviderSyncCard({
+  providerKey, label, description, logo, connection, disconnecting,
+  onConnect, onDisconnect, badgeBg, badgeBorder,
+}: {
+  providerKey: 'google' | 'microsoft'
+  label: string
+  description: string
+  logo: React.ReactNode
+  connection: Connection | undefined
+  disconnecting: boolean
+  onConnect: string
+  onDisconnect: () => void
+  badgeBg: string
+  badgeBorder: string
+}) {
+  const connected = !!connection
+  return (
+    <div style={{
+      background: connected ? '#fff' : '#fff',
+      border: connected ? '1.5px solid #22C55E' : '1.5px solid rgba(10,168,159,0.18)',
+      borderRadius: 14,
+      padding: '18px 20px',
+      boxShadow: connected
+        ? '0 6px 22px rgba(34,197,94,0.12)'
+        : '0 2px 10px rgba(7,27,58,0.05)',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12,
+    }}>
+      {/* Logo + name + status row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{
+          flexShrink: 0,
+          width: 44, height: 44, borderRadius: 11,
+          background: badgeBg, border: `1px solid ${badgeBorder}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          {logo}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.01em' }}>
+            {label}
+          </div>
+          {connected ? (
+            <div style={{ fontSize: 12, color: '#16A34A', fontWeight: 700, marginTop: 2 }}>
+              ● Connected{connection?.email ? ` · ${connection.email}` : ''}
+            </div>
+          ) : (
+            <div style={{ fontSize: 12, color: '#7AAAB2', marginTop: 2 }}>
+              {description}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* CTA row */}
+      {connected ? (
+        <button
+          onClick={onDisconnect}
+          disabled={disconnecting}
+          style={{
+            padding: '10px 14px', borderRadius: 9,
+            background: '#FEF2F2', color: '#991B1B',
+            border: '1px solid #FECACA',
+            fontSize: 12, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit',
+          }}
+        >
+          {disconnecting ? 'Disconnecting…' : 'Stop mirroring'}
+        </button>
+      ) : (
+        <a
+          href={onConnect}
+          style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            padding: '11px 16px', borderRadius: 10,
+            background: providerKey === 'google' ? '#fff' : '#fff',
+            border: '1.5px solid #DADCE0',
+            color: '#1F1F1F', fontSize: 13, fontWeight: 800,
+            textDecoration: 'none',
+            boxShadow: '0 1px 3px rgba(60,64,67,0.08)',
+          }}
+        >
+          Connect {label}
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </a>
+      )}
+    </div>
   )
 }
 
