@@ -597,34 +597,56 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
             </div>
           )}
 
-          {/* == CALENDAR TAB == */}
+          {/* == CALENDAR TAB == (mirrors real /dashboard/calendar 2026-05-26) */}
           {activeTab === 'Calendar' && (
             <div>
-              <div style={{ background: 'linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 60%)', border: '1px solid rgba(232,116,43,0.24)', borderRadius: 11, padding: '12px 14px', marginBottom: 11 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 7.5, fontWeight: 800, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '2px 7px', borderRadius: 99, background: 'rgba(232,116,43,0.12)', border: '1px solid rgba(232,116,43,0.30)' }}>Calendar</span>
-                  <div style={{ fontSize: 10.5, fontWeight: 800, color: '#0B1F3A' }}>Live appointment booking</div>
-                </div>
-                <div style={{ fontSize: 9, color: '#4A6670', lineHeight: 1.5 }}>Connect once and the AI offers your real open times to callers — no double-booking, travel buffer baked in.</div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 9, marginBottom: 11 }}>
-                {[
-                  { name: 'Google Calendar',   color: '#4285F4', glyph: 'G', status: 'Connected', live: true  },
-                  { name: 'Microsoft Outlook', color: '#0078D4', glyph: 'O', status: 'Available',  live: false },
-                  { name: 'Calendly',          color: '#006BFF', glyph: 'C', status: 'Available',  live: false },
-                ].map(p => (
-                  <div key={p.name} style={{ background: '#fff', border: p.live ? '1.5px solid #22C55E' : '1px solid rgba(10,168,159,0.16)', borderRadius: 11, padding: '12px 10px', textAlign: 'center', boxShadow: '0 2px 8px rgba(7,27,58,0.05)' }}>
-                    <div style={{ width: 34, height: 34, borderRadius: 9, background: p.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 16, margin: '0 auto 8px', boxShadow: '0 4px 10px rgba(11,31,58,0.18)' }}>{p.glyph}</div>
-                    <div style={{ fontSize: 10, fontWeight: 800, color: '#0B1F3A', marginBottom: 4 }}>{p.name}</div>
-                    <span style={{ display: 'inline-block', fontSize: 7.5, fontWeight: 700, padding: '2px 7px', borderRadius: 8, background: p.live ? '#ECFDF5' : 'rgba(10,168,159,0.06)', color: p.live ? '#059669' : '#0AA89F', border: p.live ? '1px solid #A7F3D0' : '1px solid rgba(10,168,159,0.22)' }}>{p.status}</span>
+              {/* Branded navy→teal hero — same gradient + wordmark as real page */}
+              <div style={{
+                marginBottom: 11,
+                padding: '14px 16px',
+                background: 'linear-gradient(135deg, #0B1F3A 0%, #163356 60%, #0D8F87 100%)',
+                borderRadius: 12,
+                color: '#fff',
+                boxShadow: '0 8px 22px rgba(7,27,58,0.18)',
+                position: 'relative',
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  position: 'absolute', top: -28, right: -28,
+                  width: 110, height: 110, borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(255,157,90,0.35) 0%, transparent 70%)',
+                  pointerEvents: 'none',
+                }} />
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, position: 'relative' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                      <span style={{ fontSize: 8.5, fontWeight: 900, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#fff' }}>BellAveGo</span>
+                      <span style={{ fontSize: 6.5, fontWeight: 900, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#5EEAD4', background: 'rgba(255,255,255,0.12)', padding: '2px 6px', borderRadius: 99 }}>Calendar</span>
+                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: '-0.03em', color: '#fff', marginBottom: 3 }}>
+                      Your jobs, your schedule.
+                    </div>
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.74)', lineHeight: 1.4 }}>
+                      Every AI booking + manual job. Mirror to Google/Outlook below.
+                    </div>
                   </div>
-                ))}
+                  <div style={{
+                    flexShrink: 0,
+                    padding: '7px 12px', borderRadius: 8,
+                    background: 'linear-gradient(135deg, #FFD9A8 0%, #FF9D5A 50%, #E8742B 100%)',
+                    color: '#0B1F3A', fontSize: 10, fontWeight: 900,
+                    boxShadow: '0 4px 14px rgba(232,116,43,0.42)',
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                  }}>
+                    + Add
+                  </div>
+                </div>
               </div>
 
               {/* Mini week view — fake HVAC schedule. Orange blocks were
                   auto-booked by BellAveGo's AI receptionist; blue blocks
                   are pre-existing Google Calendar events. */}
-              <div style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, overflow: 'hidden', boxShadow: '0 2px 8px rgba(7,27,58,0.05)' }}>
+              <div style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, overflow: 'hidden', boxShadow: '0 2px 8px rgba(7,27,58,0.05)', marginBottom: 11 }}>
                 {/* Header — month + legend */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderBottom: '1px solid rgba(10,168,159,0.10)', background: 'linear-gradient(135deg, #FFFFFF 0%, #FFFAF3 100%)' }}>
                   <div style={{ fontSize: 10, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.2px' }}>May 18 – May 22 · This week</div>
@@ -717,6 +739,51 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                   </span>
                 </div>
               </div>
+
+              {/* "Send your jobs to your phone" — mirrors real page bottom */}
+              <div>
+                <div style={{ fontSize: 7, fontWeight: 900, color: '#0AA89F', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 3 }}>Optional</div>
+                <div style={{ fontSize: 11, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.02em', marginBottom: 3 }}>Send your jobs to your phone</div>
+                <div style={{ fontSize: 8.5, color: '#4A6670', lineHeight: 1.45, marginBottom: 8 }}>
+                  Mirror BellAveGo appointments to Google or Outlook so they show up in your phone&apos;s calendar app too.
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
+                  {/* Google card — CONNECTED */}
+                  <div style={{ background: '#fff', border: '1.5px solid #22C55E', borderRadius: 9, padding: '8px 10px', boxShadow: '0 4px 14px rgba(34,197,94,0.10)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5 }}>
+                      <div style={{ width: 22, height: 22, borderRadius: 6, background: '#fff', border: '1px solid #DADCE0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="13" height="13" viewBox="0 0 48 48" aria-hidden="true">
+                          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                        </svg>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 9, fontWeight: 900, color: '#0B1F3A' }}>Google Calendar</div>
+                        <div style={{ fontSize: 7, fontWeight: 800, color: '#16A34A' }}>● Connected</div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Microsoft card — NOT CONNECTED */}
+                  <div style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.18)', borderRadius: 9, padding: '8px 10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5 }}>
+                      <div style={{ width: 22, height: 22, borderRadius: 6, background: '#fff', border: '1px solid #DADCE0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="13" height="13" viewBox="0 0 23 23" aria-hidden="true">
+                          <rect x="1"  y="1"  width="10" height="10" fill="#F25022"/>
+                          <rect x="12" y="1"  width="10" height="10" fill="#7FBA00"/>
+                          <rect x="1"  y="12" width="10" height="10" fill="#00A4EF"/>
+                          <rect x="12" y="12" width="10" height="10" fill="#FFB900"/>
+                        </svg>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 9, fontWeight: 900, color: '#0B1F3A' }}>Microsoft Outlook</div>
+                        <div style={{ fontSize: 7, color: '#7AAAB2' }}>Outlook · Office 365</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -727,24 +794,42 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
               Quick actions on the right). */}
           {activeTab === 'Command Center' && <div>
 
-            {/* Calendar Sync banner — mini version of the real one. */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 12px', marginBottom: 11, background: 'linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 60%)', border: '1px solid rgba(232,116,43,0.32)', borderRadius: 10, boxShadow: '0 4px 12px rgba(232,116,43,0.08)' }}>
-              <div style={{ width: 26, height: 26, borderRadius: 7, background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 3px 8px rgba(232,116,43,0.32)' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            {/* BellAveGo Calendar tile — promoted to 2nd-tier surface on the
+                real dashboard (2026-05-26). Navy→teal gradient, shows
+                upcoming count + next-event label, links to /dashboard/calendar. */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 9,
+              padding: '11px 13px', marginBottom: 11,
+              background: 'linear-gradient(135deg, #0B1F3A 0%, #163356 60%, #0D8F87 100%)',
+              border: '1.5px solid rgba(255,157,90,0.42)',
+              borderRadius: 11,
+              boxShadow: '0 8px 20px rgba(7,27,58,0.22)',
+              position: 'relative', overflow: 'hidden',
+            }}>
+              <div style={{
+                position: 'absolute', top: -22, right: -22,
+                width: 90, height: 90, borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(255,157,90,0.42) 0%, transparent 70%)',
+                pointerEvents: 'none',
+              }} />
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 10px rgba(232,116,43,0.42)', position: 'relative' }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="4" width="18" height="18" rx="2" />
                   <line x1="16" y1="2" x2="16" y2="6" />
                   <line x1="8" y1="2" x2="8" y2="6" />
                   <line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 1 }}>
-                  <span style={{ fontSize: 7, fontWeight: 900, color: '#C84B26', background: 'rgba(232,116,43,0.12)', padding: '1.5px 5px', borderRadius: 99, letterSpacing: '0.14em', textTransform: 'uppercase' }}>New</span>
-                  <span style={{ fontSize: 10.5, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.02em' }}>Connect your calendar so the AI offers real time slots</span>
+                  <span style={{ fontSize: 7, fontWeight: 900, color: '#5EEAD4', background: 'rgba(94,234,212,0.14)', padding: '1.5px 6px', borderRadius: 99, letterSpacing: '0.14em', textTransform: 'uppercase' }}>BellAveGo Calendar</span>
+                  <span style={{ fontSize: 10.5, fontWeight: 900, color: '#fff', letterSpacing: '-0.02em' }}>10 upcoming jobs</span>
                 </div>
-                <div style={{ fontSize: 8, color: '#4A6670', lineHeight: 1.4 }}>Google Calendar · Microsoft Outlook · Calendly</div>
+                <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.78)', lineHeight: 1.4 }}>
+                  Next: <strong style={{ color: '#fff' }}>Mon, May 18 · 8:00 AM — HVAC Repair · Marcus T.</strong>
+                </div>
               </div>
-              <div style={{ padding: '5px 10px', borderRadius: 7, background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', color: '#fff', fontSize: 9, fontWeight: 800, flexShrink: 0, boxShadow: '0 3px 8px rgba(10,168,159,0.32)' }}>Connect →</div>
+              <div style={{ padding: '5px 10px', borderRadius: 7, background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontSize: 9, fontWeight: 800, flexShrink: 0 }}>Open →</div>
             </div>
 
 
