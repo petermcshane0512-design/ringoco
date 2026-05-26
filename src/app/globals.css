@@ -364,21 +364,9 @@ html { overflow-x: hidden; }
       radial-gradient(900px 700px at 12% 85%, rgba(94,234,212,0.30), transparent 70%),
       linear-gradient(180deg, #2D7A92 0%, #1F6885 50%, #1A5A78 100%);
   }
-  /* Flowy wave silhouette at top of the preview — echoes the hero's
-     bottom waves so the seam between the two sections disappears. */
-  .mobile-dash-preview::before {
-    content: '';
-    position: absolute;
-    left: 0; right: 0; top: 0;
-    height: 40px;
-    background:
-      radial-gradient(ellipse 22% 100% at 18% 60%, rgba(94,234,212,0.32), transparent 70%),
-      radial-gradient(ellipse 28% 100% at 52% 50%, rgba(94,234,212,0.22), transparent 70%),
-      radial-gradient(ellipse 24% 100% at 86% 60%, rgba(94,234,212,0.34), transparent 70%);
-    opacity: 0.55;
-    filter: blur(2px);
-    pointer-events: none;
-  }
+  /* Seam wave removed — the hero now uses the SAME teal flowy bg as the
+     preview (override in app/page.tsx mobile @media), so they read as one
+     continuous surface with no boundary to bridge. */
   .mobile-dash-preview > div {
     max-width: 100% !important;
     padding: 0 6px !important;

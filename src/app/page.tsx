@@ -498,10 +498,27 @@ export default function HomePage() {
                  (hidden on desktop where the hero already shows it) */
               .mobile-dash-preview { display: block !important; padding: 40px 0 8px !important; }
 
-              /* Hero container — kill the desktop min-height: 640px so the
-                 cream consulting section begins right after the dashboard
-                 (no trailing dark-blue dead space). */
-              .hero-wrap { min-height: 0 !important; }
+              /* Hero container — kill the desktop min-height + REPLACE the
+                 dark-navy gradient with the exact same teal flowy gradient
+                 used by .mobile-dash-preview below. Result: hero + preview
+                 read as ONE continuous teal beach surface on mobile, no
+                 visible seam. The desktop dark-navy is preserved (this
+                 override only runs inside the mobile @media block). */
+              .hero-wrap {
+                min-height: 0 !important;
+                background:
+                  radial-gradient(800px 400px at 88% 8%, rgba(255,157,90,0.18), transparent 60%),
+                  radial-gradient(900px 500px at 72% 28%, rgba(232,116,43,0.12), transparent 65%),
+                  radial-gradient(1100px 600px at 78% 55%, rgba(10,168,159,0.32), transparent 65%),
+                  radial-gradient(900px 700px at 12% 85%, rgba(94,234,212,0.30), transparent 70%),
+                  linear-gradient(180deg, #2D7A92 0%, #1F6885 50%, #1A5A78 100%) !important;
+              }
+              /* Hide the dark-bottom-wave silhouette + base wave overlays on
+                 mobile — they were designed to bridge the old dark-navy hero
+                 to the next section; now the hero IS teal so no bridging
+                 needed. Cleaner edge into the preview. */
+              .hero-wrap::after { display: none !important; }
+              .hero-waves { display: none !important; }
 
               /* Pricing grid — 1-col stacked (Peter wants each card
                  stretched full-width), tight gaps to kill dead space. */
@@ -620,8 +637,8 @@ export default function HomePage() {
                   <span className="hero-trust-lab">Always on</span>
                 </div>
                 <div className="hero-trust-item">
-                  <span className="hero-trust-num">30‑day</span>
-                  <span className="hero-trust-lab">Money‑back</span>
+                  <span className="hero-trust-num">7‑day</span>
+                  <span className="hero-trust-lab">Free trial</span>
                 </div>
               </div>
             </div>

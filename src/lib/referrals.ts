@@ -388,7 +388,7 @@ export function buildShareUrl(code: string): string {
 /**
  * Count + earnings summary for a contractor's referral dashboard widget.
  * Breaks out pending vs credited so the referrer can see in-flight referrals
- * (signed up but still inside the 30-day refund window).
+ * (signed up but still inside the 7-day trial + first-paid-month window).
  */
 export async function getReferralStats(userId: string): Promise<{
   pendingCount: number

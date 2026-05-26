@@ -6,7 +6,7 @@ import { useAuth } from '@clerk/nextjs'
 /**
  * Terms of Service — required for OAuth verification (Cronofy / Google / Microsoft)
  * and general legal hygiene. Standard SaaS boilerplate tailored to BellAveGo:
- * subscription terms, acceptable use, the 30-day money-back, liability limits.
+ * subscription terms (7-day free trial, no money-back guarantee), acceptable use, liability limits.
  *
  * NOT a substitute for a lawyer-reviewed agreement once revenue scales — but
  * solid enough for OAuth review and the first hundred customers. Update
