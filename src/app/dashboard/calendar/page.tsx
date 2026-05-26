@@ -399,6 +399,40 @@ function CalendarPageInner() {
             </svg>
           </a>
 
+          {/* Cronofy verification heads-up — production verification pending
+              with Cronofy as of 2026-05-26. Until they approve, the OAuth
+              consent screen shows "this application has not been verified by
+              Cronofy" which scares contractors into bouncing. This explainer
+              kills that drop-off. Delete this block once Cronofy verifies. */}
+          <div style={{
+            marginTop: 18,
+            padding: '14px 16px',
+            background: '#FFF8EC',
+            border: '1.5px solid #FBD38D',
+            borderRadius: 12,
+            display: 'flex',
+            gap: 12,
+            alignItems: 'flex-start',
+          }}>
+            <div style={{
+              flexShrink: 0,
+              width: 32, height: 32, borderRadius: 8,
+              background: '#F59E0B',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 18,
+            }}>
+              <span role="img" aria-label="heads up" style={{ filter: 'brightness(0) invert(1)' }}>ℹ</span>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 900, color: '#78350F', marginBottom: 4 }}>
+                Heads up: you&apos;ll see a yellow &quot;not verified by Cronofy&quot; warning
+              </div>
+              <p style={{ fontSize: 13, color: '#6B4317', lineHeight: 1.55, margin: 0 }}>
+                That&apos;s expected and totally safe. Cronofy is the calendar service we use under the hood, and they&apos;re still finishing our verification review (1-2 day process). The warning will disappear in a few days. <strong>Click &quot;Allow&quot; to continue</strong> — your calendar data stays inside Google/Outlook, we only get to read your availability and book the slots you authorize.
+              </p>
+            </div>
+          </div>
+
           {/* Supported providers row */}
           <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px solid rgba(232,116,43,0.18)' }}>
             <div style={{ fontSize: 10, fontWeight: 800, color: '#7AAAB2', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>
