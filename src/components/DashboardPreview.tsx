@@ -643,100 +643,176 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                 </div>
               </div>
 
-              {/* Mini week view — fake HVAC schedule. Orange blocks were
-                  auto-booked by BellAveGo's AI receptionist; blue blocks
-                  are pre-existing Google Calendar events. */}
+              {/* Calendar grid card — FullCalendar month view replica. Same
+                  toolbar layout as the real /dashboard/calendar page: prev/
+                  next/today buttons left, month title center, view switcher
+                  right (Month/Week/Day pills). 7-col × 5-row month grid
+                  with today (May 18) highlighted and event chips inline. */}
               <div style={{ background: '#fff', border: '1px solid rgba(10,168,159,0.14)', borderRadius: 11, overflow: 'hidden', boxShadow: '0 2px 8px rgba(7,27,58,0.05)', marginBottom: 11 }}>
-                {/* Header — month + legend */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderBottom: '1px solid rgba(10,168,159,0.10)', background: 'linear-gradient(135deg, #FFFFFF 0%, #FFFAF3 100%)' }}>
-                  <div style={{ fontSize: 10, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.2px' }}>May 18 – May 22 · This week</div>
+                {/* FullCalendar-style toolbar */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderBottom: '1px solid rgba(10,168,159,0.10)', background: '#fff' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    {['‹', '›'].map((c, i) => (
+                      <button key={i} style={{ width: 22, height: 22, borderRadius: 5, border: '1px solid rgba(10,168,159,0.18)', background: '#fff', color: '#4A6670', fontSize: 11, fontWeight: 800, cursor: 'default' }}>{c}</button>
+                    ))}
+                    <span style={{ padding: '3px 9px', borderRadius: 6, border: '1px solid rgba(10,168,159,0.18)', background: '#fff', color: '#4A6670', fontSize: 8.5, fontWeight: 700, marginLeft: 3 }}>Today</span>
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.3px' }}>May 2026</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                    {[
+                      { l: 'Month', active: true  },
+                      { l: 'Week',  active: false },
+                      { l: 'Day',   active: false },
+                    ].map((b, i, arr) => (
+                      <span key={b.l} style={{
+                        padding: '4px 9px',
+                        borderTop: '1px solid rgba(10,168,159,0.18)',
+                        borderBottom: '1px solid rgba(10,168,159,0.18)',
+                        borderLeft: i === 0 ? '1px solid rgba(10,168,159,0.18)' : 'none',
+                        borderRight: '1px solid rgba(10,168,159,0.18)',
+                        borderRadius: i === 0 ? '6px 0 0 6px' : i === arr.length - 1 ? '0 6px 6px 0' : 0,
+                        background: b.active ? 'linear-gradient(135deg, #FF9D5A, #E8742B)' : '#fff',
+                        color: b.active ? '#fff' : '#4A6670',
+                        fontSize: 8, fontWeight: 800,
+                      }}>{b.l}</span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Day-of-week header row */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderTop: '1px solid rgba(10,168,159,0.10)', background: '#FAFCFB' }}>
+                  {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d, i, arr) => (
+                    <div key={d} style={{
+                      padding: '5px 0',
+                      textAlign: 'center',
+                      fontSize: 7.5, fontWeight: 800, color: '#7AAAB2',
+                      letterSpacing: '0.10em', textTransform: 'uppercase',
+                      borderRight: i < arr.length - 1 ? '1px solid rgba(10,168,159,0.08)' : 'none',
+                    }}>{d}</div>
+                  ))}
+                </div>
+
+                {/* Month grid — 5 weeks × 7 days. May 2026 starts on Friday.
+                    Today = May 18 (Monday, week 4). Pre-month days (Apr
+                    27-30) and post-month (Jun 1-6) are faded. */}
+                {(() => {
+                  // Build 35-cell array: [date, isCurrentMonth]
+                  const cells: Array<{ date: number; month: 'prev' | 'curr' | 'next'; today?: boolean; events?: Array<{ title: string; bavg: boolean }> }> = [
+                    // Week 1: Apr 26 (Sun) ... May 2 (Sat)
+                    { date: 26, month: 'prev' }, { date: 27, month: 'prev' }, { date: 28, month: 'prev' }, { date: 29, month: 'prev' }, { date: 30, month: 'prev' },
+                    { date: 1, month: 'curr', events: [{ title: '9a · Maintenance · Lopez', bavg: true }] },
+                    { date: 2, month: 'curr' },
+                    // Week 2: May 3-9
+                    { date: 3, month: 'curr' },
+                    { date: 4, month: 'curr', events: [{ title: '10a · AC tune · Hernandez', bavg: true }] },
+                    { date: 5, month: 'curr' },
+                    { date: 6, month: 'curr', events: [{ title: '2p · Drain · Park', bavg: true }] },
+                    { date: 7, month: 'curr' },
+                    { date: 8, month: 'curr', events: [{ title: '11a · Furnace · Cooper', bavg: true }] },
+                    { date: 9, month: 'curr' },
+                    // Week 3: May 10-16
+                    { date: 10, month: 'curr' },
+                    { date: 11, month: 'curr', events: [{ title: '8a · Estimate · Khan', bavg: true }] },
+                    { date: 12, month: 'curr' },
+                    { date: 13, month: 'curr', events: [{ title: '1p · Heat pump · Reyes', bavg: true }] },
+                    { date: 14, month: 'curr', events: [{ title: '3p · Truck inspection', bavg: false }] },
+                    { date: 15, month: 'curr' },
+                    { date: 16, month: 'curr' },
+                    // Week 4 (current week): May 17-23. Today = May 18.
+                    { date: 17, month: 'curr' },
+                    { date: 18, month: 'curr', today: true, events: [
+                      { title: '8a · HVAC · Marcus T.',     bavg: true },
+                      { title: "1p · Furnace · Sarah L.",   bavg: true },
+                    ] },
+                    { date: 19, month: 'curr', events: [
+                      { title: '9a · Heat pump · Kevin S.', bavg: true },
+                      { title: '2p · Thermostat · Ana K.',  bavg: true },
+                    ] },
+                    { date: 20, month: 'curr', events: [
+                      { title: '12p · Lunch with Pat',      bavg: false },
+                      { title: '3p · Supplier pickup',      bavg: false },
+                    ] },
+                    { date: 21, month: 'curr', events: [
+                      { title: '10a · Truck inspection',    bavg: false },
+                    ] },
+                    { date: 22, month: 'curr', events: [
+                      { title: '8a · Team huddle',          bavg: false },
+                    ] },
+                    { date: 23, month: 'curr' },
+                    // Week 5: May 24-30
+                    { date: 24, month: 'curr' },
+                    { date: 25, month: 'curr', events: [{ title: '9a · AC install · Wilkins', bavg: true }] },
+                    { date: 26, month: 'curr' },
+                    { date: 27, month: 'curr' },
+                    { date: 28, month: 'curr', events: [{ title: '10a · Drain · Mendez', bavg: true }] },
+                    { date: 29, month: 'curr' },
+                    { date: 30, month: 'curr' },
+                  ]
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+                      {cells.map((c, i) => {
+                        const dim = c.month !== 'curr'
+                        return (
+                          <div key={i} style={{
+                            minHeight: 54,
+                            borderRight: (i % 7) !== 6 ? '1px solid rgba(10,168,159,0.08)' : 'none',
+                            borderBottom: i < 28 ? '1px solid rgba(10,168,159,0.08)' : 'none',
+                            padding: '3px 4px',
+                            background: c.today ? 'rgba(232,116,43,0.06)' : 'transparent',
+                            position: 'relative',
+                          }}>
+                            <div style={{
+                              fontSize: 8.5, fontWeight: c.today ? 900 : 700,
+                              color: c.today ? '#C84B26' : dim ? '#C9D5D7' : '#0B1F3A',
+                              textAlign: 'right', marginBottom: 2,
+                              lineHeight: 1,
+                            }}>
+                              {c.today ? (
+                                <span style={{
+                                  display: 'inline-block',
+                                  width: 16, height: 16, borderRadius: '50%',
+                                  background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+                                  color: '#fff', textAlign: 'center', lineHeight: '16px',
+                                  fontSize: 8, fontWeight: 900,
+                                }}>{c.date}</span>
+                              ) : c.date}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                              {(c.events || []).slice(0, 2).map((ev, j) => (
+                                <div key={j} style={{
+                                  fontSize: 6.5, fontWeight: 700,
+                                  padding: '1.5px 4px',
+                                  borderRadius: 3,
+                                  background: ev.bavg
+                                    ? 'linear-gradient(135deg, rgba(255,157,90,0.96), rgba(232,116,43,0.96))'
+                                    : 'rgba(11,31,58,0.86)',
+                                  color: '#fff',
+                                  borderLeft: ev.bavg ? '2px solid #C84B26' : '2px solid #1F3B5C',
+                                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                                  lineHeight: 1.25,
+                                }}>{ev.title}</div>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })()}
+
+                {/* Legend footer — matches "Your events / AI Booked" row on real page */}
+                <div style={{ padding: '7px 12px', borderTop: '1px solid rgba(10,168,159,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(232,116,43,0.03)' }}>
+                  <span style={{ fontSize: 8, fontWeight: 700, color: '#8B5A3D' }}>10 appointments this month · 4 auto-booked</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: 2, background: '#4285F4' }} />
-                      <span style={{ fontSize: 7.5, fontWeight: 700, color: '#4A6670' }}>Google</span>
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: '#0B1F3A' }} />
+                      <span style={{ fontSize: 7.5, fontWeight: 700, color: '#4A6670' }}>Your events</span>
                     </div>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                       <div style={{ width: 8, height: 8, borderRadius: 2, background: 'linear-gradient(135deg, #FF9D5A, #E8742B)' }} />
-                      <span style={{ fontSize: 7.5, fontWeight: 700, color: '#C84B26' }}>BellAveGo auto-booked</span>
+                      <span style={{ fontSize: 7.5, fontWeight: 700, color: '#C84B26' }}>AI Booked</span>
                     </div>
                   </div>
-                </div>
-                {/* 5-day grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', borderTop: '1px solid rgba(10,168,159,0.08)' }}>
-                  {[
-                    {
-                      // TODAY — first 2 calendar events match the 4 AI-booked
-                      // canonical customers shown in the AI Receptionist tab + Jobs table.
-                      day: 'Mon', date: '18',
-                      events: [
-                        { time: '8:00 AM', title: 'HVAC Repair · Marcus T.',         source: 'bavg'   },
-                        { time: '1:00 PM', title: "Furnace Won't Start · Sarah L.",  source: 'bavg'   },
-                      ],
-                    },
-                    {
-                      day: 'Tue', date: '19',
-                      events: [
-                        { time: '9:00 AM', title: 'Heat Pump Service · Kevin S.',    source: 'bavg'   },
-                        { time: '2:00 PM', title: 'Thermostat Install · Ana K.',     source: 'bavg'   },
-                      ],
-                    },
-                    {
-                      day: 'Wed', date: '20',
-                      events: [
-                        { time: '12:00 PM', title: 'Lunch with Pat',                 source: 'google' },
-                        { time: '3:00 PM',  title: 'Supplier pickup',                source: 'google' },
-                      ],
-                    },
-                    {
-                      day: 'Thu', date: '21',
-                      events: [
-                        { time: '10:00 AM', title: 'Truck inspection',               source: 'google' },
-                      ],
-                    },
-                    {
-                      day: 'Fri', date: '22',
-                      events: [
-                        { time: '8:00 AM', title: 'Team huddle',                     source: 'google' },
-                      ],
-                    },
-                  ].map((col, i, arr) => (
-                    <div key={col.day} style={{ borderRight: i < arr.length - 1 ? '1px solid rgba(10,168,159,0.08)' : 'none', padding: '8px 6px', minHeight: 130 }}>
-                      <div style={{ textAlign: 'center', marginBottom: 7 }}>
-                        <div style={{ fontSize: 7, fontWeight: 800, color: '#7AAAB2', textTransform: 'uppercase', letterSpacing: '0.10em' }}>{col.day}</div>
-                        <div style={{ fontSize: 13, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.4px', lineHeight: 1 }}>{col.date}</div>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                        {col.events.map((ev, j) => {
-                          const isBavg = ev.source === 'bavg'
-                          return (
-                            <div key={j} style={{
-                              borderRadius: 5,
-                              padding: '4px 6px',
-                              background: isBavg
-                                ? 'linear-gradient(135deg, rgba(255,157,90,0.95), rgba(232,116,43,0.95))'
-                                : 'rgba(66,133,244,0.92)',
-                              color: '#fff',
-                              borderLeft: isBavg ? '3px solid #C84B26' : '3px solid #1A73E8',
-                              boxShadow: isBavg
-                                ? '0 2px 6px rgba(232,116,43,0.32)'
-                                : '0 2px 5px rgba(66,133,244,0.28)',
-                            }}>
-                              <div style={{ fontSize: 7, fontWeight: 800, letterSpacing: '0.05em', opacity: 0.92 }}>{ev.time}</div>
-                              <div style={{ fontSize: 8.5, fontWeight: 700, lineHeight: 1.2, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.title}</div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {/* Footer summary */}
-                <div style={{ padding: '7px 12px', borderTop: '1px solid rgba(10,168,159,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(232,116,43,0.04)' }}>
-                  <span style={{ fontSize: 8, fontWeight: 700, color: '#8B5A3D' }}>10 appointments this week</span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 8, fontWeight: 800, color: '#C84B26' }}>
-                    <span style={{ width: 6, height: 6, borderRadius: 2, background: 'linear-gradient(135deg, #FF9D5A, #E8742B)' }} />
-                    4 auto-booked by AI · Saved you ~80 min
-                  </span>
                 </div>
               </div>
 
