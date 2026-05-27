@@ -63,10 +63,23 @@ export async function pushLeadsToInstantly(opts: {
   return { pushed, errors }
 }
 
-/** Verify Instantly webhook signature (HMAC-SHA256 of raw body with INSTANTLY_WEBHOOK_SECRET). */
+/** Verify Instantly webhook signature (HMAC-SHA256 of raw body with INSTANTLY_WEBHOOK_SECRET).
+ *
+ * Fails CLOSED. If INSTANTLY_WEBHOOK_SECRET is unset:
+ *   - In NODE_ENV=development, allow (local dev convenience).
+ *   - In any other env, REJECT. Previously returned true when unset which
+ *     meant a single missed env var made the production endpoint accept
+ *     unsigned webhooks. Security audit 2026-05-27. */
 export async function verifyInstantlyWebhook(rawBody: string, signatureHeader: string | null): Promise<boolean> {
   const secret = process.env.INSTANTLY_WEBHOOK_SECRET
-  if (!secret) return true // unsigned local dev — allow
+  if (!secret) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[instantly] INSTANTLY_WEBHOOK_SECRET unset — allowing in dev only')
+      return true
+    }
+    console.error('[instantly] INSTANTLY_WEBHOOK_SECRET unset in non-dev env — rejecting webhook')
+    return false
+  }
   if (!signatureHeader) return false
   const enc = new TextEncoder()
   const key = await crypto.subtle.importKey(
@@ -80,5 +93,10 @@ export async function verifyInstantlyWebhook(rawBody: string, signatureHeader: s
   const computedHex = Array.from(new Uint8Array(sig))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
-  return computedHex === signatureHeader.replace(/^sha256=/, '')
+  // Constant-time compare to avoid timing-leak on the prefix
+  const expected = signatureHeader.replace(/^sha256=/, '')
+  if (computedHex.length !== expected.length) return false
+  let mismatch = 0
+  for (let i = 0; i < computedHex.length; i++) mismatch |= computedHex.charCodeAt(i) ^ expected.charCodeAt(i)
+  return mismatch === 0
 }

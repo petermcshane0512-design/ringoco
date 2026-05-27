@@ -277,19 +277,28 @@ export default function FounderPage() {
           </div>
 
           <p>
-            I didn&rsquo;t start BellAveGo because AI was trending &mdash; I started it because I watched hardworking people lose money while doing the actual work. One afternoon, I was helping my friend Joe with a garage project when his phone rang four different times in under an hour. He ignored two calls because his hands were full, answered one just to say <em>&ldquo;I&rsquo;ll call you back,&rdquo;</em> and had to completely stop working just to schedule an appointment. Standing there watching it happen in real time, it hit me: thousands of home-service businesses are losing revenue every single day simply because they&rsquo;re too busy working to manage everything happening around them.
+            I started BellAveGo after watching how many home-service businesses lose jobs simply because they&rsquo;re too busy working to answer the phone.
           </p>
           <p>
-            That&rsquo;s why we built BellAveGo &mdash; an AI receptionist built specifically for home-service teams of one to fifteen people. It answers the calls you can&rsquo;t get to, books appointments, captures leads, and quietly does the front-office work so you can stay on the job. But <strong>the receptionist is only half of what BellAveGo does.</strong>
+            One afternoon, I was helping my friend Joe with a garage project when his phone rang four different times in under an hour. He ignored two calls because his hands were full, answered one just to say <em>&ldquo;I&rsquo;ll call you back,&rdquo;</em> and had to stop working entirely just to schedule an appointment. Watching it happen in real time, I realized this wasn&rsquo;t just Joe&rsquo;s problem &mdash; it was happening to thousands of hardworking businesses every single day.
           </p>
           <p>
-            The other half is the part we&rsquo;re most proud of. While the AI handles your phones, our team is actively scanning your service area for opportunities and threats you&rsquo;d never see on your own &mdash; new construction and remodel permits pulled in your zip code, neighborhoods with aging systems coming due for replacement or repair, competitors raising prices or going quiet, seasonal demand spikes hitting two weeks early, storm and weather damage clusters, commercial accounts switching providers, and new homeowners moving into your service area. Every signal gets turned into a plain-English report with a list of leads to chase and threats to defend against. <strong>Not a dashboard you have to interpret. A strategy you can run on Monday morning.</strong>
+            That moment led our team to build BellAveGo.
           </p>
           <p>
-            That&rsquo;s the real reason we built this. Small home-service crews have always been the backbone of their neighborhoods, but they&rsquo;ve never had access to the kind of market intelligence and strategy work that big companies pay consulting firms five figures a month for. BellAveGo changes that &mdash; built into a product priced for a small crew, not a corporation.
+            We created BellAveGo to give small home-service businesses the kind of tools and operational support that larger companies have had for years. Our AI receptionist answers missed calls, books appointments, captures leads, and handles customer communication so owners can stay focused on the actual work instead of constantly checking their phones.
           </p>
           <p>
-            BellAveGo was never built to replace hardworking people. It was built to give smaller teams the kind of automation and intelligence that used to only exist inside large companies &mdash; so the next time the phone rings while you&rsquo;re under a sink, you don&rsquo;t lose the job, and you actually know exactly where the next ten are coming from.
+            But <strong>what really makes BellAveGo different is what happens behind the scenes.</strong>
+          </p>
+          <p>
+            While the AI handles incoming calls, our team is constantly analyzing local market activity &mdash; things like new permits, seasonal demand shifts, aging homes, competitor pricing changes, storm activity, and other signals that help businesses understand where opportunities are developing in their area. We turn that information into simple, actionable reports designed to help small crews grow smarter and faster.
+          </p>
+          <p>
+            At the end of the day, BellAveGo was never built to replace hardworking people. Our team built it to help smaller businesses compete with the kind of automation, intelligence, and operational support that big companies have relied on for years.
+          </p>
+          <p>
+            Because when you&rsquo;re on a rooftop in the middle of July, inside a freezing basement in January, or halfway through an install, <strong>missing one phone call shouldn&rsquo;t mean losing the next job.</strong>
           </p>
 
           <div className="fv4-end">
