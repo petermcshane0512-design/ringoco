@@ -80,7 +80,7 @@ export default function TermsPage() {
 
         <Section title="5. AI behavior — important">
           <p>The AI receptionist is designed to <strong>take messages, not commit you to appointments you can&apos;t make</strong>. By default, the AI never confirms an appointment — it captures the caller&apos;s request and texts you a summary so you control the schedule.</p>
-          <p>If you connect a calendar (Google, Outlook, Calendly), the AI may offer real open slots from your calendar and create events on your behalf when callers pick one. A configurable travel buffer (default 30 minutes) is applied so back-to-back bookings are prevented. You can disconnect your calendar at any time to revert to message-only behavior.</p>
+          <p>The Service includes a native BellAveGo calendar that stores all appointments booked by the AI receptionist or manually entered by you. If you optionally connect a Google Calendar or Microsoft Outlook account, the Service mirrors BellAveGo appointments outward to those calendars so they appear in the calendar app on your phone, and reads free/busy windows back so the AI does not double-book conflicts. A configurable travel buffer (default 30 minutes) is applied so back-to-back bookings are prevented. You can disconnect external calendars at any time.</p>
           <p>AI-generated outputs (consulting reports, ad creative, quote follow-up text, review replies) are recommendations, not guaranteed results. Review them before acting.</p>
         </Section>
 

@@ -332,7 +332,7 @@ export default function OnboardingPage() {
 
       <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
         style={{ marginTop: 20, fontSize: 11, color: '#A0BCC2', textAlign: 'center', position: 'relative', zIndex: 1 }}>
-        No credit card required · Two steps, 60 seconds · Cancel anytime
+        7-day free trial · Two steps, 60 seconds · Cancel anytime before day 8
       </motion.p>
     </div>
   )
