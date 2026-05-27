@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "src/app/api/sample-report/personalize/route.ts": {
+      "maxDuration": 300
+    }
+  },
   "crons": [
     {
       "path": "/api/crons/prompt-improvement",
@@ -55,6 +60,10 @@
     {
       "path": "/api/crons/stripe-reconcile",
       "schedule": "30 9 * * *"
+    },
+    {
+      "path": "/api/crons/outreach-deliverability",
+      "schedule": "0 14 * * *"
     }
   ]
 }

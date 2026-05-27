@@ -35,6 +35,21 @@ import dotenv from 'dotenv'
 dotenv.config()
 dotenv.config({ path: '.env.local' })
 
+// ── Auto-save guard: if outreach-master.xlsx already exists, pull Peter's
+// manual edits BACK into the DB before regenerating. Belt-and-suspenders
+// so a forgotten import-edits run never silently wipes call notes. ────────
+import { spawnSync } from 'node:child_process'
+const XLSX_PATH = 'C:\\Users\\peter\\ringoco\\leads\\outreach-master.xlsx'
+if (fs.existsSync(XLSX_PATH)) {
+  console.log(`♻️  Existing ${path.basename(XLSX_PATH)} found — importing your edits first...`)
+  const r = spawnSync('node', ['scripts/import-outreach-edits.mjs'], { stdio: 'inherit' })
+  if (r.status !== 0) {
+    console.warn('   ⚠ import-edits exited non-zero. Refusing to overwrite.')
+    process.exit(1)
+  }
+  console.log('   ✅ edits imported to DB — safe to regenerate\n')
+}
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -134,6 +149,21 @@ for (const key of allBusinesses) {
     subject_line: subject,
     report_opens: Number(rpt?.open_count || 0),
     last_opened: rpt?.last_opened_at || '',
+    // Follow-up tracking — these are user-editable in Excel. Run
+    // scripts/import-outreach-edits.mjs to push edits back to DB.
+    call_attempted_at: dbRow?.call_attempted_at || '',
+    call_outcome: dbRow?.call_outcome || '',
+    call_notes: dbRow?.call_notes || '',
+    text_opt_in_at: dbRow?.text_opt_in_at || '',
+    text_sent_at: dbRow?.text_sent_at || '',
+    text_response_at: dbRow?.text_response_at || '',
+    text_response: dbRow?.text_response || '',
+    demo_booked_at: dbRow?.demo_booked_at || '',
+    demo_outcome: dbRow?.demo_outcome || '',
+    trial_started_at: dbRow?.trial_started_at || '',
+    paid_at: dbRow?.paid_at || '',
+    plan_tier_signed: dbRow?.plan_tier_signed || '',
+    notes: dbRow?.notes || '',
     report_url: reportUrl,
   })
 }
@@ -172,6 +202,10 @@ const sections = [
   { name: 'COMPETITIVE', span: 4, color: 'FF8B5A2B' },  // brown
   { name: 'OUTREACH', span: 4, color: 'FF0B1F3A' },     // navy
   { name: 'PERFORMANCE', span: 2, color: 'FF2E7D32' },  // green
+  { name: '☎ CALL — log here', span: 3, color: 'FF6B21A8' },    // purple (editable)
+  { name: '📱 TEXT — log here', span: 4, color: 'FFBE185D' },   // pink (editable)
+  { name: '🎯 CLOSE — log here', span: 4, color: 'FF166534' },  // dark green (editable)
+  { name: 'NOTES', span: 2, color: 'FF334155' },       // slate (editable)
   { name: 'LINK', span: 1, color: 'FF666666' },         // gray
 ]
 let colIdx = 1
@@ -224,6 +258,23 @@ const columns = [
   // PERFORMANCE
   { header: 'Report Opens', key: 'report_opens', width: 13 },
   { header: 'Last Opened', key: 'last_opened', width: 18 },
+  // ☎ CALL (editable)
+  { header: 'Call At', key: 'call_attempted_at', width: 16 },
+  { header: 'Call Outcome', key: 'call_outcome', width: 16 },
+  { header: 'Call Notes', key: 'call_notes', width: 40 },
+  // 📱 TEXT (editable)
+  { header: 'Text Opt-In', key: 'text_opt_in_at', width: 14 },
+  { header: 'Text Sent', key: 'text_sent_at', width: 14 },
+  { header: 'Text Response At', key: 'text_response_at', width: 16 },
+  { header: 'Text Response', key: 'text_response', width: 40 },
+  // 🎯 CLOSE (editable)
+  { header: 'Demo Booked', key: 'demo_booked_at', width: 14 },
+  { header: 'Demo Outcome', key: 'demo_outcome', width: 14 },
+  { header: 'Trial Started', key: 'trial_started_at', width: 14 },
+  { header: 'Paid', key: 'paid_at', width: 14 },
+  // NOTES (editable)
+  { header: 'Plan Signed', key: 'plan_tier_signed', width: 14 },
+  { header: 'Notes', key: 'notes', width: 40 },
   // LINK
   { header: 'Report URL', key: 'report_url', width: 30 },
 ]

@@ -81,11 +81,26 @@ Generate the JSON now.`
   }
 }
 
-/** Run personalization in parallel with concurrency limit. */
+/**
+ * Run personalization in parallel with concurrency limit.
+ *
+ * Default concurrency bumped 5 → 15 (2026-05-27) to match the 1K/day
+ * outreach bull target. Haiku 4.5 rate limits are very generous (tier 4
+ * = 1000 req/min). 15-wide cuts wall time ~3x with no rate-limit risk
+ * up to ~4000 leads/day. Override via the `concurrency` arg if a script
+ * hits unexpected 429s.
+ *
+ * Cost tracking: logs total cost per batch so we can alert on runaway
+ * personalization spend (e.g. accidental loop). Haiku 4.5 = $0.005/lead
+ * approx, so 1000 leads = $5. Cost printed via console — pipe to logs.
+ */
+const HAIKU_COST_PER_LEAD_USD = 0.005
+
 export async function personalizeBatch(
   leads: EnrichedLead[],
-  concurrency: number = 5,
+  concurrency: number = 15,
 ): Promise<Array<{ lead: EnrichedLead; fragments: PersonalizedFragments }>> {
+  const startedAt = Date.now()
   const results: Array<{ lead: EnrichedLead; fragments: PersonalizedFragments }> = []
   for (let i = 0; i < leads.length; i += concurrency) {
     const batch = leads.slice(i, i + concurrency)
@@ -94,6 +109,9 @@ export async function personalizeBatch(
     )
     results.push(...batchResults)
   }
+  const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1)
+  const estCostUsd = (leads.length * HAIKU_COST_PER_LEAD_USD).toFixed(2)
+  console.log(`[personalizeBatch] ${leads.length} leads · concurrency=${concurrency} · ${elapsed}s · ~$${estCostUsd} Claude spend`)
   return results
 }
 

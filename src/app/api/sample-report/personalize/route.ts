@@ -10,7 +10,9 @@ import {
 } from '@/lib/consultingMetrics'
 
 export const runtime = 'nodejs'
-export const maxDuration = 60
+// 300s ceiling on Pro plan — Places + Census + Sonnet generate can take
+// 30-90s under load. vercel.json overrides this for the prod deployment.
+export const maxDuration = 300
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -396,8 +398,13 @@ async function generate(input: PersonalizeBody): Promise<NextResponse> {
     token = inserted?.token
   }
 
+  // Signal upstream pipelines whether the market data is REAL or fallback so
+  // bulk send scripts can drop fallback rows instead of mailing identical
+  // SAMPLE_REPORT data to every shop where Places lookup failed.
+  const usingFallback = !market || (market.competitorCount ?? 0) === 0
+
   return NextResponse.json(
-    { report: enriched, cached: false, token },
+    { report: enriched, cached: false, token, usingFallback },
     { headers: { 'Cache-Control': 'public, max-age=300' } },
   )
 }

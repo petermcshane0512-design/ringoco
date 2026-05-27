@@ -206,6 +206,13 @@ async function personalize(lead) {
       }
       const json = await res.json()
       if (!json.report) throw new Error('no report in response')
+      // usingFallback=true means Places lookup failed and report is SAMPLE_REPORT
+      // defaults — pipeline should skip these so we never email identical fake
+      // data to multiple shops. (Endpoint returns this flag on cache miss; on
+      // cache hit it isn't set, but cached rows were only stored if real.)
+      if (json.usingFallback === true) {
+        throw new Error('places_fallback — refusing to send identical defaults')
+      }
       return { report: json.report, cached: !!json.cached, token: json.token }
     } catch (e) {
       if (attempt === 1) throw e

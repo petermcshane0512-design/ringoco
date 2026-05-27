@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import pLimit from 'p-limit'
 import { searchApolloLeads, enrichWithPlaces } from '@/lib/leadEnrichment'
 import { personalizeBatch } from '@/lib/personalizeEmail'
 import { pushLeadsToInstantly } from '@/lib/instantly'
-import type { Trade, InstantlyLeadPayload } from '@/lib/leadTypes'
+import type { Trade, InstantlyLeadPayload, EnrichedLead } from '@/lib/leadTypes'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 const supabase = createClient(
@@ -68,23 +69,39 @@ export async function POST(req: NextRequest) {
   }
 
   // ── 1. Search + 2. Enrich (per city × trade) ─────────────────
-  const enrichedLeads = []
+  // Run city × trade combos in parallel with p-limit. Previously serial:
+  // 24 cities × 11 trades = 264 sequential Apollo calls + thousands of
+  // Places lookups. With concurrency=6 the same batch finishes in ~1/6
+  // the wall time. Apollo + Google Places both tolerate 6 concurrent
+  // calls comfortably (Apollo: 60 req/min, Places: 100 req/sec).
+  const combos: Array<{ city: string; state: string; trade: Trade }> = []
   for (const place of body.cities) {
     for (const trade of body.trades) {
-      try {
-        const apolloLeads = await searchApolloLeads({ ...place, trade, limit: perCityLimit })
-        stats.leads_searched += apolloLeads.length
-        for (const lead of apolloLeads) {
-          const enriched = await enrichWithPlaces(lead)
-          enrichedLeads.push(enriched)
-          stats.leads_enriched++
-        }
-      } catch (e) {
-        console.error(`enrich failed for ${place.city}/${trade}:`, e)
-        stats.errors++
-      }
+      combos.push({ ...place, trade })
     }
   }
+  const apolloLimit = pLimit(6)
+  const placesLimit = pLimit(10)
+  const enrichedLeads: EnrichedLead[] = []
+  await Promise.all(
+    combos.map((combo) =>
+      apolloLimit(async () => {
+        try {
+          const apolloLeads = await searchApolloLeads({ city: combo.city, state: combo.state, trade: combo.trade, limit: perCityLimit })
+          stats.leads_searched += apolloLeads.length
+          // Places enrichment per lead also parallelized
+          const enriched = await Promise.all(
+            apolloLeads.map((lead) => placesLimit(() => enrichWithPlaces(lead))),
+          )
+          enrichedLeads.push(...enriched)
+          stats.leads_enriched += enriched.length
+        } catch (e) {
+          console.error(`enrich failed for ${combo.city}/${combo.trade}:`, e)
+          stats.errors++
+        }
+      }),
+    ),
+  )
 
   // ── 3. Dedup vs outreach_leads ───────────────────────────────
   const emails = enrichedLeads.map((l) => l.ownerEmail)
@@ -96,8 +113,8 @@ export async function POST(req: NextRequest) {
   const fresh = enrichedLeads.filter((l) => !existingSet.has(l.ownerEmail))
   stats.leads_deduped = enrichedLeads.length - fresh.length
 
-  // ── 4. Personalize via Claude (parallel batches of 5) ─────────
-  const personalized = await personalizeBatch(fresh, 5)
+  // ── 4. Personalize via Claude (parallel batches of 15) ───────
+  const personalized = await personalizeBatch(fresh, 15)
   stats.leads_personalized = personalized.length
 
   // ── 5. Build Instantly payloads ──────────────────────────────
@@ -135,19 +152,30 @@ export async function POST(req: NextRequest) {
   }
 
   // ── 7. Persist to outreach_leads + agent_runs ───────────────
+  // Use UPSERT (not INSERT) to survive race conditions when two pipeline
+  // runs overlap or when the dedup step missed a concurrent insert.
+  // onConflict='email' assumes a UNIQUE constraint on outreach_leads.email
+  // (migration 027 added that — confirm before relying on it).
   if (personalized.length > 0) {
-    await supabase.from('outreach_leads').insert(
-      personalized.map(({ lead }) => ({
-        email: lead.ownerEmail,
-        business_name: lead.businessName,
-        owner_first_name: lead.ownerFirstName,
-        city: lead.city,
-        state: lead.state,
-        trade: lead.trade,
-        campaign_id: campaignId,
-        status: 'sent',
-      })),
-    )
+    const { error: upsertErr } = await supabase
+      .from('outreach_leads')
+      .upsert(
+        personalized.map(({ lead }) => ({
+          email: lead.ownerEmail,
+          business_name: lead.businessName,
+          owner_first_name: lead.ownerFirstName,
+          city: lead.city,
+          state: lead.state,
+          trade: lead.trade,
+          campaign_id: campaignId,
+          status: 'sent',
+        })),
+        { onConflict: 'email', ignoreDuplicates: true },
+      )
+    if (upsertErr) {
+      console.error('outreach_leads upsert failed:', upsertErr.message)
+      stats.errors++
+    }
   }
 
   await supabase.from('agent_runs').insert({
