@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { handleMicrosoftOAuthCallback } from '@/lib/calendar/microsoft'
+import { backfillProviderForUser } from '@/lib/calendar/syncOut'
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth()
@@ -47,6 +48,14 @@ export async function GET(req: NextRequest) {
   target.searchParams.set('calendar', 'connected')
   target.searchParams.set('provider', 'microsoft')
   if (result.email) target.searchParams.set('account', result.email)
+
+  // BACKFILL — push every already-booked future appointment to the
+  // newly-connected Outlook calendar so the contractor's phone shows
+  // the AI's prior bookings immediately. Fire-and-forget; don't make
+  // the redirect wait on potentially-slow Microsoft Graph calls.
+  backfillProviderForUser({ userId, provider: 'microsoft' }).catch((e) => {
+    console.warn('[microsoft/callback] backfill threw:', (e as Error).message)
+  })
 
   const res = NextResponse.redirect(target)
   res.cookies.delete('cal_oauth_csrf_ms')

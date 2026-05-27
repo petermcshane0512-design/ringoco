@@ -28,6 +28,7 @@ import {
   deleteMicrosoftEvent,
 } from './microsoft'
 import type { AppointmentRow } from './appointments'
+import { listAppointments } from './appointments'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -262,6 +263,74 @@ export async function updateExternalForAppointment(appt: AppointmentRow): Promis
   }
 
   return out
+}
+
+/**
+ * BACKFILL — when a contractor connects a NEW external calendar
+ * (Google or Microsoft) AFTER the AI has already booked some
+ * appointments, those historical jobs were never pushed outward.
+ * The contractor opens Google Calendar on their phone, sees nothing,
+ * and panics: "where are my AI bookings?"
+ *
+ * This function fixes that: on every successful OAuth connect we run
+ * a one-shot backfill that pushes EVERY un-synced future appointment
+ * to the newly-connected provider. Skips appointments already stamped
+ * for that provider so we don't double-push.
+ *
+ * Best-effort, fire-and-forget from the OAuth callback. Caller does
+ * NOT await this — it runs in the background while we redirect the
+ * user back to /dashboard/calendar. Failures land in console; the
+ * native row is still source of truth.
+ *
+ * Window: from NOW to 90 days out. Past appointments aren't worth
+ * mirroring (they already happened); 90d covers all realistic future
+ * scheduling for an HVAC contractor.
+ */
+export async function backfillProviderForUser(args: {
+  userId: string
+  provider: 'google' | 'microsoft'
+}): Promise<{ pushed: number; skipped: number; failed: number }> {
+  const out = { pushed: 0, skipped: 0, failed: 0 }
+  try {
+    const now = new Date()
+    const horizon = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000)
+    const appts = await listAppointments({
+      userId: args.userId,
+      windowStart: now,
+      windowEnd: horizon,
+    })
+
+    // Filter to ones NOT yet synced to this provider
+    const targetIdField = args.provider === 'google' ? 'google_event_id' : 'microsoft_event_id'
+    const unsynced = appts.filter((a) => !a[targetIdField as keyof AppointmentRow])
+
+    if (unsynced.length === 0) {
+      console.log(`[backfill] ${args.userId} ${args.provider} — nothing to backfill`)
+      return out
+    }
+
+    console.log(`[backfill] ${args.userId} ${args.provider} — pushing ${unsynced.length} appointment(s)`)
+
+    // Run with low concurrency to be polite to Google/Microsoft and to
+    // avoid burning the access token's per-second quota.
+    const BATCH = 4
+    for (let i = 0; i < unsynced.length; i += BATCH) {
+      const slice = unsynced.slice(i, i + BATCH)
+      const results = await Promise.all(slice.map((appt) => pushAppointmentOut(appt)))
+      for (const r of results) {
+        const p = r[args.provider]
+        if (!p) { out.skipped++; continue }
+        if (p.skipped) { out.skipped++; continue }
+        if (p.ok) out.pushed++; else out.failed++
+      }
+    }
+
+    console.log(`[backfill] ${args.userId} ${args.provider} done — pushed=${out.pushed} skipped=${out.skipped} failed=${out.failed}`)
+    return out
+  } catch (e) {
+    console.error('[backfill] threw:', (e as Error).message)
+    return out
+  }
 }
 
 /**

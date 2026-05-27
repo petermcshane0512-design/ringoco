@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { handleGoogleOAuthCallback } from '@/lib/calendar/google'
+import { backfillProviderForUser } from '@/lib/calendar/syncOut'
 
 /**
  * Google's redirect target after the contractor approves the consent screen.
@@ -50,6 +51,15 @@ export async function GET(req: NextRequest) {
   settingsUrl.searchParams.set('calendar', 'connected')
   settingsUrl.searchParams.set('provider', 'google')
   if (result.email) settingsUrl.searchParams.set('account', result.email)
+
+  // BACKFILL — fire-and-forget. Push every already-booked future
+  // appointment to the newly-connected Google calendar so the
+  // contractor sees their AI-booked jobs on their phone immediately
+  // (not just bookings made from this moment forward). Not awaited:
+  // user gets the redirect instantly while sync runs in the background.
+  backfillProviderForUser({ userId, provider: 'google' }).catch((e) => {
+    console.warn('[google/callback] backfill threw:', (e as Error).message)
+  })
 
   const res = NextResponse.redirect(settingsUrl)
   res.cookies.delete('cal_oauth_csrf')

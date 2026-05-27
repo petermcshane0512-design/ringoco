@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { UserButton, useUser } from '@clerk/nextjs'
 import { useEffect, useState } from 'react'
 import ImpersonationBanner from '@/components/ImpersonationBanner'
+import SupportWidget from '@/components/SupportWidget'
 
 const ADMIN_EMAILS = new Set(['pmcshane@fordham.edu', 'peter@bellavego.com'])
 
@@ -270,6 +271,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
       </div>
       </div>
+
+      {/* Floating support widget — bottom-right, every dashboard page.
+          One tap opens an SMS to Peter prefilled with the contractor's
+          identity + current page. Replaces "where do I email support?"
+          friction with zero-step messaging. */}
+      <SupportWidget />
     </div>
   )
 }
