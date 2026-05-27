@@ -74,10 +74,10 @@ export default function FounderPage() {
         .fv4-portrait {
           float: right;
           width: 300px;
-          aspect-ratio: 4/5;
+          aspect-ratio: 1/1;
           margin: 4px 0 18px 32px;
           position: relative;
-          border-radius: 22px;
+          border-radius: 50%;
           overflow: hidden;
           background:
             radial-gradient(circle at 28% 22%, rgba(255,217,168,0.85), transparent 60%),
