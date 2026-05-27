@@ -693,60 +693,122 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                 </div>
 
                 {/* Month grid — 5 weeks × 7 days. May 2026 starts on Friday.
-                    Today = May 18 (Monday, week 4). Pre-month days (Apr
-                    27-30) and post-month (Jun 1-6) are faded. */}
+                    Today = May 18 (Monday, week 4). Pre-month days are faded.
+                    Density: ~70% manual jobs the contractor booked themselves
+                    (navy), ~30% AI-booked by BellAveGo (orange) — proves the
+                    AI plays a meaningful but bounded role, doesn't dominate. */}
                 {(() => {
-                  // Build 35-cell array: [date, isCurrentMonth]
-                  const cells: Array<{ date: number; month: 'prev' | 'curr' | 'next'; today?: boolean; events?: Array<{ title: string; bavg: boolean }> }> = [
+                  const cells: Array<{ date: number; month: 'prev' | 'curr' | 'next'; today?: boolean; events?: Array<{ title: string; bavg: boolean }>; moreCount?: number }> = [
                     // Week 1: Apr 26 (Sun) ... May 2 (Sat)
                     { date: 26, month: 'prev' }, { date: 27, month: 'prev' }, { date: 28, month: 'prev' }, { date: 29, month: 'prev' }, { date: 30, month: 'prev' },
-                    { date: 1, month: 'curr', events: [{ title: '9a · Maintenance · Lopez', bavg: true }] },
-                    { date: 2, month: 'curr' },
+                    { date: 1, month: 'curr', events: [
+                      { title: '9a · Maint · Lopez',        bavg: false },
+                      { title: '2p · Estimate · Rivera',    bavg: false },
+                    ] },
+                    { date: 2, month: 'curr', events: [
+                      { title: '10a · Filter run · Costco', bavg: false },
+                    ] },
                     // Week 2: May 3-9
                     { date: 3, month: 'curr' },
-                    { date: 4, month: 'curr', events: [{ title: '10a · AC tune · Hernandez', bavg: true }] },
-                    { date: 5, month: 'curr' },
-                    { date: 6, month: 'curr', events: [{ title: '2p · Drain · Park', bavg: true }] },
-                    { date: 7, month: 'curr' },
-                    { date: 8, month: 'curr', events: [{ title: '11a · Furnace · Cooper', bavg: true }] },
-                    { date: 9, month: 'curr' },
+                    { date: 4, month: 'curr', events: [
+                      { title: '8a · AC tune · Hernandez',  bavg: false },
+                      { title: '1p · AC install · Patel',   bavg: false },
+                    ] },
+                    { date: 5, month: 'curr', events: [
+                      { title: '11a · Quote · Murphy',      bavg: false },
+                      { title: '3p · Drain · Park',         bavg: true  },
+                    ] },
+                    { date: 6, month: 'curr', events: [
+                      { title: '9a · Capacitor · Bell',     bavg: false },
+                      { title: '2p · Thermostat · Cho',     bavg: false },
+                    ] },
+                    { date: 7, month: 'curr', events: [
+                      { title: '8a · Furnace · Cooper',     bavg: true  },
+                      { title: "10a · Joe's Diner w/ rep",  bavg: false },
+                    ] },
+                    { date: 8, month: 'curr', events: [
+                      { title: '9a · Service · Garcia',     bavg: false },
+                      { title: '1p · Maint · Brown',        bavg: false },
+                    ] },
+                    { date: 9, month: 'curr', events: [
+                      { title: '10a · Truck wash',          bavg: false },
+                    ] },
                     // Week 3: May 10-16
                     { date: 10, month: 'curr' },
-                    { date: 11, month: 'curr', events: [{ title: '8a · Estimate · Khan', bavg: true }] },
-                    { date: 12, month: 'curr' },
-                    { date: 13, month: 'curr', events: [{ title: '1p · Heat pump · Reyes', bavg: true }] },
-                    { date: 14, month: 'curr', events: [{ title: '3p · Truck inspection', bavg: false }] },
-                    { date: 15, month: 'curr' },
-                    { date: 16, month: 'curr' },
-                    // Week 4 (current week): May 17-23. Today = May 18.
-                    { date: 17, month: 'curr' },
-                    { date: 18, month: 'curr', today: true, events: [
-                      { title: '8a · HVAC · Marcus T.',     bavg: true },
-                      { title: "1p · Furnace · Sarah L.",   bavg: true },
+                    { date: 11, month: 'curr', events: [
+                      { title: '8a · Estimate · Khan',      bavg: true  },
+                      { title: '11a · AC repair · Patel',   bavg: false },
                     ] },
-                    { date: 19, month: 'curr', events: [
-                      { title: '9a · Heat pump · Kevin S.', bavg: true },
-                      { title: '2p · Thermostat · Ana K.',  bavg: true },
+                    { date: 12, month: 'curr', events: [
+                      { title: '9a · Maint · Singh',        bavg: false },
+                      { title: '2p · Quote · Lopez Bros',   bavg: false },
                     ] },
-                    { date: 20, month: 'curr', events: [
-                      { title: '12p · Lunch with Pat',      bavg: false },
-                      { title: '3p · Supplier pickup',      bavg: false },
+                    { date: 13, month: 'curr', events: [
+                      { title: '8a · Heat pump · Reyes',    bavg: false },
+                      { title: '1p · AC tune · Walsh',      bavg: false },
                     ] },
-                    { date: 21, month: 'curr', events: [
+                    { date: 14, month: 'curr', events: [
                       { title: '10a · Truck inspection',    bavg: false },
+                      { title: '3p · Drain · Nguyen',       bavg: true  },
+                    ] },
+                    { date: 15, month: 'curr', events: [
+                      { title: '9a · Capacitor · Cohen',    bavg: false },
+                      { title: '12p · Lunch w/ Pat',        bavg: false },
+                    ] },
+                    { date: 16, month: 'curr', events: [
+                      { title: '11a · Quote · Donovan',     bavg: false },
+                    ] },
+                    // Week 4 (CURRENT WEEK): May 17-23. Today = May 18.
+                    { date: 17, month: 'curr', events: [
+                      { title: '10a · Family BBQ',          bavg: false },
+                    ] },
+                    { date: 18, month: 'curr', today: true, events: [
+                      { title: '8a · HVAC · Marcus T.',     bavg: true  },
+                      { title: '1p · Furnace · Sarah L.',   bavg: true  },
+                    ], moreCount: 1 },
+                    { date: 19, month: 'curr', events: [
+                      { title: '9a · Heat pump · Kevin S.', bavg: true  },
+                      { title: '2p · Thermostat · Ana K.',  bavg: true  },
+                    ], moreCount: 1 },
+                    { date: 20, month: 'curr', events: [
+                      { title: '8a · Service · Diaz',       bavg: false },
+                      { title: '12p · Supplier pickup',     bavg: false },
+                    ], moreCount: 1 },
+                    { date: 21, month: 'curr', events: [
+                      { title: '10a · AC install · Walsh',  bavg: false },
+                      { title: '2p · Quote · Davenport',    bavg: false },
                     ] },
                     { date: 22, month: 'curr', events: [
                       { title: '8a · Team huddle',          bavg: false },
+                      { title: '11a · Maint · Bell',        bavg: false },
                     ] },
-                    { date: 23, month: 'curr' },
+                    { date: 23, month: 'curr', events: [
+                      { title: '9a · Filter route',         bavg: false },
+                    ] },
                     // Week 5: May 24-30
                     { date: 24, month: 'curr' },
-                    { date: 25, month: 'curr', events: [{ title: '9a · AC install · Wilkins', bavg: true }] },
-                    { date: 26, month: 'curr' },
-                    { date: 27, month: 'curr' },
-                    { date: 28, month: 'curr', events: [{ title: '10a · Drain · Mendez', bavg: true }] },
-                    { date: 29, month: 'curr' },
-                    { date: 30, month: 'curr' },
+                    { date: 25, month: 'curr', events: [
+                      { title: '9a · AC install · Wilkins', bavg: true  },
+                      { title: '1p · Quote · Riley',        bavg: false },
+                    ] },
+                    { date: 26, month: 'curr', events: [
+                      { title: '10a · Service · Ortega',    bavg: false },
+                      { title: '3p · Capacitor · Foster',   bavg: false },
+                    ] },
+                    { date: 27, month: 'curr', events: [
+                      { title: '9a · Drain · Mendez',       bavg: true  },
+                      { title: '12p · Lunch w/ Wendy',      bavg: false },
+                    ] },
+                    { date: 28, month: 'curr', events: [
+                      { title: '8a · Maint · Sullivan',     bavg: false },
+                      { title: '2p · Estimate · Brooks',    bavg: false },
+                    ] },
+                    { date: 29, month: 'curr', events: [
+                      { title: '10a · AC tune · Owens',     bavg: false },
+                    ] },
+                    { date: 30, month: 'curr', events: [
+                      { title: '9a · Truck oil change',     bavg: false },
+                    ] },
                   ]
                   return (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
@@ -792,6 +854,16 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                                   lineHeight: 1.25,
                                 }}>{ev.title}</div>
                               ))}
+                              {/* "+N more" link when a day has more events than fit
+                                  in the cell — FullCalendar shows this exact pattern. */}
+                              {c.moreCount && c.moreCount > 0 && (
+                                <div style={{
+                                  fontSize: 6, fontWeight: 800,
+                                  color: '#7AAAB2',
+                                  padding: '0 4px',
+                                  lineHeight: 1.2,
+                                }}>+{c.moreCount} more</div>
+                              )}
                             </div>
                           </div>
                         )
@@ -802,7 +874,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
 
                 {/* Legend footer — matches "Your events / AI Booked" row on real page */}
                 <div style={{ padding: '7px 12px', borderTop: '1px solid rgba(10,168,159,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(232,116,43,0.03)' }}>
-                  <span style={{ fontSize: 8, fontWeight: 700, color: '#8B5A3D' }}>10 appointments this month · 4 auto-booked</span>
+                  <span style={{ fontSize: 8, fontWeight: 700, color: '#8B5A3D' }}>48 appointments this month · 14 auto-booked by AI</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                       <div style={{ width: 8, height: 8, borderRadius: 2, background: '#0B1F3A' }} />
