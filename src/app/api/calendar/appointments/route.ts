@@ -14,6 +14,11 @@ import { pushAppointmentOut } from '@/lib/calendar/syncOut'
  * List the tenant's appointments inside [from, to). Defaults to a 60-day
  * window starting now if from/to not given.
  */
+// Maximum window the list endpoint will accept. Prevents a runaway
+// request from scanning years of history (a contractor with 5 years of
+// booked jobs would otherwise return ~10k rows in one shot).
+const MAX_WINDOW_DAYS = 365
+
 export async function GET(req: NextRequest) {
   const { userId } = await effectiveAuth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -29,10 +34,18 @@ export async function GET(req: NextRequest) {
   if (isNaN(windowStart.getTime()) || isNaN(windowEnd.getTime())) {
     return NextResponse.json({ error: 'Invalid from/to' }, { status: 400 })
   }
+  if (windowEnd.getTime() <= windowStart.getTime()) {
+    return NextResponse.json({ error: 'windowEnd must be after windowStart' }, { status: 400 })
+  }
+  const windowDays = (windowEnd.getTime() - windowStart.getTime()) / (24 * 60 * 60 * 1000)
+  if (windowDays > MAX_WINDOW_DAYS) {
+    return NextResponse.json({ error: `Window cannot exceed ${MAX_WINDOW_DAYS} days — page through smaller ranges.` }, { status: 400 })
+  }
 
   const rows = await listAppointments({ userId, windowStart, windowEnd })
   return NextResponse.json({
     appointments: rows,
+    count: rows.length,
     windowStart: windowStart.toISOString(),
     windowEnd:   windowEnd.toISOString(),
   })
@@ -57,6 +70,14 @@ export async function GET(req: NextRequest) {
  */
 const VALID_BLOCK_TYPES: BlockType[] = ['job', 'block', 'lunch', 'vacation', 'personal']
 
+// Bounds for manually-entered appointments. Caller-supplied values outside
+// these ranges are rejected with a 400 — protects against typos (e.g. 1000
+// hour appointment from a junk client) and AI/automation accidents.
+const MIN_DURATION_MIN = 5
+const MAX_DURATION_MIN = 12 * 60   // 12 hours — covers all-day install jobs
+const MAX_PAST_DAYS    = 365 * 2   // 2 years — allow backfilling old jobs for reporting
+const MAX_FUTURE_DAYS  = 365 * 2   // 2 years — sanity ceiling
+
 export async function POST(req: NextRequest) {
   const { userId } = await effectiveAuth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -69,6 +90,34 @@ export async function POST(req: NextRequest) {
   const startDate = new Date(body.scheduledAt)
   if (isNaN(startDate.getTime())) {
     return NextResponse.json({ error: 'Invalid scheduledAt' }, { status: 400 })
+  }
+
+  // Sanity-check the time. We allow past times so contractors can backfill
+  // jobs they already did (for reporting), but reject obvious garbage.
+  const now = Date.now()
+  const daysFromNow = (startDate.getTime() - now) / (24 * 60 * 60 * 1000)
+  if (daysFromNow < -MAX_PAST_DAYS) {
+    return NextResponse.json({ error: 'scheduledAt is unreasonably far in the past' }, { status: 400 })
+  }
+  if (daysFromNow > MAX_FUTURE_DAYS) {
+    return NextResponse.json({ error: 'scheduledAt is unreasonably far in the future' }, { status: 400 })
+  }
+
+  // Duration validation. If the caller passes scheduledEndAt instead, we
+  // derive duration from it. Either way, must fall inside [5min, 12h].
+  let durationMin = body.durationMin ?? 90
+  if (body.scheduledEndAt) {
+    const endDate = new Date(body.scheduledEndAt)
+    if (isNaN(endDate.getTime())) {
+      return NextResponse.json({ error: 'Invalid scheduledEndAt' }, { status: 400 })
+    }
+    durationMin = Math.round((endDate.getTime() - startDate.getTime()) / 60000)
+  }
+  if (!Number.isFinite(durationMin) || durationMin < MIN_DURATION_MIN) {
+    return NextResponse.json({ error: `Duration must be at least ${MIN_DURATION_MIN} minutes` }, { status: 400 })
+  }
+  if (durationMin > MAX_DURATION_MIN) {
+    return NextResponse.json({ error: `Duration cannot exceed ${MAX_DURATION_MIN} minutes (12 hours)` }, { status: 400 })
   }
 
   const blockType: BlockType = body.blockType && VALID_BLOCK_TYPES.includes(body.blockType)
@@ -84,7 +133,7 @@ export async function POST(req: NextRequest) {
     userId,
     scheduledAt:    startDate.toISOString(),
     scheduledEndAt: body.scheduledEndAt,
-    durationMin:    body.durationMin ?? 90,
+    durationMin,
     customerName:   customerName ?? undefined,
     customerPhone:  customerPhone ?? undefined,
     customerId:     body.customerId ?? null,

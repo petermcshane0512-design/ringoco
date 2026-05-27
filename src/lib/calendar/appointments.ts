@@ -149,7 +149,14 @@ export async function createAppointment(input: AppointmentInput): Promise<Appoin
 /**
  * List appointments for a tenant inside a window.
  * Used by /dashboard/calendar to render the month/week/day view.
+ *
+ * Hard cap at 1000 rows. A single calendar view should never need more
+ * than that; if it does, the caller is asking for too big a window.
+ * Caller-side window validation (in /api/calendar/appointments) clamps
+ * to 365 days, so 1000 is a comfortable ceiling even at 3 events/day.
  */
+const LIST_HARD_CAP = 1000
+
 export async function listAppointments(args: {
   userId: string
   windowStart: Date
@@ -164,6 +171,7 @@ export async function listAppointments(args: {
     .lt('scheduled_at',  args.windowEnd.toISOString())
     .neq('status', 'cancelled')
     .order('scheduled_at', { ascending: true })
+    .limit(LIST_HARD_CAP)
 
   if (error) {
     console.error('listAppointments failed:', error.message)

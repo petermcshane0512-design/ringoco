@@ -97,51 +97,56 @@ export async function pushAppointmentOut(appt: AppointmentRow): Promise<SyncResu
   const conns = await getAllConnections(appt.user_id)
   const { summary, description } = buildEventBody(appt)
 
-  // ─── Google ─────────────────────────────────────────────────
-  if (conns.google) {
-    const tz = conns.google.timezone || 'America/Chicago'
-    const r = await createGoogleEvent({
-      connection: conns.google,
-      event: {
-        summary,
-        description,
-        startISO: appt.scheduled_at,
-        endISO:   appt.scheduled_end_at,
-        timezone: tz,
-        location: appt.address ?? undefined,
-        attendeePhone: appt.customer_phone ?? undefined,
-      },
-    })
-    out.google = r.ok
-      ? { ok: true, eventId: r.eventId }
-      : { ok: false, error: r.error }
-    if (!r.ok) console.warn(`[syncOut] google push failed for appt ${appt.id}:`, r.error)
-  } else {
-    out.google = { ok: true, skipped: true }
-  }
+  // Parallelize the two provider pushes — total sync latency now equals
+  // max(google, microsoft) instead of sum. At scale (200 customers × ~2
+  // bookings/day) this halves the wall time the API spends on sync and
+  // keeps us well under the 10s Vercel function timeout.
+  const [googleRes, microsoftRes] = await Promise.all([
+    conns.google
+      ? createGoogleEvent({
+          connection: conns.google,
+          event: {
+            summary,
+            description,
+            startISO: appt.scheduled_at,
+            endISO:   appt.scheduled_end_at,
+            timezone: conns.google.timezone || 'America/Chicago',
+            location: appt.address ?? undefined,
+            attendeePhone: appt.customer_phone ?? undefined,
+          },
+        }).then((r) => ({ kind: 'google' as const, r }))
+      : Promise.resolve({ kind: 'google' as const, r: { ok: true, skipped: true } as { ok: true; eventId?: string; error?: string; skipped?: boolean } }),
+    conns.microsoft
+      ? createMicrosoftEvent({
+          connection: conns.microsoft,
+          event: {
+            summary,
+            description,
+            startISO: appt.scheduled_at,
+            endISO:   appt.scheduled_end_at,
+            timezone: conns.microsoft.timezone || 'America/Chicago',
+            location: appt.address ?? undefined,
+            attendeePhone: appt.customer_phone ?? undefined,
+          },
+        }).then((r) => ({
+          kind: 'microsoft' as const,
+          r: r.ok ? { ok: true, eventId: r.eventId } : { ok: false, error: r.error },
+        }))
+      : Promise.resolve({ kind: 'microsoft' as const, r: { ok: true, skipped: true } as { ok: true; eventId?: string; error?: string; skipped?: boolean } }),
+  ])
 
-  // ─── Microsoft ─────────────────────────────────────────────
-  if (conns.microsoft) {
-    const tz = conns.microsoft.timezone || 'America/Chicago'
-    const r = await createMicrosoftEvent({
-      connection: conns.microsoft,
-      event: {
-        summary,
-        description,
-        startISO: appt.scheduled_at,
-        endISO:   appt.scheduled_end_at,
-        timezone: tz,
-        location: appt.address ?? undefined,
-        attendeePhone: appt.customer_phone ?? undefined,
-      },
-    })
-    out.microsoft = r.ok
-      ? { ok: true, eventId: r.eventId }
-      : { ok: false, error: r.error }
-    if (!r.ok) console.warn(`[syncOut] microsoft push failed for appt ${appt.id}:`, r.error)
-  } else {
-    out.microsoft = { ok: true, skipped: true }
-  }
+  // Normalize results
+  const gr = googleRes.r as { ok: boolean; eventId?: string; error?: string; skipped?: boolean }
+  out.google = gr.skipped
+    ? { ok: true, skipped: true }
+    : (gr.ok ? { ok: true, eventId: gr.eventId } : { ok: false, error: gr.error })
+  if ('skipped' in gr === false && !gr.ok) console.warn(`[syncOut] google push failed for appt ${appt.id}:`, gr.error)
+
+  const mr = microsoftRes.r as { ok: boolean; eventId?: string; error?: string; skipped?: boolean }
+  out.microsoft = mr.skipped
+    ? { ok: true, skipped: true }
+    : (mr.ok ? { ok: true, eventId: mr.eventId } : { ok: false, error: mr.error })
+  if ('skipped' in mr === false && !mr.ok) console.warn(`[syncOut] microsoft push failed for appt ${appt.id}:`, mr.error)
 
   // ─── Persist ids ───────────────────────────────────────────
   const update: Record<string, unknown> = {}
