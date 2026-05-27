@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@supabase/supabase-js'
 import { SAMPLE_REPORT, type ConsultingReport, type Confidence } from '@/lib/consultingReport'
 import { enrichSampleReport } from '@/lib/sampleReportEnrich'
 import {
@@ -12,6 +13,28 @@ export const runtime = 'nodejs'
 export const maxDuration = 60
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+
+// Cache client — service role for read/write on sample_reports.
+// Lazy-loaded so the route still works in environments without Supabase
+// configured (local dev, tests). Cache miss falls through to live generation.
+function getCacheClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return null
+  return createClient(url, key, { auth: { persistSession: false } })
+}
+
+type CacheRow = {
+  id: string
+  token: string
+  business_name: string
+  zip: string
+  report: ConsultingReport
+  generated_at: string
+  expires_at: string
+  opened_at: string | null
+  open_count: number
+}
 
 /**
  * Generate a personalized consulting report for a prospect from just their
@@ -39,6 +62,10 @@ type PersonalizeBody = {
   zipCode?: string
   businessType?: string
   city?: string
+  /** Lead attribution — set by the bulk pipeline so opens can be joined
+   *  back to outreach_leads. Never trust this from a public click. */
+  leadEmail?: string
+  campaignId?: string
 }
 
 const SYSTEM = `You are BellAveGo Consulting's senior analyst. You write personalized consulting reports for prospective home-service contractors based on their business name, REAL local market data (Census + Google Places), and projected industry benchmarks.
@@ -77,11 +104,84 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url)
   const businessName = url.searchParams.get('for') || url.searchParams.get('business')
   if (!businessName) return NextResponse.json({ error: 'businessName required' }, { status: 400 })
+  if (url.searchParams.get('debug') === '1') {
+    return await diagnose({
+      businessName,
+      zipCode: url.searchParams.get('zip') ?? undefined,
+      businessType: url.searchParams.get('type') ?? undefined,
+      city: url.searchParams.get('city') ?? undefined,
+    })
+  }
   return await generate({
     businessName,
     zipCode: url.searchParams.get('zip') ?? undefined,
     businessType: url.searchParams.get('type') ?? undefined,
     city: url.searchParams.get('city') ?? undefined,
+    leadEmail: url.searchParams.get('email') ?? undefined,
+    campaignId: url.searchParams.get('campaign') ?? undefined,
+  })
+}
+
+// Diagnostic endpoint — temporary, returns raw pullMarketContext output + key
+// presence checks so we can see why production keeps falling back to
+// SAMPLE_REPORT. Hit with ?debug=1. Remove after fix.
+async function diagnose(input: PersonalizeBody): Promise<NextResponse> {
+  const businessName = input.businessName.trim()
+  const businessType = (input.businessType || 'HVAC').trim()
+  const zipCode = (input.zipCode || '').trim()
+  const cityHint = (input.city || '').trim()
+
+  const placesKey = process.env.GOOGLE_PLACES_API_KEY
+  const placeId = await resolveProspectPlaceId(businessName, zipCode || cityHint)
+
+  const profileShim = {
+    user_id: 'prospect',
+    business_name: businessName,
+    business_type: businessType,
+    zip_code: zipCode,
+    service_area: cityHint,
+    google_place_id: placeId,
+  }
+
+  let market: unknown = null
+  let marketErr: string | null = null
+  try {
+    market = await pullMarketContext(profileShim)
+  } catch (e) {
+    marketErr = (e as Error).message
+  }
+
+  // Direct Places textsearch to see if API key actually works
+  let directApiResult: { status: number; resultCount: number; status_text?: string; error_message?: string } | null = null
+  if (placesKey) {
+    try {
+      const area = zipCode || cityHint
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(
+          `${businessType} near ${area}`,
+        )}&key=${placesKey}`,
+      )
+      const j = (await res.json()) as { results?: unknown[]; status?: string; error_message?: string }
+      directApiResult = {
+        status: res.status,
+        resultCount: j.results?.length ?? 0,
+        status_text: j.status,
+        error_message: j.error_message,
+      }
+    } catch (e) {
+      directApiResult = { status: 0, resultCount: 0, error_message: (e as Error).message }
+    }
+  }
+
+  return NextResponse.json({
+    debug: true,
+    inputs: { businessName, businessType, zipCode, cityHint },
+    placesKeyPresent: !!placesKey,
+    placesKeyLength: placesKey?.length ?? 0,
+    resolvedPlaceId: placeId,
+    directApiResult,
+    marketErr,
+    market,
   })
 }
 
@@ -92,6 +192,36 @@ async function generate(input: PersonalizeBody): Promise<NextResponse> {
   const businessType = (input.businessType || 'HVAC').trim()
   const zipCode = (input.zipCode || '').trim()
   const cityHint = (input.city || '').trim()
+
+  // ── Cache lookup ────────────────────────────────────────────────
+  // Bulk pipeline pre-generates these at 2am so first-open is instant.
+  // Cache miss falls through to live generation (~30s, $0.04).
+  const cache = getCacheClient()
+  if (cache) {
+    const { data: hit } = await cache
+      .from('sample_reports')
+      .select('id, token, business_name, zip, report, generated_at, expires_at, opened_at, open_count')
+      .ilike('business_name', businessName)
+      .eq('zip', zipCode)
+      .gt('expires_at', new Date().toISOString())
+      .maybeSingle<CacheRow>()
+
+    if (hit?.report) {
+      // Fire-and-forget engagement bump. Don't block the response on it.
+      void cache
+        .from('sample_reports')
+        .update({
+          open_count: (hit.open_count || 0) + 1,
+          last_opened_at: new Date().toISOString(),
+          opened_at: hit.opened_at ?? new Date().toISOString(),
+        })
+        .eq('id', hit.id)
+      return NextResponse.json(
+        { report: hit.report, cached: true, token: hit.token },
+        { headers: { 'Cache-Control': 'public, max-age=300' } },
+      )
+    }
+  }
 
   // ── 1. REAL data pulls in parallel ──────────────────────────────
   // We need to resolve the prospect's google_place_id first if we want their
@@ -237,7 +367,39 @@ async function generate(input: PersonalizeBody): Promise<NextResponse> {
     prospectType: businessType,
   }).catch(() => report)
 
-  return NextResponse.json({ report: enriched }, { headers: { 'Cache-Control': 'public, max-age=300' } })
+  // ── Cache write ─────────────────────────────────────────────────
+  // Bulk pipeline pre-generates rows at 2am; this path covers organic first
+  // hits (prospect clicks before the cron ran, or a lead not in the batch).
+  // PostgREST upsert with a functional unique index is unreliable, so we
+  // INSERT and swallow the 23505 (unique_violation) race-condition error —
+  // a parallel request already wrote the same row, which is fine.
+  let token: string | undefined
+  if (cache) {
+    const { data: inserted, error } = await cache
+      .from('sample_reports')
+      .insert({
+        business_name: businessName,
+        zip: zipCode,
+        business_type: businessType,
+        city: cityHint || null,
+        lead_email: input.leadEmail || null,
+        campaign_id: input.campaignId || null,
+        report: enriched,
+        generated_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      })
+      .select('token')
+      .maybeSingle<{ token: string }>()
+    if (error && error.code !== '23505') {
+      console.error('[sample-report cache] insert failed:', error)
+    }
+    token = inserted?.token
+  }
+
+  return NextResponse.json(
+    { report: enriched, cached: false, token },
+    { headers: { 'Cache-Control': 'public, max-age=300' } },
+  )
 }
 
 // ── Helpers ─────────────────────────────────────────────────────
@@ -245,16 +407,39 @@ async function generate(input: PersonalizeBody): Promise<NextResponse> {
 async function resolveProspectPlaceId(businessName: string, area: string): Promise<string | null> {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY
   if (!apiKey) return null
-  try {
-    const q = encodeURIComponent(`${businessName} ${area}`.trim())
-    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${q}&key=${apiKey}`
-    const res = await fetch(url, { next: { revalidate: 60 * 60 * 24 } })
-    if (!res.ok) return null
-    const data = (await res.json()) as { results?: Array<{ place_id?: string }> }
-    return data.results?.[0]?.place_id || null
-  } catch {
-    return null
+
+  // Try queries in order from most-specific to most-relaxed. First hit wins.
+  // Many shop names in our scrape are slightly different from their Google
+  // Business Profile name (corporate vs DBA, suffix variations like "LLC"),
+  // so the exact-string query misses ~50% of leads. Stripping common suffixes
+  // and trying name-only as fallback recovers most of them.
+  const cleanedName = businessName
+    .replace(/\b(LLC|Inc\.?|Corp\.?|Co\.?|Ltd\.?)\b/gi, '')
+    .replace(/[,&]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  const firstTwoWords = cleanedName.split(/\s+/).slice(0, 2).join(' ')
+
+  const queries = [
+    `${businessName} ${area}`,           // full name + area (most specific)
+    `${cleanedName} ${area}`,            // cleaned name + area
+    `${cleanedName}`,                    // cleaned name alone (Google often resolves)
+    `${firstTwoWords} ${area}`,          // first 2 words + area (fuzzy)
+  ].map((q) => q.trim()).filter((q, i, arr) => q && arr.indexOf(q) === i)
+
+  for (const q of queries) {
+    try {
+      const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(q)}&key=${apiKey}`
+      const res = await fetch(url, { next: { revalidate: 60 * 60 * 24 } })
+      if (!res.ok) continue
+      const data = (await res.json()) as { results?: Array<{ place_id?: string }> }
+      const id = data.results?.[0]?.place_id
+      if (id) return id
+    } catch {
+      // try next query
+    }
   }
+  return null
 }
 
 function inferMetroLabel(placeName: string | undefined, zip: string, cityHint: string): string {
