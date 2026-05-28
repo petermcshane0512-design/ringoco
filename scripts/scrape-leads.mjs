@@ -14,10 +14,14 @@
 
 import fs from 'fs'
 import path from 'path'
+import dotenv from 'dotenv'
+
+dotenv.config()
+dotenv.config({ path: '.env.local' })
 
 const APIFY_TOKEN = process.env.APIFY_TOKEN
 if (!APIFY_TOKEN) {
-  console.error('FATAL: APIFY_TOKEN env var missing')
+  console.error('FATAL: APIFY_TOKEN env var missing — add to .env.local')
   process.exit(1)
 }
 

@@ -201,7 +201,7 @@ export const TIER_METADATA: Record<Tier, {
 //   - reportsCadence: short consulting-report cadence label
 //   - features:  full bulleted feature list (long-form for /pricing + /)
 //   - highlights: 5-7 compressed bullets (for dashboard upgrade cards)
-//   - comingSoon: true means waitlist-only (Elite right now)
+//   - comingSoon: true means waitlist-only (none right now — Elite went live 2026-05-27)
 export type TierFeatures = {
   tagline: string
   callCap: string
@@ -264,16 +264,22 @@ export const TIER_FEATURES: Record<Tier, TierFeatures> = {
   concierge: {
     tagline: 'AI runs your back office AND your marketing. You just close the work.',
     callCap: 'Unlimited calls',
-    reportsCadence: '24 bi-weekly reports + 4 quarterly McKinsey deep-dives',
-    comingSoon: true,
+    // Truth: 26 bi-weekly strategy reports from the marketing-ops cron +
+    // 4 quarterly performance reports from the consulting-reports cron.
+    // Dropped "McKinsey-style deep-dives" framing on 2026-05-27 — the
+    // quarterly variant uses the same generator as the bi-weekly, so
+    // calling it "deeper" was marketing fluff.
+    reportsCadence: '26 bi-weekly strategy reports + 4 quarterly performance reviews',
+    comingSoon: false,
     highlights: [
       'Everything in Pro, plus:',
       'Unlimited inbound calls',
       'AI Ad Creative Generator — Google + Meta copy weekly',
       'AI Lead Sourcing — permits + storm alerts → outbound SMS',
-      'AI Job-Site Photo Studio — text a photo, get social posts',
       'AI Competitor Watcher — weekly intel on 5 local competitors',
       'AI Local SEO — weekly blog posts auto-published',
+      'Custom FSM integration — Housecall Pro / Jobber / ServiceTitan',
+      'Elite-only Regulatory + Tax-Credit Watch in every report',
       '4-hour SLA + direct founder access',
     ],
     features: [
@@ -281,10 +287,10 @@ export const TIER_FEATURES: Record<Tier, TierFeatures> = {
       'Unlimited inbound calls — no monthly cap',
       'AI Ad Creative Generator — Google + Meta ad copy written weekly from your call transcripts (the ads use YOUR customers\' actual words)',
       'AI Lead Sourcing — pulls fresh building permits + severe-weather alerts, texts the homeowner FOR you',
-      'AI Job-Site Photo Studio — text a finished-job photo, AI generates Instagram + Facebook + Google Business posts with caption, hashtags, and one-tap review request to the customer',
       'AI Competitor Watcher — weekly intel on 5 local competitors\' pricing, reviews, and ad spend',
       'AI Local SEO — weekly blog posts auto-published to your site, optimized for "[trade] near me" searches',
-      '24 bi-weekly reports + 4 quarterly McKinsey-style deep-dives',
+      'Custom integration with your dispatch tool — Housecall Pro / Jobber / ServiceTitan — white-glove built during onboarding so AI bookings flow into the system you already use. 5-day setup, founder-led.',
+      '30 reports per year — 26 bi-weekly strategy updates (from the marketing-ops engine) plus 4 quarterly performance reviews (full year-over-year analysis with action plans).',
       'Elite-exclusive: Regulatory + Tax-Credit Watch in every report — EPA refrigerant phase-downs, IRA tax credits, state license deadlines, NEC code changes. Hard facts with citations, not AI guesses.',
       '4-hour priority SLA + direct founder text/call access',
     ],

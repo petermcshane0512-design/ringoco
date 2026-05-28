@@ -23,24 +23,13 @@ export async function POST(req: NextRequest) {
   const tier: Tier = isValidTier(body.tier ?? '') ? (body.tier as Tier) : 'officemgr'
   const interval: Interval = body.interval === 'annual' ? 'annual' : 'monthly'
 
-  // ── Concierge & Multi-Location are deferred until Q3 2026 ──
-  // Defensive guard: even if someone POSTs with tier=concierge directly,
-  // we refuse the Stripe charge and redirect them to the waitlist instead.
-  // Pricing page / dashboard activation banner should be redirecting the
-  // BUTTON to /waitlist before this fires, but this is the belt-and-suspenders
-  // server-side block.
-  if (tier === 'concierge') {
-    return NextResponse.json(
-      {
-        waitlist: true,
-        redirect: '/waitlist?tier=concierge',
-        message:
-          'Concierge launches Q3 2026 — limited spots reserved for waitlist members at early-access pricing. ' +
-          'Visit /waitlist?tier=concierge to claim a spot.',
-      },
-      { status: 200 },
-    )
-  }
+  // ── Elite (concierge) is LIVE as of 2026-05-27 ──
+  // Previously waitlist-gated until 3 Pro customers existed. Lifted because
+  // (a) the Elite delivery stack is real (marketing-ops cron + competitor
+  // watcher + permit scanner + regulatory watch + ad gen + local SEO all
+  // shipped) and (b) the white-glove FSM integration promise is delivered
+  // founder-led during onboarding, no extra infra needed.
+  // Multi-location is still founder-led (handled outside Stripe).
 
   // Founding-partner pricing: subscription only — setup fee waived for the
   // first batch of customers. Re-add `{ price: setupPriceFor(tier), quantity: 1 }`

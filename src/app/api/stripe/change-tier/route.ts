@@ -48,18 +48,10 @@ export async function POST(req: NextRequest) {
   const newTier = body.tier as Tier
   const newInterval: Interval = body.interval === 'annual' ? 'annual' : 'monthly'
 
-  // Elite still waitlist-only. Push the user to the waitlist instead of
-  // attempting a Stripe update for a tier we haven't opened.
-  if (newTier === 'concierge') {
-    return NextResponse.json(
-      {
-        error: 'Elite is waitlist-only right now.',
-        waitlist: true,
-        redirect: '/waitlist?tier=concierge',
-      },
-      { status: 400 },
-    )
-  }
+  // Elite (concierge) went live 2026-05-27. Tier change to Elite goes
+  // through the normal Stripe subscription update path below — no waitlist
+  // detour. White-glove FSM integration kicks off post-checkout via the
+  // onboarding workflow (founder-led).
 
   const { data: profile } = await supabase
     .from('profiles')

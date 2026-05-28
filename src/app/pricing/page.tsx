@@ -88,11 +88,7 @@ export default function PricingPage() {
   }, [isLoaded, isSignedIn])
 
   async function handleCheckout(tier: Tier, intv: Interval) {
-    // Concierge is waitlist-only until Q3 2026 launch
-    if (tier === 'concierge') {
-      router.push('/waitlist?tier=concierge')
-      return
-    }
+    // Elite (concierge) went live 2026-05-27. No special-case redirect.
     if (!isSignedIn) {
       const next = encodeURIComponent(`/pricing?tier=${tier}&interval=${intv}&autocheckout=1`)
       router.push(`/sign-up?redirect_url=${next}`)
@@ -250,24 +246,10 @@ export default function PricingPage() {
                     )
                   })}
                 </div>
-                {plan.tier === 'concierge' ? (
-                  <Link
-                    href="/waitlist?tier=concierge"
-                    style={{
-                      padding: '14px',
-                      background: 'linear-gradient(135deg, #FFD9A8 0%, #FF9D5A 50%, #E8742B 100%)',
-                      borderRadius: 10, border: 'none',
-                      color: '#0B1F3A',
-                      fontWeight: 900, fontSize: 14,
-                      cursor: 'pointer', fontFamily: 'inherit',
-                      textAlign: 'center', display: 'block', width: '100%',
-                      transition: 'all 0.18s ease',
-                      boxShadow: '0 8px 24px rgba(232,116,43,0.42)',
-                      textDecoration: 'none',
-                      boxSizing: 'border-box',
-                    }}
-                  >
-                    Join Email Waitlist →
+                {false ? (
+                  // (Elite went live 2026-05-27 — no longer routes to waitlist)
+                  <Link href="/waitlist?tier=concierge" style={{ display: 'none' }} aria-hidden>
+                    waitlist
                   </Link>
                 ) : (
                   <button
@@ -308,7 +290,7 @@ export default function PricingPage() {
         <div style={{ maxWidth: 1080, margin: '24px auto 0', padding: '0 24px' }}>
           <div style={{ textAlign: 'center', fontSize: 12.5, color: '#4A7A80', lineHeight: 1.6, padding: '14px 18px', background: 'rgba(255,251,235,0.6)', border: '1px solid rgba(232,116,43,0.18)', borderRadius: 12 }}>
             <strong style={{ color: '#0B1F3A' }}>Starter + Pro available now.</strong>{' '}
-            Elite and Multi-Location launch <strong>Q3 2026</strong>. <Link href="/waitlist?tier=concierge" style={{ color: '#C84B26', fontWeight: 700, textDecoration: 'underline' }}>Join the waitlist for early-access pricing →</Link>
+            <strong>Elite is live now.</strong> Multi-Location is enterprise — text us at <a href="tel:+17737109565" style={{ color: '#C84B26', fontWeight: 700, textDecoration: 'underline' }}>(773) 710-9565</a> for a multi-location quote.
           </div>
         </div>
       </section>
@@ -450,7 +432,7 @@ export default function PricingPage() {
           </p>
           <div style={{ background: '#fff', border: '1px solid #DCE9E2', borderRadius: 14, padding: '24px 28px' }}>
             <p style={{ fontSize: 14, color: '#0B1F3A', lineHeight: 1.75, margin: 0 }}>
-              <strong>Elite is on the waitlist</strong> until we've validated Pro with 3 paying customers. When it opens: custom integrations into Jobber, Housecall Pro, and ServiceTitan; bi-weekly AI consulting reports; 4-hour priority SLA; and direct founder text/call access for your first 90 days. <Link href="/waitlist?tier=concierge" style={{ color: '#C84B26', fontWeight: 700, textDecoration: 'underline' }}>Join the Elite waitlist →</Link>
+              <strong>Elite is live now ($597/mo).</strong> Includes everything in Pro plus: unlimited inbound calls, AI Ad Creative Generator, AI Lead Sourcing (permits + storm alerts), AI Competitor Watcher, AI Local SEO publisher, 26 bi-weekly strategy reports + 4 quarterly performance reviews, Regulatory + Tax-Credit Watch in every report, white-glove FSM integration (Housecall Pro / Jobber / ServiceTitan) built during onboarding, 4-hour priority SLA, and direct founder text/call access. <Link href="?tier=concierge&autocheckout=1" style={{ color: '#C84B26', fontWeight: 700, textDecoration: 'underline' }}>Start your 7-day Elite trial →</Link>
             </p>
           </div>
         </div>
