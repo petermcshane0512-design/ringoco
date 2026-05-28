@@ -168,10 +168,46 @@ for (const key of allBusinesses) {
   })
 }
 
-// Sort: sent first, then by reviews desc
+// Priority score 0-100. Hottest leads float to the top so the morning call
+// session starts with shops most likely to convert.
+function priorityScore(r) {
+  let s = 0
+  const opens = Number(r.report_opens || 0)
+  s += opens * 25
+  if (r.last_opened) {
+    const hrs = (Date.now() - new Date(r.last_opened).getTime()) / (60 * 60 * 1000)
+    if (hrs < 24) s += 30
+    else if (hrs < 72) s += 15
+  }
+  if (r.call_outcome === 'interested') s += 40
+  if (r.call_outcome === 'talked') s += 20
+  if (r.status === 'positive_reply') s += 50
+  if (r.status === 'objection') s += 15
+  s += Math.min(10, Number(r.reviews || 0) / 10)
+  if (r.recommended_plan === 'Pro $297') s += 5
+  if (r.recommended_plan === 'Elite $597') s += 10
+  if (r.call_outcome === 'not_interested') s -= 100
+  if (r.call_outcome === 'hostile') s -= 100
+  if (r.status === 'bounced') s -= 100
+  if (r.status === 'dropped') s -= 100
+  return Math.max(0, Math.min(100, Math.round(s)))
+}
+
+for (const r of rows) {
+  r.priority_score = priorityScore(r)
+  r.priority_tier = r.priority_score >= 80 ? '🔴 HOT — call now'
+    : r.priority_score >= 50 ? '🟠 WARM — call today'
+    : r.priority_score >= 20 ? '🟡 INTERESTED'
+    : r.sent_batch ? '⚪ COLD'
+    : '— not sent'
+}
 rows.sort((a, b) => {
+  // Tier 1: sent + has activity (opens/replies) — hottest first
+  if (a.sent_batch && b.sent_batch) return b.priority_score - a.priority_score
+  // Tier 2: sent rows before not-sent
   if (a.sent_batch && !b.sent_batch) return -1
   if (!a.sent_batch && b.sent_batch) return 1
+  // Tier 3: not-sent rows — sort by reviews (best leads to email next)
   return Number(b.reviews || 0) - Number(a.reviews || 0)
 })
 
@@ -200,6 +236,7 @@ const sections = [
   { name: 'QUALITY', span: 5, color: 'FFE8742B' },      // orange
   { name: 'DEMOGRAPHICS (ZIP)', span: 4, color: 'FFCB9F2E' },  // gold
   { name: 'COMPETITIVE', span: 4, color: 'FF8B5A2B' },  // brown
+  { name: '🎯 PRIORITY', span: 2, color: 'FFB91C1C' },   // red — most important
   { name: 'OUTREACH', span: 4, color: 'FF0B1F3A' },     // navy
   { name: 'PERFORMANCE', span: 2, color: 'FF2E7D32' },  // green
   { name: '☎ CALL — log here', span: 3, color: 'FF6B21A8' },    // purple (editable)
@@ -250,6 +287,9 @@ const columns = [
   { header: 'Total Comp', key: 'total_competitors_local', width: 11 },
   { header: 'Top Competitor', key: 'top_competitor', width: 28 },
   { header: 'Top Comp Reviews', key: 'top_competitor_reviews', width: 14 },
+  // 🎯 PRIORITY (computed from opens + call outcome + status)
+  { header: 'Score', key: 'priority_score', width: 8 },
+  { header: 'Tier', key: 'priority_tier', width: 14 },
   // OUTREACH
   { header: 'Batch', key: 'sent_batch', width: 16 },
   { header: 'Sent At', key: 'sent_at', width: 18 },
@@ -330,8 +370,29 @@ for (const r of rows) {
   ws.getCell(`P${excelRow.number}`).numFmt = '"$"#,##0'
   ws.getCell(`T${excelRow.number}`).numFmt = '#,##0'
 
-  // Status cell bold
-  ws.getCell(`W${excelRow.number}`).font = { size: 10, bold: true }
+  // Status cell bold — Status column moved to Y after adding PRIORITY (U,V)
+  ws.getCell(`Y${excelRow.number}`).font = { size: 10, bold: true }
+
+  // PRIORITY cells: bold + color the tier label by hotness
+  const scoreCell = ws.getCell(`U${excelRow.number}`)
+  scoreCell.font = { size: 11, bold: true, color: { argb: 'FF0B1F3A' } }
+  scoreCell.alignment = { horizontal: 'center', vertical: 'middle' }
+  const tierCell = ws.getCell(`V${excelRow.number}`)
+  tierCell.font = { size: 10, bold: true,
+    color: { argb:
+      r.priority_score >= 80 ? 'FFFFFFFF' :
+      r.priority_score >= 50 ? 'FFFFFFFF' :
+      r.priority_score >= 20 ? 'FF78350F' :
+      'FF6B7280'
+    }
+  }
+  tierCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb:
+    r.priority_score >= 80 ? 'FFDC2626' :   // red — HOT
+    r.priority_score >= 50 ? 'FFEA580C' :   // orange — WARM
+    r.priority_score >= 20 ? 'FFFEF3C7' :   // amber — INTERESTED
+    'FFF3F4F6'                              // gray — COLD
+  } }
+  tierCell.alignment = { horizontal: 'center', vertical: 'middle' }
 
   // Hyperlink columns
   if (r.website) {
@@ -350,7 +411,8 @@ for (const r of rows) {
     c.font = { size: 10, color: { argb: 'FF0AA89F' }, underline: true, bold: true }
   }
   if (r.report_url) {
-    const c = ws.getCell(`AB${excelRow.number}`)
+    // Report URL column moved to AP (after adding 2 priority + 13 followup cols)
+    const c = ws.getCell(`AP${excelRow.number}`)
     c.value = { text: 'open report →', hyperlink: r.report_url }
     c.font = { size: 9, color: { argb: 'FFE8742B' }, underline: true }
   }

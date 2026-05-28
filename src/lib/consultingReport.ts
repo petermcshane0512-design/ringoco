@@ -102,6 +102,64 @@ export type ConsultingReport = {
     effort: 'low' | 'medium' | 'high'
   }[]
   methodology: string
+  // ── TIER-GATED SECTIONS (added 2026-05-27) ────────────────────
+  // Optional. Populated based on profile.plan_tier:
+  //   Starter (receptionist): none — existing report only
+  //   Pro     (officemgr):    marketOpportunity + localEconomy
+  //   Elite   (concierge):    + regulatoryWatch
+  // PDF renderer skips any section that's undefined.
+  // Every value below sourced from PUBLIC data — Census ACS, Google Places,
+  // public permit feeds, hardcoded regulatory calendars. Zero fabrication.
+  marketOpportunity?: MarketOpportunity
+  localEconomy?: LocalEconomy
+  regulatoryWatch?: RegulatoryWatch
+}
+
+/** What's coming in the next 30-90 days — public-data forward look. */
+export type MarketOpportunity = {
+  newMovers: {
+    estimatedHouseholdsLast30Days: number     // Census geographic mobility est
+    source: string                             // attribution
+  } | null
+  permitActivity: {
+    permitsFiledLast30Days: number
+    topPermitType: string | null               // e.g. "Mechanical (HVAC)"
+    serviceableCount: number                   // permits in trade
+    source: string
+  } | null
+  seasonalSignal: string                       // 1-2 sentences derived from trade + region
+  agingInfrastructure: {
+    homesOver15Years: number                   // ACS median home age × homeowner count math
+    replacementWindowCount: number             // est. homes due for trade-relevant replacement
+  } | null
+  actions: string[]                            // 2-4 bullet actions tied to the data above
+}
+
+/** Demographic + economic snapshot of the service area, ACS-grounded. */
+export type LocalEconomy = {
+  population: number | null
+  populationYoYGrowth: number | null            // 0.012 = +1.2% YoY
+  medianHouseholdIncome: number | null
+  medianHouseholdIncomeYoY: number | null
+  housingUnits: number | null
+  medianHomeValue: number | null
+  medianHomeAgeYears: number | null
+  ownerOccupiedPct: number | null               // 0.62 = 62% owner-occupied
+  notes: string[]                                // 1-3 plain-language observations
+  source: string                                 // "Census ACS 2022 5-year"
+}
+
+/** Hardcoded regulatory + tax / rebate calendar — facts, not AI output. */
+export type RegulatoryWatch = {
+  items: Array<{
+    title: string                                // "R-410A refrigerant phase-out"
+    category: 'epa' | 'tax-credit' | 'state-license' | 'safety' | 'consumer-rebate'
+    impact: 'high' | 'medium' | 'low'
+    deadlineISO: string | null                   // null = ongoing
+    summary: string                              // 1-2 sentences plain English
+    action: string                               // what the contractor should do
+    sourceUrl: string                            // public citation
+  }>
 }
 
 export const SAMPLE_REPORT: ConsultingReport = {

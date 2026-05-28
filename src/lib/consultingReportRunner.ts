@@ -11,6 +11,12 @@ import {
 import { generateReportNarrative } from './generateReportNarrative'
 import { cadenceDaysForTier, periodLabel } from './reportCadence'
 import type { ConsultingReport, ServiceAreaPoint } from './consultingReport'
+import {
+  pullMarketOpportunity,
+  buildLocalEconomyFromCensus,
+  pullRegulatoryWatch,
+} from './consultingExtras'
+import { OFFICE_MGR_TIERS, CONCIERGE_TIERS } from './pricing'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -211,6 +217,41 @@ export async function generateAndDeliverReport(
       m.jobsWithReportedRevenue,
       m.jobsWithEstimatedRevenue,
     ),
+  }
+
+  // ── TIER-GATED ENHANCEMENTS (Pro + Elite) ──────────────────────
+  // Pro and Elite contractors get extra sections. Every datum here is
+  // sourced from public APIs / hardcoded fact tables — no fabrication.
+  // If a section's data source returns nothing, the optional field
+  // stays undefined and the PDF renderer omits it cleanly.
+  const tierSlug = (profile.plan_tier || '').toLowerCase()
+  const isPro   = OFFICE_MGR_TIERS.has(tierSlug)   // includes Elite by design (matches existing gates)
+  const isElite = CONCIERGE_TIERS.has(tierSlug)
+
+  if (isPro || isElite) {
+    try {
+      report.marketOpportunity = await pullMarketOpportunity({
+        trade: businessType,
+        primaryZip,
+        homeownersInArea: census?.homeownersInArea ?? null,
+        medianHomeAgeYears: census?.medianHomeAge ?? null,
+      })
+    } catch (e) {
+      console.warn('marketOpportunity pull failed (non-fatal):', (e as Error).message)
+    }
+
+    if (census) {
+      report.localEconomy = buildLocalEconomyFromCensus({
+        population: census.homeownersInArea ? census.homeownersInArea * 2.5 : null, // ACS avg household size ≈ 2.5
+        medianIncome: census.medianIncome ?? null,
+        medianHomeAge: census.medianHomeAge ?? null,
+        homeownersInArea: census.homeownersInArea ?? null,
+      })
+    }
+  }
+
+  if (isElite) {
+    report.regulatoryWatch = pullRegulatoryWatch(businessType)
   }
 
   // 7. Render PDF

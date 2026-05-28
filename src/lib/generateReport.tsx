@@ -586,6 +586,96 @@ function ReportDocument({ data }: { data: ConsultingReport }) {
             ))}
           </View>
 
+          {/* ── TIER-GATED SECTIONS ────────────────────────────────
+              Pro + Elite contractors only. Each section renders only
+              when the runner populated the corresponding payload field
+              (which it only does for the right tier). Public-data only. */}
+
+          {/* Market Opportunity (Pro + Elite) */}
+          {data.marketOpportunity && (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>Market Opportunity · What&apos;s Coming in the Next 30-90 Days</Text>
+              {data.marketOpportunity.agingInfrastructure && (
+                <Text style={styles.methodology}>
+                  Aging infrastructure: ~{data.marketOpportunity.agingInfrastructure.homesOver15Years.toLocaleString()} homes in your service area are over 15 years old.
+                  Roughly {data.marketOpportunity.agingInfrastructure.replacementWindowCount.toLocaleString()} are in the typical replacement window for your trade.
+                </Text>
+              )}
+              {data.marketOpportunity.seasonalSignal && (
+                <Text style={[styles.methodology, { marginTop: 6 }]}>
+                  Seasonal signal: {data.marketOpportunity.seasonalSignal}
+                </Text>
+              )}
+              {data.marketOpportunity.actions.length > 0 && (
+                <View style={{ marginTop: 8 }}>
+                  {data.marketOpportunity.actions.map((a, i) => (
+                    <Text key={i} style={[styles.methodology, { marginTop: 4 }]}>
+                      • {a}
+                    </Text>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Local Economy (Pro + Elite) */}
+          {data.localEconomy && (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>Local Economy · Demographic Snapshot</Text>
+              <View style={{ flexDirection: 'row', gap: 14, marginBottom: 6 }}>
+                {data.localEconomy.medianHouseholdIncome != null && (
+                  <Text style={styles.methodology}>
+                    Median income: {fmtUSD(data.localEconomy.medianHouseholdIncome)}
+                  </Text>
+                )}
+                {data.localEconomy.medianHomeAgeYears != null && (
+                  <Text style={styles.methodology}>
+                    Median home age: {data.localEconomy.medianHomeAgeYears} yrs
+                  </Text>
+                )}
+                {data.localEconomy.population != null && (
+                  <Text style={styles.methodology}>
+                    Pop. (est): {data.localEconomy.population.toLocaleString()}
+                  </Text>
+                )}
+              </View>
+              {data.localEconomy.notes.map((n, i) => (
+                <Text key={i} style={[styles.methodology, { marginTop: 4 }]}>
+                  • {n}
+                </Text>
+              ))}
+              <Text style={[styles.methodology, { marginTop: 8, fontStyle: 'italic', opacity: 0.7 }]}>
+                Source: {data.localEconomy.source}
+              </Text>
+            </View>
+          )}
+
+          {/* Regulatory Watch (Elite only) */}
+          {data.regulatoryWatch && data.regulatoryWatch.items.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>Regulatory + Tax-Credit Watch · Trade-Specific Rules That Affect Revenue</Text>
+              {data.regulatoryWatch.items.map((item, i) => (
+                <View key={i} style={{ marginBottom: 10, paddingBottom: 8, borderBottomWidth: i < data.regulatoryWatch!.items.length - 1 ? 0.5 : 0, borderBottomColor: '#E5E7EB', borderBottomStyle: 'solid' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                    <Text style={[styles.methodology, { fontWeight: 'bold' }]}>{item.title}</Text>
+                    <Text style={[styles.methodology, { fontSize: 8, color: item.impact === 'high' ? '#C84B26' : item.impact === 'medium' ? '#A16207' : '#6B7280' }]}>
+                      · {item.impact.toUpperCase()} IMPACT
+                    </Text>
+                    {item.deadlineISO && (
+                      <Text style={[styles.methodology, { fontSize: 8 }]}>
+                        · Deadline: {new Date(item.deadlineISO).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </Text>
+                    )}
+                  </View>
+                  <Text style={styles.methodology}>{item.summary}</Text>
+                  <Text style={[styles.methodology, { marginTop: 4 }]}>
+                    → {item.action}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+
           {/* Methodology */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Methodology</Text>
