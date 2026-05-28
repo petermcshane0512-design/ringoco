@@ -204,7 +204,7 @@ function renderBody(r) {
     `— Peter`,
     `BellAveGo · (773) 710-9565`,
     '',
-    `P.S. The report has a 5-step action plan ranked by ROI. Step 1 usually adds $1,800/mo within 30 days for shops your size.`,
+    `P.S. Want to set up your team's account? Text us at (773) 710-9565. We'll text back the moment we see it — no Zoom calls, no scheduling, just a conversation on your phone like everything else in your day.`,
   ].join('\n')
 }
 

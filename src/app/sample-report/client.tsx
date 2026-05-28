@@ -201,6 +201,8 @@ export function ReportView({ report, sample = false, personalized = false }: { r
         .cr-btn-ghost:hover { background: rgba(10,168,159,0.14); }
         .cr-btn-primary { background: linear-gradient(135deg, var(--teal), #0D8F87); color: #fff; box-shadow: 0 4px 14px rgba(10,168,159,0.32); }
         .cr-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(10,168,159,0.45); }
+        .cr-btn-text { background: linear-gradient(135deg, #E8742B, #C84B26); color: #fff; box-shadow: 0 4px 14px rgba(232,116,43,0.32); text-decoration: none; }
+        .cr-btn-text:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,116,43,0.45); }
 
         /* Sample banner */
         .cr-sample {
@@ -619,8 +621,18 @@ export function ReportView({ report, sample = false, personalized = false }: { r
             </svg>
             Print / Save PDF
           </button>
+          <a
+            href={`sms:+17737109565?body=${encodeURIComponent(`Hi, I want to set up BellAveGo for ${personalized ? report.meta.businessName : 'my shop'}. Saw your report.`)}`}
+            className="cr-bar-btn cr-btn-text"
+            aria-label="Text Peter at BellAveGo"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            Text us — (773) 710-9565
+          </a>
           <Link href="/sign-up" className="cr-bar-btn cr-btn-primary">
-            Get my report
+            Start 7-day trial
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
@@ -976,12 +988,18 @@ export function ReportView({ report, sample = false, personalized = false }: { r
                 <Link href="/pricing?tier=officemgr&interval=monthly&autocheckout=1" className="cr-cta-pri">
                   Start 7-day free trial →
                 </Link>
+                <a
+                  href={`sms:+17737109565?body=${encodeURIComponent(`Hi, I want to set up BellAveGo for ${r.meta.businessName}. Saw your report.`)}`}
+                  className="cr-cta-sec"
+                >
+                  📱 Text us — (773) 710-9565
+                </a>
                 <Link href="/pricing" className="cr-cta-sec">
                   See all 3 plans
                 </Link>
               </div>
               <div className="cr-cta-fineprint">
-                ${TIER_METADATA.officemgr.monthly}/mo for the {TIER_METADATA.officemgr.name} tier (most popular) after the 7-day free trial. Cancel anytime during the trial — no charge fires. No credit card needed to talk to Peter first: text (773) 710-9565.
+                ${TIER_METADATA.officemgr.monthly}/mo for the {TIER_METADATA.officemgr.name} tier (most popular) after the 7-day free trial. Cancel anytime during the trial — no charge fires. Prefer to talk first? Text (773) 710-9565 — we text back within an hour.
               </div>
             </section>
           )}
