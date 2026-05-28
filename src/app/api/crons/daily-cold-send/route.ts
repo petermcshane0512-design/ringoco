@@ -59,13 +59,37 @@ export async function GET(req: NextRequest) {
 
   // Pull next N queued leads. Must have email + must NOT be in already-sent
   // statuses. Order by pushed_at so oldest-queued goes first (fair queue).
-  const { data: leads, error: pullErr } = await supabase
+  // Skip rows whose email is a known placeholder (example@domain.com,
+  // your@email.com, numeric-only locals, etc.) — those slipped past our
+  // earlier scrapers and would bounce, costing us sender reputation.
+  const PLACEHOLDER_EMAILS = [
+    'example.com', 'example.org', 'example.net', 'domain.com', 'yourcompany.com',
+    'your@', 'youremail@', 'name@', 'email@', 'test@', 'demo@', 'sample@',
+    'noreply@', 'no-reply@', 'donotreply', 'bobsrepair.com', 'impallari@',
+  ]
+  const isPlaceholder = (e: string | null | undefined) => {
+    if (!e) return true
+    const low = e.toLowerCase()
+    if (PLACEHOLDER_EMAILS.some((p) => low.includes(p))) return true
+    const local = low.split('@')[0]
+    if (/^\d+$/.test(local)) return true
+    if (local.length > 30) return true
+    return false
+  }
+
+  const { data: rawLeads, error: pullErr } = await supabase
     .from('outreach_leads')
     .select('id, email, business_name, owner_first_name, city, trade, campaign_id')
     .eq('status', 'queued')
     .not('email', 'is', null)
     .order('pushed_at', { ascending: true })
-    .limit(limit)
+    .limit(limit * 2) // pull extra to allow for placeholder filtering
+  const leads = (rawLeads ?? []).filter((l) => !isPlaceholder(l.email)).slice(0, limit)
+  // Mark placeholder rows so the cron doesn't keep picking them up
+  const placeholderIds = (rawLeads ?? []).filter((l) => isPlaceholder(l.email)).map((l) => l.id)
+  if (placeholderIds.length > 0) {
+    await supabase.from('outreach_leads').update({ status: 'invalid_email' }).in('id', placeholderIds)
+  }
   if (pullErr) return NextResponse.json({ error: pullErr.message }, { status: 500 })
   if (!leads || leads.length === 0) {
     return NextResponse.json({ ok: true, sent: 0, message: 'queue empty' })

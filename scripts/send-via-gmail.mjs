@@ -84,9 +84,25 @@ const rows = parse(fs.readFileSync(csvPath, 'utf8'), { columns: true, skip_empty
 // duplicate CSV rows), and drop ONLY the exact fallback-data pattern
 // (47 reviews + Northern Air Mechanical) since that's verbatim sample data
 // that would look fake to every recipient.
+const PLACEHOLDER_EMAILS = [
+  'example.com', 'example.org', 'example.net', 'domain.com', 'yourcompany.com',
+  'your@', 'youremail@', 'name@', 'email@', 'test@', 'demo@', 'sample@',
+  'noreply@', 'no-reply@', 'donotreply', 'bobsrepair.com', 'impallari@',
+]
+function isPlaceholderEmail(e) {
+  if (!e) return true
+  const low = e.toLowerCase()
+  if (PLACEHOLDER_EMAILS.some((p) => low.includes(p))) return true
+  const local = low.split('@')[0]
+  if (/^\d+$/.test(local)) return true       // pure-numeric local-part = scrape junk
+  if (local.length > 30) return true         // implausibly long
+  return false
+}
+
 const seenEmails = new Set()
 const sendable = rows
   .filter((r) => r.email && r.subject_line)
+  .filter((r) => !isPlaceholderEmail(r.email))
   .filter((r) => !(r.your_reviews === '47' && r.top_competitor_name === 'Northern Air Mechanical'))
   .filter((r) => {
     const e = r.email.toLowerCase().trim()

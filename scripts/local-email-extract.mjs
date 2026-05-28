@@ -128,8 +128,22 @@ console.log(`   Total rows with email: ${total}/${enriched.length} (${rate}%)`)
 function looksValid(e, base) {
   if (!e || typeof e !== 'string' || e.length > 100) return false
   if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(e)) return false
-  const bad = ['example.com', 'wixpress.com', 'sentry.io', 'wordpress.com', 'wordpress.org', 'godaddy.com', 'noreply@', 'no-reply@', 'donotreply', 'cloudflare.com', 'jquery.com', 'w3.org', 'png@', 'jpg@', 'svg@', 'gif@', 'webp@', 'youtube.com', 'youtu.be', 'sentry-next.com', '@sentry', 'cloudfront.net', 'github.io', 'schema.org']
+  const bad = [
+    'example.com', 'example.org', 'example.net', 'domain.com', 'yourcompany.com',
+    'wixpress.com', 'sentry.io', 'wordpress.com', 'wordpress.org', 'godaddy.com',
+    'noreply@', 'no-reply@', 'donotreply', 'cloudflare.com', 'jquery.com',
+    'w3.org', 'png@', 'jpg@', 'svg@', 'gif@', 'webp@', 'youtube.com', 'youtu.be',
+    'sentry-next.com', '@sentry', 'cloudfront.net', 'github.io', 'schema.org',
+    'your@', 'youremail@', 'name@', 'email@', 'test@', 'demo@', 'sample@',
+    'name.surname@', 'first.last@', 'firstname@', 'lastname@',
+    'bobsrepair.com', 'impallari@', // font designer scrape artifacts
+  ]
   if (bad.some((b) => e.includes(b))) return false
+  // Reject emails whose local-part is purely numeric (scrape artifacts)
+  const local = e.split('@')[0]
+  if (/^\d+$/.test(local)) return false
+  // Reject emails with implausibly long local-parts (>30 chars almost always scrape junk)
+  if (local.length > 30) return false
   // Filter out emails that look like image filenames
   if (/\.(png|jpg|jpeg|svg|gif|webp|woff|woff2|ttf|eot|css|js|ico)/.test(e)) return false
   return true
