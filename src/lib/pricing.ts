@@ -19,7 +19,7 @@
  *
  *   Mission Control ($397) → Starter ($147), 60 calls/mo cap
  *   Operator        ($797) → Pro     ($297), 300 calls/mo cap
- *   Concierge      ($1997) → Elite   ($597), UNLIMITED — waitlist-only until 3 Pro customers
+ *   Concierge      ($1997) → Elite   ($597), UNLIMITED — LIVE since 2026-05-27
  *
  * The PRICING_VERSION env var ('v1_legacy' | 'v2_new', default v2_new) controls
  * which display + price ID set the pricing page advertises. Both sets of price IDs

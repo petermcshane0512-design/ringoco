@@ -227,11 +227,7 @@ export default function DashboardPage() {
   }
 
   async function startCheckout() {
-    // Concierge is waitlist-only until Q3 2026 — short-circuit before Stripe
-    if (tier === "concierge") {
-      window.location.href = "/waitlist?tier=concierge";
-      return;
-    }
+    // Elite (concierge) went live 2026-05-27 — straight to Stripe, no waitlist.
     setCheckoutLoading(true);
     try {
       const res = await fetch("/api/stripe/checkout", {
@@ -529,8 +525,8 @@ export default function DashboardPage() {
         // For "charged today" we need the yearly total (annual × 12) + setup.
         const subToday = billingCycle === "monthly" ? cur.monthly : cur.annual * 12;
         const totalToday = subToday + cur.setup;
-        // Concierge hidden from activation banner — waitlist-only until Q3 2026 launch
-        const tierKeys: Tier[] = ["receptionist", "officemgr"];
+        // Elite (concierge) live 2026-05-27 — now selectable from the activation banner.
+        const tierKeys: Tier[] = ["receptionist", "officemgr", "concierge"];
         return (
           <div style={{ marginBottom: 22, padding: "20px 22px", background: "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)", border: "1px solid #FDE68A", borderRadius: 14 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
@@ -579,9 +575,7 @@ export default function DashboardPage() {
               </button>
             </div>
             <div style={{ marginTop: 10, fontSize: 11, color: "#A16207", lineHeight: 1.7 }}>
-              Want full AI marketing ops (Concierge, $1,997/mo)? <a href="/waitlist?tier=concierge" style={{ color: "#C84B26", fontWeight: 700, textDecoration: "underline" }}>Join waitlist · Launches Q3 2026 →</a>
-              <br />
-              Multi-location franchise (3+ locations)? <a href="/waitlist?tier=multi_location" style={{ color: "#92400E", fontWeight: 700, textDecoration: "underline" }}>Join waitlist →</a>
+              Multi-location franchise (3+ locations)? <a href="/waitlist?tier=multi_location" style={{ color: "#92400E", fontWeight: 700, textDecoration: "underline" }}>Text us at (773) 710-9565 for a quote →</a>
             </div>
           </div>
         );

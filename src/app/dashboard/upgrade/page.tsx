@@ -50,10 +50,7 @@ export default function PlanManagementPage() {
   const currentIdx = currentTier ? TIER_ORDER.indexOf(currentTier) : -1
 
   async function handleChangePlan(targetTier: Tier, action: 'upgrade' | 'downgrade' | 'switch') {
-    if (targetTier === 'concierge') {
-      window.location.href = '/waitlist?tier=concierge&from=dashboard-plan'
-      return
-    }
+    // Elite (concierge) went live 2026-05-27 — no waitlist short-circuit anymore.
     const targetMeta = TIER_METADATA[targetTier]
     const confirmMsg =
       action === 'downgrade'

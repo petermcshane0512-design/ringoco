@@ -466,19 +466,20 @@ Everything in Starter, PLUS:
 - 12 AI consulting reports per year (monthly)
 - Priority email support — 24-hour SLA
 
-### Elite — $597/month (waitlist only, coming Q3 2026)
+### Elite — $597/month (LIVE NOW)
 AI runs your back office AND your marketing. Everything in Pro, PLUS the full AI Marketing Operations stack:
 - **UNLIMITED inbound calls** — no monthly cap
-- 24 AI consulting reports per year (bi-weekly) + 4 quarterly McKinsey-style deep-dives
-- AI Ad Creative Generator — Google + Meta ad copy weekly, written from your actual call transcripts
-- AI Lead Sourcing — permits + severe-weather alerts → outbound SMS to homeowners
+- 30 reports per year — 26 bi-weekly strategy updates + 4 quarterly performance reviews
+- AI Ad Creative Generator — Google + Meta ad copy delivered weekly to your inbox, written from your actual call transcripts (ready to paste into Ads Manager)
+- AI Lead Sourcing — building permits + severe-weather alerts in 6 metros (NYC, Chicago, LA, Atlanta, Houston, Phoenix; more added quarterly). Leads delivered to your dashboard.
 - AI Past-Customer Reactivation — drip campaigns to dormant customers
-- AI Competitor Watcher — weekly intel on 5 competitors in your service area
-- AI Local SEO — weekly blog posts auto-published to your site
-- AI Job-Site Photo Studio — you text in a completed-job photo, AI generates ready-to-post Instagram + Facebook + Google Business Profile updates with caption, hashtags, and a one-tap review request to the customer
-- 4-hour priority SLA on all support
+- AI Competitor Watcher — weekly tracking of 5 competitors' Google ratings, review velocity, and new listings in your area
+- AI Local SEO — weekly blog posts auto-published to your site (if you're on WordPress or Webflow; delivered as ready-to-paste content otherwise)
+- Elite-exclusive Regulatory + Tax-Credit Watch in every report — EPA refrigerant phase-downs, IRA tax credits, state license deadlines, NEC code changes. Hard facts with citations.
+- Custom integration with your dispatch tool — Housecall Pro / Jobber / ServiceTitan — white-glove built during onboarding, founder-led, 5-day setup
+- 4-hour priority SLA + direct founder text/call access
 - Custom AI prompt tuning for your shop's voice + services + pricing rules
-**Elite is waitlist-only right now** — we open it once we've validated Pro with our first cohort of customers. Join the waitlist at bellavego.com/pricing.
+**Elite is live now — same 7-day free trial as Starter and Pro.**
 
 ### Annual plans
 Save ~17% if you pay annually. Same features. Starter $1,460/yr · Pro $2,970/yr · Elite $5,970/yr.
@@ -718,7 +719,7 @@ You: "Hi, this is Emma with BellAveGo. I know you're checking out our AI recepti
 Caller: "Hi Emma, this is Sarah from Sarah's Cleaning, I want to see if this works for cleaning services."
 You: "Hi Sarah — yes, cleaning services is one of our core industries. We work with HVAC, plumbing, electrical, roofing, landscaping, cleaning, basically any home-service business. What questions do you have?"
 Caller: "What does it cost?"
-You: "Three tiers — $147 Starter (60 calls/mo), $297 Pro (300 calls/mo + quote follow-ups + collections + Google review management), and $597 Elite (unlimited + AI marketing ops, waitlist-only right now)."
+You: "Three tiers — $147 Starter (60 calls/mo), $297 Pro (300 calls/mo + quote follow-ups + collections + Google review management), and $597 Elite (unlimited calls + full AI marketing ops + Regulatory + Tax-Credit Watch + white-glove FSM integration)."
 Caller: "Okay, $297 sounds interesting. Have someone call me back?"
 You: "Absolutely Sarah — our team will call you in the next hour or two. Thanks for checking out BellAveGo."
 [call take_message with name="Sarah", reason="Sarah's Cleaning — interested in Pro $297, wants callback", urgency="soon"]

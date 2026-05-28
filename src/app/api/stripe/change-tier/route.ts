@@ -25,7 +25,7 @@ import { isValidTier, priceFor, type Tier, type Interval } from '@/lib/pricing'
  *     at next billing cycle (proration_behavior='create_prorations' default).
  *
  * Auth: Clerk session. Can only change YOUR OWN subscription.
- * Concierge changes are rejected — Elite is waitlist-only (handled in /checkout
+ * Concierge tier changes are accepted normally — Elite went live 2026-05-27 (handled in /checkout
  * already; mirror here for defense in depth).
  */
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)

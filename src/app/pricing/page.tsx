@@ -196,8 +196,8 @@ export default function PricingPage() {
                   </div>
                 )}
                 {plan.tier === 'concierge' && (
-                  <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', color: '#fff', fontSize: 10, fontWeight: 800, padding: '4px 14px', borderRadius: 20, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap', boxShadow: '0 4px 14px rgba(232,116,43,0.32)' }}>
-                    Coming Soon
+                  <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', color: '#0B1F3A', fontSize: 10, fontWeight: 900, padding: '4px 14px', borderRadius: 20, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap', boxShadow: '0 4px 14px rgba(232,116,43,0.32)' }}>
+                    Elite · Live
                   </div>
                 )}
                 <div style={{ fontSize: 14, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.5)' : '#7AAAB2', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{plan.name}</div>
@@ -277,9 +277,7 @@ export default function PricingPage() {
                   </button>
                 )}
                 <p style={{ fontSize: 11, color: plan.popular ? 'rgba(255,255,255,0.45)' : '#7AAAB2', textAlign: 'center', marginTop: 10, marginBottom: 0, fontWeight: 500 }}>
-                  {plan.tier === 'concierge'
-                    ? 'Launches Q3 2026 · Early-access pricing for waitlist'
-                    : '7-day free trial · Cancel anytime'}
+                  7-day free trial · Cancel anytime
                 </p>
               </div>
             )
@@ -423,7 +421,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Elite waitlist — transparency about what's available now */}
+      {/* Elite tier — live as of 2026-05-27 */}
       <section style={{ padding: '60px 24px', background: '#F2F9F5', borderTop: '1px solid #DCE9E2' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <h2 style={{ fontSize: 24, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.5px', marginBottom: 8, textAlign: 'center' }}>What's live today</h2>
