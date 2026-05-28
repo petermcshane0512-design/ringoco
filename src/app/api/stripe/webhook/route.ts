@@ -100,6 +100,43 @@ export async function POST(req: NextRequest) {
 
     console.log(`Subscription activated for user ${userId}: ${planTier}`)
 
+    // ── 🎉 Peter's ALERT: SMS the founder on every new subscription ──
+    // Per Peter 5/28: he wants real-time notifications when a small dog
+    // signs up so he can text them personally within 60 sec. This converts
+    // way better than waiting for the automated trial nurture to do it.
+    try {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('business_name, owner_first_name, owner_phone, email')
+        .eq('user_id', userId)
+        .maybeSingle()
+
+      const founderPhone = process.env.FOUNDER_ALERT_PHONE ?? '+17737109565'
+      const tierName = planTier === 'concierge' ? 'Elite $597'
+        : planTier === 'officemgr' ? 'Pro $297'
+        : 'Starter $147'
+      const businessName = prof?.business_name ?? 'unknown shop'
+      const ownerName = prof?.owner_first_name ?? ''
+      const ownerPhoneClean = prof?.owner_phone?.replace(/[^\d+]/g, '') ?? ''
+
+      const sms =
+        `🎉 NEW BELLAVEGO SIGNUP\n\n` +
+        `${businessName}${ownerName ? ` (${ownerName})` : ''}\n` +
+        `Tier: ${tierName}\n` +
+        `Email: ${prof?.email ?? '—'}\n` +
+        `Phone: ${ownerPhoneClean || '—'}\n\n` +
+        `Trial just started. Text them in next 5 min — closes 2x faster.`
+
+      await twilioClient.messages.create({
+        body: sms,
+        from: process.env.TWILIO_PHONE_NUMBER!,
+        to: founderPhone,
+      })
+      console.log(`[founder alert] SMS sent to ${founderPhone} for new subscription ${userId}`)
+    } catch (e) {
+      console.error('[founder alert] SMS failed (non-blocking):', e)
+    }
+
     // ── Stage 1: record PENDING referral (anti-abuse) ──
     // If this new customer was referred (profiles.referred_by set from the
     // bavg_ref cookie at signup), record a pending referral row. NO Stripe
