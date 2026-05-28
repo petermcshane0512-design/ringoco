@@ -26,7 +26,13 @@ import { google } from 'googleapis'
 const CLIENT_FILE = 'C:\\Users\\peter\\ringoco\\.gmail-oauth-client.json'
 const ENV_FILE = 'C:\\Users\\peter\\ringoco\\.env.local'
 const REDIRECT_URI = 'http://localhost:8080/oauth/callback'
-const SCOPES = ['https://www.googleapis.com/auth/gmail.send']
+// gmail.send → write outbound
+// gmail.modify → read inbox + label/move messages (needed for reply handler
+//   and bounce detection scripts)
+const SCOPES = [
+  'https://www.googleapis.com/auth/gmail.send',
+  'https://www.googleapis.com/auth/gmail.modify',
+]
 
 if (!fs.existsSync(CLIENT_FILE)) {
   console.error(`Missing OAuth client file: ${CLIENT_FILE}`)

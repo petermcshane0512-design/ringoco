@@ -114,9 +114,13 @@ function tierOf(reviewCount, rating, website) {
     w.includes('wix.com') ||
     w.includes('squarespace.com')
 
-  if (reviewCount >= 25 && reviewCount <= 100 && rating >= 4.2 && lowSophistication) return 'A'
-  if (reviewCount > 100 && reviewCount <= 200 && rating >= 4.0) return 'B'
-  if (reviewCount >= 10 && reviewCount < 25 && rating >= 4.0) return 'C'
+  // Peter's call learning 5/28/2026: shops with >150 reviews already have
+  // receptionists / marketing teams / in-house staff. Real ICP = small dogs:
+  // solo operators + 2-5 truck shops who answer the phone themselves.
+  // New tiering targets 5-150 reviews; A = ideal sweet spot.
+  if (reviewCount >= 5 && reviewCount <= 60 && rating >= 4.2 && lowSophistication) return 'A'
+  if (reviewCount >= 10 && reviewCount <= 100 && rating >= 4.0) return 'B'
+  if (reviewCount >= 5 && reviewCount < 10 && rating >= 4.0) return 'C'
   return null
 }
 
@@ -284,8 +288,10 @@ async function main() {
     if (chain) {
       excluded.push({ name: lead.name, reason: `national chain: ${chain}` }); continue
     }
-    if (lead.reviewCount >= 500) {
-      excluded.push({ name: lead.name, reason: `too big (${lead.reviewCount} reviews)` }); continue
+    if (lead.reviewCount >= 150) {
+      // Per Peter's call learning 5/28: 150+ review shops already have
+      // receptionists + marketing teams. Wrong ICP for AI receptionist sale.
+      excluded.push({ name: lead.name, reason: `too big — has receptionist (${lead.reviewCount} reviews)` }); continue
     }
     if (lead.rating > 0 && lead.rating < 4.0) {
       excluded.push({ name: lead.name, reason: `low rating ${lead.rating.toFixed(1)}` }); continue

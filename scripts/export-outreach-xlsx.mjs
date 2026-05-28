@@ -60,8 +60,32 @@ const ROOT = 'C:\\Users\\peter\\ringoco\\leads'
 const readCSV = (p) => fs.existsSync(p) ? parse(fs.readFileSync(p, 'utf8'), { columns: true, skip_empty_lines: true, trim: true }) : []
 const norm = (s) => (s || '').toLowerCase().trim()
 
-const baseRows = readCSV(path.join(ROOT, 'arizona-hvac-top-100.csv'))
-const emailRows = readCSV(path.join(ROOT, 'arizona-hvac-top-100-with-emails.csv'))
+// Sweep ALL with-emails CSVs in /leads so freshly scraped cities + small-dog
+// batches show up in the master sheet without manual wiring. Per Peter 5/28:
+// new leads must appear at the top of the file.
+const allCsvs = fs.readdirSync(ROOT).filter((f) => f.endsWith('.csv'))
+const emailCsvFiles = allCsvs.filter((f) =>
+  /with-emails|local-emails|enriched/.test(f) && !/instantly|batch/.test(f),
+)
+console.log(`📂 Scanning ${emailCsvFiles.length} email-enriched CSVs for rows...`)
+
+let baseRows = readCSV(path.join(ROOT, 'arizona-hvac-top-100.csv'))
+let emailRows = []
+for (const f of emailCsvFiles) {
+  const r = readCSV(path.join(ROOT, f))
+  emailRows.push(...r)
+  // Some files have richer base data — merge into baseRows for fields like
+  // phone/address/reviews/website that aren't in outreach_leads.
+  if (!f.includes('arizona-hvac-top-100')) baseRows.push(...r)
+}
+// Dedup baseRows by business name (keep first match)
+const _seenBase = new Set()
+baseRows = baseRows.filter((r) => {
+  const k = norm(r.business_name || r.title || r.name || r.company_name)
+  if (!k || _seenBase.has(k)) return false
+  _seenBase.add(k)
+  return true
+})
 const today = readCSV(path.join(ROOT, 'today-send.csv'))
 const tonight = readCSV(path.join(ROOT, 'tonight-second-batch.csv'))
 
@@ -122,6 +146,54 @@ for (const key of allBusinesses) {
   const subject = b1?.subject_line || b2?.subject_line || ''
   const reportUrl = b1?.report_url || b2?.report_url || ''
 
+  // Sales ammo — pre-built copy for cold calls (auto-populated from the
+  // prospect's own report data so Peter or a rep can just read it).
+  const reportData = rpt?.report
+  const compData = reportData?.competitive
+  const topOppData = reportData?.opportunities?.[0]
+  const actionStepData = reportData?.actionPlan?.[0]
+  const cityName = rpt?.city || base?.city || enriched?.city || ''
+  const reviewsNum = Number(compData?.yourReviewCount ?? base?.reviews ?? enriched?.reviews ?? 0)
+  const marketAvgNum = Number(compData?.marketAvgReviewCount ?? 0)
+  const rankNum = compData?.yourRank ?? ''
+  const totalCompNum = compData?.totalCompetitors ?? ''
+  const topCompName = compData?.competitors?.[0]?.name ?? ''
+  const topCompReviews = compData?.competitors?.[0]?.reviewCount ?? 0
+  const oppTitle = topOppData?.title ?? ''
+  const oppDollar = topOppData?.monthlyValue ?? 0
+  const actionStep1 = actionStepData?.title ?? ''
+  // Project missed-call revenue: ~1.7 calls/missed per 10 reviews/month, $400 avg job
+  const projectedMissedRevenue = Math.round(reviewsNum * 0.17 * 400)
+
+  const openingLine = compData
+    ? `Saw ${base?.business_name || enriched?.business_name || key} has ${reviewsNum} reviews ranking #${rankNum} of ${totalCompNum} in ${cityName}. Top spot is ${topCompName} at ${topCompReviews} reviews.`
+    : ''
+
+  const roiHook = reviewsNum > 0
+    ? `${reviewsNum} reviews × ~17% missed calls @ $400/job = ~$${projectedMissedRevenue.toLocaleString()}/mo walking past the phone`
+    : ''
+
+  const top1Opportunity = oppDollar
+    ? `Modeled +$${oppDollar.toLocaleString()}/mo from "${oppTitle}"`
+    : ''
+
+  const bestCallTime = rpt?.last_opened_at
+    ? new Date(rpt.last_opened_at).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', hour12: true })
+    : ''
+
+  const ownerFirst = dbRow?.owner_first_name || ''
+  const dialTemplate = compData ? [
+    `Hey ${ownerFirst || 'there'}, this is Peter from BellAveGo.`,
+    ``,
+    `Not sure if you saw the email I sent — pulled a quick consulting report on ${base?.business_name || enriched?.business_name || key} in ${cityName}. Three things stood out:`,
+    ``,
+    `1. You're ranked #${rankNum} of ${totalCompNum} HVAC shops in ${cityName} with ${reviewsNum} reviews. Market average is ${marketAvgNum}.`,
+    `2. "${oppTitle}" could add about $${oppDollar?.toLocaleString() ?? 0}/mo for a shop your size.`,
+    `3. ${reviewsNum >= marketAvgNum ? "You're doing solid work" : "There's room to grow review volume"} - that is $${projectedMissedRevenue.toLocaleString()}/mo walking past the phone.`,
+    ``,
+    `Look — you're probably answering your own phone between jobs right now. Every missed call = missed money. We replace that for you so you can stay on the wrench AND book the job. Got 90 seconds for me to walk you through it?`,
+  ].join('\n') : ''
+
   rows.push({
     business_name: base?.business_name || enriched?.business_name || key,
     phone: base?.phone || enriched?.phone || '',
@@ -135,6 +207,13 @@ for (const key of allBusinesses) {
     tier: base?.tier ?? enriched?.tier ?? '',
     recommended_plan: base?.recommended_plan || '',
     pitch_hook: (base?.pitch_hook || '').slice(0, 250),
+    // 🎤 Sales Ammo — pre-built per-shop call ammunition
+    opening_line: openingLine,
+    top1_opportunity: top1Opportunity,
+    roi_hook: roiHook,
+    best_call_time: bestCallTime,
+    action_step_1: actionStep1,
+    dial_template: dialTemplate,
     homeowners_in_zip: marketScan?.homeownersInArea || '',
     median_income: marketScan?.medianIncome || '',
     median_home_age: marketScan?.medianHomeAge || '',
@@ -201,13 +280,28 @@ for (const r of rows) {
     : r.sent_batch ? '⚪ COLD'
     : '— not sent'
 }
+// Peter's 5/28 sort + color system:
+//   1 (top, light blue)    = unsent      → queue review / send next
+//   2 (light green)        = sent <24h   → just sent, let email land
+//   3 (DARK GREEN)         = sent 24h+   → CALL NOW (small dog, had time to read)
+//   4 (bottom, pale yellow)= big boy (150+ reviews) → skip but keep for dedup
+function sortTier(r) {
+  const sentAt = r.sent_at ? new Date(r.sent_at).getTime() : 0
+  const reviewCt = Number(r.reviews || 0)
+  const isBigBoy = reviewCt >= 150
+  if (!sentAt) return 1
+  if (isBigBoy) return 4
+  const hrs = (Date.now() - sentAt) / (60 * 60 * 1000)
+  if (hrs < 24) return 2
+  return 3
+}
+for (const r of rows) r._sortTier = sortTier(r)
 rows.sort((a, b) => {
-  // Tier 1: sent + has activity (opens/replies) — hottest first
-  if (a.sent_batch && b.sent_batch) return b.priority_score - a.priority_score
-  // Tier 2: sent rows before not-sent
-  if (a.sent_batch && !b.sent_batch) return -1
-  if (!a.sent_batch && b.sent_batch) return 1
-  // Tier 3: not-sent rows — sort by reviews (best leads to email next)
+  if (a._sortTier !== b._sortTier) return a._sortTier - b._sortTier
+  // Within tier: sent rows newest first, unsent by review count desc
+  const aSent = a.sent_at ? new Date(a.sent_at).getTime() : 0
+  const bSent = b.sent_at ? new Date(b.sent_at).getTime() : 0
+  if (aSent && bSent) return bSent - aSent
   return Number(b.reviews || 0) - Number(a.reviews || 0)
 })
 
@@ -234,6 +328,7 @@ const sections = [
   { name: 'IDENTITY', span: 5, color: 'FF0B1F3A' },     // navy
   { name: 'CONTACT', span: 2, color: 'FF0AA89F' },      // teal
   { name: 'QUALITY', span: 5, color: 'FFE8742B' },      // orange
+  { name: '🎤 SALES AMMO — read off screen', span: 6, color: 'FF7C3AED' }, // purple (cold-call ammo)
   { name: 'DEMOGRAPHICS (ZIP)', span: 4, color: 'FFCB9F2E' },  // gold
   { name: 'COMPETITIVE', span: 4, color: 'FF8B5A2B' },  // brown
   { name: '🎯 PRIORITY', span: 2, color: 'FFB91C1C' },   // red — most important
@@ -277,6 +372,13 @@ const columns = [
   { header: 'Tier', key: 'tier', width: 6 },
   { header: 'Plan Fit', key: 'recommended_plan', width: 14 },
   { header: 'Pitch Hook', key: 'pitch_hook', width: 50 },
+  // 🎤 SALES AMMO (pre-built call ammo per shop)
+  { header: 'Opening Line', key: 'opening_line', width: 60 },
+  { header: 'Their #1 Opportunity', key: 'top1_opportunity', width: 40 },
+  { header: 'ROI Hook ($missed/mo)', key: 'roi_hook', width: 50 },
+  { header: 'Best Call Time', key: 'best_call_time', width: 18 },
+  { header: 'Action Plan Step 1', key: 'action_step_1', width: 40 },
+  { header: 'Dial Template (read it)', key: 'dial_template', width: 75 },
   // DEMOGRAPHICS
   { header: 'Homeowners', key: 'homeowners_in_zip', width: 12 },
   { header: 'Median Income', key: 'median_income', width: 14 },
@@ -349,7 +451,18 @@ let writtenRows = 0
 for (const r of rows) {
   const opened = Number(r.report_opens || 0) > 0
   const statusKey = r.status === 'sent' && opened ? 'sent_opened' : (r.status || 'not_emailed')
-  const fillColor = STATUS_COLORS[statusKey] || STATUS_COLORS.not_emailed
+  // Peter's 5/28 color system based on sort tier:
+  //   tier 1: light blue   = unsent (queue)
+  //   tier 2: light green  = sent <24h to small dog (wait)
+  //   tier 3: DARK GREEN   = sent 24h+ to small dog (CALL NOW)
+  //   tier 4: pale yellow  = big boy (skip but dedup)
+  const tierColor = {
+    1: 'FFBFDBFE', // light blue
+    2: 'FFBBF7D0', // light green
+    3: 'FF15803D', // dark green
+    4: 'FFFFF59D', // pale yellow
+  }
+  const fillColor = tierColor[r._sortTier] || STATUS_COLORS.not_emailed
 
   const excelRow = ws.addRow(r)
   excelRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
@@ -427,12 +540,12 @@ ws.getCell(`A${legendStart}`).value = 'LEGEND (row color = status)'
 ws.getCell(`A${legendStart}`).font = { bold: true, size: 11, color: { argb: 'FF0B1F3A' } }
 
 const legendItems = [
-  { label: '🟢 Sent + report opened', fill: STATUS_COLORS.sent_opened },
-  { label: '🔵 Sent + no open yet', fill: STATUS_COLORS.sent },
+  { label: '🔵 LIGHT BLUE — UNSENT — queue to send next batch (TOP of list)', fill: 'FFBFDBFE' },
+  { label: '🟢 LIGHT GREEN — Sent TODAY to small dog — email just landed, give it 24h', fill: 'FFBBF7D0' },
+  { label: '🟩 DARK GREEN — Sent 24h+ ago to small dog — CALL NOW, they had time to read', fill: 'FF15803D' },
+  { label: '🟡 PALE YELLOW — Big boy (150+ reviews, has receptionist already) — SKIP but keep for dedup (BOTTOM)', fill: 'FFFFF59D' },
   { label: '🟠 Positive reply (hot lead — call ASAP)', fill: STATUS_COLORS.positive_reply },
-  { label: '🟡 Objection (engaged but pushback)', fill: STATUS_COLORS.objection },
   { label: '🔴 Bounced (skip)', fill: STATUS_COLORS.bounced },
-  { label: '⚪ Not emailed yet (queue for tomorrow)', fill: STATUS_COLORS.not_emailed },
 ]
 legendItems.forEach((item, i) => {
   const rowN = legendStart + 1 + i
@@ -447,6 +560,72 @@ legendItems.forEach((item, i) => {
 
 // Auto-filter on data rows
 ws.autoFilter = { from: { row: 3, column: 1 }, to: { row: writtenRows + 3, column: columns.length } }
+
+// ─────────────────────────────────────────────────────────────
+// Per-city tabs (Peter's 5/28 ask): one sheet per city so call sessions
+// can focus on one market at a time. Each city sheet uses the same
+// column schema but is a flat data table — no fancy headers, just rows
+// sorted newest-sent first, yellow highlight for last-48h sends.
+// ─────────────────────────────────────────────────────────────
+
+function normCity(c) {
+  if (!c) return 'Unknown'
+  return String(c).trim().split(',')[0]
+}
+
+const byCity = new Map()
+for (const r of rows) {
+  const key = normCity(r.city)
+  if (!byCity.has(key)) byCity.set(key, [])
+  byCity.get(key).push(r)
+}
+
+// Only build a tab if the city has 3+ rows — avoids cluttering with one-offs.
+const cityNames = [...byCity.keys()].filter((c) => byCity.get(c).length >= 3 && c !== 'Unknown')
+cityNames.sort((a, b) => byCity.get(b).length - byCity.get(a).length)
+
+for (const city of cityNames) {
+  const cityRows = byCity.get(city)
+  // Sort newest sent first within this city, then unsent by reviews desc.
+  cityRows.sort((a, b) => {
+    const aSent = a.sent_at ? new Date(a.sent_at).getTime() : 0
+    const bSent = b.sent_at ? new Date(b.sent_at).getTime() : 0
+    if (aSent && bSent) return bSent - aSent
+    if (aSent && !bSent) return -1
+    if (!aSent && bSent) return 1
+    return Number(b.reviews || 0) - Number(a.reviews || 0)
+  })
+
+  const cs = wb.addWorksheet(city.slice(0, 31), { // sheet name max 31 chars
+    views: [{ state: 'frozen', xSplit: 1, ySplit: 1 }],
+  })
+  cs.columns = columns.map((c) => ({ ...c }))
+  cs.getRow(1).values = columns.map((c) => c.header)
+  cs.getRow(1).eachCell((cell) => {
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10 }
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } }
+    cell.alignment = { vertical: 'middle', wrapText: true }
+  })
+  cs.getRow(1).height = 28
+
+  for (const r of cityRows) {
+    const excelRow = cs.addRow(r)
+    const sentTs = r.sent_at ? new Date(r.sent_at).getTime() : 0
+    const isRecentSend = sentTs > 0 && (Date.now() - sentTs) < 48 * 60 * 60 * 1000
+    const tier = r.priority_score >= 80 ? 'sent_opened'
+      : r.status === 'bounced' ? 'bounced'
+      : r.sent_at ? 'sent'
+      : 'not_emailed'
+    const tierColor = { 1: 'FFBFDBFE', 2: 'FFBBF7D0', 3: 'FF15803D', 4: 'FFFFF59D' }
+    const fill = tierColor[r._sortTier] || STATUS_COLORS.not_emailed
+    excelRow.eachCell({ includeEmpty: true }, (cell) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fill } }
+      cell.alignment = { vertical: 'top', wrapText: true }
+      cell.font = { size: 10 }
+    })
+  }
+  cs.autoFilter = { from: { row: 1, column: 1 }, to: { row: cityRows.length + 1, column: columns.length } }
+}
 
 // Save
 const outPath = path.join(ROOT, 'outreach-master.xlsx')
