@@ -145,10 +145,16 @@ export async function POST(req: NextRequest) {
   }
 
   // ── 6. Push to Instantly ────────────────────────────────────
+  // Track which emails actually shipped so we don't mark Instantly-failed
+  // leads as 'sent' in DB (false analytics + skipped retries).
+  let pushSucceeded = false
   if (pushToInstantly && payloads.length > 0) {
     const result = await pushLeadsToInstantly({ campaignId, leads: payloads })
     stats.leads_pushed = result.pushed
     stats.errors += result.errors
+    pushSucceeded = result.pushed > 0
+  } else if (!pushToInstantly) {
+    pushSucceeded = true // dry mode / manual run — treat as ok
   }
 
   // ── 7. Persist to outreach_leads + agent_runs ───────────────
@@ -156,7 +162,11 @@ export async function POST(req: NextRequest) {
   // runs overlap or when the dedup step missed a concurrent insert.
   // onConflict='email' assumes a UNIQUE constraint on outreach_leads.email
   // (migration 027 added that — confirm before relying on it).
+  // status='sent' only if Instantly push actually shipped; otherwise mark
+  // 'push_failed' so the deliverability cron and any retry job can see
+  // the truth instead of assuming every row was delivered.
   if (personalized.length > 0) {
+    const rowStatus = pushSucceeded ? 'sent' : 'push_failed'
     const { error: upsertErr } = await supabase
       .from('outreach_leads')
       .upsert(
@@ -168,7 +178,7 @@ export async function POST(req: NextRequest) {
           state: lead.state,
           trade: lead.trade,
           campaign_id: campaignId,
-          status: 'sent',
+          status: rowStatus,
         })),
         { onConflict: 'email', ignoreDuplicates: true },
       )

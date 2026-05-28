@@ -47,19 +47,20 @@ export async function GET(req: NextRequest) {
 
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
 
-  // 1. Sent count in the last 24h. status='sent' on outreach_leads ≈ 1 email.
-  // Real send count comes from Instantly but we don't have webhook → DB
-  // for sent events yet. Approx via outreach_leads.created_at.
+  // 1. Sent count in last 24h. Approx via outreach_leads.pushed_at (real
+  // schema column — outreach_leads has no created_at). Real send count
+  // ultimately comes from Instantly, but pushed_at is when we shipped the
+  // lead, which is within minutes of the actual send.
   const { count: sentCount } = await supabase
     .from('outreach_leads')
     .select('id', { count: 'exact', head: true })
-    .gte('created_at', since)
+    .gte('pushed_at', since)
 
-  // 2. Reply breakdown by classification
+  // 2. Reply breakdown by classification. outreach_replies uses received_at.
   const { data: replies } = await supabase
     .from('outreach_replies')
     .select('classification')
-    .gte('created_at', since)
+    .gte('received_at', since)
 
   const replyCounts = {
     total:        (replies ?? []).length,

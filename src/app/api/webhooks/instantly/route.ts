@@ -62,13 +62,16 @@ export async function POST(req: NextRequest) {
   const summary = await summarizeReply(replyBody)
 
   // ── Persist ──────────────────────────────────────────────────
-  await supabase.from('outreach_replies').insert({
+  const { error: insertErr } = await supabase.from('outreach_replies').insert({
     lead_email: leadEmail,
     campaign_id: campaignId,
     reply_body: replyBody,
     classification,
     summary,
   })
+  if (insertErr) {
+    console.error('[instantly-webhook] outreach_replies insert failed:', insertErr.message, { leadEmail })
+  }
 
   // Update lead status (drop unsubscribers/spam, keep negatives in nurture)
   const newStatus =
@@ -79,10 +82,13 @@ export async function POST(req: NextRequest) {
     classification === 'auto_reply' ? 'auto_reply' :
     'spam'
 
-  await supabase
+  const { error: updateErr } = await supabase
     .from('outreach_leads')
     .update({ status: newStatus, updated_at: new Date().toISOString() })
     .eq('email', leadEmail)
+  if (updateErr) {
+    console.error('[instantly-webhook] outreach_leads update failed:', updateErr.message, { leadEmail, newStatus })
+  }
 
   // ── If positive → SMS Peter NOW ──────────────────────────────
   if (classification === 'positive') {
