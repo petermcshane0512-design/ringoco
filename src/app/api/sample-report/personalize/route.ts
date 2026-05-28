@@ -209,15 +209,23 @@ async function generate(input: PersonalizeBody): Promise<NextResponse> {
       .maybeSingle<CacheRow>()
 
     if (hit?.report) {
-      // Fire-and-forget engagement bump. Don't block the response on it.
-      void cache
-        .from('sample_reports')
-        .update({
-          open_count: (hit.open_count || 0) + 1,
-          last_opened_at: new Date().toISOString(),
-          opened_at: hit.opened_at ?? new Date().toISOString(),
-        })
-        .eq('id', hit.id)
+      // AWAIT the engagement bump — Vercel serverless kills fire-and-forget
+      // promises when the function returns, so `void cache.update(...)` was
+      // silently dropping every open. ~30ms cost on cache hits, but the
+      // open_count + last_opened_at fields are critical for hot-lead
+      // ranking + the entire learning loop.
+      try {
+        await cache
+          .from('sample_reports')
+          .update({
+            open_count: (hit.open_count || 0) + 1,
+            last_opened_at: new Date().toISOString(),
+            opened_at: hit.opened_at ?? new Date().toISOString(),
+          })
+          .eq('id', hit.id)
+      } catch (e) {
+        console.warn('[sample-report] open_count bump failed:', e)
+      }
       return NextResponse.json(
         { report: hit.report, cached: true, token: hit.token },
         { headers: { 'Cache-Control': 'public, max-age=300' } },
