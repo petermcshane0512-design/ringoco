@@ -32,6 +32,25 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
+  // ── HARD DISABLED 2026-05-29 ────────────────────────────────────────
+  // Cold-sending from petermcshane0512@gmail.com is a reputation landmine.
+  // That's Peter's personal Gmail + recovery address on the new Zoho org.
+  // Cold outbound moving to dedicated Zoho mailboxes on burner domains via
+  // Instantly (warmup ends ~June 13, real sends start June 15). Return 410
+  // so nothing — cron, manual, or admin-secret invocation — accidentally
+  // ships from the personal account in the meantime.
+  // To re-enable for rollback, set ENABLE_GMAIL_COLD_SEND=1 in Vercel env.
+  if (process.env.ENABLE_GMAIL_COLD_SEND !== '1') {
+    return NextResponse.json(
+      {
+        ok: false,
+        disabled: true,
+        reason: 'Cold-send via personal Gmail disabled 2026-05-29. Use Instantly + Zoho burner domains.',
+      },
+      { status: 410 },
+    )
+  }
+
   const url = new URL(req.url)
   // Per Peter's 5/28 call: 50/day from petermcshane0512@gmail.com is the
   // calibrated daily cap. Throttle 60s = ~50 min total. Safer pace.
@@ -66,6 +85,7 @@ export async function GET(req: NextRequest) {
   // earlier scrapers and would bounce, costing us sender reputation.
   const PLACEHOLDER_EMAILS = [
     'example.com', 'example.org', 'example.net', 'domain.com', 'yourcompany.com',
+    '@email.com', // generic catch-all, caught fake testimonials 2026-05-29
     'your@', 'youremail@', 'name@', 'email@', 'test@', 'demo@', 'sample@',
     'noreply@', 'no-reply@', 'donotreply', 'bobsrepair.com', 'impallari@',
   ]
