@@ -124,6 +124,27 @@ export async function POST(req: NextRequest) {
       ai_tone: 'friendly',
       owner_phone: process.env.FALLBACK_OWNER_PHONE!,
     }
+
+    // Real-time "someone's calling the demo RIGHT NOW" SMS to Peter.
+    // Only fires on the first webhook hit of a call (no SpeechResult yet).
+    // Fire-and-forget so a Twilio SMS failure never breaks the call.
+    if (!speechResult && process.env.FALLBACK_OWNER_PHONE && process.env.TWILIO_DEMO_NUMBER) {
+      const nowEt = new Date().toLocaleString('en-US', {
+        timeZone: 'America/New_York',
+        hour: 'numeric', minute: '2-digit', hour12: true,
+      })
+      twilioClient.messages
+        .create({
+          body:
+            `📞 LIVE DEMO CALL — someone calling BellAveGo AI right now\n\n` +
+            `From: ${callerPhone || 'unknown'}\n` +
+            `Time: ${nowEt} ET\n\n` +
+            `They're hearing Emma. Full transcript + summary lands when they hang up.`,
+          from: process.env.TWILIO_DEMO_NUMBER,
+          to: process.env.FALLBACK_OWNER_PHONE,
+        })
+        .catch((e) => console.error('demo-incoming SMS to Peter failed:', e))
+    }
   } else {
     const { data } = await supabase
       .from('profiles')
