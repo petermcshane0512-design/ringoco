@@ -33,8 +33,10 @@ export async function GET(req: NextRequest) {
   }
 
   const url = new URL(req.url)
+  // Per Peter's 5/28 call: 50/day from petermcshane0512@gmail.com is the
+  // calibrated daily cap. Throttle 60s = ~50 min total. Safer pace.
   const limit = parseInt(url.searchParams.get('limit') ?? '50', 10)
-  const throttleSec = parseInt(url.searchParams.get('throttle') ?? '30', 10)
+  const throttleSec = parseInt(url.searchParams.get('throttle') ?? '60', 10)
   const dryRun = url.searchParams.get('dry') === '1'
 
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
