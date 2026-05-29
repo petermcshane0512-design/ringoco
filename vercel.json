@@ -66,8 +66,9 @@
       "schedule": "0 14 * * *"
     },
     {
-      "path": "/api/crons/daily-cold-send",
-      "schedule": "0 14 * * *"
+      "//PAUSED 5/28 — petermcshane0512@gmail.com landed in spam (friend confirmed)": "Resume from BellAveGo domains via Instantly after warmup. Sending more from this Gmail digs the hole deeper. Original path: /api/crons/daily-cold-send · 0 14 * * *",
+      "path": "/api/crons/stripe-reconcile",
+      "schedule": "31 9 * * *"
     }
   ]
 }
