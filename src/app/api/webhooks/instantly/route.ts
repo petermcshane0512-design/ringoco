@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
 import Anthropic from '@anthropic-ai/sdk'
 import { verifyInstantlyWebhook } from '@/lib/instantly'
+import { draftReplyForHotLead, insertPendingDraft } from '@/lib/hotReplyDraft'
 import type { ReplyClassification } from '@/lib/leadTypes'
 
 const supabase = createClient(
@@ -90,7 +91,11 @@ export async function POST(req: NextRequest) {
     console.error('[instantly-webhook] outreach_leads update failed:', updateErr.message, { leadEmail, newStatus })
   }
 
-  // ── If positive → SMS Peter NOW ──────────────────────────────
+  // ── If positive → auto-draft + SMS Peter for approval ───────
+  // Flow: generate Claude reply draft → insert as pending row with a 4-char
+  // short_code → SMS Peter with the draft inline. Peter texts back
+  // "SEND <code>" / "KILL <code>" / "EDIT <code> <new body>" from his phone
+  // and the Twilio SMS handler ships the reply via Instantly API.
   if (classification === 'positive') {
     const { data: lead } = await supabase
       .from('outreach_leads')
@@ -98,11 +103,52 @@ export async function POST(req: NextRequest) {
       .eq('email', leadEmail)
       .maybeSingle()
 
-    const body =
-      `🔥 Hot reply from ${lead?.business_name ?? leadEmail} (${lead?.trade ?? '?'} · ${lead?.city ?? '?'}):\n\n` +
-      `"${replyBody.slice(0, 240)}${replyBody.length > 240 ? '…' : ''}"\n\n` +
-      `Summary: ${summary}\n\n` +
-      `Reply within 60 min — open Instantly inbox now.`
+    const leadCtx = {
+      email: leadEmail,
+      businessName: lead?.business_name ?? null,
+      ownerFirstName: lead?.owner_first_name ?? null,
+      city: lead?.city ?? null,
+      trade: lead?.trade ?? null,
+    }
+
+    let draftBody = ''
+    try {
+      draftBody = await draftReplyForHotLead({
+        lead: leadCtx,
+        replyBody,
+        replySubject: replySubject || undefined,
+      })
+    } catch (e) {
+      console.error('[instantly-webhook] draft generation failed:', e)
+    }
+
+    let shortCode: string | null = null
+    if (draftBody) {
+      const draftRow = await insertPendingDraft({
+        lead: leadCtx,
+        campaignId: campaignId || null,
+        originalReply: replyBody,
+        draftBody,
+        sourceEvent: event as unknown as Record<string, unknown>,
+      })
+      shortCode = draftRow?.short_code ?? null
+    }
+
+    // Compose SMS — if draft generation failed, fall back to the old alert
+    // (raw reply + "open Instantly inbox") so Peter never misses a hot lead.
+    const headline =
+      `🔥 ${lead?.business_name ?? leadEmail} (${lead?.trade ?? '?'} · ${lead?.city ?? '?'}) replied:\n\n` +
+      `"${replyBody.slice(0, 200)}${replyBody.length > 200 ? '…' : ''}"\n\n`
+
+    const body = shortCode && draftBody
+      ? headline +
+        `Draft:\n${draftBody}\n\n` +
+        `Reply:\nSEND ${shortCode}  · ship as-is\n` +
+        `KILL ${shortCode}  · skip\n` +
+        `EDIT ${shortCode} <your text>  · revise + ship`
+      : headline +
+        `Summary: ${summary}\n\n` +
+        `(Draft engine offline — reply manually in Instantly.)`
 
     try {
       await twilioClient.messages.create({

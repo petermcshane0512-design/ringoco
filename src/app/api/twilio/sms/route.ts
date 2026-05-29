@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
 import Anthropic from '@anthropic-ai/sdk'
+import {
+  findPendingDraft,
+  markDraftStatus,
+  sendReplyViaInstantly,
+} from '@/lib/hotReplyDraft'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,6 +17,14 @@ const twilioClient = twilio(
   process.env.TWILIO_AUTH_TOKEN!
 )
 const anthropic = new Anthropic()
+
+const PETER_PHONE = process.env.FALLBACK_OWNER_PHONE ?? '+17737109565'
+
+// SEND a3f9 | KILL a3f9 | EDIT a3f9 <rest of message>
+// `i` for case-insensitive verb match, `s` dropped because we manually
+// handle newlines in the "rest" capture via [\s\S]. tsconfig target may
+// be below es2018 which forbids the `s` flag.
+const HOT_REPLY_ACTION_RE = /^\s*(SEND|KILL|EDIT)\s+([a-z2-9]{4})\b\s*([\s\S]*)$/i
 
 /**
  * Inbound SMS handler — three audiences:
@@ -56,6 +69,24 @@ export async function POST(req: NextRequest) {
   const body = rawBody.toUpperCase()
   const from = params['From']
   const to = params['To'] // contractor's Twilio number that received the SMS
+
+  // ── Hot-reply draft approval — fires BEFORE profile lookup ───────
+  // Peter texts "SEND <code>" / "KILL <code>" / "EDIT <code> <body>" from
+  // his personal phone to approve, kill, or revise an auto-drafted cold
+  // email reply. Must match BOTH: from = Peter's phone AND body matches the
+  // action pattern. Falls through to normal SMS handling otherwise.
+  if (from === PETER_PHONE) {
+    const match = rawBody.match(HOT_REPLY_ACTION_RE)
+    if (match) {
+      return handleHotReplyAction({
+        action: match[1].toUpperCase() as 'SEND' | 'KILL' | 'EDIT',
+        code: match[2].toLowerCase(),
+        rest: (match[3] || '').trim(),
+        replyTo: from,
+        replyFrom: to,
+      })
+    }
+  }
 
   // Look up contractor by the Twilio number that received the message
   const { data: profile } = await supabase
@@ -549,6 +580,95 @@ Examples:
   }
 
   return emptyXml()
+}
+
+async function handleHotReplyAction(args: {
+  action: 'SEND' | 'KILL' | 'EDIT'
+  code: string
+  rest: string
+  replyTo: string   // Peter's phone (where to text back)
+  replyFrom: string // the Twilio number this SMS landed on (use as From)
+}) {
+  const { action, code, rest, replyTo, replyFrom } = args
+
+  const draft = await findPendingDraft(code)
+  if (!draft) {
+    await safeSms({
+      from: replyFrom,
+      to: replyTo,
+      body: `No pending draft with code "${code}". It may have expired (1hr TTL) or already been actioned.`,
+    })
+    return emptyXml()
+  }
+
+  if (action === 'KILL') {
+    await markDraftStatus({ id: draft.id, status: 'killed' })
+    await safeSms({
+      from: replyFrom,
+      to: replyTo,
+      body: `Killed draft ${code} — no reply sent to ${draft.lead_email}.`,
+    })
+    return emptyXml()
+  }
+
+  if (action === 'EDIT') {
+    if (!rest) {
+      await safeSms({
+        from: replyFrom,
+        to: replyTo,
+        body: `EDIT ${code} needs a new body. Format: EDIT ${code} <your new reply text>`,
+      })
+      return emptyXml()
+    }
+    // Update draft_body, then ship as if SEND.
+    await markDraftStatus({ id: draft.id, status: 'edited', newBody: rest })
+    const result = await sendReplyViaInstantly({
+      draft: { ...draft, draft_body: rest },
+    })
+    if (result.ok) {
+      await markDraftStatus({ id: draft.id, status: 'sent', newBody: rest })
+      await safeSms({
+        from: replyFrom,
+        to: replyTo,
+        body: `Edited + shipped to ${draft.lead_email}.`,
+      })
+    } else {
+      await markDraftStatus({ id: draft.id, status: 'failed', failureReason: result.reason })
+      await safeSms({
+        from: replyFrom,
+        to: replyTo,
+        body: `Edit saved but ship failed: ${result.reason.slice(0, 280)}`,
+      })
+    }
+    return emptyXml()
+  }
+
+  // SEND — ship the existing draft body as-is
+  const result = await sendReplyViaInstantly({ draft })
+  if (result.ok) {
+    await markDraftStatus({ id: draft.id, status: 'sent' })
+    await safeSms({
+      from: replyFrom,
+      to: replyTo,
+      body: `Shipped to ${draft.lead_email}. Draft ${code} closed.`,
+    })
+  } else {
+    await markDraftStatus({ id: draft.id, status: 'failed', failureReason: result.reason })
+    await safeSms({
+      from: replyFrom,
+      to: replyTo,
+      body: `Ship failed for ${code}: ${result.reason.slice(0, 280)}`,
+    })
+  }
+  return emptyXml()
+}
+
+async function safeSms(opts: { from: string; to: string; body: string }) {
+  try {
+    await twilioClient.messages.create(opts)
+  } catch (e) {
+    console.error('[twilio/sms] safeSms failed:', e)
+  }
 }
 
 function emptyXml() {
