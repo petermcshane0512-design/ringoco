@@ -129,7 +129,7 @@ const allBusinesses = new Set([
   ...baseRows.map((r) => norm(r.business_name)),
 ])
 
-const rows = []
+let rows = []
 for (const key of allBusinesses) {
   if (!key) continue
   const base = baseByName.get(key)
@@ -197,8 +197,18 @@ for (const key of allBusinesses) {
   rows.push({
     business_name: base?.business_name || enriched?.business_name || key,
     phone: base?.phone || enriched?.phone || '',
-    city: base?.city || enriched?.city || '',
-    state: base?.state || 'Arizona',
+    // Parse city from address as fallback so rows with missing city field still
+    // land on the right city tab.
+    city: base?.city || enriched?.city || (() => {
+      const addr = base?.address || enriched?.address || ''
+      const m = addr.match(/,\s*([A-Za-z][A-Za-z\s.'-]+),\s*[A-Z]{2}\s+\d{5}/)
+      return m ? m[1].trim() : ''
+    })(),
+    state: base?.state || (() => {
+      const addr = base?.address || enriched?.address || ''
+      const m = addr.match(/,\s*([A-Z]{2})\s+\d{5}/)
+      return m ? m[1] : 'Arizona'
+    })(),
     address: base?.address || '',
     website: base?.website || enriched?.website || '',
     email,
@@ -224,6 +234,20 @@ for (const key of allBusinesses) {
     top_competitor_reviews: competitive?.competitors?.[0]?.reviewCount || '',
     sent_batch: sentBatch,
     sent_at: dbRow?.pushed_at || dbRow?.updated_at || '',
+    sent_when: (() => {
+      const at = dbRow?.pushed_at || dbRow?.updated_at
+      if (!at) return ''
+      const sent = new Date(at)
+      const now = new Date()
+      const sentDay = new Date(sent.getFullYear(), sent.getMonth(), sent.getDate())
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const days = Math.floor((today - sentDay) / (24 * 60 * 60 * 1000))
+      const time = sent.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+      if (days === 0) return `TODAY ${time}`
+      if (days === 1) return `YESTERDAY ${time}`
+      if (days < 7) return `${days} days ago (${sent.toLocaleDateString('en-US', { weekday: 'short' })} ${time})`
+      return sent.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })
+    })(),
     status: dbRow?.status || (sentBatch ? 'sent' : 'not_emailed'),
     subject_line: subject,
     report_opens: Number(rpt?.open_count || 0),
@@ -246,6 +270,25 @@ for (const key of allBusinesses) {
     report_url: reportUrl,
   })
 }
+
+// Per Peter 5/28: rows without a valid email should NEVER appear in the
+// master — they're unreachable noise that clutters the call session.
+const PLACEHOLDER_EMAILS = [
+  'example.com', 'example.org', 'domain.com', 'yourcompany.com',
+  'your@', 'youremail@', 'name@', 'email@', 'test@', 'demo@', 'sample@',
+  'noreply@', 'no-reply@', 'donotreply', 'bobsrepair.com', 'impallari@',
+]
+function hasValidEmail(e) {
+  if (!e || typeof e !== 'string') return false
+  if (!/^[\w.+-]+@[\w.-]+\.[a-z]{2,}$/i.test(e)) return false
+  const low = e.toLowerCase()
+  if (PLACEHOLDER_EMAILS.some((p) => low.includes(p))) return false
+  const local = low.split('@')[0]
+  if (/^\d+$/.test(local) || local.length > 30) return false
+  return true
+}
+rows = rows.filter((r) => hasValidEmail(r.email))
+console.log(`📧 After valid-email filter: ${rows.length} sendable leads (rest dropped — no usable email)`)
 
 // Priority score 0-100. Hottest leads float to the top so the morning call
 // session starts with shops most likely to convert.
@@ -310,14 +353,14 @@ const wb = new ExcelJS.Workbook()
 wb.creator = 'BellAveGo · Jarvis'
 wb.created = new Date()
 
-const ws = wb.addWorksheet('Arizona HVAC Prospects', {
+const ws = wb.addWorksheet('Master - All Cities', {
   views: [{ state: 'frozen', xSplit: 1, ySplit: 3 }], // freeze top 3 rows + first col
 })
 
 // Row 1: BellAveGo branded title
 ws.mergeCells('A1:AB1')
 const titleCell = ws.getCell('A1')
-titleCell.value = 'BellAveGo — Arizona HVAC Outreach Master'
+titleCell.value = 'BellAveGo — Cold Outreach Master (All Cities)'
 titleCell.font = { name: 'Calibri', size: 18, bold: true, color: { argb: 'FFFFFFFF' } }
 titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
 titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0B1F3A' } } // navy
@@ -393,6 +436,7 @@ const columns = [
   { header: 'Score', key: 'priority_score', width: 8 },
   { header: 'Tier', key: 'priority_tier', width: 14 },
   // OUTREACH
+  { header: 'Sent When', key: 'sent_when', width: 16 }, // human-friendly relative date
   { header: 'Batch', key: 'sent_batch', width: 16 },
   { header: 'Sent At', key: 'sent_at', width: 18 },
   { header: 'Status', key: 'status', width: 16 },

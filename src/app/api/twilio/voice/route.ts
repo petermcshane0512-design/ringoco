@@ -196,6 +196,50 @@ export async function POST(req: NextRequest) {
   const serviceArea = profile?.service_area || 'the local area'
   const aiTone = profile?.ai_tone || 'friendly'
 
+  // ── User-paused guard ──
+  // Owner clicked "Pause AI" on the dashboard. AI receptionist routes the
+  // call straight to their cell so they handle it personally, OR records a
+  // voicemail per their selected pause mode. Auto-resumes when ai_paused_until
+  // passes. Demo line is exempt — demo always answers as Emma.
+  const profileWithPause = profile as (typeof profile & {
+    ai_paused_until?: string | null
+    ai_pause_mode?: 'forward' | 'voicemail' | 'silent' | null
+    twilio_number?: string
+  }) | null
+  const pausedUntil = profileWithPause?.ai_paused_until
+  const isPaused = !!pausedUntil && new Date(pausedUntil).getTime() > Date.now()
+  if (!isDemo && isPaused && profileWithPause?.twilio_number) {
+    const mode = profileWithPause.ai_pause_mode || 'forward'
+    const VR = (await import('twilio')).twiml.VoiceResponse
+    const paused = new VR()
+    if (mode === 'forward' && ownerPhone) {
+      // Bridge caller to owner's cell. AI never speaks.
+      paused.say(
+        { voice: 'Polly.Joanna-Neural' },
+        `Thanks for calling ${businessName}. Connecting you now.`,
+      )
+      paused.dial({ timeout: 25, callerId: calledNumber }, ownerPhone)
+      // Fall-through after dial: if owner didn't pick up, record a voicemail
+      paused.say(
+        { voice: 'Polly.Joanna-Neural' },
+        `Sorry we missed you. Leave a message and we'll text you right back.`,
+      )
+      paused.record({ maxLength: 60, playBeep: true, transcribe: true })
+      paused.hangup()
+    } else if (mode === 'voicemail') {
+      paused.say(
+        { voice: 'Polly.Joanna-Neural' },
+        `Hi, thanks for calling ${businessName}. We're currently fielding calls personally — please leave your name, number, and what you need, and we'll text you right back.`,
+      )
+      paused.record({ maxLength: 60, playBeep: true, transcribe: true })
+      paused.hangup()
+    } else {
+      // silent
+      paused.hangup()
+    }
+    return new NextResponse(paused.toString(), { headers: { 'Content-Type': 'text/xml' } })
+  }
+
   // ── Account suspension guard ──
   // Customer had service active (has a provisioned BellAveGo number) but their
   // subscription is no longer active (Stripe payment failure or cancellation).

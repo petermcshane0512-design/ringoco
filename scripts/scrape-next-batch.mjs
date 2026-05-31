@@ -63,36 +63,62 @@ if (dryRun) {
   process.exit(0)
 }
 
-const perCity = Math.ceil(day.scrape_target / day.cities.length)
-console.log(`📦 ${perCity} shops per city × ${day.cities.length} cities\n`)
+// Multi-trade: load trades.json, determine active trades for today's phase.
+// Defaults to HVAC only if file missing (back-compat with pre-5/30 schedule).
+let activeTrades = [{ key: 'HVAC', query: 'HVAC contractor' }]
+try {
+  const tradesCfg = JSON.parse(fs.readFileSync('C:\\Users\\peter\\ringoco\\data\\trades.json', 'utf8'))
+  const phases = tradesCfg.rollout_phases ?? []
+  const todayIso = new Date().toISOString().slice(0, 10)
+  // Pick the latest phase whose start_date <= today
+  const currentPhase = [...phases]
+    .filter((p) => p.start_date <= todayIso)
+    .sort((a, b) => b.start_date.localeCompare(a.start_date))[0]
+  if (currentPhase) {
+    const activeKeys = new Set(currentPhase.active_trades)
+    activeTrades = tradesCfg.trades.filter((t) => activeKeys.has(t.key))
+    console.log(`📐 Phase: ${currentPhase.phase} — active trades: ${activeTrades.map((t) => t.key).join(', ')}`)
+  } else {
+    console.log(`📐 No active phase yet (next starts ${phases[0]?.start_date}). HVAC-only baseline.`)
+  }
+} catch (e) {
+  console.log(`📐 trades.json missing/invalid — defaulting to HVAC only: ${e.message}`)
+}
 
-// Step 1+2: Scrape Google Maps for each city
+const perTradePerCity = Math.max(20, Math.ceil(day.scrape_target / (day.cities.length * activeTrades.length)))
+console.log(`📦 ${perTradePerCity} shops per (trade × city) × ${activeTrades.length} trades × ${day.cities.length} cities\n`)
+
+// Step 1+2: Scrape Google Maps for each (trade × city) combo
 const rawCSVs = []
-for (const city of day.cities) {
-  const slug = city.toLowerCase().replace(/[, ]+/g, '-')
-  const out = `C:\\Users\\peter\\ringoco\\leads\\${slug}-${targetDate}-raw.csv`
-  console.log(`▶ Scrape ${city} → ${out}`)
-  try {
-    execSync(
-      `node C:\\Users\\peter\\ringoco\\scripts\\scrape-leads.mjs --query "HVAC contractor" --location "${city}" --max ${perCity} --out "${out}"`,
-      { stdio: 'inherit', env: process.env },
-    )
-    rawCSVs.push(out)
-  } catch (e) {
-    console.warn(`   ⚠ ${city} scrape failed (continuing): ${e.message}`)
+for (const trade of activeTrades) {
+  for (const city of day.cities) {
+    const citySlug = city.toLowerCase().replace(/[, ]+/g, '-')
+    const tradeSlug = trade.key.toLowerCase()
+    const out = `C:\\Users\\peter\\ringoco\\leads\\${tradeSlug}-${citySlug}-${targetDate}-raw.csv`
+    console.log(`▶ Scrape ${trade.key} in ${city} → ${out}`)
+    try {
+      execSync(
+        `node C:\\Users\\peter\\ringoco\\scripts\\scrape-leads.mjs --query "${trade.query}" --location "${city}" --max ${perTradePerCity} --out "${out}"`,
+        { stdio: 'inherit', env: process.env },
+      )
+      rawCSVs.push({ path: out, trade: trade.key })
+    } catch (e) {
+      console.warn(`   ⚠ ${trade.key}/${city} scrape failed (continuing): ${e.message}`)
+    }
   }
 }
 
-// Step 3: Combine all raw CSVs, enrich + tier
+// Step 3: Combine all raw CSVs, enrich + tier (per-trade)
 console.log(`\n🤖 Enriching ${rawCSVs.length} raw files via Claude tier filter...`)
 const enrichedCSVs = []
-for (const raw of rawCSVs) {
+for (const item of rawCSVs) {
+  const raw = item.path
   const enriched = raw.replace('-raw.csv', '-enriched.csv')
   if (fs.existsSync(enriched)) fs.unlinkSync(enriched)
   try {
     execSync(`node C:\\Users\\peter\\ringoco\\scripts\\enrich-leads.mjs "${raw}"`, { stdio: 'inherit', env: process.env })
     if (fs.existsSync(raw.replace('-raw.csv', '-raw-enriched.csv'))) {
-      enrichedCSVs.push(raw.replace('-raw.csv', '-raw-enriched.csv'))
+      enrichedCSVs.push({ path: raw.replace('-raw.csv', '-raw-enriched.csv'), trade: item.trade })
     }
   } catch (e) {
     console.warn(`   ⚠ enrich failed for ${raw}: ${e.message}`)
@@ -102,21 +128,25 @@ for (const raw of rawCSVs) {
 // Step 4: Apify Contact Info Scraper for emails on each enriched CSV
 console.log(`\n📧 Scraping emails for ${enrichedCSVs.length} enriched files...`)
 const withEmailCSVs = []
-for (const enriched of enrichedCSVs) {
+for (const item of enrichedCSVs) {
+  const enriched = item.path
   try {
     execSync(`node C:\\Users\\peter\\ringoco\\scripts\\scrape-emails.mjs "${enriched}"`, { stdio: 'inherit', env: process.env })
     const withEmails = enriched.replace('.csv', '-with-emails.csv')
-    if (fs.existsSync(withEmails)) withEmailCSVs.push(withEmails)
+    if (fs.existsSync(withEmails)) withEmailCSVs.push({ path: withEmails, trade: item.trade })
   } catch (e) {
     console.warn(`   ⚠ email scrape failed for ${enriched}: ${e.message}`)
   }
 }
 
 // Step 5: Combine all with-emails CSVs + import to outreach_leads (UNIQUE constraint dedups)
+// Per-trade campaign tag so reporting can break down conv by trade
 console.log(`\n💾 Importing ${withEmailCSVs.length} CSVs to outreach_leads (auto-dedup)...`)
-for (const csv of withEmailCSVs) {
+for (const item of withEmailCSVs) {
+  const csv = item.path
+  const trade = item.trade
   try {
-    execSync(`node C:\\Users\\peter\\ringoco\\scripts\\import-leads-to-db.mjs "${csv}" --trade HVAC --campaign hvac-${targetDate}`, { stdio: 'inherit', env: process.env })
+    execSync(`node C:\\Users\\peter\\ringoco\\scripts\\import-leads-to-db.mjs "${csv}" --trade ${trade} --campaign ${trade.toLowerCase()}-${targetDate}`, { stdio: 'inherit', env: process.env })
   } catch (e) {
     console.warn(`   ⚠ import failed for ${csv}: ${e.message}`)
   }
@@ -127,7 +157,8 @@ const combinedPath = `C:\\Users\\peter\\ringoco\\leads\\queue-${targetDate}-inpu
 console.log(`\n🔗 Combining all with-emails CSVs → ${combinedPath}`)
 let combinedHeader = null
 const combinedLines = []
-for (const csv of withEmailCSVs) {
+for (const item of withEmailCSVs) {
+  const csv = item.path
   const lines = fs.readFileSync(csv, 'utf8').split(/\r?\n/).filter((l) => l)
   if (lines.length === 0) continue
   if (!combinedHeader) {

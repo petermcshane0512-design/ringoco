@@ -1,0 +1,113 @@
+{
+  "//": "Multi-trade ICP config — 1-5 employee owner-operator small home-service shops.",
+  "//updated": "2026-05-30 — expanded from HVAC-only to 7 trades.",
+  "//rationale": "Same product fits all reactive-service trades where the owner himself fields calls between jobs. ~235K small-shop TAM across the 7 trades vs 30K HVAC-only.",
+
+  "trades": [
+    {
+      "key": "HVAC",
+      "query": "HVAC contractor",
+      "synonyms": ["heating contractor", "air conditioning"],
+      "us_small_shop_tam": 30000,
+      "peak_season_months": "Apr-Sep",
+      "priority": 1,
+      "//": "Original ICP. Strongest product-fit. Already validated."
+    },
+    {
+      "key": "plumbing",
+      "query": "plumber",
+      "synonyms": ["plumbing contractor"],
+      "us_small_shop_tam": 50000,
+      "peak_season_months": "Year-round, winter spike",
+      "priority": 2,
+      "//": "Closest fit to HVAC — reactive emergency service, owner answers phone."
+    },
+    {
+      "key": "electrical",
+      "query": "electrician",
+      "synonyms": ["electrical contractor"],
+      "us_small_shop_tam": 70000,
+      "peak_season_months": "Year-round",
+      "priority": 3,
+      "//": "Same call-receiver pattern. Slightly less emergency-urgency than HVAC."
+    },
+    {
+      "key": "garage_door",
+      "query": "garage door repair",
+      "synonyms": ["garage door service"],
+      "us_small_shop_tam": 20000,
+      "peak_season_months": "Year-round",
+      "priority": 4,
+      "//": "Emergency-heavy, small teams, high ticket. Phone capture critical."
+    },
+    {
+      "key": "locksmith",
+      "query": "locksmith",
+      "synonyms": ["locksmith service"],
+      "us_small_shop_tam": 15000,
+      "peak_season_months": "Year-round",
+      "priority": 5,
+      "//": "100% emergency reactive. Solo operators. Tight product-fit."
+    },
+    {
+      "key": "pest_control",
+      "query": "pest control",
+      "synonyms": ["exterminator", "pest exterminator"],
+      "us_small_shop_tam": 25000,
+      "peak_season_months": "Apr-Oct",
+      "priority": 6,
+      "//": "Sun Belt heavy. Matches HVAC warmup geo. Less emergency than HVAC."
+    },
+    {
+      "key": "pool_service",
+      "query": "pool service",
+      "synonyms": ["pool maintenance", "pool cleaning"],
+      "us_small_shop_tam": 25000,
+      "peak_season_months": "Apr-Oct",
+      "priority": 7,
+      "//": "Sun Belt only. Seasonal. Add for diversification, not core."
+    }
+  ],
+
+  "//excluded_trades": "Skipped — different buyer pattern or lower fit:",
+  "excluded": [
+    {
+      "trade": "lawn care",
+      "reason": "Recurring monthly contracts, not call-driven. Phone capture less valuable."
+    },
+    {
+      "trade": "handyman",
+      "reason": "Too varied. Buyer profile unstable. Hard to qualify."
+    },
+    {
+      "trade": "roofing",
+      "reason": "Quote-driven sales cycle, not reactive. Phone capture useful but lower urgency."
+    },
+    {
+      "trade": "cleaning services",
+      "reason": "Recurring contracts, lower-tier service. Different sales motion."
+    }
+  ],
+
+  "//rollout_plan": "Tier 1-3 trades go LIVE first (HVAC + plumbing + electrical). Tier 4-7 added after we prove conv per trade. Each trade gets its own copy variant on the cold email body to test resonance.",
+  "rollout_phases": [
+    {
+      "phase": "phase_1",
+      "start_date": "2026-06-15",
+      "active_trades": ["HVAC", "plumbing", "electrical"],
+      "//": "First send wave after warmup. Most product-fit trades. Validates broader ICP."
+    },
+    {
+      "phase": "phase_2",
+      "start_date": "2026-07-15",
+      "active_trades": ["HVAC", "plumbing", "electrical", "garage_door", "locksmith"],
+      "//": "Expand to emergency-heavy verticals once phase 1 conv data lands."
+    },
+    {
+      "phase": "phase_3",
+      "start_date": "2026-08-15",
+      "active_trades": ["HVAC", "plumbing", "electrical", "garage_door", "locksmith", "pest_control", "pool_service"],
+      "//": "Full multi-trade. Sun Belt seasonal peak. Maximum volume."
+    }
+  ]
+}

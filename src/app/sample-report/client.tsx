@@ -44,6 +44,15 @@ function PersonalizedReportLoader({
   const [loading, setLoading] = useState(personalize)
   const [error, setError] = useState<string | null>(null)
 
+  // Fire-and-forget visit tracking. Lead id passed in URL as ?l=<uuid>.
+  // Records report_visit_at + last_opened_at on the outreach_lead row.
+  useEffect(() => {
+    const leadId = params.get('l')
+    if (!leadId) return
+    fetch(`/api/track/report-visit?l=${encodeURIComponent(leadId)}`, { method: 'GET', cache: 'no-store' })
+      .catch(() => {})
+  }, [params])
+
   useEffect(() => {
     if (!personalize) return
     let cancelled = false
@@ -686,8 +695,8 @@ export function ReportView({ report, sample = false, personalized = false }: { r
 
           {/* 1. Executive Summary — TL;DR box pulls the #1 opportunity, then one paragraph */}
           <section id="exec" className="cr-section">
-            <h2><span className="cr-section-num">1</span>Executive Summary<span className="cr-section-tag">Narrative</span></h2>
-            <p className="cr-lede">A 60-second read of your quarter and where the biggest dollars are.</p>
+            <h2><span className="cr-section-num">1</span>Executive Summary<span className="cr-section-tag">Where the money is</span></h2>
+            <p className="cr-lede">A 60-second read on the biggest revenue dollars sitting in your local market right now.</p>
             {r.opportunities[0] && (
               <div style={{
                 padding: '16px 20px',
@@ -711,50 +720,9 @@ export function ReportView({ report, sample = false, personalized = false }: { r
             </div>
           </section>
 
-          {/* 2. Performance */}
-          <section id="performance" className="cr-section">
-            <h2><span className="cr-section-num">2</span>Performance vs. Last Quarter<span className="cr-section-tag">Your data</span></h2>
-            <p className="cr-lede">Pulled directly from your BellAveGo dashboard for the last 90 days.</p>
-            <div className="cr-kpis">
-              <Kpi label="Calls Answered" value={r.performance.callsAnswered.toString()} delta={r.performance.callsAnsweredDelta} />
-              <Kpi label="Jobs Booked" value={r.performance.jobsBooked.toString()} delta={r.performance.jobsBookedDelta} />
-              <Kpi label="Revenue Booked" value={fmtMoney(r.performance.revenue)} delta={r.performance.revenueDelta} />
-              <Kpi label="Avg Job Ticket" value={fmtMoney(r.performance.avgTicket)} delta={r.performance.avgTicketDelta} />
-              <Kpi label="Calls Saved (after-hours)" value={r.performance.callsSaved.toString()} />
-              <Kpi label="Answer Rate" value={`${(r.performance.answerRate * 100).toFixed(0)}%`} />
-            </div>
-          </section>
-
-          {/* 3. BellAveGo Score */}
-          <section id="score" className="cr-section">
-            <h2><span className="cr-section-num">3</span>BellAveGo Score<span className="cr-section-tag">Composite</span></h2>
-            <p className="cr-lede">A 1–10 score blending answer rate, booking conversion, response time, and pricing power vs. your local market.</p>
-            <div className="cr-score-grid">
-              <div>
-                <ScoreRing score={r.bellaveScore.composite} />
-                <div style={{
-                  marginTop: 14, textAlign: 'center',
-                  padding: '8px 14px', borderRadius: 99,
-                  background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.28)',
-                  fontSize: 12, fontWeight: 800, color: '#15803D',
-                  letterSpacing: '0.04em',
-                  display: 'inline-block', width: '100%',
-                }}>
-                  {scoreBenchmark(r.bellaveScore.composite, r.meta.businessType, r.meta.metroLabel)}
-                </div>
-              </div>
-              <div className="cr-bars">
-                <ScoreBar label="Answer rate" v={r.bellaveScore.answerRate} />
-                <ScoreBar label="Booking conversion" v={r.bellaveScore.bookingConversion} />
-                <ScoreBar label="Response time" v={r.bellaveScore.responseTime} />
-                <ScoreBar label="Pricing power" v={r.bellaveScore.pricingPower} />
-              </div>
-            </div>
-          </section>
-
-          {/* 4. Top 3 Opportunities */}
+          {/* 2. Top 3 Opportunities */}
           <section id="opps" className="cr-section">
-            <h2><span className="cr-section-num">4</span>Top {r.opportunities.length} Revenue Opportunities<span className="cr-section-tag">Highest leverage</span></h2>
+            <h2><span className="cr-section-num">2</span>Top {r.opportunities.length} Revenue Opportunities<span className="cr-section-tag">Highest leverage</span></h2>
             <p className="cr-lede">Ranked by addressable monthly revenue at current close rates.</p>
             <div className="cr-opps">
               {r.opportunities.map(o => (
@@ -775,9 +743,9 @@ export function ReportView({ report, sample = false, personalized = false }: { r
             </div>
           </section>
 
-          {/* 5. Market Scan */}
+          {/* 3. Market Scan */}
           <section id="market" className="cr-section">
-            <h2><span className="cr-section-num">5</span>Local Market Scan<span className="cr-section-tag">Census + Places</span></h2>
+            <h2><span className="cr-section-num">3</span>Local Market Scan<span className="cr-section-tag">Census + Places</span></h2>
             <p className="cr-lede">Demographics and demand signals for the {r.meta.serviceArea.length} ZIPs you serve.</p>
             <div className="cr-market-grid">
               <Tile num={r.marketScan.homeownersInArea.toLocaleString()} lab="Homeowners in service area" />
@@ -817,77 +785,10 @@ export function ReportView({ report, sample = false, personalized = false }: { r
             </div>
           </section>
 
-          {/* 6. Outreach targets */}
-          <section id="outreach" className="cr-section">
-            <h2><span className="cr-section-num">6</span>Outreach Targets<span className="cr-section-tag">Commercial · TCPA-safe</span></h2>
-            <p className="cr-lede">Five high-value B2B prospects in your service area. All commercial properties — legal to cold-call, currently with weak or no HVAC vendor relationship.</p>
-            <div className="cr-tablewrap">
-              <table className="cr-table">
-                <thead>
-                  <tr>
-                    <th>Business</th>
-                    <th>Type</th>
-                    <th>Address</th>
-                    <th>Phone</th>
-                    <th>Why</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {r.outreachTargets.map(t => (
-                    <tr key={t.business}>
-                      <td><strong>{t.business}</strong></td>
-                      <td style={{ color: 'var(--ink-mid)' }}>{t.type}</td>
-                      <td style={{ color: 'var(--ink-mid)' }}>{t.address}</td>
-                      <td>
-                        <a href={`tel:${t.phone.replace(/[^0-9+]/g, '')}`} style={{ color: 'var(--teal)', fontWeight: 700, textDecoration: 'none' }}>
-                          {t.phone}
-                        </a>
-                      </td>
-                      <td style={{ color: 'var(--ink)', fontSize: 12.5, lineHeight: 1.5 }}>{t.why}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p style={{ marginTop: 12, fontSize: 11.5, color: 'var(--ink-soft)', lineHeight: 1.6 }}>
-              Sourced from Google Places — commercial properties only. Residential cold-calling is excluded for TCPA compliance. Phone numbers come straight from each business&rsquo;s Google Business Profile, so a paying customer&rsquo;s report shows real, dialable numbers for property managers, restaurants, retail centers, and real-estate brokerages near them.
-            </p>
-          </section>
-
-          {/* 7. Upsells table */}
-          <section id="upsells" className="cr-section">
-            <h2><span className="cr-section-num">7</span>Recommended Priced Upsells<span className="cr-section-tag">Trade benchmarks</span></h2>
-            <p className="cr-lede">Industry-benchmark avg ticket + close rate for {r.meta.businessType.toLowerCase()} services. Paying customers see these tuned against their own job mix.</p>
-            <div className="cr-tablewrap">
-              <table className="cr-table">
-                <thead>
-                  <tr>
-                    <th>Service</th>
-                    <th>Demand signal</th>
-                    <th className="right">Avg ticket</th>
-                    <th className="right">Close rate</th>
-                    <th className="right">Monthly opportunity</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {r.upsells.map(u => (
-                    <tr key={u.service}>
-                      <td><strong>{u.service}</strong></td>
-                      <td style={{ color: 'var(--ink-mid)' }}>{u.demandSignal}</td>
-                      <td className="right">{fmtMoney(u.avgTicket)}</td>
-                      <td className="right">{(u.closeRate * 100).toFixed(0)}%</td>
-                      <td className="right"><span className="opp-num">+{fmtMoney(u.monthlyOpportunity)}</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          {/* 8. Competitive */}
+          {/* 4. Competitive Standing & Threats */}
           <section id="competitive" className="cr-section">
-            <h2><span className="cr-section-num">8</span>Competitive Snapshot<span className="cr-section-tag">Google Places</span></h2>
-            <p className="cr-lede">How you stack against the {r.competitive.totalCompetitors} {r.meta.businessType} businesses within 8 mi.</p>
+            <h2><span className="cr-section-num">4</span>Competitive Standing &amp; Threats<span className="cr-section-tag">Google Places · real data</span></h2>
+            <p className="cr-lede">How you stack against the {r.competitive.totalCompetitors} {r.meta.businessType} businesses within 8 mi — who&apos;s closest, who&apos;s gaining fastest, and where the gaps are.</p>
 
             <div className="cr-comp-head">
               <div className="cr-comp-tile you">
@@ -942,9 +843,76 @@ export function ReportView({ report, sample = false, personalized = false }: { r
             </div>
           </section>
 
-          {/* 8. Action plan */}
+          {/* 5. Neighborhood Lead Pool */}
+          <section id="outreach" className="cr-section">
+            <h2><span className="cr-section-num">5</span>Neighborhood Lead Pool<span className="cr-section-tag">Commercial · TCPA-safe</span></h2>
+            <p className="cr-lede">Five high-value B2B prospects in your service area — commercial properties with weak or no current {r.meta.businessType.toLowerCase()} vendor. Legal to cold-call (commercial, not residential).</p>
+            <div className="cr-tablewrap">
+              <table className="cr-table">
+                <thead>
+                  <tr>
+                    <th>Business</th>
+                    <th>Type</th>
+                    <th>Address</th>
+                    <th>Phone</th>
+                    <th>Why</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {r.outreachTargets.map(t => (
+                    <tr key={t.business}>
+                      <td><strong>{t.business}</strong></td>
+                      <td style={{ color: 'var(--ink-mid)' }}>{t.type}</td>
+                      <td style={{ color: 'var(--ink-mid)' }}>{t.address}</td>
+                      <td>
+                        <a href={`tel:${t.phone.replace(/[^0-9+]/g, '')}`} style={{ color: 'var(--teal)', fontWeight: 700, textDecoration: 'none' }}>
+                          {t.phone}
+                        </a>
+                      </td>
+                      <td style={{ color: 'var(--ink)', fontSize: 12.5, lineHeight: 1.5 }}>{t.why}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p style={{ marginTop: 12, fontSize: 11.5, color: 'var(--ink-soft)', lineHeight: 1.6 }}>
+              Sourced from Google Places — commercial properties only. Residential cold-calling is excluded for TCPA compliance. Phone numbers come straight from each business&rsquo;s Google Business Profile, so a paying customer&rsquo;s report shows real, dialable numbers for property managers, restaurants, retail centers, and real-estate brokerages near them.
+            </p>
+          </section>
+
+          {/* 6. Upsells table */}
+          <section id="upsells" className="cr-section">
+            <h2><span className="cr-section-num">6</span>Recommended Priced Upsells<span className="cr-section-tag">Trade benchmarks</span></h2>
+            <p className="cr-lede">Industry-benchmark avg ticket + close rate for {r.meta.businessType.toLowerCase()} services. Paying customers see these tuned against their own job mix.</p>
+            <div className="cr-tablewrap">
+              <table className="cr-table">
+                <thead>
+                  <tr>
+                    <th>Service</th>
+                    <th>Demand signal</th>
+                    <th className="right">Avg ticket</th>
+                    <th className="right">Close rate</th>
+                    <th className="right">Monthly opportunity</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {r.upsells.map(u => (
+                    <tr key={u.service}>
+                      <td><strong>{u.service}</strong></td>
+                      <td style={{ color: 'var(--ink-mid)' }}>{u.demandSignal}</td>
+                      <td className="right">{fmtMoney(u.avgTicket)}</td>
+                      <td className="right">{(u.closeRate * 100).toFixed(0)}%</td>
+                      <td className="right"><span className="opp-num">+{fmtMoney(u.monthlyOpportunity)}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* 7. Action plan */}
           <section id="actions" className="cr-section">
-            <h2><span className="cr-section-num">9</span>90-Day Action Plan<span className="cr-section-tag">Prioritized</span></h2>
+            <h2><span className="cr-section-num">7</span>90-Day Action Plan<span className="cr-section-tag">Prioritized</span></h2>
             <p className="cr-lede">Ranked by expected impact ÷ effort. Each item ties to a specific opportunity above.</p>
             <div className="cr-actions">
               {r.actionPlan.map(a => (
@@ -962,6 +930,56 @@ export function ReportView({ report, sample = false, personalized = false }: { r
                 </div>
               ))}
             </div>
+          </section>
+
+          {/* 8. BellAveGo Score — composite score from a paying customer's data.
+              Lives below the strategic intel because for a cold prospect this is
+              illustrative, not their own number. Reordered 2026-05-30. */}
+          <section id="score" className="cr-section">
+            <h2><span className="cr-section-num">8</span>BellAveGo Score<span className="cr-section-tag">Composite (sample)</span></h2>
+            <p className="cr-lede">A 1–10 score blending answer rate, booking conversion, response time, and pricing power vs. your local market. Paying customers see their own score; on this preview report it&apos;s shown as a sample.</p>
+            <div className="cr-score-grid">
+              <div>
+                <ScoreRing score={r.bellaveScore.composite} />
+                <div style={{
+                  marginTop: 14, textAlign: 'center',
+                  padding: '8px 14px', borderRadius: 99,
+                  background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.28)',
+                  fontSize: 12, fontWeight: 800, color: '#15803D',
+                  letterSpacing: '0.04em',
+                  display: 'inline-block', width: '100%',
+                }}>
+                  {scoreBenchmark(r.bellaveScore.composite, r.meta.businessType, r.meta.metroLabel)}
+                </div>
+              </div>
+              <div className="cr-bars">
+                <ScoreBar label="Answer rate" v={r.bellaveScore.answerRate} />
+                <ScoreBar label="Booking conversion" v={r.bellaveScore.bookingConversion} />
+                <ScoreBar label="Response time" v={r.bellaveScore.responseTime} />
+                <ScoreBar label="Pricing power" v={r.bellaveScore.pricingPower} />
+              </div>
+            </div>
+          </section>
+
+          {/* 9. Sample Dashboard Preview — moved to the bottom 2026-05-30 + relabeled
+              "Sample" so prospects don't see fake call numbers up top and lose trust.
+              For paying customers this becomes "Performance vs. Last Quarter" automatically. */}
+          <section id="performance" className="cr-section">
+            <h2><span className="cr-section-num">9</span>Sample Dashboard Preview<span className="cr-section-tag" style={{ background: 'rgba(245,158,11,0.10)', color: '#92400E', borderColor: 'rgba(245,158,11,0.28)' }}>Illustrative · what your live data looks like</span></h2>
+            <p className="cr-lede">
+              This is what your BellAveGo Consulting dashboard looks like AFTER you have a paying account — pulled from your actual call + booking history. The numbers below are from our demo business so you can see the format. Yours will be real.
+            </p>
+            <div className="cr-kpis">
+              <Kpi label="Calls Answered" value={r.performance.callsAnswered.toString()} delta={r.performance.callsAnsweredDelta} />
+              <Kpi label="Jobs Booked" value={r.performance.jobsBooked.toString()} delta={r.performance.jobsBookedDelta} />
+              <Kpi label="Revenue Booked" value={fmtMoney(r.performance.revenue)} delta={r.performance.revenueDelta} />
+              <Kpi label="Avg Job Ticket" value={fmtMoney(r.performance.avgTicket)} delta={r.performance.avgTicketDelta} />
+              <Kpi label="Calls Saved (after-hours)" value={r.performance.callsSaved.toString()} />
+              <Kpi label="Answer Rate" value={`${(r.performance.answerRate * 100).toFixed(0)}%`} />
+            </div>
+            <p style={{ marginTop: 14, fontSize: 11.5, color: 'var(--ink-soft)', lineHeight: 1.6, fontStyle: 'italic' }}>
+              Sample data only. Paying customers see their real call history here from day one of the trial — every missed call captured, every booking confirmed, every dollar tracked.
+            </p>
           </section>
 
           {/* Conversion CTA — only shown on personalized reports so the SAMPLE page stays clean */}
@@ -1019,11 +1037,17 @@ export function ReportView({ report, sample = false, personalized = false }: { r
   )
 }
 
+// Section nav order — restructured 2026-05-30 so cold prospects see the
+// market intel they actually want UP TOP. The fake-data "Performance"
+// section is preserved but moved to the very bottom + relabeled
+// "Sample Dashboard" so it reads as an illustration of what a paying
+// customer sees, not the prospect's own non-existent call history.
 const SECTIONS = [
-  { id: 'performance', label: 'Performance' },
   { id: 'opps', label: 'Opportunities' },
   { id: 'market', label: 'Market' },
-  { id: 'actions', label: 'Plan' },
+  { id: 'competitive', label: 'Standing & Threats' },
+  { id: 'outreach', label: 'Lead Pool' },
+  { id: 'actions', label: 'Action Plan' },
 ]
 
 function monthlyOpportunityTotal(r: ConsultingReport) {

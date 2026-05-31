@@ -53,10 +53,19 @@ export default function ReceptionistPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle')
   const [stats, setStats] = useState({ calls: 0, booked: 0, saved: 0, revenue: 0 })
   const [demoIdx, setDemoIdx] = useState(0)
+  // ── AI pause feature ──
+  // Customer-initiated "I'm answering my own calls today" toggle.
+  // Backed by profiles.ai_paused_until column + /api/profile/ai-pause.
+  const [aiPausedUntil, setAiPausedUntil] = useState<string | null>(null)
+  const [aiPauseMode, setAiPauseMode] = useState<'forward' | 'voicemail' | 'silent'>('forward')
+  const [showPauseModal, setShowPauseModal] = useState(false)
+  const [pauseSaving, setPauseSaving] = useState(false)
+  const isAiPaused = !!aiPausedUntil && new Date(aiPausedUntil).getTime() > Date.now()
 
   useEffect(() => {
     loadProfile()
     loadStats()
+    loadPauseStatus()
   }, [])
 
   // Cycle the demo transcript so the page always feels alive.
@@ -159,6 +168,62 @@ export default function ReceptionistPage() {
     })
   }
 
+  async function loadPauseStatus() {
+    try {
+      const res = await fetch('/api/profile/ai-pause')
+      if (!res.ok) return
+      const j = await res.json()
+      setAiPausedUntil(j.ai_paused_until)
+      setAiPauseMode(j.ai_pause_mode || 'forward')
+    } catch (e) {
+      console.error('loadPauseStatus failed:', e)
+    }
+  }
+
+  async function applyPause(untilIso: string | null, mode: 'forward' | 'voicemail' | 'silent', reason?: string) {
+    setPauseSaving(true)
+    try {
+      const res = await fetch('/api/profile/ai-pause', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paused_until: untilIso, mode, reason: reason ?? null }),
+      })
+      if (!res.ok) throw new Error('save failed')
+      const j = await res.json()
+      setAiPausedUntil(j.ai_paused_until)
+      setAiPauseMode(j.ai_pause_mode)
+      setShowPauseModal(false)
+    } catch (e) {
+      console.error('applyPause failed:', e)
+      alert('Could not save. Try again or refresh.')
+    } finally {
+      setPauseSaving(false)
+    }
+  }
+
+  function pauseFor(hours: number, mode: 'forward' | 'voicemail' | 'silent' = 'forward') {
+    const until = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString()
+    return applyPause(until, mode)
+  }
+  function pauseIndefinitely(mode: 'forward' | 'voicemail' | 'silent' = 'forward') {
+    // Year 9999 = effectively forever; user can resume any time.
+    const until = '9999-12-31T23:59:59.000Z'
+    return applyPause(until, mode)
+  }
+  function resumeNow() {
+    return applyPause(null, aiPauseMode)
+  }
+
+  function formatPauseUntil(iso: string): string {
+    const d = new Date(iso)
+    if (d.getFullYear() >= 9000) return 'until you resume'
+    const now = new Date()
+    const diffMin = Math.round((d.getTime() - now.getTime()) / 60000)
+    if (diffMin < 60) return `for ${diffMin} more min`
+    if (diffMin < 24 * 60) return `until ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+    return `until ${d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`
+  }
+
   const rawNumber = twilioNumber.replace(/\D/g, '')
   const callForwardCode = rawNumber.length === 11 ? `*61*+${rawNumber.slice(1)}*11*15#` : ''
 
@@ -236,19 +301,48 @@ export default function ReceptionistPage() {
             (i.e. they signed up but never checked out). Eliminates the confusing
             "Activate AI Receptionist" CTA that previously rendered for users
             who'd already paid + were live. */}
-        <div className={`mc-card ${isActive || hasPlan ? 'mc-card-teal' : ''}`} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className={`mc-card ${isAiPaused ? '' : isActive || hasPlan ? 'mc-card-teal' : ''}`} style={{ display: 'flex', flexDirection: 'column', gap: 16, borderColor: isAiPaused ? '#F59E0B' : undefined }}>
           <div>
-            <div className="mc-eyebrow" style={{ color: isActive || hasPlan ? '#15803D' : '#C84B26' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive || hasPlan ? '#22C55E' : '#FF9D5A', boxShadow: isActive || hasPlan ? '0 0 8px rgba(34,197,94,0.6)' : '0 0 8px rgba(232,116,43,0.6)' }} />
-              {isActive || hasPlan ? 'AI Active' : 'AI Inactive'}
+            <div className="mc-eyebrow" style={{ color: isAiPaused ? '#92400E' : isActive || hasPlan ? '#15803D' : '#C84B26' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: isAiPaused ? '#F59E0B' : isActive || hasPlan ? '#22C55E' : '#FF9D5A', boxShadow: isAiPaused ? '0 0 8px rgba(245,158,11,0.6)' : isActive || hasPlan ? '0 0 8px rgba(34,197,94,0.6)' : '0 0 8px rgba(232,116,43,0.6)' }} />
+              {isAiPaused ? 'AI Paused' : (isActive || hasPlan ? 'AI Active' : 'AI Inactive')}
             </div>
             <div style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.4px', marginBottom: 6 }}>
-              {isActive || hasPlan ? 'Answering every call' : 'Setup needed'}
+              {isAiPaused
+                ? (aiPauseMode === 'forward' ? 'Routing calls to your cell' : aiPauseMode === 'voicemail' ? 'Voicemail only' : 'Calls silenced')
+                : (isActive || hasPlan ? 'Answering every call' : 'Setup needed')}
             </div>
             <div style={{ fontSize: 13, color: '#4A6670', lineHeight: 1.5 }}>
-              {isActive || hasPlan ? 'Calls route through your BellAveGo number. Booked jobs land in your dashboard, your phone, and your CRM.' : 'Forward your business cell to the BellAveGo number, then activate.'}
+              {isAiPaused
+                ? `Paused ${formatPauseUntil(aiPausedUntil!)}. ${aiPauseMode === 'forward' ? 'Incoming calls go straight to your cell — AI never picks up until you resume.' : aiPauseMode === 'voicemail' ? 'Callers hear a brief greeting then leave a voicemail you can text back later.' : 'Calls disconnect silently. Use with caution.'}`
+                : (isActive || hasPlan ? 'Calls route through your BellAveGo number. Booked jobs land in your dashboard, your phone, and your CRM.' : 'Forward your business cell to the BellAveGo number, then activate.')}
             </div>
           </div>
+
+          {/* PAUSE / RESUME — visible whenever AI is set up (hasPlan or isActive). */}
+          {(isActive || hasPlan) && (
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              {isAiPaused ? (
+                <button
+                  onClick={resumeNow}
+                  disabled={pauseSaving}
+                  className="mc-btn-teal"
+                  style={{ flex: 1, minWidth: 180, padding: '12px 18px', fontWeight: 800, fontSize: 14, borderRadius: 10, cursor: 'pointer' }}
+                >
+                  ▶ Resume AI now
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowPauseModal(true)}
+                  disabled={pauseSaving}
+                  className="mc-btn-ghost"
+                  style={{ flex: 1, minWidth: 180, padding: '12px 18px', fontWeight: 800, fontSize: 14, borderRadius: 10, cursor: 'pointer', border: '1.5px solid rgba(245,158,11,0.40)', background: 'rgba(245,158,11,0.06)', color: '#92400E' }}
+                >
+                  ⏸ Pause AI Receptionist
+                </button>
+              )}
+            </div>
+          )}
           {!hasPlan && (
             <button
               onClick={handleToggleActive}
@@ -429,6 +523,128 @@ export default function ReceptionistPage() {
           </div>
         )}
       </div>
+
+      {/* ── PAUSE MODAL ── User-controlled AI pause. */}
+      {showPauseModal && (
+        <div
+          onClick={() => !pauseSaving && setShowPauseModal(false)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(11,31,58,0.55)', zIndex: 100,
+            display: 'grid', placeItems: 'center', padding: 16,
+            backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#fff', borderRadius: 18, padding: 32, maxWidth: 520, width: '100%',
+              boxShadow: '0 32px 80px rgba(11,31,58,0.24)', border: '1px solid rgba(245,158,11,0.20)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+              <span style={{ fontSize: 22 }}>⏸</span>
+              <h3 style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', margin: 0, letterSpacing: '-0.3px' }}>Pause AI Receptionist</h3>
+            </div>
+            <p style={{ fontSize: 13.5, color: '#4A6670', lineHeight: 1.55, margin: '0 0 22px' }}>
+              The AI stops answering. Calls go to your cell (or voicemail) until you resume.
+            </p>
+
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: '#92400E', letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 10 }}>How long?</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <button
+                  onClick={() => pauseFor(1)}
+                  disabled={pauseSaving}
+                  style={pauseOptionBtn}
+                >
+                  <span style={{ fontSize: 16, fontWeight: 800 }}>1 hour</span>
+                  <span style={{ fontSize: 11.5, color: '#4A6670' }}>Auto-resumes</span>
+                </button>
+                <button
+                  onClick={() => pauseFor(4)}
+                  disabled={pauseSaving}
+                  style={pauseOptionBtn}
+                >
+                  <span style={{ fontSize: 16, fontWeight: 800 }}>4 hours</span>
+                  <span style={{ fontSize: 11.5, color: '#4A6670' }}>Half-day break</span>
+                </button>
+                <button
+                  onClick={() => {
+                    // Until tomorrow 7 AM local
+                    const t = new Date()
+                    t.setDate(t.getDate() + 1)
+                    t.setHours(7, 0, 0, 0)
+                    return applyPause(t.toISOString(), aiPauseMode)
+                  }}
+                  disabled={pauseSaving}
+                  style={pauseOptionBtn}
+                >
+                  <span style={{ fontSize: 16, fontWeight: 800 }}>Until tomorrow 7 AM</span>
+                  <span style={{ fontSize: 11.5, color: '#4A6670' }}>Take the day off</span>
+                </button>
+                <button
+                  onClick={() => pauseIndefinitely()}
+                  disabled={pauseSaving}
+                  style={{ ...pauseOptionBtn, borderColor: 'rgba(220,38,38,0.40)', background: 'rgba(220,38,38,0.04)' }}
+                >
+                  <span style={{ fontSize: 16, fontWeight: 800, color: '#991B1B' }}>Until I resume</span>
+                  <span style={{ fontSize: 11.5, color: '#4A6670' }}>Indefinite pause</span>
+                </button>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 22 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: '#92400E', letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 10 }}>When paused, callers should:</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {([
+                  { value: 'forward' as const, label: '📲 Ring my cell', desc: 'Forward to your business cell' },
+                  { value: 'voicemail' as const, label: '📩 Leave voicemail', desc: 'No ring — just record' },
+                  { value: 'silent' as const, label: '🔇 Hang up', desc: 'Silent — use rarely' },
+                ]).map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setAiPauseMode(opt.value)}
+                    disabled={pauseSaving}
+                    style={{
+                      flex: 1, padding: '10px 12px', borderRadius: 9,
+                      border: aiPauseMode === opt.value ? '2px solid #E8742B' : '1.5px solid rgba(232,116,43,0.18)',
+                      background: aiPauseMode === opt.value ? 'linear-gradient(135deg, #FFFFFF, #FFF7EE)' : '#FFFAF3',
+                      cursor: pauseSaving ? 'not-allowed' : 'pointer', textAlign: 'left',
+                    }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 700, color: aiPauseMode === opt.value ? '#C84B26' : '#0B1F3A', marginBottom: 2 }}>{opt.label}</div>
+                    <div style={{ fontSize: 11, color: '#4A6670', lineHeight: 1.35 }}>{opt.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowPauseModal(false)}
+                disabled={pauseSaving}
+                style={{
+                  padding: '11px 22px', borderRadius: 9, border: '1.5px solid rgba(11,31,58,0.18)',
+                  background: '#fff', color: '#0B1F3A', fontWeight: 700, fontSize: 13.5, cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+
+            {pauseSaving && (
+              <div style={{ marginTop: 14, textAlign: 'center', fontSize: 12, color: '#7AAAB2' }}>Saving…</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
+}
+
+const pauseOptionBtn: React.CSSProperties = {
+  display: 'flex', flexDirection: 'column', gap: 4,
+  padding: '14px 16px', borderRadius: 10,
+  border: '1.5px solid rgba(245,158,11,0.30)', background: 'rgba(245,158,11,0.04)',
+  color: '#0B1F3A', cursor: 'pointer', textAlign: 'left',
 }
