@@ -62,7 +62,11 @@ export async function POST(req: NextRequest) {
   const notes = args.notes ?? null
   const objection = args.objection ?? null
 
-  const durationSec = Math.round((body?.message?.durationSeconds ?? body?.message?.endedReason && body?.message?.duration) || 0)
+  // Vapi sometimes reports duration via durationSeconds, sometimes nested under
+  // message.duration. Either / fallback to 0.
+  const durationSec = Math.round(
+    Number(body?.message?.durationSeconds ?? body?.message?.duration ?? 0),
+  )
   const transcript = body?.message?.transcript ?? null
   const recordingUrl = body?.message?.recordingUrl ?? body?.message?.artifact?.recordingUrl ?? null
   const cost = body?.message?.cost ?? null
