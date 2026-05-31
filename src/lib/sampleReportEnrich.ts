@@ -34,6 +34,9 @@ type EnrichInput = {
   prospectZip?: string
   /** Real prospect business type — falls back to the report's businessType. */
   prospectType?: string
+  /** Real prospect city — used to override the map centerLabel so the
+   *  Google Maps embed centers on the prospect's metro, not the demo's. */
+  prospectCity?: string
 }
 
 type GooglePlace = {
@@ -141,10 +144,28 @@ export async function enrichSampleReport(input: EnrichInput): Promise<Consulting
   })
 
   // ── 4. Return the enriched report ─────────────────────────────
+  // ALSO override centerLat/Lng/Label so the Google Maps embed centers on
+  // the prospect's actual metro — not the St. Louis Park demo default.
+  // Bug shipped pre-2026-05-31: only `points` was being overridden, so
+  // generated reports for AZ/TX/FL prospects all showed the map centered
+  // on Minneapolis Metro. Caught by Peter when his Skilled Solutions
+  // Cave Creek report rendered with Lebanon, Indiana coords.
+  const overrideCenter =
+    businessPin && businessPin.lat != null && businessPin.lng != null
+      ? {
+          centerLat: businessPin.lat,
+          centerLng: businessPin.lng,
+          centerLabel: input.prospectCity
+            ? input.prospectCity
+            : input.base.meta.metroLabel || input.base.serviceAreaMap.centerLabel,
+        }
+      : {}
+
   return {
     ...input.base,
     serviceAreaMap: {
       ...input.base.serviceAreaMap,
+      ...overrideCenter,
       points,
     },
   }
