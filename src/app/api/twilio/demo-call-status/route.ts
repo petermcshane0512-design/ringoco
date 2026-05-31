@@ -104,11 +104,17 @@ export async function POST(req: NextRequest) {
   // the alert. This is Peter's known personal cell from CLAUDE.md.)
   const peterPhone = process.env.FALLBACK_OWNER_PHONE || '+17737109565'
 
-  // Sender: prefer demo number, fall back to platform number, finally to the
-  // number Twilio sent the callback for (must be owned by us if we got here).
-  const fromNumber = process.env.TWILIO_DEMO_NUMBER || process.env.TWILIO_PHONE_NUMBER || calledNumber || ''
-  if (!fromNumber) {
-    console.error('demo-call-status: no fromNumber available', { calledNumber })
+  // Sender selection: prefer TWILIO_MESSAGING_SERVICE_SID (handles A2P + opt-out
+  // automatically). Otherwise prefer TWILIO_PHONE_NUMBER (the platform SMS line,
+  // known SMS-capable). Falling back to demo line LAST because it's typically
+  // voice-only — Twilio accepts the API call but the message never sends.
+  const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER
+    || process.env.TWILIO_DEMO_NUMBER
+    || calledNumber
+    || ''
+  if (!messagingServiceSid && !fromNumber) {
+    console.error('demo-call-status: no SMS sender available', { calledNumber })
     return NextResponse.json({ ok: false, error: 'no from number' }, { status: 500 })
   }
   if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
@@ -126,19 +132,33 @@ export async function POST(req: NextRequest) {
     process.env.TWILIO_AUTH_TOKEN!,
   )
 
+  const body =
+    `📞 LIVE DEMO CALL — someone calling BellAveGo AI right now\n\n` +
+    `From: ${callerPhone}\n` +
+    `Time: ${nowEt} ET\n\n` +
+    `They're hearing Emma. Full transcript + lead summary lands when they hang up.`
+
+  const messageOpts: { to: string; body: string; from?: string; messagingServiceSid?: string } = {
+    to: peterPhone,
+    body,
+  }
+  if (messagingServiceSid) {
+    messageOpts.messagingServiceSid = messagingServiceSid
+  } else {
+    messageOpts.from = fromNumber
+  }
+
   try {
-    await twilioClient.messages.create({
-      from: fromNumber,
-      to: peterPhone,
-      body:
-        `📞 LIVE DEMO CALL — someone calling BellAveGo AI right now\n\n` +
-        `From: ${callerPhone}\n` +
-        `Time: ${nowEt} ET\n\n` +
-        `They're hearing Emma. Full transcript + lead summary lands when they hang up.`,
+    const msg = await twilioClient.messages.create(messageOpts)
+    console.log('[demo-call-status] sms queued', {
+      sid: msg.sid, status: msg.status, errorCode: msg.errorCode, errorMessage: msg.errorMessage,
+      to: peterPhone, from: messageOpts.from, messagingServiceSid: messageOpts.messagingServiceSid,
     })
-  } catch (e) {
-    console.error('demo-call-status SMS to Peter failed:', e)
-    return NextResponse.json({ ok: false, error: 'sms failed' }, { status: 500 })
+  } catch (e: unknown) {
+    const code = (e as { code?: number })?.code
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('[demo-call-status] sms create threw', { code, msg, to: peterPhone, from: fromNumber, messagingServiceSid })
+    return NextResponse.json({ ok: false, error: 'sms failed', code, msg }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true, sent_at: nowEt, caller: callerPhone })
