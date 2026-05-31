@@ -29,6 +29,26 @@ export const runtime = 'nodejs'
 // 4 events back-to-back, so this catches that).
 const notifiedCalls = new Set<string>()
 
+/**
+ * GET — diagnostic only. Lets Peter sanity-check the route + env without
+ * needing the admin secret or Vercel logs. Reveals only which env keys are
+ * set (true/false), never the values.
+ */
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    route_alive: true,
+    env_present: {
+      TWILIO_ACCOUNT_SID: !!process.env.TWILIO_ACCOUNT_SID,
+      TWILIO_AUTH_TOKEN: !!process.env.TWILIO_AUTH_TOKEN,
+      TWILIO_DEMO_NUMBER: !!process.env.TWILIO_DEMO_NUMBER,
+      TWILIO_PHONE_NUMBER: !!process.env.TWILIO_PHONE_NUMBER,
+      FALLBACK_OWNER_PHONE: !!process.env.FALLBACK_OWNER_PHONE,
+    },
+    deploy_commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null,
+  })
+}
+
 export async function POST(req: NextRequest) {
   const formData = await req.formData()
   const params: Record<string, string> = {}
@@ -60,36 +80,40 @@ export async function POST(req: NextRequest) {
   const calledNumber = params['To'] || ''
   const callStatus = params['CallStatus'] || ''
 
-  // Only act on the first state we see for this CallSid. Twilio sends
-  // 'initiated' first, then 'ringing', then 'in-progress', then 'completed'.
-  // We fire on initiated/ringing so Peter gets the SMS before the AI even
-  // starts answering.
+  // Log every hit so Vercel logs show exactly what Twilio is firing.
+  console.log('[demo-call-status] hit', {
+    callSid, callerPhone, calledNumber, callStatus,
+  })
+
+  // Dedup by CallSid only. Don't gate on CallStatus — Twilio's default config
+  // only sends 'completed' events; requiring 'ringing' silently drops every
+  // call. As long as it's the FIRST event we see for this CallSid, fire.
   if (notifiedCalls.has(callSid)) {
-    return NextResponse.json({ ok: true, skipped: 'already_notified' })
-  }
-  if (!['initiated', 'ringing'].includes(callStatus)) {
-    return NextResponse.json({ ok: true, skipped: 'late_state', status: callStatus })
+    return NextResponse.json({ ok: true, skipped: 'already_notified', status: callStatus })
   }
 
-  // Verify this is actually the demo line — if Twilio fires this URL for
-  // another number by mistake, we skip.
-  const demoNumber = process.env.TWILIO_DEMO_NUMBER
-  if (demoNumber && calledNumber !== demoNumber) {
-    return NextResponse.json({ ok: true, skipped: 'not_demo_number', called: calledNumber })
-  }
+  // We trust Twilio's routing — if it POSTed here, this URL is bound to a
+  // number we own. No env-var comparison needed. (Removed the
+  // TWILIO_DEMO_NUMBER strict-match check — caused silent skips when the env
+  // value drifted from E.164 format Twilio actually sends.)
 
   notifiedCalls.add(callSid)
 
-  const peterPhone = process.env.FALLBACK_OWNER_PHONE
-  if (!peterPhone) {
-    console.error('demo-call-status: FALLBACK_OWNER_PHONE not set')
-    return NextResponse.json({ ok: false, error: 'env missing' }, { status: 500 })
-  }
+  // Fallback chain for SMS recipient: env var → hardcoded Peter cell.
+  // (Hardcoded fallback so a misnamed Vercel env var doesn't silently kill
+  // the alert. This is Peter's known personal cell from CLAUDE.md.)
+  const peterPhone = process.env.FALLBACK_OWNER_PHONE || '+17737109565'
 
-  const fromNumber = demoNumber || process.env.TWILIO_PHONE_NUMBER || ''
+  // Sender: prefer demo number, fall back to platform number, finally to the
+  // number Twilio sent the callback for (must be owned by us if we got here).
+  const fromNumber = process.env.TWILIO_DEMO_NUMBER || process.env.TWILIO_PHONE_NUMBER || calledNumber || ''
   if (!fromNumber) {
-    console.error('demo-call-status: no fromNumber available')
+    console.error('demo-call-status: no fromNumber available', { calledNumber })
     return NextResponse.json({ ok: false, error: 'no from number' }, { status: 500 })
+  }
+  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
+    console.error('demo-call-status: Twilio creds missing')
+    return NextResponse.json({ ok: false, error: 'twilio creds missing' }, { status: 500 })
   }
 
   const nowEt = new Date().toLocaleString('en-US', {
