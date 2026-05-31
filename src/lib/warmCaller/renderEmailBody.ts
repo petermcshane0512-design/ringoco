@@ -48,9 +48,10 @@ export function renderEmailText(input: RenderEmailInput): string {
   const trackedUrl = withLeadTracker(input.report_url, input.lead_id)
 
   // 2026-05-31 — body slashed in half per Peter's call: prospects on the
-  // phone between jobs won't read 6 paragraphs. New angle leans on the
-  // $70k-receptionist vs $147 AI swap. Demo number gets equal weight to
-  // the report URL — "click OR call" is the conversion fork.
+  // phone between jobs won't read 6 paragraphs. Friendly competitive nudge
+  // ("before everyone else gets in") + the $40K front-desk-hire alternative
+  // angle inside the report. Demo number gets equal weight to the report
+  // URL — "click OR call" is the conversion fork.
   const rank = c.yourRank ?? null
   const total = c.totalCompetitors ?? null
   const oppValue = o.monthlyValue ?? 0
@@ -64,7 +65,7 @@ export function renderEmailText(input: RenderEmailInput): string {
   return [
     `Hey ${input.first_name},`,
     '',
-    `AI is moving into home services fast. Pulled the ${input.city} ${input.state ? input.state + ' ' : ''}HVAC market data on ${input.company_name} so you can see where you sit before everyone else gets in.`,
+    `AI is starting to show up in ${input.city} home-service shops. Wanted to send what our team at BellAveGo found for ${input.company_name} before it's everywhere.`,
     '',
     `${rankLine} ${oppLine}.`,
     '',
@@ -73,12 +74,12 @@ export function renderEmailText(input: RenderEmailInput): string {
     '',
     `📞 Hear Emma answer your phone right now — (651) 467-7829`,
     '',
-    `$147/mo · 7-day free trial · cancel any time.`,
+    `Skip the $40K front-desk hire — $147/mo, 7-day free trial, cancel any time.`,
     '',
     `— Peter`,
     `BellAveGo · (773) 710-9565`,
     '',
-    `P.S. Want to skip the trial and talk first? Text (773) 710-9565 — I reply within the hour.`,
+    `P.S. Want to skip the trial and talk first? Text (773) 710-9565 — our team replies within the hour.`,
   ].join('\n')
 }
 

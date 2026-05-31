@@ -1039,7 +1039,7 @@ export function ReportView({ report, sample = false, personalized = false }: { r
 
           {/* Mid-report HEAR-EMMA CTA #3 — after upsells, before action plan */}
           <a href="tel:+16514677829" className="cr-hear-emma-inline">
-            <strong>Don&apos;t hire a $70K/yr receptionist. Try AI for $147/mo.</strong>
+            <strong>Skip the $40K front desk hire. AI does the same job for $147/mo.</strong>
             <span className="cr-hear-emma-inline-num">📞 (651) 467-7829</span>
             <span className="cr-hear-emma-inline-sub">7-day free trial · cancel any time · call to hear it first.</span>
           </a>
