@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import twilio from 'twilio'
+import { sendEmail } from '@/lib/email'
 
 export const runtime = 'nodejs'
 
@@ -148,18 +149,64 @@ export async function POST(req: NextRequest) {
     messageOpts.from = fromNumber
   }
 
-  try {
-    const msg = await twilioClient.messages.create(messageOpts)
-    console.log('[demo-call-status] sms queued', {
-      sid: msg.sid, status: msg.status, errorCode: msg.errorCode, errorMessage: msg.errorMessage,
-      to: peterPhone, from: messageOpts.from, messagingServiceSid: messageOpts.messagingServiceSid,
-    })
-  } catch (e: unknown) {
-    const code = (e as { code?: number })?.code
-    const msg = e instanceof Error ? e.message : String(e)
-    console.error('[demo-call-status] sms create threw', { code, msg, to: peterPhone, from: fromNumber, messagingServiceSid })
-    return NextResponse.json({ ok: false, error: 'sms failed', code, msg }, { status: 500 })
-  }
+  // Fire SMS + email in parallel. Email is the reliable channel — bypasses
+  // A2P 10DLC, carrier filtering, and SMS-capability mismatches.
+  const smsPromise = twilioClient.messages.create(messageOpts).then(
+    (msg) => {
+      console.log('[demo-call-status] sms queued', {
+        sid: msg.sid, status: msg.status, errorCode: msg.errorCode, errorMessage: msg.errorMessage,
+      })
+      return { ok: true as const, sid: msg.sid, status: msg.status }
+    },
+    (e: unknown) => {
+      const code = (e as { code?: number })?.code
+      const errMsg = e instanceof Error ? e.message : String(e)
+      console.error('[demo-call-status] sms create threw', { code, msg: errMsg })
+      return { ok: false as const, code, errMsg }
+    },
+  )
 
-  return NextResponse.json({ ok: true, sent_at: nowEt, caller: callerPhone })
+  const ownerEmail = process.env.FALLBACK_OWNER_EMAIL || 'bellavegollc@gmail.com'
+  const emailSubject = `📞 LIVE DEMO CALL — ${callerPhone} calling right now`
+  const emailHtml = `
+    <div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#0b1f3a;max-width:540px">
+      <h2 style="font-size:18px;margin:0 0 12px;color:#0b1f3a">📞 LIVE DEMO CALL</h2>
+      <p>Someone is calling the BellAveGo AI receptionist <strong>right now</strong>.</p>
+      <table style="border-collapse:collapse;margin:14px 0;font-size:13px">
+        <tr><td style="padding:4px 12px 4px 0;color:#4A6670"><strong>From:</strong></td><td><a href="tel:${callerPhone}" style="color:#0AA89F">${callerPhone}</a></td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#4A6670"><strong>Time:</strong></td><td>${nowEt} ET</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#4A6670"><strong>Called:</strong></td><td>${calledNumber}</td></tr>
+      </table>
+      <p style="font-size:12.5px;color:#4A6670">They're hearing Emma now. Full transcript + lead summary lands in your inbox when they hang up.</p>
+    </div>
+  `
+  const emailText = `📞 LIVE DEMO CALL\n\nFrom: ${callerPhone}\nTime: ${nowEt} ET\nCalled: ${calledNumber}\n\nThey're hearing Emma now. Full transcript + lead summary lands when they hang up.`
+
+  const emailPromise = sendEmail({
+    to: ownerEmail,
+    subject: emailSubject,
+    html: emailHtml,
+    text: emailText,
+  }).then(
+    (res) => {
+      if (res.ok) console.log('[demo-call-status] email sent', { id: res.id, to: ownerEmail })
+      else console.error('[demo-call-status] email failed', { error: res.error, to: ownerEmail })
+      return res
+    },
+    (e: unknown) => {
+      const errMsg = e instanceof Error ? e.message : String(e)
+      console.error('[demo-call-status] email threw', { errMsg, to: ownerEmail })
+      return { ok: false as const, error: errMsg }
+    },
+  )
+
+  const [smsResult, emailResult] = await Promise.all([smsPromise, emailPromise])
+
+  return NextResponse.json({
+    ok: true,
+    sent_at: nowEt,
+    caller: callerPhone,
+    sms: smsResult,
+    email: emailResult,
+  })
 }
