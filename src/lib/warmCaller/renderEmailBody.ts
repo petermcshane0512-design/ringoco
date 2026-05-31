@@ -45,6 +45,47 @@ function withLeadTracker(reportUrl: string, leadId: string): string {
 export function renderEmailText(input: RenderEmailInput): string {
   const c = input.report.competitive ?? {}
   const o = (input.report.opportunities ?? [])[0] ?? {}
+  const trackedUrl = withLeadTracker(input.report_url, input.lead_id)
+
+  // 2026-05-31 — body slashed in half per Peter's call: prospects on the
+  // phone between jobs won't read 6 paragraphs. New angle leans on the
+  // $70k-receptionist vs $147 AI swap. Demo number gets equal weight to
+  // the report URL — "click OR call" is the conversion fork.
+  const rank = c.yourRank ?? null
+  const total = c.totalCompetitors ?? null
+  const oppValue = o.monthlyValue ?? 0
+  const oppLine = oppValue > 0
+    ? `Top opportunity for ${input.company_name} = +$${oppValue.toLocaleString()}/mo`
+    : `Top revenue gap is mapped out for you inside`
+  const rankLine = (rank && total)
+    ? `You're ranked #${rank} of ${total} in ${input.city}.`
+    : `Your ranking + 5 nearest competitors are inside.`
+
+  return [
+    `Hey ${input.first_name},`,
+    '',
+    `AI is moving into home services fast. Pulled the ${input.city} ${input.state ? input.state + ' ' : ''}HVAC market data on ${input.company_name} so you can see where you sit before everyone else gets in.`,
+    '',
+    `${rankLine} ${oppLine}.`,
+    '',
+    `📊 Full report — no signup, 2 min:`,
+    trackedUrl,
+    '',
+    `📞 Hear Emma answer your phone right now — (651) 467-7829`,
+    '',
+    `$147/mo · 7-day free trial · cancel any time.`,
+    '',
+    `— Peter`,
+    `BellAveGo · (773) 710-9565`,
+    '',
+    `P.S. Want to skip the trial and talk first? Text (773) 710-9565 — I reply within the hour.`,
+  ].join('\n')
+}
+
+// Legacy long-form body — kept for A/B comparison via variant='legacy'.
+export function renderEmailTextLegacy(input: RenderEmailInput): string {
+  const c = input.report.competitive ?? {}
+  const o = (input.report.opportunities ?? [])[0] ?? {}
   const topComp = (c.competitors ?? [])[0] ?? {}
   const opener = pickOpener(input.variant)
   const trackedUrl = withLeadTracker(input.report_url, input.lead_id)

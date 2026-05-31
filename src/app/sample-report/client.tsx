@@ -267,6 +267,92 @@ export function ReportView({ report, sample = false, personalized = false }: { r
         .cr-hero-meta {
           display: flex; flex-wrap: wrap; gap: 8px;
         }
+
+        /* ── HEAR EMMA CTA — hero version + inline repeats + sticky float ── */
+        @keyframes hearEmmaPulse {
+          0%, 100% { box-shadow: 0 12px 32px rgba(232,116,43,0.45), 0 0 0 0 rgba(94,234,212,0.6); }
+          50%      { box-shadow: 0 16px 40px rgba(232,116,43,0.60), 0 0 0 14px rgba(94,234,212,0); }
+        }
+        .cr-hear-emma-hero {
+          display: inline-flex; align-items: center; gap: 14px;
+          padding: 16px 26px; margin-top: 22px;
+          border-radius: 16px; text-decoration: none;
+          background: linear-gradient(135deg, #FF9D5A 0%, #E8742B 60%, #C84B26 100%);
+          color: #fff; font-family: inherit;
+          box-shadow: 0 12px 32px rgba(232,116,43,0.45);
+          animation: hearEmmaPulse 2.4s ease-in-out infinite;
+          transition: transform 0.18s ease;
+          position: relative;
+        }
+        .cr-hear-emma-hero:hover { transform: translateY(-2px); }
+        .cr-hear-emma-ring { display: none; }
+        .cr-hear-emma-ico { font-size: 26px; line-height: 1; }
+        .cr-hear-emma-text { display: flex; flex-direction: column; gap: 2px; line-height: 1.2; }
+        .cr-hear-emma-eyebrow {
+          font-size: 11px; font-weight: 800; letter-spacing: 0.12em;
+          text-transform: uppercase; color: #FFF7EE; opacity: 0.95;
+        }
+        .cr-hear-emma-num {
+          font-size: 24px; font-weight: 900; letter-spacing: 0.6px;
+          font-variant-numeric: tabular-nums;
+        }
+        .cr-hear-emma-sub { font-size: 12px; opacity: 0.85; font-weight: 600; }
+
+        /* Inline mid-report CTA — appears between sections. */
+        .cr-hear-emma-inline {
+          display: flex; flex-direction: column; align-items: center; gap: 6px;
+          padding: 18px 22px;
+          margin: 22px 0;
+          border-radius: 16px;
+          background: linear-gradient(135deg, rgba(255,157,90,0.10), rgba(232,116,43,0.06));
+          border: 2px dashed rgba(232,116,43,0.40);
+          text-decoration: none; color: #0B1F3A;
+        }
+        .cr-hear-emma-inline strong {
+          font-size: 16px; font-weight: 900; letter-spacing: -0.3px;
+          background: linear-gradient(135deg, #FF9D5A, #E8742B 60%, #C84B26);
+          -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .cr-hear-emma-inline-num {
+          font-size: 22px; font-weight: 900; letter-spacing: 0.4px;
+          color: #C84B26; font-variant-numeric: tabular-nums;
+        }
+        .cr-hear-emma-inline-sub {
+          font-size: 11.5px; color: #4A6670; font-weight: 600;
+        }
+
+        /* Sticky floating button — always visible while scrolling. */
+        @keyframes stickyEmmaWiggle {
+          0%, 95%, 100% { transform: translateY(0); }
+          97% { transform: translateY(-3px); }
+        }
+        .cr-sticky-emma {
+          position: fixed; z-index: 90;
+          right: 24px; bottom: 24px;
+          display: inline-flex; align-items: center; gap: 10px;
+          padding: 14px 22px; border-radius: 999px;
+          background: linear-gradient(135deg, #E8742B 0%, #C84B26 100%);
+          color: #fff; font-weight: 800; font-size: 14px;
+          text-decoration: none; letter-spacing: 0.3px;
+          box-shadow: 0 14px 36px rgba(11,31,58,0.30), 0 0 0 4px rgba(255,255,255,0.7);
+          animation: stickyEmmaWiggle 4s ease-in-out infinite;
+          transition: transform 0.18s ease;
+        }
+        .cr-sticky-emma:hover { transform: translateY(-2px) scale(1.02); }
+        .cr-sticky-emma-num {
+          font-variant-numeric: tabular-nums;
+          background: rgba(255,255,255,0.18); padding: 4px 10px; border-radius: 99px;
+          font-size: 13px;
+        }
+        @media (max-width: 720px) {
+          .cr-sticky-emma {
+            right: 12px; bottom: 12px;
+            padding: 12px 16px; font-size: 13px;
+          }
+          .cr-sticky-emma-num { font-size: 12px; padding: 3px 8px; }
+          .cr-hear-emma-hero { width: 100%; padding: 14px 18px; }
+          .cr-hear-emma-num { font-size: 20px; }
+        }
         .cr-meta-pill {
           display: inline-flex; align-items: center; gap: 6px;
           padding: 6px 12px;
@@ -649,6 +735,16 @@ export function ReportView({ report, sample = false, personalized = false }: { r
         </div>
       </div>
 
+      {/* STICKY HEAR-EMMA — always visible while scrolling on every device.
+          Peter 5/31: "biggest thing on the report, every 5 scrolls visible". */}
+      <a
+        href="tel:+16514677829"
+        className="cr-sticky-emma"
+        aria-label="Call BellAveGo AI demo at (651) 467-7829"
+      >
+        📞 Hear Emma <span className="cr-sticky-emma-num">(651) 467-7829</span>
+      </a>
+
       {sample && !personalized && (
         <div className="cr-sample">
           Sample report · Real data shape, fictional contractor &middot; Subscribers receive a fresh report every quarter
@@ -674,6 +770,23 @@ export function ReportView({ report, sample = false, personalized = false }: { r
           <p className="cr-hero-sub">
             {r.meta.businessName} · {r.meta.period} · {r.meta.metroLabel}
           </p>
+
+          {/* HERO HEAR-EMMA CTA — biggest, brightest button on the page.
+              Tap to dial (651) 467-7829 — they hear the demo AI live. Sales
+              conversion driver per Peter 5/31: "biggest thing on the report". */}
+          <a
+            href="tel:+16514677829"
+            className="cr-hear-emma-hero"
+            aria-label="Call BellAveGo AI demo at (651) 467-7829"
+          >
+            <span className="cr-hear-emma-ring" />
+            <span className="cr-hear-emma-ico">📞</span>
+            <span className="cr-hear-emma-text">
+              <span className="cr-hear-emma-eyebrow">Hear Emma — your new AI receptionist</span>
+              <span className="cr-hear-emma-num">(651) 467-7829</span>
+              <span className="cr-hear-emma-sub">Tap to call · live in 3 seconds</span>
+            </span>
+          </a>
         </div>
       </div>
 
@@ -742,6 +855,13 @@ export function ReportView({ report, sample = false, personalized = false }: { r
               ))}
             </div>
           </section>
+
+          {/* Mid-report HEAR-EMMA CTA #1 — after opportunities reveal */}
+          <a href="tel:+16514677829" className="cr-hear-emma-inline">
+            <strong>Want to hear what this looks like in action?</strong>
+            <span className="cr-hear-emma-inline-num">📞 (651) 467-7829</span>
+            <span className="cr-hear-emma-inline-sub">Call Emma — your AI receptionist — answers in 3 seconds.</span>
+          </a>
 
           {/* 3. Market Scan */}
           <section id="market" className="cr-section">
@@ -843,6 +963,13 @@ export function ReportView({ report, sample = false, personalized = false }: { r
             </div>
           </section>
 
+          {/* Mid-report HEAR-EMMA CTA #2 — after competitive intel */}
+          <a href="tel:+16514677829" className="cr-hear-emma-inline">
+            <strong>Stop losing jobs to voicemail. Let Emma answer them.</strong>
+            <span className="cr-hear-emma-inline-num">📞 (651) 467-7829</span>
+            <span className="cr-hear-emma-inline-sub">Hear your new AI receptionist live — costs nothing to try.</span>
+          </a>
+
           {/* 5. Neighborhood Lead Pool */}
           <section id="outreach" className="cr-section">
             <h2><span className="cr-section-num">5</span>Neighborhood Lead Pool<span className="cr-section-tag">Commercial · TCPA-safe</span></h2>
@@ -909,6 +1036,13 @@ export function ReportView({ report, sample = false, personalized = false }: { r
               </table>
             </div>
           </section>
+
+          {/* Mid-report HEAR-EMMA CTA #3 — after upsells, before action plan */}
+          <a href="tel:+16514677829" className="cr-hear-emma-inline">
+            <strong>Don&apos;t hire a $70K/yr receptionist. Try AI for $147/mo.</strong>
+            <span className="cr-hear-emma-inline-num">📞 (651) 467-7829</span>
+            <span className="cr-hear-emma-inline-sub">7-day free trial · cancel any time · call to hear it first.</span>
+          </a>
 
           {/* 7. Action plan */}
           <section id="actions" className="cr-section">
