@@ -1,6 +1,6 @@
 'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -44,7 +44,20 @@ type FormData = {
 }
 
 export default function OnboardingPage() {
+  return (
+    <Suspense fallback={null}>
+      <OnboardingInner />
+    </Suspense>
+  )
+}
+
+function OnboardingInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  // Pricing's autocheckout flow routes new users through here first
+  // (commit 2026-06-01 — prevented random-area-code Twilio provisioning).
+  // Honor redirect_url so we land them back at autocheckout when done.
+  const onboardingRedirect = searchParams.get('redirect_url') || '/pricing'
   const { user } = useUser()
 
   const [step, setStep] = useState(1)
@@ -91,40 +104,47 @@ export default function OnboardingPage() {
   async function finish() {
     if (!canContinue() || saving) return
     setSaving(true)
-    // Fire-and-forget profile save with sensible defaults so we don't block the
-    // user. The remaining preferences (tone/language/hours/features) are wired
-    // to defaults here and editable from Dashboard → Settings post-checkout.
-    fetch('/api/profile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        business_name: form.businessName,
-        business_type: form.businessType,
-        owner_first_name: form.ownerFirstName,
-        owner_phone: form.phone,
-        service_area: form.serviceArea,
-        services_offered: form.trades.join(', '),
-        ai_tone: 'friendly',
-        ai_language: 'en',
-        revenue_range: '',
-        team_size: '',
-        // CRITICAL: services is what Emma reads aloud — "We cover X" in
-        // her prompt. Use the actual trades the contractor selected.
-        // Previously hardcoded to BellAveGo's product features
-        // ("Call answering, Appointment booking, SMS confirmations")
-        // which made Emma tell callers we cover SaaS features instead
-        // of HVAC/plumbing. Fall back to business_type if no trades
-        // selected, then a generic phrase. (Audit 2026-05-24)
-        services: form.trades.length > 0
-          ? form.trades.join(', ')
-          : form.businessType
-          ? `${form.businessType} services`
-          : 'home services',
-        hours_open: '8:00 AM',
-        hours_close: '6:00 PM',
-        onboarding_complete: true,
-      }),
-    }).catch(() => {})
+    // AWAIT profile save before navigating. Previously fire-and-forget,
+    // which raced the Stripe webhook: if checkout completed quickly,
+    // provisionNumberForUser() ran with owner_phone=null and Twilio fell
+    // back to a random US area code (Peter got 610 for a Chicago number
+    // on 2026-06-01). Blocking here costs ~250ms but guarantees the
+    // area-code lookup has owner_phone to work with.
+    try {
+      await fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          business_name: form.businessName,
+          business_type: form.businessType,
+          owner_first_name: form.ownerFirstName,
+          owner_phone: form.phone,
+          service_area: form.serviceArea,
+          services_offered: form.trades.join(', '),
+          ai_tone: 'friendly',
+          ai_language: 'en',
+          revenue_range: '',
+          team_size: '',
+          // services is what Emma reads aloud — "We cover X" in her
+          // prompt. Use the contractor's actual trades; fall back to
+          // business_type then generic phrase. (Audit 2026-05-24)
+          services: form.trades.length > 0
+            ? form.trades.join(', ')
+            : form.businessType
+            ? `${form.businessType} services`
+            : 'home services',
+          hours_open: '8:00 AM',
+          hours_close: '6:00 PM',
+          onboarding_complete: true,
+        }),
+      })
+    } catch (e) {
+      console.error('onboarding profile save failed:', e)
+      // Still navigate — the user can fix later in Settings, and the
+      // setup wizard will surface any missing fields. Don't trap them.
+    }
+    // Side-effects below are non-critical to provisioning, keep them
+    // fire-and-forget so they don't add 1-2s of perceived latency.
     user?.update({ unsafeMetadata: { onboardingComplete: true } }).catch(() => {})
     fetch('/api/onboarding/resolve-place', { method: 'POST' }).catch(() => {})
     fetch('/api/diagnostics', {
@@ -136,9 +156,10 @@ export default function OnboardingPage() {
         businessType: form.businessType,
       }),
     }).catch(() => {})
-    // Send them straight to pricing — no done screen, no auto-redirect timer.
-    // Goal: zero turnover between filling the form and picking a plan.
-    router.push('/pricing')
+    // Send them to the saved redirect target (pricing autocheckout, by
+    // default plain /pricing). No done screen, no auto-redirect timer —
+    // zero turnover between filling the form and picking a plan.
+    router.push(onboardingRedirect)
   }
 
   const inputStyle: React.CSSProperties = {

@@ -75,6 +75,11 @@ export default function PricingPage() {
   const isAnnual = interval === 'annual'
 
   // Auto-resume checkout after sign-up redirect: /pricing?tier=X&interval=Y&autocheckout=1
+  // CRITICAL: never bypass /onboarding. Without owner_phone in the profile,
+  // provisionNumberForUser falls back to a random US area code (Peter got
+  // 610 on a Chicago-area test on 2026-06-01). Gate autocheckout on the
+  // onboarding_complete flag — if not set, route through onboarding and
+  // ask it to bring the user back here to finish.
   useEffect(() => {
     if (!isLoaded) return
     const params = new URLSearchParams(window.location.search)
@@ -82,7 +87,26 @@ export default function PricingPage() {
     const autoInterval = params.get('interval') as Interval | null
     const autoCheckout = params.get('autocheckout') === '1'
     if (autoCheckout && autoTier && isSignedIn) {
-      handleCheckout(autoTier, autoInterval ?? 'monthly')
+      fetch('/api/profile')
+        .then(r => r.json())
+        .then(p => {
+          if (p?.onboarding_complete) {
+            handleCheckout(autoTier, autoInterval ?? 'monthly')
+          } else {
+            const back = encodeURIComponent(
+              `/pricing?tier=${autoTier}&interval=${autoInterval ?? 'monthly'}&autocheckout=1`,
+            )
+            router.push(`/onboarding?redirect_url=${back}`)
+          }
+        })
+        .catch(() => {
+          // Profile fetch failed (network blip, brand-new user with no
+          // row yet). Default to onboarding — it'll create the row.
+          const back = encodeURIComponent(
+            `/pricing?tier=${autoTier}&interval=${autoInterval ?? 'monthly'}&autocheckout=1`,
+          )
+          router.push(`/onboarding?redirect_url=${back}`)
+        })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, isSignedIn])
