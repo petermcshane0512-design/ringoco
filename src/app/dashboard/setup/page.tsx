@@ -548,97 +548,90 @@ export default function SetupWizard() {
               </p>
 
               {/* STEP 0 — wipe any leftover forwarding from a previous setup.
-                  This prevents the "stale *72 from yesterday" bug where every
-                  call goes to a number that no longer exists. Always shown. */}
+                  Two side-by-side carrier-specific image cards 2026-06-01.
+                  Contractor picks the one that matches their carrier and
+                  copies the code under it. */}
               <div style={{ marginBottom: 18, padding: "16px 16px", background: "#FFF7ED", border: "1.5px solid #FED7AA", borderRadius: 14 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                   <span style={{ fontSize: 10, fontWeight: 900, color: "#fff", background: "#EA580C", padding: "3px 9px", borderRadius: 6, letterSpacing: "0.1em" }}>STEP 1 OF 2</span>
                   <span style={{ fontSize: 12, fontWeight: 800, color: "#9A3412", letterSpacing: "0.04em", textTransform: "uppercase" }}>Wipe any old forwarding</span>
                 </div>
                 <div style={{ fontSize: 12.5, color: "#7C2D12", lineHeight: 1.55, marginBottom: 14 }}>
-                  If you&apos;ve <strong>ever</strong> forwarded calls before — even years ago — clear it now. Otherwise the new forward may not stick.
+                  If you&apos;ve <strong>ever</strong> forwarded calls before — even years ago — clear it now. Pick your carrier:
                 </div>
 
-                {/* Visual phone mockup — keypad screen + green CALL button */}
-                <div style={{
-                  background: "linear-gradient(180deg, #1F2937 0%, #111827 100%)",
-                  borderRadius: 18,
-                  padding: "14px 14px 16px",
-                  marginBottom: 12,
-                  boxShadow: "0 10px 28px rgba(17,24,39,0.3)",
-                  border: "3px solid #1F2937",
-                }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.55)", textAlign: "center", letterSpacing: "0.18em", marginBottom: 6 }}>
-                    📱 YOUR PHONE — KEYPAD
-                  </div>
-                  <div style={{
-                    background: "#0B1220",
-                    borderRadius: 10,
-                    padding: "16px 12px",
-                    textAlign: "center",
-                    marginBottom: 12,
-                    border: "1px solid rgba(255,255,255,0.06)",
-                  }}>
-                    <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 30, fontWeight: 900, color: "#fff", letterSpacing: "3px" }}>
-                      {clearAllForwardingCode(carrier)}
+                {/* Two side-by-side carrier cards */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+
+                  {/* Card 1 — AT&T / T-Mobile / US Cellular / Sprint → ##002# */}
+                  <div style={{ background: "#fff", borderRadius: 14, padding: "12px 12px", border: "1.5px solid #FED7AA", display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 900, color: "#9A3412", textAlign: "center", lineHeight: 1.35, letterSpacing: "0.02em" }}>
+                      AT&amp;T · T-Mobile<br />US Cellular · Sprint
                     </div>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginTop: 6, letterSpacing: "0.1em" }}>
-                      type these exact digits
-                    </div>
+                    <Image
+                      src="/dial-sweep-1.png"
+                      alt="AT&T, T-Mobile, US Cellular, Sprint dial sweep — type ##002# then tap call"
+                      width={400}
+                      height={500}
+                      style={{ width: "100%", height: "auto", borderRadius: 10, display: "block" }}
+                    />
+                    <button
+                      onClick={() => copyDialCode("##002#")}
+                      type="button"
+                      style={{
+                        padding: "12px 10px",
+                        background: copiedCode === "##002#"
+                          ? "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)"
+                          : "linear-gradient(135deg, #FB923C 0%, #EA580C 60%, #C2410C 100%)",
+                        color: "#fff",
+                        borderRadius: 10, border: "none",
+                        fontSize: 14, fontWeight: 900, cursor: "pointer", fontFamily: "inherit",
+                        letterSpacing: "0.02em",
+                        animation: copiedCode === "##002#"
+                          ? "none"
+                          : "copyBob 1.4s ease-in-out infinite, copyGlow 2s ease-in-out infinite",
+                      }}
+                    >
+                      {copiedCode === "##002#" ? "✓ Copied!" : "📋 Copy ##002#"}
+                    </button>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-                    <span style={{
-                      fontSize: 22, color: "#22C55E", fontWeight: 900,
-                      animation: "arrowBounce 1.2s ease-in-out infinite",
-                    }}>
-                      →
-                    </span>
-                    <div style={{
-                      width: 64, height: 64, borderRadius: "50%",
-                      background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      boxShadow: "0 0 0 0 rgba(34,197,94,0.55), 0 8px 22px rgba(22,163,74,0.45)",
-                      animation: "ringPulse 1.4s ease-out infinite",
-                    }}>
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                      </svg>
+
+                  {/* Card 2 — Verizon → *73 */}
+                  <div style={{ background: "#fff", borderRadius: 14, padding: "12px 12px", border: "1.5px solid #FED7AA", display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 900, color: "#9A3412", textAlign: "center", lineHeight: 1.35, letterSpacing: "0.02em" }}>
+                      Verizon
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 800, color: "#22C55E", letterSpacing: "0.06em" }}>
-                      then tap call
-                    </span>
+                    <Image
+                      src="/dial-sweep-2.png"
+                      alt="Verizon dial sweep — type *73 then tap call"
+                      width={400}
+                      height={500}
+                      style={{ width: "100%", height: "auto", borderRadius: 10, display: "block" }}
+                    />
+                    <button
+                      onClick={() => copyDialCode("*73")}
+                      type="button"
+                      style={{
+                        padding: "12px 10px",
+                        background: copiedCode === "*73"
+                          ? "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)"
+                          : "linear-gradient(135deg, #FB923C 0%, #EA580C 60%, #C2410C 100%)",
+                        color: "#fff",
+                        borderRadius: 10, border: "none",
+                        fontSize: 14, fontWeight: 900, cursor: "pointer", fontFamily: "inherit",
+                        letterSpacing: "0.02em",
+                        animation: copiedCode === "*73"
+                          ? "none"
+                          : "copyBob 1.4s ease-in-out infinite, copyGlow 2s ease-in-out infinite",
+                      }}
+                    >
+                      {copiedCode === "*73" ? "✓ Copied!" : "📋 Copy *73"}
+                    </button>
                   </div>
+
                 </div>
 
-                {/* Copy-only button — Tap-to-dial removed 2026-06-01 per Peter.
-                    Workflow contractors actually do: copy the code, paste into
-                    their Phone app, hit call. The tel: link was confusing them
-                    because some carriers reject tel: with non-digit chars. */}
-                <button
-                  onClick={() => copyDialCode(clearAllForwardingCode(carrier))}
-                  type="button"
-                  style={{
-                    width: "100%",
-                    padding: "16px 18px",
-                    background: copiedCode === clearAllForwardingCode(carrier)
-                      ? "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)"
-                      : "linear-gradient(135deg, #FB923C 0%, #EA580C 60%, #C2410C 100%)",
-                    color: "#fff",
-                    borderRadius: 12, border: "none",
-                    fontSize: 16, fontWeight: 900, cursor: "pointer", fontFamily: "inherit",
-                    letterSpacing: "0.02em",
-                    boxShadow: "0 8px 22px rgba(234,88,12,0.45)",
-                    animation: copiedCode === clearAllForwardingCode(carrier)
-                      ? "none"
-                      : "copyBob 1.4s ease-in-out infinite, copyGlow 2s ease-in-out infinite",
-                  }}
-                >
-                  {copiedCode === clearAllForwardingCode(carrier)
-                    ? "✓ Copied — now paste it into your Phone app"
-                    : "📋 Copy code"}
-                </button>
-
-                <div style={{ fontSize: 11.5, color: "#9A3412", marginTop: 10, lineHeight: 1.55 }}>
+                <div style={{ fontSize: 11.5, color: "#9A3412", marginTop: 12, lineHeight: 1.55, textAlign: "center" }}>
                   You&apos;ll hear &quot;Erasure successful&quot; or two beeps. Then continue below.
                 </div>
               </div>
