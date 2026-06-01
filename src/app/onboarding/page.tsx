@@ -23,9 +23,12 @@ const TRADE_OPTIONS = [
   'Pest control', 'Pool / spa service', 'Handyman / odd jobs',
 ]
 
+// Single-step onboarding 2026-06-01 — trade picker + greeting picker
+// removed. Friendly intro is auto-selected, trades list moved to optional
+// Settings tweaks post-trial. Goal: zero friction between "I'm signing up"
+// and "I'm picking a plan."
 const STEPS = [
   { id: 1, label: 'Your Business', icon: '🏢' },
-  { id: 2, label: 'Your Trades',   icon: '🔧' },
 ]
 
 const slideVariants = {
@@ -90,7 +93,6 @@ function OnboardingInner() {
 
   function canContinue() {
     if (step === 1) return form.businessName.trim() && form.businessType && form.phone.trim() && form.ownerFirstName.trim() && form.serviceArea.trim()
-    if (step === 2) return form.trades.length > 0
     return true
   }
 
@@ -167,10 +169,13 @@ function OnboardingInner() {
     router.push(onboardingRedirect)
   }
 
+  // 16px is the iOS Safari zoom threshold — anything smaller and the
+  // viewport zooms in on focus, pushing the "Continue" button below the
+  // fold (Peter hit this on 2026-06-01 typing the service-area field).
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '12px 14px', borderRadius: 10,
     border: '1.5px solid rgba(10,168,159,0.2)', background: '#F5FDFB',
-    fontSize: 14, color: '#0B1F3A', fontFamily: 'inherit', outline: 'none',
+    fontSize: 16, color: '#0B1F3A', fontFamily: 'inherit', outline: 'none',
     boxSizing: 'border-box', transition: 'border-color 0.2s',
   }
 
@@ -312,108 +317,9 @@ function OnboardingInner() {
               </motion.div>
             )}
 
-            {/* ── STEP 2: Trades ── */}
-            {step === 2 && (
-              <motion.div key="step2" custom={dir} variants={slideVariants} initial="enter" animate="center" exit="exit"
-                transition={{ duration: 0.3, ease: 'easeOut' }}>
-                <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.02em', marginBottom: 6 }}>
-                  What services do you offer?
-                </h2>
-                <p style={{ fontSize: 13, color: '#7AAAB2', marginBottom: 18 }}>
-                  Pick all that apply. Your AI will only confirm jobs in these categories and politely route anything else.
-                </p>
-
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
-                  {TRADE_OPTIONS.map(t => {
-                    const active = form.trades.includes(t)
-                    return (
-                      <button key={t} onClick={() => toggleTrade(t)} style={{
-                        padding: '8px 13px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                        border: `1.5px solid ${active ? '#0AA89F' : 'rgba(10,168,159,0.2)'}`,
-                        background: active ? 'rgba(10,168,159,0.1)' : '#F5FDFB',
-                        color: active ? '#0AA89F' : '#4A7A80',
-                        transition: 'all 0.15s ease',
-                      }}>{active ? '✓ ' : ''}{t}</button>
-                    )
-                  })}
-                </div>
-
-                {/* Greeting style picker — how Emma opens every call. Live
-                    previews use the business name they typed in step 1 so
-                    they can hear-in-their-head exactly what callers get. */}
-                <div style={{ marginBottom: 18 }}>
-                  <label style={labelStyle}>How should Emma answer the phone?</label>
-                  <p style={{ fontSize: 11, color: '#A0BCC2', marginTop: 0, marginBottom: 10 }}>
-                    Pick what feels most like your business. You can change this anytime in Settings.
-                  </p>
-                  <div style={{ display: 'grid', gap: 8 }}>
-                    {([
-                      {
-                        v: 'friendly_intro' as GreetingStyle,
-                        label: 'Friendly intro',
-                        recommended: true,
-                        preview: `"Hi, this is Emma with ${form.businessName || 'your business'}. ${form.ownerFirstName || 'The owner'} is out on a job — how can I help?"`,
-                      },
-                      {
-                        v: 'thanks_for_calling' as GreetingStyle,
-                        label: 'Thanks for calling',
-                        recommended: false,
-                        preview: `"Thanks for calling ${form.businessName || 'your business'}, this is Emma — how can I help you today?"`,
-                      },
-                      {
-                        v: 'business_first' as GreetingStyle,
-                        label: 'Business-first',
-                        recommended: false,
-                        preview: `"Hi, you've reached ${form.businessName || 'your business'}. Emma speaking — what can I do for you?"`,
-                      },
-                    ]).map((opt) => {
-                      const active = form.greetingStyle === opt.v
-                      return (
-                        <button
-                          key={opt.v}
-                          type="button"
-                          onClick={() => set('greetingStyle', opt.v)}
-                          style={{
-                            textAlign: 'left',
-                            padding: '12px 14px',
-                            borderRadius: 11,
-                            border: `1.5px solid ${active ? '#0AA89F' : 'rgba(10,168,159,0.18)'}`,
-                            background: active ? 'rgba(10,168,159,0.08)' : '#F5FDFB',
-                            cursor: 'pointer',
-                            fontFamily: 'inherit',
-                            transition: 'all 0.15s ease',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                            <span style={{ fontSize: 13, fontWeight: 800, color: active ? '#0AA89F' : '#0B1F3A' }}>
-                              {active ? '✓ ' : ''}{opt.label}
-                            </span>
-                            {opt.recommended && (
-                              <span style={{ fontSize: 9, fontWeight: 800, color: '#0AA89F', background: 'rgba(10,168,159,0.14)', padding: '2px 7px', borderRadius: 99, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                                Recommended
-                              </span>
-                            )}
-                          </div>
-                          <div style={{ fontSize: 12, color: '#4A6670', lineHeight: 1.5, fontStyle: 'italic' }}>
-                            {opt.preview}
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                <div style={{ background: '#F5FDFB', border: '1px solid rgba(10,168,159,0.16)', borderRadius: 12, padding: '14px 16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22C55E' }} />
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#0B1F3A' }}>7-day free trial · no charge until day 8</span>
-                  </div>
-                  <p style={{ fontSize: 11, color: '#7AAAB2', margin: 0, lineHeight: 1.6 }}>
-                    Pick your plan next. We save your card but don&apos;t charge it for 7 days. Cancel anytime during the trial — no charge ever fires.
-                  </p>
-                </div>
-              </motion.div>
-            )}
+            {/* STEP 2 (trades + greeting picker) removed 2026-06-01.
+                Trades default to the contractor's business_type; greeting
+                defaults to 'friendly_intro'. Both editable in Settings later. */}
 
           </AnimatePresence>
         </div>
