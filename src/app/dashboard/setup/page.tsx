@@ -657,88 +657,18 @@ export default function SetupWizard() {
             </div>
           )}
 
-          {/* STEP 4 — Phone alerts + hear your AI (UNIVERSAL — every tier) */}
+          {/* STEP 3 — Call your AI to verify it works (final step for every tier) */}
           {step === 3 && (
             <div className="step-enter">
-              <h2 style={{ ...titleStyle, fontSize: 26 }}>Two last things on your phone.</h2>
+              <h2 style={{ ...titleStyle, fontSize: 26 }}>Last step — hear your AI live.</h2>
               <p style={{ ...subStyle, fontSize: 15 }}>
-                Get instant alerts every time the AI catches a call, then call your new number to hear how it sounds.
+                Call your new number from this phone to confirm Emma is answering.
               </p>
 
-              {/* PART A — Add to home screen + enable alerts */}
-              <div style={{
-                background: "linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 60%)",
-                border: "1.5px solid rgba(232,116,43,0.28)",
-                borderRadius: 14,
-                padding: "18px 18px",
-                marginBottom: 14,
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                  <span style={{
-                    fontSize: 11, fontWeight: 900, color: "#fff",
-                    background: "linear-gradient(135deg, #FF9D5A, #E8742B)",
-                    padding: "4px 10px", borderRadius: 99, letterSpacing: "0.08em",
-                  }}>1</span>
-                  <span style={{ fontSize: 16, fontWeight: 900, color: "#0B1F3A" }}>
-                    Add BellAveGo to your phone
-                  </span>
-                </div>
-                <p style={{ fontSize: 14, color: "#4A6670", lineHeight: 1.55, margin: "0 0 12px" }}>
-                  On your phone, open <strong style={{ color: "#0AA89F" }}>bellavego.com/dashboard</strong> in Safari (iPhone) or Chrome (Android). Then:
-                </p>
-                <div style={{ background: "#fff", borderRadius: 10, padding: "12px 14px", border: "1px solid rgba(232,116,43,0.18)", marginBottom: 10 }}>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: "#0B1F3A", marginBottom: 6 }}>📱 iPhone</div>
-                  <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "#4A6670", lineHeight: 1.7 }}>
-                    <li>Tap the <strong>Share</strong> icon (square with up-arrow)</li>
-                    <li>Scroll → <strong>Add to Home Screen</strong> → <strong>Add</strong></li>
-                    <li>Open BellAveGo from your home screen icon</li>
-                    <li>Tap the big orange &quot;Turn on Lead Alerts&quot; button → Allow</li>
-                  </ol>
-                </div>
-                <div style={{ background: "#fff", borderRadius: 10, padding: "12px 14px", border: "1px solid rgba(232,116,43,0.18)" }}>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: "#0B1F3A", marginBottom: 6 }}>🤖 Android</div>
-                  <p style={{ margin: 0, fontSize: 13, color: "#4A6670", lineHeight: 1.55 }}>
-                    Chrome shows an &quot;Install&quot; banner when you open the dashboard. Tap it, then tap &quot;Turn on Lead Alerts&quot; → Allow.
-                  </p>
-                </div>
-                <button
-                  onClick={async () => {
-                    if (!profile.owner_phone) {
-                      alert("Add your phone number in settings first so we can text you the link.")
-                      return
-                    }
-                    setBusy(true)
-                    try {
-                      const res = await fetch("/api/push/text-link", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({}),
-                      })
-                      const j = await res.json()
-                      if (!res.ok) {
-                        alert(j.error || "Couldn't send. Open bellavego.com/dashboard on your phone manually.")
-                      } else {
-                        alert(`Sent! Check your phone (${j.sent_to}) for the link.`)
-                      }
-                    } catch (e) {
-                      alert(`Failed: ${(e as Error).message}`)
-                    } finally {
-                      setBusy(false)
-                    }
-                  }}
-                  disabled={busy}
-                  style={{
-                    marginTop: 12, width: "100%",
-                    padding: "12px 18px", borderRadius: 10,
-                    background: "linear-gradient(135deg, #FF9D5A, #E8742B)",
-                    color: "#fff", fontSize: 14, fontWeight: 900, border: "none",
-                    cursor: busy ? "wait" : "pointer", fontFamily: "inherit",
-                    boxShadow: "0 6px 18px rgba(232,116,43,0.32)",
-                  }}
-                >
-                  {busy ? "Sending…" : "📲 Text me the link"}
-                </button>
-              </div>
+              {/* PWA install widget was removed from step 3 on 2026-06-01 —
+                  the PushNotificationSetup component is already rendered on
+                  step 1 (right under the welcome banner), so repeating it
+                  here was duplicate UX. */}
 
               {/* PART B — Call your AI to hear it */}
               <div style={{
@@ -749,11 +679,6 @@ export default function SetupWizard() {
                 marginBottom: 18,
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                  <span style={{
-                    fontSize: 11, fontWeight: 900, color: "#fff",
-                    background: "linear-gradient(135deg, #0AA89F, #088A82)",
-                    padding: "4px 10px", borderRadius: 99, letterSpacing: "0.08em",
-                  }}>2</span>
                   <span style={{ fontSize: 16, fontWeight: 900, color: "#0B1F3A" }}>
                     Call your AI and hear it live
                   </span>
