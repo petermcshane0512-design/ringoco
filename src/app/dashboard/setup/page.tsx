@@ -569,7 +569,7 @@ export default function SetupWizard() {
                       AT&amp;T · T-Mobile<br />US Cellular · Sprint
                     </div>
                     <Image
-                      src="/dial-sweep-1.png"
+                      src="/dialsweep1.png"
                       alt="AT&T, T-Mobile, US Cellular, Sprint dial sweep — type ##002# then tap call"
                       width={400}
                       height={500}
@@ -602,7 +602,7 @@ export default function SetupWizard() {
                       Verizon
                     </div>
                     <Image
-                      src="/dial-sweep-2.png"
+                      src="/dialsweep2.png"
                       alt="Verizon dial sweep — type *73 then tap call"
                       width={400}
                       height={500}
