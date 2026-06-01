@@ -284,74 +284,9 @@ function CalendarPageInner() {
         </FlashBanner>
       )}
 
-      {/* ── MODE SELECTOR — top of page, biggest decision the contractor makes.
-            "Book appointments" connects a calendar + Emma offers slots.
-            "Just summarize" → Emma takes a message + texts the contractor;
-            no calendar OAuth required. Implicitly controlled by whether a
-            calendar is connected — UI surfaces it as an explicit fork. ── */}
-      <div style={{
-        background: '#fff',
-        border: '1.5px solid rgba(10,168,159,0.22)',
-        borderRadius: 16,
-        padding: '22px 24px',
-        marginBottom: 18,
-        boxShadow: '0 6px 22px rgba(7,27,58,0.08)',
-      }}>
-        <div style={{ fontSize: 11, fontWeight: 900, color: '#0AA89F', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 6 }}>
-          Step 1 · Decide how Emma handles bookings
-        </div>
-        <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.02em', margin: '0 0 14px' }}>
-          Do you want Emma to book appointments, or just summarize calls?
-        </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-          <a
-            href="#calendar-grid"
-            style={{
-              display: 'block',
-              padding: '16px 18px',
-              borderRadius: 14,
-              border: '2px solid #0AA89F',
-              background: 'linear-gradient(135deg, #F0FBF8 0%, #FFFFFF 100%)',
-              textDecoration: 'none',
-              boxShadow: '0 6px 22px rgba(10,168,159,0.16)',
-            }}
-          >
-            <div style={{ fontSize: 11, fontWeight: 900, color: '#0AA89F', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
-              📅 Book appointments
-            </div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A', marginBottom: 4 }}>
-              &ldquo;Tuesday 2 PM or Wednesday 9 AM works&rdquo;
-            </div>
-            <div style={{ fontSize: 12, color: '#4A6670', lineHeight: 1.5 }}>
-              Connect Google or Outlook below. Emma offers real time slots from your free time. You still confirm via SMS.
-            </div>
-          </a>
-          <a
-            href="#summarize-only"
-            style={{
-              display: 'block',
-              padding: '16px 18px',
-              borderRadius: 14,
-              border: '1.5px solid rgba(10,168,159,0.22)',
-              background: '#fff',
-              textDecoration: 'none',
-            }}
-          >
-            <div style={{ fontSize: 11, fontWeight: 900, color: '#7AAAB2', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
-              💬 Just summarize calls
-            </div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A', marginBottom: 4 }}>
-              &ldquo;Got it — Mike will call you back soon&rdquo;
-            </div>
-            <div style={{ fontSize: 12, color: '#4A6670', lineHeight: 1.5 }}>
-              No calendar needed. Emma takes name + reason and texts you the lead. You call them back when you can.
-            </div>
-          </a>
-        </div>
-        <div id="summarize-only" style={{ fontSize: 11.5, color: '#7AAAB2', marginTop: 12, lineHeight: 1.6 }}>
-          Whichever you pick — the AI never auto-books without you confirming via SMS. You can change this anytime.
-        </div>
-      </div>
+      {/* Mode selector moved BELOW the calendar grid 2026-06-01 per Peter.
+          The hero "Add appointment" + the calendar itself land first — the
+          mode-fork sits between calendar and sync providers. */}
 
       {/* Anchor for the "Book appointments" mode card. Calendar grid below
           is THE workspace for the booking flow. */}
@@ -421,6 +356,65 @@ function CalendarPageInner() {
             )}
           </div>
         </section>
+
+      {/* ── MODE SELECTOR — moved BELOW the calendar grid 2026-06-01.
+            Sits between calendar workspace and the sync provider cards
+            so the fork ("book vs summarize") frames the OAuth choice
+            right below it. ── */}
+      <div style={{
+        background: '#fff',
+        border: '1.5px solid rgba(10,168,159,0.22)',
+        borderRadius: 16,
+        padding: '22px 24px',
+        marginTop: 22,
+        marginBottom: 18,
+        boxShadow: '0 6px 22px rgba(7,27,58,0.08)',
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 900, color: '#0AA89F', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 6 }}>
+          Pick how Emma handles bookings
+        </div>
+        <h2 style={{ fontSize: 20, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.02em', margin: '0 0 14px' }}>
+          Book appointments, or just summarize calls?
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+          <div style={{
+            padding: '16px 18px',
+            borderRadius: 14,
+            border: '2px solid #0AA89F',
+            background: 'linear-gradient(135deg, #F0FBF8 0%, #FFFFFF 100%)',
+            boxShadow: '0 6px 22px rgba(10,168,159,0.16)',
+          }}>
+            <div style={{ fontSize: 11, fontWeight: 900, color: '#0AA89F', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+              📅 Book appointments
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A', marginBottom: 4 }}>
+              &ldquo;Tuesday 2 PM or Wednesday 9 AM works&rdquo;
+            </div>
+            <div style={{ fontSize: 12, color: '#4A6670', lineHeight: 1.5 }}>
+              Connect Google or Outlook below. Emma offers real time slots from your free time. You still confirm via SMS.
+            </div>
+          </div>
+          <div style={{
+            padding: '16px 18px',
+            borderRadius: 14,
+            border: '1.5px solid rgba(10,168,159,0.22)',
+            background: '#fff',
+          }}>
+            <div style={{ fontSize: 11, fontWeight: 900, color: '#7AAAB2', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+              💬 Just summarize calls
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A', marginBottom: 4 }}>
+              &ldquo;Got it — Mike will call you back soon&rdquo;
+            </div>
+            <div style={{ fontSize: 12, color: '#4A6670', lineHeight: 1.5 }}>
+              No calendar needed. Emma takes name + reason and texts you the lead. You call them back when you can.
+            </div>
+          </div>
+        </div>
+        <div style={{ fontSize: 11.5, color: '#7AAAB2', marginTop: 12, lineHeight: 1.6 }}>
+          The AI never auto-books without you confirming via SMS. You can change this anytime.
+        </div>
+      </div>
 
       {/* SYNC TO PHONE — secondary surface explaining how BellAveGo mirrors to
           the contractor's phone calendars. Hierarchy:

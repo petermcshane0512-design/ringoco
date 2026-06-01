@@ -319,29 +319,27 @@ export default function SetupWizard() {
   }
 
   async function continueAfterPhoneStep() {
-    // Phone alerts step done → Starter finishes, Pro/Elite go to CRM.
-    if (meta.isOfficeMgr || meta.isConcierge) {
-      await saveStep({ step: 4 });
-      setStep(4);
-    } else {
-      finishReceptionist();
-    }
+    // Universal step 4 = booking-mode choice. CRM (old step 4) + kickoff
+    // (old step 5) deleted 2026-06-01 per Peter — too far down the funnel
+    // for paying contractors who just want to start receiving calls.
+    await saveStep({ step: 4 });
+    setStep(4);
   }
 
-  async function onPickCrm(provider: string) {
-    setCrm(provider);
-    if (meta.isConcierge) {
-      await saveStep({ crmProvider: provider, step: 5 });
-      setStep(5);
+  async function finishWithMode(mode: 'book' | 'summarize') {
+    // Mode preserved as crm_provider='none' for summarize so existing
+    // tier-gate checks still resolve; book mode sets it to 'pending_calendar'
+    // as a marker that the next page (/dashboard/calendar) is where the
+    // contractor connects Google / Outlook. setup_complete = true either way.
+    await saveStep({
+      crmProvider: mode === 'book' ? 'jobber' : 'none',
+      setupComplete: true,
+    });
+    if (mode === 'book') {
+      router.replace('/dashboard/calendar');
     } else {
-      await saveStep({ crmProvider: provider, setupComplete: true });
-      router.replace("/dashboard");
+      router.replace('/dashboard');
     }
-  }
-
-  async function finishConcierge() {
-    await saveStep({ kickoffScheduled: true, customPromptNotes: promptNotes, setupComplete: true });
-    router.replace("/dashboard");
   }
 
   if (loading || !profile) {
@@ -408,10 +406,11 @@ export default function SetupWizard() {
   // 4 steps now — added Appointment Rules at position 3 (mandatory for AI
   // booking safety). Starter: 4 (forward, test, rules, phone). Pro: 5 (+ CRM).
   // Elite: 6 (+ kickoff).
-  // Step 2 (auto-fire forwarding test) was removed 2026-06-01 — too many
-  // carrier-specific failures trapping contractors at the very first wall.
-  // Counts: Starter 3, Pro 4, Elite 5.
-  const totalSteps = meta.isConcierge ? 5 : meta.isOfficeMgr ? 4 : 3;
+  // Universal 4 steps for every tier 2026-06-01: forwarding → appointment
+  // rules → phone alerts → booking-mode choice. Old tier-specific CRM
+  // (step 4) and kickoff (step 5) blocks dropped — paying contractors
+  // just want the AI live, not 5 onboarding screens.
+  const totalSteps = 4;
 
   return (
     <div style={pageStyle}>
@@ -1189,7 +1188,7 @@ export default function SetupWizard() {
                 </>
               ) : (
                 <button onClick={continueAfterPhoneStep} disabled={busy} style={primaryButton}>
-                  {busy ? "Saving…" : meta.isOfficeMgr || meta.isConcierge ? "Continue →" : "🎉 I'm done — open my dashboard →"}
+                  {busy ? "Saving…" : "Continue → pick booking mode"}
                 </button>
               )}
               <div style={{ fontSize: 12, color: "#A0BCC2", marginTop: 10, textAlign: "center" }}>
@@ -1198,60 +1197,70 @@ export default function SetupWizard() {
             </div>
           )}
 
-          {/* STEP 4 — CRM (Office Mgr + Concierge) — was step 5 pre-2026-06-01 */}
-          {step === 4 && (meta.isOfficeMgr || meta.isConcierge) && (
+          {/* STEP 4 — Universal: pick booking mode. Replaced the tier-specific
+              CRM (old step 4) + kickoff (old step 5) blocks 2026-06-01. */}
+          {step === 4 && (
             <div className="step-enter">
-              <h2 style={titleStyle}>Connect your CRM.</h2>
+              <h2 style={{ ...titleStyle, fontSize: 24 }}>How should Emma handle bookings?</h2>
               <p style={subStyle}>
-                So Quote Hunter, Collections, and Reviews can pull jobs and invoices from where you already work.
-              </p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 20 }}>
-                {[
-                  { id: "jobber", label: "Jobber" },
-                  { id: "housecallpro", label: "Housecall Pro" },
-                  { id: "servicetitan", label: "ServiceTitan" },
-                  { id: "none", label: "None / Other" },
-                ].map((c) => (
-                  <button key={c.id} onClick={() => onPickCrm(c.id)} disabled={busy} style={pillButton(crm === c.id)}>
-                    {c.label}
-                  </button>
-                ))}
-              </div>
-              <div style={{ fontSize: 11, color: "#7AAAB2", lineHeight: 1.6 }}>
-                We&apos;ll email you the integration link within 24 hours. Concierge customers — our team sets it up live on the kickoff call.
-              </div>
-            </div>
-          )}
-
-          {/* STEP 6 — Kickoff (Concierge only) */}
-          {step === 5 && meta.isConcierge && (
-            <div className="step-enter">
-              <h2 style={titleStyle}>Schedule your kickoff call.</h2>
-              <p style={subStyle}>
-                30 minutes. We&apos;ll tune your AI prompt to your shop&apos;s voice, walk through your CRM live, and get you fully wired.
+                One last pick. You can change this anytime in Settings.
               </p>
 
-              <a href={CAL_LINK} target="_blank" rel="noreferrer" style={{ display: "block", padding: "16px 20px", background: "linear-gradient(135deg, #0B1F3A, #163356)", borderRadius: 14, color: "#fff", textDecoration: "none", marginBottom: 18 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#5EEAD4", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 6 }}>
-                  Concierge kickoff
+              <button
+                onClick={() => finishWithMode('book')}
+                disabled={busy}
+                style={{
+                  width: "100%",
+                  background: "linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 14,
+                  padding: "18px 18px",
+                  textAlign: "left",
+                  cursor: busy ? "wait" : "pointer",
+                  fontFamily: "inherit",
+                  marginBottom: 10,
+                  boxShadow: "0 8px 22px rgba(10,168,159,0.32)",
+                }}
+              >
+                <div style={{ fontSize: 11, fontWeight: 900, color: "rgba(255,255,255,0.85)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>
+                  📅 Recommended
                 </div>
-                <div style={{ fontSize: 15, fontWeight: 700 }}>Open Cal.com to pick a slot in the next 7 days →</div>
-              </a>
-
-              <label style={{ display: "block", fontSize: 11, color: "#7AAAB2", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6, fontWeight: 700 }}>
-                Anything specific you want our team to tune the AI to? (optional)
-              </label>
-              <textarea
-                value={promptNotes}
-                onChange={(e) => setPromptNotes(e.target.value)}
-                placeholder="e.g. emergency rate is 1.5x, we don't service propane, my wife Sarah books with me…"
-                rows={4}
-                style={{ width: "100%", padding: "12px 14px", border: "1.5px solid rgba(10,168,159,0.22)", borderRadius: 10, background: "#F5FDFB", fontSize: 13, color: "#0B1F3A", fontFamily: "inherit", outline: "none", boxSizing: "border-box", resize: "vertical", marginBottom: 18 }}
-              />
-
-              <button onClick={finishConcierge} disabled={busy} style={primaryButton}>
-                Finish — open dashboard →
+                <div style={{ fontSize: 17, fontWeight: 900, marginBottom: 4 }}>
+                  Book appointments for me
+                </div>
+                <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.88)", lineHeight: 1.5 }}>
+                  Emma offers real time slots from your Google or Outlook calendar — &ldquo;Tuesday at 2 PM or Wednesday at 9 AM?&rdquo; You still confirm via SMS.
+                </div>
               </button>
+
+              <button
+                onClick={() => finishWithMode('summarize')}
+                disabled={busy}
+                style={{
+                  width: "100%",
+                  background: "#fff",
+                  color: "#0B1F3A",
+                  border: "1.5px solid rgba(10,168,159,0.22)",
+                  borderRadius: 14,
+                  padding: "16px 18px",
+                  textAlign: "left",
+                  cursor: busy ? "wait" : "pointer",
+                  fontFamily: "inherit",
+                  marginBottom: 14,
+                }}
+              >
+                <div style={{ fontSize: 17, fontWeight: 900, marginBottom: 4 }}>
+                  💬 Just summarize calls
+                </div>
+                <div style={{ fontSize: 12.5, color: "#4A6670", lineHeight: 1.5 }}>
+                  No calendar needed. Emma takes name + reason and texts you the lead. You call them back when you can.
+                </div>
+              </button>
+
+              <div style={{ fontSize: 11, color: "#A0BCC2", textAlign: "center", lineHeight: 1.6 }}>
+                {busy ? "Saving…" : "Picking either finishes setup. Change anytime in Settings."}
+              </div>
             </div>
           )}
 

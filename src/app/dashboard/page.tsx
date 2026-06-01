@@ -423,8 +423,16 @@ export default function DashboardPage() {
         },
   ];
 
+  // Dashboard zoom-out 2026-06-01 — Peter said the home dashboard was too
+  // zoomed in on desktop + mobile. 90% zoom on desktop, 95% on mobile so
+  // paying contractors see more data at a glance without scrolling.
   return (
-    <div style={{ padding: isMobile ? "10px 8px 36px" : "28px 32px 60px", fontFamily: "'Inter', system-ui, sans-serif", fontSize: isMobile ? 12 : undefined }}>
+    <div style={{
+      padding: isMobile ? "10px 8px 36px" : "28px 32px 60px",
+      fontFamily: "'Inter', system-ui, sans-serif",
+      fontSize: isMobile ? 12 : undefined,
+      zoom: isMobile ? 0.95 : 0.9,
+    } as React.CSSProperties}>
 
       {/* CALENDAR SYNC PROMO — top of dashboard, hard to miss. Hides itself
           once the contractor has connected at least one calendar. */}
