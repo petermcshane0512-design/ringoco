@@ -39,6 +39,9 @@ export async function GET() {
 
   let subscriptionCount: number | null = null
   let dbError: string | null = null
+  let demoOwnerUserId: string | null = null
+  let demoOwnerSource: 'env' | 'profile_lookup' | 'not_found' = 'not_found'
+  let demoOwnerSubs: number | null = null
   try {
     const sb = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -49,20 +52,61 @@ export async function GET() {
       .select('id', { count: 'exact', head: true })
     if (error) dbError = error.message
     else subscriptionCount = count ?? 0
+
+    // Resolve the demo owner (Peter) the same way the demo push fan-out does
+    // — env first, then profile lookup by FALLBACK_OWNER_PHONE. Without this
+    // signal, "push works for diag but not for demo calls" is invisible.
+    const fromEnv = process.env.FALLBACK_OWNER_USER_ID
+    if (fromEnv) {
+      demoOwnerUserId = fromEnv
+      demoOwnerSource = 'env'
+    } else {
+      const ownerPhone = process.env.FALLBACK_OWNER_PHONE
+      if (ownerPhone) {
+        const { data } = await sb
+          .from('profiles')
+          .select('user_id')
+          .eq('owner_phone', ownerPhone)
+          .maybeSingle()
+        const id = (data as { user_id?: string } | null)?.user_id ?? null
+        if (id) {
+          demoOwnerUserId = id
+          demoOwnerSource = 'profile_lookup'
+        }
+      }
+    }
+    if (demoOwnerUserId) {
+      const { count: subCount } = await sb
+        .from('push_subscriptions')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', demoOwnerUserId)
+      demoOwnerSubs = subCount ?? 0
+    }
   } catch (e) {
     dbError = (e as Error).message
   }
 
-  const allGood = !!pub && !!priv && !!subject && !dbError
+  const demoReady = !!demoOwnerUserId && (demoOwnerSubs ?? 0) > 0
+  const allGood = !!pub && !!priv && !!subject && !dbError && demoReady
   return NextResponse.json(
     {
       ok: allGood,
       env: checks,
       push_subscriptions_total: subscriptionCount,
+      demo_owner: {
+        user_id: demoOwnerUserId,
+        resolved_from: demoOwnerSource,
+        device_count: demoOwnerSubs,
+        ready: demoReady,
+      },
       db_error: dbError,
-      hint: allGood
-        ? 'Config OK. If pushes still missing, check sw.js registration + Notification.permission on the device.'
-        : 'Set the missing env var(s) in Vercel → Settings → Environment Variables. Generate VAPID keys via `npx web-push generate-vapid-keys`.',
+      hint: !pub || !priv || !subject
+        ? 'Set the missing env var(s) in Vercel → Settings → Environment Variables. Generate VAPID keys via `npx web-push generate-vapid-keys`.'
+        : !demoOwnerUserId
+        ? 'Demo owner unresolved. Set FALLBACK_OWNER_USER_ID env in Vercel to your Clerk user_id (visible in Clerk dashboard → Users), OR ensure a profile row has owner_phone matching FALLBACK_OWNER_PHONE.'
+        : (demoOwnerSubs ?? 0) === 0
+        ? 'Demo owner found but they have 0 push subscriptions. Open /dashboard on the device that should get push, accept the notification prompt, then re-check.'
+        : 'All checks passing. Demo + tenant calls will both push to all registered devices.',
     },
     { status: allGood ? 200 : 500 },
   )
