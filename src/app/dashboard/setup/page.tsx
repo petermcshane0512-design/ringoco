@@ -425,6 +425,18 @@ export default function SetupWizard() {
           0%, 100% { transform: translateX(0) }
           50% { transform: translateX(6px) }
         }
+        @keyframes copyBob {
+          0%, 100% { transform: translateY(0) }
+          50% { transform: translateY(-4px) }
+        }
+        @keyframes copyGlow {
+          0%, 100% { box-shadow: 0 6px 18px rgba(234,88,12,0.45) }
+          50% { box-shadow: 0 10px 26px rgba(234,88,12,0.75) }
+        }
+        @keyframes copyGlowTeal {
+          0%, 100% { box-shadow: 0 6px 18px rgba(10,168,159,0.45) }
+          50% { box-shadow: 0 10px 26px rgba(10,168,159,0.75) }
+        }
         @keyframes confettiFall {
           0% { transform: translateY(-20vh) rotate(0deg); opacity: 1 }
           100% { transform: translateY(110vh) rotate(720deg); opacity: 0 }
@@ -598,30 +610,33 @@ export default function SetupWizard() {
                   </div>
                 </div>
 
-                {/* Two-button row: dial OR copy */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
-                  <a href={`tel:${encodeURIComponent(clearAllForwardingCode(carrier))}`} style={{
-                    padding: "12px 12px", background: "#EA580C", color: "#fff",
-                    borderRadius: 10, textDecoration: "none", fontSize: 13, fontWeight: 900,
-                    textAlign: "center", display: "block",
-                    boxShadow: "0 4px 12px rgba(234,88,12,0.32)",
-                  }}>
-                    📞 Tap to dial
-                  </a>
-                  <button
-                    onClick={() => copyDialCode(clearAllForwardingCode(carrier))}
-                    type="button"
-                    style={{
-                      padding: "12px 12px",
-                      background: copiedCode === clearAllForwardingCode(carrier) ? "#16A34A" : "#fff",
-                      color: copiedCode === clearAllForwardingCode(carrier) ? "#fff" : "#9A3412",
-                      borderRadius: 10, border: "1.5px solid #EA580C",
-                      fontSize: 13, fontWeight: 900, cursor: "pointer", fontFamily: "inherit",
-                    }}
-                  >
-                    {copiedCode === clearAllForwardingCode(carrier) ? "✓ Copied!" : "📋 Copy code"}
-                  </button>
-                </div>
+                {/* Copy-only button — Tap-to-dial removed 2026-06-01 per Peter.
+                    Workflow contractors actually do: copy the code, paste into
+                    their Phone app, hit call. The tel: link was confusing them
+                    because some carriers reject tel: with non-digit chars. */}
+                <button
+                  onClick={() => copyDialCode(clearAllForwardingCode(carrier))}
+                  type="button"
+                  style={{
+                    width: "100%",
+                    padding: "16px 18px",
+                    background: copiedCode === clearAllForwardingCode(carrier)
+                      ? "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)"
+                      : "linear-gradient(135deg, #FB923C 0%, #EA580C 60%, #C2410C 100%)",
+                    color: "#fff",
+                    borderRadius: 12, border: "none",
+                    fontSize: 16, fontWeight: 900, cursor: "pointer", fontFamily: "inherit",
+                    letterSpacing: "0.02em",
+                    boxShadow: "0 8px 22px rgba(234,88,12,0.45)",
+                    animation: copiedCode === clearAllForwardingCode(carrier)
+                      ? "none"
+                      : "copyBob 1.4s ease-in-out infinite, copyGlow 2s ease-in-out infinite",
+                  }}
+                >
+                  {copiedCode === clearAllForwardingCode(carrier)
+                    ? "✓ Copied — now paste it into your Phone app"
+                    : "📋 Copy code"}
+                </button>
 
                 <div style={{ fontSize: 11.5, color: "#9A3412", marginTop: 10, lineHeight: 1.55 }}>
                   You&apos;ll hear &quot;Erasure successful&quot; or two beeps. Then continue below.
@@ -715,37 +730,33 @@ export default function SetupWizard() {
                     </div>
                   </div>
 
-                  {/* Two-button row: dial OR copy */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                    <a
-                      href={`tel:${carrierCode}`}
-                      onClick={onDialedForwarding}
-                      style={{
-                        padding: "14px 12px",
-                        background: "linear-gradient(135deg, #0AA89F, #088A82)",
-                        color: "#fff",
-                        borderRadius: 10, textDecoration: "none",
-                        fontSize: 14, fontWeight: 900,
-                        textAlign: "center", display: "block",
-                        boxShadow: "0 6px 18px rgba(10,168,159,0.32)",
-                      }}
-                    >
-                      📞 Tap to dial
-                    </a>
-                    <button
-                      onClick={() => copyDialCode(carrierCode)}
-                      type="button"
-                      style={{
-                        padding: "14px 12px",
-                        background: copiedCode === carrierCode ? "#16A34A" : "#fff",
-                        color: copiedCode === carrierCode ? "#fff" : "#0AA89F",
-                        borderRadius: 10, border: "1.5px solid #0AA89F",
-                        fontSize: 14, fontWeight: 900, cursor: "pointer", fontFamily: "inherit",
-                      }}
-                    >
-                      {copiedCode === carrierCode ? "✓ Copied!" : "📋 Copy code"}
-                    </button>
-                  </div>
+                  {/* Copy-only — Tap-to-dial removed 2026-06-01 per Peter.
+                      The "Done — set appointment rules →" button below the
+                      mockups still fires onDialedForwarding so the wizard
+                      advances normally after the contractor pastes + calls. */}
+                  <button
+                    onClick={() => copyDialCode(carrierCode)}
+                    type="button"
+                    style={{
+                      width: "100%",
+                      padding: "16px 18px",
+                      background: copiedCode === carrierCode
+                        ? "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)"
+                        : "linear-gradient(135deg, #14B8A6 0%, #0AA89F 60%, #088A82 100%)",
+                      color: "#fff",
+                      borderRadius: 12, border: "none",
+                      fontSize: 16, fontWeight: 900, cursor: "pointer", fontFamily: "inherit",
+                      letterSpacing: "0.02em",
+                      boxShadow: "0 8px 22px rgba(10,168,159,0.45)",
+                      animation: copiedCode === carrierCode
+                        ? "none"
+                        : "copyBob 1.4s ease-in-out infinite, copyGlowTeal 2s ease-in-out infinite",
+                    }}
+                  >
+                    {copiedCode === carrierCode
+                      ? "✓ Copied — now paste it into your Phone app"
+                      : "📋 Copy code"}
+                  </button>
                 </div>
                 )
               })()}
