@@ -223,14 +223,16 @@ export default function SettingsPage() {
   }
 
   async function submitDelete() {
-    if (deleteConfirmText !== 'DELETE') return
     setDeleting(true)
     setDeleteStatus('idle')
     try {
       const res = await fetch('/api/account/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirmation: 'DELETE', reason: deleteReason }),
+        // confirmation is hardcoded — clicking the destructive button IS
+        // the confirmation. API still validates the literal so a stray
+        // CSRF curl from elsewhere can't trip the delete.
+        body: JSON.stringify({ confirmation: 'DELETE', reason: '' }),
       })
       const json = await res.json().catch(() => ({}))
       setDeleting(false)
@@ -1070,84 +1072,35 @@ export default function SettingsPage() {
                     </ul>
                   </div>
 
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#4A7A80', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-                    Mind sharing why? (optional, helps us improve)
-                  </label>
-                  <textarea
-                    value={deleteReason}
-                    onChange={(e) => setDeleteReason(e.target.value)}
-                    placeholder="What didn't work? What would have made you stay?"
-                    rows={2}
-                    style={{
-                      width: '100%',
-                      background: '#F5FDFB',
-                      border: '1.5px solid rgba(10,168,159,0.2)',
-                      borderRadius: 8,
-                      padding: '10px 12px',
-                      fontSize: 13,
-                      color: '#0B1F3A',
-                      fontFamily: 'inherit',
-                      lineHeight: 1.5,
-                      outline: 'none',
-                      resize: 'vertical',
-                      boxSizing: 'border-box',
-                      marginBottom: 16,
-                    }}
-                  />
-
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#991B1B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-                    Type DELETE to confirm
-                  </label>
-                  <input
-                    value={deleteConfirmText}
-                    onChange={(e) => setDeleteConfirmText(e.target.value)}
-                    placeholder="DELETE"
-                    style={{
-                      width: '100%',
-                      background: '#fff',
-                      border: '1.5px solid #FECACA',
-                      borderRadius: 8,
-                      padding: '12px 14px',
-                      fontSize: 15,
-                      fontWeight: 700,
-                      color: '#991B1B',
-                      letterSpacing: '0.1em',
-                      fontFamily: 'inherit',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                      textTransform: 'uppercase',
-                    }}
-                  />
-
                   {deleteStatus === 'error' && deleteMessage && (
-                    <div style={{ marginTop: 12, padding: '10px 12px', borderRadius: 8, background: '#FEF2F2', border: '1px solid #FECACA', fontSize: 12, color: '#991B1B' }}>
+                    <div style={{ marginTop: 4, marginBottom: 16, padding: '10px 12px', borderRadius: 8, background: '#FEF2F2', border: '1px solid #FECACA', fontSize: 12, color: '#991B1B' }}>
                       {deleteMessage}
                     </div>
                   )}
 
-                  <div style={{ marginTop: 18, display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                  <div style={{ marginTop: 4, display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
                     <button
                       onClick={() => setDeleteModalOpen(false)}
                       disabled={deleting}
                       style={{
-                        fontSize: 13, fontWeight: 700, padding: '10px 18px', borderRadius: 9,
+                        fontSize: 14, fontWeight: 800, padding: '12px 22px', borderRadius: 10,
                         border: '1.5px solid rgba(10,168,159,0.25)', background: '#fff',
-                        color: '#4A7A80', cursor: deleting ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+                        color: '#0B1F3A', cursor: deleting ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
                       }}
                     >
                       Keep my account
                     </button>
                     <button
                       onClick={submitDelete}
-                      disabled={deleting || deleteConfirmText !== 'DELETE'}
+                      disabled={deleting}
                       style={{
-                        fontSize: 13, fontWeight: 800, padding: '10px 20px', borderRadius: 9,
+                        fontSize: 14, fontWeight: 800, padding: '12px 22px', borderRadius: 10,
                         border: 'none',
-                        background: deleteConfirmText === 'DELETE' ? '#DC2626' : 'rgba(220,38,38,0.35)',
+                        background: '#DC2626',
                         color: '#fff',
-                        cursor: deleting || deleteConfirmText !== 'DELETE' ? 'not-allowed' : 'pointer',
+                        cursor: deleting ? 'not-allowed' : 'pointer',
                         fontFamily: 'inherit',
-                        boxShadow: deleteConfirmText === 'DELETE' ? '0 4px 14px rgba(220,38,38,0.32)' : 'none',
+                        boxShadow: '0 4px 14px rgba(220,38,38,0.32)',
                       }}
                     >
                       {deleting ? 'Deleting…' : 'Permanently delete'}
