@@ -534,45 +534,44 @@ export default function SetupWizard() {
                 }}
               >
                 <PushNotificationSetup />
-                {pushDeviceCount === 0 && (
-                  <div style={{
-                    marginTop: 10,
-                    background: "#fff",
-                    border: "1.5px dashed rgba(255,157,90,0.45)",
-                    borderRadius: 14,
-                    padding: "10px 12px",
-                    textAlign: "center",
-                  }}>
-                    <div style={{ fontSize: 10, fontWeight: 900, color: "#C2410C", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>
-                      How to add BellAveGo to your phone
-                    </div>
-                    {/* Three compact side-by-side panels — kept small to
-                        minimize scrolling on step 1 (Peter 2026-06-01). */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
-                      <Image
-                        src="/ADDTOHOMESCREEN.png"
-                        alt="Add to Home Screen — step 1"
-                        width={300}
-                        height={520}
-                        style={{ width: "100%", height: "auto", borderRadius: 6, display: "block" }}
-                      />
-                      <Image
-                        src="/ADDTOHOMESCREEN2.png"
-                        alt="Add to Home Screen — step 2"
-                        width={300}
-                        height={520}
-                        style={{ width: "100%", height: "auto", borderRadius: 6, display: "block" }}
-                      />
-                      <Image
-                        src="/ADDTOHOMESCREEN3.png"
-                        alt="Add to Home Screen — step 3"
-                        width={300}
-                        height={520}
-                        style={{ width: "100%", height: "auto", borderRadius: 6, display: "block" }}
-                      />
-                    </div>
+                {/* Three compact phone screenshots — always render so the
+                    contractor sees what to do regardless of whether they're
+                    already subscribed. Small height so step 1 stays tight. */}
+                <div style={{
+                  marginTop: 10,
+                  background: "#fff",
+                  border: "1.5px dashed rgba(255,157,90,0.45)",
+                  borderRadius: 14,
+                  padding: "8px 10px",
+                  textAlign: "center",
+                }}>
+                  <div style={{ fontSize: 10, fontWeight: 900, color: "#C2410C", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>
+                    How to add BellAveGo to your phone
                   </div>
-                )}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4 }}>
+                    <Image
+                      src="/ADDTOHOMESCREEN.png"
+                      alt="Add to Home Screen — step 1"
+                      width={300}
+                      height={520}
+                      style={{ width: "100%", height: "auto", maxHeight: 180, objectFit: "contain", borderRadius: 6, display: "block" }}
+                    />
+                    <Image
+                      src="/ADDTOHOMESCREEN2.png"
+                      alt="Add to Home Screen — step 2"
+                      width={300}
+                      height={520}
+                      style={{ width: "100%", height: "auto", maxHeight: 180, objectFit: "contain", borderRadius: 6, display: "block" }}
+                    />
+                    <Image
+                      src="/ADDTOHOMESCREEN3.png"
+                      alt="Add to Home Screen — step 3"
+                      width={300}
+                      height={520}
+                      style={{ width: "100%", height: "auto", maxHeight: 180, objectFit: "contain", borderRadius: 6, display: "block" }}
+                    />
+                  </div>
+                </div>
               </div>
 
               <h2 style={titleStyle}>Forward your business cell here.</h2>
@@ -603,7 +602,7 @@ export default function SetupWizard() {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
 
                   {/* Card 1 — AT&T / T-Mobile / US Cellular / Sprint → ##002# */}
-                  <div style={{ background: "#fff", borderRadius: 14, padding: "12px 12px", border: "1.5px solid #FED7AA", display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ background: "#fff", borderRadius: 12, padding: "10px 10px", border: "1.5px solid #FED7AA", display: "flex", flexDirection: "column", gap: 8 }}>
                     <div style={{ fontSize: 11, fontWeight: 900, color: "#9A3412", textAlign: "center", lineHeight: 1.35, letterSpacing: "0.02em" }}>
                       AT&amp;T · T-Mobile<br />US Cellular · Sprint
                     </div>
@@ -612,7 +611,7 @@ export default function SetupWizard() {
                       alt="AT&T, T-Mobile, US Cellular, Sprint dial sweep — type ##002# then tap call"
                       width={400}
                       height={500}
-                      style={{ width: "100%", height: "auto", borderRadius: 10, display: "block" }}
+                      style={{ width: "100%", height: "auto", maxHeight: 200, objectFit: "contain", borderRadius: 8, display: "block" }}
                     />
                     <button
                       onClick={() => copyDialCode("##002#")}
@@ -636,7 +635,7 @@ export default function SetupWizard() {
                   </div>
 
                   {/* Card 2 — Verizon → *73 */}
-                  <div style={{ background: "#fff", borderRadius: 14, padding: "12px 12px", border: "1.5px solid #FED7AA", display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ background: "#fff", borderRadius: 12, padding: "10px 10px", border: "1.5px solid #FED7AA", display: "flex", flexDirection: "column", gap: 8 }}>
                     <div style={{ fontSize: 11, fontWeight: 900, color: "#9A3412", textAlign: "center", lineHeight: 1.35, letterSpacing: "0.02em" }}>
                       Verizon
                     </div>
@@ -645,7 +644,7 @@ export default function SetupWizard() {
                       alt="Verizon dial sweep — type *73 then tap call"
                       width={400}
                       height={500}
-                      style={{ width: "100%", height: "auto", borderRadius: 10, display: "block" }}
+                      style={{ width: "100%", height: "auto", maxHeight: 200, objectFit: "contain", borderRadius: 8, display: "block" }}
                     />
                     <button
                       onClick={() => copyDialCode("*73")}
