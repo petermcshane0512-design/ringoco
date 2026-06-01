@@ -33,9 +33,6 @@ const clerkAppearance = {
     footerActionLink: { color: '#0AA89F', fontWeight: '600' },
     headerTitle: { color: '#0B1F3A', fontSize: '21px', fontWeight: '800', letterSpacing: '-0.02em' },
     headerSubtitle: { color: '#5A8A92' },
-    // Hide social-auth (Google) buttons + the "or" divider so signup is
-    // email + password only. Keeps the flow simple and skips having to
-    // wire up Google OAuth credentials in Clerk for production.
     socialButtonsBlockButton: { display: 'none' },
     socialButtons: { display: 'none' },
     socialButtonsIconButton: { display: 'none' },
@@ -58,11 +55,14 @@ export default function SignUpPage() {
 }
 
 function SignUpInner() {
-  // Honor the redirect_url query param so autocheckout (and any other deep
-  // link from a paid CTA) completes after sign-up. Falls back to onboarding
-  // for organic sign-ups landing here directly.
+  // Honor a deep-link redirect (e.g. autocheckout from a tier CTA on /pricing).
+  // Falls back to /pricing per Peter's call on 2026-06-01 — sending fresh
+  // signups straight to the three-tier comparison is the highest-converting
+  // landing after verification. The autocheckout flow on /pricing gates on
+  // onboarding_complete so users without a profile still get routed through
+  // /onboarding when they pick a plan.
   const searchParams = useSearchParams()
-  const redirectUrl = searchParams.get('redirect_url') || '/onboarding'
+  const redirectUrl = searchParams.get('redirect_url') || '/pricing'
 
   return (
     <div className="auth-page" style={{
@@ -135,7 +135,11 @@ function SignUpInner() {
       >
         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 380, height: 380, background: 'radial-gradient(ellipse, rgba(32,178,170,0.12) 0%, transparent 65%)', pointerEvents: 'none' }} />
         <div style={{ width: '100%', position: 'relative', zIndex: 1 }}>
-          <SignUp forceRedirectUrl={redirectUrl} appearance={clerkAppearance} />
+          <SignUp
+            forceRedirectUrl={redirectUrl}
+            signInForceRedirectUrl={redirectUrl}
+            appearance={clerkAppearance}
+          />
         </div>
       </motion.div>
     </div>
