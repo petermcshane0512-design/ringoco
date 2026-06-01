@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server'
 import { clerkClient } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
+import Stripe from 'stripe'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2026-04-22.dahlia',
+})
 
 // Admin-only: list every signed-up customer with their tier + activity.
 // Used by /admin/customers (Peter's ops cockpit). Returns at most 500 rows.
@@ -37,7 +41,11 @@ export async function GET() {
 
   const { data: profiles, error } = await supabase
     .from('profiles')
-    .select('user_id, business_name, plan_tier, is_active, setup_complete, twilio_number, owner_phone, created_at, welcomed_at, forwarding_confirmed_at')
+    .select(
+      'user_id, business_name, business_type, plan_tier, is_active, setup_complete, twilio_number, owner_phone, created_at, welcomed_at, forwarding_confirmed_at, ' +
+      'stripe_subscription_id, stripe_customer_id, owner_first_name, service_area, zip_code, ai_greeting_style, ai_voice_id, ' +
+      'crm_provider, push_nudge_sent_at',
+    )
     .order('created_at', { ascending: false })
     .limit(500)
 
@@ -64,46 +72,128 @@ export async function GET() {
     if (at && (!r.lastAt || at > r.lastAt)) r.lastAt = at
   }
 
-  // Enrich with email from Clerk (best-effort, in parallel)
+  // Push device counts (one query, group in JS) — Peter wants to see who
+  // has alerts enabled vs who's relying on email only.
+  const { data: pushRows } = await supabase
+    .from('push_subscriptions')
+    .select('user_id')
+  const pushByUser: Record<string, number> = {}
+  for (const r of pushRows ?? []) {
+    const uid = (r as { user_id?: string }).user_id
+    if (uid) pushByUser[uid] = (pushByUser[uid] ?? 0) + 1
+  }
+
+  // Calendar connections (one query) — book-mode vs summarize-only
+  const { data: calRows } = await supabase
+    .from('calendar_connections')
+    .select('user_id, provider, enabled')
+    .eq('enabled', true)
+  const calByUser: Record<string, string[]> = {}
+  for (const r of calRows ?? []) {
+    const uid = (r as { user_id?: string }).user_id
+    const prov = (r as { provider?: string }).provider
+    if (uid && prov) (calByUser[uid] ??= []).push(prov)
+  }
+
+  // Enrich with Clerk email AND Stripe subscription status / trial_end.
+  // Stripe lookups parallelize but each adds ~150ms — fine for an admin
+  // ops page that loads infrequently.
   const enrichments = await Promise.all(
     (profiles ?? []).map(async p => {
       const uid = (p as { user_id?: string }).user_id
-      if (!uid) return { email: '' }
-      try {
-        const u = await client.users.getUser(uid)
-        return { email: u.emailAddresses?.[0]?.emailAddress ?? '' }
-      } catch {
-        return { email: '' }
+      const subId = (p as { stripe_subscription_id?: string | null }).stripe_subscription_id
+
+      const out: {
+        email: string
+        stripe_status: string | null
+        trial_end_at: string | null
+        current_period_end: string | null
+        cancel_at_period_end: boolean
+      } = {
+        email: '',
+        stripe_status: null,
+        trial_end_at: null,
+        current_period_end: null,
+        cancel_at_period_end: false,
       }
+
+      if (uid) {
+        try {
+          const u = await client.users.getUser(uid)
+          out.email = u.emailAddresses?.[0]?.emailAddress ?? ''
+        } catch {}
+      }
+      if (subId) {
+        try {
+          const sub = await stripe.subscriptions.retrieve(subId)
+          out.stripe_status = sub.status
+          out.cancel_at_period_end = !!sub.cancel_at_period_end
+          if (sub.trial_end) out.trial_end_at = new Date(sub.trial_end * 1000).toISOString()
+          const cpe = (sub as unknown as { current_period_end?: number }).current_period_end
+          if (cpe) out.current_period_end = new Date(cpe * 1000).toISOString()
+        } catch {
+          // sub deleted/expired — leave nulls so UI shows "no sub"
+        }
+      }
+      return out
     }),
   )
 
+  const now = Date.now()
   const customers = (profiles ?? []).map((p, i) => {
     const uid = (p as { user_id?: string }).user_id ?? ''
     const tier = (p as { plan_tier?: string }).plan_tier ?? 'starter'
     const callStats = callsByUser[uid] ?? { total: 0, booked: 0 }
+    const enr = enrichments[i]
+
+    let trial_days_remaining: number | null = null
+    if (enr.stripe_status === 'trialing' && enr.trial_end_at) {
+      const ms = new Date(enr.trial_end_at).getTime() - now
+      trial_days_remaining = Math.max(0, Math.ceil(ms / 86_400_000))
+    }
+
     return {
       user_id: uid,
-      email: enrichments[i].email,
+      email: enr.email,
       business_name: (p as { business_name?: string }).business_name ?? '',
+      business_type: (p as { business_type?: string }).business_type ?? '',
+      owner_first_name: (p as { owner_first_name?: string }).owner_first_name ?? '',
       plan_tier: tier,
       is_active: !!(p as { is_active?: boolean }).is_active,
       setup_complete: !!(p as { setup_complete?: boolean }).setup_complete,
       twilio_number: (p as { twilio_number?: string }).twilio_number ?? '',
       owner_phone: (p as { owner_phone?: string }).owner_phone ?? '',
+      service_area: (p as { service_area?: string }).service_area ?? '',
+      zip_code: (p as { zip_code?: string }).zip_code ?? '',
+      ai_greeting_style: (p as { ai_greeting_style?: string }).ai_greeting_style ?? 'friendly_intro',
       created_at: (p as { created_at?: string }).created_at ?? '',
       welcomed_at: (p as { welcomed_at?: string }).welcomed_at ?? '',
       forwarding_confirmed_at: (p as { forwarding_confirmed_at?: string }).forwarding_confirmed_at ?? '',
-      mrr: (p as { is_active?: boolean }).is_active ? (TIER_MRR[tier] ?? 0) : 0,
+      stripe_status: enr.stripe_status,
+      trial_end_at: enr.trial_end_at,
+      trial_days_remaining,
+      current_period_end: enr.current_period_end,
+      cancel_at_period_end: enr.cancel_at_period_end,
+      push_devices: pushByUser[uid] ?? 0,
+      calendar_providers: calByUser[uid] ?? [],
+      crm_provider: (p as { crm_provider?: string }).crm_provider ?? '',
+      mrr: (p as { is_active?: boolean }).is_active && enr.stripe_status !== 'trialing'
+        ? (TIER_MRR[tier] ?? 0)
+        : 0,
       calls_mtd: callStats.total,
       bookings_mtd: callStats.booked,
       last_call_at: callStats.lastAt,
     }
   })
 
+  const trialing = customers.filter(c => c.stripe_status === 'trialing').length
+  const paying = customers.filter(c => c.stripe_status === 'active' && !c.cancel_at_period_end).length
+
   const totals = {
     count: customers.length,
     active: customers.filter(c => c.is_active).length,
+    trialing,
+    paying,
     mrr: customers.reduce((s, c) => s + c.mrr, 0),
     calls_mtd: customers.reduce((s, c) => s + c.calls_mtd, 0),
   }
