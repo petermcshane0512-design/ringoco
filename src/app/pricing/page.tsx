@@ -119,6 +119,25 @@ export default function PricingPage() {
       return
     }
     setLoading(tier)
+    // HARD GATE — every checkout, whether autocheckout or organic-click,
+    // must go through /onboarding first if it's not done. Otherwise
+    // owner_phone is null at provision time and Twilio picks a random
+    // area code (Peter hit this on 2026-06-01, got 610 in Chicago).
+    try {
+      const profileRes = await fetch('/api/profile')
+      const profileJson = await profileRes.json().catch(() => null)
+      if (!profileJson?.onboarding_complete) {
+        const back = encodeURIComponent(`/pricing?tier=${tier}&interval=${intv}&autocheckout=1`)
+        router.push(`/onboarding?redirect_url=${back}`)
+        return
+      }
+    } catch {
+      // Profile fetch failed — better to route through onboarding than
+      // skip the gate. /onboarding creates the row if missing.
+      const back = encodeURIComponent(`/pricing?tier=${tier}&interval=${intv}&autocheckout=1`)
+      router.push(`/onboarding?redirect_url=${back}`)
+      return
+    }
     try {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',

@@ -56,6 +56,8 @@ const SAFE_PROFILE_COLUMNS = new Set([
   'default_job_duration_min', 'travel_buffer_min', 'appointment_settings_at',
   // ── greeting style (migration 2026-06-01) ─────────────────────────
   'ai_greeting_style', 'ai_greeting_custom',
+  // ── forwarding diag (migration 2026-06-01) ────────────────────────
+  'forwarding_test_from', 'forwarding_test_strict_match',
 ])
 
 export async function POST(req: NextRequest) {

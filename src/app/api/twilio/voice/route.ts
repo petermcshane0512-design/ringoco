@@ -155,15 +155,22 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Forwarding verification detection ──
-  // If the inbound call is FROM our office line (TWILIO_PHONE_NUMBER) and this
-  // profile has a recent forwarding_test_started_at row, it means the test call
-  // we placed actually forwarded through. Stamp verified, hang up cleanly.
-  // No conversation, no Claude, no SMS — pure verification handshake.
+  // If this profile has a recent forwarding_test_started_at AND a call just
+  // hit its BellAveGo number, it's the test loop closing. Stamp verified,
+  // hang up cleanly. No conversation, no Claude, no SMS — pure handshake.
+  //
+  // Originally gated on callerPhone === TWILIO_PHONE_NUMBER. That broke for
+  // certain carriers (some GSM/MVNO setups and a chunk of Verizon CNAM paths)
+  // that rewrite the From= header on a no-answer forward — the inbound leg
+  // arrives with the forwarding number's CLI or even the original carrier's
+  // own routing CLI, not our office line. Widened to ANY From= as long as the
+  // test was recent (≤120s window). False-positive cost = if a real customer
+  // happens to call within the test window, they'd be hung up on once. Tiny
+  // risk, real fix to a real blocker (Peter hit this 2026-06-01).
   if (
     !isDemo &&
     profile &&
-    process.env.TWILIO_PHONE_NUMBER &&
-    callerPhone === process.env.TWILIO_PHONE_NUMBER
+    process.env.TWILIO_PHONE_NUMBER
   ) {
     const profileWithVerify = profile as typeof profile & {
       user_id?: string
@@ -172,16 +179,31 @@ export async function POST(req: NextRequest) {
     const startedAt = profileWithVerify.forwarding_test_started_at
       ? new Date(profileWithVerify.forwarding_test_started_at).getTime()
       : 0
-    const within90s = startedAt > 0 && Date.now() - startedAt < 90_000
+    const elapsed = startedAt > 0 ? Date.now() - startedAt : Number.POSITIVE_INFINITY
+    const within120s = elapsed >= 0 && elapsed < 120_000
 
-    if (within90s && profileWithVerify.user_id) {
+    if (within120s && profileWithVerify.user_id) {
+      const fromMatchesOfficeLine = callerPhone === process.env.TWILIO_PHONE_NUMBER
       try {
         await supabase
           .from('profiles')
-          .update({ forwarding_verified_at: new Date().toISOString() })
+          .update({
+            forwarding_verified_at: new Date().toISOString(),
+            // Capture what From= we actually saw so support can debug
+            // carrier-specific weirdness across deployments.
+            forwarding_test_from: callerPhone ?? '(unknown)',
+            forwarding_test_strict_match: fromMatchesOfficeLine,
+          })
           .eq('user_id', profileWithVerify.user_id)
       } catch (e) {
         console.error('forwarding_verified_at stamp failed:', e)
+      }
+      if (!fromMatchesOfficeLine) {
+        console.warn(
+          `[forwarding-verify] Loose match for ${profileWithVerify.user_id}: ` +
+            `expected From=${process.env.TWILIO_PHONE_NUMBER}, got From=${callerPhone}. ` +
+            `Carrier likely rewrote the CLI on the forward leg.`,
+        )
       }
       const VR = (await import('twilio')).twiml.VoiceResponse
       const verified = new VR()

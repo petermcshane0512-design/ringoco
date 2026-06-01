@@ -251,9 +251,30 @@ function OnboardingInner() {
                 <p style={{ fontSize: 13, color: '#7AAAB2', marginBottom: 22 }}>We&apos;ll personalize your AI receptionist with this. Everything else (tone, hours, features) is editable in settings later.</p>
 
                 <div style={{ marginBottom: 14 }}>
-                  <label style={labelStyle}>Business name</label>
-                  <input style={inputStyle} placeholder="e.g. Smith HVAC & Plumbing" value={form.businessName}
-                    onChange={e => set('businessName', e.target.value)} />
+                  <label style={labelStyle}>
+                    Business name <span style={{ color: '#DC2626', fontWeight: 800 }}>·</span>{' '}
+                    <span style={{ textTransform: 'none', letterSpacing: 0, fontSize: 11, color: '#0AA89F', fontWeight: 800 }}>
+                      Emma says this on every call
+                    </span>
+                  </label>
+                  <input
+                    style={{
+                      ...inputStyle,
+                      // Highlight when blank so the user knows it's load-bearing.
+                      border: form.businessName.trim()
+                        ? '1.5px solid rgba(10,168,159,0.2)'
+                        : '1.5px solid rgba(220,38,38,0.32)',
+                    }}
+                    placeholder="e.g. Mike's HVAC, Acme Plumbing, Sunrise Electric"
+                    value={form.businessName}
+                    onChange={e => set('businessName', e.target.value)}
+                  />
+                  <p style={{ fontSize: 11, color: '#7AAAB2', marginTop: 6, lineHeight: 1.5 }}>
+                    Use the exact name your customers know you by. Emma will open every call with this — e.g.{' '}
+                    <span style={{ color: '#0B1F3A', fontWeight: 700 }}>
+                      &ldquo;Hi, this is Emma with {form.businessName || "Mike's HVAC"}...&rdquo;
+                    </span>
+                  </p>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
