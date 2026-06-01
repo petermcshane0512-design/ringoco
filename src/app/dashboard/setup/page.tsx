@@ -542,7 +542,7 @@ export default function SetupWizard() {
                   background: "#fff",
                   border: "1.5px dashed rgba(255,157,90,0.45)",
                   borderRadius: 14,
-                  padding: "8px 10px",
+                  padding: "6px 6px 8px",
                   textAlign: "center",
                 }}>
                   <div style={{ fontSize: 10, fontWeight: 900, color: "#C2410C", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>
@@ -554,21 +554,21 @@ export default function SetupWizard() {
                       alt="Add to Home Screen — step 1"
                       width={300}
                       height={520}
-                      style={{ width: "100%", height: "auto", maxHeight: 180, objectFit: "contain", borderRadius: 6, display: "block" }}
+                      style={{ width: "100%", height: "auto", borderRadius: 6, display: "block" }}
                     />
                     <Image
                       src="/ADDTOHOMESCREEN2.png"
                       alt="Add to Home Screen — step 2"
                       width={300}
                       height={520}
-                      style={{ width: "100%", height: "auto", maxHeight: 180, objectFit: "contain", borderRadius: 6, display: "block" }}
+                      style={{ width: "100%", height: "auto", borderRadius: 6, display: "block" }}
                     />
                     <Image
                       src="/ADDTOHOMESCREEN3.png"
                       alt="Add to Home Screen — step 3"
                       width={300}
                       height={520}
-                      style={{ width: "100%", height: "auto", maxHeight: 180, objectFit: "contain", borderRadius: 6, display: "block" }}
+                      style={{ width: "100%", height: "auto", borderRadius: 6, display: "block" }}
                     />
                   </div>
                 </div>
@@ -589,20 +589,20 @@ export default function SetupWizard() {
                   Two side-by-side carrier-specific image cards 2026-06-01.
                   Contractor picks the one that matches their carrier and
                   copies the code under it. */}
-              <div style={{ marginBottom: 18, padding: "16px 16px", background: "#FFF7ED", border: "1.5px solid #FED7AA", borderRadius: 14 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <div style={{ marginBottom: 18, padding: "12px 10px", background: "#FFF7ED", border: "1.5px solid #FED7AA", borderRadius: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                   <span style={{ fontSize: 10, fontWeight: 900, color: "#fff", background: "#EA580C", padding: "3px 9px", borderRadius: 6, letterSpacing: "0.1em" }}>STEP 1 OF 2</span>
                   <span style={{ fontSize: 12, fontWeight: 800, color: "#9A3412", letterSpacing: "0.04em", textTransform: "uppercase" }}>Wipe any old forwarding</span>
                 </div>
-                <div style={{ fontSize: 12.5, color: "#7C2D12", lineHeight: 1.55, marginBottom: 14 }}>
+                <div style={{ fontSize: 12.5, color: "#7C2D12", lineHeight: 1.55, marginBottom: 10 }}>
                   If you&apos;ve <strong>ever</strong> forwarded calls before — even years ago — clear it now. Pick your carrier:
                 </div>
 
                 {/* Two side-by-side carrier cards */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
 
                   {/* Card 1 — AT&T / T-Mobile / US Cellular / Sprint → ##002# */}
-                  <div style={{ background: "#fff", borderRadius: 12, padding: "10px 10px", border: "1.5px solid #FED7AA", display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ background: "#fff", borderRadius: 10, padding: "6px 6px 8px", border: "1.5px solid #FED7AA", display: "flex", flexDirection: "column", gap: 6 }}>
                     <div style={{ fontSize: 11, fontWeight: 900, color: "#9A3412", textAlign: "center", lineHeight: 1.35, letterSpacing: "0.02em" }}>
                       AT&amp;T · T-Mobile<br />US Cellular · Sprint
                     </div>
@@ -611,20 +611,19 @@ export default function SetupWizard() {
                       alt="AT&T, T-Mobile, US Cellular, Sprint dial sweep — type ##002# then tap call"
                       width={400}
                       height={500}
-                      style={{ width: "100%", height: "auto", maxHeight: 200, objectFit: "contain", borderRadius: 8, display: "block" }}
+                      style={{ width: "100%", height: "auto", borderRadius: 8, display: "block" }}
                     />
                     <button
                       onClick={() => copyDialCode("##002#")}
                       type="button"
                       style={{
-                        padding: "12px 10px",
+                        padding: "10px 4px",
                         background: copiedCode === "##002#"
                           ? "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)"
                           : "linear-gradient(135deg, #FB923C 0%, #EA580C 60%, #C2410C 100%)",
                         color: "#fff",
                         borderRadius: 10, border: "none",
-                        fontSize: 14, fontWeight: 900, cursor: "pointer", fontFamily: "inherit",
-                        letterSpacing: "0.02em",
+                        fontSize: 13, fontWeight: 900, cursor: "pointer", fontFamily: "inherit",
                         animation: copiedCode === "##002#"
                           ? "none"
                           : "copyBob 1.4s ease-in-out infinite, copyGlow 2s ease-in-out infinite",
@@ -635,7 +634,7 @@ export default function SetupWizard() {
                   </div>
 
                   {/* Card 2 — Verizon → *73 */}
-                  <div style={{ background: "#fff", borderRadius: 12, padding: "10px 10px", border: "1.5px solid #FED7AA", display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ background: "#fff", borderRadius: 10, padding: "6px 6px 8px", border: "1.5px solid #FED7AA", display: "flex", flexDirection: "column", gap: 6 }}>
                     <div style={{ fontSize: 11, fontWeight: 900, color: "#9A3412", textAlign: "center", lineHeight: 1.35, letterSpacing: "0.02em" }}>
                       Verizon
                     </div>
@@ -644,20 +643,19 @@ export default function SetupWizard() {
                       alt="Verizon dial sweep — type *73 then tap call"
                       width={400}
                       height={500}
-                      style={{ width: "100%", height: "auto", maxHeight: 200, objectFit: "contain", borderRadius: 8, display: "block" }}
+                      style={{ width: "100%", height: "auto", borderRadius: 8, display: "block" }}
                     />
                     <button
                       onClick={() => copyDialCode("*73")}
                       type="button"
                       style={{
-                        padding: "12px 10px",
+                        padding: "10px 4px",
                         background: copiedCode === "*73"
                           ? "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)"
                           : "linear-gradient(135deg, #FB923C 0%, #EA580C 60%, #C2410C 100%)",
                         color: "#fff",
                         borderRadius: 10, border: "none",
-                        fontSize: 14, fontWeight: 900, cursor: "pointer", fontFamily: "inherit",
-                        letterSpacing: "0.02em",
+                        fontSize: 13, fontWeight: 900, cursor: "pointer", fontFamily: "inherit",
                         animation: copiedCode === "*73"
                           ? "none"
                           : "copyBob 1.4s ease-in-out infinite, copyGlow 2s ease-in-out infinite",
