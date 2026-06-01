@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import PushNotificationSetup from "@/components/PushNotificationSetup";
 
 type Tier =
   | "receptionist" | "officemgr" | "concierge"
@@ -80,6 +81,17 @@ export default function SetupWizard() {
   // proceed past Step 3 without saving (clicking continue saves first).
   const [apptDuration, setApptDuration] = useState<number>(90)
   const [apptBuffer, setApptBuffer] = useState<number>(30)
+
+  // Visible elapsed-seconds counter for the loading screen. Drives rotating
+  // status copy ("Securing subscription…" → "Provisioning number…" →
+  // "Taking longer than usual…") and reveals an escape-hatch button after
+  // 25s so a stalled webhook doesn't trap the user on a silent spinner.
+  const [loadingElapsed, setLoadingElapsed] = useState(0)
+  useEffect(() => {
+    if (!loading) return
+    const id = setInterval(() => setLoadingElapsed(e => e + 1), 1000)
+    return () => clearInterval(id)
+  }, [loading])
 
   // Initial load + carrier auto-detect
   // Webhook race fix: instead of bouncing to /dashboard when !is_active, we
@@ -269,12 +281,30 @@ export default function SetupWizard() {
   }
 
   if (loading || !profile) {
+    // Phased copy so the user sees progress instead of a silent 60-second
+    // spinner. After 25s we expose an escape hatch — the webhook may have
+    // landed and the dashboard might already work; trapping them on the
+    // wizard is worse than letting them try.
+    const phase =
+      loadingElapsed < 12 ? 'normal' :
+      loadingElapsed < 25 ? 'slow' :
+      'stuck'
+    const headline =
+      phase === 'normal' ? 'Setting things up…' :
+      phase === 'slow' ? 'Almost there…' :
+      'Taking longer than usual'
+    const sub =
+      phase === 'normal'
+        ? 'Stripe is wiring up your subscription and we\'re buying you a local AI receptionist number. Usually 10–30 seconds.'
+        : phase === 'slow'
+        ? 'Finalizing your AI assistant. Almost done — give it 10 more seconds.'
+        : 'Webhook is slow. Your account is being set up in the background — you can refresh, or open your dashboard now and the setup wizard will appear once it\'s ready.'
     return (
       <div style={pageStyle}>
         <style>{`
           @keyframes setupSpin { to { transform: rotate(360deg) } }
         `}</style>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, maxWidth: 380, textAlign: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, maxWidth: 420, textAlign: 'center' }}>
           <div style={{
             width: 36, height: 36, borderRadius: '50%',
             border: '3px solid rgba(10,168,159,0.18)',
@@ -282,11 +312,30 @@ export default function SetupWizard() {
             animation: 'setupSpin 0.9s linear infinite',
           }} />
           <div style={{ fontSize: 16, fontWeight: 800, color: '#0B1F3A', letterSpacing: '-0.3px' }}>
-            Setting things up…
+            {headline}
           </div>
           <div style={{ fontSize: 13, color: '#4A7A80', lineHeight: 1.55 }}>
-            Stripe is wiring up your subscription and we&apos;re buying you a local AI receptionist number. Usually 10–30 seconds.
+            {sub}
           </div>
+          {phase === 'stuck' && (
+            <div style={{ display: 'flex', gap: 10, flexDirection: 'column', alignItems: 'center', marginTop: 8 }}>
+              <button
+                onClick={() => window.location.reload()}
+                style={{ background: '#0AA89F', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 22px', fontWeight: 800, fontSize: 14, cursor: 'pointer' }}
+              >
+                Refresh
+              </button>
+              <button
+                onClick={() => router.replace('/dashboard')}
+                style={{ background: 'transparent', color: '#0AA89F', border: '1.5px solid #0AA89F', borderRadius: 10, padding: '10px 18px', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+              >
+                Open dashboard anyway
+              </button>
+              <div style={{ fontSize: 11, color: '#7AAAB2', marginTop: 4 }}>
+                Stuck? Text Peter: (773) 710-9565
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -353,6 +402,16 @@ export default function SetupWizard() {
                 <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", marginTop: 4 }}>
                   Welcome, {profile.business_name || "partner"}. Two taps to go live.
                 </div>
+              </div>
+
+              {/* Push install banner — surfaced ON STEP 1 (was previously only
+                  reachable deep in setup OR on /dashboard). The push fan-out
+                  is wired into both the take_message AND end-of-call paths,
+                  so getting the device subscribed early = first paid lead
+                  alert lands on the contractor's phone the second it comes in.
+                  Renders no-op if device already subscribed. */}
+              <div style={{ marginBottom: 22 }}>
+                <PushNotificationSetup />
               </div>
 
               <h2 style={titleStyle}>Forward your business cell here.</h2>

@@ -1002,6 +1002,34 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
           ? Math.round((new Date(m.endedAt).getTime() - new Date(m.startedAt).getTime()) / 1000)
           : null
       const endedReason = m.endedReason ?? null
+
+      // Mirror handleToolCalls' push fan-out for the silent-failure path.
+      // Voicemail / caller hung up early / Emma never reached take_message =
+      // the only delivery channels otherwise would be email. PWA push is
+      // free, ~1-2s, and survives A2P 10DLC. Caller paid for a receptionist —
+      // every call event deserves a phone alert. Fire-and-forget; the
+      // `priorJobCreated` gate above already prevents duplicates when the
+      // tool-calls event fired earlier in the same call.
+      const pushBody = summary
+        ? summary.slice(0, 180)
+        : durationSec
+        ? `Caller hung up after ${durationSec}s — tap to view transcript`
+        : 'Caller hung up before details — tap to view transcript'
+      firePushAsync(tenant.user_id, {
+        title: callerPhone ? `📞 Missed call — ${callerPhone}` : '📞 Missed call',
+        body: pushBody,
+        url: '/dashboard',
+        tag: `missed-${callSid}`,
+        urgency: 'soon',
+        requireInteraction: false,
+        data: {
+          caller_phone: callerPhone,
+          duration_sec: durationSec,
+          ended_reason: endedReason,
+          source: 'end-of-call-silent-failure',
+        },
+      })
+
       const transcriptText =
         typeof transcript === 'string'
           ? transcript

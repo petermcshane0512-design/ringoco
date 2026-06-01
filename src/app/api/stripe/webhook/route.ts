@@ -7,6 +7,16 @@ import { PRICE_TO_TIER } from '@/lib/pricing'
 import { applyLedgerEntry } from '@/lib/marketing/growth-wallet'
 import { recordPendingReferral, applyPendingReferralCredit, voidPendingReferral } from '@/lib/referrals'
 import { sendEmail } from '@/lib/email'
+import { lookupOwnerEmail } from '@/lib/notify'
+
+function escapeHtmlMin(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
@@ -249,11 +259,60 @@ export async function POST(req: NextRequest) {
           .maybeSingle()
 
         if (contractor?.owner_phone && !contractor.welcomed_at) {
+          // 1. Welcome SMS — fast, immediate, ringtone-grade alert.
           await twilioClient.messages.create({
             body: `Welcome to BellAveGo, ${contractor.business_name || 'partner'}! Your AI receptionist is live at ${provisionedNumber}. Next step: set up call forwarding so missed calls ring through — walkthrough: https://www.bellavego.com/dashboard/forwarding. You're in your 7-day free trial — first charge hits day 8 unless you cancel. — BellAveGo team`,
             from: provisionedNumber,
             to: contractor.owner_phone,
           })
+
+          // 2. Welcome EMAIL — receipt-grade record of trial start.
+          // SMS can be missed / muted / land in unknown-sender. Email gives
+          // them a paper trail with the charge-day-8 disclosure and the
+          // dashboard link they can click from any device.
+          try {
+            const contractorEmail = await lookupOwnerEmail(userId)
+            if (contractorEmail) {
+              const biz = contractor.business_name || 'partner'
+              const subject = `Welcome to BellAveGo — your AI receptionist is live`
+              const html =
+                `<div style="font-family:system-ui,-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0B1F3A;">` +
+                `<div style="text-align:center;margin-bottom:24px;"><div style="display:inline-block;background:#0AA89F;color:#fff;font-weight:800;padding:10px 18px;border-radius:10px;font-size:18px;letter-spacing:0.3px;">🔔 BellAveGo</div></div>` +
+                `<h1 style="font-size:22px;margin:0 0 12px;">Welcome, ${escapeHtmlMin(biz)} 👋</h1>` +
+                `<p style="font-size:15px;line-height:1.55;margin:0 0 18px;">Your AI receptionist is live and ready to answer calls. Here's what's next:</p>` +
+                `<div style="background:#F5F1EA;border-radius:10px;padding:16px 18px;margin:0 0 20px;">` +
+                  `<p style="margin:0 0 8px;font-size:13px;color:#4A6670;">Your dedicated number</p>` +
+                  `<p style="margin:0;font-size:20px;font-weight:800;color:#0AA89F;">${provisionedNumber}</p>` +
+                `</div>` +
+                `<h2 style="font-size:16px;margin:24px 0 8px;">Get up and running (5 min)</h2>` +
+                `<ol style="font-size:14px;line-height:1.7;padding-left:20px;margin:0 0 20px;">` +
+                  `<li><strong>Set up call forwarding</strong> so missed calls ring our AI. <a href="https://www.bellavego.com/dashboard/forwarding" style="color:#0AA89F;">Step-by-step walkthrough →</a></li>` +
+                  `<li><strong>Save the dashboard to your phone home screen</strong> so you get push alerts the second a lead comes in.</li>` +
+                  `<li><strong>Test it</strong> — call your new number from a different phone and hear Emma in action.</li>` +
+                `</ol>` +
+                `<p style="text-align:center;margin:24px 0;"><a href="https://www.bellavego.com/dashboard" style="display:inline-block;background:#0AA89F;color:#fff;text-decoration:none;font-weight:800;padding:14px 28px;border-radius:10px;font-size:15px;">Open your dashboard</a></p>` +
+                `<div style="border-top:1px solid #E5E7EB;margin-top:24px;padding-top:16px;font-size:12px;color:#4A6670;line-height:1.6;">` +
+                  `<p style="margin:0 0 6px;"><strong>Trial details:</strong> You're in a 7-day free trial. Your card won't be charged until day 8. Cancel anytime from the billing tab — no questions, no fees.</p>` +
+                  `<p style="margin:0 0 6px;"><strong>Need help?</strong> Text Peter (founder) directly: (773) 710-9565. Replies under 10 min during business hours.</p>` +
+                  `<p style="margin:6px 0 0;">— BellAveGo team</p>` +
+                `</div>` +
+                `</div>`
+              const text =
+                `Welcome to BellAveGo, ${biz}!\n\n` +
+                `Your AI receptionist is live at ${provisionedNumber}.\n\n` +
+                `Get up and running (5 min):\n` +
+                `1. Set up call forwarding: https://www.bellavego.com/dashboard/forwarding\n` +
+                `2. Save the dashboard to your phone home screen for push alerts\n` +
+                `3. Test it — call your new number from a different phone\n\n` +
+                `Dashboard: https://www.bellavego.com/dashboard\n\n` +
+                `Trial details: 7-day free trial. Card charged day 8 unless you cancel. Cancel anytime from the billing tab.\n\n` +
+                `Need help? Text Peter directly: (773) 710-9565.\n\n— BellAveGo team`
+              await sendEmail({ to: contractorEmail, subject, html, text })
+            }
+          } catch (e) {
+            console.error(`Welcome email failed for ${userId}:`, e)
+          }
+
           await supabase
             .from('profiles')
             .update({ welcomed_at: new Date().toISOString() })
