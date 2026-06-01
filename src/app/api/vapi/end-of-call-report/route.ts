@@ -21,6 +21,51 @@ const twilioClient = twilio(
 const anthropic = new Anthropic()
 
 /**
+ * Resolve Peter's user_id (the demo line's notification recipient). Used to
+ * fan-out push notifications on demo calls — the demo branch has no tenant
+ * since there's no paying contractor on (651) 467-7829, just the public
+ * "hear Emma now" line. Push must still hit Peter's PWA bookmark.
+ *
+ * Resolution order:
+ *   1. FALLBACK_OWNER_USER_ID env (fastest path, no DB read)
+ *   2. profiles row whose owner_phone matches FALLBACK_OWNER_PHONE (Peter's cell)
+ *   3. null — log + skip push silently
+ *
+ * Result is cached at module scope so demo calls don't hit Supabase every time.
+ */
+let cachedDemoOwnerUserId: string | null | undefined
+async function getDemoOwnerUserId(): Promise<string | null> {
+  if (cachedDemoOwnerUserId !== undefined) return cachedDemoOwnerUserId
+  const fromEnv = process.env.FALLBACK_OWNER_USER_ID
+  if (fromEnv) {
+    cachedDemoOwnerUserId = fromEnv
+    return fromEnv
+  }
+  const ownerPhone = process.env.FALLBACK_OWNER_PHONE
+  if (!ownerPhone) {
+    cachedDemoOwnerUserId = null
+    return null
+  }
+  try {
+    const { data } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('owner_phone', ownerPhone)
+      .maybeSingle()
+    const id = (data as { user_id?: string } | null)?.user_id ?? null
+    cachedDemoOwnerUserId = id
+    if (!id) {
+      console.warn('[demo-push] no profile with owner_phone matching FALLBACK_OWNER_PHONE — set FALLBACK_OWNER_USER_ID env to bypass')
+    }
+    return id
+  } catch (e) {
+    console.error('[demo-push] owner lookup failed:', e)
+    cachedDemoOwnerUserId = null
+    return null
+  }
+}
+
+/**
  * Vapi post-call webhook. Receives two event types we care about:
  *   - tool-calls       → AI called book_appointment. Run the booking flow.
  *   - end-of-call-report → conversation finished. Log transcript + finalize.
@@ -204,6 +249,27 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
         } catch (e) {
           logTwilioSmsError('demo lead alert to Peter', e)
         }
+      }
+
+      // Push to Peter's BellAveGo PWA bookmark — demo line is HIS line, so
+      // push routes to his user_id (not to a tenant). Survives A2P + email
+      // delays entirely; lands in ~1-2 sec on his iPhone home-screen icon.
+      const demoOwnerId = await getDemoOwnerUserId()
+      if (demoOwnerId) {
+        const urgencyLabelPush =
+          args.urgency === 'emergency' ? '🚨' : args.urgency === 'soon' ? '🎯' : '💡'
+        firePushAsync(demoOwnerId, {
+          title: `${urgencyLabelPush} DEMO LEAD — ${args.customer_name}`,
+          body:
+            `${args.reason}` +
+            (callerNumber ? `\n📞 ${callerNumber}` : '') +
+            (args.customer_address ? `\n📍 ${args.customer_address}` : ''),
+          url: '/admin/forward',
+          tag: `demo-lead-${callSid}`,
+          urgency: args.urgency === 'emergency' ? 'emergency' : 'soon',
+          requireInteraction: args.urgency === 'emergency',
+          data: { caller_phone: callerNumber, source: 'demo-tool-call' },
+        })
       }
 
       // Demo lead email to Peter — reliable iPhone alert while SMS is
@@ -889,6 +955,37 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
         ? Math.round((new Date(m.endedAt).getTime() - new Date(m.startedAt).getTime()) / 1000)
         : null
     const endedReason = m.endedReason ?? null
+
+    // Push to Peter's BellAveGo bookmark — fires for EVERY demo end-of-call
+    // event (voicemail, hangup, no-tool-call path, etc.). Mirror of the
+    // contractor silent-failure branch below. Without this, demo calls
+    // that don't fire take_message produce email only — no phone push.
+    try {
+      const demoOwnerId = await getDemoOwnerUserId()
+      if (demoOwnerId) {
+        const pushBody = summary
+          ? summary.slice(0, 180)
+          : durationSec
+          ? `Caller hung up after ${durationSec}s — tap for transcript`
+          : 'Demo call ended before details — tap for transcript'
+        firePushAsync(demoOwnerId, {
+          title: callerPhone ? `📞 Demo call — ${callerPhone}` : '📞 Demo call',
+          body: pushBody,
+          url: '/admin/forward',
+          tag: `demo-${callSid}`,
+          urgency: 'soon',
+          requireInteraction: false,
+          data: {
+            caller_phone: callerPhone,
+            duration_sec: durationSec,
+            ended_reason: endedReason,
+            source: 'demo-end-of-call',
+          },
+        })
+      }
+    } catch (e) {
+      console.error('demo push fan-out failed:', e)
+    }
 
     try {
       const subject = `📞 Demo call — ${callerPhone ?? 'unknown'}${durationSec ? ` (${durationSec}s)` : ''}`
