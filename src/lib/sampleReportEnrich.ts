@@ -97,12 +97,49 @@ export async function enrichSampleReport(input: EnrichInput): Promise<Consulting
   }
 
   if (!businessPin) {
-    // Demo mode — use the fictional centroid
-    businessPin = {
-      lat: MIKES_DEMO_CENTROID.lat,
-      lng: MIKES_DEMO_CENTROID.lng,
-      label: 'Y',
-      note: `${input.base.meta.businessName} · demo business`,
+    // Real prospect but Google Places had no hit (no website, scrubbed
+    // listing, etc.). Geocode the prospect's CITY so the map centers on
+    // their actual metro instead of the Minneapolis demo centroid
+    // (Peter 2026-06-01: Cool Men LLC + 75 pre-warmed reports all
+    // showed Minneapolis because of this fallback).
+    let cityPin: { lat: number; lng: number; label: string; note?: string } | null = null
+    const geoQuery = (input.prospectCity || input.prospectName || '').trim()
+    if (geoQuery && apiKey) {
+      try {
+        const q = encodeURIComponent(geoQuery)
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${q}&key=${apiKey}`
+        const res = await fetch(url, { next: { revalidate: 60 * 60 * 24 } })
+        const data = (await res.json()) as { results?: GooglePlace[] }
+        const loc = data.results?.[0]?.geometry?.location
+        if (loc?.lat != null && loc?.lng != null) {
+          cityPin = {
+            lat: loc.lat,
+            lng: loc.lng,
+            label: 'Y',
+            note: input.prospectName
+              ? `${input.prospectName} · ${input.prospectCity || 'service area'}`
+              : input.prospectCity || 'Your service area',
+          }
+        }
+      } catch {
+        // Geocode failed — fall through to demo centroid
+      }
+    }
+    if (cityPin) {
+      businessPin = cityPin
+    } else {
+      // True demo mode OR full geocode failure — use the fictional
+      // centroid. Better a generic Minneapolis-ish blur than a crashed
+      // map render. Logged so we notice if this hits real prospects.
+      if (input.prospectName) {
+        console.warn(`[sampleReportEnrich] no Places hit AND no geocode for "${input.prospectName}" in "${input.prospectCity ?? '?'}" — falling back to demo centroid`)
+      }
+      businessPin = {
+        lat: MIKES_DEMO_CENTROID.lat,
+        lng: MIKES_DEMO_CENTROID.lng,
+        label: 'Y',
+        note: `${input.base.meta.businessName} · demo business`,
+      }
     }
   }
 
