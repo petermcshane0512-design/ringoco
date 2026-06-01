@@ -75,6 +75,12 @@ export default function DashboardPage() {
   const [callsToday, setCallsToday] = useState(0);
   const [callsThisWeek, setCallsThisWeek] = useState(0);
   const [leadsThisMonth, setLeadsThisMonth] = useState(0);
+  // Monthly cap usage — drives the "X of N calls left this month" card.
+  // unlimited=true for Elite + legacy unlimited tiers; UI flips to the
+  // count-up form ("23 calls this month") with no remaining number.
+  const [callsUsedThisMonth, setCallsUsedThisMonth] = useState(0);
+  const [callCapMonth, setCallCapMonth] = useState<number | null>(null);
+  const [callCapUnlimited, setCallCapUnlimited] = useState(false);
   // Activity feed — persistent in-app history of every call. Survives the
   // OS clearing push notifications + the contractor's inbox burying emails.
   type ActivityRow = {
@@ -194,6 +200,18 @@ export default function DashboardPage() {
     setCallsToday(summary.callsToday || 0);
     setCallsThisWeek(summary.callsThisWeek || 0);
     setLeadsThisMonth(summary.leadsThisMonth || 0);
+
+    // Pull monthly cap usage in parallel — small, independent endpoint
+    // so a slow cap query never blocks the rest of the dashboard render.
+    fetch('/api/calls/count')
+      .then(r => (r.ok ? r.json() : null))
+      .then((c: { used?: number; cap?: number | null; unlimited?: boolean } | null) => {
+        if (!c) return
+        setCallsUsedThisMonth(c.used ?? 0)
+        setCallCapMonth(typeof c.cap === 'number' ? c.cap : null)
+        setCallCapUnlimited(!!c.unlimited)
+      })
+      .catch(() => {})
     setLoadingJobs(false);
 
     // Activity feed — separate endpoint, runs in parallel-ish. Errors silently
@@ -379,6 +397,29 @@ export default function DashboardPage() {
       iconBg: "#EFF6FF", iconColor: "#2563EB", accentColor: "#3B82F6",
       icon: <><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></>,
     },
+    // Monthly cap card — fed by /api/calls/count. Counts call_logs rows
+    // since the 1st of the current calendar month + tier cap from
+    // TIER_CALL_CAP. Unlimited tiers (Elite + legacy) show the count-up
+    // form ("23 calls this month") with no remaining number.
+    callCapUnlimited
+      ? {
+          label: "Calls This Month", value: String(callsUsedThisMonth),
+          sub: "Unlimited plan — no monthly cap",
+          iconBg: "#F0FDF4", iconColor: "#16A34A", accentColor: "#22C55E",
+          icon: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>,
+        }
+      : {
+          label: "Calls Left This Month",
+          value: callCapMonth != null ? `${Math.max(0, callCapMonth - callsUsedThisMonth)} / ${callCapMonth}` : '—',
+          sub:
+            callCapMonth == null
+              ? 'Counting your calls…'
+              : callsUsedThisMonth >= callCapMonth
+                ? 'Cap reached. Upgrade for more.'
+                : `${callsUsedThisMonth} of ${callCapMonth} used`,
+          iconBg: "#F5F3FF", iconColor: "#7C3AED", accentColor: "#8B5CF6",
+          icon: <><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></>,
+        },
   ];
 
   return (
