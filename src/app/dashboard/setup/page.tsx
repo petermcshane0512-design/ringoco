@@ -389,6 +389,35 @@ export default function SetupWizard() {
         {/* Body */}
         <div style={{ padding: "30px 28px 28px", minHeight: 360 }}>
 
+          {/* Back nav — shown on every step except step 1. Pure client-side
+              rewind: doesn't write setup_step backward, just rerenders the
+              previous step's UI. Lets contractors fix a wrong carrier /
+              wrong forwarding code without restarting. Added after Peter
+              hit "Forwarding didn't connect" on step 2 and had no recovery
+              path back to step 1 (2026-06-01). */}
+          {step > 1 && (
+            <button
+              onClick={() => setStep(step - 1)}
+              type="button"
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#0AA89F",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+                padding: "0 0 14px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                fontFamily: "inherit",
+              }}
+              aria-label="Go back to previous step"
+            >
+              ← Back
+            </button>
+          )}
+
           {/* STEP 1 — Forwarding (folded with welcome banner) */}
           {step === 1 && (
             <div className="step-enter">
@@ -529,9 +558,29 @@ export default function SetupWizard() {
               </div>
 
               {testStatus === "error" && (
-                <button onClick={fireTestCall} style={{ ...primaryButton, marginTop: 12, marginBottom: 12 }}>
-                  Try the test call again →
-                </button>
+                <>
+                  <button onClick={fireTestCall} style={{ ...primaryButton, marginTop: 12, marginBottom: 8 }}>
+                    Try the test call again →
+                  </button>
+                  <button
+                    onClick={continueAfterTest}
+                    type="button"
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      color: "#0AA89F",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      padding: "8px 0",
+                      width: "100%",
+                      textAlign: "center",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    Skip for now — I&apos;ll verify from the dashboard later
+                  </button>
+                </>
               )}
               {testStatus === "sent" && (
                 <>
