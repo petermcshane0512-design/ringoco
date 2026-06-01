@@ -284,154 +284,78 @@ function CalendarPageInner() {
         </FlashBanner>
       )}
 
-      {/* ── APPOINTMENT SETTINGS — the rules the AI follows when booking.
-            Two sliders. Plain English. Saved to profile (migration 021)
-            so the AI applies these to EVERY booking attempt. ── */}
+      {/* ── MODE SELECTOR — top of page, biggest decision the contractor makes.
+            "Book appointments" connects a calendar + Emma offers slots.
+            "Just summarize" → Emma takes a message + texts the contractor;
+            no calendar OAuth required. Implicitly controlled by whether a
+            calendar is connected — UI surfaces it as an explicit fork. ── */}
       <div style={{
         background: '#fff',
-        border: '1.5px solid #FF9D5A',
+        border: '1.5px solid rgba(10,168,159,0.22)',
         borderRadius: 16,
-        padding: '24px 28px',
+        padding: '22px 24px',
         marginBottom: 18,
-        boxShadow: '0 6px 22px rgba(232,116,43,0.10)',
+        boxShadow: '0 6px 22px rgba(7,27,58,0.08)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-          <span style={{
-            fontSize: 10, fontWeight: 900, color: '#fff',
-            background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
-            padding: '3px 10px', borderRadius: 99,
-            letterSpacing: '0.14em', textTransform: 'uppercase',
-          }}>
-            Required first
-          </span>
-          <span style={{ fontSize: 11, color: '#7AAAB2', fontWeight: 600 }}>30 seconds</span>
+        <div style={{ fontSize: 11, fontWeight: 900, color: '#0AA89F', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 6 }}>
+          Step 1 · Decide how Emma handles bookings
         </div>
-        <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.02em', margin: 0, marginBottom: 6 }}>
-          Set your appointment rules.
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.02em', margin: '0 0 14px' }}>
+          Do you want Emma to book appointments, or just summarize calls?
         </h2>
-        <p style={{ fontSize: 14, color: '#4A6670', lineHeight: 1.55, margin: 0, marginBottom: 22 }}>
-          The AI uses these two numbers EVERY time it books a job for you. Set them once. Change anytime.
-        </p>
-
-        {/* Slider 1 — typical job duration */}
-        <div style={{ marginBottom: 22 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
-            <span style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A' }}>
-              🕐 How long is a typical job?
-            </span>
-            <span style={{ fontSize: 22, fontWeight: 900, color: '#E8742B', letterSpacing: '-0.02em' }}>
-              {durationMin >= 60 ? `${Math.floor(durationMin / 60)}h${durationMin % 60 ? ` ${durationMin % 60}m` : ''}` : `${durationMin} min`}
-            </span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
-            {[30, 60, 90, 120, 180].map((min) => {
-              const active = durationMin === min
-              return (
-                <button
-                  key={min}
-                  onClick={() => setDurationMin(min)}
-                  style={{
-                    padding: '12px 6px',
-                    borderRadius: 10,
-                    border: active ? '2px solid #E8742B' : '1.5px solid rgba(232,116,43,0.20)',
-                    background: active ? 'linear-gradient(135deg, #FF9D5A, #E8742B)' : '#FFF7EE',
-                    color: active ? '#fff' : '#0B1F3A',
-                    fontSize: 13, fontWeight: 800,
-                    cursor: 'pointer', fontFamily: 'inherit',
-                  }}
-                >
-                  {min >= 60 ? `${min / 60}h${min % 60 ? `${min % 60}m` : ''}` : `${min}m`}
-                </button>
-              )
-            })}
-          </div>
-          <div style={{ fontSize: 12, color: '#7AAAB2', marginTop: 8, lineHeight: 1.5 }}>
-            The AI blocks this much time for every booked job. If a caller says &quot;just a quick fix&quot; or &quot;big install&quot;, the AI will adjust — but this is the default.
-          </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+          <a
+            href="#calendar-grid"
+            style={{
+              display: 'block',
+              padding: '16px 18px',
+              borderRadius: 14,
+              border: '2px solid #0AA89F',
+              background: 'linear-gradient(135deg, #F0FBF8 0%, #FFFFFF 100%)',
+              textDecoration: 'none',
+              boxShadow: '0 6px 22px rgba(10,168,159,0.16)',
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 900, color: '#0AA89F', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+              📅 Book appointments
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A', marginBottom: 4 }}>
+              &ldquo;Tuesday 2 PM or Wednesday 9 AM works&rdquo;
+            </div>
+            <div style={{ fontSize: 12, color: '#4A6670', lineHeight: 1.5 }}>
+              Connect Google or Outlook below. Emma offers real time slots from your free time. You still confirm via SMS.
+            </div>
+          </a>
+          <a
+            href="#summarize-only"
+            style={{
+              display: 'block',
+              padding: '16px 18px',
+              borderRadius: 14,
+              border: '1.5px solid rgba(10,168,159,0.22)',
+              background: '#fff',
+              textDecoration: 'none',
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 900, color: '#7AAAB2', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+              💬 Just summarize calls
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A', marginBottom: 4 }}>
+              &ldquo;Got it — Mike will call you back soon&rdquo;
+            </div>
+            <div style={{ fontSize: 12, color: '#4A6670', lineHeight: 1.5 }}>
+              No calendar needed. Emma takes name + reason and texts you the lead. You call them back when you can.
+            </div>
+          </a>
         </div>
-
-        {/* Slider 2 — travel buffer */}
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
-            <span style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A' }}>
-              🚗 Travel time between jobs?
-            </span>
-            <span style={{ fontSize: 22, fontWeight: 900, color: '#0AA89F', letterSpacing: '-0.02em' }}>
-              {bufferMin === 0 ? 'None' : `${bufferMin} min`}
-            </span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
-            {[0, 15, 30, 45, 60].map((min) => {
-              const active = bufferMin === min
-              return (
-                <button
-                  key={min}
-                  onClick={() => setBufferMin(min)}
-                  style={{
-                    padding: '12px 6px',
-                    borderRadius: 10,
-                    border: active ? '2px solid #0AA89F' : '1.5px solid rgba(10,168,159,0.20)',
-                    background: active ? 'linear-gradient(135deg, #0AA89F, #088A82)' : '#F0FBF8',
-                    color: active ? '#fff' : '#0B1F3A',
-                    fontSize: 13, fontWeight: 800,
-                    cursor: 'pointer', fontFamily: 'inherit',
-                  }}
-                >
-                  {min === 0 ? 'None' : `${min}m`}
-                </button>
-              )
-            })}
-          </div>
-          <div style={{ fontSize: 12, color: '#7AAAB2', marginTop: 8, lineHeight: 1.5 }}>
-            We&apos;ll leave this much space BEFORE and AFTER every existing event on your calendar. So a 30-min buffer means we won&apos;t book any job that ends less than 30 min before your next appointment.
-          </div>
+        <div id="summarize-only" style={{ fontSize: 11.5, color: '#7AAAB2', marginTop: 12, lineHeight: 1.6 }}>
+          Whichever you pick — the AI never auto-books without you confirming via SMS. You can change this anytime.
         </div>
-
-        {/* Live example so contractor sees the math */}
-        <div style={{
-          background: '#F5F1EA',
-          borderRadius: 10,
-          padding: '12px 14px',
-          marginBottom: 18,
-          fontSize: 12.5,
-          color: '#0B1F3A',
-          lineHeight: 1.55,
-        }}>
-          <strong style={{ color: '#E8742B' }}>Example:</strong> If you have an appointment at 11:00 AM, the AI won&apos;t book anything ending after {(() => {
-            const start = 11 * 60
-            const earliest = start - bufferMin
-            const h = Math.floor(earliest / 60), m = earliest % 60
-            return `${h % 12 || 12}:${String(m).padStart(2, '0')} AM`
-          })()} OR starting before {(() => {
-            const endOfPrev = 12 * 60 + bufferMin  // assume 11 AM job ends at noon, then add buffer
-            const h = Math.floor(endOfPrev / 60), m = endOfPrev % 60
-            return `${h % 12 || 12}:${String(m).padStart(2, '0')} PM`
-          })()}. Every booked job is {durationMin >= 60 ? `${Math.floor(durationMin / 60)}h${durationMin % 60 ? ` ${durationMin % 60}m` : ''}` : `${durationMin} min`} long with {bufferMin === 0 ? 'no' : `${bufferMin} min`} buffer on each side.
-        </div>
-
-        <button
-          onClick={saveAppointmentSettings}
-          disabled={!settingsLoaded || savingSettings}
-          style={{
-            width: '100%',
-            padding: '13px 18px',
-            borderRadius: 12,
-            border: 'none',
-            background: savedTick
-              ? 'linear-gradient(135deg, #22C55E, #16A34A)'
-              : 'linear-gradient(135deg, #FF9D5A, #E8742B)',
-            color: '#fff',
-            fontSize: 14, fontWeight: 900,
-            cursor: savingSettings ? 'wait' : 'pointer',
-            fontFamily: 'inherit',
-            boxShadow: '0 6px 18px rgba(232,116,43,0.32)',
-            transition: 'background 0.18s ease',
-          }}
-        >
-          {savingSettings ? 'Saving…' : savedTick ? '✓ Saved — AI will use these rules' : 'Save these rules →'}
-        </button>
       </div>
 
+      {/* Anchor for the "Book appointments" mode card. Calendar grid below
+          is THE workspace for the booking flow. */}
+      <div id="calendar-grid" />
 {/* SYNC PROVIDERS — small secondary section under the calendar grid below */}
 
       {/* CALENDAR GRID — primary surface. Renders ALL appointments from the
@@ -594,6 +518,126 @@ function CalendarPageInner() {
             <li><strong>NEVER</strong>: we don&apos;t read event titles, attendees, descriptions, or locations from your phone calendar.</li>
             <li><strong>EDITS</strong>: change a job in BellAveGo → your phone calendar updates. Change it in Google → BellAveGo ignores the change. (Source of truth = BellAveGo.)</li>
           </ul>
+        </div>
+      </section>
+
+      {/* ── APPOINTMENT RULES — moved to bottom 2026-06-01 per Peter.
+            The mode selector at the top is the load-bearing first decision;
+            duration + buffer are AI booking guardrails, only relevant if
+            the contractor picked "Book appointments". Two sliders saved to
+            profile (migration 021). ── */}
+      <section id="appointment-rules" style={{ marginTop: 36 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+          <span style={{
+            fontSize: 9, fontWeight: 900, color: '#E8742B',
+            background: 'rgba(232,116,43,0.12)', padding: '3px 10px', borderRadius: 99,
+            letterSpacing: '0.14em', textTransform: 'uppercase',
+          }}>
+            Booking mode · settings
+          </span>
+        </div>
+        <div style={{
+          background: '#fff',
+          border: '1.5px solid rgba(232,116,43,0.32)',
+          borderRadius: 16,
+          padding: '24px 28px',
+          marginTop: 8,
+          boxShadow: '0 6px 22px rgba(232,116,43,0.10)',
+        }}>
+          <h2 style={{ fontSize: 20, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.02em', margin: 0, marginBottom: 6 }}>
+            Appointment rules
+          </h2>
+          <p style={{ fontSize: 13, color: '#4A6670', lineHeight: 1.55, margin: 0, marginBottom: 20 }}>
+            If Emma is booking jobs, these two numbers tell her how long each job blocks and how much travel buffer to leave around your existing events.
+          </p>
+
+          {/* Slider 1 — typical job duration */}
+          <div style={{ marginBottom: 22 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+              <span style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A' }}>
+                🕐 How long is a typical job?
+              </span>
+              <span style={{ fontSize: 22, fontWeight: 900, color: '#E8742B', letterSpacing: '-0.02em' }}>
+                {durationMin >= 60 ? `${Math.floor(durationMin / 60)}h${durationMin % 60 ? ` ${durationMin % 60}m` : ''}` : `${durationMin} min`}
+              </span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
+              {[30, 60, 90, 120, 180].map((min) => {
+                const active = durationMin === min
+                return (
+                  <button
+                    key={min}
+                    onClick={() => setDurationMin(min)}
+                    style={{
+                      padding: '12px 6px', borderRadius: 10,
+                      border: active ? '2px solid #E8742B' : '1.5px solid rgba(232,116,43,0.20)',
+                      background: active ? 'linear-gradient(135deg, #FF9D5A, #E8742B)' : '#FFF7EE',
+                      color: active ? '#fff' : '#0B1F3A',
+                      fontSize: 13, fontWeight: 800,
+                      cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >
+                    {min >= 60 ? `${min / 60}h${min % 60 ? `${min % 60}m` : ''}` : `${min}m`}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Slider 2 — travel buffer */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+              <span style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A' }}>
+                🚗 Travel buffer between jobs?
+              </span>
+              <span style={{ fontSize: 22, fontWeight: 900, color: '#0AA89F', letterSpacing: '-0.02em' }}>
+                {bufferMin === 0 ? 'None' : `${bufferMin} min`}
+              </span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
+              {[0, 15, 30, 45, 60].map((min) => {
+                const active = bufferMin === min
+                return (
+                  <button
+                    key={min}
+                    onClick={() => setBufferMin(min)}
+                    style={{
+                      padding: '12px 6px', borderRadius: 10,
+                      border: active ? '2px solid #0AA89F' : '1.5px solid rgba(10,168,159,0.20)',
+                      background: active ? 'linear-gradient(135deg, #0AA89F, #088A82)' : '#F0FBF8',
+                      color: active ? '#fff' : '#0B1F3A',
+                      fontSize: 13, fontWeight: 800,
+                      cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >
+                    {min === 0 ? 'None' : `${min}m`}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <button
+            onClick={saveAppointmentSettings}
+            disabled={!settingsLoaded || savingSettings}
+            style={{
+              width: '100%',
+              padding: '13px 18px',
+              borderRadius: 12,
+              border: 'none',
+              background: savedTick
+                ? 'linear-gradient(135deg, #22C55E, #16A34A)'
+                : 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+              color: '#fff',
+              fontSize: 14, fontWeight: 900,
+              cursor: savingSettings ? 'wait' : 'pointer',
+              fontFamily: 'inherit',
+              boxShadow: '0 6px 18px rgba(232,116,43,0.32)',
+              transition: 'background 0.18s ease',
+            }}
+          >
+            {savingSettings ? 'Saving…' : savedTick ? '✓ Saved' : 'Save rules'}
+          </button>
         </div>
       </section>
 
