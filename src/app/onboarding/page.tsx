@@ -1,5 +1,5 @@
 'use client'
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
 import Image from 'next/image'
@@ -44,6 +44,11 @@ type FormData = {
   businessType: string
   ownerFirstName: string
   phone: string
+  zip: string
+  // serviceArea is now derived from zip via zippopotam lookup —
+  // stored as "Chicago, IL" so Emma can read it on every call AND
+  // the consulting-report fallback knows which metro to scan when
+  // there's no public web presence for the contractor.
   serviceArea: string
   trades: string[]
   greetingStyle: GreetingStyle
@@ -75,10 +80,42 @@ function OnboardingInner() {
     businessType: '',
     ownerFirstName: '',
     phone: '',
+    zip: '',
     serviceArea: '',
     trades: [],
     greetingStyle: 'friendly_intro',
   })
+
+  // ZIP → "City, ST" resolution via zippopotam.us. Free, no key. Fires
+  // 350ms after the user stops typing a 5-digit ZIP. Result populates
+  // form.serviceArea so the existing save path keeps working AND drives
+  // the consulting-report fallback for contractors with no public footprint.
+  const [zipResolveStatus, setZipResolveStatus] = useState<'idle' | 'looking' | 'ok' | 'not_found' | 'err'>('idle')
+  useEffect(() => {
+    const z = (form.zip || '').replace(/\D/g, '')
+    if (z.length !== 5) {
+      setZipResolveStatus('idle')
+      return
+    }
+    setZipResolveStatus('looking')
+    const t = setTimeout(() => {
+      fetch(`https://api.zippopotam.us/us/${z}`)
+        .then(r => (r.ok ? r.json() : null))
+        .then((j: { places?: Array<{ 'place name'?: string; 'state abbreviation'?: string }> } | null) => {
+          const place = j?.places?.[0]
+          const city = place?.['place name']
+          const state = place?.['state abbreviation']
+          if (city && state) {
+            setForm(f => ({ ...f, serviceArea: `${city}, ${state}` }))
+            setZipResolveStatus('ok')
+          } else {
+            setZipResolveStatus('not_found')
+          }
+        })
+        .catch(() => setZipResolveStatus('err'))
+    }, 350)
+    return () => clearTimeout(t)
+  }, [form.zip])
 
   function set<K extends keyof FormData>(key: K, val: FormData[K]) {
     setForm(f => ({ ...f, [key]: val }))
@@ -92,7 +129,16 @@ function OnboardingInner() {
   }
 
   function canContinue() {
-    if (step === 1) return form.businessName.trim() && form.businessType && form.phone.trim() && form.ownerFirstName.trim() && form.serviceArea.trim()
+    if (step === 1) {
+      return (
+        form.businessName.trim() &&
+        form.businessType &&
+        form.phone.trim() &&
+        form.ownerFirstName.trim() &&
+        /^\d{5}$/.test(form.zip) &&
+        form.serviceArea.trim()
+      )
+    }
     return true
   }
 
@@ -126,6 +172,7 @@ function OnboardingInner() {
           owner_first_name: form.ownerFirstName,
           owner_phone: form.phone,
           service_area: form.serviceArea,
+          zip_code: form.zip,
           services_offered: form.trades.join(', '),
           ai_tone: 'friendly',
           ai_language: 'en',
@@ -307,12 +354,45 @@ function OnboardingInner() {
                 </div>
 
                 <div>
-                  <label style={labelStyle}>Service area</label>
-                  <input style={inputStyle} placeholder="e.g. metro Atlanta · or Minneapolis–St. Paul" value={form.serviceArea}
-                    onChange={e => set('serviceArea', e.target.value)} />
-                  <p style={{ fontSize: 11, color: '#A0BCC2', marginTop: 5 }}>
-                    The AI will tell callers &quot;we serve {form.serviceArea || 'your area'}.&quot;
+                  <label style={labelStyle}>Service area ZIP code</label>
+                  <input
+                    style={{
+                      ...inputStyle,
+                      border: zipResolveStatus === 'ok'
+                        ? '1.5px solid #22C55E'
+                        : zipResolveStatus === 'not_found' || zipResolveStatus === 'err'
+                        ? '1.5px solid #DC2626'
+                        : '1.5px solid rgba(10,168,159,0.2)',
+                    }}
+                    placeholder="e.g. 60601"
+                    inputMode="numeric"
+                    maxLength={5}
+                    value={form.zip}
+                    onChange={e => set('zip', e.target.value.replace(/\D/g, '').slice(0, 5))}
+                  />
+                  <p style={{ fontSize: 11, color: '#A0BCC2', marginTop: 5, lineHeight: 1.55 }}>
+                    {zipResolveStatus === 'idle' && 'Used by your AI to tell callers what city you serve. Also drives your consulting reports when there\'s no public info about your business.'}
+                    {zipResolveStatus === 'looking' && 'Looking up your area…'}
+                    {zipResolveStatus === 'ok' && (
+                      <span style={{ color: '#16A34A', fontWeight: 700 }}>
+                        ✓ {form.serviceArea} — Emma will say &ldquo;we serve {form.serviceArea}.&rdquo;
+                      </span>
+                    )}
+                    {zipResolveStatus === 'not_found' && (
+                      <span style={{ color: '#DC2626', fontWeight: 700 }}>That ZIP didn&apos;t match a US city — double-check it.</span>
+                    )}
+                    {zipResolveStatus === 'err' && (
+                      <span style={{ color: '#DC2626', fontWeight: 700 }}>Lookup failed — type your city manually below.</span>
+                    )}
                   </p>
+                  {zipResolveStatus === 'err' && (
+                    <input
+                      style={{ ...inputStyle, marginTop: 8 }}
+                      placeholder="City, ST"
+                      value={form.serviceArea}
+                      onChange={e => set('serviceArea', e.target.value)}
+                    />
+                  )}
                 </div>
               </motion.div>
             )}
