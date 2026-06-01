@@ -536,23 +536,34 @@ export default function SetupWizard() {
                 <PushNotificationSetup />
                 {pushDeviceCount === 0 && (
                   <div style={{
-                    marginTop: 14,
+                    marginTop: 10,
                     background: "#fff",
                     border: "1.5px dashed rgba(255,157,90,0.45)",
                     borderRadius: 14,
-                    padding: "12px 14px",
+                    padding: "10px 12px",
                     textAlign: "center",
                   }}>
-                    <div style={{ fontSize: 11, fontWeight: 900, color: "#C2410C", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
+                    <div style={{ fontSize: 10, fontWeight: 900, color: "#C2410C", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>
                       How to add BellAveGo to your phone
                     </div>
-                    <Image
-                      src="/ADDTOHOMESCREEN.png"
-                      alt="Add BellAveGo to home screen — iPhone Safari Share menu → Add to Home Screen"
-                      width={520}
-                      height={520}
-                      style={{ width: "100%", maxWidth: 360, height: "auto", borderRadius: 10, display: "block", margin: "0 auto" }}
-                    />
+                    {/* Two compact side-by-side panels — kept small to
+                        minimize scrolling on step 1 (Peter 2026-06-01). */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                      <Image
+                        src="/ADDTOHOMESCREEN.png"
+                        alt="Add to Home Screen — step 1"
+                        width={400}
+                        height={500}
+                        style={{ width: "100%", height: "auto", borderRadius: 8, display: "block" }}
+                      />
+                      <Image
+                        src="/ADDTOHOMESCREEN2.png"
+                        alt="Add to Home Screen — step 2"
+                        width={400}
+                        height={500}
+                        style={{ width: "100%", height: "auto", borderRadius: 8, display: "block" }}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
