@@ -546,22 +546,29 @@ export default function SetupWizard() {
                     <div style={{ fontSize: 10, fontWeight: 900, color: "#C2410C", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>
                       How to add BellAveGo to your phone
                     </div>
-                    {/* Two compact side-by-side panels — kept small to
+                    {/* Three compact side-by-side panels — kept small to
                         minimize scrolling on step 1 (Peter 2026-06-01). */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
                       <Image
                         src="/ADDTOHOMESCREEN.png"
                         alt="Add to Home Screen — step 1"
-                        width={400}
-                        height={500}
-                        style={{ width: "100%", height: "auto", borderRadius: 8, display: "block" }}
+                        width={300}
+                        height={520}
+                        style={{ width: "100%", height: "auto", borderRadius: 6, display: "block" }}
                       />
                       <Image
                         src="/ADDTOHOMESCREEN2.png"
                         alt="Add to Home Screen — step 2"
-                        width={400}
-                        height={500}
-                        style={{ width: "100%", height: "auto", borderRadius: 8, display: "block" }}
+                        width={300}
+                        height={520}
+                        style={{ width: "100%", height: "auto", borderRadius: 6, display: "block" }}
+                      />
+                      <Image
+                        src="/ADDTOHOMESCREEN3.png"
+                        alt="Add to Home Screen — step 3"
+                        width={300}
+                        height={520}
+                        style={{ width: "100%", height: "auto", borderRadius: 6, display: "block" }}
                       />
                     </div>
                   </div>
