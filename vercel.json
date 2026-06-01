@@ -54,10 +54,6 @@
       "schedule": "5 0 1 * *"
     },
     {
-      "path": "/api/crons/social-content-daily",
-      "schedule": "0 11 * * *"
-    },
-    {
       "path": "/api/crons/stripe-reconcile",
       "schedule": "30 9 * * *"
     },

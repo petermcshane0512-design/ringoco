@@ -40,6 +40,13 @@ function authedCron(req: Request): boolean {
 }
 
 export async function GET(req: Request) {
+  // DISABLED 2026-06-01 per Peter — no more auto-posting to FB/IG.
+  // Belt-and-suspenders: cron removed from vercel.json AND this guard
+  // ensures any manual trigger or stale schedule no-ops. Set env
+  // SOCIAL_AUTOPOST_ENABLED=1 to re-enable.
+  if (process.env.SOCIAL_AUTOPOST_ENABLED !== '1') {
+    return NextResponse.json({ ok: true, disabled: true, note: 'Auto-posting paused per Peter 2026-06-01' })
+  }
   if (!authedCron(req)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
