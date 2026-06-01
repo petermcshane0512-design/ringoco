@@ -92,6 +92,46 @@ export default function SetupWizard() {
   // "Taking longer than usual…") and reveals an escape-hatch button after
   // 25s so a stalled webhook doesn't trap the user on a silent spinner.
   const [loadingElapsed, setLoadingElapsed] = useState(0)
+
+  // Push-subscription guard for step 3. Polled on step entry so the
+  // "I'm done" button stays disabled until the contractor has at least
+  // one device registered (or explicitly skips). Closes the silent-fail
+  // hole where a new account had 0 push subs and Peter's brother's call
+  // delivered email-only, no PWA push (2026-06-01).
+  const [pushDeviceCount, setPushDeviceCount] = useState<number | null>(null)
+  const [pushTestStatus, setPushTestStatus] = useState<'idle' | 'sending' | 'sent' | 'no-sub' | 'error'>('idle')
+  const [pushSkipAck, setPushSkipAck] = useState(false)
+  useEffect(() => {
+    if (step !== 3) return
+    let cancelled = false
+    const poll = () => {
+      fetch('/api/push/device-count')
+        .then(r => (r.ok ? r.json() : null))
+        .then((j: { count?: number } | null) => {
+          if (!cancelled) setPushDeviceCount(j?.count ?? 0)
+        })
+        .catch(() => { if (!cancelled) setPushDeviceCount(0) })
+    }
+    poll()
+    // Re-poll every 4s so subscribing in another tab updates the gate.
+    const id = setInterval(poll, 4000)
+    return () => { cancelled = true; clearInterval(id) }
+  }, [step])
+
+  async function fireTestPush() {
+    if (pushTestStatus === 'sending') return
+    setPushTestStatus('sending')
+    try {
+      const res = await fetch('/api/push/test', { method: 'POST' })
+      const j = await res.json().catch(() => null)
+      if (res.ok && j?.sent > 0) setPushTestStatus('sent')
+      else if (j?.reason === 'no subscriptions') setPushTestStatus('no-sub')
+      else setPushTestStatus('error')
+    } catch {
+      setPushTestStatus('error')
+    }
+    setTimeout(() => setPushTestStatus('idle'), 5000)
+  }
   useEffect(() => {
     if (!loading) return
     const id = setInterval(() => setLoadingElapsed(e => e + 1), 1000)
@@ -763,9 +803,100 @@ export default function SetupWizard() {
                 </p>
               </div>
 
-              <button onClick={continueAfterPhoneStep} disabled={busy} style={primaryButton}>
-                {busy ? "Saving…" : meta.isOfficeMgr || meta.isConcierge ? "Continue →" : "🎉 I'm done — open my dashboard →"}
-              </button>
+              {/* PUSH GATE — REQUIRED. New accounts that ship with 0 push
+                  subscriptions deliver email-only and get "where's my
+                  notification?" support tickets within 24 hours (Peter's
+                  brother's call, 2026-06-01). Block the finish button
+                  until either (a) at least one device is registered, or
+                  (b) contractor explicitly clicks "skip and finish anyway". */}
+              <div style={{
+                background: pushDeviceCount && pushDeviceCount > 0
+                  ? "linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 60%)"
+                  : "linear-gradient(135deg, #FFFBEB 0%, #FFFFFF 60%)",
+                border: pushDeviceCount && pushDeviceCount > 0
+                  ? "1.5px solid #22C55E"
+                  : "1.5px solid #F59E0B",
+                borderRadius: 14,
+                padding: "16px 18px",
+                marginBottom: 18,
+              }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: pushDeviceCount && pushDeviceCount > 0 ? "#16A34A" : "#B45309", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>
+                  {pushDeviceCount == null ? "Checking phone alerts…" : pushDeviceCount > 0 ? "✅ Phone alerts on" : "⚠️ Phone alerts NOT enabled"}
+                </div>
+                {pushDeviceCount === 0 ? (
+                  <>
+                    <p style={{ fontSize: 13, color: "#0B1F3A", lineHeight: 1.55, margin: 0 }}>
+                      <strong>You won&apos;t get a phone notification</strong> when a customer calls. Email still works, but if you want the lock-screen alert you need to enable lead alerts on your phone.
+                    </p>
+                    <p style={{ fontSize: 12, color: "#7C2D12", lineHeight: 1.55, margin: "8px 0 0" }}>
+                      Go back to step 1, tap <strong>&ldquo;Text me the link&rdquo;</strong>, open the SMS on your phone, tap the link, then tap <strong>&ldquo;Turn on Lead Alerts&rdquo;</strong>.
+                    </p>
+                  </>
+                ) : (
+                  <p style={{ fontSize: 13, color: "#0B1F3A", lineHeight: 1.55, margin: 0 }}>
+                    <strong>{pushDeviceCount} device{pushDeviceCount === 1 ? '' : 's'}</strong> will get a push notification every time a customer calls. Send a test below to confirm it really works.
+                  </p>
+                )}
+                <button
+                  onClick={fireTestPush}
+                  disabled={pushTestStatus === 'sending'}
+                  style={{
+                    marginTop: 10,
+                    padding: "10px 18px",
+                    borderRadius: 10,
+                    border: "none",
+                    background: pushTestStatus === 'sent'
+                      ? 'linear-gradient(135deg, #22C55E, #16A34A)'
+                      : pushTestStatus === 'no-sub' || pushTestStatus === 'error'
+                      ? 'linear-gradient(135deg, #F59E0B, #D97706)'
+                      : 'linear-gradient(135deg, #0AA89F, #088A82)',
+                    color: '#fff',
+                    fontSize: 13, fontWeight: 800,
+                    cursor: pushTestStatus === 'sending' ? 'wait' : 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  {pushTestStatus === 'sending' && 'Sending…'}
+                  {pushTestStatus === 'sent' && '✅ Sent — check your phone'}
+                  {pushTestStatus === 'no-sub' && 'No device — enable first ↑'}
+                  {pushTestStatus === 'error' && 'Failed — try again'}
+                  {pushTestStatus === 'idle' && '📲 Send test notification'}
+                </button>
+              </div>
+
+              {/* Gate: must have devices OR explicitly skip */}
+              {pushDeviceCount === 0 && !pushSkipAck ? (
+                <>
+                  <button
+                    disabled
+                    style={{ ...primaryButton, opacity: 0.5, cursor: 'not-allowed' }}
+                  >
+                    🎉 I&apos;m done — open my dashboard →
+                  </button>
+                  <button
+                    onClick={() => setPushSkipAck(true)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#7AAAB2',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      padding: '12px 0 0',
+                      width: '100%',
+                      textAlign: 'center',
+                      fontFamily: 'inherit',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    Skip phone alerts for now — I&apos;ll set them up later
+                  </button>
+                </>
+              ) : (
+                <button onClick={continueAfterPhoneStep} disabled={busy} style={primaryButton}>
+                  {busy ? "Saving…" : meta.isOfficeMgr || meta.isConcierge ? "Continue →" : "🎉 I'm done — open my dashboard →"}
+                </button>
+              )}
               <div style={{ fontSize: 12, color: "#A0BCC2", marginTop: 10, textAlign: "center" }}>
                 You can come back to enable phone alerts anytime from the dashboard.
               </div>

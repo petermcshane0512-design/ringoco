@@ -8,7 +8,7 @@ import { switchToCapacityMode } from '@/lib/provisionNumber'
 import { sendEmail, renderLeadAlertEmail, renderContractorLeadEmail, renderFirstCallCelebrationEmail } from '@/lib/email'
 import { lookupOwnerEmail } from '@/lib/notify'
 import { estimateJobTicket } from '@/lib/consultingMetrics'
-import { firePushAsync } from '@/lib/push'
+import { firePushAsync, sendPushToUser } from '@/lib/push'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -866,7 +866,12 @@ async function takeMessage(opts: {
   // Urgency=emergency triggers high-urgency push (bypasses device battery
   // saver) AND vibrate pattern on Android.
   const urgencyLabel = args.urgency === 'emergency' ? '🚨' : args.urgency === 'soon' ? '⚡' : '🕓'
-  firePushAsync(tenant.user_id, {
+  // BACKSTOP — switched from fire-and-forget to awaited so we can detect
+  // "0 subscriptions" and SMS the owner with a one-time setup nudge.
+  // Without this, brand-new contractors who finished setup before enabling
+  // push deliver lead alerts via email only and complain "where's my
+  // notification?" within 24 hours (Peter's brother's call, 2026-06-01).
+  const pushResult = await sendPushToUser(tenant.user_id, {
     title: `${urgencyLabel} New lead — ${args.customer_name}`,
     body:
       `${args.reason}` +
@@ -877,7 +882,41 @@ async function takeMessage(opts: {
     urgency: args.urgency === 'emergency' ? 'emergency' : 'soon',
     requireInteraction: args.urgency === 'emergency',
     data: { job_id: jobRow?.id, caller_phone: phone, urgency: args.urgency },
+  }).catch((e) => {
+    console.error('sendPushToUser threw:', e)
+    return { ok: false, sent: 0, failed: 0, reason: 'threw' } as const
   })
+
+  // If push delivered to 0 devices because no subscription exists, fire a
+  // one-time setup-nudge SMS to the owner. Idempotent via the
+  // push_nudge_sent_at flag on profiles — first call only, never again.
+  if (pushResult.sent === 0 && pushResult.reason === 'no subscriptions') {
+    try {
+      const { data: nudgeCheck } = await supabase
+        .from('profiles')
+        .select('owner_phone, push_nudge_sent_at')
+        .eq('user_id', tenant.user_id)
+        .maybeSingle()
+      const nudge = nudgeCheck as { owner_phone?: string | null; push_nudge_sent_at?: string | null } | null
+      if (nudge?.owner_phone && !nudge.push_nudge_sent_at) {
+        await twilioClient.messages.create({
+          body:
+            `📲 Heads up — a customer just called your BellAveGo line but your phone alerts aren't enabled yet. ` +
+            `Email still works. To get lock-screen push alerts on every future call: open https://www.bellavego.com/dashboard ` +
+            `on your phone in Safari (iPhone) or Chrome (Android), tap Share → Add to Home Screen, then tap Turn on Lead Alerts. ` +
+            `Reply STOP to opt out.`,
+          from: process.env.TWILIO_PHONE_NUMBER!,
+          to: nudge.owner_phone,
+        })
+        await supabase
+          .from('profiles')
+          .update({ push_nudge_sent_at: new Date().toISOString() })
+          .eq('user_id', tenant.user_id)
+      }
+    } catch (e) {
+      console.error('push-nudge SMS failed:', e)
+    }
+  }
 
   // 6. Upsert call_logs (powers Receptionist tier monthly call cap counter)
   try {
