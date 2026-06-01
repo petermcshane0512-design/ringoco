@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import PushNotificationSetup from "@/components/PushNotificationSetup";
+import { buildFirstMessage } from "@/lib/greeting";
 
 type Tier =
   | "receptionist" | "officemgr" | "concierge"
@@ -12,6 +13,7 @@ type Tier =
 type Profile = {
   user_id: string;
   business_name?: string;
+  owner_first_name?: string | null;
   owner_phone?: string;
   twilio_number?: string;
   is_active?: boolean;
@@ -22,6 +24,9 @@ type Profile = {
   test_call_at?: string | null;
   forwarding_verified_at?: string | null;
   crm_provider?: string;
+  ai_language?: string | null;
+  ai_greeting_style?: string | null;
+  ai_greeting_custom?: string | null;
 };
 
 type CarrierKey = "verizon" | "att" | "tmobile" | "sprint" | "other";
@@ -853,9 +858,39 @@ export default function SetupWizard() {
                     Call your AI and hear it live
                   </span>
                 </div>
-                <p style={{ fontSize: 14, color: "#4A6670", lineHeight: 1.55, margin: "0 0 14px" }}>
+                <p style={{ fontSize: 14, color: "#4A6670", lineHeight: 1.55, margin: "0 0 12px" }}>
                   Tap below to call your new BellAveGo number from this phone. You&apos;ll hear what your customers hear when you can&apos;t pick up.
                 </p>
+                {/* Preview the EXACT first line Emma will say — same string the
+                    Vapi assistant-request route renders, so what they read
+                    here matches what they hear when they tap the dial button. */}
+                <div style={{
+                  background: "#fff",
+                  border: "1.5px solid rgba(10,168,159,0.22)",
+                  borderRadius: 10,
+                  padding: "12px 14px",
+                  marginBottom: 14,
+                }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: "#0AA89F", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>
+                    Emma will open with
+                  </div>
+                  <div style={{ fontSize: 13, color: "#0B1F3A", lineHeight: 1.55, fontStyle: "italic" }}>
+                    &ldquo;{buildFirstMessage({
+                      businessName: profile.business_name,
+                      ownerFirstName: profile.owner_first_name,
+                      aiName: 'Emma',
+                      style: (profile as { ai_greeting_style?: string | null }).ai_greeting_style,
+                      customTemplate: (profile as { ai_greeting_custom?: string | null }).ai_greeting_custom,
+                      language: (profile.ai_language as 'en' | 'es') || 'en',
+                    })}&rdquo;
+                  </div>
+                  <a
+                    href="/dashboard/settings"
+                    style={{ display: "inline-block", marginTop: 8, fontSize: 11, color: "#0AA89F", fontWeight: 700, textDecoration: "underline" }}
+                  >
+                    Change in Settings →
+                  </a>
+                </div>
                 {profile.twilio_number && (
                   <a
                     href={`tel:${profile.twilio_number}`}

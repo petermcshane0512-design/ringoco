@@ -10,6 +10,7 @@ import {
   type TenantContext,
 } from '@/lib/vapi'
 import { hasCalendarConnected } from '@/lib/calendar/availability'
+import { buildFirstMessage } from '@/lib/greeting'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -335,10 +336,21 @@ export async function POST(req: NextRequest) {
     hasCalendarConnected: calendarConnected,
   }
 
-  const firstMessage =
-    tenant.aiLanguage === 'es'
-      ? `Hola, soy ${aiName} con ${tenant.businessName}. ${tenant.ownerFirstName || 'El dueño'} está en un trabajo — ¿en qué le puedo ayudar?`
-      : `Hi, this is ${aiName} with ${tenant.businessName}. ${tenant.ownerFirstName || 'The owner'} is out on a job — how can I help?`
+  // Greeting style is set during onboarding (or later in /dashboard/settings).
+  // Defaults to 'friendly_intro' which preserves the legacy "Hi, this is Emma
+  // with {business}. {owner} is out on a job — how can I help?" line.
+  const greetingProfile = profile as {
+    ai_greeting_style?: string | null
+    ai_greeting_custom?: string | null
+  }
+  const firstMessage = buildFirstMessage({
+    businessName: tenant.businessName,
+    ownerFirstName: tenant.ownerFirstName,
+    aiName,
+    style: greetingProfile.ai_greeting_style,
+    customTemplate: greetingProfile.ai_greeting_custom,
+    language: tenant.aiLanguage === 'es' ? 'es' : 'en',
+  })
 
   return NextResponse.json({
     assistantId: ASSISTANT_ID,

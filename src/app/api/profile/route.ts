@@ -17,6 +17,10 @@ const VAPI_PROMPT_RELEVANT_FIELDS = new Set([
   'ai_voice_id',
   'ai_language',
   'custom_prompt_notes',
+  // Greeting style + custom template feed the firstMessage build in
+  // /api/vapi/assistant-request. Changes must trigger an assistant repatch.
+  'ai_greeting_style',
+  'ai_greeting_custom',
 ])
 
 const supabase = createClient(
@@ -50,6 +54,8 @@ const SAFE_PROFILE_COLUMNS = new Set([
   // Used by /lib/calendar/availability.ts to decide how long the AI
   // blocks each booked job + how much travel buffer to leave before/after.
   'default_job_duration_min', 'travel_buffer_min', 'appointment_settings_at',
+  // ── greeting style (migration 2026-06-01) ─────────────────────────
+  'ai_greeting_style', 'ai_greeting_custom',
 ])
 
 export async function POST(req: NextRequest) {

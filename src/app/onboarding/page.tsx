@@ -34,6 +34,8 @@ const slideVariants = {
   exit:  (dir: number) => ({ x: dir > 0 ? -48 : 48, opacity: 0 }),
 }
 
+type GreetingStyle = 'friendly_intro' | 'thanks_for_calling' | 'business_first'
+
 type FormData = {
   businessName: string
   businessType: string
@@ -41,6 +43,7 @@ type FormData = {
   phone: string
   serviceArea: string
   trades: string[]
+  greetingStyle: GreetingStyle
 }
 
 export default function OnboardingPage() {
@@ -71,6 +74,7 @@ function OnboardingInner() {
     phone: '',
     serviceArea: '',
     trades: [],
+    greetingStyle: 'friendly_intro',
   })
 
   function set<K extends keyof FormData>(key: K, val: FormData[K]) {
@@ -133,6 +137,7 @@ function OnboardingInner() {
             : form.businessType
             ? `${form.businessType} services`
             : 'home services',
+          ai_greeting_style: form.greetingStyle,
           hours_open: '8:00 AM',
           hours_close: '6:00 PM',
           onboarding_complete: true,
@@ -310,6 +315,71 @@ function OnboardingInner() {
                       }}>{active ? '✓ ' : ''}{t}</button>
                     )
                   })}
+                </div>
+
+                {/* Greeting style picker — how Emma opens every call. Live
+                    previews use the business name they typed in step 1 so
+                    they can hear-in-their-head exactly what callers get. */}
+                <div style={{ marginBottom: 18 }}>
+                  <label style={labelStyle}>How should Emma answer the phone?</label>
+                  <p style={{ fontSize: 11, color: '#A0BCC2', marginTop: 0, marginBottom: 10 }}>
+                    Pick what feels most like your business. You can change this anytime in Settings.
+                  </p>
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    {([
+                      {
+                        v: 'friendly_intro' as GreetingStyle,
+                        label: 'Friendly intro',
+                        recommended: true,
+                        preview: `"Hi, this is Emma with ${form.businessName || 'your business'}. ${form.ownerFirstName || 'The owner'} is out on a job — how can I help?"`,
+                      },
+                      {
+                        v: 'thanks_for_calling' as GreetingStyle,
+                        label: 'Thanks for calling',
+                        recommended: false,
+                        preview: `"Thanks for calling ${form.businessName || 'your business'}, this is Emma — how can I help you today?"`,
+                      },
+                      {
+                        v: 'business_first' as GreetingStyle,
+                        label: 'Business-first',
+                        recommended: false,
+                        preview: `"Hi, you've reached ${form.businessName || 'your business'}. Emma speaking — what can I do for you?"`,
+                      },
+                    ]).map((opt) => {
+                      const active = form.greetingStyle === opt.v
+                      return (
+                        <button
+                          key={opt.v}
+                          type="button"
+                          onClick={() => set('greetingStyle', opt.v)}
+                          style={{
+                            textAlign: 'left',
+                            padding: '12px 14px',
+                            borderRadius: 11,
+                            border: `1.5px solid ${active ? '#0AA89F' : 'rgba(10,168,159,0.18)'}`,
+                            background: active ? 'rgba(10,168,159,0.08)' : '#F5FDFB',
+                            cursor: 'pointer',
+                            fontFamily: 'inherit',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                            <span style={{ fontSize: 13, fontWeight: 800, color: active ? '#0AA89F' : '#0B1F3A' }}>
+                              {active ? '✓ ' : ''}{opt.label}
+                            </span>
+                            {opt.recommended && (
+                              <span style={{ fontSize: 9, fontWeight: 800, color: '#0AA89F', background: 'rgba(10,168,159,0.14)', padding: '2px 7px', borderRadius: 99, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                                Recommended
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 12, color: '#4A6670', lineHeight: 1.5, fontStyle: 'italic' }}>
+                            {opt.preview}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
 
                 <div style={{ background: '#F5FDFB', border: '1px solid rgba(10,168,159,0.16)', borderRadius: 12, padding: '14px 16px' }}>
