@@ -14,6 +14,7 @@ const isPublicRoute = createRouteMatcher([
   "/founder(.*)",
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/goodbye(.*)",
   "/privacy(.*)",
   "/terms(.*)",
   // Concierge + Multi-Location waitlist — public form for prospects who don't

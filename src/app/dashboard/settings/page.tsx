@@ -100,6 +100,17 @@ export default function SettingsPage() {
   const [cancelModalOpen, setCancelModalOpen] = useState(false)
   const [cancelReason, setCancelReason] = useState<string>('')
   const [cancelReasonDetail, setCancelReasonDetail] = useState('')
+  // Permanent account deletion — irreversible. Separate flow from
+  // cancel-subscription so contractors don't conflate "pause billing"
+  // with "erase me from the system." Legal-compliance requirement: a
+  // visible self-serve delete path that purges Stripe + Twilio + DB +
+  // Clerk, all without a support-ticket round-trip.
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleteReason, setDeleteReason] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [deleteStatus, setDeleteStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [deleteMessage, setDeleteMessage] = useState('')
 
   useEffect(() => { loadProfile() }, [])
 
@@ -200,6 +211,44 @@ export default function SettingsPage() {
     } else {
       setCancelStatus('error')
       setCancelMessage(json.error || 'Could not cancel — please text Peter at (773) 710-9565.')
+    }
+  }
+
+  function openDeleteModal() {
+    setDeleteConfirmText('')
+    setDeleteReason('')
+    setDeleteStatus('idle')
+    setDeleteMessage('')
+    setDeleteModalOpen(true)
+  }
+
+  async function submitDelete() {
+    if (deleteConfirmText !== 'DELETE') return
+    setDeleting(true)
+    setDeleteStatus('idle')
+    try {
+      const res = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmation: 'DELETE', reason: deleteReason }),
+      })
+      const json = await res.json().catch(() => ({}))
+      setDeleting(false)
+      if (res.ok) {
+        setDeleteStatus('success')
+        setDeleteMessage(json.message || 'Account deleted.')
+        // Clerk session is dead the moment Clerk user is removed. Give
+        // the user 3.5s to read the success copy, then bounce them to
+        // a public "we'd love to have you back" page.
+        setTimeout(() => { window.location.href = '/goodbye' }, 3500)
+      } else {
+        setDeleteStatus('error')
+        setDeleteMessage(json.error || 'Could not delete — please text Peter at (773) 710-9565 and we\'ll handle it manually.')
+      }
+    } catch (e) {
+      setDeleting(false)
+      setDeleteStatus('error')
+      setDeleteMessage((e as Error).message || 'Network error — please text Peter at (773) 710-9565.')
     }
   }
 
@@ -699,42 +748,115 @@ export default function SettingsPage() {
                 </button>
               </div>
 
-              {/* Cancel & refund — destructive */}
-              <div style={{
-                borderTop: '1px solid rgba(220,38,38,0.12)',
-                paddingTop: 16,
-                marginTop: 4,
-              }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#DC2626', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Cancel subscription
-                </div>
-                <p style={{ fontSize: 12, color: '#7AAAB2', marginBottom: 10, lineHeight: 1.5 }}>
-                  Cancel during your 1-week free trial (day 1–7) and no charge ever fires. After day 8, cancelling stops your next renewal. Your BellAveGo number will be paused.
-                </p>
-                <button
-                  onClick={openCancelModal}
-                  disabled={cancelling}
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    padding: '8px 18px',
-                    borderRadius: 8,
-                    border: '1px solid rgba(220,38,38,0.25)',
-                    background: cancelStatus === 'success' ? '#DC2626' : '#FEF2F2',
-                    color: cancelStatus === 'success' ? '#fff' : '#DC2626',
-                    cursor: cancelling ? 'not-allowed' : 'pointer',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  {cancelStatus === 'success' ? 'Cancelled' : 'Cancel & request refund'}
-                </button>
-              </div>
             </>
           ) : (
             <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '14px 16px', fontSize: 13, color: '#DC2626' }}>
               Your subscription has been cancelled. <a href="/pricing" style={{ color: '#DC2626', fontWeight: 700 }}>Resubscribe →</a>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* ──────── DANGER ZONE — Cancel + Delete account ────────
+          High-visibility, easy-to-find legal-compliance card. Both
+          paths surface clearly: pause billing (cancel) and full erasure
+          (delete). Customers must never have to email support to leave. */}
+      <div style={{
+        ...card,
+        border: '2px solid rgba(220,38,38,0.3)',
+        background: 'linear-gradient(180deg, #FEF2F2 0%, #FFFFFF 100%)',
+      }}>
+        <div style={{
+          ...cardHead,
+          background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',
+          borderBottom: 'none',
+        }}>
+          <div style={{ fontSize: 14, fontWeight: 900, color: '#fff', letterSpacing: '-0.01em', textTransform: 'uppercase' }}>
+            ⚠️ Danger Zone — Cancel or Delete
+          </div>
+        </div>
+        <div style={{ ...cardBody, padding: '22px 20px' }}>
+
+          {/* ── Cancel subscription ── */}
+          <div style={{
+            background: '#fff',
+            border: '1.5px solid rgba(220,38,38,0.18)',
+            borderRadius: 12,
+            padding: '16px 18px',
+            marginBottom: 14,
+          }}>
+            <div style={{ fontSize: 15, fontWeight: 900, color: '#0B1F3A', marginBottom: 4 }}>
+              I&apos;m not satisfied with BellAveGo — cancel my subscription
+            </div>
+            <p style={{ fontSize: 13, color: '#4A6670', lineHeight: 1.55, margin: '0 0 12px' }}>
+              Cancel during your 7-day free trial → <strong>no charge ever fires.</strong>{' '}
+              Cancel after day 8 → stops the next renewal. Service stays live until the end of the current cycle. No refund issued for the current cycle.
+            </p>
+            <button
+              onClick={openCancelModal}
+              disabled={cancelling || !profile?.stripe_subscription_id}
+              style={{
+                fontSize: 14,
+                fontWeight: 800,
+                padding: '12px 22px',
+                borderRadius: 10,
+                border: 'none',
+                background: cancelStatus === 'success' ? '#16A34A' : '#DC2626',
+                color: '#fff',
+                cursor: cancelling ? 'not-allowed' : 'pointer',
+                fontFamily: 'inherit',
+                boxShadow: '0 4px 14px rgba(220,38,38,0.32)',
+                width: '100%',
+              }}
+            >
+              {cancelStatus === 'success' ? 'Cancelled ✓' : 'Cancel my subscription'}
+            </button>
+          </div>
+
+          {/* ── Permanently delete account ── */}
+          <div style={{
+            background: '#fff',
+            border: '1.5px solid rgba(220,38,38,0.18)',
+            borderRadius: 12,
+            padding: '16px 18px',
+          }}>
+            <div style={{ fontSize: 15, fontWeight: 900, color: '#0B1F3A', marginBottom: 4 }}>
+              Permanently delete my account
+            </div>
+            <p style={{ fontSize: 13, color: '#4A6670', lineHeight: 1.55, margin: '0 0 12px' }}>
+              Erases your account completely: cancels any active subscription, releases your AI receptionist phone number, and deletes your data. <strong>This cannot be undone.</strong> You can sign up again later with the same email — you&apos;ll get a fresh AI receptionist number.
+            </p>
+            <button
+              onClick={openDeleteModal}
+              disabled={deleting}
+              style={{
+                fontSize: 14,
+                fontWeight: 800,
+                padding: '12px 22px',
+                borderRadius: 10,
+                border: '2px solid #DC2626',
+                background: '#fff',
+                color: '#DC2626',
+                cursor: deleting ? 'not-allowed' : 'pointer',
+                fontFamily: 'inherit',
+                width: '100%',
+              }}
+            >
+              Permanently delete my account
+            </button>
+          </div>
+
+          <div style={{
+            fontSize: 11,
+            color: '#7AAAB2',
+            marginTop: 14,
+            textAlign: 'center',
+            lineHeight: 1.55,
+          }}>
+            Need help instead? Text Peter directly at{' '}
+            <a href="tel:7737109565" style={{ color: '#0AA89F', fontWeight: 700, textDecoration: 'none' }}>(773) 710-9565</a>
+            {' '}— replies in under 10 minutes during business hours.
+          </div>
         </div>
       </div>
 
@@ -880,6 +1002,155 @@ export default function SettingsPage() {
                       }}
                     >
                       {cancelling ? 'Processing…' : 'Cancel & refund'}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ──────── Delete account modal ────────
+          Hard-confirm dialog. Requires typing the literal text DELETE
+          so muscle-memory "yes yes yes" clicking can't erase a real
+          account. Reason field is optional but captured for churn. */}
+      {deleteModalOpen && (
+        <div
+          onClick={() => !deleting && setDeleteModalOpen(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(11,31,58,0.62)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 20, fontFamily: "'Inter', system-ui, sans-serif",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: 520, background: '#fff',
+              borderRadius: 16, boxShadow: '0 24px 60px rgba(7,27,58,0.4)',
+              border: '2px solid rgba(220,38,38,0.35)',
+              overflow: 'hidden',
+            }}
+          >
+            {deleteStatus === 'success' ? (
+              <div style={{ padding: '32px 28px', textAlign: 'center' }}>
+                <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #DC2626, #B91C1C)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 8px 24px rgba(220,38,38,0.32)' }}>
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6" /></svg>
+                </div>
+                <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0B1F3A', margin: '0 0 8px', letterSpacing: '-0.3px' }}>Account deleted</h3>
+                <p style={{ fontSize: 13, color: '#4A6670', lineHeight: 1.55, margin: 0 }}>{deleteMessage}</p>
+              </div>
+            ) : (
+              <>
+                <div style={{ padding: '22px 26px 14px', background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)', color: '#fff' }}>
+                  <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 6, opacity: 0.9 }}>
+                    ⚠️ Permanent — cannot be undone
+                  </div>
+                  <h3 style={{ fontSize: 19, fontWeight: 900, margin: '0 0 6px', letterSpacing: '-0.3px' }}>
+                    Delete your BellAveGo account?
+                  </h3>
+                  <p style={{ fontSize: 13, lineHeight: 1.55, margin: 0, opacity: 0.92 }}>
+                    This cancels your subscription, releases your AI receptionist number, and erases your data permanently.
+                  </p>
+                </div>
+                <div style={{ padding: '20px 26px' }}>
+                  <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: '#991B1B', marginBottom: 6 }}>
+                      What gets deleted
+                    </div>
+                    <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: '#7F1D1D', lineHeight: 1.7 }}>
+                      <li>Your Stripe subscription — <strong>cancelled immediately</strong>, no further charges</li>
+                      <li>Your AI receptionist phone number — released back to Twilio</li>
+                      <li>All your calls, customers, jobs, reports, and settings</li>
+                      <li>Your login — you&apos;ll be signed out and the email can sign up fresh</li>
+                    </ul>
+                  </div>
+
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#4A7A80', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+                    Mind sharing why? (optional, helps us improve)
+                  </label>
+                  <textarea
+                    value={deleteReason}
+                    onChange={(e) => setDeleteReason(e.target.value)}
+                    placeholder="What didn't work? What would have made you stay?"
+                    rows={2}
+                    style={{
+                      width: '100%',
+                      background: '#F5FDFB',
+                      border: '1.5px solid rgba(10,168,159,0.2)',
+                      borderRadius: 8,
+                      padding: '10px 12px',
+                      fontSize: 13,
+                      color: '#0B1F3A',
+                      fontFamily: 'inherit',
+                      lineHeight: 1.5,
+                      outline: 'none',
+                      resize: 'vertical',
+                      boxSizing: 'border-box',
+                      marginBottom: 16,
+                    }}
+                  />
+
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#991B1B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+                    Type DELETE to confirm
+                  </label>
+                  <input
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="DELETE"
+                    style={{
+                      width: '100%',
+                      background: '#fff',
+                      border: '1.5px solid #FECACA',
+                      borderRadius: 8,
+                      padding: '12px 14px',
+                      fontSize: 15,
+                      fontWeight: 700,
+                      color: '#991B1B',
+                      letterSpacing: '0.1em',
+                      fontFamily: 'inherit',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      textTransform: 'uppercase',
+                    }}
+                  />
+
+                  {deleteStatus === 'error' && deleteMessage && (
+                    <div style={{ marginTop: 12, padding: '10px 12px', borderRadius: 8, background: '#FEF2F2', border: '1px solid #FECACA', fontSize: 12, color: '#991B1B' }}>
+                      {deleteMessage}
+                    </div>
+                  )}
+
+                  <div style={{ marginTop: 18, display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                    <button
+                      onClick={() => setDeleteModalOpen(false)}
+                      disabled={deleting}
+                      style={{
+                        fontSize: 13, fontWeight: 700, padding: '10px 18px', borderRadius: 9,
+                        border: '1.5px solid rgba(10,168,159,0.25)', background: '#fff',
+                        color: '#4A7A80', cursor: deleting ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+                      }}
+                    >
+                      Keep my account
+                    </button>
+                    <button
+                      onClick={submitDelete}
+                      disabled={deleting || deleteConfirmText !== 'DELETE'}
+                      style={{
+                        fontSize: 13, fontWeight: 800, padding: '10px 20px', borderRadius: 9,
+                        border: 'none',
+                        background: deleteConfirmText === 'DELETE' ? '#DC2626' : 'rgba(220,38,38,0.35)',
+                        color: '#fff',
+                        cursor: deleting || deleteConfirmText !== 'DELETE' ? 'not-allowed' : 'pointer',
+                        fontFamily: 'inherit',
+                        boxShadow: deleteConfirmText === 'DELETE' ? '0 4px 14px rgba(220,38,38,0.32)' : 'none',
+                      }}
+                    >
+                      {deleting ? 'Deleting…' : 'Permanently delete'}
                     </button>
                   </div>
                 </div>
