@@ -534,6 +534,27 @@ export default function SetupWizard() {
                 }}
               >
                 <PushNotificationSetup />
+                {pushDeviceCount === 0 && (
+                  <div style={{
+                    marginTop: 14,
+                    background: "#fff",
+                    border: "1.5px dashed rgba(255,157,90,0.45)",
+                    borderRadius: 14,
+                    padding: "12px 14px",
+                    textAlign: "center",
+                  }}>
+                    <div style={{ fontSize: 11, fontWeight: 900, color: "#C2410C", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
+                      How to add BellAveGo to your phone
+                    </div>
+                    <Image
+                      src="/ADDTOHOMESCREEN.png"
+                      alt="Add BellAveGo to home screen — iPhone Safari Share menu → Add to Home Screen"
+                      width={520}
+                      height={520}
+                      style={{ width: "100%", maxWidth: 360, height: "auto", borderRadius: 10, display: "block", margin: "0 auto" }}
+                    />
+                  </div>
+                )}
               </div>
 
               <h2 style={titleStyle}>Forward your business cell here.</h2>
