@@ -215,23 +215,20 @@ export default function SetupWizard() {
     }
   }
 
-  // After user taps the dial code, advance + auto-fire test
+  // After user taps the dial code, advance straight to APPOINTMENT RULES.
+  // Old flow had an auto-fire forwarding test (step 2) — removed 2026-06-01
+  // because the test failed for too many carriers (CLI rewrites, voicemail
+  // racing the conditional-forward timer, etc.) and trapped contractors in
+  // a "Forwarding didn't connect" dead end. They now verify in real life
+  // by having a friend call their cell from the dashboard onboarding tip.
   async function onDialedForwarding() {
     await saveStep({ forwardingCarrier: carrier, forwardingConfirmed: true, step: 2 });
     setStep(2);
-    setTimeout(() => fireTestCall(), 1500); // brief pause for transition
   }
 
   async function finishReceptionist() {
     await saveStep({ setupComplete: true });
     router.replace("/dashboard");
-  }
-
-  async function continueAfterTest() {
-    // Forwarding works → step 3 = APPOINTMENT RULES (mandatory for every
-    // tier; locks in how long the AI books each job + travel buffer).
-    await saveStep({ step: 3 });
-    setStep(3);
   }
 
   async function continueAfterAppointmentRules() {
@@ -255,15 +252,15 @@ export default function SetupWizard() {
     } finally {
       setBusy(false);
     }
-    await saveStep({ step: 4 });
-    setStep(4);
+    await saveStep({ step: 3 });
+    setStep(3);
   }
 
   async function continueAfterPhoneStep() {
-    // Phone alerts step done → Starter finishes, Pro/Elite go to CRM (step 5).
+    // Phone alerts step done → Starter finishes, Pro/Elite go to CRM.
     if (meta.isOfficeMgr || meta.isConcierge) {
-      await saveStep({ step: 5 });
-      setStep(5);
+      await saveStep({ step: 4 });
+      setStep(4);
     } else {
       finishReceptionist();
     }
@@ -272,8 +269,8 @@ export default function SetupWizard() {
   async function onPickCrm(provider: string) {
     setCrm(provider);
     if (meta.isConcierge) {
-      await saveStep({ crmProvider: provider, step: 6 });
-      setStep(6);
+      await saveStep({ crmProvider: provider, step: 5 });
+      setStep(5);
     } else {
       await saveStep({ crmProvider: provider, setupComplete: true });
       router.replace("/dashboard");
@@ -349,7 +346,10 @@ export default function SetupWizard() {
   // 4 steps now — added Appointment Rules at position 3 (mandatory for AI
   // booking safety). Starter: 4 (forward, test, rules, phone). Pro: 5 (+ CRM).
   // Elite: 6 (+ kickoff).
-  const totalSteps = meta.isConcierge ? 6 : meta.isOfficeMgr ? 5 : 4;
+  // Step 2 (auto-fire forwarding test) was removed 2026-06-01 — too many
+  // carrier-specific failures trapping contractors at the very first wall.
+  // Counts: Starter 3, Pro 4, Elite 5.
+  const totalSteps = meta.isConcierge ? 5 : meta.isOfficeMgr ? 4 : 3;
 
   return (
     <div style={pageStyle}>
@@ -544,112 +544,12 @@ export default function SetupWizard() {
             </div>
           )}
 
-          {/* STEP 2 — Test call (auto-fired) */}
+          {/* STEP 2 — APPOINTMENT RULES (MANDATORY for every tier).
+              Was step 3 before the auto-fire forwarding test (old step 2)
+              was deleted on 2026-06-01 for trapping contractors with carrier-
+              specific dead ends. Locks in default job duration + travel
+              buffer so the AI can never book overlapping jobs. */}
           {step === 2 && (
-            <div className="step-enter">
-              <div style={{ textAlign: "center", padding: "8px 0 18px" }}>
-                <div style={{ width: 84, height: 84, borderRadius: "50%", background: "linear-gradient(135deg, #0AA89F, #0D8F87)", margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center", animation: testStatus === "calling" ? "ringPulse 1.4s infinite" : "none" }}>
-                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                </div>
-                <h2 style={{ ...titleStyle, textAlign: "center", marginBottom: 6 }}>
-                  {testStatus === "calling" ? "Calling your business line — DON'T pick up" : testStatus === "sent" ? "Forwarding works ✓" : testStatus === "error" ? "Forwarding didn't connect" : "Ready to test"}
-                </h2>
-                <p style={{ ...subStyle, textAlign: "center", maxWidth: 380, margin: "0 auto" }}>
-                  {testStatus === "calling" && (<><strong>Let it ring through.</strong> After ~12 seconds your carrier will forward the call to BellAveGo. We&apos;ll detect it automatically. Takes about 30 seconds total.</>)}
-                  {testStatus === "sent" && (<>Your carrier forwarded the call straight to BellAveGo. You&apos;re live — every missed call from now on lands here.</>)}
-                  {testStatus === "error" && (<>Two common causes: (1) you picked up before the carrier forwarded, or (2) the forwarding code didn&apos;t save. Either retry, or go back and re-dial the forwarding code.</>)}
-                  {testStatus === "idle" && (<>Tap below — we&apos;ll call your business line, you let it ring, and we&apos;ll confirm when BellAveGo picks up the forwarded call.</>)}
-                </p>
-              </div>
-
-              {testStatus === "error" && (
-                <>
-                  <button onClick={fireTestCall} style={{ ...primaryButton, marginTop: 12, marginBottom: 8 }}>
-                    Try the test call again →
-                  </button>
-                  <button
-                    onClick={continueAfterTest}
-                    type="button"
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      color: "#0AA89F",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      padding: "8px 0",
-                      width: "100%",
-                      textAlign: "center",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    Skip for now — I&apos;ll verify from the dashboard later
-                  </button>
-                </>
-              )}
-              {testStatus === "sent" && (
-                <>
-                  {/* Calendar callout — show this prominently after forwarding works,
-                      so contractors see it BEFORE they bounce to the dashboard. */}
-                  <div style={{
-                    marginTop: 8, marginBottom: 16,
-                    padding: "20px 22px",
-                    background: "linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 60%)",
-                    border: "1.5px solid rgba(232,116,43,0.32)",
-                    borderRadius: 14,
-                    boxShadow: "0 8px 24px rgba(232,116,43,0.10)",
-                  }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                      <span style={{
-                        fontSize: 9, fontWeight: 900, color: "#C84B26",
-                        background: "rgba(232,116,43,0.12)", padding: "3px 9px", borderRadius: 99,
-                        letterSpacing: "0.14em", textTransform: "uppercase",
-                      }}>
-                        New · Recommended
-                      </span>
-                      <span style={{ fontSize: 11, color: "#7AAAB2", fontWeight: 600 }}>30 seconds</span>
-                    </div>
-                    <h3 style={{ fontSize: 17, fontWeight: 900, color: "#0B1F3A", margin: 0, marginBottom: 6, letterSpacing: "-0.02em" }}>
-                      Connect your calendar so the AI offers real time slots.
-                    </h3>
-                    <p style={{ fontSize: 13, color: "#4A6670", lineHeight: 1.55, margin: 0, marginBottom: 14 }}>
-                      Without this, the AI takes a message and you call back. <strong>With it,</strong> the AI says "Mike has Tuesday at 2 PM or Wednesday at 9 AM — which works?" — using your actual free time. You still confirm via SMS, never auto-booked.
-                    </p>
-                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                      <a
-                        href="/dashboard/calendar"
-                        style={{
-                          padding: "11px 20px", borderRadius: 10,
-                          background: "linear-gradient(135deg, #FFD9A8 0%, #FF9D5A 50%, #E8742B 100%)",
-                          color: "#0B1F3A", fontSize: 13, fontWeight: 900,
-                          textDecoration: "none",
-                          boxShadow: "0 6px 18px rgba(232,116,43,0.32)",
-                        }}
-                      >
-                        Connect a calendar →
-                      </a>
-                      <span style={{ fontSize: 11.5, color: "#7AAAB2", fontWeight: 500, alignSelf: "center" }}>
-                        Google Calendar · Microsoft Outlook
-                      </span>
-                    </div>
-                  </div>
-                  <button onClick={continueAfterTest} disabled={busy} style={primaryButton}>
-                    {meta.isOfficeMgr || meta.isConcierge ? "Continue →" : "Skip for now — open dashboard →"}
-                  </button>
-                </>
-              )}
-              {testStatus === "idle" && (
-                <button onClick={fireTestCall} style={primaryButton}>
-                  Start the test call →
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* STEP 3 — APPOINTMENT RULES (MANDATORY for every tier).
-              Locks in default job duration + travel buffer so the AI can
-              never book overlapping jobs. Saves to profile on continue. */}
-          {step === 3 && (
             <div className="step-enter">
               <div style={{
                 display: 'inline-block',
@@ -758,7 +658,7 @@ export default function SetupWizard() {
           )}
 
           {/* STEP 4 — Phone alerts + hear your AI (UNIVERSAL — every tier) */}
-          {step === 4 && (
+          {step === 3 && (
             <div className="step-enter">
               <h2 style={{ ...titleStyle, fontSize: 26 }}>Two last things on your phone.</h2>
               <p style={{ ...subStyle, fontSize: 15 }}>
@@ -916,6 +816,28 @@ export default function SetupWizard() {
                 </p>
               </div>
 
+              {/* Real-world forwarding check — replaces the old auto-fire test
+                  call that trapped contractors on carrier-specific failures.
+                  Asking a real human to call is the actual test that matters. */}
+              <div style={{
+                background: "linear-gradient(135deg, #F0FBF8 0%, #FFFFFF 60%)",
+                border: "1.5px dashed rgba(10,168,159,0.32)",
+                borderRadius: 14,
+                padding: "16px 18px",
+                marginBottom: 18,
+              }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: "#0AA89F", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>
+                  Verify forwarding works
+                </div>
+                <p style={{ fontSize: 13, color: "#0B1F3A", lineHeight: 1.55, margin: 0 }}>
+                  Ask a family member or friend to call your business cell —{' '}
+                  <strong>{profile.owner_phone || 'your number'}</strong> — and let it ring. After ~15 seconds your carrier should forward to BellAveGo and Emma should pick up. If she does, you&apos;re live.
+                </p>
+                <p style={{ fontSize: 11, color: "#7AAAB2", lineHeight: 1.55, margin: "8px 0 0" }}>
+                  If Emma doesn&apos;t pick up: go back to step 1 and re-dial the forwarding code. Some carriers need you to wipe old forwarding first.
+                </p>
+              </div>
+
               <button onClick={continueAfterPhoneStep} disabled={busy} style={primaryButton}>
                 {busy ? "Saving…" : meta.isOfficeMgr || meta.isConcierge ? "Continue →" : "🎉 I'm done — open my dashboard →"}
               </button>
@@ -925,8 +847,8 @@ export default function SetupWizard() {
             </div>
           )}
 
-          {/* STEP 5 — CRM (Office Mgr + Concierge) */}
-          {step === 5 && (meta.isOfficeMgr || meta.isConcierge) && (
+          {/* STEP 4 — CRM (Office Mgr + Concierge) — was step 5 pre-2026-06-01 */}
+          {step === 4 && (meta.isOfficeMgr || meta.isConcierge) && (
             <div className="step-enter">
               <h2 style={titleStyle}>Connect your CRM.</h2>
               <p style={subStyle}>
@@ -951,7 +873,7 @@ export default function SetupWizard() {
           )}
 
           {/* STEP 6 — Kickoff (Concierge only) */}
-          {step === 6 && meta.isConcierge && (
+          {step === 5 && meta.isConcierge && (
             <div className="step-enter">
               <h2 style={titleStyle}>Schedule your kickoff call.</h2>
               <p style={subStyle}>
