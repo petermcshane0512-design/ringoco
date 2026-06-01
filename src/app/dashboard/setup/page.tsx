@@ -93,16 +93,16 @@ export default function SetupWizard() {
   // 25s so a stalled webhook doesn't trap the user on a silent spinner.
   const [loadingElapsed, setLoadingElapsed] = useState(0)
 
-  // Push-subscription guard for step 3. Polled on step entry so the
-  // "I'm done" button stays disabled until the contractor has at least
-  // one device registered (or explicitly skips). Closes the silent-fail
-  // hole where a new account had 0 push subs and Peter's brother's call
-  // delivered email-only, no PWA push (2026-06-01).
+  // Push-subscription guard. Polled on EVERY step now (step 1 is the
+  // critical gate — Peter saw new clients land on step 2+ with 0 push
+  // subs and never receive a lead alert, 2026-06-01). When count==0 on
+  // step 1, the "Done — let's test it →" button is locked until either
+  // (a) push subscribes, or (b) contractor explicitly skips.
   const [pushDeviceCount, setPushDeviceCount] = useState<number | null>(null)
   const [pushTestStatus, setPushTestStatus] = useState<'idle' | 'sending' | 'sent' | 'no-sub' | 'error'>('idle')
   const [pushSkipAck, setPushSkipAck] = useState(false)
+  const [copiedCode, setCopiedCode] = useState<string | null>(null)
   useEffect(() => {
-    if (step !== 3) return
     let cancelled = false
     const poll = () => {
       fetch('/api/push/device-count')
@@ -116,7 +116,19 @@ export default function SetupWizard() {
     // Re-poll every 4s so subscribing in another tab updates the gate.
     const id = setInterval(poll, 4000)
     return () => { cancelled = true; clearInterval(id) }
-  }, [step])
+  }, [])
+
+  async function copyDialCode(code: string) {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopiedCode(code)
+      setTimeout(() => setCopiedCode(c => (c === code ? null : c)), 2500)
+    } catch {
+      // Older Safari may block. Fall back to no-op; the tel: link still works.
+      setCopiedCode('err')
+      setTimeout(() => setCopiedCode(null), 2500)
+    }
+  }
 
   async function fireTestPush() {
     if (pushTestStatus === 'sending') return
@@ -173,7 +185,17 @@ export default function SetupWizard() {
         if (p.is_active && p.twilio_number) {
           // Webhook landed AND number is provisioned — render the wizard.
           setProfile(p)
-          setStep(p.setup_step && p.setup_step > 1 ? p.setup_step : 1)
+          // PWA-resume guard: if push isn't enabled yet, force back to
+          // step 1 regardless of saved setup_step. Without push, future
+          // step-2/3 work means nothing (Peter 2026-06-01).
+          let resumeStep = p.setup_step && p.setup_step > 1 ? p.setup_step : 1
+          try {
+            const dc = await fetch('/api/push/device-count').then(r => (r.ok ? r.json() : null))
+            if ((dc?.count ?? 0) === 0 && resumeStep > 1) {
+              resumeStep = 1
+            }
+          } catch { /* keep saved step */ }
+          setStep(resumeStep)
           setCrm(p.crm_provider || "")
           setLoading(false)
 
@@ -395,6 +417,14 @@ export default function SetupWizard() {
     <div style={pageStyle}>
       <style>{`
         @keyframes pulseDot { 0%,100% { transform: scale(1); opacity: 1 } 50% { transform: scale(1.4); opacity: 0.5 } }
+        @keyframes glowPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(255,157,90,0.55), 0 12px 32px rgba(10,168,159,0.28) }
+          50% { box-shadow: 0 0 0 14px rgba(255,157,90,0), 0 12px 32px rgba(10,168,159,0.32) }
+        }
+        @keyframes arrowBounce {
+          0%, 100% { transform: translateX(0) }
+          50% { transform: translateX(6px) }
+        }
         @keyframes confettiFall {
           0% { transform: translateY(-20vh) rotate(0deg); opacity: 1 }
           100% { transform: translateY(110vh) rotate(720deg); opacity: 0 }
@@ -478,13 +508,19 @@ export default function SetupWizard() {
                 </div>
               </div>
 
-              {/* Push install banner — surfaced ON STEP 1 (was previously only
-                  reachable deep in setup OR on /dashboard). The push fan-out
-                  is wired into both the take_message AND end-of-call paths,
-                  so getting the device subscribed early = first paid lead
-                  alert lands on the contractor's phone the second it comes in.
-                  Renders no-op if device already subscribed. */}
-              <div style={{ marginBottom: 22 }}>
+              {/* Push install banner — surfaced ON STEP 1, glowing when 0
+                  devices so contractors can't miss it (Peter 2026-06-01:
+                  brother's call delivered no PWA push because new account
+                  had no subscription). Renders no-op if already subscribed. */}
+              <div
+                style={{
+                  marginBottom: 22,
+                  borderRadius: 22,
+                  animation: pushDeviceCount === 0
+                    ? "glowPulse 1.8s ease-in-out infinite"
+                    : "none",
+                }}
+              >
                 <PushNotificationSetup />
               </div>
 
@@ -502,23 +538,92 @@ export default function SetupWizard() {
               {/* STEP 0 — wipe any leftover forwarding from a previous setup.
                   This prevents the "stale *72 from yesterday" bug where every
                   call goes to a number that no longer exists. Always shown. */}
-              <div style={{ marginBottom: 16, padding: "14px 16px", background: "#FFF7ED", border: "1.5px solid #FED7AA", borderRadius: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                  <span style={{ fontSize: 10, fontWeight: 800, color: "#fff", background: "#EA580C", padding: "3px 8px", borderRadius: 6, letterSpacing: "0.08em" }}>DO THIS FIRST</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: "#9A3412", letterSpacing: "0.04em", textTransform: "uppercase" }}>Wipe any old forwarding (10 sec)</span>
+              <div style={{ marginBottom: 18, padding: "16px 16px", background: "#FFF7ED", border: "1.5px solid #FED7AA", borderRadius: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <span style={{ fontSize: 10, fontWeight: 900, color: "#fff", background: "#EA580C", padding: "3px 9px", borderRadius: 6, letterSpacing: "0.1em" }}>STEP 1 OF 2</span>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: "#9A3412", letterSpacing: "0.04em", textTransform: "uppercase" }}>Wipe any old forwarding</span>
                 </div>
-                <div style={{ fontSize: 12, color: "#7C2D12", lineHeight: 1.55, marginBottom: 10 }}>
+                <div style={{ fontSize: 12.5, color: "#7C2D12", lineHeight: 1.55, marginBottom: 14 }}>
                   If you&apos;ve <strong>ever</strong> forwarded calls before — even years ago — clear it now. Otherwise the new forward may not stick.
                 </div>
-                <a href={`tel:${encodeURIComponent(clearAllForwardingCode(carrier))}`} style={{
-                  display: "inline-block", padding: "10px 18px", background: "#EA580C", color: "#fff",
-                  borderRadius: 10, textDecoration: "none", fontSize: 14, fontWeight: 800,
-                  fontFamily: "'JetBrains Mono', ui-monospace, monospace", letterSpacing: "0.5px",
-                  boxShadow: "0 4px 12px rgba(234,88,12,0.32)",
+
+                {/* Visual phone mockup — keypad screen + green CALL button */}
+                <div style={{
+                  background: "linear-gradient(180deg, #1F2937 0%, #111827 100%)",
+                  borderRadius: 18,
+                  padding: "14px 14px 16px",
+                  marginBottom: 12,
+                  boxShadow: "0 10px 28px rgba(17,24,39,0.3)",
+                  border: "3px solid #1F2937",
                 }}>
-                  Tap to dial {clearAllForwardingCode(carrier)}
-                </a>
-                <div style={{ fontSize: 11, color: "#9A3412", marginTop: 8, lineHeight: 1.5 }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.55)", textAlign: "center", letterSpacing: "0.18em", marginBottom: 6 }}>
+                    📱 YOUR PHONE — KEYPAD
+                  </div>
+                  <div style={{
+                    background: "#0B1220",
+                    borderRadius: 10,
+                    padding: "16px 12px",
+                    textAlign: "center",
+                    marginBottom: 12,
+                    border: "1px solid rgba(255,255,255,0.06)",
+                  }}>
+                    <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 30, fontWeight: 900, color: "#fff", letterSpacing: "3px" }}>
+                      {clearAllForwardingCode(carrier)}
+                    </div>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginTop: 6, letterSpacing: "0.1em" }}>
+                      type these exact digits
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                    <span style={{
+                      fontSize: 22, color: "#22C55E", fontWeight: 900,
+                      animation: "arrowBounce 1.2s ease-in-out infinite",
+                    }}>
+                      →
+                    </span>
+                    <div style={{
+                      width: 64, height: 64, borderRadius: "50%",
+                      background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      boxShadow: "0 0 0 0 rgba(34,197,94,0.55), 0 8px 22px rgba(22,163,74,0.45)",
+                      animation: "ringPulse 1.4s ease-out infinite",
+                    }}>
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                      </svg>
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: "#22C55E", letterSpacing: "0.06em" }}>
+                      then tap call
+                    </span>
+                  </div>
+                </div>
+
+                {/* Two-button row: dial OR copy */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+                  <a href={`tel:${encodeURIComponent(clearAllForwardingCode(carrier))}`} style={{
+                    padding: "12px 12px", background: "#EA580C", color: "#fff",
+                    borderRadius: 10, textDecoration: "none", fontSize: 13, fontWeight: 900,
+                    textAlign: "center", display: "block",
+                    boxShadow: "0 4px 12px rgba(234,88,12,0.32)",
+                  }}>
+                    📞 Tap to dial
+                  </a>
+                  <button
+                    onClick={() => copyDialCode(clearAllForwardingCode(carrier))}
+                    type="button"
+                    style={{
+                      padding: "12px 12px",
+                      background: copiedCode === clearAllForwardingCode(carrier) ? "#16A34A" : "#fff",
+                      color: copiedCode === clearAllForwardingCode(carrier) ? "#fff" : "#9A3412",
+                      borderRadius: 10, border: "1.5px solid #EA580C",
+                      fontSize: 13, fontWeight: 900, cursor: "pointer", fontFamily: "inherit",
+                    }}
+                  >
+                    {copiedCode === clearAllForwardingCode(carrier) ? "✓ Copied!" : "📋 Copy code"}
+                  </button>
+                </div>
+
+                <div style={{ fontSize: 11.5, color: "#9A3412", marginTop: 10, lineHeight: 1.55 }}>
                   You&apos;ll hear &quot;Erasure successful&quot; or two beeps. Then continue below.
                 </div>
               </div>
@@ -543,40 +648,153 @@ export default function SetupWizard() {
                 </button>
               )}
 
-              {/* Big tap-to-dial CTA */}
-              {profile.twilio_number && (
-                <a
-                  href={`tel:${fwdCode(carrier, profile.twilio_number)}`}
-                  onClick={onDialedForwarding}
-                  style={tapToDialStyle}
-                >
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.85)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>
-                    Tap to dial · {CARRIER_LABEL[carrier]}
+              {/* STEP 2 OF 2 — carrier-specific forward to BellAveGo */}
+              {profile.twilio_number && (() => {
+                const tn = profile.twilio_number
+                const carrierCode = fwdCode(carrier, tn)
+                return (
+                <div style={{ marginBottom: 14, padding: "16px 16px", background: "#F0FBF8", border: "1.5px solid rgba(10,168,159,0.28)", borderRadius: 14 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <span style={{ fontSize: 10, fontWeight: 900, color: "#fff", background: "#0AA89F", padding: "3px 9px", borderRadius: 6, letterSpacing: "0.1em" }}>STEP 2 OF 2</span>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: "#0B1F3A", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                      Forward to BellAveGo · {CARRIER_LABEL[carrier]}
+                    </span>
                   </div>
-                  <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 26, fontWeight: 800, letterSpacing: "1px" }}>
-                    {fwdCode(carrier, profile.twilio_number)}
+                  <div style={{ fontSize: 12.5, color: "#0B1F3A", lineHeight: 1.55, marginBottom: 14 }}>
+                    This code tells your carrier to forward unanswered calls to your AI receptionist after about 15 seconds.
                   </div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.85)", marginTop: 8 }}>
-                    Tap from your phone &nbsp;·&nbsp; Press call &nbsp;·&nbsp; Hang up
+
+                  {/* Phone mockup — keypad screen with the carrier code typed */}
+                  <div style={{
+                    background: "linear-gradient(180deg, #1F2937 0%, #111827 100%)",
+                    borderRadius: 18,
+                    padding: "14px 14px 16px",
+                    marginBottom: 12,
+                    boxShadow: "0 10px 28px rgba(17,24,39,0.3)",
+                    border: "3px solid #1F2937",
+                  }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.55)", textAlign: "center", letterSpacing: "0.18em", marginBottom: 6 }}>
+                      📱 YOUR PHONE — KEYPAD
+                    </div>
+                    <div style={{
+                      background: "#0B1220",
+                      borderRadius: 10,
+                      padding: "16px 10px",
+                      textAlign: "center",
+                      marginBottom: 12,
+                      border: "1px solid rgba(255,255,255,0.06)",
+                    }}>
+                      <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 22, fontWeight: 900, color: "#fff", letterSpacing: "1.5px", wordBreak: "break-all" }}>
+                        {carrierCode}
+                      </div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginTop: 6, letterSpacing: "0.1em" }}>
+                        the digits include your BellAveGo number above
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                      <span style={{
+                        fontSize: 22, color: "#22C55E", fontWeight: 900,
+                        animation: "arrowBounce 1.2s ease-in-out infinite",
+                      }}>
+                        →
+                      </span>
+                      <div style={{
+                        width: 64, height: 64, borderRadius: "50%",
+                        background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        boxShadow: "0 0 0 0 rgba(34,197,94,0.55), 0 8px 22px rgba(22,163,74,0.45)",
+                        animation: "ringPulse 1.4s ease-out infinite",
+                      }}>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                        </svg>
+                      </div>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: "#22C55E", letterSpacing: "0.06em" }}>
+                        then tap call
+                      </span>
+                    </div>
                   </div>
-                </a>
-              )}
+
+                  {/* Two-button row: dial OR copy */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <a
+                      href={`tel:${carrierCode}`}
+                      onClick={onDialedForwarding}
+                      style={{
+                        padding: "14px 12px",
+                        background: "linear-gradient(135deg, #0AA89F, #088A82)",
+                        color: "#fff",
+                        borderRadius: 10, textDecoration: "none",
+                        fontSize: 14, fontWeight: 900,
+                        textAlign: "center", display: "block",
+                        boxShadow: "0 6px 18px rgba(10,168,159,0.32)",
+                      }}
+                    >
+                      📞 Tap to dial
+                    </a>
+                    <button
+                      onClick={() => copyDialCode(carrierCode)}
+                      type="button"
+                      style={{
+                        padding: "14px 12px",
+                        background: copiedCode === carrierCode ? "#16A34A" : "#fff",
+                        color: copiedCode === carrierCode ? "#fff" : "#0AA89F",
+                        borderRadius: 10, border: "1.5px solid #0AA89F",
+                        fontSize: 14, fontWeight: 900, cursor: "pointer", fontFamily: "inherit",
+                      }}
+                    >
+                      {copiedCode === carrierCode ? "✓ Copied!" : "📋 Copy code"}
+                    </button>
+                  </div>
+                </div>
+                )
+              })()}
 
               {/* What to expect — sets the trust */}
-              <div style={{ marginTop: 14, padding: "12px 14px", background: "#F5FDFB", border: "1px dashed rgba(10,168,159,0.3)", borderRadius: 10 }}>
+              <div style={{ marginTop: 4, padding: "12px 14px", background: "#F5FDFB", border: "1px dashed rgba(10,168,159,0.3)", borderRadius: 10 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "#0AA89F", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
                   What to expect
                 </div>
                 <ol style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: "#4A7A80", lineHeight: 1.7 }}>
                   <li>You&apos;ll hear a confirmation tone or short message</li>
                   <li>Your carrier saves the forwarding rule — calls after 12 sec of no answer route here</li>
-                  <li>We&apos;ll verify in the next step with a live test call</li>
+                  <li>Have a friend call your business cell to verify it works (on the last step)</li>
                 </ol>
               </div>
 
-              <button onClick={onDialedForwarding} disabled={busy} style={{ ...primaryButton, marginTop: 16 }}>
-                {busy ? "Saving…" : "Done — let's test it →"}
-              </button>
+              {/* PUSH GATE on step 1 — can't continue until phone alerts on,
+                  OR contractor explicitly skips. Closes the silent-fail hole
+                  where new accounts had 0 push subs (Peter 2026-06-01). */}
+              {pushDeviceCount === 0 && !pushSkipAck ? (
+                <>
+                  <button
+                    disabled
+                    style={{ ...primaryButton, marginTop: 16, opacity: 0.45, cursor: "not-allowed" }}
+                  >
+                    🔔 Turn on Lead Alerts above first
+                  </button>
+                  <div style={{ fontSize: 12, color: "#B45309", fontWeight: 700, marginTop: 10, textAlign: "center", lineHeight: 1.55 }}>
+                    Enable lead alerts above before continuing — otherwise you won&apos;t get phone notifications when a customer calls.
+                  </div>
+                  <button
+                    onClick={() => setPushSkipAck(true)}
+                    type="button"
+                    style={{
+                      background: "transparent", border: "none",
+                      color: "#A0BCC2", fontSize: 11, fontWeight: 700,
+                      cursor: "pointer", padding: "10px 0 0",
+                      width: "100%", textAlign: "center", fontFamily: "inherit",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    Skip phone alerts for now (not recommended)
+                  </button>
+                </>
+              ) : (
+                <button onClick={onDialedForwarding} disabled={busy} style={{ ...primaryButton, marginTop: 16 }}>
+                  {busy ? "Saving…" : "Done — set appointment rules →"}
+                </button>
+              )}
 
               <div style={{ fontSize: 11, color: "#A0BCC2", marginTop: 14, textAlign: "center" }}>
                 To turn off forwarding later, dial <strong style={{ color: "#4A7A80" }}>{disableCode(carrier)}</strong> from the same phone.
