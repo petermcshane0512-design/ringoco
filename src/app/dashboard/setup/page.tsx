@@ -548,27 +548,24 @@ export default function SetupWizard() {
                   <div style={{ fontSize: 10, fontWeight: 900, color: "#C2410C", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>
                     How to add BellAveGo to your phone
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4 }}>
-                    <Image
+                  {/* Plain <img> so the grid columns control width — Next/Image
+                      was leaking its intrinsic sizing into the grid and
+                      stacking the cells on narrow screens. */}
+                  <div style={{ display: "flex", flexDirection: "row", gap: 4, width: "100%", alignItems: "flex-start" }}>
+                    <img
                       src="/ADDTOHOMESCREEN.png"
                       alt="Add to Home Screen — step 1"
-                      width={300}
-                      height={520}
-                      style={{ width: "100%", height: "auto", borderRadius: 6, display: "block" }}
+                      style={{ flex: "1 1 0", minWidth: 0, width: "33%", height: "auto", borderRadius: 6, display: "block" }}
                     />
-                    <Image
+                    <img
                       src="/ADDTOHOMESCREEN2.png"
                       alt="Add to Home Screen — step 2"
-                      width={300}
-                      height={520}
-                      style={{ width: "100%", height: "auto", borderRadius: 6, display: "block" }}
+                      style={{ flex: "1 1 0", minWidth: 0, width: "33%", height: "auto", borderRadius: 6, display: "block" }}
                     />
-                    <Image
+                    <img
                       src="/ADDTOHOMESCREEN3.png"
                       alt="Add to Home Screen — step 3"
-                      width={300}
-                      height={520}
-                      style={{ width: "100%", height: "auto", borderRadius: 6, display: "block" }}
+                      style={{ flex: "1 1 0", minWidth: 0, width: "33%", height: "auto", borderRadius: 6, display: "block" }}
                     />
                   </div>
                 </div>
@@ -598,19 +595,20 @@ export default function SetupWizard() {
                   If you&apos;ve <strong>ever</strong> forwarded calls before — even years ago — clear it now. Pick your carrier:
                 </div>
 
-                {/* Two side-by-side carrier cards */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                {/* Two side-by-side carrier cards. Flex with explicit
+                    flex-basis so the row never collapses to vertical
+                    regardless of viewport. Plain img tags so Next/Image
+                    can't impose intrinsic sizing on the row. */}
+                <div style={{ display: "flex", flexDirection: "row", gap: 6, width: "100%", alignItems: "stretch" }}>
 
                   {/* Card 1 — AT&T / T-Mobile / US Cellular / Sprint → ##002# */}
-                  <div style={{ background: "#fff", borderRadius: 10, padding: "6px 6px 8px", border: "1.5px solid #FED7AA", display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div style={{ flex: "1 1 0", minWidth: 0, background: "#fff", borderRadius: 10, padding: "6px 6px 8px", border: "1.5px solid #FED7AA", display: "flex", flexDirection: "column", gap: 6 }}>
                     <div style={{ fontSize: 11, fontWeight: 900, color: "#9A3412", textAlign: "center", lineHeight: 1.35, letterSpacing: "0.02em" }}>
                       AT&amp;T · T-Mobile<br />US Cellular · Sprint
                     </div>
-                    <Image
+                    <img
                       src="/dialsweep1.png"
                       alt="AT&T, T-Mobile, US Cellular, Sprint dial sweep — type ##002# then tap call"
-                      width={400}
-                      height={500}
                       style={{ width: "100%", height: "auto", borderRadius: 8, display: "block" }}
                     />
                     <button
@@ -623,7 +621,7 @@ export default function SetupWizard() {
                           : "linear-gradient(135deg, #FB923C 0%, #EA580C 60%, #C2410C 100%)",
                         color: "#fff",
                         borderRadius: 10, border: "none",
-                        fontSize: 13, fontWeight: 900, cursor: "pointer", fontFamily: "inherit",
+                        fontSize: 12, fontWeight: 900, cursor: "pointer", fontFamily: "inherit",
                         animation: copiedCode === "##002#"
                           ? "none"
                           : "copyBob 1.4s ease-in-out infinite, copyGlow 2s ease-in-out infinite",
@@ -634,15 +632,13 @@ export default function SetupWizard() {
                   </div>
 
                   {/* Card 2 — Verizon → *73 */}
-                  <div style={{ background: "#fff", borderRadius: 10, padding: "6px 6px 8px", border: "1.5px solid #FED7AA", display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div style={{ flex: "1 1 0", minWidth: 0, background: "#fff", borderRadius: 10, padding: "6px 6px 8px", border: "1.5px solid #FED7AA", display: "flex", flexDirection: "column", gap: 6 }}>
                     <div style={{ fontSize: 11, fontWeight: 900, color: "#9A3412", textAlign: "center", lineHeight: 1.35, letterSpacing: "0.02em" }}>
                       Verizon
                     </div>
-                    <Image
+                    <img
                       src="/dialsweep2.png"
                       alt="Verizon dial sweep — type *73 then tap call"
-                      width={400}
-                      height={500}
                       style={{ width: "100%", height: "auto", borderRadius: 8, display: "block" }}
                     />
                     <button
@@ -655,7 +651,7 @@ export default function SetupWizard() {
                           : "linear-gradient(135deg, #FB923C 0%, #EA580C 60%, #C2410C 100%)",
                         color: "#fff",
                         borderRadius: 10, border: "none",
-                        fontSize: 13, fontWeight: 900, cursor: "pointer", fontFamily: "inherit",
+                        fontSize: 12, fontWeight: 900, cursor: "pointer", fontFamily: "inherit",
                         animation: copiedCode === "*73"
                           ? "none"
                           : "copyBob 1.4s ease-in-out infinite, copyGlow 2s ease-in-out infinite",
