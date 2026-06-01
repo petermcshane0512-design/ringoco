@@ -61,6 +61,11 @@ export async function POST(req: NextRequest) {
       payment_method_types: ['card'],
       mode: 'subscription',
       line_items,
+      // Allow promo code entry on the Stripe-hosted page. Founder-only test
+      // codes (e.g. PETERTEST 100%-off forever) flow through here so Peter
+      // and any internal QA can experience the entire signup → checkout →
+      // onboarding flow end-to-end without burning $147.
+      allow_promotion_codes: true,
       payment_method_collection: 'always',
       metadata: { userId, tier, interval, trial_days: String(TRIAL_DAYS) },
       subscription_data: {
