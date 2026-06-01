@@ -318,7 +318,27 @@ export default function PushNotificationSetup() {
           Add BellAveGo to your Home Screen first
         </div>
         <ol style={{ fontSize: 15, lineHeight: 1.55, paddingLeft: 20, margin: '0 0 12px 0' }}>
-          <li>Tap the <strong>Share</strong> icon (square with arrow) at the bottom of Safari</li>
+          <li>
+            Tap the <strong>Share</strong> icon{' '}
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 32, height: 32,
+              borderRadius: 8,
+              background: 'rgba(255,255,255,0.18)',
+              border: '1.5px solid rgba(255,255,255,0.45)',
+              verticalAlign: 'middle',
+              margin: '0 4px',
+            }}>
+              <svg width="18" height="20" viewBox="0 0 24 26" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4 13v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="16" />
+              </svg>
+            </span>
+            {' '}at the bottom of Safari
+          </li>
           <li>Scroll → tap <strong>Add to Home Screen</strong> → tap <strong>Add</strong></li>
           <li>Close Safari and open BellAveGo from your home screen</li>
           <li>You&apos;ll see the &quot;Turn on Lead Alerts&quot; button — tap it</li>

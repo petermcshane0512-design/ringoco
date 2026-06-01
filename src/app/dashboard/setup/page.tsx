@@ -601,16 +601,32 @@ export default function SetupWizard() {
                     can't impose intrinsic sizing on the row. */}
                 <div style={{ display: "flex", flexDirection: "row", gap: 6, width: "100%", alignItems: "stretch" }}>
 
-                  {/* Card 1 — AT&T / T-Mobile / US Cellular / Sprint → ##002# */}
+                  {/* Card 1 — AT&T / T-Mobile / US Cellular / Sprint → ##002#
+                      Carrier label moved UNDER the image (above the copy
+                      button) so both cards have the same image height —
+                      previously the 2-line carrier list on top pushed the
+                      image down and the cards looked misaligned. */}
                   <div style={{ flex: "1 1 0", minWidth: 0, background: "#fff", borderRadius: 10, padding: "6px 6px 8px", border: "1.5px solid #FED7AA", display: "flex", flexDirection: "column", gap: 6 }}>
-                    <div style={{ fontSize: 11, fontWeight: 900, color: "#9A3412", textAlign: "center", lineHeight: 1.35, letterSpacing: "0.02em" }}>
-                      AT&amp;T · T-Mobile<br />US Cellular · Sprint
-                    </div>
                     <img
                       src="/dialsweep1.png"
                       alt="AT&T, T-Mobile, US Cellular, Sprint dial sweep — type ##002# then tap call"
                       style={{ width: "100%", height: "auto", borderRadius: 8, display: "block" }}
                     />
+                    <div style={{
+                      fontSize: 11,
+                      fontWeight: 900,
+                      color: "#fff",
+                      background: "linear-gradient(135deg, #0B1F3A, #163356)",
+                      textAlign: "center",
+                      letterSpacing: "0.04em",
+                      padding: "6px 4px",
+                      borderRadius: 8,
+                      textTransform: "uppercase",
+                      lineHeight: 1.3,
+                      boxShadow: "0 2px 8px rgba(11,31,58,0.18)",
+                    }}>
+                      AT&amp;T · T-Mobile<br />US Cellular · Sprint
+                    </div>
                     <button
                       onClick={() => copyDialCode("##002#")}
                       type="button"
@@ -633,14 +649,26 @@ export default function SetupWizard() {
 
                   {/* Card 2 — Verizon → *73 */}
                   <div style={{ flex: "1 1 0", minWidth: 0, background: "#fff", borderRadius: 10, padding: "6px 6px 8px", border: "1.5px solid #FED7AA", display: "flex", flexDirection: "column", gap: 6 }}>
-                    <div style={{ fontSize: 11, fontWeight: 900, color: "#9A3412", textAlign: "center", lineHeight: 1.35, letterSpacing: "0.02em" }}>
-                      Verizon
-                    </div>
                     <img
                       src="/dialsweep2.png"
                       alt="Verizon dial sweep — type *73 then tap call"
                       style={{ width: "100%", height: "auto", borderRadius: 8, display: "block" }}
                     />
+                    <div style={{
+                      fontSize: 13,
+                      fontWeight: 900,
+                      color: "#fff",
+                      background: "linear-gradient(135deg, #DC2626, #B91C1C)",
+                      textAlign: "center",
+                      letterSpacing: "0.04em",
+                      padding: "10px 4px",
+                      borderRadius: 8,
+                      textTransform: "uppercase",
+                      lineHeight: 1.3,
+                      boxShadow: "0 2px 8px rgba(220,38,38,0.22)",
+                    }}>
+                      Verizon
+                    </div>
                     <button
                       onClick={() => copyDialCode("*73")}
                       type="button"
@@ -704,54 +732,67 @@ export default function SetupWizard() {
                     This code tells your carrier to forward unanswered calls to your AI receptionist after about 15 seconds.
                   </div>
 
-                  {/* Phone mockup — keypad screen with the carrier code typed */}
-                  <div style={{
-                    background: "linear-gradient(180deg, #1F2937 0%, #111827 100%)",
-                    borderRadius: 18,
-                    padding: "14px 14px 16px",
-                    marginBottom: 12,
-                    boxShadow: "0 10px 28px rgba(17,24,39,0.3)",
-                    border: "3px solid #1F2937",
-                  }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.55)", textAlign: "center", letterSpacing: "0.18em", marginBottom: 6 }}>
-                      📱 YOUR PHONE — KEYPAD
-                    </div>
+                  {/* Phone mockup 75% + NUMBER.png 25% side-by-side
+                      (Peter 2026-06-01 — wants visual of what the
+                      forwarded number sticker looks like next to the
+                      keypad demo). */}
+                  <div style={{ display: "flex", flexDirection: "row", gap: 8, marginBottom: 12, alignItems: "stretch" }}>
                     <div style={{
-                      background: "#0B1220",
-                      borderRadius: 10,
-                      padding: "16px 10px",
-                      textAlign: "center",
-                      marginBottom: 12,
-                      border: "1px solid rgba(255,255,255,0.06)",
+                      flex: "3 1 0",
+                      minWidth: 0,
+                      background: "linear-gradient(180deg, #1F2937 0%, #111827 100%)",
+                      borderRadius: 18,
+                      padding: "14px 12px 16px",
+                      boxShadow: "0 10px 28px rgba(17,24,39,0.3)",
+                      border: "3px solid #1F2937",
                     }}>
-                      <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 22, fontWeight: 900, color: "#fff", letterSpacing: "1.5px", wordBreak: "break-all" }}>
-                        {carrierCode}
+                      <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.55)", textAlign: "center", letterSpacing: "0.18em", marginBottom: 6 }}>
+                        📱 YOUR PHONE — KEYPAD
                       </div>
-                      <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginTop: 6, letterSpacing: "0.1em" }}>
-                        the digits include your BellAveGo number above
+                      <div style={{
+                        background: "#0B1220",
+                        borderRadius: 10,
+                        padding: "14px 8px",
+                        textAlign: "center",
+                        marginBottom: 12,
+                        border: "1px solid rgba(255,255,255,0.06)",
+                      }}>
+                        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 18, fontWeight: 900, color: "#fff", letterSpacing: "1px", wordBreak: "break-all" }}>
+                          {carrierCode}
+                        </div>
+                        <div style={{ fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginTop: 6, letterSpacing: "0.1em" }}>
+                          includes your BellAveGo number
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                        <span style={{
+                          fontSize: 20, color: "#22C55E", fontWeight: 900,
+                          animation: "arrowBounce 1.2s ease-in-out infinite",
+                        }}>
+                          →
+                        </span>
+                        <div style={{
+                          width: 52, height: 52, borderRadius: "50%",
+                          background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          boxShadow: "0 0 0 0 rgba(34,197,94,0.55), 0 8px 22px rgba(22,163,74,0.45)",
+                          animation: "ringPulse 1.4s ease-out infinite",
+                        }}>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                          </svg>
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: "#22C55E", letterSpacing: "0.04em" }}>
+                          tap call
+                        </span>
                       </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-                      <span style={{
-                        fontSize: 22, color: "#22C55E", fontWeight: 900,
-                        animation: "arrowBounce 1.2s ease-in-out infinite",
-                      }}>
-                        →
-                      </span>
-                      <div style={{
-                        width: 64, height: 64, borderRadius: "50%",
-                        background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        boxShadow: "0 0 0 0 rgba(34,197,94,0.55), 0 8px 22px rgba(22,163,74,0.45)",
-                        animation: "ringPulse 1.4s ease-out infinite",
-                      }}>
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                        </svg>
-                      </div>
-                      <span style={{ fontSize: 12, fontWeight: 800, color: "#22C55E", letterSpacing: "0.06em" }}>
-                        then tap call
-                      </span>
+                    <div style={{ flex: "1 1 0", minWidth: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <img
+                        src="/NUMBER.png"
+                        alt="What the forwarded number looks like on the keypad"
+                        style={{ width: "100%", height: "auto", borderRadius: 8, display: "block" }}
+                      />
                     </div>
                   </div>
 
@@ -780,7 +821,7 @@ export default function SetupWizard() {
                   >
                     {copiedCode === carrierCode
                       ? "✓ Copied — now paste it into your Phone app"
-                      : "📋 Copy code"}
+                      : "📋 Copy your code"}
                   </button>
                 </div>
                 )
