@@ -93,6 +93,7 @@ export default function DashboardPage() {
     summary: string | null
     viewed_at: string | null
     created_at: string
+    recording_url: string | null
   }
   const [activity, setActivity] = useState<ActivityRow[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -847,15 +848,28 @@ export default function DashboardPage() {
                           <div style={{ fontSize: 12.5, color: '#4A6670', lineHeight: 1.45 }}>
                             {summaryShort}{summaryShort.length === 110 ? '…' : ''}
                           </div>
-                          {a.caller_phone && (
-                            <a
-                              href={`tel:${a.caller_phone}`}
-                              onClick={(e) => e.stopPropagation()}
-                              style={{ display: 'inline-block', marginTop: 6, fontSize: 11.5, fontWeight: 700, color: '#0AA89F', textDecoration: 'none' }}
-                            >
-                              📲 Tap to call back
-                            </a>
-                          )}
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 6, alignItems: 'center' }}>
+                            {a.caller_phone && (
+                              <a
+                                href={`tel:${a.caller_phone}`}
+                                onClick={(e) => e.stopPropagation()}
+                                style={{ fontSize: 11.5, fontWeight: 700, color: '#0AA89F', textDecoration: 'none' }}
+                              >
+                                📲 Tap to call back
+                              </a>
+                            )}
+                            {a.recording_url && (
+                              <a
+                                href={a.recording_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                style={{ fontSize: 11.5, fontWeight: 700, color: '#7C3AED', textDecoration: 'none' }}
+                              >
+                                ▶ Listen to call
+                              </a>
+                            )}
+                          </div>
                         </div>
                       </li>
                     )

@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
   const [{ data: rows, error: rowsErr }, { count: unreadCount }] = await Promise.all([
     supabase
       .from('call_logs')
-      .select('id, call_sid, caller_phone, job_type, job_created, booking_completed, summary, viewed_at, created_at')
+      .select('id, call_sid, caller_phone, job_type, job_created, booking_completed, summary, viewed_at, created_at, recording_url')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(limit),

@@ -1083,6 +1083,14 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
   }
   const effectiveMessageCaptured = messageCaptured || priorJobCreated
 
+  // Vapi posts the call recording URL on every end-of-call-report event.
+  // Sometimes at message.recordingUrl, sometimes nested under artifact.
+  // Capture both so the dashboard "▶ Listen" button always finds it.
+  const recordingUrl =
+    (message as unknown as { recordingUrl?: string | null })?.recordingUrl ??
+    (message as unknown as { artifact?: { recordingUrl?: string | null } })?.artifact?.recordingUrl ??
+    null
+
   try {
     await supabase.from('call_logs').upsert(
       {
@@ -1102,6 +1110,7 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
         // the founder dashboard can show real-time spend instead of an
         // estimate. Column added in sql/2026-05-24-call-logs-cost.sql.
         cost_usd: (message as unknown as { cost?: number })?.cost ?? null,
+        recording_url: recordingUrl,
       },
       { onConflict: 'call_sid' },
     )
