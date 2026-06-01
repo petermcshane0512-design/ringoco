@@ -1,4 +1,6 @@
 'use client'
+import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import Image from 'next/image'
 import { SignIn } from '@clerk/nextjs'
 import { motion } from 'framer-motion'
@@ -47,6 +49,22 @@ const clerkAppearance = {
 }
 
 export default function SignInPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignInInner />
+    </Suspense>
+  )
+}
+
+function SignInInner() {
+  // Honor the redirect_url query param so a deep link (e.g. a /dashboard
+  // request that bounced through middleware to /sign-in) completes after
+  // auth. Falls back to /dashboard for organic sign-ins — without ANY
+  // redirect target, Clerk's <SignIn> leaves the user on a blank shell
+  // after success, which is what bit Peter on 2026-06-01.
+  const searchParams = useSearchParams()
+  const redirectUrl = searchParams.get('redirect_url') || '/dashboard'
+
   return (
     <div className="auth-page" style={{
       minHeight: '100vh',
@@ -118,7 +136,7 @@ export default function SignInPage() {
       >
         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 380, height: 380, background: 'radial-gradient(ellipse, rgba(32,178,170,0.12) 0%, transparent 65%)', pointerEvents: 'none' }} />
         <div style={{ width: '100%', position: 'relative', zIndex: 1 }}>
-          <SignIn appearance={clerkAppearance} />
+          <SignIn forceRedirectUrl={redirectUrl} appearance={clerkAppearance} />
         </div>
       </motion.div>
     </div>
