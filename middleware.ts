@@ -17,6 +17,10 @@ const isPublicRoute = createRouteMatcher([
   "/goodbye(.*)",
   "/privacy(.*)",
   "/terms(.*)",
+  // Programmatic SEO landing pages — must be publicly indexable by Google.
+  "/answering-service(.*)",
+  "/sitemap.xml",
+  "/robots.txt",
   // Concierge + Multi-Location waitlist — public form for prospects who don't
   // have accounts yet. /api/waitlist receives the POST from the form.
   "/waitlist(.*)",
