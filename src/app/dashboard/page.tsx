@@ -7,6 +7,7 @@ import { useUser } from "@clerk/nextjs";
 import { TIER_METADATA, type Tier } from "@/lib/pricing";
 import { useIsMobile } from "@/lib/useIsMobile";
 import PushNotificationSetup from "@/components/PushNotificationSetup";
+import ReferralBanner from "@/components/ReferralBanner";
 
 const ADMIN_EMAILS = new Set(["pmcshane@fordham.edu", "peter@bellavego.com"]);
 
@@ -437,6 +438,12 @@ export default function DashboardPage() {
       {/* CALENDAR SYNC PROMO — top of dashboard, hard to miss. Hides itself
           once the contractor has connected at least one calendar. */}
       <CalendarSyncBanner />
+
+      {/* REFERRAL BANNER — top of dashboard so every paying customer sees
+          it (single highest-converting acquisition channel for SMB SaaS).
+          Auto-hides if dismissed via localStorage or the /api/referrals/me
+          call errors. Full stats widget stays on /dashboard/settings. */}
+      <ReferralBanner />
 
       {/* PUSH NOTIFICATION OPT-IN — auto-hides if subscribed/unsupported.
           Replaces SMS for contractor lead alerts; survives A2P 10DLC blackout. */}

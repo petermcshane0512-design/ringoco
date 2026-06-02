@@ -21,6 +21,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/sample-report`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${base}/sign-up`,      lastModified: now, changeFrequency: 'yearly',  priority: 0.5 },
     { url: `${base}/sign-in`,      lastModified: now, changeFrequency: 'yearly',  priority: 0.4 },
+    { url: `${base}/tools/missed-call-calculator`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
   ]
   const seoPages: MetadataRoute.Sitemap = []
   for (const t of TRADES) {
