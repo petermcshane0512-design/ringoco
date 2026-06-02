@@ -23,6 +23,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/sign-in`,      lastModified: now, changeFrequency: 'yearly',  priority: 0.4 },
     { url: `${base}/tools/missed-call-calculator`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
   ]
+  // National trade hub pages — 6 high-volume national keywords
+  // (e.g. "AI receptionist HVAC"). Higher priority than city pages
+  // because each anchors a topical cluster.
+  const tradeHubs: MetadataRoute.Sitemap = TRADES.map((t) => ({
+    url: `${base}/answering-service-for-${t.slug}`,
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.85,
+  }))
+
+  // City × trade combo pages — 300 total
   const seoPages: MetadataRoute.Sitemap = []
   for (const t of TRADES) {
     for (const c of CITIES) {
@@ -34,5 +45,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
       })
     }
   }
-  return [...fixed, ...seoPages]
+  return [...fixed, ...tradeHubs, ...seoPages]
 }

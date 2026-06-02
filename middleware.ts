@@ -19,6 +19,7 @@ const isPublicRoute = createRouteMatcher([
   "/terms(.*)",
   // Programmatic SEO landing pages — must be publicly indexable by Google.
   "/answering-service(.*)",
+  "/answering-service-for(.*)",
   "/tools(.*)",
   "/sitemap.xml",
   "/robots.txt",
