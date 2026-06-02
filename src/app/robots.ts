@@ -20,6 +20,10 @@ export default function robots(): MetadataRoute.Robots {
           '/sign-in/',
           '/sign-up/',
           '/r/',  // private report viewer — uses unguessable UUIDs but no need to crawl
+          // Personalized cold-outreach growth reports — 1:1 attachments,
+          // not SEO content. Backed up by noindex meta tag on the page
+          // itself so even direct discovery doesn't index them.
+          '/sample-report',
         ],
       },
     ],

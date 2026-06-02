@@ -9,8 +9,16 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
   const businessName = (sp.for || sp.business || '').trim()
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.bellavego.com'
 
+  // noindex on ALL /sample-report URLs — these are 1:1 personalized
+  // cold-outreach attachments, not SEO content. We want them crawlable
+  // for OpenGraph (Twitter/iMessage previews) but NOT indexed by Google,
+  // so they don't pollute organic results or compete with the real SEO
+  // landing pages at /answering-service/[trade]-[city].
+  const noIndex = { robots: { index: false, follow: false } } as const
+
   if (!businessName) {
     return {
+      ...noIndex,
       title: 'BellAveGo Growth Report — Sample',
       description: 'See what BellAveGo Consulting delivers — every quarter, automatically, based on your real call and booking data.',
       openGraph: {
@@ -33,6 +41,7 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
   const ogUrl = `${baseUrl}/api/og/sample-report?${ogParams.toString()}`
 
   return {
+    ...noIndex,
     title: `${businessName} — Growth Report by BellAveGo`,
     description: `AI-generated revenue analysis for ${businessName}. Three opportunities. Five-step action plan. Real local market data.`,
     openGraph: {
