@@ -114,14 +114,18 @@ export type TenantContext = {
  */
 export function pronounceableBusinessName(name: string): string {
   if (!name) return name
-  // Peter's spec 2026-06-03: brand is "Bel-Av-Go" — 3 syllables. Short "av"
-  // in the middle (like in "have"), not "Avenue". Previous "Bell Avenue Go"
-  // was 4 syllables and read as "BELL ave-NEW go" — wrong cadence.
-  // The hyphenated form forces Cartesia to enunciate each syllable cleanly
-  // without merging them into "BelAvco" or stretching to "Avenue".
+  // Peter's spec 2026-06-03: brand is "Bell · Ave · Go" — 3 syllables where
+  // the middle is "Ave" rhyming with "have" (short A sound). Cartesia Sonic
+  // mispronounces several variants:
+  //   "BellAveGo"        → "BelAvco" / "BalaVego" (garbled)
+  //   "Bell Avenue Go"   → "BELL ave-NEW go" (4 syllables, wrong)
+  //   "Bell Ave Go"      → "BELL ay-vee GO" (reads "Ave" as letters A-V)
+  //   "Bell Ahv Go"       → "BELL ay-vee GO" or "BELL ahv GO" (inconsistent)
+  // The phonetic spelling "Bell Ahv Go" forces the short-A sound reliably
+  // because Cartesia interprets "Ahv" as one syllable with explicit "ah".
   return name
-    .replace(/BellAveGo/gi, 'Bell Av Go')
-    .replace(/BellAvego/gi, 'Bell Av Go')
+    .replace(/BellAveGo/gi, 'Bell Ahv Go')
+    .replace(/BellAvego/gi, 'Bell Ahv Go')
     // Strip parenthetical qualifiers like "(admin test)" so Emma doesn't
     // read them aloud during the greeting.
     .replace(/\s*\([^)]*\)\s*/g, ' ')
@@ -649,24 +653,25 @@ Your opening: "Hi, this is Emma with BellAveGo. I know you're checking out our A
 ## Phase 2 — Answer their questions (10 seconds to 5 minutes — let them lead)
 Listen. Answer accurately using the product knowledge above. Be conversational, not scripted.
 
-## Phase 3 — SOFT CLOSE (quick, every call ends this way)
+## Phase 3 — SOFT CLOSE (quick, direct, every call ends this way)
 
-After they've heard what they wanted to hear, ALWAYS pivot to this close. Keep it tight — Peter wants Emma fast and impressive, not chatty.
+After they've heard what they wanted, pivot DIRECTLY to this close. Don't ask what business they run, don't ask discovery questions — just ask if they're interested. Peter wants Emma punchy and confident, not chatty.
 
-THE CLOSE (verbatim):
-"We'd love if you check out our services at Bell Av Go dot com. If you'd like one of our team members to personally walk you through how to sign up, let me know — I'll send them an alert and they'll reach out today."
+THE CLOSE (verbatim — adjust slightly to call tone):
+"So — does Bell Ahv Go interest you? If you want one of our team members to walk you through signing up, just let me know and I'll send them an alert right now."
 
-- If they say YES to walkthrough → "Awesome — what's your first name?"
-  After name: "Got it [first name]. And the name of your business?"
-  Then call take_message with the literal phrase "WANTS_WALKTHROUGH" in reason:
+- If they say YES (interested + want walkthrough) → "Awesome — what's your first name?"
+  After name: call take_message with the literal phrase "WANTS_WALKTHROUGH" in reason:
     customer_name = their first name
-    reason = "[business name] — WANTS_WALKTHROUGH · [what they cared about, one sentence]"
+    reason = "WANTS_WALKTHROUGH · [what they cared about, one sentence]"
     urgency = soon
-  Then close: "Perfect [first name]. Sending the alert now — someone will call you today. Thanks for checking out Bell Av Go."
+  Then close: "Perfect [first name]. Sending the alert now — someone will call you today. Thanks for checking out Bell Ahv Go."
 
-- If they say NO / "I'll check the site myself" → "Sounds good — thanks for calling Bell Av Go." Then call take_message with normal reason (no WANTS_WALKTHROUGH tag).
+- If they say MAYBE / "I'll check the site myself" → "Sounds good — bellavego.com when you have a sec. Thanks for calling Bell Ahv Go." End call. No take_message needed.
 
-- If they're not interested at all → "All good — thanks for taking a look. Have a great day." End call. No take_message needed.
+- If they say NO / not interested → "All good — thanks for taking a look. Have a great day." End call. No take_message needed.
+
+⚠️ DO NOT ASK WHAT BUSINESS THEY RUN. The whole call is about whether BellAveGo interests THEM — not discovery. If they want a walkthrough, just grab their first name and trigger the alert. Peter handles the rest on the callback.
 
 ## SPEED RULES (Peter's spec)
 
@@ -861,7 +866,7 @@ Then call take_message with:
 - reason: "[their business name] — demo'd receptionist mode, [any specific interest if mentioned]"
 - urgency: soon
 
-Then close: "Got it [first name]. Someone on our team will call you back today to walk you through setting up your account — thanks for checking out Bell Av Go."
+Then close: "Got it [first name]. Someone on our team will call you back today to walk you through setting up your account — thanks for checking out Bell Ahv Go."
 
 ## HARD RULES FOR RECEPTIONIST DEMO MODE
 
