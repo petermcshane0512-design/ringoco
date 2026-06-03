@@ -58,7 +58,7 @@ async function runSync(req: NextRequest) {
   const url = new URL(req.url)
   const firstMessage =
     url.searchParams.get('firstMessage') ||
-    "Hi, this is Emma with Bell Ahva Go. Do you want to hear about our software, or how I'd answer a phone call for your team?"
+    "Hey, this is Emma with Bell Ahva Go. Are you interested in hearing about our software, or how we're going to start answering your calls when you sign up?"
 
   const tools = [
     {
