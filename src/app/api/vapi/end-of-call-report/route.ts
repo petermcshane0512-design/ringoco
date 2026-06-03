@@ -228,33 +228,43 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
           logTwilioSmsError('demo caller SMS', e)
         }
 
-        // Trial-text close — Emma asks at the end of every demo call:
-        // "Want me to text you a free 7-day trial signup link?" If yes, she
-        // tags the take_message reason with "WANTS_TRIAL_LINK" and we fire
-        // the trial-link SMS here. Captures inbound express consent on the
-        // call. This is THE highest-leverage close on ad-driven demo calls —
-        // converts the "I called to test it" prospect into a trial signup
-        // without requiring them to remember bellavego.com later.
-        const reasonStr = (args.reason || '').toString()
-        if (reasonStr.toUpperCase().includes('WANTS_TRIAL_LINK')) {
-          try {
-            const appUrl =
-              process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost')
-                ? process.env.NEXT_PUBLIC_APP_URL
-                : 'https://www.bellavego.com'
-            const trialUrl = `${appUrl}/pricing?tier=receptionist&utm_source=vapi-demo&utm_campaign=trial-text-close`
-            await twilioClient.messages.create({
-              body:
-                `Hi ${args.customer_name} — here's your free 7-day BellAveGo trial signup link: ${trialUrl}\n\n` +
-                `Takes 60 seconds. No card required. Cancel anytime before day 8 if it's not for you.\n\n` +
-                `— Peter (BellAveGo)\n` +
-                `Reply STOP to opt out.`,
-              from: fromNumber,
-              to: callerNumber,
-            })
-          } catch (e) {
-            logTwilioSmsError('trial-text-close SMS', e)
-          }
+      }
+
+      // Walkthrough-request close — Emma asks at the end of every demo call:
+      // "If you'd like one of our team members to personally walk you through
+      // how to sign up, let me know." If caller says YES, she tags the
+      // take_message reason with "WANTS_WALKTHROUGH". We fire a HOT-LEAD email
+      // alert to Peter (pmcshane@512edgeemail.com) so he can call back today.
+      // No SMS to caller — Peter's spec: keep the call short, drive them to
+      // the website, then Peter reaches out personally. Higher-touch, higher-
+      // conversion approach than the previous trial-text SMS.
+      const reasonStr2 = (args.reason || '').toString()
+      if (reasonStr2.toUpperCase().includes('WANTS_WALKTHROUGH')) {
+        try {
+          const walkthroughEmail = 'pmcshane@512edgeemail.com'
+          const callerNumberForAlert = args.customer_phone || callerPhone
+          const subject = `🚨 HOT WALKTHROUGH REQUEST — ${args.customer_name || 'Unknown'} just called demo line`
+          const html =
+            `<div style="font-family:system-ui,sans-serif;max-width:600px">
+              <h2 style="color:#E8742B;margin:0 0 12px">🚨 WALKTHROUGH REQUEST · CALL TODAY</h2>
+              <p>Prospect just hung up after demoing Emma on the BellAveGo demo line. They asked for a team member to walk them through signup.</p>
+              <table style="border-collapse:collapse;margin:16px 0">
+                <tr><td style="padding:6px;font-weight:bold">Name</td><td style="padding:6px">${args.customer_name || '(not given)'}</td></tr>
+                <tr><td style="padding:6px;font-weight:bold">Phone</td><td style="padding:6px"><a href="tel:${callerNumberForAlert}">${callerNumberForAlert || '(no phone captured)'}</a></td></tr>
+                <tr><td style="padding:6px;font-weight:bold">Context</td><td style="padding:6px">${args.reason || ''}</td></tr>
+                <tr><td style="padding:6px;font-weight:bold">Urgency</td><td style="padding:6px">${args.urgency || 'soon'}</td></tr>
+              </table>
+              <p style="background:#FFE4D6;padding:12px;border-radius:8px"><strong>Call them back within 30 minutes for best conversion.</strong></p>
+            </div>`
+          const text = `🚨 WALKTHROUGH REQUEST · CALL TODAY\n\n` +
+            `Name: ${args.customer_name || '(not given)'}\n` +
+            `Phone: ${callerNumberForAlert || '(no phone captured)'}\n` +
+            `Context: ${args.reason || ''}\n` +
+            `Urgency: ${args.urgency || 'soon'}\n\n` +
+            `Call them back within 30 minutes for best conversion.`
+          await sendEmail({ to: walkthroughEmail, subject, html, text })
+        } catch (e) {
+          console.error('walkthrough-request email failed:', e)
         }
       }
 
