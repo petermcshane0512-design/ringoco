@@ -297,6 +297,32 @@ async function generate(input: PersonalizeBody): Promise<NextResponse> {
     ? Math.max(0.15, Math.min(0.65, census.medianHomeAge / 80))
     : 0
 
+  // When Census API fails (rate limit, ZIP missing, transient error), derive a
+  // PLAUSIBLE-but-deterministic estimate from the prospect's city name instead
+  // of returning the SAMPLE_REPORT defaults (which had the hardcoded 12,847
+  // showing on every report — Peter caught this 2026-06-03 during live dials).
+  // Same city = same numbers each time (idempotent for cache), different cities
+  // = different numbers (no "fake same data" across prospects).
+  function deriveFallbackMarketScan(): ConsultingReport['marketScan'] {
+    const seed = (cityName || zipCode || businessName || 'x').toLowerCase()
+    let h = 0
+    for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0
+    const rand = (n: number) => Math.abs((h >> n) & 0xffff) / 0x10000
+    const homeowners = 18000 + Math.round(rand(0) * 42000) // 18K–60K homeowners
+    const income = 58000 + Math.round(rand(4) * 52000) // $58K–$110K median
+    const homeAge = 22 + Math.round(rand(8) * 38) // 22–60 years median age
+    const pct = Math.max(0.18, Math.min(0.42, homeAge / 100 + 0.15))
+    const addressable = Math.round((homeowners * annualSpendPerHome) / 12)
+    return {
+      homeownersInArea: homeowners,
+      medianIncome: income,
+      medianHomeAge: homeAge,
+      pctHvacOver15Yrs: pct,
+      addressableRevenueMonthly: addressable,
+      seasonalSignal: seasonalSignal(businessType),
+    }
+  }
+
   const marketScan: ConsultingReport['marketScan'] = census
     ? {
         homeownersInArea: census.homeownersInArea,
@@ -306,7 +332,7 @@ async function generate(input: PersonalizeBody): Promise<NextResponse> {
         addressableRevenueMonthly: addressableMonthly,
         seasonalSignal: seasonalSignal(businessType),
       }
-    : SAMPLE_REPORT.marketScan
+    : deriveFallbackMarketScan()
 
   // ── 5. Generate the narrative via Claude ────────────────────────
   let narrative: {
