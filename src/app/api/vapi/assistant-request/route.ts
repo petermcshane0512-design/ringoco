@@ -179,13 +179,17 @@ export async function POST(req: NextRequest) {
       // works whether or not the phone number has its own assistantId binding.
       assistantId: ASSISTANT_ID,
       assistantOverrides: {
-        firstMessage: `Hi, this is Emma with BellAveGo. I know you're checking out our AI receptionist for home-service businesses — how can I help?`,
+        firstMessage: `Hi, this is Emma with Bellavgo. How can I help?`,
         model: {
-          // Higher maxTokens so Emma can actually explain pricing + handle
-          // objections in natural sentences. Base config uses 220 already
-          // but we set explicitly here so any future base lower won't choke her.
-          maxTokens: 260,
-          temperature: 0.6,
+          // CLOSER MODE: shorter responses (160 max), lower temp for tighter
+          // delivery. Peter 2026-06-03: demo line callers want sharp + fast,
+          // not features-dump. Haiku is 3-5× faster than Sonnet — measurable
+          // latency drop in Vapi pipeline. Quality is sufficient for the
+          // 2-sentence-max prompt structure.
+          provider: 'anthropic',
+          model: 'claude-haiku-4-5',
+          maxTokens: 160,
+          temperature: 0.4,
           messages: [{ role: 'system', content: renderSalesAgentPrompt() }],
         },
         voice: {
