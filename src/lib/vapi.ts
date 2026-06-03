@@ -120,12 +120,12 @@ export function pronounceableBusinessName(name: string): string {
   //   "BellAveGo"        → "BelAvco" / "BalaVego" (garbled)
   //   "Bell Avenue Go"   → "BELL ave-NEW go" (4 syllables, wrong)
   //   "Bell Ave Go"      → "BELL ay-vee GO" (reads "Ave" as letters A-V)
-  //   "Bell Ahv Go"       → "BELL ay-vee GO" or "BELL ahv GO" (inconsistent)
-  // The phonetic spelling "Bell Ahv Go" forces the short-A sound reliably
+  //   "Bel-Av-Go"       → "BELL ay-vee GO" or "BELL ahv GO" (inconsistent)
+  // The phonetic spelling "Bel-Av-Go" forces the short-A sound reliably
   // because Cartesia interprets "Ahv" as one syllable with explicit "ah".
   return name
-    .replace(/BellAveGo/gi, 'Bell Ahv Go')
-    .replace(/BellAvego/gi, 'Bell Ahv Go')
+    .replace(/BellAveGo/gi, 'Bel-Av-Go')
+    .replace(/BellAvego/gi, 'Bel-Av-Go')
     // Strip parenthetical qualifiers like "(admin test)" so Emma doesn't
     // read them aloud during the greeting.
     .replace(/\s*\([^)]*\)\s*/g, ' ')
@@ -658,7 +658,7 @@ Listen. Answer accurately using the product knowledge above. Be conversational, 
 After they've heard what they wanted, deliver THIS pitch verbatim — no discovery, no "does it interest you", no asking what business they run. Push the free week HARD. End by sending them to bellavego.com.
 
 THE PITCH (deliver naturally, hit every beat):
-"We'd love for our team at Bell Ahv Go to have you join up with us. The first week is completely free across all three tiers — Starter, Pro, and Elite. You'll get your own brand new phone number set up the moment you sign up, the onboarding only takes a few minutes, and you get a full week to try it out, no card needed. We really think you'll love it."
+"We'd love for our team at Bel-Av-Go to have you join up with us. The first week is completely free across all three tiers — Starter, Pro, and Elite. You'll get your own brand new phone number set up the moment you sign up, the onboarding only takes a few minutes, and you get a full week to try it out, no card needed. We really think you'll love it."
 
 PUSH THE FREE WEEK EVEN HARDER at the very end:
 "Honestly — the free week alone is worth it. No card, no commitment, and your AI receptionist is live in under five minutes."
@@ -883,7 +883,7 @@ Then call take_message with:
 - reason: "[their business name] — demo'd receptionist mode, [any specific interest if mentioned]"
 - urgency: soon
 
-Then close: "Got it [first name]. Someone on our team will call you back today to walk you through setting up your account — thanks for checking out Bell Ahv Go."
+Then close: "Got it [first name]. Someone on our team will call you back today to walk you through setting up your account — thanks for checking out Bel-Av-Go."
 
 ## HARD RULES FOR RECEPTIONIST DEMO MODE
 
@@ -1093,6 +1093,23 @@ export function buildAssistantConfig(opts: {
       language: 'en-US',
       smartFormat: true,
       endpointing: 300,
+    },
+
+    // Stop-speaking-plan tuning — Peter 2026-06-03: Emma was pausing
+    // mid-sentence then saying "sorry" because VAD was interpreting her
+    // own pauses or background noise as caller speech. Raise the
+    // word/voice thresholds so Emma keeps talking through small audio
+    // blips and natural mid-sentence pauses.
+    stopSpeakingPlan: {
+      numWords: 3, // require 3+ words from caller before Emma stops
+      voiceSeconds: 0.4, // wait for sustained voice activity, not blips
+      backoffSeconds: 1.0, // pause briefly before resuming after interrupt
+    },
+    // Start-speaking-plan — give the caller a real beat to start, but
+    // smart-endpointing detects when their turn is genuinely done.
+    startSpeakingPlan: {
+      waitSeconds: 0.4,
+      smartEndpointingEnabled: 'livekit',
     },
 
     // Vapi ends the call after take_message returns successfully.
