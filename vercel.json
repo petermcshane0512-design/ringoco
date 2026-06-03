@@ -1,9 +1,4 @@
 {
-  "functions": {
-    "src/app/api/sample-report/personalize/route.ts": {
-      "maxDuration": 300
-    }
-  },
   "crons": [
     {
       "path": "/api/crons/prompt-improvement",
@@ -72,6 +67,18 @@
     {
       "path": "/api/crons/auto-load-instantly",
       "schedule": "0 */12 * * *"
+    },
+    {
+      "path": "/api/crons/daily-200-leads",
+      "schedule": "0 9 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "src/app/api/sample-report/personalize/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/crons/daily-200-leads/route.ts": {
+      "maxDuration": 300
+    }
+  }
 }
