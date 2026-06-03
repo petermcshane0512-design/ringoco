@@ -53,11 +53,12 @@ async function runSync(req: NextRequest) {
   const salesPrompt = renderSalesAgentPrompt()
 
   // Optional override: ?firstMessage=… changes the greeting without
-  // re-deploying. Default matches the bake-script's hardcoded copy.
+  // re-deploying. Default matches the assistant-request override copy
+  // (Peter 2026-06-03 — CLOSER mode, fast open, no features dump).
   const url = new URL(req.url)
   const firstMessage =
     url.searchParams.get('firstMessage') ||
-    "Hi, this is Emma with BellAveGo — thanks for checking us out! Would you like to hear about our software, or hear how I'd answer your customers' phone calls?"
+    "Hi, this is Emma with Bellavgo. How can I help?"
 
   const tools = [
     {
