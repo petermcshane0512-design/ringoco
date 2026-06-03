@@ -1003,7 +1003,32 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
   const callSid = message.call?.id ?? cryptoRandom()
   const callerPhone = message.call?.customer?.number ?? null
   const transcript = message.transcript ?? message.artifact?.transcript ?? null
-  const summary = message.summary ?? message.analysis?.summary ?? null
+  // Vapi sometimes doesn't generate a summary (analyzer disabled, call too
+  // short, etc.) — when that happens we generate one ourselves from the
+  // transcript using Haiku ($0.001/call). Emails were arriving without
+  // summaries per Peter 2026-06-03, leaving him with no idea what the
+  // caller wanted. Fallback ensures every email has a usable summary.
+  let summary: string | null = message.summary ?? message.analysis?.summary ?? null
+  if (!summary && transcript) {
+    const transcriptStr = typeof transcript === 'string' ? transcript : JSON.stringify(transcript)
+    if (transcriptStr.length > 80) {
+      try {
+        const resp = await anthropic.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 180,
+          system:
+            'Summarize this BellAveGo AI receptionist call transcript in 2-3 sentences. ' +
+            'Include: caller name (if given), what they wanted, urgency, and any specific details ' +
+            '(address, timing, business mentioned). Plain text, no markdown. If transcript is too ' +
+            'short to summarize, output: "Caller hung up before stating reason."',
+          messages: [{ role: 'user', content: transcriptStr.slice(0, 8000) }],
+        })
+        summary = resp.content[0].type === 'text' ? resp.content[0].text.trim() : null
+      } catch (e) {
+        console.warn('[end-of-call] fallback summary generation failed:', (e as Error).message)
+      }
+    }
+  }
   const messageCaptured = (message.toolCallList ?? message.toolCalls ?? []).some(
     (tc) => tc.function?.name === 'take_message',
   )
