@@ -227,6 +227,35 @@ async function handleToolCalls(message: VapiServerMessage['message']) {
         } catch (e) {
           logTwilioSmsError('demo caller SMS', e)
         }
+
+        // Trial-text close — Emma asks at the end of every demo call:
+        // "Want me to text you a free 7-day trial signup link?" If yes, she
+        // tags the take_message reason with "WANTS_TRIAL_LINK" and we fire
+        // the trial-link SMS here. Captures inbound express consent on the
+        // call. This is THE highest-leverage close on ad-driven demo calls —
+        // converts the "I called to test it" prospect into a trial signup
+        // without requiring them to remember bellavego.com later.
+        const reasonStr = (args.reason || '').toString()
+        if (reasonStr.toUpperCase().includes('WANTS_TRIAL_LINK')) {
+          try {
+            const appUrl =
+              process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost')
+                ? process.env.NEXT_PUBLIC_APP_URL
+                : 'https://www.bellavego.com'
+            const trialUrl = `${appUrl}/pricing?tier=receptionist&utm_source=vapi-demo&utm_campaign=trial-text-close`
+            await twilioClient.messages.create({
+              body:
+                `Hi ${args.customer_name} — here's your free 7-day BellAveGo trial signup link: ${trialUrl}\n\n` +
+                `Takes 60 seconds. No card required. Cancel anytime before day 8 if it's not for you.\n\n` +
+                `— Peter (BellAveGo)\n` +
+                `Reply STOP to opt out.`,
+              from: fromNumber,
+              to: callerNumber,
+            })
+          } catch (e) {
+            logTwilioSmsError('trial-text-close SMS', e)
+          }
+        }
       }
 
       // Hot-lead alert to Peter — warm prospect just demo'd the product
