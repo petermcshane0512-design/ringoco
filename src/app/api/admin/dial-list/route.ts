@@ -44,14 +44,40 @@ export async function GET(req: NextRequest) {
 
   const dateStr = url.searchParams.get('date') || new Date().toISOString().slice(0, 10)
   const format = url.searchParams.get('format') || 'xlsx'
+  const priority = url.searchParams.get('priority') // 'openers' = hot first
   const source = `daily-200-${dateStr}`
 
-  const { data, error } = await supabase
+  // When ?priority=openers, return ALL hot_opener leads + recent fresh leads.
+  // Hot openers FIRST = highest-converting dials at top.
+  let query = supabase
     .from('outreach_leads')
-    .select('id, business_name, owner_phone, owner_first_name, email, city, state, trade, open_count, notes, campaign_id')
-    .eq('campaign_id', source)
-    .order('owner_phone', { ascending: false, nullsFirst: false })
-    .order('open_count', { ascending: true })
+    .select('id, business_name, owner_phone, owner_first_name, email, city, state, trade, open_count, notes, campaign_id, status')
+    .not('owner_phone', 'is', null)
+
+  if (priority === 'openers') {
+    // Pull hot openers + daily-200 fresh, ordered by status (hot first)
+    query = query
+      .in('status', ['hot_opener', 'queued', 'in_instantly_queue'])
+      .order('status', { ascending: false }) // 'queued' < 'hot_opener' alphabetically — manual sort below
+      .order('open_count', { ascending: true })
+      .limit(300)
+  } else {
+    query = query
+      .eq('campaign_id', source)
+      .order('open_count', { ascending: true })
+  }
+
+  let { data, error } = await query
+
+  // Manual sort to ensure hot_opener rows are TRULY at top
+  if (priority === 'openers' && data) {
+    data = data.sort((a, b) => {
+      const aHot = a.status === 'hot_opener' ? 0 : 1
+      const bHot = b.status === 'hot_opener' ? 0 : 1
+      if (aHot !== bHot) return aHot - bHot
+      return (a.open_count || 0) - (b.open_count || 0)
+    })
+  }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (!data || data.length === 0) {
