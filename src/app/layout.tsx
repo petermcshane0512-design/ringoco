@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Suspense } from "react";
+import GoogleAdsTag from "@/components/GoogleAdsTag";
+import GoogleAdsConversion from "@/components/GoogleAdsConversion";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -145,8 +148,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareJsonLd) }}
           />
+          <GoogleAdsTag />
         </head>
-        <body>{children}</body>
+        <body>
+          <Suspense fallback={null}>
+            <GoogleAdsConversion />
+          </Suspense>
+          {children}
+        </body>
       </html>
     </ClerkProvider>
   );
