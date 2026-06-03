@@ -48,10 +48,10 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabase
     .from('outreach_leads')
-    .select('id, business_name, owner_phone, owner_first_name, email, city, state, trade, review_count, website, source')
-    .eq('source', source)
+    .select('id, business_name, owner_phone, owner_first_name, email, city, state, trade, open_count, notes, campaign_id')
+    .eq('campaign_id', source)
     .order('owner_phone', { ascending: false, nullsFirst: false })
-    .order('review_count', { ascending: true })
+    .order('open_count', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (!data || data.length === 0) {
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
     { header: 'Phone (TAP TO CALL)', key: 'phone_link', width: 22 },
     { header: 'City', key: 'city', width: 14 },
     { header: 'State', key: 'state', width: 6 },
-    { header: '# Reviews', key: 'review_count', width: 10 },
+    { header: '# Reviews', key: 'open_count', width: 10 },
     { header: 'REPORT URL (send to prospect)', key: 'report_url', width: 60 },
     { header: 'SEND-REPORT-SMS (one tap)', key: 'send_report_link', width: 40 },
     { header: 'Email', key: 'email', width: 32 },
@@ -97,17 +97,18 @@ export async function GET(req: NextRequest) {
     const reportUrl = `${APP}/sample-report?${reportQs.toString()}`
     const sendReportUrl = `${APP}/api/admin/send-report-sms?lead=${l.id}&phone=${encodeURIComponent(l.owner_phone || '')}&secret=${encodeURIComponent(expected)}`
 
+    const websiteFromNotes = l.notes?.startsWith('web:') ? l.notes.slice(4) : null
     const row = ws.addRow({
       idx,
       business_name: l.business_name,
       phone_link: l.owner_phone || '',
       city: l.city,
       state: l.state,
-      review_count: l.review_count,
+      open_count: l.open_count,
       report_url: reportUrl,
       send_report_link: 'Tap to SMS',
       email: l.email,
-      website: l.website,
+      website: websiteFromNotes,
     })
     // Phone tel: link for mobile tap-to-call
     if (l.owner_phone) {

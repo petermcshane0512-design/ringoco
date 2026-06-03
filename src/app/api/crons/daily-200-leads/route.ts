@@ -222,9 +222,16 @@ export async function GET(req: NextRequest) {
   let inserted = 0
   for (let i = 0; i < fresh.length; i += 100) {
     const batch = fresh.slice(i, i + 100).map((l) => ({
-      ...l,
+      email: l.email,
+      business_name: l.business_name,
+      owner_phone: l.owner_phone,
+      city: l.city,
+      state: l.state,
+      trade: l.trade,
+      open_count: l.review_count,
+      notes: l.website ? `web:${l.website}` : null,
       status: 'queued',
-      source: sourceTag,
+      campaign_id: sourceTag,
     }))
     const { error } = await supabase.from('outreach_leads').insert(batch)
     if (!error) inserted += batch.length

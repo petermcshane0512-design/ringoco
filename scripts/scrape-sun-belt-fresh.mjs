@@ -25,8 +25,8 @@ import { createClient } from '@supabase/supabase-js'
 
 dotenv.config({ path: 'C:\\Users\\peter\\ringoco\\.env.local' })
 
-const APIFY_TOKEN = process.env.APIFY_API_TOKEN
-if (!APIFY_TOKEN) throw new Error('APIFY_API_TOKEN missing')
+const APIFY_TOKEN = process.env.APIFY_API_TOKEN || process.env.APIFY_TOKEN
+if (!APIFY_TOKEN) throw new Error('APIFY token missing — set APIFY_API_TOKEN or APIFY_TOKEN')
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -54,7 +54,7 @@ const TARGETS = [
 
 const MAX_REVIEWS = 50
 const MIN_REVIEWS = 3 // below 3 = sketchy / inactive / fake
-const PER_CITY_LIMIT = 60 // raw scrape count, will dedup down
+const PER_CITY_LIMIT = 200 // raw scrape count, will dedup down. Higher pulls smaller-dog shops from deeper search results.
 
 async function runApifyGoogleMaps(query) {
   const run = await fetch(
@@ -213,9 +213,9 @@ const insertRows = allFresh.map((l) => ({
   state: l.state,
   trade: l.trade,
   status: 'queued',
-  source: l.source,
-  review_count: l.review_count,
-  website: l.website,
+  campaign_id: l.source,
+  open_count: l.review_count,
+  notes: l.website ? `web:${l.website}` : null,
 }))
 
 let inserted = 0
