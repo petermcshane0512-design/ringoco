@@ -12,6 +12,8 @@ Reusable skills and agent workflows live in:
 
 Available skills: `google-maps-search`, `apollo-enrich`, `instantly-push-leads`, `instantly-analytics`, `supabase-query`, `stripe-usage-report`
 
+**REMOVED 2026-06-03:** `ig-fb-engager` skill + `scripts/social-engage.ts` permanently deleted. The Playwright-based IG/FB auto-engagement triggered Meta's automation detection and got `bellavegollc` Business Manager restricted on 2026-05-25. NEVER rebuild any automation that touches Facebook or Instagram via browser automation, API, or any other channel. All future Meta presence is paid ads only (Ads Manager UI).
+
 Available agents: `lead-sourcing`, `campaign-monitor`, `reply-handler`, `email-researcher`, `business-diagnostic`
 
 When running an agent, load its `.md` file and the skills it references. Do not rebuild logic already defined there.
