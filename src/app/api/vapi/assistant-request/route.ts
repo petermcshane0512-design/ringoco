@@ -179,7 +179,7 @@ export async function POST(req: NextRequest) {
       // works whether or not the phone number has its own assistantId binding.
       assistantId: ASSISTANT_ID,
       assistantOverrides: {
-        firstMessage: `Hi, this is Emma with Bellavgo. How can I help?`,
+        firstMessage: `Hi, this is Emma with Bell Ave Go. How can I help?`,
         model: {
           // CLOSER MODE: shorter responses (160 max), lower temp for tighter
           // delivery. Peter 2026-06-03: demo line callers want sharp + fast,

@@ -120,16 +120,16 @@ export function pronounceableBusinessName(name: string): string {
   //   "BellAveGo"        → "BelAvco" / "BalaVego" (garbled)
   //   "Bell Avenue Go"   → "BELL ave-NEW go" (4 syllables, wrong)
   //   "Bell Ave Go"      → "BELL ay-vee GO" (reads "Ave" as letters A-V)
-  //   "Bellavgo"       → "BELL ay-vee GO" or "BELL ahv GO" (inconsistent)
-  // The phonetic spelling "Bellavgo" forces the short-A sound reliably
+  //   "Bell Ave Go"       → "BELL ay-vee GO" or "BELL ahv GO" (inconsistent)
+  // The phonetic spelling "Bell Ave Go" forces the short-A sound reliably
   // because Cartesia interprets "Ahv" as one syllable with explicit "ah".
   return name
     // Peter's spec 2026-06-03 (4th revision): try fused single-word
-    // "Bellavgo" — Cartesia syllabifies non-words phonetically as
+    // "Bell Ave Go" — Cartesia syllabifies non-words phonetically as
     // "bell-AV-go" (3 syllables, short A in middle). Hyphenated form
     // "Bel-Av-Go" was reading as letter "A.V." or drifting.
-    .replace(/BellAveGo/gi, 'Bellavgo')
-    .replace(/BellAvego/gi, 'Bellavgo')
+    .replace(/BellAveGo/gi, 'Bell Ave Go')
+    .replace(/BellAvego/gi, 'Bell Ave Go')
     // Strip parenthetical qualifiers like "(admin test)" so Emma doesn't
     // read them aloud during the greeting.
     .replace(/\s*\([^)]*\)\s*/g, ' ')
@@ -697,7 +697,7 @@ Listen. Answer accurately using the product knowledge above. Be conversational, 
 After they've heard what they wanted, deliver THIS pitch verbatim — no discovery, no "does it interest you", no asking what business they run. Push the free week HARD. End by sending them to bellavego.com.
 
 THE PITCH (deliver naturally, hit every beat):
-"We'd love for our team at Bellavgo to have you join up with us. The first week is completely free across all three tiers — Starter, Pro, and Elite. You'll get your own brand new phone number set up the moment you sign up, the onboarding only takes a few minutes, and you get a full week to try it out, no card needed. We really think you'll love it."
+"We'd love for our team at Bell Ave Go to have you join up with us. The first week is completely free across all three tiers — Starter, Pro, and Elite. You'll get your own brand new phone number set up the moment you sign up, the onboarding only takes a few minutes, and you get a full week to try it out, no card needed. We really think you'll love it."
 
 PUSH THE FREE WEEK EVEN HARDER at the very end:
 "Honestly — the free week alone is worth it. No card, no commitment, and your AI receptionist is live in under five minutes."
@@ -922,7 +922,7 @@ Then call take_message with:
 - reason: "[their business name] — demo'd receptionist mode, [any specific interest if mentioned]"
 - urgency: soon
 
-Then close: "Got it [first name]. Someone on our team will call you back today to walk you through setting up your account — thanks for checking out Bellavgo."
+Then close: "Got it [first name]. Someone on our team will call you back today to walk you through setting up your account — thanks for checking out Bell Ave Go."
 
 ## HARD RULES FOR RECEPTIONIST DEMO MODE
 
