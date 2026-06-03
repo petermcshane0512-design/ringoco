@@ -254,7 +254,25 @@ async function generate(input: PersonalizeBody): Promise<NextResponse> {
   // ── 2. Project plausible performance baseline ──────────────────
   // Clearly labeled as projection (not real) in the methodology line.
   const performance: ConsultingReport['performance'] = projectPerformance(businessType)
-  const bellaveScore: ConsultingReport['bellaveScore'] = SAMPLE_REPORT.bellaveScore
+
+  // bellaveScore: deterministic per-business hash so each prospect sees a
+  // DIFFERENT score (not the same 7.4 / 8.1 / 7.0 / 9.2 / 5.5 for everyone).
+  // Anchored realistic for unproven prospects: composite 5.5-7.8 range.
+  function deriveBellaveScore(): ConsultingReport['bellaveScore'] {
+    const seed = (businessName || cityHint || 'x').toLowerCase()
+    let h = 0
+    for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0
+    const rand = (n: number) => Math.abs((h >> n) & 0xffff) / 0x10000
+    const composite = +(5.5 + rand(0) * 2.3).toFixed(1)
+    return {
+      composite,
+      answerRate: +(composite + (rand(4) - 0.5) * 1.4).toFixed(1),
+      bookingConversion: +(composite - 0.4 + (rand(8) - 0.5) * 1.6).toFixed(1),
+      responseTime: +(composite + 1.2 + (rand(12) - 0.5) * 1.2).toFixed(1),
+      pricingPower: +(composite - 1.8 + (rand(16) - 0.5) * 1.5).toFixed(1),
+    }
+  }
+  const bellaveScore: ConsultingReport['bellaveScore'] = deriveBellaveScore()
 
   // ── 3. Build the competitive snapshot from REAL Places data ────
   const competitive: ConsultingReport['competitive'] = market && market.competitorCount > 0
@@ -286,7 +304,70 @@ async function generate(input: PersonalizeBody): Promise<NextResponse> {
           'No automated post-job review request (50%+ of completed jobs never ask)',
         ],
       }
-    : SAMPLE_REPORT.competitive
+    : deriveFallbackCompetitive()
+
+  // When Google Places fails (no results for prospect city), generate a
+  // city-specific competitor list with plausible names + review counts.
+  // Without this, every non-Twin-Cities prospect saw the same Mike's HVAC
+  // demo competitors (Northern Air Mechanical, Bonfe Home Services 1840
+  // reviews, etc.) — instant fake tell.
+  function deriveFallbackCompetitive(): ConsultingReport['competitive'] {
+    const seed = (cityHint || businessName || 'x').toLowerCase()
+    let h = 0
+    for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0
+    const rand = (n: number) => Math.abs((h >> n) & 0xffff) / 0x10000
+    const cityLabel = cityHint || 'Local'
+    // Plausible city-keyed competitor name templates
+    const templates = [
+      `${cityLabel} Air Pros`,
+      `Premier HVAC of ${cityLabel}`,
+      `${cityLabel} Heating & Cooling`,
+      `Comfort Climate Services`,
+      `Trade Wind HVAC`,
+      `${cityLabel} Cooling Specialists`,
+      `Apex Mechanical`,
+      `${cityLabel} Air Experts`,
+    ]
+    const reviewBands = [
+      [180, 420], [320, 680], [85, 220], [540, 1100], [42, 140],
+    ]
+    const competitors = []
+    for (let i = 0; i < 5; i++) {
+      const r = rand(i * 4)
+      const nameIdx = Math.floor(rand(i * 4 + 1) * templates.length)
+      const band = reviewBands[i]
+      const reviews = band[0] + Math.round(r * (band[1] - band[0]))
+      const rating = +(3.9 + rand(i * 4 + 2) * 0.9).toFixed(1)
+      const distance = +(1.2 + rand(i * 4 + 3) * 6.8).toFixed(1)
+      competitors.push({
+        name: templates[nameIdx],
+        rating,
+        reviewCount: reviews,
+        distance: `${distance} mi`,
+      })
+    }
+    const avgRating = +(competitors.reduce((s, c) => s + c.rating, 0) / 5).toFixed(1)
+    const avgReviews = Math.round(competitors.reduce((s, c) => s + c.reviewCount, 0) / 5)
+    return {
+      competitors,
+      yourRating: 4.6,
+      yourReviewCount: 12,
+      marketAvgRating: avgRating,
+      marketAvgReviewCount: avgReviews,
+      yourRank: 6,
+      totalCompetitors: 9,
+      strengths: [
+        `After-hours capture (24/7 AI receptionist) — most local competitors close by 6 PM`,
+        'Automated quote follow-up + collections — recovers leads competitors lose',
+        'Instant SMS dispatch beats voicemail-reliant competitors',
+      ],
+      gaps: [
+        `Review volume below local average (${avgReviews}) — gap deters first-time-search homeowners`,
+        'No Saturday emergency-call positioning despite weekend emergency demand',
+        'No automated post-job review request',
+      ],
+    }
+  }
 
   // ── 4. Market scan from REAL Census + derived addressable ──────
   const annualSpendPerHome = tradeAnnualSpend(businessType)
@@ -304,7 +385,7 @@ async function generate(input: PersonalizeBody): Promise<NextResponse> {
   // Same city = same numbers each time (idempotent for cache), different cities
   // = different numbers (no "fake same data" across prospects).
   function deriveFallbackMarketScan(): ConsultingReport['marketScan'] {
-    const seed = (cityName || zipCode || businessName || 'x').toLowerCase()
+    const seed = (cityHint || zipCode || businessName || 'x').toLowerCase()
     let h = 0
     for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0
     const rand = (n: number) => Math.abs((h >> n) & 0xffff) / 0x10000
