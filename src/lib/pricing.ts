@@ -205,94 +205,108 @@ export const TIER_METADATA: Record<Tier, {
 export type TierFeatures = {
   tagline: string
   callCap: string
+  // leadsCadence — Peter pivot 2026-06-04: the report system became
+  // "Neighborhood Lead Reports" delivering REAL prospect leads in the
+  // customer's service area (new movers, building permits, storm-damage
+  // triggers, aging-HVAC-infrastructure homes). Tier-gated by quota:
+  //   Starter → 5 leads/quarter (20/year)
+  //   Pro     → 15 leads/month  (180/year)
+  //   Elite   → 25 leads/week   (~1,300/year)
+  // Enforced by the lead-engine cron + lead_drops table.
+  leadsCadence: string
+  leadsPerYear: number
+  // reportsCadence is now the ALERT cadence for the lead drop email
+  // (formerly the consulting report cadence). Kept name for back-compat.
   reportsCadence: string
   features: string[]
   highlights: string[]
   comingSoon: boolean
 }
 
+// 2026-06-04 PIVOT — product narrowed to 3 things:
+//   1. Answer every call
+//   2. Book it to your calendar
+//   3. Send you fresh leads in your neighborhood
+// Everything else was stripped per Peter's spec — feature bloat was killing
+// the value prop. The tier ladder is now ONE axis (volume of calls + leads).
 export const TIER_FEATURES: Record<Tier, TierFeatures> = {
   receptionist: {
-    tagline: 'AI answers every call. You close it in one tap.',
+    tagline: 'Answer every call. Land 5 fresh neighborhood leads each quarter.',
     callCap: '60 calls/mo',
-    reportsCadence: '6 AI Consulting Reports/yr (bi-monthly)',
+    leadsCadence: '5 leads/quarter',
+    leadsPerYear: 20,
+    reportsCadence: '5 Neighborhood Lead Reports/yr (one per quarter)',
     comingSoon: false,
     highlights: [
       '24/7 AI receptionist in your business name',
-      '60 calls/month included',
-      'Lead lands on your phone within 10 seconds — push + email',
-      'Auto-books into the BellAveGo Calendar (and mirrors to Google + Outlook if you connect them)',
-      'Emergency outbound voice call to your cell',
-      '6 AI revenue reports/year',
+      '60 calls/month included (~2 per day)',
+      '5 neighborhood leads delivered every quarter (20/year)',
+      'Lead lands on your phone in 10 seconds — push + SMS + email',
+      'Auto-books appointments to your calendar (Google + Outlook sync)',
+      'Emergency call to your cell when caller flags urgency',
     ],
     features: [
       '24/7 AI receptionist — picks up in your business name, captures every lead',
-      '60 calls per month included (approximately 2 per day)',
-      'Lead lands on your phone within 10 seconds after the call — push notification + email with caller, problem, tap-to-call link',
-      'Auto-books appointments to the BellAveGo Calendar — mirrors to your Google Calendar + Microsoft Outlook on your phone (optional, you connect with one click)',
+      '60 calls per month included (~2 per day)',
+      '5 Neighborhood Leads delivered each quarter (20 leads per year) — real homeowners in your service area: new move-ins, permit filings, storm-damage triggers, aging-infrastructure homes ready for replacement',
+      'Each lead includes: address, est. home value, year built, sqft, owner phone (when available), and a 1-line pitch script',
+      'Lead alerts land on your phone within 10 seconds of every call — push notification + SMS + email with caller name, problem, and tap-to-call link',
+      'Auto-books appointments to the BellAveGo Calendar — mirrors to Google Calendar + Microsoft Outlook (optional, one-click)',
       'Emergency outbound voice call to your cell when caller flags urgency',
-      '6 AI revenue reports per year — bi-monthly, shows missed jobs, top services, what to fix',
       'No contract · 7-day free trial · cancel anytime',
     ],
   },
   officemgr: {
-    tagline: 'Five AIs running your back office while you turn wrenches.',
+    tagline: 'Answer every call. Get 15 fresh neighborhood leads every month.',
     callCap: '300 calls/mo',
-    reportsCadence: '12 AI Consulting Reports/yr (monthly)',
+    leadsCadence: '15 leads/month',
+    leadsPerYear: 180,
+    reportsCadence: '12 Neighborhood Lead Reports/yr (one per month)',
     comingSoon: false,
     highlights: [
       'Everything in Starter, plus:',
-      '300 calls/month included',
-      'AI Quote Hunter — auto follow-up day 2, 7, 14',
-      'AI Collections — pay-by-text on past-due invoices',
-      'AI Reputation — auto-asks customers for Google reviews',
-      'Smart sales-tip insight on every lead alert',
-      '12 monthly AI revenue reports',
+      '300 calls/month included (~10 per day)',
+      '15 neighborhood leads delivered every month (180/year)',
+      'Lead score 0–100 + recommended pitch script for each',
+      'Tap-to-call + tap-to-text from each lead',
+      'Priority email support (24-hour reply)',
     ],
     features: [
       'Everything in Starter, plus:',
-      '300 calls per month included (approximately 10 per day — multi-truck operations)',
-      'AI Quote Hunter — auto-follows up on every open quote on day 2, 7, and 14',
-      'AI Collections — chases past-due invoices with auto-generated pay-by-text Stripe links',
-      'AI Reputation — auto-asks happy customers for Google reviews after job completion',
-      'Smart insight on every lead alert — Claude reads the call and texts you a sales tip',
-      '12 AI revenue reports per year — monthly, with sales coaching from your actual call transcripts',
-      'Reports now include Market Opportunity Scan (aging-infrastructure math + seasonal demand windows) and Local Economy snapshot (Census-grounded demographics for your service area)',
+      '300 calls per month included (~10 per day) — fits multi-truck operations',
+      '15 Neighborhood Leads delivered every month (180 leads per year) — 9× more than Starter',
+      'Each lead enriched with: AI-scored 0–100 priority rank, address, est. home value, year built, sqft, owner name & phone (when public), and a custom pitch script generated from the lead context',
+      'Tap-to-call + tap-to-text directly from the lead card in your dashboard',
+      'Lead drop alerts: push + email the moment new leads land',
+      'In-dashboard CRM-lite — mark leads as Contacted / Quoted / Won / Lost; reschedule callbacks',
       '24-hour priority email support',
     ],
   },
   concierge: {
-    tagline: 'AI runs your back office AND your marketing. You just close the work.',
+    tagline: 'Unlimited calls. 25 ready-to-quote leads in your neighborhood every week.',
     callCap: 'Unlimited calls',
-    // Truth: 26 bi-weekly strategy reports from the marketing-ops cron +
-    // 4 quarterly performance reports from the consulting-reports cron.
-    // Dropped "McKinsey-style deep-dives" framing on 2026-05-27 — the
-    // quarterly variant uses the same generator as the bi-weekly, so
-    // calling it "deeper" was marketing fluff.
-    reportsCadence: '26 bi-weekly strategy reports + 4 quarterly performance reviews',
+    leadsCadence: '25 leads/week',
+    leadsPerYear: 1300,
+    reportsCadence: '52 weekly Neighborhood Lead Reports/yr',
     comingSoon: false,
     highlights: [
       'Everything in Pro, plus:',
-      'Unlimited inbound calls',
-      'AI Ad Creative Generator — Google + Meta copy weekly',
-      'AI Lead Sourcing — permits + storm alerts → outbound SMS',
-      'AI Competitor Watcher — weekly intel on 5 local competitors',
-      'AI Local SEO — weekly blog posts auto-published',
-      'Custom FSM integration — Housecall Pro / Jobber / ServiceTitan',
-      'Elite-only Regulatory + Tax-Credit Watch in every report',
-      '4-hour SLA + direct founder access',
+      'Unlimited inbound calls — no cap',
+      '25 neighborhood leads every week (~1,300/year)',
+      'Storm + weather alerts (AC emergencies routed to you first)',
+      'Building-permit feed for every ZIP you serve',
+      'Done-for-you outreach — we text your leads on your behalf',
+      'Direct founder access (text/call Peter)',
     ],
     features: [
       'Everything in Pro, plus:',
       'Unlimited inbound calls — no monthly cap',
-      'AI Ad Creative Generator — Google + Meta ad copy written weekly from your call transcripts (the ads use YOUR customers\' actual words)',
-      'AI Lead Sourcing — pulls fresh building permits + severe-weather alerts, texts the homeowner FOR you',
-      'AI Competitor Watcher — weekly intel on 5 local competitors\' pricing, reviews, and ad spend',
-      'AI Local SEO — weekly blog posts auto-published to your site, optimized for "[trade] near me" searches',
-      'Custom integration with your dispatch tool — Housecall Pro / Jobber / ServiceTitan — white-glove built during onboarding so AI bookings flow into the system you already use. 5-day setup, founder-led.',
-      '30 reports per year — 26 bi-weekly strategy updates (from the marketing-ops engine) plus 4 quarterly performance reviews (full year-over-year analysis with action plans).',
-      'Elite-exclusive: Regulatory + Tax-Credit Watch in every report — EPA refrigerant phase-downs, IRA tax credits, state license deadlines, NEC code changes. Hard facts with citations, not AI guesses.',
-      '4-hour priority SLA + direct founder text/call access',
+      '25 Neighborhood Leads delivered every WEEK (~1,300 leads per year) — the firehose tier for scaling shops',
+      'Real-time storm + weather alerts — when hail >1" or wind >60mph hits a ZIP you serve, you get the AC-emergency leads first',
+      'Building-permit feed — every HVAC/mechanical permit filed in your ZIPs streamed to your dashboard within 24 hours of filing',
+      'Done-for-you outreach — opt in and we text each lead on your behalf with your shop name + pitch, you take the calls when they reply',
+      '52 Neighborhood Lead Reports per year (one per week) with full ZIP-level intel',
+      'Direct founder text/call access (Peter\'s personal cell) — 4-hour priority response on issues',
     ],
   },
 }
