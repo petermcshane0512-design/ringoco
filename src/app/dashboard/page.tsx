@@ -993,7 +993,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 9, fontWeight: 800, color: "#C84B26", letterSpacing: "0.16em", textTransform: "uppercase", padding: "2px 8px", borderRadius: 99, background: "rgba(232,116,43,0.12)", border: "1px solid rgba(232,116,43,0.30)" }}>Consulting</span>
+                    <span style={{ fontSize: 9, fontWeight: 800, color: "#C84B26", letterSpacing: "0.16em", textTransform: "uppercase", padding: "2px 8px", borderRadius: 99, background: "rgba(232,116,43,0.12)", border: "1px solid rgba(232,116,43,0.30)" }}>Lead Reports</span>
                     <div style={cardTitle}>BellAveGo Lead Reports</div>
                   </div>
                   <div style={{ fontSize: 11, color: "#8B5A3D", marginTop: 3, fontWeight: 500 }}>Your quarterly growth advisor — delivered as a PDF</div>

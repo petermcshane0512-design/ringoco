@@ -559,7 +559,7 @@ export default function ConsultingShowcase() {
       <div className="cs-wrap">
         {/* Header */}
         <header className="cs-head">
-          <span className="cs-eyebrow">Quarterly Consulting · Included on Growth+</span>
+          <span className="cs-eyebrow">Neighborhood Lead Drops · Included on Growth+</span>
           <h2 className="cs-h2">
             BellAveGo continuously analyzes your business for <span className="money">missed revenue opportunities</span>.
           </h2>
@@ -576,11 +576,11 @@ export default function ConsultingShowcase() {
               <span className="cs-tlight" style={{ background: '#FF5F57' }} />
               <span className="cs-tlight" style={{ background: '#FEBC2E' }} />
               <span className="cs-tlight" style={{ background: '#28C840' }} />
-              <span className="cs-term-title">bellavego.consulting · Q1 2026 · Mike&apos;s HVAC</span>
+              <span className="cs-term-title">bellavego.leads · Q1 2026 · Mike&apos;s HVAC</span>
               <span className="cs-live">Generating</span>
             </div>
             <div className="cs-term-body">
-              <div className="cs-term-prompt">$ <b>bellavego</b> consulting build --period Q1 --customer mike-hvac</div>
+              <div className="cs-term-prompt">$ <b>bellavego</b> leads build --period Q1 --customer mike-hvac</div>
               {BUILD_SCRIPT.map((s, i) => {
                 const status: Step['status'] =
                   activeIdx < 0 ? 'pending'
