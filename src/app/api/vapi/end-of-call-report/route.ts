@@ -1047,7 +1047,14 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
       return NextResponse.json({ ok: true, demo: true, already_emailed_via_tool_call: true })
     }
 
-    const peterAlertEmail = process.env.FALLBACK_OWNER_EMAIL || 'bellavegollc@gmail.com'
+    // Fan demo-call summary emails to ALL of Peter's inboxes (Peter 2026-06-04
+    // — was missing summaries because they only fanned to one address).
+    const peterAlertEmails = [
+      process.env.FALLBACK_OWNER_EMAIL || 'bellavegollc@gmail.com',
+      'pmcshane@fordham.edu',
+      'pmcshane@512edgeemail.com',
+    ].filter((e, i, arr) => arr.indexOf(e) === i)
+    const peterAlertEmail = peterAlertEmails[0]
     const transcriptText =
       typeof transcript === 'string' ? transcript : transcript ? JSON.stringify(transcript) : '(no transcript)'
     // Vapi's end-of-call-report message includes timestamps + endedReason
