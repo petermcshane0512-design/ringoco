@@ -39,6 +39,10 @@ const supabase = createClient(
 // B25035_001E = Median Year Structure Built (whole pop)
 // B25002_001E = Total housing units
 // API: https://api.census.gov/data/2022/acs/acs5
+//
+// Requires a free Census API key (register at https://api.census.gov/data/key_signup.html).
+// Without CENSUS_API_KEY env var, the cron exits early with a 200 noop so
+// it doesn't fire-and-fail every week. Set the env var in Vercel to enable.
 const CENSUS_BASE = 'https://api.census.gov/data/2022/acs/acs5'
 
 // HVAC replacement rate per year (Energy Star: avg unit lives 15-20yr,
@@ -52,14 +56,21 @@ type CensusRow = {
   total_units: number | null
 }
 
-async function fetchCensusForState(stateFips: string): Promise<CensusRow[]> {
+async function fetchCensusForState(stateFips: string, apiKey: string): Promise<CensusRow[]> {
   // Pull all ZCTAs in a state. Census uses 5-digit ZCTA as the geographic key.
-  const url = `${CENSUS_BASE}?get=B25035_001E,B25002_001E&for=zip%20code%20tabulation%20area:*&in=state:${stateFips}`
+  // Key is required as of late 2025 — anonymous calls return HTML error page.
+  const url = `${CENSUS_BASE}?get=B25035_001E,B25002_001E&for=zip%20code%20tabulation%20area:*&in=state:${stateFips}&key=${apiKey}`
   const r = await fetch(url, {
     headers: { 'User-Agent': 'BellAveGo (peter@bellavego.com)' },
   })
   if (!r.ok) {
     console.warn(`[census-aging] state ${stateFips} returned HTTP ${r.status}`)
+    return []
+  }
+  const ctype = r.headers.get('content-type') || ''
+  if (!ctype.includes('json')) {
+    // Census returns HTML on errors (bad key, missing key, etc.)
+    console.warn(`[census-aging] state ${stateFips} returned non-JSON (likely auth error)`)
     return []
   }
   const raw = (await r.json()) as string[][]
@@ -77,6 +88,17 @@ export async function GET(req: NextRequest) {
   const expected = process.env.ADMIN_API_SECRET
   if (!isCron && (!expected || adminSecret !== expected)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  }
+
+  const censusKey = process.env.CENSUS_API_KEY
+  if (!censusKey) {
+    // No key configured — return 200 noop so the cron doesn't show as
+    // failing in Vercel. Register at https://api.census.gov/data/key_signup.html
+    return NextResponse.json({
+      ok: true,
+      skipped: true,
+      reason: 'CENSUS_API_KEY env var not set. Register at https://api.census.gov/data/key_signup.html',
+    })
   }
 
   // Optional ?state=AZ to test one state. Default: pull all 50.
@@ -139,7 +161,7 @@ export async function GET(req: NextRequest) {
   for (const state of candidateStates) {
     const fips = FIPS[state]
     if (!fips) continue
-    const rows = await fetchCensusForState(fips)
+    const rows = await fetchCensusForState(fips, censusKey)
     statesProcessed++
 
     // Update zip_centroids with median home age (for next lead-engine run)

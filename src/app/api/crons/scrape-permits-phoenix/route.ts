@@ -30,10 +30,12 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
-// Phoenix Socrata endpoint. Resource ID below covers residential
-// + commercial permits. If they migrate the dataset, update here.
+// Phoenix CKAN endpoint. Resource ID below is the active "Building Permit
+// Data" dataset (verified via package_search on 2026-06-04). If the city
+// rotates IDs, re-discover via:
+//   https://www.phoenixopendata.com/api/3/action/package_search?q=building+permit
 const PHOENIX_PERMITS_URL =
-  'https://www.phoenixopendata.com/api/3/action/datastore_search?resource_id=87aa17d8-2fff-4c8d-ad7f-3a8e0fc56a93&limit=500'
+  'https://www.phoenixopendata.com/api/3/action/datastore_search?resource_id=1c61b4b2-1968-4c4b-8ff8-eb44f573e47a&limit=500'
 
 type RawPermit = {
   PermitNumber?: string

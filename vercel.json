@@ -77,7 +77,7 @@
       "schedule": "0 10 * * *"
     },
     {
-      "path": "/api/crons/scrape-permits-phoenix",
+      "path": "/api/crons/scrape-permits-chicago",
       "schedule": "0 5 * * *"
     },
     {
