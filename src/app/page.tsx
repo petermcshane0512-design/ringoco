@@ -756,7 +756,7 @@ export default function HomePage() {
           dashboard at the right of the headline; that block is hidden on
           mobile (.hero-stage display:none). Surface it here so mobile
           visitors still see what they're getting before they hit the
-          consulting reports section. CSS class hides this on desktop. */}
+          lead reports section. CSS class hides this on desktop. */}
       <section className="mobile-dash-preview" ref={mobileDashRef}>
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 8px 8px' }}>
           <div style={{ fontSize: 11, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.16em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 10 }}>

@@ -34,7 +34,7 @@ function WaitlistForm() {
   const tierLabel = tier === 'multi_location' ? 'Multi-Location' : 'Elite'
   const tierBlurb = tier === 'multi_location'
     ? 'Enterprise multi-location ($2,497/loc/mo + $25K setup). For franchises and 3+ location operators.'
-    : 'Everything in Pro, plus: 24 AI consulting reports/yr (bi-weekly), custom integrations into Jobber/Housecall Pro/ServiceTitan, 4-hour priority SLA, and direct founder access for the first 90 days. $597/mo — waitlist-only until we validate Pro with 3 paying customers.'
+    : 'Everything in Pro, plus: 24 AI lead reports/yr (bi-weekly), custom integrations into Jobber/Housecall Pro/ServiceTitan, 4-hour priority SLA, and direct founder access for the first 90 days. $597/mo — waitlist-only until we validate Pro with 3 paying customers.'
 
   useEffect(() => {
     document.title = `Join the ${tierLabel} waitlist · BellAveGo`

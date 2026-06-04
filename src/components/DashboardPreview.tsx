@@ -16,7 +16,7 @@ const JOBS = [
 ]
 
 const REPORTS = [
-  { title: 'Welcome AI Consulting Report', date: 'March 1, 2026' },
+  { title: 'Welcome Neighborhood Lead Report', date: 'March 1, 2026' },
   { title: 'Q1 2026 Growth Report', date: 'April 1, 2026' },
 ]
 
@@ -271,12 +271,12 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
             <div style={{ fontSize: 7.5, fontWeight: 800, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '0 5px', marginBottom: 4 }}>Workspace</div>
 
             {/* Order locked to match real /dashboard sidebar (2026-05-26):
-                Command Center → Calendar → Consulting Reports → Call Forwarding
+                Command Center → Calendar → Lead Reports → Call Forwarding
                 → AI Receptionist → Invoicing → Pro. */}
             {[
               { label: 'Command Center',     dot: false },
               { label: 'Calendar',           dot: false },
-              { label: 'Consulting Reports', dot: false },
+              { label: 'Lead Reports', dot: false },
               { label: 'Call Forwarding',    dot: false },
               { label: 'AI Receptionist',    dot: true  },
               { label: 'Invoicing',          dot: false },
@@ -528,7 +528,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
           )}
 
           {/* == CONSULTING REPORTS TAB == */}
-          {activeTab === 'Consulting Reports' && (
+          {activeTab === 'Lead Reports' && (
             <div>
               <div style={{ background: 'linear-gradient(160deg, #FFF6EE 0%, #FFFFFF 100%)', border: '1px solid rgba(232,116,43,0.24)', borderRadius: 11, padding: '12px 14px', marginBottom: 11 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -541,14 +541,14 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                     </svg>
                   </div>
                   <div>
-                    <div style={{ fontSize: 10.5, fontWeight: 800, color: '#0B1F3A' }}>BellAveGo Consulting Reports</div>
+                    <div style={{ fontSize: 10.5, fontWeight: 800, color: '#0B1F3A' }}>BellAveGo Lead Reports</div>
                     <div style={{ fontSize: 8, color: '#8B5A3D', marginTop: 1, fontWeight: 600 }}>Your quarterly growth advisor — delivered as a PDF</div>
                   </div>
                 </div>
               </div>
               <div style={{ background: '#fff', border: '1px solid rgba(232,116,43,0.16)', borderRadius: 11, overflow: 'hidden', boxShadow: '0 2px 8px rgba(232,116,43,0.06)' }}>
                 {[
-                  { title: 'Welcome AI Consulting Report',  date: 'March 1, 2026', tag: 'Delivered' },
+                  { title: 'Welcome Neighborhood Lead Report',  date: 'March 1, 2026', tag: 'Delivered' },
                   { title: 'Q1 2026 Growth Report',         date: 'April 1, 2026', tag: 'Delivered' },
                   { title: 'May 2026 Revenue Intelligence', date: 'May 1, 2026',  tag: 'Delivered' },
                   { title: 'Q2 2026 Growth Report',         date: 'July 1, 2026', tag: 'Scheduled' },
@@ -938,7 +938,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
           {/* == COMMAND CENTER TAB (default) ==
               Mirrors /dashboard exactly: Calendar Sync banner, 4 metric
               cards, 2-col layout (Incoming Requests + All Jobs +
-              Consulting Reports on the left; AI Receptionist status +
+              Lead Reports on the left; AI Receptionist status +
               Quick actions on the right). */}
           {activeTab === 'Command Center' && <div>
 
@@ -1184,12 +1184,12 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
               </div>
             </div>
 
-            {/* Consulting Reports — sunset orange palette */}
+            {/* Lead Reports — sunset orange palette */}
             <div style={{ background: 'linear-gradient(160deg, #FFF6EE 0%, #FFFFFF 100%)', border: '1px solid rgba(232,116,43,0.22)', borderRadius: 11, padding: '11px 13px', boxShadow: '0 2px 10px rgba(232,116,43,0.10), 0 0 0 1px rgba(232,116,43,0.06)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 9 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 7, fontWeight: 800, color: '#E8742B', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 99, background: 'rgba(232,116,43,0.10)', border: '1px solid rgba(232,116,43,0.28)' }}>Consulting</span>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A' }}>BellAveGo Consulting Reports</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A' }}>BellAveGo Lead Reports</div>
                 </div>
                 <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: 'rgba(232,116,43,0.10)', color: '#C84B26', border: '1px solid rgba(232,116,43,0.30)' }}>2 reports</span>
               </div>
@@ -1242,12 +1242,12 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                   2-row × 4-col grid via .dp-mobile-tabs in globals.css —
                   mirrors the real mobile tabbar layout. */}
               {/* Order locked to match real mobile tabbar (2026-05-26):
-                  Command Center → Calendar → Consulting Reports →
+                  Command Center → Calendar → Lead Reports →
                   Call Forwarding → AI Receptionist → Invoicing → Pro → Settings */}
               {[
                 { label: 'Command Center' },
                 { label: 'Calendar' },
-                { label: 'Consulting Reports' },
+                { label: 'Lead Reports' },
                 { label: 'Call Forwarding' },
                 { label: 'AI Receptionist', dot: true },
                 { label: 'Invoicing' },

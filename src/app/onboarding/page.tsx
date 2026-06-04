@@ -371,7 +371,7 @@ function OnboardingInner() {
                     onChange={e => set('zip', e.target.value.replace(/\D/g, '').slice(0, 5))}
                   />
                   <p style={{ fontSize: 11, color: '#A0BCC2', marginTop: 5, lineHeight: 1.55 }}>
-                    {zipResolveStatus === 'idle' && 'Used by your AI to tell callers what city you serve. Also drives your consulting reports when there\'s no public info about your business.'}
+                    {zipResolveStatus === 'idle' && 'Used by your AI to tell callers what city you serve. Also drives your lead reports when there\'s no public info about your business.'}
                     {zipResolveStatus === 'looking' && 'Looking up your area…'}
                     {zipResolveStatus === 'ok' && (
                       <span style={{ color: '#16A34A', fontWeight: 700 }}>

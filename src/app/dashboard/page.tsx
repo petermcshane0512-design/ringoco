@@ -14,7 +14,7 @@ const ADMIN_EMAILS = new Set(["pmcshane@fordham.edu", "peter@bellavego.com"]);
 // Activation-banner copy. Prices come from TIER_METADATA in src/lib/pricing.ts
 // (single source of truth — if pricing changes, this banner updates automatically).
 const TIER_BANNER_COPY: Record<Tier, string> = {
-  receptionist: "AI answers every call · 60 calls/mo · 6 AI consulting reports/yr",
+  receptionist: "AI answers every call · 60 calls/mo · 6 AI lead reports/yr",
   officemgr:    "Starter + 300 calls/mo + Quote Hunter + Collections + Reviews + Reputation + 12 reports/yr",
   concierge:    "Pro + unlimited calls + custom integrations + bi-weekly reports + 4-hr SLA + direct founder access",
 };
@@ -382,7 +382,7 @@ export default function DashboardPage() {
 
   // Stripped to two metrics that actually reflect the AI's work: calls
   // answered today + this week. Revenue + Total Customers cards removed
-  // 2026-05-24 — revenue moved into the consulting reports (estimated
+  // 2026-05-24 — revenue moved into the lead reports (estimated
   // there with proper trade-average context); "Total Customers" was
   // confusing because it counted contact rows AI created, not paying
   // accounts. Less noise, more signal.
@@ -962,7 +962,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Consulting Reports — sunset orange palette */}
+          {/* Lead Reports — sunset orange palette */}
           <div style={{
             background: "linear-gradient(160deg, #FFF6EE 0%, #FFFFFF 60%)",
             border: "1px solid rgba(232,116,43,0.24)",
@@ -994,7 +994,7 @@ export default function DashboardPage() {
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ fontSize: 9, fontWeight: 800, color: "#C84B26", letterSpacing: "0.16em", textTransform: "uppercase", padding: "2px 8px", borderRadius: 99, background: "rgba(232,116,43,0.12)", border: "1px solid rgba(232,116,43,0.30)" }}>Consulting</span>
-                    <div style={cardTitle}>BellAveGo Consulting Reports</div>
+                    <div style={cardTitle}>BellAveGo Lead Reports</div>
                   </div>
                   <div style={{ fontSize: 11, color: "#8B5A3D", marginTop: 3, fontWeight: 500 }}>Your quarterly growth advisor — delivered as a PDF</div>
                 </div>
@@ -1008,7 +1008,7 @@ export default function DashboardPage() {
                 <div style={emptyBox}>
                   <div style={emptyTitle}>Your first report is on the way</div>
                   <div style={emptySub}>
-                    Your welcome consulting report auto-generates the day after activation.
+                    Your welcome lead report auto-generates the day after activation.
                     After that, reports arrive on your plan&apos;s cadence — bi-monthly (Mission Control),
                     monthly (Operator), or weekly + quarterly (Concierge).
                   </div>
