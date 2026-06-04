@@ -88,7 +88,20 @@ Return: ["script1", "script2", ...]  — exactly ${leads.length} items.`
     .trim()
     .replace(/^```(?:json)?\s*|\s*```$/g, '')
 
-  const parsed = JSON.parse(text)
+  // Lenient JSON extraction — find first [ and matching ] in case Haiku
+  // wraps with extra prose despite the system rule.
+  const first = text.indexOf('[')
+  const last = text.lastIndexOf(']')
+  if (first === -1 || last === -1) {
+    throw new Error(`no JSON array in: ${text.slice(0, 200)}`)
+  }
+  const slice = text.slice(first, last + 1)
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(slice)
+  } catch (e) {
+    throw new Error(`parse failed: ${(e as Error).message}. Slice: ${slice.slice(0, 200)}`)
+  }
   if (!Array.isArray(parsed)) throw new Error('expected array')
   return parsed.slice(0, leads.length).map(String)
 }
@@ -125,6 +138,7 @@ export async function GET(req: NextRequest) {
   const BATCH = 20
   let generated = 0
   let failed = 0
+  const errors: string[] = []
 
   for (let i = 0; i < leads.length; i += BATCH) {
     const batch = leads.slice(i, i + BATCH) as LeadRow[]
@@ -143,6 +157,7 @@ export async function GET(req: NextRequest) {
       failed += results.filter((r) => r.status === 'rejected').length
     } catch (e) {
       console.warn(`[pitch-scripts] batch ${i / BATCH} failed: ${(e as Error).message}`)
+      if (errors.length < 5) errors.push((e as Error).message.slice(0, 200))
       failed += batch.length
     }
   }
@@ -152,6 +167,7 @@ export async function GET(req: NextRequest) {
     leads_processed: leads.length,
     generated,
     failed,
+    errors: errors.length > 0 ? errors : undefined,
     checked_at: new Date().toISOString(),
   })
 }

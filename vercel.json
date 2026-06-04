@@ -85,10 +85,6 @@
       "schedule": "10 5 * * *"
     },
     {
-      "path": "/api/crons/scrape-permits-orlando",
-      "schedule": "30 5 * * *"
-    },
-    {
       "path": "/api/crons/generate-pitch-scripts",
       "schedule": "0 2 * * *"
     },
