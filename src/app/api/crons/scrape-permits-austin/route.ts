@@ -25,13 +25,13 @@ export async function GET(req: NextRequest) {
     cityLabel: 'Austin TX',
     socrataUrl: 'https://data.austintexas.gov/resource/3syk-w9eu.json',
     fields: {
-      issueDate: 'issued_date',
+      issueDate: 'issue_date',
       workDescription: 'description',
       permitType: 'permit_type_desc',
       cost: 'total_job_valuation',
-      fullAddress: 'permit_location',
-      latitude: 'latitude',
-      longitude: 'longitude',
+      fullAddress: 'original_address1',
+      zip: 'original_zip',
+      contractorPhone: 'contractor_phone',
     },
   }, {
     lookbackDays: parseInt(url.searchParams.get('days') ?? '14', 10),

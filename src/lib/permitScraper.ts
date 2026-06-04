@@ -28,8 +28,13 @@ export type PermitConfig = {
     streetName?: string
     streetDirection?: string
     fullAddress?: string    // some APIs return one combined field
-    latitude: string
-    longitude: string
+    // Geo: prefer a direct ZIP field. Fall back to lat/lng → nearest-centroid
+    // lookup if zip field absent. Austin/Dallas have ZIP directly; Chicago/
+    // NYC have lat/lng only.
+    zip?: string
+    latitude?: string
+    longitude?: string
+    contractorPhone?: string // captured into source_details when available
   }
   // SoQL $where date filter column name (defaults to fields.issueDate)
   dateColumn?: string
@@ -144,14 +149,25 @@ export async function scrapeCityPermits(cfg: PermitConfig, opts: { lookbackDays?
     const type = cfg.fields.permitType ? String(p[cfg.fields.permitType] || '') : ''
     const trades = classifyTrades(`${type} ${work}`)
     if (trades.length === 0) { skippedNoTrade++; continue }
-    const lat = Number(p[cfg.fields.latitude])
-    const lng = Number(p[cfg.fields.longitude])
-    if (!isFinite(lat) || !isFinite(lng)) { skippedNoGeo++; continue }
-    const zip = await nearestZip(lat, lng)
+
+    // Geo resolution: prefer direct ZIP, fall back to lat/lng → nearest centroid.
+    let zip: string | null = null
+    if (cfg.fields.zip && p[cfg.fields.zip]) {
+      const z = String(p[cfg.fields.zip]).slice(0, 5)
+      if (/^\d{5}$/.test(z)) zip = z
+    }
+    if (!zip && cfg.fields.latitude && cfg.fields.longitude) {
+      const lat = Number(p[cfg.fields.latitude])
+      const lng = Number(p[cfg.fields.longitude])
+      if (isFinite(lat) && isFinite(lng)) {
+        zip = await nearestZip(lat, lng)
+      }
+    }
     if (!zip) { skippedNoGeo++; continue }
 
     const cost = cfg.fields.cost ? Number(p[cfg.fields.cost] || 0) : 0
     const issue = p[cfg.fields.issueDate] ? String(p[cfg.fields.issueDate]) : null
+    const contractorPhone = cfg.fields.contractorPhone ? String(p[cfg.fields.contractorPhone] || '').trim() : ''
 
     classified++
     leadRows.push({
@@ -165,6 +181,7 @@ export async function scrapeCityPermits(cfg: PermitConfig, opts: { lookbackDays?
         work_description: work.slice(0, 240),
         reported_cost: cost || null,
         issue_date: issue,
+        contractor_phone: contractorPhone || undefined,
       },
       lead_score: scorePermit(cost, issue, trades.length),
       trade_match: trades,

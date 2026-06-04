@@ -31,9 +31,8 @@ export async function GET(req: NextRequest) {
       workDescription: 'work_description',
       permitType: 'permit_type',
       cost: 'value',
-      fullAddress: 'permit_address',
-      latitude: 'latitude',
-      longitude: 'longitude',
+      fullAddress: 'street_address',
+      zip: 'zip_code',
     },
   }, {
     lookbackDays: parseInt(url.searchParams.get('days') ?? '14', 10),
