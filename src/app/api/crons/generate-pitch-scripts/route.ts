@@ -118,11 +118,14 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(1000, parseInt(url.searchParams.get('limit') ?? '200', 10))
   const dryRun = url.searchParams.get('dry') === '1'
 
-  // Pull leads with no pitch yet, highest-score first
+  // Pull leads with no pitch yet, highest-score first. Skip aging_hvac
+  // (template-able, low-volume customer reads, $25 one-time waste). Only
+  // pitch permit + storm leads where the trigger is specific + valuable.
   const { data: leads, error } = await supabase
     .from('leads')
     .select('id, source, street_address, zip, source_details, trade_match, lead_score')
     .is('pitch_script', null)
+    .in('source', ['permit', 'storm'])
     .order('lead_score', { ascending: false })
     .limit(limit)
 

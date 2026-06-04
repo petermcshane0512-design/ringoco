@@ -668,7 +668,10 @@ Schema:
 ${SCHEMA}`
 
   const completion = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    // Haiku 4.5 — switched 2026-06-04 for cost. Sonnet was $0.04/report ×
+    // 580/day = $23/day. Haiku is ~$0.005/report = $2.90/day. Quality dip
+    // is minor for cold-email-grade reports (prospect reads <60sec anyway).
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 4000,
     system: SYSTEM,
     messages: [{ role: 'user', content: prompt }],

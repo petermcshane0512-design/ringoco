@@ -95,7 +95,8 @@ export async function generateReportNarrative(input: {
 
   try {
     const completion = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      // Haiku 4.5 — switched 2026-06-04 for cost savings on consulting reports.
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 3000,
       system,
       messages: [{ role: 'user', content: prompt }],

@@ -172,6 +172,13 @@ function LeadCard({ drop, onStatus }: { drop: LeadDrop; onStatus: (id: string, s
     other: 'Lead',
   } as Record<string, string>)[l.source] || 'Lead'
 
+  // Template pitch for aging_hvac leads — skips API generation since the
+  // trigger is the same for every aging-HVAC neighborhood (Census ZIP
+  // density). Real per-lead Haiku gen reserved for permits + storms.
+  const pitch = l.pitch_script || (l.source === 'aging_hvac'
+    ? `Hi, calling neighbors in ${l.zip} where most homes are 20+ yrs old — AC units past their lifespan. Got a min to talk about a free tune-up to extend yours?`
+    : null)
+
   return (
     <div style={{
       background: '#fff', borderRadius: 14, padding: '18px 20px',
@@ -196,9 +203,9 @@ function LeadCard({ drop, onStatus }: { drop: LeadDrop; onStatus: (id: string, s
               {l.sqft ? ` · 📐 ${l.sqft.toLocaleString()} sqft` : null}
             </div>
           )}
-          {l.pitch_script && (
+          {pitch && (
             <div style={{ background: '#F5F1EA', padding: '10px 12px', borderRadius: 8, fontSize: 13, color: '#0B1F3A', lineHeight: 1.5, marginBottom: 10 }}>
-              💡 {l.pitch_script}
+              💡 {pitch}
             </div>
           )}
         </div>
