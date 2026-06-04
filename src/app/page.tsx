@@ -680,7 +680,7 @@ export default function HomePage() {
 
           <div className="hero-grid">
             <div>
-              <div className="hero-eyebrow">AI Built for Home Service Pros</div>
+              <div className="hero-eyebrow">Built for HVAC, Plumbing, Electrical, Roofing, and Handyman pros</div>
               <h1 className="hero-h1">
                 Never lose another job<br />
                 <span className="accent">to voicemail.</span>
@@ -1242,7 +1242,7 @@ export default function HomePage() {
 
       {/* INDUSTRIES */}
       <section style={{ background: '#F2F9F5', borderBottom: '1px solid #D4E6DC', padding: '28px 0 0' }}>
-        <p style={{ textAlign: 'center', fontWeight: 700, fontSize: 13, color: '#5A8A92', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 18 }}>Built for home service businesses</p>
+        <p style={{ textAlign: 'center', fontWeight: 700, fontSize: 13, color: '#5A8A92', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 18 }}>Built for HVAC, Plumbing, Electrical, Roofing, and Handyman pros</p>
         <div style={{ overflow: 'hidden' }}>
           <div style={{ display: 'flex', width: 'max-content', animation: 'scroll 25s linear infinite', paddingBottom: 26 }}>
             {[...Array(2)].map((_, repeat) => (
@@ -1393,7 +1393,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <Image src="/logo.png" alt="BellAveGo" width={300} height={100} style={{ objectFit: 'contain' }} />
           <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
-          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>AI receptionist and growth platform for home-service businesses · From $147/mo · 7-day free trial · Cancel anytime</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>AI receptionist and growth platform for HVAC, plumbing, electrical, roofing, and handyman pros · From $147/mo · 7-day free trial · Cancel anytime</p>
           <p style={{ margin: '8px 0 0', fontSize: 11, color: '#3D5A62' }}>
             <Link href="/privacy" style={{ color: '#7AAAB2', textDecoration: 'none' }}>Privacy</Link>
             {' · '}

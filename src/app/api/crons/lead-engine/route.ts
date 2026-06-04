@@ -39,8 +39,24 @@ type ProfileRow = {
   user_id: string
   plan_tier: string | null
   service_area: string | null
+  service_zips: string[] | null
+  service_radius_mi: number | null
   business_type: string | null
   is_active: boolean | null
+}
+
+// 5-trade lock 2026-06-04: BellAveGo only sells to HVAC, plumbing,
+// electrical, roofing, and handyman. Anything else gets a default 'hvac'
+// match so the lead engine doesn't 500.
+const VALID_TRADES = ['hvac', 'plumbing', 'electrical', 'roofing', 'handyman'] as const
+type Trade = (typeof VALID_TRADES)[number]
+function normalizeTrade(raw: string | null | undefined): Trade {
+  const t = (raw || '').toLowerCase().trim()
+  if (t.includes('plumb')) return 'plumbing'
+  if (t.includes('elect')) return 'electrical'
+  if (t.includes('roof')) return 'roofing'
+  if (t.includes('handy')) return 'handyman'
+  return 'hvac' // default
 }
 
 async function assignLeadsForTenant(profile: ProfileRow): Promise<{ assigned: number; skipped_reason?: string }> {
@@ -66,15 +82,19 @@ async function assignLeadsForTenant(profile: ProfileRow): Promise<{ assigned: nu
   const remaining = cadence.perDrop - used
   if (remaining <= 0) return { assigned: 0, skipped_reason: 'quota_filled' }
 
-  // Pull top-scored unassigned leads matching tenant's trade + service area.
-  // service_area for HVAC contractors typically holds a city/region string;
-  // for now we match by trade (broader) and rank by score. ZIP-based geo
-  // filtering is added in a follow-up cron (uses profile.serviceZips).
-  const tradeFilter = (profile.business_type || 'hvac').toLowerCase()
+  // 2-axis filter: tenant's trade + tenant's service ZIPs.
+  // service_zips is the source of truth for geo routing — set during
+  // onboarding. Empty array = serve no leads (force ZIP entry).
+  const tradeFilter: Trade = normalizeTrade(profile.business_type)
+  const zips = (profile.service_zips || []).filter(Boolean)
+  if (zips.length === 0) {
+    return { assigned: 0, skipped_reason: 'no_service_zips' }
+  }
   const { data: candidates } = await supabase
     .from('leads')
     .select('id, lead_score, source, trade_match, zip, street_address')
     .contains('trade_match', [tradeFilter])
+    .in('zip', zips)
     .order('lead_score', { ascending: false })
     .limit(remaining * 3) // pull buffer in case some are already assigned to this tenant
 
@@ -121,7 +141,7 @@ export async function GET(req: NextRequest) {
   // Pull all active tenants on a real tier (skip demo/legacy)
   const { data: profiles, error } = await supabase
     .from('profiles')
-    .select('user_id, plan_tier, service_area, business_type, is_active')
+    .select('user_id, plan_tier, service_area, service_zips, service_radius_mi, business_type, is_active')
     .eq('is_active', true)
     .in('plan_tier', ['receptionist', 'officemgr', 'concierge'])
     .not('twilio_number', 'is', null)
@@ -134,7 +154,7 @@ export async function GET(req: NextRequest) {
   const results = {
     total_tenants: profiles.length,
     assigned_count: 0,
-    skipped: { quota_filled: 0, no_candidates: 0, all_already_received: 0, insert_failed: 0, inactive: 0, unknown_tier: 0 },
+    skipped: { quota_filled: 0, no_candidates: 0, all_already_received: 0, insert_failed: 0, inactive: 0, unknown_tier: 0, no_service_zips: 0 },
     per_tenant: [] as Array<{ user_id: string; tier: string; assigned: number; reason?: string }>,
   }
 

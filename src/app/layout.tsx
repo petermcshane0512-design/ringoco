@@ -23,15 +23,15 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   manifest: "/manifest.json",
   title: {
-    default: "BellAveGo — AI receptionist and growth platform for home-service businesses",
+    default: "BellAveGo — AI receptionist and growth platform for HVAC, plumbing, electrical, roofing, and handyman pros",
     template: "%s · BellAveGo",
   },
   description:
-    "AI answers every call, books the job, follows up on quotes, recovers past-due invoices, and runs your marketing — automatically. Built for home service contractors of 1–15. From $147/mo. 7-day free trial, cancel anytime.",
+    "AI answers every call, books the job, follows up on quotes, recovers past-due invoices, and runs your marketing — automatically. Built for HVAC, plumbing, electrical, roofing, and handyman pros of 1–15. From $147/mo. 7-day free trial, cancel anytime.",
   applicationName: "BellAveGo",
   keywords: [
     "AI receptionist",
-    "AI for home services",
+    "AI for HVAC, plumbing, electrical, roofing, and handyman",
     "HVAC AI",
     "plumber AI",
     "electrician AI",
@@ -49,9 +49,9 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "BellAveGo",
-    title: "BellAveGo — AI receptionist and growth platform for home-service businesses",
+    title: "BellAveGo — AI receptionist and growth platform for HVAC, plumbing, electrical, roofing, and handyman pros",
     description:
-      "AI answers every call, books the job, follows up on quotes, recovers past-due invoices, and runs your marketing — all on autopilot. Built for home service teams of 1–15.",
+      "AI answers every call, books the job, follows up on quotes, recovers past-due invoices, and runs your marketing — all on autopilot. Built for HVAC, plumbing, electrical, roofing, and handyman teams of 1–15.",
     url: SITE_URL,
     locale: "en_US",
     images: [
@@ -59,15 +59,15 @@ export const metadata: Metadata = {
         url: OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: "BellAveGo — AI receptionist and growth platform for home-service businesses",
+        alt: "BellAveGo — AI receptionist and growth platform for HVAC, plumbing, electrical, roofing, and handyman pros",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "BellAveGo — AI receptionist and growth platform for home-service businesses",
+    title: "BellAveGo — AI receptionist and growth platform for HVAC, plumbing, electrical, roofing, and handyman pros",
     description:
-      "AI answers every call, books the job, runs your marketing. Built for home service contractors. From $147/mo.",
+      "AI answers every call, books the job, runs your marketing. Built for HVAC, plumbing, electrical, roofing, and handyman pros. From $147/mo.",
     images: [OG_IMAGE],
   },
   robots: {
@@ -95,7 +95,7 @@ const organizationJsonLd = {
   url: SITE_URL,
   logo: OG_IMAGE,
   description:
-    "AI receptionist and growth platform for home-service businesses. Answers calls, books jobs, recovers revenue, runs marketing.",
+    "AI receptionist and growth platform for HVAC, plumbing, electrical, roofing, and handyman pros. Answers calls, books jobs, recovers revenue, runs marketing.",
   founder: {
     "@type": "Organization",
     name: "BellAveGo Team",
@@ -126,7 +126,7 @@ const softwareJsonLd = {
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
   description:
-    "AI receptionist and growth platform for home-service businesses. 24/7 call answering, automated booking, AI-powered marketing operations.",
+    "AI receptionist and growth platform for HVAC, plumbing, electrical, roofing, and handyman pros. 24/7 call answering, automated booking, AI-powered marketing operations.",
   offers: [
     { "@type": "Offer", name: "Starter", price: "147", priceCurrency: "USD" },
     { "@type": "Offer", name: "Pro",     price: "297", priceCurrency: "USD" },
