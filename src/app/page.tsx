@@ -1240,31 +1240,6 @@ export default function HomePage() {
       {/* ROI CALCULATOR + FOUNDER SECTION both moved to /founder per Peter —
           homepage is now Hero → Consulting → Appointments (2-mode) → Industries → Pricing → CTA. */}
 
-      {/* INDUSTRIES */}
-      <section style={{ background: '#F2F9F5', borderBottom: '1px solid #D4E6DC', padding: '28px 0 0' }}>
-        <p style={{ textAlign: 'center', fontWeight: 700, fontSize: 13, color: '#5A8A92', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 18 }}>Built for HVAC, Plumbing, Electrical, Roofing, and Handyman pros</p>
-        <div style={{ overflow: 'hidden' }}>
-          <div style={{ display: 'flex', width: 'max-content', animation: 'scroll 25s linear infinite', paddingBottom: 26 }}>
-            {[...Array(2)].map((_, repeat) => (
-              <div key={repeat} style={{ display: 'flex' }}>
-                {[
-                  { icon: '❄️', label: 'HVAC' },
-                  { icon: '🪠', label: 'Plumbing' },
-                  { icon: '⚡', label: 'Electrical' },
-                  { icon: '🏠', label: 'Roofing' },
-                  { icon: '🔨', label: 'Handyman' },
-                ].map(s => (
-                  <div key={s.label + repeat} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 28px', borderRight: '1px solid #D4E6DC', whiteSpace: 'nowrap' }}>
-                    <span style={{ fontSize: 18 }}>{s.icon}</span>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: '#3D5A62' }}>{s.label}</span>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* PRICING */}
       <section style={{ padding: '72px 48px', background: '#F2F9F5', borderBottom: '1px solid #D4E6DC', textAlign: 'center' }}>
         <p style={{ fontSize: 13, fontWeight: 700, color: '#20B2AA', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Pricing</p>
