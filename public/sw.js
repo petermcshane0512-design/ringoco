@@ -56,22 +56,40 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   const targetUrl = event.notification.data?.url || '/dashboard'
+  // Resolve to absolute URL so comparisons work and iOS PWA openWindow accepts it.
+  const absoluteUrl = new URL(targetUrl, self.location.origin).href
 
-  event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientsList) => {
-      // If a BellAveGo tab is already open, focus it + navigate to the target URL.
-      for (const client of clientsList) {
-        if ('focus' in client && client.url.includes(self.location.origin)) {
-          client.focus()
-          if ('navigate' in client) {
-            return client.navigate(targetUrl)
+  event.waitUntil((async () => {
+    const clientsList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+
+    // Pass 1: existing tab already AT the target URL → focus it. No nav needed.
+    for (const client of clientsList) {
+      if (client.url === absoluteUrl) {
+        return client.focus()
+      }
+    }
+
+    // Pass 2: existing tab on our origin → focus + try navigate. iOS PWA
+    // commonly silently drops .navigate() but doesn't throw, so we still
+    // fall through to openWindow if no actual navigation occurred.
+    for (const client of clientsList) {
+      if (client.url.startsWith(self.location.origin)) {
+        try {
+          const focused = await client.focus()
+          if ('navigate' in focused) {
+            // Some iOS Safari builds reject cross-path navigate() — wrap.
+            const navigated = await focused.navigate(absoluteUrl).catch(() => null)
+            if (navigated && navigated.url === absoluteUrl) return navigated
           }
+        } catch {
+          // focus failed too — fall through
         }
       }
-      // Otherwise open a new window.
-      if (self.clients.openWindow) {
-        return self.clients.openWindow(targetUrl)
-      }
-    }),
-  )
+    }
+
+    // Pass 3: open a brand-new window at the target URL.
+    if (self.clients.openWindow) {
+      return self.clients.openWindow(absoluteUrl)
+    }
+  })())
 })

@@ -1081,7 +1081,7 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
         firePushAsync(demoOwnerId, {
           title: callerPhone ? `📞 Demo call — ${callerPhone}` : '📞 Demo call',
           body: pushBody,
-          url: '/admin/forward',
+          url: `/admin/calls/${callSid}`,
           tag: `demo-${callSid}`,
           urgency: 'soon',
           requireInteraction: false,
@@ -1234,7 +1234,7 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
       firePushAsync(tenant.user_id, {
         title: callerPhone ? `📞 Missed call — ${callerPhone}` : '📞 Missed call',
         body: pushBody,
-        url: '/dashboard',
+        url: `/admin/calls/${callSid}`,
         tag: `missed-${callSid}`,
         urgency: 'soon',
         requireInteraction: false,
