@@ -88,6 +88,28 @@ export async function GET(req: NextRequest) {
     })
   }
 
+  // Debug mode — dump raw Census response so we can see WHY 0 rows.
+  // Safe to leave in: still requires x-admin-secret auth.
+  const dbg = req.headers.get('x-admin-secret') ? new URL(req.url).searchParams.get('debug') : null
+  if (dbg === '1') {
+    const testUrl = `${CENSUS_BASE}?get=B25035_001E,B25002_001E&for=zip%20code%20tabulation%20area:60601&key=${censusKey}`
+    const r = await fetch(testUrl, { headers: { 'User-Agent': 'BellAveGo debug' } })
+    const ctype = r.headers.get('content-type') || ''
+    const body = await r.text()
+    return NextResponse.json({
+      debug: true,
+      key_present: true,
+      key_len: censusKey.length,
+      key_first4: censusKey.slice(0, 4),
+      key_last4: censusKey.slice(-4),
+      key_has_whitespace: /\s/.test(censusKey),
+      test_url: testUrl.replace(censusKey, '***'),
+      status: r.status,
+      content_type: ctype,
+      body_first_400: body.slice(0, 400),
+    })
+  }
+
   // Optional ?stateFilter=AZ caps generation to one state's ZIPs for testing.
   // Default: process every ZCTA Census returns.
   const url = new URL(req.url)
