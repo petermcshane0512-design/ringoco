@@ -559,12 +559,12 @@ export default function ConsultingShowcase() {
       <div className="cs-wrap">
         {/* Header */}
         <header className="cs-head">
-          <span className="cs-eyebrow">Neighborhood Lead Drops · Included on Growth+</span>
+          <span className="cs-eyebrow">Lead Reports · Included on every plan</span>
           <h2 className="cs-h2">
-            BellAveGo continuously analyzes your business for <span className="money">missed revenue opportunities</span>.
+            Fresh leads in your neighborhood, delivered to your dashboard. <span className="money">More jobs. More money.</span>
           </h2>
           <p className="cs-sub">
-            Higher-tier plans include more frequent reporting, deeper market analysis, and ongoing AI-driven business intelligence.
+            BellAveGo scans permits, deed transfers, storm-damage zones, and aging-HVAC homes in your service area — then drops the highest-intent leads straight to your phone. Starter: 5 per quarter. Pro: 15 per month. Elite: 25 per week.
           </p>
         </header>
 
