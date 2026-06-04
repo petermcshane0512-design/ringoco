@@ -89,9 +89,9 @@ export async function GET(req: NextRequest) {
   }
 
   // Debug mode — dump raw Census response so we can see WHY 0 rows.
-  // Safe to leave in: still requires x-admin-secret auth.
-  const dbg = req.headers.get('x-admin-secret') ? new URL(req.url).searchParams.get('debug') : null
-  if (dbg === '1') {
+  // Already past auth gate (admin secret matched or cron header set).
+  const debugMode = new URL(req.url).searchParams.get('debug') === '1'
+  if (debugMode) {
     const testUrl = `${CENSUS_BASE}?get=B25035_001E,B25002_001E&for=zip%20code%20tabulation%20area:60601&key=${censusKey}`
     const r = await fetch(testUrl, { headers: { 'User-Agent': 'BellAveGo debug' } })
     const ctype = r.headers.get('content-type') || ''
