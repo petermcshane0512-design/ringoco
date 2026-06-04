@@ -34,10 +34,17 @@ async function handle(req: NextRequest) {
     )
     const { data: existing } = await supabase
       .from('outreach_leads')
-      .select('report_visit_at, first_opened_at, open_count')
+      .select('report_visit_at, first_opened_at, open_count, buyer_score')
       .eq('id', leadId)
       .maybeSingle()
     if (existing) {
+      // Each open bumps buyer_score by +10 (capped at 100). Clicking the
+      // report is the strongest pre-conversion signal we have — a prospect
+      // who opens 3+ times is 10-20x more likely to convert than blind
+      // dials. Boost surfaces them to the top of any score-ranked dial
+      // list (e.g. /admin/dial-list, daily digest, scoring cron output).
+      const currentScore = existing.buyer_score ?? 0
+      const nextScore = Math.min(100, currentScore + 10)
       await supabase
         .from('outreach_leads')
         .update({
@@ -45,6 +52,7 @@ async function handle(req: NextRequest) {
           first_opened_at: existing.first_opened_at ?? new Date().toISOString(),
           last_opened_at: new Date().toISOString(),
           open_count: (existing.open_count ?? 0) + 1,
+          buyer_score: nextScore,
         })
         .eq('id', leadId)
     }
