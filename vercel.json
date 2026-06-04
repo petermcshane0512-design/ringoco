@@ -85,10 +85,6 @@
       "schedule": "10 5 * * *"
     },
     {
-      "path": "/api/crons/scrape-permits-dallas",
-      "schedule": "20 5 * * *"
-    },
-    {
       "path": "/api/crons/scrape-census-aging",
       "schedule": "0 4 * * 1"
     },
