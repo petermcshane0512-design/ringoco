@@ -8,6 +8,7 @@ import { applyLedgerEntry } from '@/lib/marketing/growth-wallet'
 import { recordPendingReferral, applyPendingReferralCredit, voidPendingReferral } from '@/lib/referrals'
 import { sendEmail } from '@/lib/email'
 import { lookupOwnerEmail } from '@/lib/notify'
+import { fireLeadEngineForUser } from '@/lib/leadEngine'
 
 function escapeHtmlMin(s: string): string {
   return s
@@ -109,6 +110,21 @@ export async function POST(req: NextRequest) {
     }).eq('user_id', userId)
 
     console.log(`Subscription activated for user ${userId}: ${planTier}`)
+
+    // ── Day-1 lead drop ──────────────────────────────────────────────
+    // Fire lead-engine for this tenant NOW, not next 4am cron. Service
+    // ZIPs + radius were captured during onboarding (before checkout),
+    // so the profile is ready. Fire-and-forget so it doesn't block the
+    // 200 we owe Stripe. Logs the assigned count for debugging.
+    fireLeadEngineForUser(userId)
+      .then((r) => {
+        if (r.assigned > 0) {
+          console.log(`[day-1 leads] dropped ${r.assigned} leads to new tenant ${userId}`)
+        } else {
+          console.log(`[day-1 leads] no drop for ${userId}: ${r.skipped_reason}`)
+        }
+      })
+      .catch((e) => console.error(`[day-1 leads] threw for ${userId}:`, e))
 
     // ── 🎉 Peter's ALERT: SMS the founder on every new subscription ──
     // Per Peter 5/28: he wants real-time notifications when a small dog

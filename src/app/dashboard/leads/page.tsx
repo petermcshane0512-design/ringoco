@@ -114,15 +114,39 @@ export default function LeadsPage() {
         <div style={{ padding: 60, textAlign: 'center', color: '#7AAAB2' }}>Loading your leads…</div>
       ) : drops.length === 0 ? (
         <div style={{
-          background: '#fff', borderRadius: 16, padding: '50px 30px', textAlign: 'center',
+          background: '#fff', borderRadius: 16, padding: '40px 30px', textAlign: 'center',
           border: '1.5px dashed rgba(10,168,159,0.22)',
         }}>
-          <div style={{ fontSize: 44, marginBottom: 8 }}>🏠</div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: '#0B1F3A', marginBottom: 8 }}>
-            No leads dropped yet
+          <div style={{ fontSize: 44, marginBottom: 8 }}>🛰️</div>
+          <div style={{ fontSize: 19, fontWeight: 800, color: '#0B1F3A', marginBottom: 8 }}>
+            Scanning your service area now
           </div>
-          <p style={{ fontSize: 14, color: '#4A6670', maxWidth: 480, margin: '0 auto', lineHeight: 1.55 }}>
-            We&apos;re scanning your service area for new movers, fresh permits, and storm-trigger events. Your first {quota?.per_drop ?? 5} leads will land within a few days. We&apos;ll ping you when they arrive.
+          <p style={{ fontSize: 14, color: '#4A6670', maxWidth: 520, margin: '0 auto 18px', lineHeight: 1.55 }}>
+            We pull from 5 free public data sources in real time: city permits, US Census aging-home data,
+            NOAA storm alerts, new-mover signals, and competitor footprints. Your first {quota?.per_drop ?? 5}{' '}
+            {quota?.cadence_label ?? 'weekly'} leads land within 24 hours of signup.
+          </p>
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+            gap: 10, maxWidth: 540, margin: '18px auto 0', textAlign: 'left',
+          }}>
+            {[
+              { icon: '🏗️', label: 'Live permit feeds' },
+              { icon: '🌡️', label: 'Aging HVAC data' },
+              { icon: '⛈️', label: 'Storm triggers' },
+              { icon: '🏠', label: 'Move-in signals' },
+            ].map((s) => (
+              <div key={s.label} style={{
+                padding: '10px 12px', borderRadius: 10,
+                background: '#F5FDFB', border: '1px solid rgba(10,168,159,0.16)',
+                fontSize: 12, color: '#0B1F3A', fontWeight: 700,
+              }}>
+                {s.icon} {s.label}
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: 11, color: '#7AAAB2', marginTop: 16 }}>
+            Want to expand your service radius? <Link href="/dashboard/settings" style={{ color: '#0AA89F', fontWeight: 700, textDecoration: 'none' }}>Settings →</Link>
           </p>
         </div>
       ) : (

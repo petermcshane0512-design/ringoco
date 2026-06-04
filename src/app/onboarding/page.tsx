@@ -179,6 +179,21 @@ function OnboardingInner() {
     const resolvedTrade = form.businessType === 'Other' && form.businessTypeOther.trim()
       ? form.businessTypeOther.trim()
       : form.businessType
+
+    // Per-trade radius defaults — match real-world travel patterns so
+    // tenants get a sensible default they probably won't override.
+    //   Handyman = 10mi (small jobs, can't justify drive time)
+    //   Plumbing = 15mi (urgent, dispatch fast)
+    //   HVAC/Electrical = 20mi (mobile vans)
+    //   Roofing = 30mi (project-based, willing to travel)
+    function defaultRadiusFor(bt: string): number {
+      const t = bt.toLowerCase()
+      if (t.includes('handy')) return 10
+      if (t.includes('plumb')) return 15
+      if (t.includes('roof')) return 30
+      return 20
+    }
+    const defaultRadius = defaultRadiusFor(form.businessType)
     try {
       await fetch('/api/profile', {
         method: 'POST',
@@ -190,11 +205,10 @@ function OnboardingInner() {
           owner_phone: form.phone,
           service_area: form.serviceArea,
           zip_code: form.zip,
-          // service_zips drives /api/crons/lead-engine. Default radius
-          // 25mi covers a normal home-service truck-roll. Customer can
-          // expand to 50/75/100 in Settings if they travel farther.
+          // service_zips drives /api/crons/lead-engine. Radius defaults
+          // per-trade above. Customer can adjust in Settings later.
           service_zips: [form.zip],
-          service_radius_mi: 25,
+          service_radius_mi: defaultRadius,
           services_offered: resolvedTrade,
           ai_tone: 'friendly',
           ai_language: 'en',
@@ -416,11 +430,11 @@ function OnboardingInner() {
                     onChange={e => set('zip', e.target.value.replace(/\D/g, '').slice(0, 5))}
                   />
                   <p style={{ fontSize: 11, color: '#A0BCC2', marginTop: 5, lineHeight: 1.55 }}>
-                    {zipResolveStatus === 'idle' && 'Used by your AI to tell callers what city you serve AND to pull every neighborhood lead within 25 miles of this ZIP. Critical — leads stop if this is wrong.'}
+                    {zipResolveStatus === 'idle' && 'Used by your AI to tell callers what city you serve AND to pull every neighborhood lead within your trade\'s default travel radius of this ZIP. Critical — leads stop if this is wrong.'}
                     {zipResolveStatus === 'looking' && 'Looking up your area…'}
                     {zipResolveStatus === 'ok' && (
                       <span style={{ color: '#16A34A', fontWeight: 700 }}>
-                        ✓ {form.serviceArea} — Emma will say &ldquo;we serve {form.serviceArea}&rdquo; · leads pulled within 25mi
+                        ✓ {form.serviceArea} — Emma will say &ldquo;we serve {form.serviceArea}&rdquo; · radius set in Settings
                       </span>
                     )}
                     {zipResolveStatus === 'not_found' && (
