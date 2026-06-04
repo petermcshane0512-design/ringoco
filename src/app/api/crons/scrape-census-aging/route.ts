@@ -141,7 +141,11 @@ export async function GET(req: NextRequest) {
     ? rows.filter((r) => allowedZips!.has(r.zip))
     : rows
 
-  // Update zip_centroids with median home age (for next lead-engine run)
+  // Update zip_centroids with median home age (for next lead-engine run).
+  // ONLY for ZIPs that already exist in our centroid table — bulk upsert
+  // was silently failing because Census returns ZCTAs not in our zipcodes
+  // package, and the insert branch hit lat NOT NULL violation. UPDATE-only
+  // path side-steps that.
   const centroidUpdates = filtered
     .filter((r) => r.median_year_built && r.median_year_built > 1900)
     .map((r) => ({
@@ -150,10 +154,28 @@ export async function GET(req: NextRequest) {
       households: r.total_units,
     }))
 
+  let centroidUpdatesApplied = 0
   if (centroidUpdates.length > 0) {
-    for (let i = 0; i < centroidUpdates.length; i += 500) {
-      const batch = centroidUpdates.slice(i, i + 500)
-      await supabase.from('zip_centroids').upsert(batch, { onConflict: 'zip' })
+    // Pre-fetch which ZIPs we actually have. Skip the rest.
+    const allZips = centroidUpdates.map((u) => u.zip)
+    const existingZips = new Set<string>()
+    for (let i = 0; i < allZips.length; i += 1000) {
+      const slice = allZips.slice(i, i + 1000)
+      const { data } = await supabase
+        .from('zip_centroids')
+        .select('zip')
+        .in('zip', slice)
+      if (data) for (const r of data) existingZips.add(r.zip)
+    }
+
+    const updatable = centroidUpdates.filter((u) => existingZips.has(u.zip))
+    // Use upsert with onConflict — every row now has a guaranteed match,
+    // so it routes to UPDATE path only.
+    for (let i = 0; i < updatable.length; i += 500) {
+      const batch = updatable.slice(i, i + 500)
+      const { error } = await supabase.from('zip_centroids').upsert(batch, { onConflict: 'zip' })
+      if (!error) centroidUpdatesApplied += batch.length
+      else console.warn(`[census-aging] centroid update err: ${error.message}`)
     }
   }
 
@@ -207,7 +229,8 @@ export async function GET(req: NextRequest) {
     state_filter: stateFilter,
     zips_returned_by_census: rows.length,
     zips_in_filter: filtered.length,
-    centroid_updates: centroidUpdates.length,
+    centroid_updates_attempted: centroidUpdates.length,
+    centroid_updates_applied: centroidUpdatesApplied,
     aging_zips_qualified: agingZips.length,
     leads_inserted_or_dedup: totalLeadsInserted,
     checked_at: now.toISOString(),
