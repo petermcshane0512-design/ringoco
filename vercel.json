@@ -85,6 +85,10 @@
       "schedule": "0 */4 * * *"
     },
     {
+      "path": "/api/crons/scrape-census-aging",
+      "schedule": "0 4 * * 1"
+    },
+    {
       "path": "/api/crons/prioritize-tomorrow-dials",
       "schedule": "30 23 * * 1-5"
     }
@@ -94,6 +98,9 @@
       "maxDuration": 300
     },
     "src/app/api/crons/daily-200-leads/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/crons/scrape-census-aging/route.ts": {
       "maxDuration": 300
     }
   }

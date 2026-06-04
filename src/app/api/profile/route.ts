@@ -58,6 +58,11 @@ const SAFE_PROFILE_COLUMNS = new Set([
   'ai_greeting_style', 'ai_greeting_custom',
   // ── forwarding diag (migration 2026-06-01) ────────────────────────
   'forwarding_test_from', 'forwarding_test_strict_match',
+  // ── lead routing (sql/2026-06-04-profile-service-zips.sql) ────────
+  // service_zips = home ZIPs the contractor works out of (array). Drives
+  // /api/crons/lead-engine — every lead is filtered to ZIPs within
+  // service_radius_mi of any of these. Captured at onboarding.
+  'service_zips', 'service_radius_mi',
 ])
 
 export async function POST(req: NextRequest) {

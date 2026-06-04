@@ -5,10 +5,12 @@ import { useUser } from '@clerk/nextjs'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 
+// 5-trade lock 2026-06-04: BellAveGo only sells to HVAC, plumbing,
+// electrical, roofing, handyman. "Other" still allowed (custom text
+// captured via businessTypeOther) so we don't lose top-of-funnel
+// curiosity signups — Peter manually reviews these.
 const BUSINESS_TYPES = [
-  'HVAC', 'Plumbing', 'Electrical', 'Cleaning', 'Landscaping',
-  'Handyman', 'Roofing', 'Appliance Repair', 'Auto Detailing',
-  'Pool & Spa', 'Pest Control', 'Other',
+  'HVAC', 'Electrical', 'Plumbing', 'Handyman', 'Roofing', 'Other',
 ]
 
 // Common trades the AI can confirm to callers ("Sounds like an HVAC issue").
@@ -42,6 +44,9 @@ type GreetingStyle = 'friendly_intro' | 'thanks_for_calling' | 'business_first'
 type FormData = {
   businessName: string
   businessType: string
+  // When businessType === 'Other', user types their actual line of work
+  // here. We store the resolved string in services_offered on submit.
+  businessTypeOther: string
   ownerFirstName: string
   phone: string
   zip: string
@@ -78,6 +83,7 @@ function OnboardingInner() {
   const [form, setForm] = useState<FormData>({
     businessName: '',
     businessType: '',
+    businessTypeOther: '',
     ownerFirstName: '',
     phone: '',
     zip: '',
@@ -130,13 +136,18 @@ function OnboardingInner() {
 
   function canContinue() {
     if (step === 1) {
+      // If "Other" picked, require the custom-trade text. Otherwise the
+      // saved business_type would be the literal string "Other" which
+      // breaks the 5-trade lead-engine normalizer downstream.
+      const businessTypeOk = form.businessType
+        && (form.businessType !== 'Other' || form.businessTypeOther.trim().length > 0)
       return (
-        form.businessName.trim() &&
-        form.businessType &&
+        !!(form.businessName.trim() &&
+        businessTypeOk &&
         form.phone.trim() &&
         form.ownerFirstName.trim() &&
         /^\d{5}$/.test(form.zip) &&
-        form.serviceArea.trim()
+        form.serviceArea.trim())
       )
     }
     return true
@@ -162,6 +173,12 @@ function OnboardingInner() {
     // back to a random US area code (Peter got 610 for a Chicago number
     // on 2026-06-01). Blocking here costs ~250ms but guarantees the
     // area-code lookup has owner_phone to work with.
+    // Resolve "Other" → custom text the user typed. business_type stays
+    // 'Other' in the column (so admin can filter), but services_offered
+    // gets the actual line of work for Emma + lead-routing normalization.
+    const resolvedTrade = form.businessType === 'Other' && form.businessTypeOther.trim()
+      ? form.businessTypeOther.trim()
+      : form.businessType
     try {
       await fetch('/api/profile', {
         method: 'POST',
@@ -173,18 +190,21 @@ function OnboardingInner() {
           owner_phone: form.phone,
           service_area: form.serviceArea,
           zip_code: form.zip,
-          services_offered: form.trades.join(', '),
+          // service_zips drives /api/crons/lead-engine. Default radius
+          // 25mi covers a normal home-service truck-roll. Customer can
+          // expand to 50/75/100 in Settings if they travel farther.
+          service_zips: [form.zip],
+          service_radius_mi: 25,
+          services_offered: resolvedTrade,
           ai_tone: 'friendly',
           ai_language: 'en',
           revenue_range: '',
           team_size: '',
           // services is what Emma reads aloud — "We cover X" in her
-          // prompt. Use the contractor's actual trades; fall back to
-          // business_type then generic phrase. (Audit 2026-05-24)
-          services: form.trades.length > 0
-            ? form.trades.join(', ')
-            : form.businessType
-            ? `${form.businessType} services`
+          // prompt. Use the resolved trade so "Other" customers get
+          // their actual line of work spoken, not the literal "Other".
+          services: resolvedTrade
+            ? `${resolvedTrade} services`
             : 'home services',
           ai_greeting_style: form.greetingStyle,
           hours_open: '8:00 AM',
@@ -331,7 +351,7 @@ function OnboardingInner() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
                   <div>
-                    <label style={labelStyle}>Business type</label>
+                    <label style={labelStyle}>Trade</label>
                     <select style={selectStyle} value={form.businessType} onChange={e => set('businessType', e.target.value)}>
                       <option value="">Select…</option>
                       {BUSINESS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
@@ -343,6 +363,31 @@ function OnboardingInner() {
                       onChange={e => set('ownerFirstName', e.target.value)} />
                   </div>
                 </div>
+
+                {form.businessType === 'Other' && (
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={labelStyle}>
+                      What kind of work? <span style={{ color: '#DC2626', fontWeight: 800 }}>·</span>{' '}
+                      <span style={{ textTransform: 'none', letterSpacing: 0, fontSize: 11, color: '#0AA89F', fontWeight: 800 }}>
+                        Required
+                      </span>
+                    </label>
+                    <input
+                      style={{
+                        ...inputStyle,
+                        border: form.businessTypeOther.trim()
+                          ? '1.5px solid rgba(10,168,159,0.2)'
+                          : '1.5px solid rgba(220,38,38,0.32)',
+                      }}
+                      placeholder="e.g. Garage doors, Pool service, Locksmith"
+                      value={form.businessTypeOther}
+                      onChange={e => set('businessTypeOther', e.target.value)}
+                    />
+                    <p style={{ fontSize: 11, color: '#7AAAB2', marginTop: 5, lineHeight: 1.5 }}>
+                      Type your line of work — we&apos;ll use this for your AI receptionist and to filter neighborhood leads.
+                    </p>
+                  </div>
+                )}
 
                 <div style={{ marginBottom: 14 }}>
                   <label style={labelStyle}>Business phone number</label>
@@ -371,11 +416,11 @@ function OnboardingInner() {
                     onChange={e => set('zip', e.target.value.replace(/\D/g, '').slice(0, 5))}
                   />
                   <p style={{ fontSize: 11, color: '#A0BCC2', marginTop: 5, lineHeight: 1.55 }}>
-                    {zipResolveStatus === 'idle' && 'Used by your AI to tell callers what city you serve. Also drives your lead reports when there\'s no public info about your business.'}
+                    {zipResolveStatus === 'idle' && 'Used by your AI to tell callers what city you serve AND to pull every neighborhood lead within 25 miles of this ZIP. Critical — leads stop if this is wrong.'}
                     {zipResolveStatus === 'looking' && 'Looking up your area…'}
                     {zipResolveStatus === 'ok' && (
                       <span style={{ color: '#16A34A', fontWeight: 700 }}>
-                        ✓ {form.serviceArea} — Emma will say &ldquo;we serve {form.serviceArea}.&rdquo;
+                        ✓ {form.serviceArea} — Emma will say &ldquo;we serve {form.serviceArea}&rdquo; · leads pulled within 25mi
                       </span>
                     )}
                     {zipResolveStatus === 'not_found' && (

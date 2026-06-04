@@ -82,21 +82,46 @@ async function assignLeadsForTenant(profile: ProfileRow): Promise<{ assigned: nu
   const remaining = cadence.perDrop - used
   if (remaining <= 0) return { assigned: 0, skipped_reason: 'quota_filled' }
 
-  // 2-axis filter: tenant's trade + tenant's service ZIPs.
-  // service_zips is the source of truth for geo routing — set during
-  // onboarding. Empty array = serve no leads (force ZIP entry).
+  // 2-axis filter: tenant's trade + ZIPs within radius_mi of any home ZIP.
+  // service_zips = home ZIPs the contractor operates from (1-N entries).
+  // service_radius_mi = distance from each home ZIP they'll travel (default 25mi).
+  // For each home ZIP we call the SQL `zips_within_miles()` function then
+  // union the results to build the full eligible ZIP set.
   const tradeFilter: Trade = normalizeTrade(profile.business_type)
-  const zips = (profile.service_zips || []).filter(Boolean)
-  if (zips.length === 0) {
+  const homeZips = (profile.service_zips || []).filter(Boolean)
+  if (homeZips.length === 0) {
     return { assigned: 0, skipped_reason: 'no_service_zips' }
   }
+  const radius = Math.max(1, Math.min(150, profile.service_radius_mi ?? 25))
+
+  // Expand home ZIPs → full radius coverage. Always include the home ZIPs
+  // themselves in case the centroid table doesn't.
+  const expanded = new Set<string>(homeZips)
+  for (const hz of homeZips) {
+    const { data: nearby } = await supabase.rpc('zips_within_miles', {
+      primary_zip: hz,
+      radius_mi: radius,
+    })
+    if (Array.isArray(nearby)) {
+      for (const r of nearby) {
+        if (r?.zip) expanded.add(r.zip)
+      }
+    }
+  }
+  const eligibleZips = [...expanded]
+  if (eligibleZips.length === 0) {
+    return { assigned: 0, skipped_reason: 'no_service_zips' }
+  }
+
+  // Postgres `IN` clause is fine up to a few thousand entries — at 25mi
+  // radius typical metros expand to ~50-200 ZIPs, well under any limit.
   const { data: candidates } = await supabase
     .from('leads')
     .select('id, lead_score, source, trade_match, zip, street_address')
     .contains('trade_match', [tradeFilter])
-    .in('zip', zips)
+    .in('zip', eligibleZips)
     .order('lead_score', { ascending: false })
-    .limit(remaining * 3) // pull buffer in case some are already assigned to this tenant
+    .limit(remaining * 3)
 
   if (!candidates || candidates.length === 0) {
     return { assigned: 0, skipped_reason: 'no_candidates' }
