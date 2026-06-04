@@ -39,7 +39,23 @@ type Lead = {
   review_count: number | null
 }
 
+// Build the personalized report URL with lead_id attribution. Critical:
+// `?l=<lead_id>` is what /api/track/report-visit reads to flip
+// report_visit_at on outreach_leads — without it, Instantly clicks land
+// on the report page but Peter can never see WHO clicked. That defeats
+// the entire "call people who opened the report" play.
+function buildReportUrl(lead: Lead): string {
+  const params = new URLSearchParams({
+    for: lead.business_name || '',
+    type: lead.trade || 'HVAC',
+    l: lead.id,
+  })
+  if (lead.city) params.set('city', lead.city)
+  return `https://www.bellavego.com/sample-report?${params.toString()}`
+}
+
 async function pushLead(lead: Lead): Promise<{ ok: boolean; error?: string }> {
+  const reportUrl = buildReportUrl(lead)
   const body = {
     campaign: CAMPAIGN_ID,
     email: lead.email,
@@ -51,6 +67,11 @@ async function pushLead(lead: Lead): Promise<{ ok: boolean; error?: string }> {
       city: lead.city || '',
       trade: lead.trade || 'HVAC',
       review_count: lead.review_count?.toString() || '',
+      // Instantly template references this as {{report_url}}. Every
+      // click on this URL fires /api/track/report-visit?l=<lead_id>
+      // which sets report_visit_at on outreach_leads — that's the
+      // signal Peter sorts by to know who to dial first.
+      report_url: reportUrl,
     },
     skip_if_in_workspace: true,
     skip_if_in_campaign: true,
