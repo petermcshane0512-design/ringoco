@@ -1248,10 +1248,11 @@ export default function HomePage() {
             {[...Array(2)].map((_, repeat) => (
               <div key={repeat} style={{ display: 'flex' }}>
                 {[
-                  { icon: '❄️', label: 'HVAC' }, { icon: '🪠', label: 'Plumbing' }, { icon: '⚡', label: 'Electrical' },
-                  { icon: '🧹', label: 'Cleaning' }, { icon: '🌿', label: 'Landscaping' }, { icon: '🔨', label: 'Handyman' },
-                  { icon: '🏠', label: 'Roofing' }, { icon: '🔧', label: 'Appliance Repair' }, { icon: '🚗', label: 'Auto Detailing' },
-                  { icon: '🐾', label: 'Pet Services' }, { icon: '💧', label: 'Pool & Spa' }, { icon: '🪟', label: 'Window Cleaning' },
+                  { icon: '❄️', label: 'HVAC' },
+                  { icon: '🪠', label: 'Plumbing' },
+                  { icon: '⚡', label: 'Electrical' },
+                  { icon: '🏠', label: 'Roofing' },
+                  { icon: '🔨', label: 'Handyman' },
                 ].map(s => (
                   <div key={s.label + repeat} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 28px', borderRight: '1px solid #D4E6DC', whiteSpace: 'nowrap' }}>
                     <span style={{ fontSize: 18 }}>{s.icon}</span>
