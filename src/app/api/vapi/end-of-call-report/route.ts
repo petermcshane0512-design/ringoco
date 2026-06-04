@@ -1110,11 +1110,11 @@ async function handleEndOfCallReport(message: VapiServerMessage['message']) {
         `\n` +
         (summary ? `AI summary:\n${summary}\n\n` : '') +
         `Transcript:\n${transcriptText}\n`
-      await sendEmail({ to: peterAlertEmail, subject, html, text })
+      await sendEmail({ to: peterAlertEmails, subject, html, text })
     } catch (e) {
       console.error('demo call summary email failed:', e)
     }
-    return NextResponse.json({ ok: true, demo: true, summary_emailed: true })
+    return NextResponse.json({ ok: true, demo: true, summary_emailed: true, recipients: peterAlertEmails.length })
   }
 
   if (!tenant.user_id) {
