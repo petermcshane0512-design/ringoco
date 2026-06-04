@@ -174,7 +174,7 @@ export async function GET(req: NextRequest) {
     return {
       street_address: `Aging HVAC opportunity · ZIP ${r.zip} · ${annualReplaceEst} est. units/yr need replacement`,
       zip: r.zip,
-      source: 'census_aging' as const,
+      source: 'aging_hvac' as const,
       source_event_date: now.toISOString(),
       source_details: {
         median_year_built: r.median_year_built,
