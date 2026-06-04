@@ -89,6 +89,10 @@
       "schedule": "0 13 * * *"
     },
     {
+      "path": "/api/crons/pregen-reports",
+      "schedule": "0 6 * * *"
+    },
+    {
       "path": "/api/crons/prioritize-tomorrow-dials",
       "schedule": "30 23 * * 1-5"
     }
@@ -101,6 +105,9 @@
       "maxDuration": 300
     },
     "src/app/api/crons/scrape-census-aging/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/crons/pregen-reports/route.ts": {
       "maxDuration": 300
     }
   }
