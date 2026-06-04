@@ -1,0 +1,227 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+
+type LeadDrop = {
+  id: string
+  drop_date: string
+  drop_period: string
+  status: 'new' | 'viewed' | 'contacted' | 'quoted' | 'won' | 'lost' | 'dismissed'
+  notes: string | null
+  lead: {
+    id: string
+    street_address: string | null
+    city: string | null
+    state: string | null
+    zip: string
+    owner_name: string | null
+    owner_phone: string | null
+    owner_email: string | null
+    home_value_est: number | null
+    year_built: number | null
+    sqft: number | null
+    source: string
+    lead_score: number
+    pitch_script: string | null
+  }
+}
+
+type QuotaInfo = {
+  tier: 'receptionist' | 'officemgr' | 'concierge' | null
+  tier_display: string
+  cadence: 'quarterly' | 'monthly' | 'weekly'
+  cadence_label: string
+  per_drop: number
+  used_this_period: number
+}
+
+export default function LeadsPage() {
+  const [drops, setDrops] = useState<LeadDrop[]>([])
+  const [quota, setQuota] = useState<QuotaInfo | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/leads/list')
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.drops) setDrops(j.drops)
+        if (j.quota) setQuota(j.quota)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  async function updateStatus(dropId: string, newStatus: LeadDrop['status']) {
+    setDrops((prev) => prev.map((d) => (d.id === dropId ? { ...d, status: newStatus } : d)))
+    await fetch(`/api/leads/${dropId}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    })
+  }
+
+  const pctUsed = quota ? Math.min(100, Math.round((quota.used_this_period / quota.per_drop) * 100)) : 0
+
+  return (
+    <main style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 24px 80px', fontFamily: "'Inter', system-ui, sans-serif" }}>
+      <Link href="/dashboard" style={{ fontSize: 12, fontWeight: 700, color: '#0AA89F', textDecoration: 'none' }}>
+        ← Back to dashboard
+      </Link>
+
+      {/* HERO */}
+      <header style={{
+        marginTop: 14,
+        marginBottom: 22,
+        padding: '24px 28px',
+        background: 'linear-gradient(135deg, #0B1F3A 0%, #163356 60%, #0D8F87 100%)',
+        borderRadius: 20,
+        color: '#fff',
+        boxShadow: '0 14px 40px rgba(7,27,58,0.22)',
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 800, color: '#5EEAD4', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 10 }}>
+          Neighborhood Leads · {quota?.tier_display ?? 'Active'}
+        </div>
+        <h1 style={{ fontSize: 'clamp(26px, 3.4vw, 38px)', fontWeight: 900, letterSpacing: '-0.04em', margin: '0 0 8px', color: '#fff' }}>
+          Ready-to-quote homeowners near you.
+        </h1>
+        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.78)', lineHeight: 1.55, maxWidth: 620, margin: 0 }}>
+          New movers, fresh permits, storm-damage triggers, and aging-HVAC homes — delivered to your dashboard at your tier&apos;s cadence. Tap to call or text directly.
+        </p>
+
+        {quota && (
+          <div style={{ marginTop: 18, padding: '14px 18px', background: 'rgba(255,255,255,0.08)', borderRadius: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <div style={{ fontSize: 13, fontWeight: 700 }}>
+                {quota.used_this_period} of {quota.per_drop} {quota.cadence_label} leads delivered
+              </div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>{pctUsed}% used</div>
+            </div>
+            <div style={{ height: 8, background: 'rgba(255,255,255,0.18)', borderRadius: 4, overflow: 'hidden' }}>
+              <div style={{
+                width: `${pctUsed}%`,
+                height: '100%',
+                background: 'linear-gradient(90deg, #FF9D5A, #E8742B)',
+                transition: 'width 0.4s ease',
+              }} />
+            </div>
+          </div>
+        )}
+      </header>
+
+      {/* LEADS LIST */}
+      {loading ? (
+        <div style={{ padding: 60, textAlign: 'center', color: '#7AAAB2' }}>Loading your leads…</div>
+      ) : drops.length === 0 ? (
+        <div style={{
+          background: '#fff', borderRadius: 16, padding: '50px 30px', textAlign: 'center',
+          border: '1.5px dashed rgba(10,168,159,0.22)',
+        }}>
+          <div style={{ fontSize: 44, marginBottom: 8 }}>🏠</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: '#0B1F3A', marginBottom: 8 }}>
+            No leads dropped yet
+          </div>
+          <p style={{ fontSize: 14, color: '#4A6670', maxWidth: 480, margin: '0 auto', lineHeight: 1.55 }}>
+            We&apos;re scanning your service area for new movers, fresh permits, and storm-trigger events. Your first {quota?.per_drop ?? 5} leads will land within a few days. We&apos;ll ping you when they arrive.
+          </p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {drops.map((d) => (
+            <LeadCard key={d.id} drop={d} onStatus={updateStatus} />
+          ))}
+        </div>
+      )}
+    </main>
+  )
+}
+
+function LeadCard({ drop, onStatus }: { drop: LeadDrop; onStatus: (id: string, s: LeadDrop['status']) => void }) {
+  const l = drop.lead
+  const fullAddr = [l.street_address, l.city, l.state, l.zip].filter(Boolean).join(', ')
+  const sourceLabel = ({
+    move_in: '🏠 New Mover',
+    permit: '🏗️ Permit Filed',
+    storm: '⛈️ Storm Trigger',
+    aging_hvac: '🌡️ Aging HVAC',
+    expired_listing: '🏷️ Recent Sale',
+    other: 'Lead',
+  } as Record<string, string>)[l.source] || 'Lead'
+
+  return (
+    <div style={{
+      background: '#fff', borderRadius: 14, padding: '18px 20px',
+      border: '1px solid rgba(10,168,159,0.16)',
+      boxShadow: '0 4px 16px rgba(7,27,58,0.05)',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 240 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 }}>
+            {sourceLabel} · Score {l.lead_score}/100
+          </div>
+          <div style={{ fontSize: 17, fontWeight: 800, color: '#0B1F3A', marginBottom: 6 }}>
+            {l.owner_name ?? 'Owner unlisted'}
+          </div>
+          <div style={{ fontSize: 13, color: '#4A6670', marginBottom: 8 }}>
+            📍 {fullAddr || `${l.zip}`}
+          </div>
+          {(l.home_value_est || l.year_built || l.sqft) && (
+            <div style={{ fontSize: 12, color: '#7AAAB2', marginBottom: 10 }}>
+              {l.home_value_est ? `💰 ~$${l.home_value_est.toLocaleString()}` : null}
+              {l.year_built ? ` · 🛠 built ${l.year_built}` : null}
+              {l.sqft ? ` · 📐 ${l.sqft.toLocaleString()} sqft` : null}
+            </div>
+          )}
+          {l.pitch_script && (
+            <div style={{ background: '#F5F1EA', padding: '10px 12px', borderRadius: 8, fontSize: 13, color: '#0B1F3A', lineHeight: 1.5, marginBottom: 10 }}>
+              💡 {l.pitch_script}
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 180 }}>
+          {l.owner_phone && (
+            <a href={`tel:${l.owner_phone}`} style={{
+              padding: '10px 18px', borderRadius: 10,
+              background: 'linear-gradient(135deg, #0AA89F, #06776F)',
+              color: '#fff', textDecoration: 'none', textAlign: 'center',
+              fontSize: 13, fontWeight: 800,
+            }}>
+              📞 Call {l.owner_phone}
+            </a>
+          )}
+          {l.owner_phone && (
+            <a href={`sms:${l.owner_phone}`} style={{
+              padding: '10px 18px', borderRadius: 10,
+              background: '#fff', border: '1.5px solid #0AA89F',
+              color: '#0AA89F', textDecoration: 'none', textAlign: 'center',
+              fontSize: 13, fontWeight: 800,
+            }}>
+              💬 Text
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* Status pills */}
+      <div style={{ display: 'flex', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>
+        {(['new', 'contacted', 'quoted', 'won', 'lost', 'dismissed'] as const).map((s) => (
+          <button
+            key={s}
+            onClick={() => onStatus(drop.id, s)}
+            style={{
+              padding: '6px 12px', borderRadius: 99,
+              border: drop.status === s ? '2px solid #0AA89F' : '1px solid rgba(10,168,159,0.2)',
+              background: drop.status === s ? '#E6F7F5' : '#fff',
+              color: drop.status === s ? '#06776F' : '#4A6670',
+              fontSize: 11, fontWeight: 700, cursor: 'pointer',
+              textTransform: 'capitalize',
+            }}
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}

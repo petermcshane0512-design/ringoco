@@ -9,23 +9,27 @@ import SupportWidget from '@/components/SupportWidget'
 
 const ADMIN_EMAILS = new Set(['pmcshane@fordham.edu', 'peter@bellavego.com'])
 
-// Workspace nav order (locked 2026-05-26 by Peter):
-// 1. Command Center        — hub, everyone lands here first
-// 2. Calendar               — the differentiator + most-touched daily
-// 3. Lead Reports    — the moat (per CLAUDE.md "this IS the moat")
-// 4. Call Forwarding       — critical onboarding step
-// 5. AI Receptionist       — phone product details, less daily after setup
-// 6. Invoicing             — daily $ collection
-// 7. Pro                    — feature gate / upsell surface
+// Workspace nav order — 2026-06-04 PIVOT (Peter):
+// Stripped to ONLY the product's core promise: answer calls + book
+// calendar + deliver neighborhood leads. Invoicing + Office-Manager
+// "Pro" tabs removed (feature bloat that didn't align with the new
+// lead-focused tier structure). The 6 tabs left ALL serve the product
+// story directly.
+//
+// 1. Command Center       — hub, everyone lands here first
+// 2. Calendar             — where bookings live + manual adds
+// 3. Neighborhood Leads   — NEW: tier-quota'd lead drops (5/qtr / 15/mo / 25/wk)
+// 4. Lead Reports         — periodic neighborhood-intel reports
+// 5. Call Forwarding      — critical onboarding step
+// 6. AI Receptionist      — phone product details + Emma config
 // (Settings + Account live in the separate "Account" section below.)
 const nav = [
   { label: 'Command Center',     href: '/dashboard' },
   { label: 'Calendar',           href: '/dashboard/calendar' },
-  { label: 'Lead Reports', href: '/dashboard/reports' },
+  { label: 'Neighborhood Leads', href: '/dashboard/leads', dot: true },
+  { label: 'Lead Reports',       href: '/dashboard/reports' },
   { label: 'Call Forwarding',    href: '/dashboard/forwarding' },
-  { label: 'AI Receptionist',    href: '/dashboard/receptionist', dot: true },
-  { label: 'Invoicing',          href: '/dashboard/invoicing' },
-  { label: 'Pro',                href: '/dashboard/office-manager' },
+  { label: 'AI Receptionist',    href: '/dashboard/receptionist' },
 ]
 
 function formatUS(num: string) {
@@ -121,6 +125,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             icon: <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,
           },
           {
+            href: '/dashboard/leads', label: 'Neighborhood Leads', dot: true,
+            icon: <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></>,
+          },
+          {
             href: '/dashboard/reports', label: 'Lead Reports',
             icon: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></>,
           },
@@ -129,16 +137,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             icon: <><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/><polyline points="15 4 20 4 20 9"/><line x1="15" y1="9" x2="20" y2="4"/></>,
           },
           {
-            href: '/dashboard/receptionist', label: 'AI Receptionist', dot: true,
+            href: '/dashboard/receptionist', label: 'AI Receptionist',
             icon: <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>,
-          },
-          {
-            href: '/dashboard/invoicing', label: 'Invoicing',
-            icon: <><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></>,
-          },
-          {
-            href: '/dashboard/office-manager', label: 'Pro',
-            icon: <><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,
           },
         ].map(({ href, label, icon, dot }) => {
           const active = isActive(href)
@@ -243,23 +243,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             hides this on desktop (display: none) and shows on mobile. */}
         <nav className="dash-mobile-tabbar" aria-label="Workspace tabs">
           {[
-            // Workspace order (locked 2026-05-26 by Peter) — same as desktop:
-            // Command Center → Calendar → Lead Reports → Call Forwarding
-            // → AI Receptionist → Invoicing → Pro → Settings.
+            // Workspace order — 2026-06-04 pivot (Peter):
+            // Stripped to align with lead-focused product. Invoicing + Pro
+            // gone. Neighborhood Leads added (the new tier-quota'd lead drops).
             { href: '/dashboard', label: 'Home',
               svg: <><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></> },
             { href: '/dashboard/calendar', label: 'Calendar',
               svg: <><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></> },
+            { href: '/dashboard/leads', label: 'Leads',
+              svg: <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></> },
             { href: '/dashboard/reports', label: 'Reports',
               svg: <><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-7"/></> },
-            { href: '/dashboard/forwarding', label: 'Forwarding',
+            { href: '/dashboard/forwarding', label: 'Forward',
               svg: <><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></> },
             { href: '/dashboard/receptionist', label: 'AI',
               svg: <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/> },
-            { href: '/dashboard/invoicing', label: 'Invoicing',
-              svg: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></> },
-            { href: '/dashboard/office-manager', label: 'Pro',
-              svg: <><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></> },
             { href: '/dashboard/settings', label: 'Settings',
               svg: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></> },
           ].map(({ href, label, svg }) => (
