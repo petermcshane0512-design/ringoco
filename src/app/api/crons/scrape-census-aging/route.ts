@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+// @ts-expect-error pg has no @types/pg in deps; runtime works fine
+import pg from 'pg'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -155,27 +157,45 @@ export async function GET(req: NextRequest) {
     }))
 
   let centroidUpdatesApplied = 0
-  if (centroidUpdates.length > 0) {
-    // Pre-fetch which ZIPs we actually have. Skip the rest.
-    const allZips = centroidUpdates.map((u) => u.zip)
-    const existingZips = new Set<string>()
-    for (let i = 0; i < allZips.length; i += 1000) {
-      const slice = allZips.slice(i, i + 1000)
-      const { data } = await supabase
-        .from('zip_centroids')
-        .select('zip')
-        .in('zip', slice)
-      if (data) for (const r of data) existingZips.add(r.zip)
-    }
-
-    const updatable = centroidUpdates.filter((u) => existingZips.has(u.zip))
-    // Use upsert with onConflict — every row now has a guaranteed match,
-    // so it routes to UPDATE path only.
-    for (let i = 0; i < updatable.length; i += 500) {
-      const batch = updatable.slice(i, i + 500)
-      const { error } = await supabase.from('zip_centroids').upsert(batch, { onConflict: 'zip' })
-      if (!error) centroidUpdatesApplied += batch.length
-      else console.warn(`[census-aging] centroid update err: ${error.message}`)
+  if (centroidUpdates.length > 0 && process.env.DATABASE_URL) {
+    // PostgREST upsert validates INSERT path even when onConflict would
+    // route to UPDATE — fails on lat/lng NOT NULL. Bypass via direct pg
+    // client UPDATE FROM (VALUES …) which never tries the INSERT path.
+    // ~32K rows update in 1-2 sec.
+    const client = new pg.Client({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    })
+    try {
+      await client.connect()
+      for (let i = 0; i < centroidUpdates.length; i += 500) {
+        const batch = centroidUpdates.slice(i, i + 500)
+        const valueClauses: string[] = []
+        const params: (string | number | null)[] = []
+        batch.forEach((u, idx) => {
+          const base = idx * 3
+          valueClauses.push(`($${base + 1}::text, $${base + 2}::int, $${base + 3}::int)`)
+          params.push(u.zip, u.median_home_age, u.households ?? null)
+        })
+        const sql = `
+          update zip_centroids zc
+          set median_home_age = v.median_home_age,
+              households = v.households,
+              updated_at = now()
+          from (values ${valueClauses.join(',')}) as v(zip, median_home_age, households)
+          where zc.zip = v.zip
+        `
+        try {
+          const r = await client.query(sql, params)
+          centroidUpdatesApplied += r.rowCount ?? 0
+        } catch (e) {
+          console.warn(`[census-aging] direct update batch ${i / 500} err: ${(e as Error).message}`)
+        }
+      }
+    } catch (e) {
+      console.warn(`[census-aging] pg connect failed: ${(e as Error).message}`)
+    } finally {
+      await client.end().catch(() => {})
     }
   }
 
