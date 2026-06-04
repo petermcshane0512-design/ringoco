@@ -37,7 +37,7 @@ export default async function ReportsIndexPage() {
 
       <div style={{ marginTop: 18, marginBottom: 8, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <h1 style={{ fontSize: 30, fontWeight: 900, color: "#0B1F3A", letterSpacing: "-0.04em", margin: 0 }}>
-          New Business Nearby <span style={{ background: "linear-gradient(135deg, #FF9D5A, #E8742B 60%, #C84B26)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>em></span>
+          New business <span style={{ background: "linear-gradient(135deg, #FF9D5A, #E8742B 60%, #C84B26)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>in your neighborhood.</span>
         </h1>
         <span style={{
           display: "inline-flex", alignItems: "center", gap: 6,
@@ -46,7 +46,7 @@ export default async function ReportsIndexPage() {
           fontSize: 10.5, fontWeight: 800, color: "#C84B26",
           letterSpacing: "0.14em", textTransform: "uppercase",
         }}>
-          McKinsey-grade · AI-generated
+          Fresh leads · AI-scored
         </span>
       </div>
       <p style={{ fontSize: 14, color: "#4A6670", marginBottom: 30, lineHeight: 1.55, maxWidth: 720 }}>
