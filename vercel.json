@@ -65,6 +65,10 @@
       "schedule": "0 */4 * * *"
     },
     {
+      "path": "/api/crons/enrich-young-scores",
+      "schedule": "0 2 * * *"
+    },
+    {
       "path": "/api/crons/auto-load-instantly",
       "schedule": "0 */12 * * *"
     },
@@ -116,6 +120,9 @@
       "maxDuration": 300
     },
     "src/app/api/crons/pregen-reports/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/crons/enrich-young-scores/route.ts": {
       "maxDuration": 300
     }
   }
