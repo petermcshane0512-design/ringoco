@@ -1,67 +1,2229 @@
 {
   "//": "BellAveGo HVAC cold email schedule. City-by-city plan. Generated 2026-05-27.",
   "//rationale": "Sun Belt first (cooling season peak May-Sep), Midwest summer, Northern markets for heating Q4. Each lead emailed once via outreach_leads UNIQUE constraint = no repeats. Returns to cities every 90 days for NEW shops only.",
-  "//volume": "50/day until Jun 17 (Gmail soft launch). 500/day Jun 18-Aug 31 (Instantly). 1K/day Sept+. Scrape 75/day to buffer the 50/day send (some leads lack emails).",
-
+  "//volume": "50/day until Jun 14 (Gmail warm). 580/day Jun 15 → Dec 25 (Instantly young-pivot). 900/day scrape buffer.",
   "cities": [
-    { "city": "Phoenix, AZ",     "estimated_shops": 5800, "peak_season": "Apr-Sep", "priority_window": "now → Aug 31" },
-    { "city": "Las Vegas, NV",   "estimated_shops": 2500, "peak_season": "Apr-Sep", "priority_window": "now → Aug 31" },
-    { "city": "Tucson, AZ",      "estimated_shops": 1800, "peak_season": "Apr-Sep", "priority_window": "now → Aug 31" },
-    { "city": "Mesa, AZ",        "estimated_shops": 1200, "peak_season": "Apr-Sep", "priority_window": "now → Aug 31" },
-    { "city": "Dallas, TX",      "estimated_shops": 5500, "peak_season": "May-Sep", "priority_window": "now → Aug 31" },
-    { "city": "Houston, TX",     "estimated_shops": 5000, "peak_season": "May-Sep", "priority_window": "now → Aug 31" },
-    { "city": "Fort Worth, TX",  "estimated_shops": 2200, "peak_season": "May-Sep", "priority_window": "now → Aug 31" },
-    { "city": "Austin, TX",      "estimated_shops": 2000, "peak_season": "May-Sep", "priority_window": "now → Aug 31" },
-    { "city": "San Antonio, TX", "estimated_shops": 2200, "peak_season": "May-Sep", "priority_window": "now → Aug 31" },
-    { "city": "Tampa, FL",       "estimated_shops": 3500, "peak_season": "Apr-Oct", "priority_window": "now → Aug 31" },
-    { "city": "Orlando, FL",     "estimated_shops": 2800, "peak_season": "Apr-Oct", "priority_window": "now → Aug 31" },
-    { "city": "Jacksonville, FL","estimated_shops": 1800, "peak_season": "Apr-Oct", "priority_window": "now → Aug 31" },
-    { "city": "Miami, FL",       "estimated_shops": 3200, "peak_season": "May-Oct", "priority_window": "now → Aug 31" },
-    { "city": "Atlanta, GA",     "estimated_shops": 4000, "peak_season": "May-Sep", "priority_window": "Jun → Aug 31" },
-    { "city": "Charlotte, NC",   "estimated_shops": 2200, "peak_season": "May-Sep", "priority_window": "Jun → Aug 31" },
-    { "city": "Raleigh, NC",     "estimated_shops": 1600, "peak_season": "May-Sep", "priority_window": "Jun → Aug 31" },
-    { "city": "Nashville, TN",   "estimated_shops": 1800, "peak_season": "May-Sep", "priority_window": "Jun → Aug 31" },
-    { "city": "Memphis, TN",     "estimated_shops": 1500, "peak_season": "May-Sep", "priority_window": "Jun → Aug 31" },
-    { "city": "Birmingham, AL",  "estimated_shops": 1300, "peak_season": "May-Sep", "priority_window": "Jun → Aug 31" },
-    { "city": "Oklahoma City, OK","estimated_shops": 1800, "peak_season": "May-Sep", "priority_window": "Jul → Aug 31" },
-    { "city": "Albuquerque, NM", "estimated_shops": 1400, "peak_season": "May-Sep", "priority_window": "Jul → Aug 31" },
-    { "city": "Fresno, CA",      "estimated_shops": 1800, "peak_season": "May-Sep", "priority_window": "Jul → Aug 31" },
-    { "city": "Sacramento, CA",  "estimated_shops": 2300, "peak_season": "May-Sep", "priority_window": "Jul → Aug 31" },
-    { "city": "Bakersfield, CA", "estimated_shops": 1200, "peak_season": "May-Sep", "priority_window": "Jul → Aug 31" }
+    {
+      "city": "Phoenix, AZ",
+      "estimated_shops": 5800,
+      "peak_season": "Apr-Sep",
+      "priority_window": "now → Aug 31"
+    },
+    {
+      "city": "Las Vegas, NV",
+      "estimated_shops": 2500,
+      "peak_season": "Apr-Sep",
+      "priority_window": "now → Aug 31"
+    },
+    {
+      "city": "Tucson, AZ",
+      "estimated_shops": 1800,
+      "peak_season": "Apr-Sep",
+      "priority_window": "now → Aug 31"
+    },
+    {
+      "city": "Mesa, AZ",
+      "estimated_shops": 1200,
+      "peak_season": "Apr-Sep",
+      "priority_window": "now → Aug 31"
+    },
+    {
+      "city": "Dallas, TX",
+      "estimated_shops": 5500,
+      "peak_season": "May-Sep",
+      "priority_window": "now → Aug 31"
+    },
+    {
+      "city": "Houston, TX",
+      "estimated_shops": 5000,
+      "peak_season": "May-Sep",
+      "priority_window": "now → Aug 31"
+    },
+    {
+      "city": "Fort Worth, TX",
+      "estimated_shops": 2200,
+      "peak_season": "May-Sep",
+      "priority_window": "now → Aug 31"
+    },
+    {
+      "city": "Austin, TX",
+      "estimated_shops": 2000,
+      "peak_season": "May-Sep",
+      "priority_window": "now → Aug 31"
+    },
+    {
+      "city": "San Antonio, TX",
+      "estimated_shops": 2200,
+      "peak_season": "May-Sep",
+      "priority_window": "now → Aug 31"
+    },
+    {
+      "city": "Tampa, FL",
+      "estimated_shops": 3500,
+      "peak_season": "Apr-Oct",
+      "priority_window": "now → Aug 31"
+    },
+    {
+      "city": "Orlando, FL",
+      "estimated_shops": 2800,
+      "peak_season": "Apr-Oct",
+      "priority_window": "now → Aug 31"
+    },
+    {
+      "city": "Jacksonville, FL",
+      "estimated_shops": 1800,
+      "peak_season": "Apr-Oct",
+      "priority_window": "now → Aug 31"
+    },
+    {
+      "city": "Miami, FL",
+      "estimated_shops": 3200,
+      "peak_season": "May-Oct",
+      "priority_window": "now → Aug 31"
+    },
+    {
+      "city": "Atlanta, GA",
+      "estimated_shops": 4000,
+      "peak_season": "May-Sep",
+      "priority_window": "Jun → Aug 31"
+    },
+    {
+      "city": "Charlotte, NC",
+      "estimated_shops": 2200,
+      "peak_season": "May-Sep",
+      "priority_window": "Jun → Aug 31"
+    },
+    {
+      "city": "Raleigh, NC",
+      "estimated_shops": 1600,
+      "peak_season": "May-Sep",
+      "priority_window": "Jun → Aug 31"
+    },
+    {
+      "city": "Nashville, TN",
+      "estimated_shops": 1800,
+      "peak_season": "May-Sep",
+      "priority_window": "Jun → Aug 31"
+    },
+    {
+      "city": "Memphis, TN",
+      "estimated_shops": 1500,
+      "peak_season": "May-Sep",
+      "priority_window": "Jun → Aug 31"
+    },
+    {
+      "city": "Birmingham, AL",
+      "estimated_shops": 1300,
+      "peak_season": "May-Sep",
+      "priority_window": "Jun → Aug 31"
+    },
+    {
+      "city": "Oklahoma City, OK",
+      "estimated_shops": 1800,
+      "peak_season": "May-Sep",
+      "priority_window": "Jul → Aug 31"
+    },
+    {
+      "city": "Albuquerque, NM",
+      "estimated_shops": 1400,
+      "peak_season": "May-Sep",
+      "priority_window": "Jul → Aug 31"
+    },
+    {
+      "city": "Fresno, CA",
+      "estimated_shops": 1800,
+      "peak_season": "May-Sep",
+      "priority_window": "Jul → Aug 31"
+    },
+    {
+      "city": "Sacramento, CA",
+      "estimated_shops": 2300,
+      "peak_season": "May-Sep",
+      "priority_window": "Jul → Aug 31"
+    },
+    {
+      "city": "Bakersfield, CA",
+      "estimated_shops": 1200,
+      "peak_season": "May-Sep",
+      "priority_window": "Jul → Aug 31"
+    }
   ],
-
   "schedule": [
-    { "date": "2026-05-28", "send_target": 50,  "scrape_target": 75,  "cities": ["Las Vegas, NV"] },
-    { "date": "2026-05-29", "send_target": 50,  "scrape_target": 75,  "cities": ["Tucson, AZ"] },
-    { "date": "2026-05-30", "send_target": 50,  "scrape_target": 75,  "cities": ["Dallas, TX"] },
-    { "date": "2026-05-31", "send_target": 50,  "scrape_target": 75,  "cities": ["Tampa, FL"] },
-    { "date": "2026-06-01", "send_target": 50,  "scrape_target": 75,  "cities": ["Houston, TX"] },
-    { "date": "2026-06-02", "send_target": 50,  "scrape_target": 75,  "cities": ["Orlando, FL"] },
-    { "date": "2026-06-03", "send_target": 50,  "scrape_target": 75,  "cities": ["Austin, TX"] },
-    { "date": "2026-06-04", "send_target": 50,  "scrape_target": 75,  "cities": ["Mesa, AZ"] },
-    { "date": "2026-06-05", "send_target": 50,  "scrape_target": 75,  "cities": ["San Antonio, TX"] },
-    { "date": "2026-06-06", "send_target": 50,  "scrape_target": 75,  "cities": ["Jacksonville, FL"] },
-    { "date": "2026-06-07", "send_target": 50,  "scrape_target": 75,  "cities": ["Miami, FL"] },
-    { "date": "2026-06-08", "send_target": 50,  "scrape_target": 75,  "cities": ["Fort Worth, TX"] },
-    { "date": "2026-06-09", "send_target": 50,  "scrape_target": 75,  "cities": ["Phoenix, AZ"] },
-    { "date": "2026-06-10", "send_target": 50,  "scrape_target": 75,  "cities": ["Las Vegas, NV"] },
-    { "date": "2026-06-11", "send_target": 50,  "scrape_target": 75,  "cities": ["Dallas, TX"] },
-    { "date": "2026-06-12", "send_target": 50,  "scrape_target": 75,  "cities": ["Tampa, FL"] },
-    { "date": "2026-06-13", "send_target": 50,  "scrape_target": 75,  "cities": ["Houston, TX"] },
-    { "date": "2026-06-14", "send_target": 50,  "scrape_target": 75,  "cities": ["Orlando, FL"] },
-    { "date": "2026-06-15", "send_target": 50,  "scrape_target": 75,  "cities": ["Austin, TX"] },
-    { "date": "2026-06-16", "send_target": 50,  "scrape_target": 75,  "cities": ["Tucson, AZ"] },
-    { "date": "2026-06-17", "send_target": 50,  "scrape_target": 75,  "cities": ["San Antonio, TX"] },
-
-    { "date": "2026-06-18", "send_target": 500, "scrape_target": 750, "cities": ["Phoenix, AZ","Las Vegas, NV","Tucson, AZ","Dallas, TX","Houston, TX"] },
-    { "date": "2026-06-19", "send_target": 500, "scrape_target": 750, "cities": ["Tampa, FL","Orlando, FL","Miami, FL","Austin, TX","San Antonio, TX"] },
-    { "date": "2026-06-20", "send_target": 500, "scrape_target": 750, "cities": ["Atlanta, GA","Charlotte, NC","Nashville, TN","Fort Worth, TX","Jacksonville, FL"] },
-
-    "// Schedule continues — rotate through 24 cities × 90 days. Avg 200/day per city = exhausts TAM in ~30 days per city. Cycle returns every 90 days for NEW shops only (dedup via outreach_leads.email UNIQUE).",
-
-    { "date": "2026-09-01", "send_target": 1000, "scrape_target": 1500, "cities": ["Phoenix, AZ","Las Vegas, NV","Dallas, TX","Houston, TX","Tampa, FL","Orlando, FL","Atlanta, GA"] }
+    {
+      "date": "2026-05-28",
+      "send_target": 50,
+      "scrape_target": 75,
+      "cities": [
+        "Las Vegas, NV"
+      ]
+    },
+    {
+      "date": "2026-05-29",
+      "send_target": 50,
+      "scrape_target": 75,
+      "cities": [
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-05-30",
+      "send_target": 50,
+      "scrape_target": 75,
+      "cities": [
+        "Dallas, TX"
+      ]
+    },
+    {
+      "date": "2026-05-31",
+      "send_target": 50,
+      "scrape_target": 75,
+      "cities": [
+        "Tampa, FL"
+      ]
+    },
+    {
+      "date": "2026-06-01",
+      "send_target": 50,
+      "scrape_target": 75,
+      "cities": [
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-06-02",
+      "send_target": 50,
+      "scrape_target": 75,
+      "cities": [
+        "Orlando, FL"
+      ]
+    },
+    {
+      "date": "2026-06-03",
+      "send_target": 50,
+      "scrape_target": 75,
+      "cities": [
+        "Austin, TX"
+      ]
+    },
+    {
+      "date": "2026-06-04",
+      "send_target": 50,
+      "scrape_target": 75,
+      "cities": [
+        "Mesa, AZ"
+      ]
+    },
+    {
+      "date": "2026-06-05",
+      "send_target": 50,
+      "scrape_target": 75,
+      "cities": [
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-06-06",
+      "send_target": 50,
+      "scrape_target": 75,
+      "cities": [
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-06-07",
+      "send_target": 50,
+      "scrape_target": 75,
+      "cities": [
+        "Miami, FL"
+      ]
+    },
+    {
+      "date": "2026-06-08",
+      "send_target": 50,
+      "scrape_target": 75,
+      "cities": [
+        "Fort Worth, TX"
+      ]
+    },
+    {
+      "date": "2026-06-09",
+      "send_target": 50,
+      "scrape_target": 75,
+      "cities": [
+        "Phoenix, AZ"
+      ]
+    },
+    {
+      "date": "2026-06-10",
+      "send_target": 50,
+      "scrape_target": 75,
+      "cities": [
+        "Las Vegas, NV"
+      ]
+    },
+    {
+      "date": "2026-06-11",
+      "send_target": 50,
+      "scrape_target": 75,
+      "cities": [
+        "Dallas, TX"
+      ]
+    },
+    {
+      "date": "2026-06-12",
+      "send_target": 50,
+      "scrape_target": 75,
+      "cities": [
+        "Tampa, FL"
+      ]
+    },
+    {
+      "date": "2026-06-13",
+      "send_target": 50,
+      "scrape_target": 75,
+      "cities": [
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-06-14",
+      "send_target": 50,
+      "scrape_target": 75,
+      "cities": [
+        "Orlando, FL"
+      ]
+    },
+    {
+      "date": "2026-06-15",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-06-16",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-06-17",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-06-18",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-06-19",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-06-20",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-06-21",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-06-22",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-06-23",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-06-24",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-06-25",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-06-26",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-06-27",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-06-28",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-06-29",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-06-30",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-07-01",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-07-02",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-07-03",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-07-04",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-07-05",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-07-06",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-07-07",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-07-08",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-07-09",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-07-10",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-07-11",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-07-12",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-07-13",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-07-14",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-07-15",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-07-16",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-07-17",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-07-18",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-07-19",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-07-20",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-07-21",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-07-22",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-07-23",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-07-24",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-07-25",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-07-26",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-07-27",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-07-28",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-07-29",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-07-30",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-07-31",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-08-01",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-08-02",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-08-03",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-08-04",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-08-05",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-08-06",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-08-07",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-08-08",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-08-09",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-08-10",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-08-11",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-08-12",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-08-13",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-08-14",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-08-15",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-08-16",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-08-17",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-08-18",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-08-19",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-08-20",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-08-21",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-08-22",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-08-23",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-08-24",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-08-25",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-08-26",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-08-27",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-08-28",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-08-29",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-08-30",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-08-31",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-09-01",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-09-02",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-09-03",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-09-04",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-09-05",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-09-06",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-09-07",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-09-08",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-09-09",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-09-10",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-09-11",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-09-12",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-09-13",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-09-14",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-09-15",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-09-16",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-09-17",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-09-18",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-09-19",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-09-20",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-09-21",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-09-22",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-09-23",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-09-24",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-09-25",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-09-26",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-09-27",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-09-28",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-09-29",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-09-30",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-10-01",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-10-02",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-10-03",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-10-04",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-10-05",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-10-06",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-10-07",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-10-08",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-10-09",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-10-10",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-10-11",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-10-12",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-10-13",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-10-14",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-10-15",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-10-17",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-10-18",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-10-21",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-10-22",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-10-23",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-10-24",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-10-25",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-10-26",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-10-27",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-10-28",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-10-29",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-10-30",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-10-31",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-11-01",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-11-02",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-11-03",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-11-04",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-11-05",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-11-06",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-11-07",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-11-08",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-11-09",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-11-10",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-11-11",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-11-12",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-11-13",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-11-14",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-11-15",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-11-16",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-11-17",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-11-18",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-11-19",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-11-20",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-11-21",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-11-22",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-11-23",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-11-24",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-11-25",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-11-26",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-11-27",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-11-28",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-11-29",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-11-30",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-12-01",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-12-02",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-12-03",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-12-04",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-12-05",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-12-06",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-12-07",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-12-08",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-12-09",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-12-10",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-12-11",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-12-12",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-12-13",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-12-14",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-12-15",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-12-16",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    },
+    {
+      "date": "2026-12-17",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Mesa, AZ",
+        "Dallas, TX",
+        "Houston, TX"
+      ]
+    },
+    {
+      "date": "2026-12-18",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fort Worth, TX",
+        "Austin, TX",
+        "San Antonio, TX"
+      ]
+    },
+    {
+      "date": "2026-12-19",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Tampa, FL",
+        "Orlando, FL",
+        "Jacksonville, FL"
+      ]
+    },
+    {
+      "date": "2026-12-20",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Miami, FL",
+        "Atlanta, GA",
+        "Charlotte, NC"
+      ]
+    },
+    {
+      "date": "2026-12-21",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Raleigh, NC",
+        "Nashville, TN",
+        "Memphis, TN"
+      ]
+    },
+    {
+      "date": "2026-12-22",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Birmingham, AL",
+        "Oklahoma City, OK",
+        "Albuquerque, NM"
+      ]
+    },
+    {
+      "date": "2026-12-23",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Fresno, CA",
+        "Sacramento, CA",
+        "Bakersfield, CA"
+      ]
+    },
+    {
+      "date": "2026-12-24",
+      "send_target": 580,
+      "scrape_target": 900,
+      "cities": [
+        "Phoenix, AZ",
+        "Las Vegas, NV",
+        "Tucson, AZ"
+      ]
+    }
   ],
-
   "tam_exhaustion_estimate": {
     "us_hvac_total_shops": 125000,
     "shops_with_findable_email": 70000,
@@ -69,5 +2231,6 @@
     "by_aug_31_500per_day": 38500,
     "by_may_2027_1k_per_day": 280000,
     "//": "We hit ~70K unique HVAC shops with emails ≈ 100% of email-findable TAM by ~Apr 2027. Then expand to plumbing (+120K), electrical (+70K), garage doors (+40K)."
-  }
+  },
+  "//pivot_2026-06-05": "Schedule rewritten for young-owner ICP. Scrape 900/day across 3 Sun Belt cities, send 580/day to young-flagged leads only (young_owner_score >= 40)."
 }
