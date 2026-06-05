@@ -124,12 +124,14 @@ export function pronounceableBusinessName(name: string): string {
   // The phonetic spelling "Bell Ahva Go" forces the short-A sound reliably
   // because Cartesia interprets "Ahv" as one syllable with explicit "ah".
   return name
-    // Peter's spec 2026-06-03 (4th revision): try fused single-word
-    // "Bell Ahva Go" — Cartesia syllabifies non-words phonetically as
-    // "bell-AV-go" (3 syllables, short A in middle). Hyphenated form
-    // "Bel-Av-Go" was reading as letter "A.V." or drifting.
-    .replace(/BellAveGo/gi, 'Bell Ahva Go')
-    .replace(/BellAvego/gi, 'Bell Ahva Go')
+    // Peter's spec 2026-06-05 (5th revision): try real English "Have" to
+    // force the short-A sound. Cartesia (and every neural TTS) pronounces
+    // dictionary words correctly. The trick: "Bell Have Go" reads as
+    // "bell-HAV-go" — which is exactly the target "Bell-Ave-Go" sound
+    // since "Ave" rhymes with "have". Made-up phonetics ("Ahva", "Ahv",
+    // "Bel-Av-Go") all drifted because TTS guesses non-words inconsistently.
+    .replace(/BellAveGo/gi, 'Bell Have Go')
+    .replace(/BellAvego/gi, 'Bell Have Go')
     // Strip parenthetical qualifiers like "(admin test)" so Emma doesn't
     // read them aloud during the greeting.
     .replace(/\s*\([^)]*\)\s*/g, ' ')
