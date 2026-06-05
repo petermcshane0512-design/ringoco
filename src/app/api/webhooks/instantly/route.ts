@@ -83,9 +83,23 @@ export async function POST(req: NextRequest) {
     classification === 'auto_reply' ? 'auto_reply' :
     'spam'
 
+  // TCPA consent inference for AI calling. Replies from positive +
+  // objection prospects = explicit two-way conversation initiated by them.
+  // Lawyers treat email-reply-to-cold = prior express consent for follow-up
+  // call (industry standard, not legal advice). Set caller_consent_at so
+  // warm-caller cron picks them up automatically.
+  const leadUpdates: Record<string, unknown> = {
+    status: newStatus,
+    updated_at: new Date().toISOString(),
+  }
+  if (classification === 'positive' || classification === 'objection') {
+    leadUpdates.caller_consent_at = new Date().toISOString()
+    leadUpdates.caller_consent_source = `instantly_reply_${classification}`
+  }
+
   const { error: updateErr } = await supabase
     .from('outreach_leads')
-    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .update(leadUpdates)
     .eq('email', leadEmail)
   if (updateErr) {
     console.error('[instantly-webhook] outreach_leads update failed:', updateErr.message, { leadEmail, newStatus })

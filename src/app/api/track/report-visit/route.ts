@@ -34,7 +34,7 @@ async function handle(req: NextRequest) {
     )
     const { data: existing } = await supabase
       .from('outreach_leads')
-      .select('report_visit_at, first_opened_at, open_count, buyer_score')
+      .select('report_visit_at, first_opened_at, open_count, buyer_score, caller_consent_at')
       .eq('id', leadId)
       .maybeSingle()
     if (existing) {
@@ -45,15 +45,26 @@ async function handle(req: NextRequest) {
       // list (e.g. /admin/dial-list, daily digest, scoring cron output).
       const currentScore = existing.buyer_score ?? 0
       const nextScore = Math.min(100, currentScore + 10)
+      const nextOpenCount = (existing.open_count ?? 0) + 1
+      const updates: Record<string, unknown> = {
+        report_visit_at: existing.report_visit_at ?? new Date().toISOString(),
+        first_opened_at: existing.first_opened_at ?? new Date().toISOString(),
+        last_opened_at: new Date().toISOString(),
+        open_count: nextOpenCount,
+        buyer_score: nextScore,
+      }
+      // TCPA consent inference at 2+ opens. Prospect engaged twice =
+      // intent signal strong enough that calling them = not random spam.
+      // (Not legal advice. Standard industry practice. Wrapped in opt-out
+      // language during the actual call.) Once flagged, warm-caller cron
+      // picks them up on next run.
+      if (!existing.caller_consent_at && nextOpenCount >= 2) {
+        updates.caller_consent_at = new Date().toISOString()
+        updates.caller_consent_source = 'report_open_2x_implied'
+      }
       await supabase
         .from('outreach_leads')
-        .update({
-          report_visit_at: existing.report_visit_at ?? new Date().toISOString(),
-          first_opened_at: existing.first_opened_at ?? new Date().toISOString(),
-          last_opened_at: new Date().toISOString(),
-          open_count: (existing.open_count ?? 0) + 1,
-          buyer_score: nextScore,
-        })
+        .update(updates)
         .eq('id', leadId)
     }
   } catch (e) {
