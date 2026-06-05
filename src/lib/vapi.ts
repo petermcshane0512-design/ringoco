@@ -124,22 +124,17 @@ export function pronounceableBusinessName(name: string): string {
   // The phonetic spelling "Bell Ahva Go" forces the short-A sound reliably
   // because Cartesia interprets "Ahv" as one syllable with explicit "ah".
   return name
-    // Peter's spec 2026-06-05 (6th revision): SSML phoneme tag with IPA.
-    // Cartesia Sonic supports <phoneme alphabet="ipa" ph="..."> per their
-    // docs (sonic-english model only). IPA /bɛl ˈæv ɡoʊ/ = "Bell-AV-Go"
-    // with short-A in middle syllable. The brand text inside the tag is
-    // only used as fallback display — TTS reads the ph= attribute.
-    //
-    // If Vapi strips SSML, falls back to literal "BellAveGo" which
-    // Cartesia mis-pronounces but at least uses the real brand name.
-    .replace(
-      /BellAveGo/gi,
-      '<phoneme alphabet="ipa" ph="bɛl ˈæv ɡoʊ">BellAveGo</phoneme>',
-    )
-    .replace(
-      /BellAvego/gi,
-      '<phoneme alphabet="ipa" ph="bɛl ˈæv ɡoʊ">BellAveGo</phoneme>',
-    )
+    // 2026-06-05 final: Cartesia neural TTS can't reliably pronounce
+    // "BellAveGo" no matter what phonetic substitution we throw at it.
+    // 6 transforms tried + SSML phoneme tag — none stuck. Solution: keep
+    // raw "BellAveGo" string in case it's needed, and in the demo-line
+    // prompt explicitly tell Emma not to say the brand aloud in greetings.
+    // For tenant lines, business names are normal English (no transform
+    // needed). When BellAveGo brand must be spoken (rare follow-up "what
+    // company?"), Cartesia's mispronunciation is acceptable since it's
+    // not the first impression.
+    // If pronunciation becomes critical → swap demo line to ElevenLabs
+    // (~$45/mo extra, has phoneme dictionary that actually works).
     // Strip parenthetical qualifiers like "(admin test)" so Emma doesn't
     // read them aloud during the greeting.
     .replace(/\s*\([^)]*\)\s*/g, ' ')
@@ -697,7 +692,9 @@ Emma stays calm when callers are frustrated. The captured message tells Mike *ex
 # YOUR CALL FLOW
 
 ## Phase 1 — Greet (you say this when the phone connects)
-Your opening: "Hi, this is Emma with BellAveGo. I know you're checking out our AI receptionist for home-service businesses — how can I help?"
+Your opening: "Hi, this is Emma — thanks for calling our demo line. I'm the AI receptionist for home-service businesses. How can I help?"
+
+NEVER say the brand name aloud in the greeting. It's a compound name the TTS engine mispronounces — skip it on greeting. If asked "what company?" later, you can say it then.
 
 ## Phase 2 — Answer their questions (10 seconds to 5 minutes — let them lead)
 Listen. Answer accurately using the product knowledge above. Be conversational, not scripted.
@@ -707,7 +704,7 @@ Listen. Answer accurately using the product knowledge above. Be conversational, 
 After they've heard what they wanted, deliver THIS pitch verbatim — no discovery, no "does it interest you", no asking what business they run. Push the free week HARD. End by sending them to bellavego.com.
 
 THE PITCH (deliver naturally, hit every beat):
-"We'd love for our team at Bell Ahva Go to have you join up with us. The first week is completely free across all three tiers — Starter, Pro, and Elite. You'll get your own brand new phone number set up the moment you sign up, the onboarding only takes a few minutes, and you get a full week to try it out, no card needed. We really think you'll love it."
+"We'd love to have you join us. The first week is completely free across all three tiers — Starter, Pro, and Elite. You'll get your own brand new phone number set up the moment you sign up, the onboarding only takes a few minutes, and you get a full week to try it out, no card needed. We really think you'll love it."
 
 PUSH THE FREE WEEK EVEN HARDER at the very end:
 "Honestly — the free week alone is worth it. No card, no commitment, and your AI receptionist is live in under five minutes."
