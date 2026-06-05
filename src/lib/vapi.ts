@@ -124,14 +124,22 @@ export function pronounceableBusinessName(name: string): string {
   // The phonetic spelling "Bell Ahva Go" forces the short-A sound reliably
   // because Cartesia interprets "Ahv" as one syllable with explicit "ah".
   return name
-    // Peter's spec 2026-06-05 (5th revision): try real English "Have" to
-    // force the short-A sound. Cartesia (and every neural TTS) pronounces
-    // dictionary words correctly. The trick: "Bell Have Go" reads as
-    // "bell-HAV-go" — which is exactly the target "Bell-Ave-Go" sound
-    // since "Ave" rhymes with "have". Made-up phonetics ("Ahva", "Ahv",
-    // "Bel-Av-Go") all drifted because TTS guesses non-words inconsistently.
-    .replace(/BellAveGo/gi, 'Bell Have Go')
-    .replace(/BellAvego/gi, 'Bell Have Go')
+    // Peter's spec 2026-06-05 (6th revision): SSML phoneme tag with IPA.
+    // Cartesia Sonic supports <phoneme alphabet="ipa" ph="..."> per their
+    // docs (sonic-english model only). IPA /bɛl ˈæv ɡoʊ/ = "Bell-AV-Go"
+    // with short-A in middle syllable. The brand text inside the tag is
+    // only used as fallback display — TTS reads the ph= attribute.
+    //
+    // If Vapi strips SSML, falls back to literal "BellAveGo" which
+    // Cartesia mis-pronounces but at least uses the real brand name.
+    .replace(
+      /BellAveGo/gi,
+      '<phoneme alphabet="ipa" ph="bɛl ˈæv ɡoʊ">BellAveGo</phoneme>',
+    )
+    .replace(
+      /BellAvego/gi,
+      '<phoneme alphabet="ipa" ph="bɛl ˈæv ɡoʊ">BellAveGo</phoneme>',
+    )
     // Strip parenthetical qualifiers like "(admin test)" so Emma doesn't
     // read them aloud during the greeting.
     .replace(/\s*\([^)]*\)\s*/g, ' ')
