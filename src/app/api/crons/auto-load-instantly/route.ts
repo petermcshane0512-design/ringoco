@@ -118,12 +118,19 @@ export async function GET(req: NextRequest) {
   // Re-filtering here on review_count would require it to be reliably populated
   // across every scraper, which it isn't yet (varies by source). Keep this
   // route trustful of the upstream filter.
+  // YOUNG-OWNER ICP FILTER (2026-06-05 pivot per real cold-call signal).
+  // Old HVAC heads (>40yo, 20+yr shops) don't trust AI. Only send to
+  // young_owner_score >= 40. Strongest signal is domain_registered_at
+  // post-2018 via RDAP enrichment. Tunable threshold via env.
+  const minYoungScore = parseInt(process.env.INSTANTLY_MIN_YOUNG_SCORE ?? '40', 10)
   const { data: leads, error } = await supabase
     .from('outreach_leads')
-    .select('id, email, business_name, owner_first_name, city, trade, review_count')
+    .select('id, email, business_name, owner_first_name, city, trade, review_count, young_owner_score')
     .eq('status', 'queued')
     .not('email', 'is', null)
     .ilike('trade', '%hvac%')
+    .gte('young_owner_score', minYoungScore)
+    .order('young_owner_score', { ascending: false })
     .order('pushed_at', { ascending: true })
     .limit(limit)
 
