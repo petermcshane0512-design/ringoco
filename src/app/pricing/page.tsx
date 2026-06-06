@@ -364,8 +364,7 @@ export default function PricingPage() {
             {[
               { label: 'Human receptionist', cost: '$2,500/mo', flaw: 'Closes 6pm. No leads. No weekends.' },
               { label: 'Voicemail', cost: '$0', flaw: 'Loses $2,300/mo in unbooked jobs.' },
-              { label: 'AnswerForce / Rosie', cost: '$179-$299', flaw: 'Just answers. No leads. No book.' },
-              { label: 'BellAveGo', cost: '$297/mo', flaw: '24/7 + auto-book + 25 leads/mo + guarantee', highlight: true },
+              { label: 'BellAveGo', cost: '$297/mo', flaw: '24/7 + auto-book + 5 leads/wk + 30-day refund', highlight: true },
             ].map((item) => (
               <div key={item.label} style={{
                 background: item.highlight ? '#F0FDF4' : '#F8FAFC',
