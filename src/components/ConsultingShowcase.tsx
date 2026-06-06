@@ -18,9 +18,9 @@ import Link from 'next/link'
  * without being a real contractor's data.
  */
 
-type Tag = 'New Move-In' | 'Aging Unit' | 'Pool Permit' | 'Storm Zone' | 'Rebate Window' | 'Rental Owner' | 'Switch Target' | 'Pre-Listing' | 'Solar Stack' | 'New Build'
+export type Tag = 'New Move-In' | 'Aging Unit' | 'Pool Permit' | 'Storm Zone' | 'Rebate Window' | 'Rental Owner' | 'Switch Target' | 'Pre-Listing' | 'Solar Stack' | 'New Build'
 
-type Lead = {
+export type Lead = {
   owner: string
   address: string
   phone: string
@@ -30,7 +30,35 @@ type Lead = {
   score: number // BellAveGo lead score, 0-10
 }
 
-const LEADS: Lead[] = [
+export const LEADS: Lead[] = [
+  // ── TOP 5 (shown on homepage) — sorted by score, headline cases first ──
+  {
+    owner: 'Daniel & Sara Bachman',
+    address: '6712 N 7th St, Phoenix 85014',
+    phone: '(623) 555-0317',
+    tag: 'Aging Unit',
+    why: 'Single-family built 1998. Property record + last permit show original Carrier unit, now year 28. Avg PHX lifespan 15-20 yrs. Statistically already had 2+ emergency repairs this season — they are waiting for the next one.',
+    est: 9800,
+    score: 9.6,
+  },
+  {
+    owner: 'Aurelia Vázquez',
+    address: '2476 N 16th St, Phoenix 85006',
+    phone: '(602) 555-1118',
+    tag: 'Rebate Window',
+    why: 'Submitted SRP rebate application for 16+ SEER heat pump. Pre-approved, looking for installer. Window expires Sep 30 — caller-side urgency does the closing for you. Average rebate-driven install: $11,400.',
+    est: 11400,
+    score: 9.5,
+  },
+  {
+    owner: 'Dana Friedhoff',
+    address: '9201 E Sweetwater Ave, Scottsdale 85260',
+    phone: '(480) 555-1540',
+    tag: 'Switch Target',
+    why: 'Long-time customer of competitor "Cool-Tech AZ." Public Yelp review history shows 1-star on last 4 service visits ("never showed up", "doubled the quote"). Ripe for switch. Estimated 3-zone home, 2 condensers.',
+    est: 14800,
+    score: 9.4,
+  },
   {
     owner: 'Marcus Reyes',
     address: '4517 E Cactus Blvd, Phoenix 85032',
@@ -39,6 +67,34 @@ const LEADS: Lead[] = [
     why: 'Closed on 3,200 sqft home 19 days ago. Maricopa County permit history shows AC unit last serviced 2008 (Carrier 38AKS, 17 yrs old). Move-in 90-day window = peak service-intent. Pitch pre-summer tune-up + replacement quote.',
     est: 8400,
     score: 9.4,
+  },
+  {
+    owner: 'Jamal Whitfield',
+    address: '9408 S 51st Ave, Laveen 85339',
+    phone: '(602) 555-0408',
+    tag: 'New Move-In',
+    why: 'Just moved from CA Mar 2026 (out-of-state mover, AC-naive). Listing photos show outdoor condenser caked in dust + missing capacitor cap — both pre-failure indicators. First haboob takes it out.',
+    est: 6100,
+    score: 9.3,
+  },
+  // ── REMAINING 15 (shown only on /sample-report full report view) ──
+  {
+    owner: 'Brian Coats',
+    address: '6101 N Black Canyon Hwy, Phoenix 85015',
+    phone: '(623) 555-1245',
+    tag: 'Aging Unit',
+    why: 'Home built 1972. No HVAC permit on file since 1992 (34 yrs). Statistical near-certainty of full system replacement need. Lead score 9.2/10 by replacement-probability model.',
+    est: 12000,
+    score: 9.2,
+  },
+  {
+    owner: 'Frank Salerno',
+    address: '5689 W Glendale Ave, Glendale 85301',
+    phone: '(623) 555-0834',
+    tag: 'Solar Stack',
+    why: 'New solar permit filed (Sunrun, 8.4kW). Solar customers stack IRA 25C tax credit by adding heat-pump replacement in same tax yr. Pitch bundled install for combined ~$3,000 credit.',
+    est: 13500,
+    score: 9.2,
   },
   {
     owner: 'Lisa Tran',
@@ -50,22 +106,22 @@ const LEADS: Lead[] = [
     score: 9.1,
   },
   {
-    owner: 'Daniel & Sara Bachman',
-    address: '6712 N 7th St, Phoenix 85014',
-    phone: '(623) 555-0317',
-    tag: 'Aging Unit',
-    why: 'Single-family built 1998. Property record + last permit show original Carrier unit, now year 28. Avg PHX lifespan 15-20 yrs. Statistically already had 2+ emergency repairs this season — they are waiting for the next one.',
-    est: 9800,
-    score: 9.6,
+    owner: 'Kenji Watanabe',
+    address: '4422 E Camelback Rd, Phoenix 85018',
+    phone: '(602) 555-1467',
+    tag: 'Rental Owner',
+    why: 'Owns 4-unit rental property (LLC: KW Holdings AZ). Tenant filed maintenance request via property mgmt portal for "not cooling." Landlord = decision-maker on price-no-object emergency. Same-day call wins.',
+    est: 2400,
+    score: 9.0,
   },
   {
-    owner: 'Jamal Whitfield',
-    address: '9408 S 51st Ave, Laveen 85339',
-    phone: '(602) 555-0408',
+    owner: 'Theresa Nguyen',
+    address: '3725 E Bell Rd, Phoenix 85032',
+    phone: '(602) 555-1612',
     tag: 'New Move-In',
-    why: 'Just moved from CA Mar 2026 (out-of-state mover, AC-naive). Listing photos show outdoor condenser caked in dust + missing capacitor cap — both pre-failure indicators. First haboob takes it out.',
-    est: 6100,
-    score: 9.3,
+    why: 'Estate sale closed May 19 — probate inheritance, out-of-state heir flying in to manage property. Prior owner deceased 8 mo ago, no HVAC maintenance since. Inheritor wants minimum spend to flip + rent. Tune-up + repair window.',
+    est: 1700,
+    score: 8.9,
   },
   {
     owner: 'Patricia Holloway',
@@ -86,31 +142,22 @@ const LEADS: Lead[] = [
     score: 8.7,
   },
   {
-    owner: 'Megan O\'Brien',
-    address: '7820 E Vista Bonita Dr, Scottsdale 85255',
-    phone: '(480) 555-0752',
-    tag: 'Pre-Listing',
-    why: 'Listed home for sale 6 days ago at $1.4M. AZ inspection reports always flag HVAC > 12 yrs. Pre-listing tune-up + cert letter ≈ $450 ticket + 1-2 buyer-side referrals when home closes.',
-    est: 1200,
-    score: 8.5,
+    owner: 'Calvin Brooks',
+    address: '7611 W Camelback Rd, Glendale 85303',
+    phone: '(623) 555-1755',
+    tag: 'Rebate Window',
+    why: 'Disabled veteran. Filed VA HISA + AZ APS rebate paperwork for heat-pump replacement (combined credit ~$4,400). Pre-approved, looking for installer who handles VA paperwork. Lead is fully pre-qualified — just needs a yes.',
+    est: 9200,
+    score: 8.7,
   },
   {
-    owner: 'Frank Salerno',
-    address: '5689 W Glendale Ave, Glendale 85301',
-    phone: '(623) 555-0834',
-    tag: 'Solar Stack',
-    why: 'New solar permit filed (Sunrun, 8.4kW). Solar customers stack IRA 25C tax credit by adding heat-pump replacement in same tax yr. Pitch bundled install for combined ~$3,000 credit.',
-    est: 13500,
-    score: 9.2,
-  },
-  {
-    owner: 'Hannah Reichert',
-    address: '14211 N 28th St, Phoenix 85032',
-    phone: '(602) 555-0907',
+    owner: 'Doug Mendelsohn',
+    address: '5024 N 36th Pl, Phoenix 85018',
+    phone: '(602) 555-1881',
     tag: 'Storm Zone',
-    why: 'Inside Aug 2025 haboob path. Filed roof insurance claim. Outdoor condenser coil is statistically packed with dust debris. Coil-clean ($380) + duct sanitize ($620) upsell.',
-    est: 1000,
-    score: 8.3,
+    why: 'Dialed 311 about a noisy outdoor unit on May 31 — public city records mark it as "compressor seizure complaint." Confirmed unit failure within ~30 days based on prior 311 patterns in the neighborhood. Same-day visit wins.',
+    est: 6800,
+    score: 8.6,
   },
   {
     owner: 'Ezra Park',
@@ -122,22 +169,40 @@ const LEADS: Lead[] = [
     score: 8.6,
   },
   {
-    owner: 'Aurelia Vázquez',
-    address: '2476 N 16th St, Phoenix 85006',
-    phone: '(602) 555-1118',
-    tag: 'Rebate Window',
-    why: 'Submitted SRP rebate application for 16+ SEER heat pump. Pre-approved, looking for installer. Window expires Sep 30 — caller-side urgency does the closing for you. Average rebate-driven install: $11,400.',
-    est: 11400,
-    score: 9.5,
+    owner: 'Megan O\'Brien',
+    address: '7820 E Vista Bonita Dr, Scottsdale 85255',
+    phone: '(480) 555-0752',
+    tag: 'Pre-Listing',
+    why: 'Listed home for sale 6 days ago at $1.4M. AZ inspection reports always flag HVAC > 12 yrs. Pre-listing tune-up + cert letter ≈ $450 ticket + 1-2 buyer-side referrals when home closes.',
+    est: 1200,
+    score: 8.5,
   },
   {
-    owner: 'Brian Coats',
-    address: '6101 N Black Canyon Hwy, Phoenix 85015',
-    phone: '(623) 555-1245',
+    owner: 'Jenna Castillo',
+    address: '1822 E Bethany Home Rd, Phoenix 85016',
+    phone: '(602) 555-1994',
     tag: 'Aging Unit',
-    why: 'Home built 1972. No HVAC permit on file since 1992 (34 yrs). Statistical near-certainty of full system replacement need. Lead score 9.2/10 by replacement-probability model.',
-    est: 12000,
-    score: 9.2,
+    why: 'SRP energy-use data shows her June bill is 168% higher YoY despite same square footage. Classic signal of failing compressor or refrigerant leak. Existing unit installed 2009 per permit. Energy-audit pitch wedges the sale.',
+    est: 5600,
+    score: 8.4,
+  },
+  {
+    owner: 'Hannah Reichert',
+    address: '14211 N 28th St, Phoenix 85032',
+    phone: '(602) 555-0907',
+    tag: 'Storm Zone',
+    why: 'Inside Aug 2025 haboob path. Filed roof insurance claim. Outdoor condenser coil is statistically packed with dust debris. Coil-clean ($380) + duct sanitize ($620) upsell.',
+    est: 1000,
+    score: 8.3,
+  },
+  {
+    owner: 'Yvette Park',
+    address: '2845 E Indian School Rd, Phoenix 85016',
+    phone: '(602) 555-2067',
+    tag: 'New Move-In',
+    why: 'New homeowner since Apr 2026, just enrolled newborn at Madison School District (Maricopa school records — new-baby-in-house signal). Young families panic-buy AC service the first hot week of summer. Time the call for next 80°+ forecast day.',
+    est: 2200,
+    score: 8.2,
   },
   {
     owner: 'Sofia Maldonado',
@@ -148,32 +213,17 @@ const LEADS: Lead[] = [
     est: 540,
     score: 7.9,
   },
-  {
-    owner: 'Kenji Watanabe',
-    address: '4422 E Camelback Rd, Phoenix 85018',
-    phone: '(602) 555-1467',
-    tag: 'Rental Owner',
-    why: 'Owns 4-unit rental property (LLC: KW Holdings AZ). Tenant filed maintenance request via property mgmt portal for "not cooling." Landlord = decision-maker on price-no-object emergency. Same-day call wins.',
-    est: 2400,
-    score: 9.0,
-  },
-  {
-    owner: 'Dana Friedhoff',
-    address: '9201 E Sweetwater Ave, Scottsdale 85260',
-    phone: '(480) 555-1540',
-    tag: 'Switch Target',
-    why: 'Long-time customer of competitor "Cool-Tech AZ." Public Yelp review history shows 1-star on last 4 service visits ("never showed up", "doubled the quote"). Ripe for switch. Estimated 3-zone home, 2 condensers.',
-    est: 14800,
-    score: 9.4,
-  },
 ]
 
-const TOTAL_PIPELINE = LEADS.reduce((sum, l) => sum + l.est, 0)
+// Homepage shows the top 5 only — the full /sample-report page renders all 20.
+const TOP_LEADS = LEADS.slice(0, 5)
+const TOP_PIPELINE = TOP_LEADS.reduce((sum, l) => sum + l.est, 0)
+const TOTAL_LEAD_COUNT = LEADS.length
 
 // Bottom 10% — phone-call activity strip. Numbers stay generic so the
 // section reads as a realistic Sun Valley HVAC month without quoting any
 // specific real tenant's metrics.
-const CALLS = {
+export const CALLS = {
   answered: 87,
   bookedJobs: 31,
   estRevenueCaptured: 42300,
@@ -185,7 +235,7 @@ const CALLS = {
   },
 }
 
-const TAG_STYLES: Record<Tag, { bg: string; color: string; border: string }> = {
+export const TAG_STYLES: Record<Tag, { bg: string; color: string; border: string }> = {
   'New Move-In':    { bg: 'rgba(94,234,212,0.12)',  color: '#5EEAD4', border: 'rgba(94,234,212,0.40)' },
   'Aging Unit':     { bg: 'rgba(232,116,43,0.14)',  color: '#FF9D5A', border: 'rgba(232,116,43,0.40)' },
   'Pool Permit':    { bg: 'rgba(59,130,246,0.14)',  color: '#93C5FD', border: 'rgba(59,130,246,0.40)' },
@@ -198,7 +248,7 @@ const TAG_STYLES: Record<Tag, { bg: string; color: string; border: string }> = {
   'New Build':      { bg: 'rgba(148,163,184,0.18)', color: '#CBD5E1', border: 'rgba(148,163,184,0.45)' },
 }
 
-function usd(n: number) {
+export function usd(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 }
 
@@ -532,12 +582,12 @@ export default function ConsultingShowcase() {
       <div className="cs-wrap">
         {/* Header */}
         <header className="cs-head">
-          <span className="cs-eyebrow">Weekly Lead Drop · Included on every plan</span>
+          <span className="cs-eyebrow">Weekly Report · Included on every plan</span>
           <h2 className="cs-h2">
-            15 fresh leads in your neighborhood. <span className="money">Real homes. Real reasons. Real phone numbers.</span>
+            5 fresh leads in your neighborhood. <span className="money">Real homes. Real reasons. Real phone numbers. Every week.</span>
           </h2>
           <p className="cs-sub">
-            Every Monday morning, BellAveGo drops 5 high-intent homeowners straight to your dashboard. Permits, deed transfers, aging HVAC, storm-damage zones, and rebate-window claims — pre-qualified, ranked, and ready to call. Below is a real sample week for a Phoenix HVAC shop.
+            Every Monday BellAveGo drops 5 high-intent homeowners straight to your dashboard. We mine new permits, deed transfers, aging-HVAC homes, new neighbors moving in, storm-damage zones, rebate-window claims, pre-listing tune-ups, rental-owner emergencies, energy-bill spikes, estate &amp; probate transitions, solar-stack add-ons, and competitor-switch targets — pre-qualified, ranked by addressable revenue, and ready to call. Below is a real sample week for a Phoenix HVAC shop.
           </p>
         </header>
 
@@ -559,13 +609,13 @@ export default function ConsultingShowcase() {
                   <span className="cs-rep-tag" style={{ color: '#5EEAD4', borderColor: 'rgba(94,234,212,0.32)', background: 'rgba(94,234,212,0.10)' }}>Week of June 9, 2026</span>
                 </div>
                 <div className="cs-rep-title">Sun Valley HVAC · Phoenix, AZ</div>
-                <div className="cs-rep-sub">15 leads · 4 ZIP clusters · ranked by addressable revenue × intent score</div>
+                <div className="cs-rep-sub">Top 5 of this week · ranked by addressable revenue × intent score</div>
               </div>
             </div>
             <div className="cs-rep-pipeline">
-              <div className="lab">Total Pipeline Value</div>
-              <div className="num">{usd(TOTAL_PIPELINE)}</div>
-              <div className="lab2">if 100% close rate</div>
+              <div className="lab">Top-5 Pipeline Value</div>
+              <div className="num">{usd(TOP_PIPELINE)}</div>
+              <div className="lab2">this week alone</div>
             </div>
           </div>
 
@@ -583,7 +633,7 @@ export default function ConsultingShowcase() {
                 </tr>
               </thead>
               <tbody>
-                {LEADS.map((l, i) => {
+                {TOP_LEADS.map((l, i) => {
                   const ts = TAG_STYLES[l.tag]
                   const telHref = 'tel:+1' + l.phone.replace(/[^0-9]/g, '')
                   return (
@@ -656,14 +706,14 @@ export default function ConsultingShowcase() {
 
         {/* CTA row */}
         <div className="cs-cta-row">
-          <Link href="/pricing" className="cs-cta-primary">
-            Get my weekly lead drop
+          <Link href="/monthly-report" className="cs-cta-primary">
+            View Full Monthly Report of {TOTAL_LEAD_COUNT}
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
           </Link>
-          <Link href="/sample-report" className="cs-cta-secondary">
-            View a full BellAveGo report
+          <Link href="/pricing" className="cs-cta-secondary">
+            Get my weekly lead drop
           </Link>
         </div>
       </div>
