@@ -276,7 +276,7 @@ export const TIER_FEATURES: Record<Tier, TierFeatures> = {
       'FREE dedicated phone number ($50/mo value)',
       'FREE white-glove onboarding (under 10 min)',
       'Lifetime price lock — never goes up',
-      'Performance guarantee: 5+ jobs booked in 30 days OR full refund',
+      '30-day money-back guarantee — cancel any time first 30 days, full refund',
     ],
     features: [
       '24/7 AI receptionist — unlimited inbound calls, no cap, ever',

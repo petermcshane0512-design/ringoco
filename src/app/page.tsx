@@ -1243,14 +1243,14 @@ export default function HomePage() {
       {/* PRICING — Grand Slam Hormozi single offer card (mirrors /pricing) */}
       <section style={{ padding: '72px 24px 40px', background: '#F2F9F5', borderBottom: '1px solid #D4E6DC', textAlign: 'center' }}>
         <div style={{ display: 'inline-block', background: 'rgba(34,197,94,0.10)', color: '#16A34A', fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 999, letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 16 }}>
-          🎯 Performance guarantee included
+          🎯 30-day money-back guarantee
         </div>
         <h2 style={{ fontSize: 'clamp(32px, 4.4vw, 52px)', fontWeight: 900, marginBottom: 14, letterSpacing: '-1.5px', color: '#0B1F3A', lineHeight: 1.05 }}>
           Never miss another job.<br/>
-          <span style={{ background: 'linear-gradient(135deg, #5EEAD4 0%, #2DD4BF 50%, #0AA89F 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Or you don&apos;t pay.</span>
+          <span style={{ background: 'linear-gradient(135deg, #5EEAD4 0%, #2DD4BF 50%, #0AA89F 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Try risk-free for 30 days.</span>
         </h2>
         <p style={{ color: '#4A6670', fontSize: 16, marginBottom: 36, maxWidth: 640, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.55 }}>
-          Book at least <strong style={{ color: '#0B1F3A' }}>5 jobs</strong> from BellAveGo in your first 30 days — or full refund. One click, no hoops.
+          Use it 30 days. If you don&apos;t love it, click one button in your dashboard. Full refund. No questions.
         </p>
 
         <div style={{
@@ -1353,10 +1353,10 @@ export default function HomePage() {
             🏆 Our Guarantee
           </div>
           <h3 style={{ fontSize: 24, fontWeight: 900, color: '#92400E', letterSpacing: '-0.5px', marginBottom: 10, marginTop: 12 }}>
-            5 booked jobs in 30 days. Or it&apos;s on us.
+            30 days. Full refund. Zero hoops.
           </h3>
           <p style={{ fontSize: 14, color: '#78350F', lineHeight: 1.55, maxWidth: 560, margin: '0 auto' }}>
-            If BellAveGo doesn&apos;t book at least 5 jobs in your first 30 days, full refund. No hoops. One-click cancel from your dashboard.
+            If BellAveGo isn&apos;t working for your shop in the first 30 days, cancel from your dashboard in one click. We refund your most recent payment immediately. Same-week back on your card.
           </p>
         </div>
       </section>

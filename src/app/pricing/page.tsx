@@ -191,17 +191,17 @@ export default function PricingPage() {
       {/* ── HERO — Grand Slam hook (Hormozi $100M Offers) ── */}
       <section style={{ padding: '72px 24px 32px', textAlign: 'center', maxWidth: 1100, margin: '0 auto' }}>
         <div style={{ display: 'inline-block', background: 'rgba(34,197,94,0.10)', color: '#16A34A', fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 999, letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 18 }}>
-          🎯 Performance guarantee included
+          🎯 30-day money-back guarantee
         </div>
         <h1 style={{ fontSize: 'clamp(36px, 5vw, 64px)', fontWeight: 900, letterSpacing: '-2px', lineHeight: 1.02, marginBottom: 18 }}>
           Never miss another job.<br/>
-          <span style={{ background: 'linear-gradient(135deg, #5EEAD4 0%, #2DD4BF 50%, #0AA89F 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Or you don&apos;t pay.</span>
+          <span style={{ background: 'linear-gradient(135deg, #5EEAD4 0%, #2DD4BF 50%, #0AA89F 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Try risk-free for 30 days.</span>
         </h1>
         <p style={{ fontSize: 18, color: '#4A6670', maxWidth: 720, margin: '0 auto 12px', lineHeight: 1.55, fontWeight: 500 }}>
-          AI answers every missed call 24/7. Books the appointment. Texts you the lead. Drops 5 ready-to-quote homeowner leads in your neighborhood every Monday morning.
+          AI answers every missed call 24/7. Books the appointment. Texts you the lead. Drops 5 ready-to-quote homeowner leads in your neighborhood every Monday morning. Cancel any time first 30 days for full refund.
         </p>
         <p style={{ fontSize: 15, color: '#7AAAB2', maxWidth: 600, margin: '0 auto', lineHeight: 1.55 }}>
-          Book at least <strong style={{ color: '#0B1F3A' }}>5 jobs</strong> from BellAveGo in your first 30 days — or we refund every penny. One click, no hoops.
+          Use it 30 days. If you don&apos;t love it, click one button in your dashboard. Full refund. No questions, no phone call.
         </p>
       </section>
 
@@ -341,10 +341,10 @@ export default function PricingPage() {
             🏆 Our Guarantee
           </div>
           <h2 style={{ fontSize: 26, fontWeight: 900, color: '#92400E', letterSpacing: '-0.6px', marginBottom: 12, marginTop: 12 }}>
-            5 booked jobs in 30 days. Or it&apos;s on us.
+            30 days. Full refund. Zero hoops.
           </h2>
           <p style={{ fontSize: 15, color: '#78350F', lineHeight: 1.6, maxWidth: 600, margin: '0 auto' }}>
-            If BellAveGo doesn&apos;t book at least 5 jobs for your shop in the first 30 days, we refund every dollar you paid. No hoops. No phone-call cancellation. Click one button in your dashboard, money back same week.
+            If you don&apos;t love BellAveGo in your first 30 days, cancel from your dashboard in one click. We refund your most recent payment immediately. No phone-call cancellation. No retention loop. Same-week refund to your card.
           </p>
         </div>
       </section>
