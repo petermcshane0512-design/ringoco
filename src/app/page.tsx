@@ -1242,8 +1242,13 @@ export default function HomePage() {
 
       {/* PRICING — Grand Slam Hormozi single offer card (mirrors /pricing) */}
       <section style={{ padding: '72px 24px 40px', background: '#F2F9F5', borderBottom: '1px solid #D4E6DC', textAlign: 'center' }}>
-        <div style={{ display: 'inline-block', background: 'rgba(34,197,94,0.10)', color: '#16A34A', fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 999, letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 16 }}>
-          🎯 30-day money-back guarantee
+        <div style={{ display: 'inline-flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <div style={{ background: 'rgba(220,38,38,0.10)', color: '#DC2626', fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 999, letterSpacing: '0.10em', textTransform: 'uppercase' }}>
+            🔥 Founding-100 · $297 locked for life
+          </div>
+          <div style={{ background: 'rgba(34,197,94,0.10)', color: '#16A34A', fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 999, letterSpacing: '0.10em', textTransform: 'uppercase' }}>
+            🎯 30-day money back
+          </div>
         </div>
         <h2 style={{ fontSize: 'clamp(32px, 4.4vw, 52px)', fontWeight: 900, marginBottom: 14, letterSpacing: '-1.5px', color: '#0B1F3A', lineHeight: 1.05 }}>
           Never miss another job.<br/>

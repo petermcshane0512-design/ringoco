@@ -190,8 +190,13 @@ export default function PricingPage() {
 
       {/* ── HERO — Grand Slam hook (Hormozi $100M Offers) ── */}
       <section style={{ padding: '72px 24px 32px', textAlign: 'center', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ display: 'inline-block', background: 'rgba(34,197,94,0.10)', color: '#16A34A', fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 999, letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 18 }}>
-          🎯 30-day money-back guarantee
+        <div style={{ display: 'inline-flex', gap: 8, marginBottom: 18, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <div style={{ background: 'rgba(220,38,38,0.10)', color: '#DC2626', fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 999, letterSpacing: '0.10em', textTransform: 'uppercase' }}>
+            🔥 Founding-100 price · $297 locked for life
+          </div>
+          <div style={{ background: 'rgba(34,197,94,0.10)', color: '#16A34A', fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 999, letterSpacing: '0.10em', textTransform: 'uppercase' }}>
+            🎯 30-day money back
+          </div>
         </div>
         <h1 style={{ fontSize: 'clamp(36px, 5vw, 64px)', fontWeight: 900, letterSpacing: '-2px', lineHeight: 1.02, marginBottom: 18 }}>
           Never miss another job.<br/>
