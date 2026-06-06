@@ -22,7 +22,7 @@ const supabase = createClient(
 //   Legacy tiers preserved for grandfathered customers (receptionist + concierge).
 export const TIER_DROP_TARGET: Record<Tier, { period: 'quarterly' | 'monthly' | 'weekly'; perDrop: number }> = {
   receptionist: { period: 'quarterly', perDrop: 5 },
-  officemgr:    { period: 'weekly',    perDrop: 6 },   // 6/wk × 4.33wk = 26/mo (≈25/mo marketed)
+  officemgr:    { period: 'weekly',    perDrop: 5 },   // 5/wk × 4.33wk = ~22/mo (5/wk marketed)
   concierge:    { period: 'weekly',    perDrop: 25 },  // legacy Elite tier
 }
 

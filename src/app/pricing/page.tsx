@@ -198,10 +198,10 @@ export default function PricingPage() {
           <span style={{ background: 'linear-gradient(135deg, #5EEAD4 0%, #2DD4BF 50%, #0AA89F 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Or you don&apos;t pay.</span>
         </h1>
         <p style={{ fontSize: 18, color: '#4A6670', maxWidth: 720, margin: '0 auto 12px', lineHeight: 1.55, fontWeight: 500 }}>
-          AI answers every missed call 24/7. Books the appointment. Texts you the lead. Drops 25 ready-to-quote homeowner leads in your neighborhood every month.
+          AI answers every missed call 24/7. Books the appointment. Texts you the lead. Drops 5 ready-to-quote homeowner leads in your neighborhood every Monday morning.
         </p>
         <p style={{ fontSize: 15, color: '#7AAAB2', maxWidth: 600, margin: '0 auto', lineHeight: 1.55 }}>
-          Book at least <strong style={{ color: '#0B1F3A' }}>5 jobs</strong> from BellAveGo in your first 30 days — or we refund every penny <strong style={{ color: '#0B1F3A' }}>+ pay you $50 cash</strong> for your time.
+          Book at least <strong style={{ color: '#0B1F3A' }}>5 jobs</strong> from BellAveGo in your first 30 days — or we refund every penny. One click, no hoops.
         </p>
       </section>
 
@@ -268,12 +268,12 @@ export default function PricingPage() {
             {[
               { item: '24/7 AI receptionist · UNLIMITED calls answered', val: '$200/mo' },
               { item: 'Auto-books appointments to your calendar live', val: '$97/mo' },
-              { item: '25 fresh neighborhood leads/mo (6 every Monday)', val: '$500/mo' },
+              { item: '5 fresh neighborhood leads delivered every Monday', val: '$500/mo' },
               { item: 'AI pitch script for every lead', val: '$50/mo' },
               { item: 'FREE dedicated phone number', val: '$50/mo' },
               { item: 'FREE white-glove onboarding (<10 min)', val: '$500 once' },
               { item: 'Lifetime price lock — never raised', val: 'priceless' },
-              { item: 'Performance guarantee or refund + $50 cash', val: 'risk-free' },
+              { item: 'Performance guarantee — refund if it doesn&apos;t work', val: 'risk-free' },
             ].map((row) => (
               <div key={row.item} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '6px 0' }}>
                 <div style={{ width: 18, height: 18, background: '#22C55E', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
@@ -344,7 +344,7 @@ export default function PricingPage() {
             5 booked jobs in 30 days. Or it&apos;s on us.
           </h2>
           <p style={{ fontSize: 15, color: '#78350F', lineHeight: 1.6, maxWidth: 600, margin: '0 auto' }}>
-            If BellAveGo doesn&apos;t book at least 5 jobs for your shop in the first 30 days, we refund every dollar you paid <strong>+ Venmo you $50 cash</strong> for the time you spent setting up. No hoops. No phone-call cancellation. Click one button in your dashboard, money back same week.
+            If BellAveGo doesn&apos;t book at least 5 jobs for your shop in the first 30 days, we refund every dollar you paid. No hoops. No phone-call cancellation. Click one button in your dashboard, money back same week.
           </p>
         </div>
       </section>
@@ -636,7 +636,7 @@ export default function PricingPage() {
             Stop losing jobs to voicemail.
           </h2>
           <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', lineHeight: 1.5, marginBottom: 24 }}>
-            One subscription. Unlimited calls. 25 leads/month. Performance guarantee. Cancel anytime.
+            One subscription. Unlimited calls. 5 leads every Monday. Performance guarantee. Cancel anytime.
           </p>
           <button
             onClick={() => handleCheckout('officemgr', interval)}
@@ -657,7 +657,7 @@ export default function PricingPage() {
             {loading === 'officemgr' ? 'Loading…' : `Start for $${isAnnual ? '2,970/yr' : '297/mo'} →`}
           </button>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 14 }}>
-            Performance guarantee: 5 jobs in 30 days or full refund + $50 cash
+            Performance guarantee: 5 jobs in 30 days or full refund
           </p>
         </div>
       </section>

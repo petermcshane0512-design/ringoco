@@ -1240,104 +1240,125 @@ export default function HomePage() {
       {/* ROI CALCULATOR + FOUNDER SECTION both moved to /founder per Peter —
           homepage is now Hero → Consulting → Appointments (2-mode) → Industries → Pricing → CTA. */}
 
-      {/* PRICING */}
-      <section style={{ padding: '72px 48px', background: '#F2F9F5', borderBottom: '1px solid #D4E6DC', textAlign: 'center' }}>
-        <p style={{ fontSize: 13, fontWeight: 700, color: '#20B2AA', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Pricing</p>
-        <h2 style={{ fontSize: 42, fontWeight: 900, marginBottom: 8, letterSpacing: '-1.5px', color: '#0B1F3A' }}>Pay for what you use.</h2>
-        <p style={{ color: '#4A6670', fontSize: 16, marginBottom: 48 }}>Your first booked job pays for the whole month.</p>
-
-        <div className="home-pricing-grid" style={{ gap: 20, maxWidth: 1180, margin: '0 auto 20px' }}>
-          {/* Homepage tier cards — driven by TIER_FEATURES in src/lib/pricing.ts
-              so they ALWAYS match /pricing and /dashboard/upgrade. Edit features
-              there, not here. */}
-          {(['officemgr'] as const).map((tier) => {
-            const meta = HOMEPAGE_TIER_META[tier]
-            const features = HOMEPAGE_TIER_FEATURES[tier]
-            return {
-              name: meta.name,
-              price: meta.monthly,
-              setup: meta.setup,
-              tier,
-              calls: features.callCap.replace(' calls/mo', '/mo').replace(' calls', ''),
-              desc: features.tagline,
-              features: features.features,
-              popular: tier === 'officemgr',
-              customCta: false,
-              comingSoon: features.comingSoon,
-            }
-          }).map(plan => (
-            <div key={plan.name} style={{
-              background: plan.popular ? 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)' : '#fff',
-              borderRadius: 20,
-              padding: '36px 28px',
-              border: plan.popular ? 'none' : plan.comingSoon ? '1px dashed rgba(232,116,43,0.45)' : '1px solid rgba(10,168,159,0.18)',
-              boxShadow: plan.popular ? '0 24px 60px rgba(11,31,58,0.26)' : '0 2px 16px rgba(7,27,58,0.06)',
-              position: 'relative',
-              textAlign: 'left',
-              opacity: plan.comingSoon ? 0.92 : 1,
-            }}>
-              {plan.popular && (
-                <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: '#22C55E', color: '#fff', fontSize: 10, fontWeight: 800, padding: '4px 14px', borderRadius: 20, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-                  Most Popular
-                </div>
-              )}
-              {plan.comingSoon && (
-                <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', color: '#fff', fontSize: 10, fontWeight: 800, padding: '4px 14px', borderRadius: 20, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap', boxShadow: '0 4px 14px rgba(232,116,43,0.32)' }}>
-                  Coming Soon
-                </div>
-              )}
-              <div style={{ fontSize: 14, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.5)' : '#7AAAB2', marginBottom: 8 }}>{plan.name}</div>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 2, marginBottom: 4 }}>
-                {plan.customCta ? (
-                  <span style={{ fontSize: 32, fontWeight: 900, color: '#0B1F3A', lineHeight: 1.1, letterSpacing: '-1px' }}>Custom</span>
-                ) : (
-                  <>
-                    <span style={{ fontSize: 20, fontWeight: 900, color: plan.popular ? 'rgba(255,255,255,0.5)' : '#4A7A80', marginTop: 10 }}>$</span>
-                    <span style={{ fontSize: 56, fontWeight: 900, color: plan.popular ? '#fff' : '#0B1F3A', lineHeight: 1, letterSpacing: '-2px' }}>{plan.price}</span>
-                  </>
-                )}
-              </div>
-              <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.38)' : '#7AAAB2', marginBottom: 6 }}>{plan.customCta ? 'pricing per location' : 'per month · cancel anytime'}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2', marginBottom: 12 }}>{plan.customCta ? 'White-glove kickoff included' : '7-day free trial · Cancel anytime'}</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: plan.popular ? '#18AFA8' : '#0AA89F', marginBottom: 16 }}>{plan.calls} calls</div>
-              <div style={{ fontSize: 13, color: plan.popular ? 'rgba(255,255,255,0.6)' : '#4A7A80', marginBottom: 24, lineHeight: 1.6 }}>{plan.desc}</div>
-              <div style={{ marginBottom: 24 }}>
-                {(plan.features ?? []).map((f, idx) => {
-                  const isHeader = f.endsWith(':') || f.endsWith('plus:')
-                  return (
-                    <div key={f + idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '6px 0', borderBottom: idx === (plan.features!.length - 1) ? 'none' : `1px solid ${plan.popular ? 'rgba(255,255,255,0.07)' : 'rgba(10,168,159,0.08)'}` }}>
-                      {!isHeader && (
-                        <div style={{ width: 16, height: 16, background: plan.popular ? '#18AFA8' : '#22C55E', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
-                          <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                            <path d="M3 8.5l3.5 3.5 6.5-7" />
-                          </svg>
-                        </div>
-                      )}
-                      <span style={{ fontSize: 12, color: isHeader ? (plan.popular ? 'rgba(255,255,255,0.55)' : '#7AAAB2') : (plan.popular ? 'rgba(255,255,255,0.82)' : '#0B1F3A'), fontWeight: isHeader ? 700 : 500, fontStyle: isHeader ? 'italic' : 'normal', lineHeight: 1.4 }}>{f}</span>
-                    </div>
-                  )
-                })}
-              </div>
-              {plan.comingSoon ? (
-                <Link href="/waitlist?tier=concierge" style={{ display: 'block', textAlign: 'center', padding: '13px', background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 100%)', borderRadius: 10, textDecoration: 'none', color: '#fff', fontWeight: 800, fontSize: 14, border: 'none', boxShadow: '0 6px 20px rgba(232,116,43,0.32)' }}>
-                  Join Email Waitlist →
-                </Link>
-              ) : isSignedIn ? (
-                <Link href={`/pricing?tier=${plan.tier}&autocheckout=1`} style={{ display: 'block', textAlign: 'center', padding: '13px', background: plan.popular ? '#22C55E' : 'linear-gradient(135deg,#0AA89F,#0D8F87)', borderRadius: 10, textDecoration: 'none', color: '#fff', fontWeight: 800, fontSize: 14, border: 'none' }}>
-                  Let&apos;s get started →
-                </Link>
-              ) : (
-                <Link href={`/pricing?tier=${plan.tier}`} style={{ display: 'block', textAlign: 'center', padding: '13px', background: plan.popular ? '#22C55E' : 'rgba(10,168,159,0.08)', borderRadius: 10, textDecoration: 'none', color: plan.popular ? '#fff' : '#0AA89F', fontWeight: 800, fontSize: 14, border: plan.popular ? 'none' : '1px solid rgba(10,168,159,0.2)' }}>
-                  Get started →
-                </Link>
-              )}
-            </div>
-          ))}
+      {/* PRICING — Grand Slam Hormozi single offer card (mirrors /pricing) */}
+      <section style={{ padding: '72px 24px 40px', background: '#F2F9F5', borderBottom: '1px solid #D4E6DC', textAlign: 'center' }}>
+        <div style={{ display: 'inline-block', background: 'rgba(34,197,94,0.10)', color: '#16A34A', fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 999, letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 16 }}>
+          🎯 Performance guarantee included
         </div>
-        <p style={{ fontSize: 13, color: '#7AAAB2', marginTop: 16, lineHeight: 1.6 }}>
-          Month-to-month · 7-day free trial · Card collected at signup, first month billed on day 8 if you stay · 17% off annual.<br />
-          <span style={{ fontWeight: 700, color: '#0AA89F' }}>Most contractors book their first new job before the trial even ends.</span>
+        <h2 style={{ fontSize: 'clamp(32px, 4.4vw, 52px)', fontWeight: 900, marginBottom: 14, letterSpacing: '-1.5px', color: '#0B1F3A', lineHeight: 1.05 }}>
+          Never miss another job.<br/>
+          <span style={{ background: 'linear-gradient(135deg, #5EEAD4 0%, #2DD4BF 50%, #0AA89F 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Or you don&apos;t pay.</span>
+        </h2>
+        <p style={{ color: '#4A6670', fontSize: 16, marginBottom: 36, maxWidth: 640, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.55 }}>
+          Book at least <strong style={{ color: '#0B1F3A' }}>5 jobs</strong> from BellAveGo in your first 30 days — or full refund. One click, no hoops.
         </p>
+
+        <div style={{
+          maxWidth: 720, margin: '0 auto',
+          background: 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)',
+          borderRadius: 24,
+          padding: 'clamp(28px, 4vw, 44px)',
+          color: '#fff',
+          position: 'relative',
+          boxShadow: '0 32px 80px rgba(11,31,58,0.32)',
+          textAlign: 'left',
+        }}>
+          <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', color: '#0B1F3A', fontSize: 11, fontWeight: 900, padding: '6px 18px', borderRadius: 20, letterSpacing: '0.10em', textTransform: 'uppercase', whiteSpace: 'nowrap', boxShadow: '0 4px 16px rgba(232,116,43,0.38)' }}>
+            🔥 The Whole Thing
+          </div>
+
+          {/* Price */}
+          <div style={{ textAlign: 'center', marginBottom: 22, marginTop: 8 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 4 }}>
+              <span style={{ fontSize: 28, fontWeight: 900, color: 'rgba(255,255,255,0.45)', marginTop: 18 }}>$</span>
+              <span style={{ fontSize: 86, fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-3px' }}>297</span>
+              <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', fontWeight: 600, alignSelf: 'flex-end', marginBottom: 18, marginLeft: 6 }}>/mo</span>
+            </div>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', margin: '4px 0 0', fontWeight: 600 }}>
+              Or $2,970/yr (save $594). Cancel anytime.
+            </p>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', margin: '6px 0 0' }}>
+              Lifetime price lock — your rate never goes up.
+            </p>
+          </div>
+
+          {/* Value stack */}
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: '20px 22px', marginBottom: 24 }}>
+            <p style={{ fontSize: 11, fontWeight: 900, color: '#5EEAD4', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 14px' }}>
+              📦 Here&apos;s everything you get
+            </p>
+            {[
+              { item: '24/7 AI receptionist · UNLIMITED calls answered', val: '$200/mo' },
+              { item: 'Auto-books appointments to your calendar live', val: '$97/mo' },
+              { item: '5 fresh neighborhood leads delivered every Monday', val: '$500/mo' },
+              { item: 'AI pitch script for every lead', val: '$50/mo' },
+              { item: 'FREE dedicated phone number', val: '$50/mo' },
+              { item: 'FREE white-glove onboarding (<10 min)', val: '$500 once' },
+              { item: 'Lifetime price lock — never raised', val: 'priceless' },
+              { item: 'Performance guarantee — refund if it doesn&apos;t work', val: 'risk-free' },
+            ].map((row) => (
+              <div key={row.item} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '6px 0' }}>
+                <div style={{ width: 18, height: 18, background: '#22C55E', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M3 8.5l3.5 3.5 6.5-7" />
+                  </svg>
+                </div>
+                <span style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.92)', lineHeight: 1.5, flex: 1 }}>{row.item}</span>
+                <span style={{ fontSize: 11, color: 'rgba(94,234,212,0.85)', fontWeight: 800, whiteSpace: 'nowrap' }}>{row.val}</span>
+              </div>
+            ))}
+            <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px dashed rgba(255,255,255,0.18)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>Total equivalent value:</span>
+                <span style={{ fontSize: 18, color: '#fff', fontWeight: 900, textDecoration: 'line-through', textDecorationColor: 'rgba(220,38,38,0.7)' }}>$847/mo + $500</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 15, color: '#22C55E', fontWeight: 800 }}>Your price today:</span>
+                <span style={{ fontSize: 22, color: '#5EEAD4', fontWeight: 900 }}>$297/mo</span>
+              </div>
+            </div>
+          </div>
+
+          <Link href="/pricing" style={{
+            display: 'block', textAlign: 'center',
+            padding: '18px',
+            background: '#22C55E',
+            borderRadius: 12,
+            color: '#fff',
+            fontWeight: 900,
+            fontSize: 17,
+            textDecoration: 'none',
+            boxShadow: '0 12px 32px rgba(34,197,94,0.42)',
+            letterSpacing: '-0.01em',
+          }}>
+            Start now — $297/mo →
+          </Link>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginTop: 12, marginBottom: 0 }}>
+            Card collected upfront. Cancel anytime in 1 click.
+          </p>
+        </div>
+
+        {/* Performance guarantee block — mirror /pricing */}
+        <div style={{
+          maxWidth: 720,
+          margin: '32px auto 0',
+          background: 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)',
+          border: '3px solid #F59E0B',
+          borderRadius: 20,
+          padding: '28px 32px',
+          textAlign: 'center',
+          position: 'relative',
+        }}>
+          <div style={{ position: 'absolute', top: -16, left: '50%', transform: 'translateX(-50%)', background: '#F59E0B', color: '#fff', fontSize: 12, fontWeight: 900, padding: '6px 16px', borderRadius: 20, letterSpacing: '0.10em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+            🏆 Our Guarantee
+          </div>
+          <h3 style={{ fontSize: 24, fontWeight: 900, color: '#92400E', letterSpacing: '-0.5px', marginBottom: 10, marginTop: 12 }}>
+            5 booked jobs in 30 days. Or it&apos;s on us.
+          </h3>
+          <p style={{ fontSize: 14, color: '#78350F', lineHeight: 1.55, maxWidth: 560, margin: '0 auto' }}>
+            If BellAveGo doesn&apos;t book at least 5 jobs in your first 30 days, full refund. No hoops. One-click cancel from your dashboard.
+          </p>
+        </div>
       </section>
 
       {/* FINAL CTA */}
