@@ -188,41 +188,201 @@ export default function PricingPage() {
         </div>
       </nav>
 
-      <section style={{ padding: '72px 24px 32px', textAlign: 'center', maxWidth: 1200, margin: '0 auto' }}>
-        <p style={{ fontSize: 13, fontWeight: 700, color: '#0AA89F', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>Pricing</p>
-        <h1 style={{ fontSize: 'clamp(34px, 4.4vw, 56px)', fontWeight: 900, letterSpacing: '-1.5px', lineHeight: 1.05, marginBottom: 16 }}>
-          AI answers every call.<br/>
-          <span style={{ background: 'linear-gradient(135deg, #5EEAD4 0%, #2DD4BF 50%, #0AA89F 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>You close it in one tap.</span>
-        </h1>
-        <p style={{ fontSize: 17, color: '#4A6670', maxWidth: 680, margin: '0 auto 28px', lineHeight: 1.6 }}>
-          One subscription replaces voicemail, your office manager, your collections agent, and your reputation manager. Every feature runs on autopilot — your AI does the work, you just close.
-        </p>
-
-        <div style={{ display: 'inline-flex', alignItems: 'center', background: '#fff', border: '1px solid #DCE9E2', borderRadius: 999, padding: 4, gap: 4, marginBottom: 8 }}>
-          <button
-            onClick={() => setInterval('monthly')}
-            style={{
-              padding: '8px 20px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13,
-              background: !isAnnual ? 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)' : 'transparent',
-              color: !isAnnual ? '#fff' : '#4A6670',
-              transition: 'all 0.18s ease',
-            }}
-          >Monthly</button>
-          <button
-            onClick={() => setInterval('annual')}
-            style={{
-              padding: '8px 20px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13,
-              background: isAnnual ? 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)' : 'transparent',
-              color: isAnnual ? '#fff' : '#4A6670',
-              transition: 'all 0.18s ease',
-            }}
-          >Annual <span style={{ fontSize: 10, padding: '2px 6px', background: isAnnual ? 'rgba(255,255,255,0.22)' : 'rgba(34,197,94,0.16)', color: isAnnual ? '#fff' : '#16A34A', borderRadius: 4, marginLeft: 6, fontWeight: 800 }}>SAVE 17%</span></button>
+      {/* ── HERO — Grand Slam hook (Hormozi $100M Offers) ── */}
+      <section style={{ padding: '72px 24px 32px', textAlign: 'center', maxWidth: 1100, margin: '0 auto' }}>
+        <div style={{ display: 'inline-block', background: 'rgba(34,197,94,0.10)', color: '#16A34A', fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 999, letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 18 }}>
+          🎯 Performance guarantee included
         </div>
-        <p style={{ fontSize: 12, color: '#7AAAB2', margin: 0 }}>{isAnnual ? '12 months for the price of 10. Billed once.' : 'Cancel anytime.'}</p>
-
+        <h1 style={{ fontSize: 'clamp(36px, 5vw, 64px)', fontWeight: 900, letterSpacing: '-2px', lineHeight: 1.02, marginBottom: 18 }}>
+          Never miss another job.<br/>
+          <span style={{ background: 'linear-gradient(135deg, #5EEAD4 0%, #2DD4BF 50%, #0AA89F 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Or you don&apos;t pay.</span>
+        </h1>
+        <p style={{ fontSize: 18, color: '#4A6670', maxWidth: 720, margin: '0 auto 12px', lineHeight: 1.55, fontWeight: 500 }}>
+          AI answers every missed call 24/7. Books the appointment. Texts you the lead. Drops 25 ready-to-quote homeowner leads in your neighborhood every month.
+        </p>
+        <p style={{ fontSize: 15, color: '#7AAAB2', maxWidth: 600, margin: '0 auto', lineHeight: 1.55 }}>
+          Book at least <strong style={{ color: '#0B1F3A' }}>5 jobs</strong> from BellAveGo in your first 30 days — or we refund every penny <strong style={{ color: '#0B1F3A' }}>+ pay you $50 cash</strong> for your time.
+        </p>
       </section>
 
-      <section style={{ padding: '0 24px 32px' }}>
+      {/* ── BIG OFFER CARD — Hormozi value stack ── */}
+      <section style={{ padding: '0 24px 40px' }}>
+        <div id="plan-officemgr" style={{
+          maxWidth: 760, margin: '0 auto',
+          background: 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)',
+          borderRadius: 24,
+          padding: 'clamp(28px, 4vw, 48px)',
+          color: '#fff',
+          position: 'relative',
+          boxShadow: '0 32px 80px rgba(11,31,58,0.32)',
+          scrollMarginTop: 100,
+        }}>
+          <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)', color: '#0B1F3A', fontSize: 11, fontWeight: 900, padding: '6px 18px', borderRadius: 20, letterSpacing: '0.10em', textTransform: 'uppercase', whiteSpace: 'nowrap', boxShadow: '0 4px 16px rgba(232,116,43,0.38)' }}>
+            🔥 The Whole Thing
+          </div>
+
+          {/* Interval toggle */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24, marginTop: 8 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.16)', borderRadius: 999, padding: 4, gap: 4 }}>
+              <button
+                onClick={() => setInterval('monthly')}
+                style={{
+                  padding: '8px 18px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 12,
+                  background: !isAnnual ? '#fff' : 'transparent',
+                  color: !isAnnual ? '#0B1F3A' : 'rgba(255,255,255,0.7)',
+                }}
+              >Monthly</button>
+              <button
+                onClick={() => setInterval('annual')}
+                style={{
+                  padding: '8px 18px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 12,
+                  background: isAnnual ? '#fff' : 'transparent',
+                  color: isAnnual ? '#0B1F3A' : 'rgba(255,255,255,0.7)',
+                }}
+              >Annual <span style={{ fontSize: 9, padding: '2px 6px', background: isAnnual ? 'rgba(34,197,94,0.16)' : 'rgba(34,197,94,0.16)', color: '#22C55E', borderRadius: 4, marginLeft: 6, fontWeight: 800 }}>SAVE $594</span></button>
+            </div>
+          </div>
+
+          {/* Price */}
+          <div style={{ textAlign: 'center', marginBottom: 22 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 4 }}>
+              <span style={{ fontSize: 28, fontWeight: 900, color: 'rgba(255,255,255,0.45)', marginTop: 18 }}>$</span>
+              <span style={{ fontSize: 88, fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-3px' }}>
+                {isAnnual ? '248' : '297'}
+              </span>
+              <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', fontWeight: 600, alignSelf: 'flex-end', marginBottom: 18, marginLeft: 6 }}>/mo</span>
+            </div>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', margin: '4px 0 0', fontWeight: 600 }}>
+              {isAnnual ? 'Billed $2,970/yr once. Save $594. Cancel anytime.' : 'Billed monthly. Cancel anytime.'}
+            </p>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', margin: '6px 0 0' }}>
+              Lifetime price lock — your rate never goes up.
+            </p>
+          </div>
+
+          {/* Hormozi value stack */}
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: '20px 22px', marginBottom: 24 }}>
+            <p style={{ fontSize: 11, fontWeight: 900, color: '#5EEAD4', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 14px' }}>
+              📦 Here&apos;s everything you get
+            </p>
+            {[
+              { item: '24/7 AI receptionist · UNLIMITED calls answered', val: '$200/mo' },
+              { item: 'Auto-books appointments to your calendar live', val: '$97/mo' },
+              { item: '25 fresh neighborhood leads/mo (6 every Monday)', val: '$500/mo' },
+              { item: 'AI pitch script for every lead', val: '$50/mo' },
+              { item: 'FREE dedicated phone number', val: '$50/mo' },
+              { item: 'FREE white-glove onboarding (<10 min)', val: '$500 once' },
+              { item: 'Lifetime price lock — never raised', val: 'priceless' },
+              { item: 'Performance guarantee or refund + $50 cash', val: 'risk-free' },
+            ].map((row) => (
+              <div key={row.item} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '6px 0' }}>
+                <div style={{ width: 18, height: 18, background: '#22C55E', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M3 8.5l3.5 3.5 6.5-7" />
+                  </svg>
+                </div>
+                <span style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.92)', lineHeight: 1.5, flex: 1 }}>{row.item}</span>
+                <span style={{ fontSize: 11, color: 'rgba(94,234,212,0.85)', fontWeight: 800, whiteSpace: 'nowrap' }}>{row.val}</span>
+              </div>
+            ))}
+            <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px dashed rgba(255,255,255,0.18)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>Total equivalent value:</span>
+                <span style={{ fontSize: 18, color: '#fff', fontWeight: 900, textDecoration: 'line-through', textDecorationColor: 'rgba(220,38,38,0.7)' }}>$847/mo + $500</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 15, color: '#22C55E', fontWeight: 800 }}>Your price today:</span>
+                <span style={{ fontSize: 22, color: '#5EEAD4', fontWeight: 900 }}>${isAnnual ? '248' : '297'}/mo</span>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <button
+            onClick={() => handleCheckout('officemgr', interval)}
+            disabled={loading === 'officemgr'}
+            style={{
+              width: '100%',
+              padding: '18px',
+              background: '#22C55E',
+              borderRadius: 12,
+              border: 'none',
+              color: '#fff',
+              fontWeight: 900,
+              fontSize: 17,
+              cursor: loading === 'officemgr' ? 'wait' : 'pointer',
+              fontFamily: 'inherit',
+              boxShadow: '0 12px 32px rgba(34,197,94,0.42)',
+              transition: 'all 0.18s ease',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {loading === 'officemgr' ? 'Loading…' : `Start now — $${isAnnual ? '2,970/yr' : '297/mo'} →`}
+          </button>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginTop: 12, marginBottom: 0 }}>
+            Card collected upfront. Cancel anytime in 1 click.
+          </p>
+        </div>
+      </section>
+
+      {/* ── PERFORMANCE GUARANTEE — Hormozi risk reversal block ── */}
+      <section style={{ padding: '0 24px 60px' }}>
+        <div style={{
+          maxWidth: 760,
+          margin: '0 auto',
+          background: 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)',
+          border: '3px solid #F59E0B',
+          borderRadius: 20,
+          padding: '32px 36px',
+          textAlign: 'center',
+          position: 'relative',
+        }}>
+          <div style={{ position: 'absolute', top: -16, left: '50%', transform: 'translateX(-50%)', background: '#F59E0B', color: '#fff', fontSize: 12, fontWeight: 900, padding: '6px 16px', borderRadius: 20, letterSpacing: '0.10em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+            🏆 Our Guarantee
+          </div>
+          <h2 style={{ fontSize: 26, fontWeight: 900, color: '#92400E', letterSpacing: '-0.6px', marginBottom: 12, marginTop: 12 }}>
+            5 booked jobs in 30 days. Or it&apos;s on us.
+          </h2>
+          <p style={{ fontSize: 15, color: '#78350F', lineHeight: 1.6, maxWidth: 600, margin: '0 auto' }}>
+            If BellAveGo doesn&apos;t book at least 5 jobs for your shop in the first 30 days, we refund every dollar you paid <strong>+ Venmo you $50 cash</strong> for the time you spent setting up. No hoops. No phone-call cancellation. Click one button in your dashboard, money back same week.
+          </p>
+        </div>
+      </section>
+
+      {/* ── COMPARISON STRIP — Hormozi competitor anchor ── */}
+      <section style={{ padding: '32px 24px 60px', background: '#fff', borderTop: '1px solid #DCE9E2', borderBottom: '1px solid #DCE9E2' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.4px', marginBottom: 18, textAlign: 'center' }}>
+            What you&apos;re actually choosing between
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+            {[
+              { label: 'Human receptionist', cost: '$2,500/mo', flaw: 'Closes 6pm. No leads. No weekends.' },
+              { label: 'Voicemail', cost: '$0', flaw: 'Loses $2,300/mo in unbooked jobs.' },
+              { label: 'AnswerForce / Rosie', cost: '$179-$299', flaw: 'Just answers. No leads. No book.' },
+              { label: 'BellAveGo', cost: '$297/mo', flaw: '24/7 + auto-book + 25 leads/mo + guarantee', highlight: true },
+            ].map((item) => (
+              <div key={item.label} style={{
+                background: item.highlight ? '#F0FDF4' : '#F8FAFC',
+                border: item.highlight ? '2px solid #22C55E' : '1px solid #E2E8F0',
+                borderRadius: 12,
+                padding: '14px 16px',
+              }}>
+                <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4 }}>{item.label}</div>
+                <div style={{ fontSize: 18, fontWeight: 900, color: item.highlight ? '#16A34A' : '#0B1F3A', marginBottom: 6 }}>{item.cost}</div>
+                <div style={{ fontSize: 12, color: item.highlight ? '#15803D' : '#64748B', lineHeight: 1.4 }}>{item.flaw}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Multi-Loc placeholder retained below for enterprise.
+          The old PLANS.map tier-card grid is hidden behind `false` since
+          the single-tier offer card above replaces it. Code preserved in
+          case we ever need to display multi-tier again. */}
+
+      <section style={{ padding: '0 24px 32px', display: 'none' }}>
         <div className="pricing-tier-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, maxWidth: 1200, margin: '0 auto' }}>
           {PLANS.map(plan => {
             const price = isAnnual ? plan.annual : plan.monthly
@@ -469,23 +629,41 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Elite tier — live as of 2026-05-27 */}
-      <section style={{ padding: '60px 24px', background: '#F2F9F5', borderTop: '1px solid #DCE9E2' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 24, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.5px', marginBottom: 8, textAlign: 'center' }}>What's live today</h2>
-          <p style={{ fontSize: 14, color: '#4A6670', textAlign: 'center', marginBottom: 24, maxWidth: 620, marginLeft: 'auto', marginRight: 'auto' }}>
-            Radical transparency. Every Starter and Pro feature listed above is shipping today — sign up and you'll be live in 5 minutes.
+      {/* ── FINAL CTA — Hormozi "ask again" repeat close ── */}
+      <section style={{ padding: '60px 24px 72px', background: 'linear-gradient(135deg, #0AA89F 0%, #0D8F87 100%)', textAlign: 'center' }}>
+        <div style={{ maxWidth: 720, margin: '0 auto' }}>
+          <h2 style={{ fontSize: 32, fontWeight: 900, color: '#fff', letterSpacing: '-0.8px', marginBottom: 12 }}>
+            Stop losing jobs to voicemail.
+          </h2>
+          <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', lineHeight: 1.5, marginBottom: 24 }}>
+            One subscription. Unlimited calls. 25 leads/month. Performance guarantee. Cancel anytime.
           </p>
-          <div style={{ background: '#fff', border: '1px solid #DCE9E2', borderRadius: 14, padding: '24px 28px' }}>
-            <p style={{ fontSize: 14, color: '#0B1F3A', lineHeight: 1.75, margin: 0 }}>
-              <strong>Elite is live now ($597/mo).</strong> Includes everything in Pro plus: unlimited inbound calls, AI Ad Creative Generator, AI Lead Sourcing (permits + storm alerts), AI Competitor Watcher, AI Local SEO publisher, 26 bi-weekly strategy reports + 4 quarterly performance reviews, Regulatory + Tax-Credit Watch in every report, white-glove FSM integration (Housecall Pro / Jobber / ServiceTitan) built during onboarding, 4-hour priority SLA, and direct founder text/call access. <Link href="?tier=concierge&autocheckout=1" style={{ color: '#C84B26', fontWeight: 700, textDecoration: 'underline' }}>Start your 7-day Elite trial →</Link>
-            </p>
-          </div>
+          <button
+            onClick={() => handleCheckout('officemgr', interval)}
+            disabled={loading === 'officemgr'}
+            style={{
+              padding: '18px 40px',
+              background: '#fff',
+              color: '#0AA89F',
+              fontWeight: 900,
+              fontSize: 18,
+              border: 'none',
+              borderRadius: 12,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              boxShadow: '0 16px 40px rgba(0,0,0,0.18)',
+            }}
+          >
+            {loading === 'officemgr' ? 'Loading…' : `Start for $${isAnnual ? '2,970/yr' : '297/mo'} →`}
+          </button>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 14 }}>
+            Performance guarantee: 5 jobs in 30 days or full refund + $50 cash
+          </p>
         </div>
       </section>
 
       <footer style={{ padding: '36px 40px', background: '#0B1F3A', textAlign: 'center' }}>
-        <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>BellAveGo · AI receptionist and growth platform for home-service businesses · 7-day free trial · Cancel anytime</p>
+        <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>BellAveGo · AI receptionist for HVAC, plumbing, electrical, roofing, and handyman pros · Cancel anytime</p>
         <p style={{ margin: '8px 0 0', fontSize: 11, color: '#3D5A62' }}>
           <Link href="/privacy" style={{ color: '#7AAAB2', textDecoration: 'none' }}>Privacy</Link>
           {' · '}
