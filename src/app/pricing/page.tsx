@@ -273,7 +273,7 @@ export default function PricingPage() {
               { item: 'FREE dedicated phone number', val: '$50/mo' },
               { item: 'FREE white-glove onboarding (<10 min)', val: '$500 once' },
               { item: 'Lifetime price lock — never raised', val: 'priceless' },
-              { item: 'Performance guarantee — refund if it doesn&apos;t work', val: 'risk-free' },
+              { item: "Performance guarantee — refund if it doesn't work", val: 'risk-free' },
             ].map((row) => (
               <div key={row.item} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '6px 0' }}>
                 <div style={{ width: 18, height: 18, background: '#22C55E', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
