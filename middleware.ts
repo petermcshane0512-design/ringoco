@@ -11,9 +11,11 @@ const isPublicRoute = createRouteMatcher([
   "/sample-report(.*)",
   "/pricing(.*)",
   // Creator-tagged landing — sets bavg_creator_code cookie + redirects.
-  // Must be public so prospect visiting bellavego.com/r/BAVG-XXXXXX before
-  // signing in isn't blocked by Clerk.
-  "/r/(.*)",
+  // Must be public so prospect visiting bellavego.com/ref/BAVG-XXXXXX before
+  // signing in isn't blocked by Clerk. Moved from /r/* (collided w/ existing
+  // /r/[reportId] dashboard route — Next.js can't have two dynamic params
+  // at the same level).
+  "/ref/(.*)",
   "/demo(.*)",
   "/founder(.*)",
   "/sign-in(.*)",

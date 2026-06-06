@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export const runtime = 'nodejs'
 
 /**
- * GET /r/[code]
+ * GET /ref/[code]
  *
  * Creator-tagged landing entry. Sets the `bavg_creator_code` attribution
  * cookie (180-day) + redirects to /pricing?creator=<code>. Stripe
