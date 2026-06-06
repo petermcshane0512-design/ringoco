@@ -93,8 +93,20 @@ export async function POST(req: NextRequest) {
     hashtag_source?: string
     notes?: string
     status?: string
+    // 2026-06-06 — Peter wants to name codes manually. If provided, these
+    // override the auto-derived `{HANDLE}` / `{HANDLE}3MO` strings.
+    public_code?: string
+    personal_code?: string
   }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'invalid json' }, { status: 400 }) }
+
+  function sanitize(s: string | undefined): string | null {
+    if (!s) return null
+    const out = s.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 16)
+    return out || null
+  }
+  const publicCodeOverride = sanitize(body.public_code)
+  const personalCodeOverride = sanitize(body.personal_code)
 
   const handle = (body.handle || '').trim().replace(/^@/, '').toLowerCase()
   if (!handle) return NextResponse.json({ error: 'handle required' }, { status: 400 })
@@ -176,10 +188,28 @@ export async function POST(req: NextRequest) {
 
   if (!promo_code) {
     try {
-      const base = vanityCodeFromHandle(handle)
+      const base = publicCodeOverride || vanityCodeFromHandle(handle)
       if (base) {
         await ensureSharedCoupon(stripe)
-        const finalCode = await findAvailableCode(supabase, base, 'promo_code')
+        // If user provided an explicit override, fail loudly on collision
+        // rather than appending a suffix — they care about the exact string.
+        let finalCode: string
+        if (publicCodeOverride) {
+          const { data: clash } = await supabase
+            .from('ig_creator_outreach')
+            .select('id, handle')
+            .eq('promo_code', publicCodeOverride)
+            .maybeSingle()
+          if (clash) {
+            console.warn('[admin/ig-creators] public_code collision', publicCodeOverride, clash)
+            // fall back to auto-derive instead of erroring the whole add
+            finalCode = await findAvailableCode(supabase, vanityCodeFromHandle(handle), 'promo_code')
+          } else {
+            finalCode = publicCodeOverride
+          }
+        } else {
+          finalCode = await findAvailableCode(supabase, base, 'promo_code')
+        }
         const promo = await mintPromotionCode(stripe, finalCode, {
           creator_id: String(created.id),
           creator_handle: handle,
@@ -202,10 +232,25 @@ export async function POST(req: NextRequest) {
 
   if (!personal_promo_code) {
     try {
-      const base = personalCodeFromHandle(handle)
+      const base = personalCodeOverride || personalCodeFromHandle(handle)
       if (base) {
         await ensurePersonalCoupon(stripe)
-        const finalCode = await findAvailableCode(supabase, base, 'personal_promo_code')
+        let finalCode: string
+        if (personalCodeOverride) {
+          const { data: clash } = await supabase
+            .from('ig_creator_outreach')
+            .select('id, handle')
+            .eq('personal_promo_code', personalCodeOverride)
+            .maybeSingle()
+          if (clash) {
+            console.warn('[admin/ig-creators] personal_code collision', personalCodeOverride, clash)
+            finalCode = await findAvailableCode(supabase, personalCodeFromHandle(handle), 'personal_promo_code')
+          } else {
+            finalCode = personalCodeOverride
+          }
+        } else {
+          finalCode = await findAvailableCode(supabase, base, 'personal_promo_code')
+        }
         const promo = await mintPersonalPromotionCode(stripe, finalCode, {
           creator_id: String(created.id),
           creator_handle: handle,
