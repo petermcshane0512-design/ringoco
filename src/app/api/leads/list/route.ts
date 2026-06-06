@@ -62,7 +62,8 @@ export async function GET() {
       id, drop_date, drop_period, status, notes,
       lead:leads (
         id, street_address, city, state, zip, owner_name, owner_phone, owner_email,
-        home_value_est, year_built, sqft, source, lead_score, pitch_script
+        home_value_est, year_built, sqft, source, lead_score, pitch_script,
+        skip_trace_attempted_at, skip_trace_hit
       )
     `)
     .eq('user_id', userId)

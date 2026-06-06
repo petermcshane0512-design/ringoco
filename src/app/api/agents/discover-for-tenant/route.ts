@@ -182,50 +182,10 @@ async function discoverForTenant(userId: string): Promise<{
     steps.push({ kind: 'scrape:census-aging', ok: true, detail: 'pool sufficient, skipped' })
   }
 
-  // Step 3 — skip-trace any leads in the radius that don't have a phone yet.
-  // Capped to 15 lookups ($1.50) per discovery call to control cost.
-  let skipTraced = 0
-  try {
-    type LeadToTrace = { id: string; street_address: string | null; city: string | null; state: string | null; zip: string | null }
-    const { data: untraced } = await supabase
-      .from('leads')
-      .select('id, street_address, city, state, zip')
-      .contains('trade_match', [tradeFilter])
-      .in('zip', [...eligibleZips])
-      .is('skip_trace_attempted_at', null)
-      .not('street_address', 'is', null)
-      .order('lead_score', { ascending: false })
-      .limit(15)
-
-    if (untraced && untraced.length > 0) {
-      const { skipTraceAddress } = await import('@/lib/skipTrace')
-      for (const l of untraced as LeadToTrace[]) {
-        const r = await skipTraceAddress({
-          street: l.street_address!,
-          city: l.city ?? undefined,
-          state: l.state ?? undefined,
-          zip: l.zip ?? undefined,
-        })
-        const update: Record<string, unknown> = {
-          skip_trace_attempted_at: new Date().toISOString(),
-          skip_trace_hit: r.hit,
-          skip_trace_cost_cents: r.cost_cents,
-          updated_at: new Date().toISOString(),
-        }
-        if (r.hit) {
-          if (r.owner_name) update.owner_name = r.owner_name
-          if (r.owner_phones && r.owner_phones.length > 0) update.owner_phone = r.owner_phones[0]
-          if (r.owner_emails && r.owner_emails.length > 0) update.owner_email = r.owner_emails[0]
-          update.skip_trace_raw = r.raw_response
-        }
-        await supabase.from('leads').update(update).eq('id', l.id)
-        if (r.hit) skipTraced++
-      }
-    }
-    steps.push({ kind: 'skip_trace', ok: true, detail: `${skipTraced} phones populated` })
-  } catch (e) {
-    steps.push({ kind: 'skip_trace', ok: false, detail: (e as Error).message })
-  }
+  // 2026-06-06 PIVOT — no auto skip-trace here either. Phones are
+  // revealed click-by-click in the dashboard via POST /api/leads/[id]/
+  // reveal-phone (paid customer engagement gates the spend).
+  steps.push({ kind: 'skip_trace', ok: true, detail: 'click-to-reveal — no enrichment at discovery time' })
 
   const { count: poolAfter } = await supabase
     .from('leads')

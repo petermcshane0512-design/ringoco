@@ -24,6 +24,9 @@ type LeadDrop = {
     source: string
     lead_score: number
     pitch_script: string | null
+    // 2026-06-06 — click-to-reveal skip-trace state
+    skip_trace_attempted_at?: string | null
+    skip_trace_hit?: boolean | null
   }
 }
 
@@ -59,6 +62,31 @@ export default function LeadsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),
     })
+  }
+
+  // Click-to-reveal skip-trace. Costs us ~$0.10/click; runs only on engaged
+  // leads. Optimistic UI flip while the backend fetches BatchData (~1s).
+  async function revealPhone(leadId: string) {
+    setDrops((prev) => prev.map((d) =>
+      d.lead.id === leadId ? { ...d, lead: { ...d.lead, skip_trace_attempted_at: new Date().toISOString() } } : d
+    ))
+    const r = await fetch(`/api/leads/${leadId}/reveal-phone`, { method: 'POST' })
+    const j = await r.json().catch(() => ({}))
+    if (j.ok && j.hit) {
+      setDrops((prev) => prev.map((d) =>
+        d.lead.id === leadId ? { ...d, lead: {
+          ...d.lead,
+          owner_phone: j.owner_phone ?? d.lead.owner_phone,
+          owner_email: j.owner_email ?? d.lead.owner_email,
+          owner_name: j.owner_name ?? d.lead.owner_name,
+          skip_trace_hit: true,
+        }} : d
+      ))
+    } else {
+      setDrops((prev) => prev.map((d) =>
+        d.lead.id === leadId ? { ...d, lead: { ...d.lead, skip_trace_hit: false } } : d
+      ))
+    }
   }
 
   const pctUsed = quota ? Math.min(100, Math.round((quota.used_this_period / quota.per_drop) * 100)) : 0
@@ -152,7 +180,7 @@ export default function LeadsPage() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {drops.map((d) => (
-            <LeadCard key={d.id} drop={d} onStatus={updateStatus} />
+            <LeadCard key={d.id} drop={d} onStatus={updateStatus} onReveal={revealPhone} />
           ))}
         </div>
       )}
@@ -160,7 +188,7 @@ export default function LeadsPage() {
   )
 }
 
-function LeadCard({ drop, onStatus }: { drop: LeadDrop; onStatus: (id: string, s: LeadDrop['status']) => void }) {
+function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id: string, s: LeadDrop['status']) => void; onReveal: (leadId: string) => void }) {
   const l = drop.lead
   const fullAddr = [l.street_address, l.city, l.state, l.zip].filter(Boolean).join(', ')
   const sourceLabel = ({
@@ -211,26 +239,58 @@ function LeadCard({ drop, onStatus }: { drop: LeadDrop; onStatus: (id: string, s
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 180 }}>
-          {l.owner_phone && (
-            <a href={`tel:${l.owner_phone}`} style={{
-              padding: '10px 18px', borderRadius: 10,
-              background: 'linear-gradient(135deg, #0AA89F, #06776F)',
-              color: '#fff', textDecoration: 'none', textAlign: 'center',
-              fontSize: 13, fontWeight: 800,
+          {/* Phone reveal state machine:
+                phone present                → Call + Text buttons
+                attempted, no hit            → "No phone found" (already paid)
+                attempted in flight (UI)     → "Looking up…"
+                not yet attempted, address ok → "🔓 Reveal phone" (CTA)
+                no street address            → nothing (can't trace) */}
+          {l.owner_phone ? (
+            <>
+              <a href={`tel:${l.owner_phone}`} style={{
+                padding: '10px 18px', borderRadius: 10,
+                background: 'linear-gradient(135deg, #0AA89F, #06776F)',
+                color: '#fff', textDecoration: 'none', textAlign: 'center',
+                fontSize: 13, fontWeight: 800,
+              }}>
+                📞 Call {l.owner_phone}
+              </a>
+              <a href={`sms:${l.owner_phone}`} style={{
+                padding: '10px 18px', borderRadius: 10,
+                background: '#fff', border: '1.5px solid #0AA89F',
+                color: '#0AA89F', textDecoration: 'none', textAlign: 'center',
+                fontSize: 13, fontWeight: 800,
+              }}>
+                💬 Text
+              </a>
+            </>
+          ) : l.skip_trace_attempted_at && l.skip_trace_hit === false ? (
+            <div style={{
+              padding: '10px 14px', borderRadius: 10,
+              background: '#F5F1EA', color: '#7AAAB2',
+              fontSize: 12, fontWeight: 700, textAlign: 'center',
             }}>
-              📞 Call {l.owner_phone}
-            </a>
-          )}
-          {l.owner_phone && (
-            <a href={`sms:${l.owner_phone}`} style={{
-              padding: '10px 18px', borderRadius: 10,
-              background: '#fff', border: '1.5px solid #0AA89F',
-              color: '#0AA89F', textDecoration: 'none', textAlign: 'center',
-              fontSize: 13, fontWeight: 800,
+              No phone on file
+            </div>
+          ) : l.skip_trace_attempted_at ? (
+            <div style={{
+              padding: '10px 14px', borderRadius: 10,
+              background: 'rgba(10,168,159,0.08)', color: '#0AA89F',
+              fontSize: 12, fontWeight: 700, textAlign: 'center',
             }}>
-              💬 Text
-            </a>
-          )}
+              Looking up…
+            </div>
+          ) : l.street_address ? (
+            <button onClick={() => onReveal(l.id)} style={{
+              padding: '10px 18px', borderRadius: 10,
+              background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+              color: '#fff', border: 'none', cursor: 'pointer',
+              fontSize: 13, fontWeight: 800,
+              boxShadow: '0 4px 12px rgba(232,116,43,0.38)',
+            }}>
+              🔓 Reveal phone
+            </button>
+          ) : null}
         </div>
       </div>
 

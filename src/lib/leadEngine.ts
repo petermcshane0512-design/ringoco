@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
 import { isValidTier, type Tier } from '@/lib/pricing'
-import { skipTraceAddress } from '@/lib/skipTrace'
 
 /**
  * Lead-engine core. Used by:
@@ -195,74 +194,13 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
     return { assigned: 0, skipped_reason: 'insert_failed' }
   }
 
-  // ── Skip-trace enrichment ────────────────────────────────────────
-  // For every freshly-dropped lead that hasn't been skip-traced yet,
-  // call BatchData (~$0.10/lookup) and write the result back to the
-  // leads row. Runs inline so the contractor sees the phone number
-  // the moment the lead lands on their dashboard. Budget caps at
-  // $1.00 per drop call (~10 traces) to keep cost predictable when
-  // a backfill or quota-bump fires a big batch.
-  enrichDropsInBackground(fresh.map((f) => f.id)).catch((e) => {
-    console.error('[lead-engine] background skip-trace failed:', e)
-  })
+  // 2026-06-06 PIVOT — no auto-enrich on drop. Click-to-reveal pattern:
+  // skip-trace only fires when the contractor taps "Reveal phone" on a
+  // specific lead in the dashboard (POST /api/leads/[id]/reveal-phone).
+  // This cuts skip-trace cost from $2.20/customer/mo to ~$1.50, only
+  // spending on leads the contractor actually wants to call.
 
   return { assigned: fresh.length }
-}
-
-/**
- * Skip-trace the just-dropped leads. Fire-and-forget so the assign
- * function returns quickly to the webhook / cron caller. Each lookup
- * costs ~$0.10. Writes phone + owner_name back to the leads row so the
- * customer's dashboard shows them on the next render.
- *
- * Only traces leads that haven't been attempted yet.
- */
-async function enrichDropsInBackground(leadIds: string[]): Promise<void> {
-  if (leadIds.length === 0) return
-
-  const { data: rows } = await supabase
-    .from('leads')
-    .select('id, street_address, city, state, zip, skip_trace_attempted_at')
-    .in('id', leadIds)
-
-  type LeadRow = {
-    id: string
-    street_address: string | null
-    city: string | null
-    state: string | null
-    zip: string | null
-    skip_trace_attempted_at: string | null
-  }
-  const toTrace = ((rows ?? []) as LeadRow[]).filter((l) => !l.skip_trace_attempted_at && l.street_address)
-  if (toTrace.length === 0) return
-
-  let spent = 0
-  const MAX_BUDGET = 1000 // $10 max per drop call
-
-  for (const l of toTrace) {
-    if (spent + 10 > MAX_BUDGET) break
-    const r = await skipTraceAddress({
-      street: l.street_address!,
-      city: l.city ?? undefined,
-      state: l.state ?? undefined,
-      zip: l.zip ?? undefined,
-    })
-    spent += r.cost_cents
-    const update: Record<string, unknown> = {
-      skip_trace_attempted_at: new Date().toISOString(),
-      skip_trace_hit: r.hit,
-      skip_trace_cost_cents: r.cost_cents,
-      updated_at: new Date().toISOString(),
-    }
-    if (r.hit) {
-      if (r.owner_name) update.owner_name = r.owner_name
-      if (r.owner_phones && r.owner_phones.length > 0) update.owner_phone = r.owner_phones[0]
-      if (r.owner_emails && r.owner_emails.length > 0) update.owner_email = r.owner_emails[0]
-      update.skip_trace_raw = r.raw_response
-    }
-    await supabase.from('leads').update(update).eq('id', l.id)
-  }
-  console.log(`[lead-engine] skip-trace batch: ${toTrace.length} attempted, $${(spent / 100).toFixed(2)} spent`)
 }
 
 /**
