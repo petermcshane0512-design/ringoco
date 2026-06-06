@@ -310,28 +310,6 @@ export default function FounderPage() {
         </div>
       </article>
 
-      {/* ═════════ SCENE PHOTOS ═════════ */}
-      <section className="fv4-scenes">
-        <div className="fv4-scene">
-          <Image
-            src="/customer.png"
-            alt="A homeowner calls — BellAveGo's AI answers, captures the job, and texts the contractor"
-            fill
-            sizes="(max-width: 720px) 50vw, 410px"
-            style={{ objectFit: 'contain' }}
-          />
-        </div>
-        <div className="fv4-scene">
-          <Image
-            src="/electrician.png"
-            alt="An electrician on the job gets a text from BellAveGo with a new appointment — never has to stop working"
-            fill
-            sizes="(max-width: 720px) 50vw, 410px"
-            style={{ objectFit: 'contain' }}
-          />
-        </div>
-      </section>
-
       {/* Footer */}
       <footer style={{ padding: '28px 40px', background: '#FFF7EE', borderTop: '1px solid rgba(232,116,43,0.18)', textAlign: 'center' }}>
         <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>
