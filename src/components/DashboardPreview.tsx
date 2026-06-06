@@ -15,9 +15,15 @@ const JOBS = [
   { name: 'Ana K.',    type: 'Thermostat Install',  status: 'scheduled', time: 'Tomorrow 2:00 PM' },
 ]
 
+// Mirrors the real /dashboard Lead Reports table — same columns
+// (Client | Report | Date | Link). Client is hardcoded to the demo
+// tenant ("Mike's HVAC Co.") so the preview matches what a real
+// signed-in user sees on their own dashboard.
 const REPORTS = [
-  { title: 'Welcome Neighborhood Lead Report', date: 'March 1, 2026' },
-  { title: 'Q1 2026 Growth Report', date: 'April 1, 2026' },
+  { client: "Mike's HVAC Co.", title: 'Welcome Neighborhood Lead Report', date: 'March 1, 2026', tag: 'Delivered' as const },
+  { client: "Mike's HVAC Co.", title: 'Q1 2026 Growth Report',            date: 'April 1, 2026', tag: 'Delivered' as const },
+  { client: "Mike's HVAC Co.", title: 'May 2026 Revenue Intelligence',    date: 'May 1, 2026',   tag: 'Delivered' as const },
+  { client: "Mike's HVAC Co.", title: 'Q2 2026 Growth Report',            date: 'July 1, 2026',  tag: 'Scheduled' as const },
 ]
 
 // Public AI demo number used everywhere on marketing pages — never a real
@@ -527,12 +533,31 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
             </div>
           )}
 
-          {/* == CONSULTING REPORTS TAB == */}
+          {/* == LEAD REPORTS TAB — mirrors real /dashboard Lead Reports card ==
+              Header gradient bar (icon + Lead Reports tag + title + subtitle
+              + count badge) sits above a 4-column table (Client | Report |
+              Date | Link). Matches src/app/dashboard/page.tsx ~line 951. */}
           {activeTab === 'Lead Reports' && (
-            <div>
-              <div style={{ background: 'linear-gradient(160deg, #FFF6EE 0%, #FFFFFF 100%)', border: '1px solid rgba(232,116,43,0.24)', borderRadius: 11, padding: '12px 14px', marginBottom: 11 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <div style={{ width: 26, height: 26, borderRadius: 7, background: 'linear-gradient(135deg, #FF9D5A, #E8742B)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 8px rgba(232,116,43,0.35)' }}>
+            <div style={{
+              background: 'linear-gradient(160deg, #FFF6EE 0%, #FFFFFF 60%)',
+              border: '1px solid rgba(232,116,43,0.24)',
+              borderRadius: 11,
+              overflow: 'hidden',
+              boxShadow: '0 6px 20px rgba(232,116,43,0.12), 0 0 0 1px rgba(232,116,43,0.06)',
+            }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '10px 14px',
+                borderBottom: '1px solid rgba(232,116,43,0.18)',
+                background: 'linear-gradient(135deg, rgba(232,116,43,0.06), rgba(255,157,90,0.10))',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{
+                    width: 26, height: 26, borderRadius: 7,
+                    background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 4px 10px rgba(232,116,43,0.42)', flexShrink: 0,
+                  }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                       <polyline points="14 2 14 8 20 8"/>
@@ -541,25 +566,52 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                     </svg>
                   </div>
                   <div>
-                    <div style={{ fontSize: 10.5, fontWeight: 800, color: '#0B1F3A' }}>BellAveGo Lead Reports</div>
-                    <div style={{ fontSize: 8, color: '#8B5A3D', marginTop: 1, fontWeight: 600 }}>Your quarterly growth advisor — delivered as a PDF</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 7, fontWeight: 800, color: '#C84B26', letterSpacing: '0.16em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 99, background: 'rgba(232,116,43,0.12)', border: '1px solid rgba(232,116,43,0.30)' }}>Lead Reports</span>
+                      <div style={{ fontSize: 10.5, fontWeight: 800, color: '#0B1F3A' }}>BellAveGo Lead Reports</div>
+                    </div>
+                    <div style={{ fontSize: 8, color: '#8B5A3D', marginTop: 2, fontWeight: 600 }}>Your quarterly growth advisor — delivered as a PDF</div>
                   </div>
                 </div>
+                <span style={{ fontSize: 8.5, fontWeight: 800, padding: '3px 8px', borderRadius: 99, background: 'rgba(232,116,43,0.12)', color: '#C84B26', border: '1px solid rgba(232,116,43,0.32)' }}>
+                  {REPORTS.length} reports
+                </span>
               </div>
-              <div style={{ background: '#fff', border: '1px solid rgba(232,116,43,0.16)', borderRadius: 11, overflow: 'hidden', boxShadow: '0 2px 8px rgba(232,116,43,0.06)' }}>
-                {[
-                  { title: 'Welcome Neighborhood Lead Report',  date: 'March 1, 2026', tag: 'Delivered' },
-                  { title: 'Q1 2026 Growth Report',         date: 'April 1, 2026', tag: 'Delivered' },
-                  { title: 'May 2026 Revenue Intelligence', date: 'May 1, 2026',  tag: 'Delivered' },
-                  { title: 'Q2 2026 Growth Report',         date: 'July 1, 2026', tag: 'Scheduled' },
-                ].map((r, i, arr) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 12px', borderBottom: i < arr.length - 1 ? '1px solid rgba(232,116,43,0.10)' : 'none' }}>
-                    <div style={{ flex: 1, fontSize: 10, fontWeight: 700, color: '#0B1F3A' }}>{r.title}</div>
-                    <div style={{ fontSize: 8.5, color: '#8B5A3D' }}>{r.date}</div>
-                    <span style={{ fontSize: 7, fontWeight: 700, padding: '2px 6px', borderRadius: 8, background: r.tag === 'Delivered' ? 'rgba(34,197,94,0.10)' : 'rgba(232,116,43,0.10)', color: r.tag === 'Delivered' ? '#15803D' : '#C84B26', border: r.tag === 'Delivered' ? '1px solid rgba(34,197,94,0.3)' : '1px solid rgba(232,116,43,0.30)' }}>{r.tag}</span>
-                    <div style={{ padding: '3px 9px', borderRadius: 6, background: r.tag === 'Delivered' ? 'linear-gradient(135deg, #FF9D5A, #E8742B)' : 'rgba(232,116,43,0.10)', color: r.tag === 'Delivered' ? '#fff' : '#C84B26', fontSize: 8, fontWeight: 800, boxShadow: r.tag === 'Delivered' ? '0 2px 6px rgba(232,116,43,0.35)' : 'none' }}>{r.tag === 'Delivered' ? 'View →' : 'Pending'}</div>
-                  </div>
-                ))}
+              <div style={{ padding: '0 14px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: '8px 6px 6px', fontSize: 7.5, fontWeight: 800, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#8B5A3D', borderBottom: '1px solid rgba(232,116,43,0.18)' }}>Client</th>
+                      <th style={{ textAlign: 'left', padding: '8px 6px 6px', fontSize: 7.5, fontWeight: 800, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#8B5A3D', borderBottom: '1px solid rgba(232,116,43,0.18)' }}>Report</th>
+                      <th style={{ textAlign: 'left', padding: '8px 6px 6px', fontSize: 7.5, fontWeight: 800, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#8B5A3D', borderBottom: '1px solid rgba(232,116,43,0.18)' }}>Date</th>
+                      <th style={{ textAlign: 'right', padding: '8px 6px 6px', fontSize: 7.5, fontWeight: 800, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#8B5A3D', borderBottom: '1px solid rgba(232,116,43,0.18)' }}>Link</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {REPORTS.map((r, i) => (
+                      <tr key={i}>
+                        <td style={{ padding: '8px 6px', fontSize: 9.5, fontWeight: 700, color: '#0B1F3A', borderBottom: i < REPORTS.length - 1 ? '1px solid rgba(232,116,43,0.10)' : 'none' }}>{r.client}</td>
+                        <td style={{ padding: '8px 6px', fontSize: 9.5, color: '#0B1F3A', borderBottom: i < REPORTS.length - 1 ? '1px solid rgba(232,116,43,0.10)' : 'none' }}>{r.title}</td>
+                        <td style={{ padding: '8px 6px', fontSize: 9, color: '#8B5A3D', borderBottom: i < REPORTS.length - 1 ? '1px solid rgba(232,116,43,0.10)' : 'none' }}>{r.date}</td>
+                        <td style={{ padding: '8px 6px', textAlign: 'right', borderBottom: i < REPORTS.length - 1 ? '1px solid rgba(232,116,43,0.10)' : 'none' }}>
+                          {r.tag === 'Delivered' ? (
+                            <span style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 4,
+                              padding: '4px 9px',
+                              borderRadius: 7,
+                              background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+                              color: '#fff',
+                              fontSize: 9, fontWeight: 800,
+                              boxShadow: '0 3px 8px rgba(232,116,43,0.38)',
+                            }}>View →</span>
+                          ) : (
+                            <span style={{ fontSize: 9, color: '#8B5A3D' }}>Scheduled</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
@@ -1184,45 +1236,85 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
               </div>
             </div>
 
-            {/* Lead Reports — sunset orange palette */}
-            <div style={{ background: 'linear-gradient(160deg, #FFF6EE 0%, #FFFFFF 100%)', border: '1px solid rgba(232,116,43,0.22)', borderRadius: 11, padding: '11px 13px', boxShadow: '0 2px 10px rgba(232,116,43,0.10), 0 0 0 1px rgba(232,116,43,0.06)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 9 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 7, fontWeight: 800, color: '#E8742B', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 99, background: 'rgba(232,116,43,0.10)', border: '1px solid rgba(232,116,43,0.28)' }}>Lead Reports</span>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A' }}>BellAveGo Lead Reports</div>
-                </div>
-                <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: 'rgba(232,116,43,0.10)', color: '#C84B26', border: '1px solid rgba(232,116,43,0.30)' }}>2 reports</span>
-              </div>
-              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                {/* Banner */}
-                <div style={{ flex: '0 0 auto', background: 'linear-gradient(135deg, rgba(232,116,43,0.10), rgba(255,157,90,0.16))', border: '1px solid rgba(232,116,43,0.28)', borderRadius: 8, padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 230 }}>
-                  <div style={{ width: 26, height: 26, borderRadius: 6, background: 'linear-gradient(135deg, #FF9D5A, #E8742B)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 10px rgba(232,116,43,0.35)' }}>
-                    <span style={{ fontSize: 12, color: '#fff' }}>Rep</span>
+            {/* Lead Reports (Command Center embed) — collapsed mirror of the
+                real /dashboard Lead Reports card. Same gradient header + 4-
+                column table (Client | Report | Date | Link). Compressed cell
+                padding + font-size so it fits the right-rail width without
+                horizontal scroll. */}
+            <div style={{
+              background: 'linear-gradient(160deg, #FFF6EE 0%, #FFFFFF 60%)',
+              border: '1px solid rgba(232,116,43,0.24)',
+              borderRadius: 11,
+              overflow: 'hidden',
+              boxShadow: '0 6px 18px rgba(232,116,43,0.12), 0 0 0 1px rgba(232,116,43,0.06)',
+            }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '10px 13px',
+                borderBottom: '1px solid rgba(232,116,43,0.18)',
+                background: 'linear-gradient(135deg, rgba(232,116,43,0.06), rgba(255,157,90,0.10))',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                  <div style={{
+                    width: 24, height: 24, borderRadius: 6,
+                    background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 3px 8px rgba(232,116,43,0.42)', flexShrink: 0,
+                  }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="9" y1="13" x2="15" y2="13"/>
+                      <line x1="9" y1="17" x2="13" y2="17"/>
+                    </svg>
                   </div>
                   <div>
-                    <div style={{ fontSize: 8.5, fontWeight: 700, color: '#0B1F3A', lineHeight: 1.3 }}>Your personal growth advisor</div>
-                    <div style={{ fontSize: 7.5, color: '#8B5A3D', marginTop: 1, fontWeight: 600 }}>Quarterly · network-wide insights</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <span style={{ fontSize: 6.5, fontWeight: 800, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '2px 5px', borderRadius: 99, background: 'rgba(232,116,43,0.12)', border: '1px solid rgba(232,116,43,0.30)' }}>Lead Reports</span>
+                      <div style={{ fontSize: 9.5, fontWeight: 800, color: '#0B1F3A' }}>BellAveGo Lead Reports</div>
+                    </div>
+                    <div style={{ fontSize: 7.5, color: '#8B5A3D', marginTop: 2, fontWeight: 600 }}>Your quarterly growth advisor — delivered as a PDF</div>
                   </div>
                 </div>
-
-                {/* Report rows */}
-                <div style={{ flex: 1 }}>
-                  {REPORTS.map((r, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: i < REPORTS.length - 1 ? '1px solid rgba(232,116,43,0.10)' : 'none' }}>
-                      <div style={{ flex: 1, fontSize: 9, fontWeight: 600, color: '#0B1F3A' }}>{r.title}</div>
-                      <div style={{ fontSize: 8, color: '#8B5A3D' }}>{r.date}</div>
-                      <span style={{ fontSize: 7.5, fontWeight: 700, padding: '2px 6px', borderRadius: 8, background: 'rgba(34,197,94,0.10)', color: '#15803D', border: '1px solid rgba(34,197,94,0.3)', flexShrink: 0 }}>Delivered</span>
-                      <div style={{ padding: '2px 8px', borderRadius: 6, background: 'linear-gradient(135deg, #FF9D5A, #E8742B)', color: '#fff', fontSize: 8, fontWeight: 800, flexShrink: 0, boxShadow: '0 2px 6px rgba(232,116,43,0.35)' }}>View</div>
-                    </div>
-                  ))}
-                  <div style={{ marginTop: 6, padding: '5px 8px', background: 'rgba(232,116,43,0.06)', borderRadius: 7, border: '1px dashed rgba(232,116,43,0.28)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ fontSize: 8.5, fontWeight: 700, color: '#0B1F3A' }}>Next report · Q2 2026</div>
-                      <div style={{ fontSize: 7.5, color: '#8B5A3D' }}>Due July 1, 2026</div>
-                    </div>
-                    <span style={{ fontSize: 7.5, fontWeight: 800, padding: '2px 6px', borderRadius: 8, background: 'rgba(232,116,43,0.14)', color: '#C84B26', border: '1px solid rgba(232,116,43,0.30)' }}>Upcoming</span>
-                  </div>
-                </div>
+                <span style={{ fontSize: 7.5, fontWeight: 800, padding: '2px 7px', borderRadius: 99, background: 'rgba(232,116,43,0.12)', color: '#C84B26', border: '1px solid rgba(232,116,43,0.32)' }}>
+                  {REPORTS.length} reports
+                </span>
+              </div>
+              <div style={{ padding: '0 13px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: '7px 4px 5px', fontSize: 6.5, fontWeight: 800, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#8B5A3D', borderBottom: '1px solid rgba(232,116,43,0.18)' }}>Client</th>
+                      <th style={{ textAlign: 'left', padding: '7px 4px 5px', fontSize: 6.5, fontWeight: 800, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#8B5A3D', borderBottom: '1px solid rgba(232,116,43,0.18)' }}>Report</th>
+                      <th style={{ textAlign: 'left', padding: '7px 4px 5px', fontSize: 6.5, fontWeight: 800, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#8B5A3D', borderBottom: '1px solid rgba(232,116,43,0.18)' }}>Date</th>
+                      <th style={{ textAlign: 'right', padding: '7px 4px 5px', fontSize: 6.5, fontWeight: 800, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#8B5A3D', borderBottom: '1px solid rgba(232,116,43,0.18)' }}>Link</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {REPORTS.map((r, i) => (
+                      <tr key={i}>
+                        <td style={{ padding: '6px 4px', fontSize: 8.5, fontWeight: 700, color: '#0B1F3A', borderBottom: i < REPORTS.length - 1 ? '1px solid rgba(232,116,43,0.10)' : 'none' }}>{r.client}</td>
+                        <td style={{ padding: '6px 4px', fontSize: 8.5, color: '#0B1F3A', borderBottom: i < REPORTS.length - 1 ? '1px solid rgba(232,116,43,0.10)' : 'none' }}>{r.title}</td>
+                        <td style={{ padding: '6px 4px', fontSize: 8, color: '#8B5A3D', borderBottom: i < REPORTS.length - 1 ? '1px solid rgba(232,116,43,0.10)' : 'none' }}>{r.date}</td>
+                        <td style={{ padding: '6px 4px', textAlign: 'right', borderBottom: i < REPORTS.length - 1 ? '1px solid rgba(232,116,43,0.10)' : 'none' }}>
+                          {r.tag === 'Delivered' ? (
+                            <span style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 3,
+                              padding: '3px 8px',
+                              borderRadius: 6,
+                              background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+                              color: '#fff',
+                              fontSize: 8, fontWeight: 800,
+                              boxShadow: '0 2px 6px rgba(232,116,43,0.38)',
+                            }}>View →</span>
+                          ) : (
+                            <span style={{ fontSize: 8, color: '#8B5A3D' }}>Scheduled</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>}

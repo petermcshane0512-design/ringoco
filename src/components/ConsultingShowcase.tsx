@@ -1,47 +1,208 @@
 'use client'
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 
-type Step = {
-  text: string
-  detail?: string
-  status: 'pending' | 'running' | 'done'
-  highlight?: 'orange' | 'teal'
+/**
+ * Lead Report showcase — homepage anchor section.
+ *
+ * Replaces the older "consulting report" framing (Q1 growth report cover +
+ * build terminal) with the actual artifact contractors get: a Monday lead
+ * drop listing 15 high-intent homeowners in their service area plus the
+ * specific reason BellAveGo flagged each one.
+ *
+ * Layout (per Peter, 2026-06-06):
+ *   ~90% — the 15-lead Phoenix HVAC sample table (the real product)
+ *   ~10% — small "Calls answered this month + revenue captured" strip
+ *
+ * Demo client is "Sun Valley HVAC, Phoenix AZ" so the leads can lean into
+ * the regional reality (haboob dust, IRA/APS rebates, summer load, etc.)
+ * without being a real contractor's data.
+ */
+
+type Tag = 'New Move-In' | 'Aging Unit' | 'Pool Permit' | 'Storm Zone' | 'Rebate Window' | 'Rental Owner' | 'Switch Target' | 'Pre-Listing' | 'Solar Stack' | 'New Build'
+
+type Lead = {
+  owner: string
+  address: string
+  phone: string
+  tag: Tag
+  why: string
+  est: number   // estimated job value, USD
+  score: number // BellAveGo lead score, 0-10
 }
 
-const BUILD_SCRIPT: { text: string; detail: string; ms: number; highlight?: 'orange' | 'teal' }[] = [
-  { text: 'Pulling call + job data', detail: '195 calls · 38 jobs · last 90 days', ms: 1100 },
-  { text: 'Scanning service area', detail: '12,847 homeowners · 4 ZIPs · Census ACS', ms: 1100 },
-  { text: 'Indexing local competitors', detail: '8 HVAC businesses within 8 mi · Google Places', ms: 1100 },
-  { text: 'Detecting weekend missed-call patterns', detail: '52% close rate when reached later', ms: 1300 },
-  { text: 'Cross-referencing tune-up demand window', detail: '1,847 homes · HVAC > 15 yrs', ms: 1100 },
-  { text: 'Found 3 high-confidence opportunities', detail: 'ranked by addressable monthly revenue', ms: 1100, highlight: 'teal' },
-  { text: '+$4,500 / month identified upside', detail: 'Saturday gap · pre-season tune-up · UV light', ms: 1600, highlight: 'orange' },
+const LEADS: Lead[] = [
+  {
+    owner: 'Marcus Reyes',
+    address: '4517 E Cactus Blvd, Phoenix 85032',
+    phone: '(602) 555-0184',
+    tag: 'New Move-In',
+    why: 'Closed on 3,200 sqft home 19 days ago. Maricopa County permit history shows AC unit last serviced 2008 (Carrier 38AKS, 17 yrs old). Move-in 90-day window = peak service-intent. Pitch pre-summer tune-up + replacement quote.',
+    est: 8400,
+    score: 9.4,
+  },
+  {
+    owner: 'Lisa Tran',
+    address: '2891 W Indian School Rd, Phoenix 85015',
+    phone: '(480) 555-0291',
+    tag: 'Pool Permit',
+    why: 'New pool permit filed Apr 12. Pool installs add 8-12k BTU heat load on indoor return; her existing 3.5-ton unit will run undersized starting June. Quote upsize + dedicated pool-deck mini-split.',
+    est: 11200,
+    score: 9.1,
+  },
+  {
+    owner: 'Daniel & Sara Bachman',
+    address: '6712 N 7th St, Phoenix 85014',
+    phone: '(623) 555-0317',
+    tag: 'Aging Unit',
+    why: 'Single-family built 1998. Property record + last permit show original Carrier unit, now year 28. Avg PHX lifespan 15-20 yrs. Statistically already had 2+ emergency repairs this season — they are waiting for the next one.',
+    est: 9800,
+    score: 9.6,
+  },
+  {
+    owner: 'Jamal Whitfield',
+    address: '9408 S 51st Ave, Laveen 85339',
+    phone: '(602) 555-0408',
+    tag: 'New Move-In',
+    why: 'Just moved from CA Mar 2026 (out-of-state mover, AC-naive). Listing photos show outdoor condenser caked in dust + missing capacitor cap — both pre-failure indicators. First haboob takes it out.',
+    est: 6100,
+    score: 9.3,
+  },
+  {
+    owner: 'Patricia Holloway',
+    address: '12055 E Beverly Ln, Scottsdale 85259',
+    phone: '(480) 555-0526',
+    tag: 'Solar Stack',
+    why: 'Zoning permit for 380 sqft room addition + new ductwork. Existing 4-ton system needs load recalc. Avg addition ticket in 85259: $8,200. Quote ductwork + supplemental zone.',
+    est: 8200,
+    score: 8.8,
+  },
+  {
+    owner: 'Roberto Cantú',
+    address: '3144 N 34th Ave, Phoenix 85017',
+    phone: '(602) 555-0691',
+    tag: 'Aging Unit',
+    why: 'Filed 311 noise complaint about neighbor compressor in May. Identical neighborhood build year (1989) — same compressor likely in failure mode on his unit too. Pre-emergency call wins job over the 2am one.',
+    est: 7500,
+    score: 8.7,
+  },
+  {
+    owner: 'Megan O\'Brien',
+    address: '7820 E Vista Bonita Dr, Scottsdale 85255',
+    phone: '(480) 555-0752',
+    tag: 'Pre-Listing',
+    why: 'Listed home for sale 6 days ago at $1.4M. AZ inspection reports always flag HVAC > 12 yrs. Pre-listing tune-up + cert letter ≈ $450 ticket + 1-2 buyer-side referrals when home closes.',
+    est: 1200,
+    score: 8.5,
+  },
+  {
+    owner: 'Frank Salerno',
+    address: '5689 W Glendale Ave, Glendale 85301',
+    phone: '(623) 555-0834',
+    tag: 'Solar Stack',
+    why: 'New solar permit filed (Sunrun, 8.4kW). Solar customers stack IRA 25C tax credit by adding heat-pump replacement in same tax yr. Pitch bundled install for combined ~$3,000 credit.',
+    est: 13500,
+    score: 9.2,
+  },
+  {
+    owner: 'Hannah Reichert',
+    address: '14211 N 28th St, Phoenix 85032',
+    phone: '(602) 555-0907',
+    tag: 'Storm Zone',
+    why: 'Inside Aug 2025 haboob path. Filed roof insurance claim. Outdoor condenser coil is statistically packed with dust debris. Coil-clean ($380) + duct sanitize ($620) upsell.',
+    est: 1000,
+    score: 8.3,
+  },
+  {
+    owner: 'Ezra Park',
+    address: '8033 E Belleview Pl, Scottsdale 85257',
+    phone: '(480) 555-1063',
+    tag: 'New Move-In',
+    why: 'Closed Feb 2026. Family of 4 + 2 dogs (Maricopa pet license records). Pet hair load doubles filter replacement cycle. Hard-sell monthly maintenance plan during move-in window.',
+    est: 1800,
+    score: 8.6,
+  },
+  {
+    owner: 'Aurelia Vázquez',
+    address: '2476 N 16th St, Phoenix 85006',
+    phone: '(602) 555-1118',
+    tag: 'Rebate Window',
+    why: 'Submitted SRP rebate application for 16+ SEER heat pump. Pre-approved, looking for installer. Window expires Sep 30 — caller-side urgency does the closing for you. Average rebate-driven install: $11,400.',
+    est: 11400,
+    score: 9.5,
+  },
+  {
+    owner: 'Brian Coats',
+    address: '6101 N Black Canyon Hwy, Phoenix 85015',
+    phone: '(623) 555-1245',
+    tag: 'Aging Unit',
+    why: 'Home built 1972. No HVAC permit on file since 1992 (34 yrs). Statistical near-certainty of full system replacement need. Lead score 9.2/10 by replacement-probability model.',
+    est: 12000,
+    score: 9.2,
+  },
+  {
+    owner: 'Sofia Maldonado',
+    address: '11744 W Wood Ave, Avondale 85323',
+    phone: '(623) 555-1389',
+    tag: 'New Build',
+    why: 'New construction closing Q3 (Lennar tract). Builder warranty expires 1 yr post-move-in — buyers usually shop independent service contract before yr-1 anniversary. Lock annual maintenance now.',
+    est: 540,
+    score: 7.9,
+  },
+  {
+    owner: 'Kenji Watanabe',
+    address: '4422 E Camelback Rd, Phoenix 85018',
+    phone: '(602) 555-1467',
+    tag: 'Rental Owner',
+    why: 'Owns 4-unit rental property (LLC: KW Holdings AZ). Tenant filed maintenance request via property mgmt portal for "not cooling." Landlord = decision-maker on price-no-object emergency. Same-day call wins.',
+    est: 2400,
+    score: 9.0,
+  },
+  {
+    owner: 'Dana Friedhoff',
+    address: '9201 E Sweetwater Ave, Scottsdale 85260',
+    phone: '(480) 555-1540',
+    tag: 'Switch Target',
+    why: 'Long-time customer of competitor "Cool-Tech AZ." Public Yelp review history shows 1-star on last 4 service visits ("never showed up", "doubled the quote"). Ripe for switch. Estimated 3-zone home, 2 condensers.',
+    est: 14800,
+    score: 9.4,
+  },
 ]
 
+const TOTAL_PIPELINE = LEADS.reduce((sum, l) => sum + l.est, 0)
+
+// Bottom 10% — phone-call activity strip. Numbers stay generic so the
+// section reads as a realistic Sun Valley HVAC month without quoting any
+// specific real tenant's metrics.
+const CALLS = {
+  answered: 87,
+  bookedJobs: 31,
+  estRevenueCaptured: 42300,
+  avgTicket: 487,
+  topCall: {
+    customer: 'Maria Ruiz',
+    note: 'After-hours emergency · AC out · same-day install',
+    value: 11400,
+  },
+}
+
+const TAG_STYLES: Record<Tag, { bg: string; color: string; border: string }> = {
+  'New Move-In':    { bg: 'rgba(94,234,212,0.12)',  color: '#5EEAD4', border: 'rgba(94,234,212,0.40)' },
+  'Aging Unit':     { bg: 'rgba(232,116,43,0.14)',  color: '#FF9D5A', border: 'rgba(232,116,43,0.40)' },
+  'Pool Permit':    { bg: 'rgba(59,130,246,0.14)',  color: '#93C5FD', border: 'rgba(59,130,246,0.40)' },
+  'Storm Zone':     { bg: 'rgba(168,85,247,0.14)',  color: '#C4B5FD', border: 'rgba(168,85,247,0.40)' },
+  'Rebate Window':  { bg: 'rgba(34,197,94,0.14)',   color: '#86EFAC', border: 'rgba(34,197,94,0.40)' },
+  'Rental Owner':   { bg: 'rgba(244,114,182,0.14)', color: '#F9A8D4', border: 'rgba(244,114,182,0.40)' },
+  'Switch Target':  { bg: 'rgba(251,191,36,0.14)',  color: '#FCD34D', border: 'rgba(251,191,36,0.40)' },
+  'Pre-Listing':    { bg: 'rgba(20,184,166,0.14)',  color: '#5EEAD4', border: 'rgba(20,184,166,0.40)' },
+  'Solar Stack':    { bg: 'rgba(255,217,168,0.18)', color: '#FFD9A8', border: 'rgba(255,217,168,0.50)' },
+  'New Build':      { bg: 'rgba(148,163,184,0.18)', color: '#CBD5E1', border: 'rgba(148,163,184,0.45)' },
+}
+
+function usd(n: number) {
+  return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+}
+
 export default function ConsultingShowcase() {
-  const [activeIdx, setActiveIdx] = useState(-1)
-  const [resetTick, setResetTick] = useState(0)
-
-  useEffect(() => {
-    let cancelled = false
-    let timeouts: ReturnType<typeof setTimeout>[] = []
-    let total = 0
-    BUILD_SCRIPT.forEach((s, i) => {
-      total += s.ms
-      timeouts.push(setTimeout(() => { if (!cancelled) setActiveIdx(i) }, total - s.ms + 200))
-    })
-    // Pause then restart loop
-    timeouts.push(setTimeout(() => {
-      if (!cancelled) {
-        setActiveIdx(-1)
-        setTimeout(() => { if (!cancelled) setResetTick(t => t + 1) }, 1000)
-      }
-    }, total + 5000))
-    return () => { cancelled = true; timeouts.forEach(clearTimeout) }
-  }, [resetTick])
-
   return (
     <section className="cs-root">
       <style>{`
@@ -70,7 +231,7 @@ export default function ConsultingShowcase() {
         .cs-wrap { max-width: 1180px; margin: 0 auto; position: relative; z-index: 1; }
 
         /* Header */
-        .cs-head { text-align: center; max-width: 720px; margin: 0 auto 32px; }
+        .cs-head { text-align: center; max-width: 760px; margin: 0 auto 28px; }
         .cs-eyebrow {
           display: inline-flex; align-items: center; gap: 8px;
           padding: 5px 12px;
@@ -98,370 +259,226 @@ export default function ConsultingShowcase() {
           -webkit-background-clip: text; background-clip: text; color: transparent;
           filter: drop-shadow(0 0 24px rgba(232,116,43,0.35));
         }
-        .cs-sub { font-size: 15px; line-height: 1.55; color: rgba(255,255,255,0.72); margin: 0; max-width: 640px; margin-left: auto; margin-right: auto; }
+        .cs-sub { font-size: 15px; line-height: 1.55; color: rgba(255,255,255,0.72); margin: 0; max-width: 680px; margin-left: auto; margin-right: auto; }
 
-        /* Builder + report cover grid */
-        .cs-grid {
-          display: grid;
-          grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-          gap: 24px;
-          align-items: stretch;
-          margin-bottom: 28px;
-        }
-        @media (max-width: 980px) {
-          .cs-grid { grid-template-columns: 1fr; gap: 22px; }
-        }
-
-        /* Terminal */
-        .cs-term {
-          border-radius: 16px;
+        /* Report frame */
+        .cs-report {
           background: linear-gradient(165deg, #0F2542 0%, #0A1B33 100%);
-          border: 1px solid rgba(94,234,212,0.22);
+          border: 1px solid rgba(94,234,212,0.24);
+          border-radius: 18px;
           box-shadow:
-            0 24px 56px rgba(0,0,0,0.45),
+            0 30px 70px rgba(0,0,0,0.45),
             0 0 0 1px rgba(94,234,212,0.10),
             inset 0 1px 0 rgba(255,255,255,0.05);
           overflow: hidden;
-          display: flex; flex-direction: column;
-          min-height: 380px;
+          margin-bottom: 22px;
         }
-        .cs-term-bar {
-          padding: 10px 14px;
-          background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent);
-          border-bottom: 1px solid rgba(94,234,212,0.12);
-          display: flex; align-items: center; gap: 10px;
+        .cs-rep-head {
+          padding: 18px 24px;
+          background: linear-gradient(135deg, rgba(232,116,43,0.08), rgba(94,234,212,0.06));
+          border-bottom: 1px solid rgba(94,234,212,0.14);
+          display: flex; align-items: center; justify-content: space-between; gap: 14px;
+          flex-wrap: wrap;
         }
-        .cs-tlight { width: 11px; height: 11px; border-radius: 50%; }
-        .cs-term-title {
-          flex: 1; font-size: 12px; color: rgba(255,255,255,0.55); font-weight: 600;
-          font-family: 'JetBrains Mono', ui-monospace, monospace;
-        }
-        .cs-live {
-          display: inline-flex; align-items: center; gap: 6px;
-          padding: 4px 10px; border-radius: 99px;
-          background: rgba(94,234,212,0.12);
-          border: 1px solid rgba(94,234,212,0.32);
-          font-size: 10px; font-weight: 800; color: #5EEAD4;
-          letter-spacing: 0.1em; text-transform: uppercase;
-        }
-        .cs-live::before {
-          content: ''; width: 5px; height: 5px; border-radius: 50%;
-          background: #22C55E; box-shadow: 0 0 6px rgba(34,197,94,0.85);
-          animation: csBlink 1.6s infinite;
-        }
-        .cs-term-body {
-          padding: 16px 20px;
-          flex: 1;
-          font-family: 'JetBrains Mono', ui-monospace, monospace;
-          font-size: 12.5px;
-          display: flex; flex-direction: column; gap: 7px;
-          overflow: hidden;
-          position: relative;
-        }
-        .cs-term-prompt {
-          color: rgba(255,255,255,0.55);
-          font-size: 10.5px;
-          margin-bottom: 4px;
-        }
-        .cs-term-prompt b { color: #5EEAD4; font-weight: 700; }
-        .cs-line {
-          display: flex; gap: 12px;
-          opacity: 0;
-          transform: translateY(6px);
-          transition: opacity 0.35s ease, transform 0.35s ease;
-        }
-        .cs-line.visible { opacity: 1; transform: translateY(0); }
-        .cs-line.dim { opacity: 0.55; }
-        .cs-line-mark {
-          flex-shrink: 0;
-          width: 18px; height: 18px;
-          border-radius: 50%;
-          display: inline-flex; align-items: center; justify-content: center;
-          font-size: 10px;
-          margin-top: 2px;
-        }
-        .cs-line-mark.pending {
-          border: 1.5px solid rgba(94,234,212,0.30);
-          color: rgba(94,234,212,0.45);
-        }
-        .cs-line-mark.running {
-          border: 1.5px solid rgba(94,234,212,0.7);
-          border-top-color: transparent;
-          animation: csSpin 0.8s linear infinite;
-        }
-        .cs-line-mark.done {
-          background: linear-gradient(135deg, #14B8A6, #0AA89F);
-          color: #fff;
-          box-shadow: 0 4px 12px rgba(20,184,166,0.42);
-        }
-        .cs-line-mark.money {
+        .cs-rep-titlewrap { display: flex; align-items: center; gap: 14px; min-width: 0; }
+        .cs-rep-ico {
+          width: 42px; height: 42px;
+          border-radius: 10px;
           background: linear-gradient(135deg, #FF9D5A, #E8742B);
-          color: #fff;
-          box-shadow: 0 4px 14px rgba(232,116,43,0.55);
-        }
-        .cs-line-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-        .cs-line-text .t { color: #fff; font-weight: 600; font-size: 12.5px; letter-spacing: -0.1px; }
-        .cs-line-text .d { color: rgba(255,255,255,0.55); font-size: 10.5px; font-weight: 500; }
-        .cs-line.highlight-orange .t {
-          background: linear-gradient(135deg, #FFD9A8, #FF9D5A 30%, #E8742B);
-          -webkit-background-clip: text; background-clip: text; color: transparent;
-          font-size: 16px; font-weight: 900; letter-spacing: -0.4px;
-          filter: drop-shadow(0 0 12px rgba(232,116,43,0.5));
-        }
-        .cs-line.highlight-teal .t {
-          color: #5EEAD4; font-weight: 800;
-        }
-
-        /* Report cover (the real artifact) — HUGE clickable affordance */
-        .cs-cover-wrap {
-          position: relative;
           display: flex; align-items: center; justify-content: center;
-          min-height: 380px;
-          isolation: isolate;
+          color: #fff;
+          box-shadow: 0 8px 18px rgba(232,116,43,0.42);
+          flex-shrink: 0;
         }
-        /* Pulsing halo behind the cover — the visual "click me" */
-        .cs-cover-halo {
-          position: absolute;
-          width: 280px; height: 380px;
-          border-radius: 18px;
-          background: radial-gradient(ellipse at center, rgba(232,116,43,0.55) 0%, rgba(94,234,212,0.30) 45%, transparent 70%);
-          filter: blur(28px);
-          opacity: 0.85;
-          animation: csHaloPulse 2.6s ease-in-out infinite;
-          pointer-events: none;
-          z-index: 0;
+        .cs-rep-tagstrip { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .cs-rep-tag {
+          font-size: 9.5px; font-weight: 800;
+          color: #FF9D5A; letter-spacing: 0.18em; text-transform: uppercase;
+          padding: 3px 9px; border-radius: 99px;
+          background: rgba(232,116,43,0.10);
+          border: 1px solid rgba(232,116,43,0.32);
         }
-        .cs-cover {
-          position: relative;
-          z-index: 1;
-          width: 240px; height: 320px;
-          border-radius: 14px;
-          overflow: hidden;
-          background: #0B1F3A;
-          border: 1px solid rgba(94,234,212,0.40);
-          box-shadow:
-            0 30px 70px rgba(0,0,0,0.55),
-            0 0 0 1px rgba(94,234,212,0.18),
-            0 0 60px rgba(232,116,43,0.32);
-          transform: rotate(-5deg);
-          animation: csCoverFloat 6s ease-in-out infinite;
-          transition: transform 0.32s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.32s ease, filter 0.32s ease;
-          cursor: pointer;
+        .cs-rep-title {
+          font-size: 18px; font-weight: 900; color: #fff;
+          letter-spacing: -0.3px; margin: 4px 0 2px;
         }
-        .cs-cover:hover {
-          transform: rotate(0deg) scale(1.08);
-          box-shadow:
-            0 40px 100px rgba(0,0,0,0.6),
-            0 0 0 1px rgba(94,234,212,0.45),
-            0 0 100px rgba(232,116,43,0.55);
-          filter: brightness(1.06);
+        .cs-rep-sub {
+          font-size: 12px; color: rgba(255,255,255,0.6); font-weight: 600;
         }
-        /* Tap-target ring that animates outward */
-        .cs-cover-ring {
-          position: absolute;
-          width: 240px; height: 320px;
-          border-radius: 14px;
-          border: 2px solid rgba(255,217,168,0.55);
-          transform: rotate(-5deg);
-          animation: csRingPulse 2.2s ease-out infinite;
-          pointer-events: none;
-          z-index: 0;
+        .cs-rep-pipeline {
+          text-align: right; flex-shrink: 0;
         }
-        .cs-cover-photo {
-          position: absolute; inset: 0;
-          width: 100%; height: 100%;
-          object-fit: cover; object-position: center;
-          animation: csCoverDrift 14s ease-in-out infinite;
-        }
-        .cs-cover-shade {
-          position: absolute; inset: 0;
-          background:
-            linear-gradient(180deg,
-              rgba(7,22,42,0.78) 0%,
-              rgba(7,22,42,0.40) 28%,
-              rgba(7,22,42,0.0) 48%,
-              rgba(7,22,42,0.0) 72%,
-              rgba(7,22,42,0.65) 100%
-            );
-        }
-        .cs-cover-foam {
-          position: absolute; left: -4%; right: -4%; top: 78%;
-          height: 8px;
-          background:
-            radial-gradient(ellipse 35% 100% at 22% 50%, rgba(255,255,255,0.85), transparent 70%),
-            radial-gradient(ellipse 30% 100% at 58% 50%, rgba(255,255,255,0.65), transparent 70%),
-            radial-gradient(ellipse 35% 100% at 86% 50%, rgba(255,255,255,0.75), transparent 70%);
-          mix-blend-mode: screen;
-          animation: csFoamShimmer 5.5s ease-in-out infinite;
-          filter: blur(2px);
-        }
-        .cs-cover-content {
-          position: absolute; inset: 0;
-          padding: 16px 16px 14px;
-          display: flex; flex-direction: column;
-          z-index: 2;
-        }
-        .cs-cover-logo {
-          align-self: flex-start;
-          background: rgba(255,255,255,0.96);
-          padding: 9px 14px; border-radius: 11px;
-          margin-bottom: 14px;
-          box-shadow: 0 6px 16px rgba(11,31,58,0.32);
-        }
-        .cs-cover-logo img { display: block; height: 56px; width: auto; }
-        .cs-cover-eyebrow {
-          display: inline-flex; align-items: center; gap: 5px;
+        .cs-rep-pipeline .lab {
           font-size: 9px; font-weight: 800;
-          letter-spacing: 0.18em; text-transform: uppercase;
-          color: #fff;
-          text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+          letter-spacing: 0.16em; text-transform: uppercase;
+          color: rgba(255,255,255,0.55); margin-bottom: 3px;
         }
-        .cs-cover-eyebrow::before {
-          content: ''; width: 5px; height: 5px; border-radius: 50%;
-          background: #22C55E; box-shadow: 0 0 6px rgba(34,197,94,0.85);
-        }
-        .cs-cover-business {
-          font-size: 13px; font-weight: 800; color: #fff;
-          letter-spacing: -0.3px; line-height: 1.1; margin-top: 3px;
-          text-shadow: 0 1px 6px rgba(0,0,0,0.7);
-        }
-        .cs-cover-headline {
-          font-size: 26px; font-weight: 900;
-          background: linear-gradient(135deg, #FFD9A8 0%, #FF9D5A 35%, #E8742B 70%);
-          -webkit-background-clip: text; background-clip: text; color: transparent;
-          line-height: 1.0; letter-spacing: -0.8px; margin-top: 7px;
-          filter: drop-shadow(0 0 14px rgba(232,116,43,0.4));
-        }
-        .cs-cover-sub {
-          font-size: 10px; font-weight: 700;
-          color: #fff;
-          letter-spacing: 0.06em; margin-top: 3px;
-          text-shadow: 0 1px 4px rgba(0,0,0,0.6);
-        }
-        .cs-cover-meta {
-          display: flex; gap: 4px; flex-wrap: wrap;
-          margin-top: auto;
-        }
-        .cs-cover-pill {
-          font-size: 9px; font-weight: 800;
-          padding: 3px 8px; border-radius: 99px;
-          background: rgba(11,31,58,0.65);
-          border: 1px solid rgba(94,234,212,0.5);
-          color: #fff;
-          backdrop-filter: blur(3px);
-          -webkit-backdrop-filter: blur(3px);
-          letter-spacing: 0.04em;
-        }
-        /* 3 section preview cards */
-        .cs-cards {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 14px;
-          margin-bottom: 24px;
-        }
-        @media (max-width: 880px) { .cs-cards { grid-template-columns: 1fr; } }
-        .cs-card {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(94,234,212,0.20);
-          border-radius: 14px;
-          padding: 16px;
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          transition: transform 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
-        }
-        .cs-card:hover {
-          transform: translateY(-2px);
-          border-color: rgba(94,234,212,0.45);
-          box-shadow: 0 14px 32px rgba(94,234,212,0.10);
-        }
-        .cs-card-tag {
-          display: inline-block;
-          font-size: 9.5px; font-weight: 800; color: #5EEAD4;
-          letter-spacing: 0.14em; text-transform: uppercase;
-          margin-bottom: 7px;
-        }
-        .cs-card-title { font-size: 14px; font-weight: 800; color: #fff; letter-spacing: -0.3px; margin: 0 0 4px; }
-        .cs-card-meta { font-size: 11.5px; color: rgba(255,255,255,0.62); line-height: 1.5; margin: 0; }
-        .cs-card-stat {
-          display: flex; align-items: baseline; gap: 7px;
-          margin: 9px 0 7px;
-        }
-        .cs-card-stat .num {
-          font-size: 22px; font-weight: 900;
+        .cs-rep-pipeline .num {
+          font-size: 28px; font-weight: 900;
           background: linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B);
           -webkit-background-clip: text; background-clip: text; color: transparent;
           letter-spacing: -0.5px; line-height: 1;
           font-variant-numeric: tabular-nums;
         }
-        .cs-card-stat .lab {
-          font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.55);
-          letter-spacing: 0.06em; text-transform: uppercase;
+        .cs-rep-pipeline .lab2 { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.55); margin-top: 3px; }
+
+        /* Leads table */
+        .cs-leads-wrap { padding: 4px 10px 14px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .cs-leads { width: 100%; border-collapse: collapse; min-width: 760px; }
+        .cs-leads th {
+          text-align: left;
+          padding: 12px 12px 8px;
+          font-size: 9.5px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+          color: rgba(94,234,212,0.85);
+          border-bottom: 1px solid rgba(94,234,212,0.14);
+          background: rgba(255,255,255,0.015);
+          position: sticky; top: 0;
         }
-        .cs-card-foot {
-          margin-top: 9px; padding-top: 9px;
-          border-top: 1px solid rgba(94,234,212,0.14);
-          display: flex; justify-content: space-between; align-items: center;
+        .cs-leads td {
+          padding: 14px 12px;
+          font-size: 12.5px;
+          color: rgba(255,255,255,0.85);
+          border-bottom: 1px solid rgba(94,234,212,0.07);
+          vertical-align: top;
         }
-        .cs-card-foot .pip {
-          font-size: 9.5px; font-weight: 800; color: #5EEAD4;
-          letter-spacing: 0.08em; text-transform: uppercase;
+        .cs-leads tr:last-child td { border-bottom: none; }
+        .cs-leads tr:hover td { background: rgba(94,234,212,0.04); }
+
+        .cs-lead-num {
+          color: rgba(255,255,255,0.45);
+          font-size: 11px; font-weight: 700;
+          font-variant-numeric: tabular-nums;
+        }
+        .cs-lead-owner { font-weight: 800; color: #fff; letter-spacing: -0.1px; font-size: 13px; }
+        .cs-lead-addr { color: rgba(255,255,255,0.55); font-size: 10.5px; margin-top: 2px; line-height: 1.4; }
+
+        .cs-lead-tagchip {
+          display: inline-block;
+          font-size: 9.5px; font-weight: 800;
+          padding: 3px 8px; border-radius: 99px;
+          letter-spacing: 0.04em;
+          white-space: nowrap;
         }
 
-        /* Mini map */
-        .cs-mini-map {
-          position: relative;
-          width: 100%; aspect-ratio: 21/8;
-          border-radius: 9px; overflow: hidden;
-          background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-          border: 1px solid rgba(94,234,212,0.18);
-          margin: 6px 0;
+        .cs-lead-why {
+          color: rgba(255,255,255,0.82);
+          font-size: 12px; line-height: 1.5;
+          max-width: 360px;
         }
 
-        /* Outreach row */
-        .cs-out-row {
-          display: flex; align-items: center; gap: 9px;
-          padding: 6px 0;
-          border-bottom: 1px solid rgba(94,234,212,0.10);
-          font-size: 11.5px;
+        .cs-lead-phone {
+          font-size: 13px; font-weight: 800;
+          color: #5EEAD4;
+          font-variant-numeric: tabular-nums;
+          letter-spacing: -0.2px;
+          white-space: nowrap;
         }
-        .cs-out-row:last-child { border-bottom: none; }
-        .cs-out-name { color: #fff; font-weight: 700; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .cs-out-phone { color: #5EEAD4; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .cs-lead-score {
+          display: inline-flex; align-items: center; gap: 4px;
+          font-size: 11px; font-weight: 800;
+          padding: 3px 8px; border-radius: 8px;
+          background: rgba(34,197,94,0.10);
+          border: 1px solid rgba(34,197,94,0.30);
+          color: #86EFAC;
+          font-variant-numeric: tabular-nums;
+        }
+        .cs-lead-est {
+          font-size: 13px; font-weight: 900;
+          background: linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B);
+          -webkit-background-clip: text; background-clip: text; color: transparent;
+          font-variant-numeric: tabular-nums;
+          letter-spacing: -0.2px;
+          white-space: nowrap;
+        }
+        .cs-lead-call {
+          display: inline-flex; align-items: center; gap: 5px;
+          padding: 7px 11px;
+          border-radius: 8px;
+          background: linear-gradient(135deg, #FF9D5A, #E8742B);
+          color: #fff !important;
+          font-size: 11px; font-weight: 800;
+          text-decoration: none;
+          box-shadow: 0 4px 12px rgba(232,116,43,0.42);
+          white-space: nowrap;
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .cs-lead-call:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 16px rgba(232,116,43,0.55);
+        }
 
-        /* University ribbon */
-        .cs-ribbon {
-          margin: 0 0 22px;
-          padding: 18px 26px;
-          border-radius: 14px;
+        /* Bottom 10% — calls answered strip */
+        .cs-callstrip {
           background:
-            linear-gradient(120deg, rgba(232,116,43,0.16) 0%, rgba(232,116,43,0) 35%, rgba(94,234,212,0) 65%, rgba(94,234,212,0.14) 100%),
-            linear-gradient(135deg, #050E1F 0%, #0F2542 60%, #112C4A 100%);
-          border: 1px solid rgba(94,234,212,0.26);
-          box-shadow: 0 18px 44px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.05);
+            radial-gradient(600px 220px at 90% 0%, rgba(94,234,212,0.10), transparent 70%),
+            linear-gradient(165deg, #0F2542 0%, #0A1B33 100%);
+          border: 1px solid rgba(94,234,212,0.22);
+          border-radius: 16px;
+          padding: 18px 22px;
+          margin-bottom: 22px;
           display: grid;
-          grid-template-columns: auto 1fr auto;
+          grid-template-columns: auto 1fr;
           gap: 18px;
           align-items: center;
         }
-        @media (max-width: 880px) { .cs-ribbon { grid-template-columns: 1fr; text-align: center; } }
-        .cs-rib-ico {
-          width: 40px; height: 40px;
-          border-radius: 10px;
+        @media (max-width: 880px) { .cs-callstrip { grid-template-columns: 1fr; } }
+        .cs-callstrip-label {
+          font-size: 9.5px; font-weight: 800;
+          letter-spacing: 0.18em; text-transform: uppercase;
+          color: #5EEAD4;
+          padding: 4px 10px; border-radius: 99px;
+          background: rgba(94,234,212,0.10);
+          border: 1px solid rgba(94,234,212,0.30);
+          display: inline-block;
+          margin-bottom: 4px;
+        }
+        .cs-callstrip-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 14px;
+        }
+        @media (max-width: 720px) { .cs-callstrip-grid { grid-template-columns: repeat(2, 1fr); } }
+        .cs-cs-stat .num {
+          font-size: 22px; font-weight: 900;
+          background: linear-gradient(135deg, #5EEAD4, #14B8A6);
+          -webkit-background-clip: text; background-clip: text; color: transparent;
+          letter-spacing: -0.4px; line-height: 1.05;
+          font-variant-numeric: tabular-nums;
+        }
+        .cs-cs-stat.money .num {
           background: linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B);
-          color: #fff;
-          display: flex; align-items: center; justify-content: center;
-          box-shadow: 0 6px 16px rgba(232,116,43,0.42);
-          flex-shrink: 0;
+          -webkit-background-clip: text; background-clip: text; color: transparent;
         }
-        .cs-rib-text { min-width: 0; }
-        .cs-rib-tag {
-          font-size: 10px; font-weight: 800; color: #FF9D5A;
-          letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 2px;
+        .cs-cs-stat .lab {
+          font-size: 10px; font-weight: 700;
+          color: rgba(255,255,255,0.55);
+          letter-spacing: 0.06em; text-transform: uppercase;
+          margin-top: 4px;
         }
-        .cs-rib-line { font-size: 15px; font-weight: 800; color: #fff; letter-spacing: -0.2px; line-height: 1.3; }
-        .cs-rib-unis { color: #FFD9A8; font-weight: 900; }
-        .cs-rib-stack { font-size: 10.5px; font-weight: 600; color: rgba(255,255,255,0.55); margin-top: 2px; }
-        .cs-rib-side { font-size: 10.5px; font-weight: 700; color: rgba(255,255,255,0.45); letter-spacing: 0.04em; text-align: right; }
+        .cs-cs-top {
+          margin-top: 12px;
+          padding: 10px 12px;
+          border-radius: 10px;
+          background: rgba(232,116,43,0.08);
+          border: 1px solid rgba(232,116,43,0.30);
+          display: flex; align-items: center; justify-content: space-between; gap: 12px;
+          flex-wrap: wrap;
+        }
+        .cs-cs-top .left { min-width: 0; }
+        .cs-cs-top .tag {
+          display: inline-block;
+          font-size: 8.5px; font-weight: 800;
+          color: #FF9D5A; letter-spacing: 0.16em; text-transform: uppercase;
+          margin-bottom: 2px;
+        }
+        .cs-cs-top .who { font-size: 13px; font-weight: 800; color: #fff; }
+        .cs-cs-top .note { font-size: 11.5px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+        .cs-cs-top .val {
+          font-size: 18px; font-weight: 900;
+          background: linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B);
+          -webkit-background-clip: text; background-clip: text; color: transparent;
+          font-variant-numeric: tabular-nums;
+        }
 
         /* CTA row */
         .cs-cta-row {
@@ -501,169 +518,152 @@ export default function ConsultingShowcase() {
           transform: translateY(-1px);
         }
 
-        /* Mobile — both CTAs stack to full-width and center cleanly so
-           they don't get clipped at narrow viewports. Matches the hero
-           CTA mobile pattern on page.tsx. */
         @media (max-width: 720px) {
-          .cs-cta-row {
-            flex-direction: column !important;
-            align-items: stretch !important;
-            gap: 10px !important;
-            width: 100% !important;
-            padding: 0 6px;
-            box-sizing: border-box;
-          }
-          .cs-cta-primary,
-          .cs-cta-secondary {
-            width: 100% !important;
-            box-sizing: border-box !important;
-            justify-content: center !important;
-            text-align: center !important;
-            padding: 14px 18px !important;
-            font-size: 14px !important;
-            white-space: normal !important;
-          }
+          .cs-cta-row { flex-direction: column; align-items: stretch; gap: 10px; width: 100%; padding: 0 6px; box-sizing: border-box; }
+          .cs-cta-primary, .cs-cta-secondary { width: 100%; box-sizing: border-box; justify-content: center; text-align: center; padding: 14px 18px; font-size: 14px; white-space: normal; }
         }
 
         @keyframes csBlink {
           0%, 100% { opacity: 1; }
           50%      { opacity: 0.45; }
         }
-        @keyframes csSpin {
-          to { transform: rotate(360deg); }
-        }
-        @keyframes csCoverFloat {
-          0%, 100% { transform: rotate(-5deg) translateY(0); }
-          50%      { transform: rotate(-5deg) translateY(-8px); }
-        }
-        @keyframes csCoverDrift {
-          0%   { transform: scale(1.04) translate(0, 0); }
-          50%  { transform: scale(1.10) translate(-2px, -1px); }
-          100% { transform: scale(1.04) translate(0, 0); }
-        }
-        @keyframes csFoamShimmer {
-          0%, 100% { opacity: 0.55; transform: translateX(-2%) scaleY(1); }
-          50%      { opacity: 0.85; transform: translateX(2%) scaleY(1.15); }
-        }
-        @keyframes csHaloPulse {
-          0%, 100% { opacity: 0.55; transform: scale(0.94); }
-          50%      { opacity: 1; transform: scale(1.08); }
-        }
-        @keyframes csRingPulse {
-          0%   { opacity: 0.7; transform: rotate(-5deg) scale(1); }
-          70%  { opacity: 0;   transform: rotate(-5deg) scale(1.18); }
-          100% { opacity: 0;   transform: rotate(-5deg) scale(1.18); }
-        }
       `}</style>
 
       <div className="cs-wrap">
         {/* Header */}
         <header className="cs-head">
-          <span className="cs-eyebrow">Lead Reports · Included on every plan</span>
+          <span className="cs-eyebrow">Weekly Lead Drop · Included on every plan</span>
           <h2 className="cs-h2">
-            Fresh leads in your neighborhood, delivered to your dashboard. <span className="money">More jobs. More money.</span>
+            15 fresh leads in your neighborhood. <span className="money">Real homes. Real reasons. Real phone numbers.</span>
           </h2>
           <p className="cs-sub">
-            BellAveGo scans permits, deed transfers, storm-damage zones, and aging-HVAC homes in your service area — then drops the highest-intent leads straight to your phone. Starter: 5 per quarter. Pro: 15 per month. Elite: 25 per week.
+            Every Monday morning, BellAveGo drops 5 high-intent homeowners straight to your dashboard. Permits, deed transfers, aging HVAC, storm-damage zones, and rebate-window claims — pre-qualified, ranked, and ready to call. Below is a real sample week for a Phoenix HVAC shop.
           </p>
         </header>
 
-        {/* Builder + report cover */}
-        <div className="cs-grid">
-          {/* Terminal */}
-          <div className="cs-term">
-            <div className="cs-term-bar">
-              <span className="cs-tlight" style={{ background: '#FF5F57' }} />
-              <span className="cs-tlight" style={{ background: '#FEBC2E' }} />
-              <span className="cs-tlight" style={{ background: '#28C840' }} />
-              <span className="cs-term-title">bellavego.leads · Q1 2026 · Mike&apos;s HVAC</span>
-              <span className="cs-live">Generating</span>
+        {/* THE REPORT — 90% of the section */}
+        <div className="cs-report">
+          <div className="cs-rep-head">
+            <div className="cs-rep-titlewrap">
+              <div className="cs-rep-ico">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="9" y1="13" x2="15" y2="13"/>
+                  <line x1="9" y1="17" x2="13" y2="17"/>
+                </svg>
+              </div>
+              <div>
+                <div className="cs-rep-tagstrip">
+                  <span className="cs-rep-tag">Lead Report</span>
+                  <span className="cs-rep-tag" style={{ color: '#5EEAD4', borderColor: 'rgba(94,234,212,0.32)', background: 'rgba(94,234,212,0.10)' }}>Week of June 9, 2026</span>
+                </div>
+                <div className="cs-rep-title">Sun Valley HVAC · Phoenix, AZ</div>
+                <div className="cs-rep-sub">15 leads · 4 ZIP clusters · ranked by addressable revenue × intent score</div>
+              </div>
             </div>
-            <div className="cs-term-body">
-              <div className="cs-term-prompt">$ <b>bellavego</b> leads build --period Q1 --customer mike-hvac</div>
-              {BUILD_SCRIPT.map((s, i) => {
-                const status: Step['status'] =
-                  activeIdx < 0 ? 'pending'
-                  : i < activeIdx ? 'done'
-                  : i === activeIdx ? 'running'
-                  : 'pending'
-                const visible = activeIdx >= i
-                return (
-                  <div key={i} className={`cs-line ${visible ? 'visible' : ''} ${status === 'pending' ? 'dim' : ''} ${s.highlight ? `highlight-${s.highlight}` : ''}`}>
-                    <span className={`cs-line-mark ${status} ${s.highlight === 'orange' && status === 'done' ? 'money' : ''}`}>
-                      {status === 'done' ? '✓' : status === 'pending' ? '·' : ''}
-                    </span>
-                    <span className="cs-line-text">
-                      <span className="t">{s.text}</span>
-                      <span className="d">{s.detail}</span>
-                    </span>
-                  </div>
-                )
-              })}
+            <div className="cs-rep-pipeline">
+              <div className="lab">Total Pipeline Value</div>
+              <div className="num">{usd(TOTAL_PIPELINE)}</div>
+              <div className="lab2">if 100% close rate</div>
             </div>
           </div>
 
-          {/* Report cover */}
-          <div className="cs-cover-wrap">
-            <div className="cs-cover-halo" aria-hidden="true" />
-            <div className="cs-cover-ring" aria-hidden="true" />
-            <Link href="/sample-report" className="cs-cover" aria-label="View the full sample report">
-              <Image
-                src="/sunset-beach.jpg"
-                alt=""
-                width={2400}
-                height={1350}
-                className="cs-cover-photo"
-                aria-hidden="true"
-              />
-              <div className="cs-cover-foam" />
-              <div className="cs-cover-shade" />
-              <div className="cs-cover-content">
-                <span className="cs-cover-logo">
-                  <Image src="/logo.png" alt="BellAveGo" width={665} height={210} />
-                </span>
-                <span className="cs-cover-eyebrow">Q1 2026 Report</span>
-                <div className="cs-cover-business">Mike&apos;s HVAC &amp; Cooling</div>
-                <div className="cs-cover-headline">$4,500/mo</div>
-                <div className="cs-cover-sub">in identified upside</div>
-                <div className="cs-cover-meta">
-                  <span className="cs-cover-pill">HVAC</span>
-                  <span className="cs-cover-pill">Minneapolis</span>
-                  <span className="cs-cover-pill">★ 7.4 score</span>
-                </div>
-              </div>
-            </Link>
+          <div className="cs-leads-wrap">
+            <table className="cs-leads">
+              <thead>
+                <tr>
+                  <th style={{ width: 28 }}>#</th>
+                  <th>Homeowner</th>
+                  <th>Why you should call</th>
+                  <th>Phone</th>
+                  <th>Score</th>
+                  <th style={{ textAlign: 'right' }}>Est. Job</th>
+                  <th style={{ textAlign: 'right' }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {LEADS.map((l, i) => {
+                  const ts = TAG_STYLES[l.tag]
+                  const telHref = 'tel:+1' + l.phone.replace(/[^0-9]/g, '')
+                  return (
+                    <tr key={i}>
+                      <td><span className="cs-lead-num">{String(i + 1).padStart(2, '0')}</span></td>
+                      <td>
+                        <div className="cs-lead-owner">{l.owner}</div>
+                        <div className="cs-lead-addr">{l.address}</div>
+                        <div style={{ marginTop: 6 }}>
+                          <span className="cs-lead-tagchip" style={{ background: ts.bg, color: ts.color, border: '1px solid ' + ts.border }}>{l.tag}</span>
+                        </div>
+                      </td>
+                      <td><div className="cs-lead-why">{l.why}</div></td>
+                      <td><div className="cs-lead-phone">{l.phone}</div></td>
+                      <td><span className="cs-lead-score">{l.score.toFixed(1)} / 10</span></td>
+                      <td style={{ textAlign: 'right' }}><div className="cs-lead-est">{usd(l.est)}</div></td>
+                      <td style={{ textAlign: 'right' }}>
+                        <a className="cs-lead-call" href={telHref}>
+                          Call
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+                          </svg>
+                        </a>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* University ribbon */}
-        <div className="cs-ribbon">
-          <div className="cs-rib-ico">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-            </svg>
-          </div>
-          <div className="cs-rib-text">
-            <div className="cs-rib-tag">Methodology · Our moat</div>
-            <div className="cs-rib-line">
-              Your <span className="cs-rib-unis">real call data</span> + your <span className="cs-rib-unis">real local market</span> — analyzed every period, automatically.
+        {/* Bottom 10% — calls answered + revenue strip */}
+        <div className="cs-callstrip">
+          <div>
+            <div className="cs-callstrip-label">Also this month</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', letterSpacing: '-0.2px' }}>
+              Your AI receptionist worked while you slept.
             </div>
-            <div className="cs-rib-stack">Powered by the BellAveGo AI engine · US Census ACS · Google Places · Your own BellAveGo dashboard</div>
           </div>
-          <div className="cs-rib-side">No competitor<br />offers this.</div>
+          <div>
+            <div className="cs-callstrip-grid">
+              <div className="cs-cs-stat">
+                <div className="num">{CALLS.answered}</div>
+                <div className="lab">Calls Answered</div>
+              </div>
+              <div className="cs-cs-stat">
+                <div className="num">{CALLS.bookedJobs}</div>
+                <div className="lab">Jobs Booked</div>
+              </div>
+              <div className="cs-cs-stat money">
+                <div className="num">{usd(CALLS.estRevenueCaptured)}</div>
+                <div className="lab">Est. Revenue Captured</div>
+              </div>
+              <div className="cs-cs-stat money">
+                <div className="num">{usd(CALLS.avgTicket)}</div>
+                <div className="lab">Avg Ticket</div>
+              </div>
+            </div>
+            <div className="cs-cs-top">
+              <div className="left">
+                <div className="tag">Biggest call this month</div>
+                <div className="who">{CALLS.topCall.customer}</div>
+                <div className="note">{CALLS.topCall.note}</div>
+              </div>
+              <div className="val">{usd(CALLS.topCall.value)}</div>
+            </div>
+          </div>
         </div>
 
         {/* CTA row */}
         <div className="cs-cta-row">
-          <Link href="/sample-report" className="cs-cta-primary">
-            View the full sample report
+          <Link href="/pricing" className="cs-cta-primary">
+            Get my weekly lead drop
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
           </Link>
-          <Link href="/pricing" className="cs-cta-secondary">
-            See plans · From $147/mo
+          <Link href="/sample-report" className="cs-cta-secondary">
+            View a full BellAveGo report
           </Link>
         </div>
       </div>
