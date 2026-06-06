@@ -131,15 +131,41 @@ export async function POST(req: NextRequest) {
     // ZIPs + radius were captured during onboarding (before checkout),
     // so the profile is ready. Fire-and-forget so it doesn't block the
     // 200 we owe Stripe. Logs the assigned count for debugging.
-    fireLeadEngineForUser(userId)
+    // Step A — fire the discovery agent FIRST. This will:
+    //   1. trigger any registered city scraper for the tenant's metro
+    //   2. fall back to census-aging if the pool is light
+    //   3. skip-trace untraced leads in their 50mi radius
+    // Step B — only THEN call fireLeadEngineForUser which actually drops
+    // 5 leads to their dashboard. Without A → B order, brand-new tenants
+    // in metros we don't pre-scrape get 0 leads on day 1.
+    //
+    // Both run fire-and-forget so they don't block the 200 to Stripe.
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost')
+      ? process.env.NEXT_PUBLIC_APP_URL
+      : 'https://www.bellavego.com'
+    fetch(`${appUrl}/api/agents/discover-for-tenant`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-secret': process.env.ADMIN_API_SECRET || '',
+      },
+      body: JSON.stringify({ user_id: userId }),
+    })
+      .then((r) => r.ok ? r.json() : Promise.resolve({ ok: false, status: r.status }))
+      .then((d) => {
+        console.log(`[discover-agent] tenant ${userId}: leads_in_radius=${d.leads_in_radius ?? '?'} steps=${(d.steps ?? []).length}`)
+        // Now drop the 5 leads — discovery has primed the pool.
+        return fireLeadEngineForUser(userId)
+      })
       .then((r) => {
+        if (!r) return
         if (r.assigned > 0) {
           console.log(`[day-1 leads] dropped ${r.assigned} leads to new tenant ${userId}`)
         } else {
           console.log(`[day-1 leads] no drop for ${userId}: ${r.skipped_reason}`)
         }
       })
-      .catch((e) => console.error(`[day-1 leads] threw for ${userId}:`, e))
+      .catch((e) => console.error(`[day-1 leads] discover→drop chain threw for ${userId}:`, e))
 
     // ── 🎉 Peter's ALERT: SMS the founder on every new subscription ──
     // Per Peter 5/28: he wants real-time notifications when a small dog

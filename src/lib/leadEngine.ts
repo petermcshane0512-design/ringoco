@@ -81,12 +81,19 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
   const homeZips = (profile.service_zips || []).filter(Boolean)
   if (homeZips.length === 0) return { assigned: 0, skipped_reason: 'no_service_zips' }
 
-  // Radius ladder — start at tenant's setting, then escalate twice if the
-  // pool returns < remaining quota. Without this, a Phoenix HVAC guy in a
-  // small ZIP with 20mi default would silently get 0 leads. With it, we
-  // climb to 60mi → 120mi → national-top-score before giving up.
-  const baseRadius = Math.max(1, Math.min(150, profile.service_radius_mi ?? 25))
-  const radiusLadder = [baseRadius, Math.min(150, baseRadius * 2.5), 150]
+  // Radius ladder — start at tenant's setting, escalate twice if pool is
+  // light. HARD CAP 50mi (~1hr drive). These are 1-4 person teams, not
+  // regional contractors — surfacing a Maine HVAC guy leads in Boston is
+  // worse than surfacing nothing.
+  //   Per-trade base defaults set in onboarding:
+  //     handyman 10mi, plumbing 15mi, HVAC/electrical 20mi, roofing 30mi
+  const RADIUS_HARD_CAP = 50
+  const baseRadius = Math.max(1, Math.min(RADIUS_HARD_CAP, profile.service_radius_mi ?? 20))
+  const radiusLadder = [
+    baseRadius,
+    Math.min(RADIUS_HARD_CAP, Math.round(baseRadius * 1.5)),
+    RADIUS_HARD_CAP,
+  ]
   const dedup = new Set<string>()
   type Candidate = {
     id: string
@@ -137,22 +144,11 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
     if (candidates.length >= remaining * 2) break
   }
 
-  // National top-score fallback if all radii exhausted and we're still short.
-  if (candidates.length < remaining) {
-    const { data: nat } = await supabase
-      .from('leads')
-      .select('id, lead_score, source, trade_match, zip, street_address, source_details, city, state')
-      .contains('trade_match', [tradeFilter])
-      .order('lead_score', { ascending: false })
-      .limit(remaining * 3)
-    type CandidateRow = Candidate
-    for (const c of (nat ?? []) as CandidateRow[]) {
-      if (!dedup.has(c.id)) {
-        dedup.add(c.id)
-        candidates.push(c)
-      }
-    }
-  }
+  // NO national fallback. If pool is light inside 50mi, the on-signup
+  // discovery agent (api/agents/discover-for-tenant) is responsible for
+  // backfilling — by triggering local scrapers + census-aging pulls for
+  // the tenant's actual ZIPs. Cross-country leads are a worse experience
+  // than a smaller drop.
 
   if (candidates.length === 0) {
     console.warn(`[lead-engine] no candidates for ${profile.user_id} (radius_used=${radiusUsed}mi, trade=${tradeFilter})`)
