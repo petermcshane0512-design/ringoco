@@ -161,13 +161,17 @@ export async function GET(req: NextRequest) {
     })
   }
 
-  // Insert as 'saved' (needs Peter manual review before DMing)
+  // Insert as 'saved' (needs Peter manual review before DMing).
+  // NOTE: schema has UNIQUE on lower(handle) (functional index), so
+  // PostgREST upsert with onConflict can't find a matching constraint.
+  // Plain INSERT — duplicates throw 23505 which we catch + ignore.
   let inserted = 0
+  let dupes = 0
   for (const c of toInsert) {
     const free_trial_code = `BAVG-${c.handle.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6).padEnd(6, '0')}`
     const { error } = await supabase
       .from('ig_creator_outreach')
-      .upsert({
+      .insert({
         handle: c.handle,
         trade: c.trade,
         hashtag_source: `auto-discovery (${TARGET_HASHTAGS.length} tags)`,
@@ -175,8 +179,14 @@ export async function GET(req: NextRequest) {
         free_trial_code,
         notes: `Auto-discovered from hashtag scrape. Recent caption sample: "${c.captions[0]?.slice(0, 120) || ''}"`,
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'handle', ignoreDuplicates: true })
-    if (!error) inserted++
+      })
+    if (!error) {
+      inserted++
+    } else if (error.code === '23505') {
+      dupes++
+    } else {
+      console.warn(`[ig-creator-discovery] insert err for ${c.handle}: ${error.message}`)
+    }
   }
 
   return NextResponse.json({
@@ -187,6 +197,7 @@ export async function GET(req: NextRequest) {
     new_candidates: newHandles.length,
     trade_matched: candidates.length,
     inserted,
-    next_step: 'Hit /api/admin/ig-creators to see them. Click 🔍 Enrich → ✍️ Gen DM → 📋 Copy → send.',
+    dupes,
+    next_step: 'Hit /admin/ig-creators to see them. Click 🔍 Enrich → ✍️ Gen DM → 📋 Copy → send.',
   })
 }
