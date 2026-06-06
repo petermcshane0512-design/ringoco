@@ -44,7 +44,11 @@ type Plan = {
 // ─────────────────────────────────────────────────────────────────────
 const POPULAR_TIER: Tier = 'officemgr'
 
-const TIER_ORDER: Tier[] = ['receptionist', 'officemgr', 'concierge']
+// 2026-06-06 PIVOT: single public tier (officemgr at $297).
+// Algorithm + Hormozi applied → Grand Slam single offer.
+// Legacy tiers (receptionist + concierge) preserved in pricing.ts for
+// grandfathered customers but HIDDEN from public pricing page.
+const TIER_ORDER: Tier[] = ['officemgr']
 
 const PLANS: Plan[] = TIER_ORDER.map((tier) => {
   const meta = TIER_METADATA[tier]
@@ -70,7 +74,8 @@ const PLANS: Plan[] = TIER_ORDER.map((tier) => {
 export default function PricingPage() {
   const { isSignedIn, isLoaded } = useAuth()
   const router = useRouter()
-  const [interval, setInterval] = useState<Interval>('monthly')
+  // Default to ANNUAL per Hormozi cash-collection — most prepay = 17% off + 12mo lock
+  const [interval, setInterval] = useState<Interval>('annual')
   const [loading, setLoading] = useState<Tier | null>(null)
   const isAnnual = interval === 'annual'
 

@@ -101,12 +101,19 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Read creator_code from checkout session metadata (set by /api/stripe/checkout
+    // when prospect signed up via /r/[code] flow). Stored on profile so the first
+    // paid invoice handler below can credit the right IG creator's referral count.
+    const creatorCode = (session.metadata?.creator_code || '').toUpperCase().trim()
+    const validCreatorCode = /^BAVG-[A-Z0-9]{6}$/.test(creatorCode) ? creatorCode : null
+
     await supabase.from('profiles').update({
       stripe_subscription_id: subscriptionId,
       stripe_customer_id: customerId,
       stripe_metered_item_id: meteredItemId,
       plan_tier: planTier,
       is_active: true,
+      ...(validCreatorCode ? { creator_referral_code: validCreatorCode } : {}),
     }).eq('user_id', userId)
 
     console.log(`Subscription activated for user ${userId}: ${planTier}`)
@@ -457,9 +464,54 @@ export async function POST(req: NextRequest) {
     if (customerId) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('user_id, is_active, plan_tier')
+        .select('user_id, is_active, plan_tier, creator_referral_code, creator_referral_credited_at')
         .eq('stripe_customer_id', customerId)
         .maybeSingle()
+
+      // ── IG creator referral credit (pivot 2026-06-06) ──
+      // First time this customer pays a non-zero invoice + has a creator_code
+      // attached + hasn't been credited yet → bump that creator's
+      // paid_referrals_count and auto-flip status to 'paid_bonus_hit' at 5.
+      if (
+        profile?.user_id &&
+        profile.creator_referral_code &&
+        !profile.creator_referral_credited_at &&
+        invoice.amount_paid &&
+        invoice.amount_paid > 0
+      ) {
+        try {
+          // Get current count for this creator
+          const { data: creator } = await supabase
+            .from('ig_creator_outreach')
+            .select('id, paid_referrals_count, status')
+            .eq('free_trial_code', profile.creator_referral_code)
+            .maybeSingle()
+
+          if (creator) {
+            const nextCount = (creator.paid_referrals_count ?? 0) + 1
+            const shouldFlipBonus = nextCount >= 5 && creator.status === 'active_creator'
+            await supabase
+              .from('ig_creator_outreach')
+              .update({
+                paid_referrals_count: nextCount,
+                ...(shouldFlipBonus ? { status: 'paid_bonus_hit', bonus_paid_at: null } : {}),
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', creator.id)
+            // Mark customer as credited so we don't double-bump on renewals
+            await supabase
+              .from('profiles')
+              .update({ creator_referral_credited_at: new Date().toISOString() })
+              .eq('user_id', profile.user_id)
+            console.log(`[ig-referral] credited creator ${profile.creator_referral_code} for customer ${profile.user_id} — total refs now ${nextCount}`)
+          } else {
+            console.warn(`[ig-referral] no creator found for code ${profile.creator_referral_code}`)
+          }
+        } catch (e) {
+          console.error('[ig-referral] credit failed:', e)
+        }
+      }
+
       // Restore service only if it was paused AND the plan wasn't outright
       // cancelled (which sets plan_tier='cancelled' via subscription.deleted).
       if (profile?.user_id && profile.is_active === false && profile.plan_tier !== 'cancelled') {

@@ -17,10 +17,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
+// 2026-06-06 PIVOT — single public tier (officemgr) gets weekly Monday drop:
+//   officemgr → 6 leads/week (≈25/month). Drops on first cron run each week.
+//   Legacy tiers preserved for grandfathered customers (receptionist + concierge).
 export const TIER_DROP_TARGET: Record<Tier, { period: 'quarterly' | 'monthly' | 'weekly'; perDrop: number }> = {
   receptionist: { period: 'quarterly', perDrop: 5 },
-  officemgr:    { period: 'monthly',   perDrop: 15 },
-  concierge:    { period: 'weekly',    perDrop: 25 },
+  officemgr:    { period: 'weekly',    perDrop: 6 },   // 6/wk × 4.33wk = 26/mo (≈25/mo marketed)
+  concierge:    { period: 'weekly',    perDrop: 25 },  // legacy Elite tier
 }
 
 const VALID_TRADES = ['hvac', 'plumbing', 'electrical', 'roofing', 'handyman'] as const

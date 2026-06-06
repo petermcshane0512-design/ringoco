@@ -10,6 +10,10 @@ const isPublicRoute = createRouteMatcher([
   "/manifest.json",
   "/sample-report(.*)",
   "/pricing(.*)",
+  // Creator-tagged landing — sets bavg_creator_code cookie + redirects.
+  // Must be public so prospect visiting bellavego.com/r/BAVG-XXXXXX before
+  // signing in isn't blocked by Clerk.
+  "/r/(.*)",
   "/demo(.*)",
   "/founder(.*)",
   "/sign-in(.*)",

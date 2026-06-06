@@ -19,9 +19,17 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({})) as {
     tier?: string
     interval?: Interval
+    creatorCode?: string  // BAVG-XXXXXX from /r/[code] cookie redemption
   }
   const tier: Tier = isValidTier(body.tier ?? '') ? (body.tier as Tier) : 'officemgr'
   const interval: Interval = body.interval === 'annual' ? 'annual' : 'monthly'
+  // 2026-06-06 PIVOT — trial only via creator code. Public path = pay-immediately.
+  // BAVG-XXXXXX format validated; anything else ignored.
+  const rawCode = (body.creatorCode || '').trim().toUpperCase()
+  const creatorCode = /^BAVG-[A-Z0-9]{6}$/.test(rawCode) ? rawCode : null
+  // Also read attribution cookie set by /r/[code] visit (in case JS path missed it).
+  const cookieCode = req.cookies.get('bavg_creator_code')?.value || ''
+  const effectiveCode = creatorCode || (/^BAVG-[A-Z0-9]{6}$/.test(cookieCode.toUpperCase()) ? cookieCode.toUpperCase() : null)
 
   // ── Elite (concierge) is LIVE as of 2026-05-27 ──
   // Previously waitlist-gated until 3 Pro customers existed. Lifted because
@@ -41,41 +49,42 @@ export async function POST(req: NextRequest) {
   ]
 
   try {
-    // ── 7-DAY FREE TRIAL (replaces the legacy 30-day money-back guarantee) ──
-    // Stripe behavior:
-    //   * Card is collected at checkout (Stripe requires payment_method even on
-    //     trials in subscription mode by default — we pin that explicitly with
-    //     payment_method_collection:'always' so test/no-card paths can't slip
-    //     through).
-    //   * First $0 invoice is generated immediately, marked paid.
-    //   * On day 8 the trial ends and Stripe automatically issues the first
-    //     real invoice + charges the card. customer.subscription.trial_will_end
-    //     fires at trial_end - 72h so we can warn the contractor by SMS/email.
-    //   * If the customer cancels (cancel_at_period_end via the portal or our
-    //     /api/subscription/refund route) before day 8, the trial ends and no
-    //     charge ever fires.
-    // Never widen TRIAL_DAYS without re-checking Stripe's free-trial fraud
-    // limits (>14 days requires bank-grade KYC for new merchants).
-    const TRIAL_DAYS = 7
+    // ── TRIAL POLICY 2026-06-06 PIVOT ──
+    // - With valid creator code (BAVG-XXXXXX) → 14-day trial. Filters tire-kickers
+    //   via card-on-file but gives real evaluation window per Hormozi spec.
+    // - Without code → 0-day trial (pay immediately). Public-trial path killed;
+    //   forces signups through creator channel for attribution + commission.
+    const TRIAL_DAYS = effectiveCode ? 14 : 0
+    const subscriptionData: Record<string, unknown> = {
+      metadata: {
+        userId,
+        tier,
+        interval,
+        trial_days: String(TRIAL_DAYS),
+        creator_code: effectiveCode || '',
+      },
+    }
+    if (TRIAL_DAYS > 0) {
+      subscriptionData.trial_period_days = TRIAL_DAYS
+      subscriptionData.trial_settings = {
+        end_behavior: { missing_payment_method: 'cancel' },
+      }
+    }
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'subscription',
       line_items,
-      // Allow promo code entry on the Stripe-hosted page. Founder-only test
-      // codes (e.g. PETERTEST 100%-off forever) flow through here so Peter
-      // and any internal QA can experience the entire signup → checkout →
-      // onboarding flow end-to-end without burning $147.
       allow_promotion_codes: true,
       payment_method_collection: 'always',
-      metadata: { userId, tier, interval, trial_days: String(TRIAL_DAYS) },
-      subscription_data: {
-        trial_period_days: TRIAL_DAYS,
-        trial_settings: {
-          end_behavior: { missing_payment_method: 'cancel' },
-        },
-        metadata: { userId, tier, interval, trial_days: String(TRIAL_DAYS) },
+      metadata: {
+        userId,
+        tier,
+        interval,
+        trial_days: String(TRIAL_DAYS),
+        creator_code: effectiveCode || '',
       },
-      success_url: `${APP_URL}/dashboard/setup?welcome=1&trial=1`,
+      subscription_data: subscriptionData as never,
+      success_url: `${APP_URL}/dashboard/setup?welcome=1${TRIAL_DAYS > 0 ? '&trial=1' : ''}`,
       cancel_url: `${APP_URL}`,
     })
 

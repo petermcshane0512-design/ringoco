@@ -1250,7 +1250,7 @@ export default function HomePage() {
           {/* Homepage tier cards — driven by TIER_FEATURES in src/lib/pricing.ts
               so they ALWAYS match /pricing and /dashboard/upgrade. Edit features
               there, not here. */}
-          {(['receptionist', 'officemgr', 'concierge'] as const).map((tier) => {
+          {(['officemgr'] as const).map((tier) => {
             const meta = HOMEPAGE_TIER_META[tier]
             const features = HOMEPAGE_TIER_FEATURES[tier]
             return {

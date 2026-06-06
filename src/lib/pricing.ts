@@ -136,11 +136,16 @@ export const RECEPTIONIST_CALL_CAP: number =
 // for runtime enforcement in /api/twilio/voice and /api/vapi/assistant-request.
 // Infinity = no cap. Legacy slugs preserved at their original marketed caps
 // so grandfathered customers don't get downgraded.
+//
+// PIVOT 2026-06-06 (Algorithm + Hormozi applied):
+//   - Single public tier = officemgr ($297). UNLIMITED calls (was 300 cap).
+//   - receptionist + concierge kept for grandfathered customers only.
+//   - Public pricing page now shows ONE offer.
 export const TIER_CALL_CAP: Record<string, number> = {
-  // v2 active (May 23 2026)
-  receptionist: CURRENT_PRICING_VERSION === 'v1_legacy' ? 250 : 60, // Starter $147
-  officemgr:    300,                                                 // Pro $297
-  concierge:    Number.POSITIVE_INFINITY,                            // Elite $597
+  // v2 active (May 23 2026 — pivoted 2026-06-06 to single tier)
+  receptionist: CURRENT_PRICING_VERSION === 'v1_legacy' ? 250 : 60, // Starter $147 (legacy, hidden from public)
+  officemgr:    Number.POSITIVE_INFINITY,                            // Pro $297 (NOW UNLIMITED — main public tier)
+  concierge:    Number.POSITIVE_INFINITY,                            // Elite $597 (legacy, hidden from public)
   // Legacy plan_tier strings — keep generous for grandfathered customers.
   foundation:   Number.POSITIVE_INFINITY, // legacy $79 unlimited
   growth:       Number.POSITIVE_INFINITY, // legacy $179 unlimited
@@ -257,29 +262,36 @@ export const TIER_FEATURES: Record<Tier, TierFeatures> = {
     ],
   },
   officemgr: {
-    tagline: 'Answer every call. Get 15 fresh neighborhood leads every month.',
-    callCap: '300 calls/mo',
-    leadsCadence: '15 leads/month',
-    leadsPerYear: 180,
-    reportsCadence: '12 Neighborhood Lead Reports/yr (one per month)',
+    tagline: 'Unlimited calls answered. 25 fresh neighborhood leads/month. Or your money back.',
+    callCap: 'Unlimited calls',
+    leadsCadence: '25 leads/month (~6 every Monday)',
+    leadsPerYear: 300,
+    reportsCadence: 'Weekly neighborhood lead drop every Monday morning',
     comingSoon: false,
     highlights: [
-      'Everything in Starter, plus:',
-      '300 calls/month included (~10 per day)',
-      '15 neighborhood leads delivered every month (180/year)',
-      'Lead score 0–100 + recommended pitch script for each',
-      'Tap-to-call + tap-to-text from each lead',
-      'Priority email support (24-hour reply)',
+      '24/7 AI receptionist — unlimited calls answered',
+      'Auto-books appointments to your calendar live on the call',
+      '25 neighborhood leads/month (6 every Monday morning)',
+      'AI pitch script per lead — never wonder what to say',
+      'FREE dedicated phone number ($50/mo value)',
+      'FREE white-glove onboarding (under 10 min)',
+      'Lifetime price lock — never goes up',
+      'Performance guarantee: 5+ jobs booked in 30 days OR full refund + $50 cash',
     ],
     features: [
-      'Everything in Starter, plus:',
-      '300 calls per month included (~10 per day) — fits multi-truck operations',
-      '15 Neighborhood Leads delivered every month (180 leads per year) — 9× more than Starter',
-      'Each lead enriched with: AI-scored 0–100 priority rank, address, est. home value, year built, sqft, owner name & phone (when public), and a custom pitch script generated from the lead context',
-      'Tap-to-call + tap-to-text directly from the lead card in your dashboard',
-      'Lead drop alerts: push + email the moment new leads land',
-      'In-dashboard CRM-lite — mark leads as Contacted / Quoted / Won / Lost; reschedule callbacks',
-      '24-hour priority email support',
+      '24/7 AI receptionist — unlimited inbound calls, no cap, ever',
+      'Auto-books appointments to your calendar live on the call (Google + Outlook sync)',
+      'Texts you every captured lead in 10 seconds with caller info + summary',
+      '25 Neighborhood Leads delivered monthly — drops ~6 every Monday morning',
+      'Lead types: new homeowners moving in, building permits filed nearby, storm-damage triggers, aging-HVAC homes ready for replacement',
+      'Each lead enriched with: address, est. home value, year built, sqft, owner phone (when public), AI-generated pitch script you can read off the screen',
+      'Tap-to-call + tap-to-text from every lead card',
+      'In-dashboard CRM-lite — mark Contacted / Quoted / Won / Lost; auto-reschedule callbacks',
+      'FREE dedicated phone number provisioned in your area code ($50/mo value)',
+      'FREE white-glove onboarding — your AI is live in under 10 minutes',
+      'Lifetime price lock — your rate never increases as long as you stay subscribed',
+      'PERFORMANCE GUARANTEE — Book at least 5 jobs from the AI in your first 30 days OR full refund + $50 cash for your time',
+      'Cancel anytime in dashboard. No contracts. No upsell pressure.',
     ],
   },
   concierge: {
