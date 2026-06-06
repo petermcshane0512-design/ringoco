@@ -91,25 +91,36 @@ export async function ensureSharedCoupon(stripe: Stripe): Promise<Stripe.Coupon>
  * coupon. Idempotent on the (code, coupon) pair — if the code already
  * exists in Stripe, returns the existing object.
  */
+// Stripe-Version pin for promotion_codes.create. The 2026-04-22.dahlia API
+// release REMOVED `coupon` as an accepted parameter on this endpoint and
+// did not document a replacement. Until Stripe ships docs for the new
+// "discount" object flow, we send this single call with an older API
+// version header so `coupon` is still accepted. Other Stripe calls in the
+// codebase continue to use the default dahlia version.
+const PROMOTION_CODE_API_VERSION = '2024-11-20.acacia'
+
 export async function mintPromotionCode(
   stripe: Stripe,
   code: string,
   metadata: Record<string, string>,
 ): Promise<Stripe.PromotionCode> {
-  // Look up existing by code first — Stripe doesn't enforce unique on
-  // promotion_codes globally, but our DB does, so this is just an extra
-  // belt-and-suspenders on Stripe's side.
-  const existing = await stripe.promotionCodes.list({ code, limit: 1 })
+  // Same per-call version pin on the LIST call too — keeps the request
+  // semantics consistent and avoids subtle param-shape differences
+  // between API versions.
+  const existing = await stripe.promotionCodes.list(
+    { code, limit: 1 },
+    { apiVersion: PROMOTION_CODE_API_VERSION },
+  )
   if (existing.data[0]) return existing.data[0]
 
-  // Stripe API 2026-04 still accepts `coupon` on promotionCodes.create, but
-  // the TypeScript types lag — cast through `as never` so the call compiles.
-  // Tested against the live Dahlia API on 2026-06-06.
   const params = {
     coupon: COUPON_ID,
     code,
     metadata,
     active: true,
   } as unknown as Stripe.PromotionCodeCreateParams
-  return await stripe.promotionCodes.create(params)
+  return await stripe.promotionCodes.create(
+    params,
+    { apiVersion: PROMOTION_CODE_API_VERSION },
+  )
 }
