@@ -69,6 +69,10 @@
       "schedule": "0 2 * * *"
     },
     {
+      "path": "/api/crons/ig-creator-discovery",
+      "schedule": "0 5 * * 1-6"
+    },
+    {
       "path": "/api/crons/auto-load-instantly",
       "schedule": "0 */12 * * *"
     },
@@ -123,6 +127,9 @@
       "maxDuration": 300
     },
     "src/app/api/crons/enrich-young-scores/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/crons/ig-creator-discovery/route.ts": {
       "maxDuration": 300
     }
   }
