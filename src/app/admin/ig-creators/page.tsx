@@ -36,6 +36,11 @@ type Creator = {
   paid_referrals_count: number | null
   bonus_paid_at: string | null
   total_commission_paid_cents: number | null
+  bio: string | null
+  engagement_rate: number | null
+  enriched_at: string | null
+  generated_dm: string | null
+  generated_dm_at: string | null
   created_at: string
   updated_at: string
 }
@@ -123,6 +128,27 @@ export default function IGCreatorsPage() {
     if (r.ok) load()
   }
 
+  async function enrich(id: string) {
+    const r = await fetch(`/api/admin/ig-creators/${id}/enrich`, { method: 'POST' })
+    if (r.ok) { load() } else {
+      const j = await r.json().catch(() => ({}))
+      alert('Enrich failed: ' + (j.error || r.status))
+    }
+  }
+
+  async function personalize(id: string) {
+    const r = await fetch(`/api/admin/ig-creators/${id}/personalize`, { method: 'POST' })
+    if (r.ok) { load() } else {
+      const j = await r.json().catch(() => ({}))
+      alert('DM gen failed: ' + (j.error || r.status))
+    }
+  }
+
+  async function copyDm(text: string) {
+    await navigator.clipboard.writeText(text)
+    alert('DM copied — paste in IG')
+  }
+
   async function bumpReferrals(id: string, delta: number) {
     const current = creators.find((c) => c.id === id)
     if (!current) return
@@ -179,9 +205,14 @@ export default function IGCreatorsPage() {
             label={`${STATUS_LABELS[s].emoji} ${STATUS_LABELS[s].label}`}
           />
         ))}
+        <a
+          href={`/api/admin/ig-creators/export?status=${filter}&with_dm=1`}
+          style={{ marginLeft: 'auto', padding: '8px 16px', borderRadius: 8, background: '#fff', color: '#0AA89F', fontSize: 13, fontWeight: 800, border: '1px solid #0AA89F', cursor: 'pointer', textDecoration: 'none' }}>
+          📥 Export CSV
+        </a>
         <button
           onClick={() => setShowAdd(!showAdd)}
-          style={{ marginLeft: 'auto', padding: '8px 16px', borderRadius: 8, background: '#0AA89F', color: '#fff', fontSize: 13, fontWeight: 800, border: 'none', cursor: 'pointer' }}>
+          style={{ padding: '8px 16px', borderRadius: 8, background: '#0AA89F', color: '#fff', fontSize: 13, fontWeight: 800, border: 'none', cursor: 'pointer' }}>
           + Add creator
         </button>
       </div>
@@ -213,7 +244,8 @@ export default function IGCreatorsPage() {
           {creators.map((c) => {
             const s = STATUS_LABELS[c.status] || STATUS_LABELS.saved
             return (
-              <div key={c.id} style={{ background: '#fff', padding: '14px 16px', borderRadius: 12, border: '1px solid rgba(10,168,159,0.14)', display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'center' }}>
+              <div key={c.id} style={{ background: '#fff', padding: '14px 16px', borderRadius: 12, border: '1px solid rgba(10,168,159,0.14)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'center' }}>
                 <div>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
                     <a href={`https://instagram.com/${c.handle}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 16, fontWeight: 800, color: '#0B1F3A', textDecoration: 'none' }}>
@@ -235,6 +267,14 @@ export default function IGCreatorsPage() {
                   {c.notes && <div style={{ fontSize: 11, color: '#4A6670', marginTop: 4, fontStyle: 'italic' }}>"{c.notes.slice(0, 100)}"</div>}
                 </div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  {!c.enriched_at && <ActionBtn onClick={() => enrich(c.id)} bg="#6366F1">🔍 Enrich</ActionBtn>}
+                  {c.enriched_at && !c.generated_dm && <ActionBtn onClick={() => personalize(c.id)} bg="#7C3AED">✍️ Gen DM</ActionBtn>}
+                  {c.generated_dm && (
+                    <>
+                      <ActionBtn onClick={() => copyDm(c.generated_dm!)} bg="#22C55E">📋 Copy DM</ActionBtn>
+                      <ActionBtn onClick={() => personalize(c.id)} bg="#94a3b8">↻ Regen</ActionBtn>
+                    </>
+                  )}
                   {c.status === 'saved' && <ActionBtn onClick={() => updateStatus(c.id, 'dmed')} bg="#0AA89F">✉️ Mark DM'd</ActionBtn>}
                   {c.status === 'dmed' && <>
                     <ActionBtn onClick={() => updateStatus(c.id, 'replied_yes')} bg="#22C55E">🔥 YES</ActionBtn>
@@ -246,6 +286,15 @@ export default function IGCreatorsPage() {
                     <ActionBtn onClick={() => bumpReferrals(c.id, -1)} bg="#94a3b8">−1</ActionBtn>
                   </>}
                 </div>
+                </div>
+                {c.generated_dm && (
+                  <div style={{ marginTop: 10, padding: '12px 14px', background: '#F5FDFB', borderRadius: 8, fontSize: 12, color: '#0B1F3A', whiteSpace: 'pre-wrap', lineHeight: 1.5, borderLeft: '3px solid #7C3AED' }}>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: '#7C3AED', letterSpacing: '0.08em', marginBottom: 6 }}>
+                      ✨ PERSONALIZED DM — click Copy DM above
+                    </div>
+                    {c.generated_dm}
+                  </div>
+                )}
               </div>
             )
           })}
