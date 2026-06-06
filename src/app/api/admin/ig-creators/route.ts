@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import Stripe from 'stripe'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
+import { vanityCodeFromHandle, findAvailableCode, mintPromotionCode, ensureSharedCoupon } from '@/lib/creatorCodes'
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2026-04-22.dahlia',
+})
 
 export const runtime = 'nodejs'
 
@@ -85,10 +91,12 @@ export async function POST(req: NextRequest) {
   const handle = (body.handle || '').trim().replace(/^@/, '').toLowerCase()
   if (!handle) return NextResponse.json({ error: 'handle required' }, { status: 400 })
 
-  // Generate referral code now (one per creator, locked from creation)
+  // Legacy free_trial_code kept on the row for back-compat — anyone hitting
+  // /ref/BAVG-XXXXXX from old DMs still resolves. New attribution pivot
+  // (2026-06-06) uses promo_code (the personalized Stripe promotion_code).
   const free_trial_code = `BAVG-${handle.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6).padEnd(6, '0')}`
 
-  const { data, error } = await supabase
+  const { data: created, error } = await supabase
     .from('ig_creator_outreach')
     .upsert({
       handle,
@@ -104,5 +112,42 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true, creator: data })
+
+  // Auto-mint the personalized Stripe promotion_code so the row is fully
+  // shareable the moment Peter sees it on the admin page. Wrapped in
+  // try/catch — if Stripe is down, the creator still exists and we can
+  // re-run /generate-promo-code later. Don't block the response.
+  let promo_code: string | null = created.promo_code ?? null
+  let stripe_promotion_code_id: string | null = created.stripe_promotion_code_id ?? null
+  if (!promo_code) {
+    try {
+      const base = vanityCodeFromHandle(handle)
+      if (base) {
+        await ensureSharedCoupon(stripe)
+        const finalCode = await findAvailableCode(supabase, base)
+        const promo = await mintPromotionCode(stripe, finalCode, {
+          creator_id: String(created.id),
+          creator_handle: handle,
+        })
+        await supabase
+          .from('ig_creator_outreach')
+          .update({
+            promo_code: finalCode,
+            stripe_promotion_code_id: promo.id,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', created.id)
+        promo_code = finalCode
+        stripe_promotion_code_id = promo.id
+      }
+    } catch (e) {
+      console.warn('[admin/ig-creators] promo_code auto-mint failed for', handle, e)
+    }
+  }
+
+  return NextResponse.json({
+    ok: true,
+    creator: { ...created, promo_code, stripe_promotion_code_id },
+    ref_url: promo_code ? `https://www.bellavego.com/ref/${promo_code}` : null,
+  })
 }

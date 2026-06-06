@@ -102,10 +102,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Read creator_code from checkout session metadata (set by /api/stripe/checkout
-    // when prospect signed up via /r/[code] flow). Stored on profile so the first
-    // paid invoice handler below can credit the right IG creator's referral count.
+    // when prospect signed up via /ref/[code] flow). Two accepted formats:
+    //   PERSONALIZED  HVACMIKE, PLUMBERJON (current $200-off promotion_code path)
+    //   LEGACY        BAVG-XXXXXX          (old DMs still in the wild, attribution-only)
+    // Stored both on profiles.creator_referral_code (legacy column) and
+    // referred_by_promo_code (new 2026-06-06 schema) so old code paths keep working.
     const creatorCode = (session.metadata?.creator_code || '').toUpperCase().trim()
-    const validCreatorCode = /^BAVG-[A-Z0-9]{6}$/.test(creatorCode) ? creatorCode : null
+    const isLegacyCode = /^BAVG-[A-Z0-9]{6}$/.test(creatorCode)
+    const isPersonalizedCode = /^[A-Z0-9]{1,12}$/.test(creatorCode) && !isLegacyCode
+    const validCreatorCode = isLegacyCode || isPersonalizedCode ? creatorCode : null
 
     await supabase.from('profiles').update({
       stripe_subscription_id: subscriptionId,
@@ -113,7 +118,10 @@ export async function POST(req: NextRequest) {
       stripe_metered_item_id: meteredItemId,
       plan_tier: planTier,
       is_active: true,
-      ...(validCreatorCode ? { creator_referral_code: validCreatorCode } : {}),
+      ...(validCreatorCode ? {
+        creator_referral_code: validCreatorCode,
+        referred_by_promo_code: validCreatorCode,
+      } : {}),
     }).eq('user_id', userId)
 
     console.log(`Subscription activated for user ${userId}: ${planTier}`)
@@ -464,51 +472,87 @@ export async function POST(req: NextRequest) {
     if (customerId) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('user_id, is_active, plan_tier, creator_referral_code, creator_referral_credited_at')
+        .select('user_id, is_active, plan_tier, creator_referral_code, referred_by_promo_code, first_paid_charge_at, second_paid_charge_at')
         .eq('stripe_customer_id', customerId)
         .maybeSingle()
 
-      // ── IG creator referral credit (pivot 2026-06-06) ──
-      // First time this customer pays a non-zero invoice + has a creator_code
-      // attached + hasn't been credited yet → bump that creator's
-      // paid_referrals_count and auto-flip status to 'paid_bonus_hit' at 5.
-      if (
-        profile?.user_id &&
-        profile.creator_referral_code &&
-        !profile.creator_referral_credited_at &&
-        invoice.amount_paid &&
-        invoice.amount_paid > 0
-      ) {
-        try {
-          // Get current count for this creator
-          const { data: creator } = await supabase
-            .from('ig_creator_outreach')
-            .select('id, paid_referrals_count, status')
-            .eq('free_trial_code', profile.creator_referral_code)
-            .maybeSingle()
+      // ── IG creator payout staging (pivot 2026-06-06, refined) ──
+      // Two-stage flow tied to fan's first + second paid invoices:
+      //
+      //   FIRST  paid charge (~$97 with $200-off code applied):
+      //     • stamp profiles.first_paid_charge_at
+      //     • add $200 to creator.pending_payout_cents (in 30-day MBG window)
+      //
+      //   SECOND paid charge (~$297, day ~30):
+      //     • stamp profiles.second_paid_charge_at
+      //     • move $200 from pending_payout_cents → payable_friday_cents
+      //     • bump paid_referrals_count
+      //     • flip status to 'paid_bonus_hit' at 5 refs
+      //
+      // The Friday cron (/api/crons/creator-payout-batch) drains
+      // payable_friday_cents and ACHs the creator.
+      //
+      // amount_paid > 0 filters out $0 invoices (trial extensions, etc.) so
+      // we only count real cash collected. Each profile column is set
+      // exactly once — repeat invoices fall through.
+      const promoCode = profile?.referred_by_promo_code ?? profile?.creator_referral_code
+      const isFirstPaid = !profile?.first_paid_charge_at && invoice.amount_paid && invoice.amount_paid > 0
+      const isSecondPaid = !!profile?.first_paid_charge_at && !profile?.second_paid_charge_at && invoice.amount_paid && invoice.amount_paid > 0
 
-          if (creator) {
-            const nextCount = (creator.paid_referrals_count ?? 0) + 1
-            const shouldFlipBonus = nextCount >= 5 && creator.status === 'active_creator'
+      if (profile?.user_id && promoCode && (isFirstPaid || isSecondPaid)) {
+        try {
+          // Find the creator by NEW promo_code first; fall back to legacy
+          // free_trial_code for rows that predate the 2026-06-06 schema.
+          let creatorQuery = await supabase
+            .from('ig_creator_outreach')
+            .select('id, pending_payout_cents, payable_friday_cents, paid_referrals_count, status')
+            .eq('promo_code', promoCode)
+            .maybeSingle()
+          if (!creatorQuery.data) {
+            creatorQuery = await supabase
+              .from('ig_creator_outreach')
+              .select('id, pending_payout_cents, payable_friday_cents, paid_referrals_count, status')
+              .eq('free_trial_code', promoCode)
+              .maybeSingle()
+          }
+          const creator = creatorQuery.data
+
+          if (!creator) {
+            console.warn(`[creator-payout] no creator found for code ${promoCode}`)
+          } else if (isFirstPaid) {
+            await supabase
+              .from('profiles')
+              .update({ first_paid_charge_at: new Date().toISOString() })
+              .eq('user_id', profile.user_id)
             await supabase
               .from('ig_creator_outreach')
               .update({
+                pending_payout_cents: (creator.pending_payout_cents ?? 0) + 20000,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', creator.id)
+            console.log(`[creator-payout] PENDING +$200 to ${promoCode} (fan first paid charge)`)
+          } else if (isSecondPaid) {
+            const nextCount = (creator.paid_referrals_count ?? 0) + 1
+            const shouldFlipBonus = nextCount >= 5 && creator.status === 'active_creator'
+            await supabase
+              .from('profiles')
+              .update({ second_paid_charge_at: new Date().toISOString() })
+              .eq('user_id', profile.user_id)
+            await supabase
+              .from('ig_creator_outreach')
+              .update({
+                pending_payout_cents: Math.max(0, (creator.pending_payout_cents ?? 0) - 20000),
+                payable_friday_cents: (creator.payable_friday_cents ?? 0) + 20000,
                 paid_referrals_count: nextCount,
                 ...(shouldFlipBonus ? { status: 'paid_bonus_hit', bonus_paid_at: null } : {}),
                 updated_at: new Date().toISOString(),
               })
               .eq('id', creator.id)
-            // Mark customer as credited so we don't double-bump on renewals
-            await supabase
-              .from('profiles')
-              .update({ creator_referral_credited_at: new Date().toISOString() })
-              .eq('user_id', profile.user_id)
-            console.log(`[ig-referral] credited creator ${profile.creator_referral_code} for customer ${profile.user_id} — total refs now ${nextCount}`)
-          } else {
-            console.warn(`[ig-referral] no creator found for code ${profile.creator_referral_code}`)
+            console.log(`[creator-payout] PAYABLE +$200 to ${promoCode} (fan second paid charge) — total refs now ${nextCount}`)
           }
         } catch (e) {
-          console.error('[ig-referral] credit failed:', e)
+          console.error('[creator-payout] staging failed:', e)
         }
       }
 
