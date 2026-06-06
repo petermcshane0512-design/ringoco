@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { isValidTier, type Tier } from '@/lib/pricing'
+import { skipTraceAddress } from '@/lib/skipTrace'
 
 /**
  * Lead-engine core. Used by:
@@ -46,6 +47,9 @@ export type ProfileRow = {
   service_radius_mi: number | null
   business_type: string | null
   is_active: boolean | null
+  // 2026-06-06 — optional onboarding fields used to refine the lead pool
+  sub_trade?: string | null
+  min_ticket?: number | null   // USD
 }
 
 export type AssignResult = { assigned: number; skipped_reason?: string }
@@ -77,43 +81,108 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
   const homeZips = (profile.service_zips || []).filter(Boolean)
   if (homeZips.length === 0) return { assigned: 0, skipped_reason: 'no_service_zips' }
 
-  const radius = Math.max(1, Math.min(150, profile.service_radius_mi ?? 25))
+  // Radius ladder — start at tenant's setting, then escalate twice if the
+  // pool returns < remaining quota. Without this, a Phoenix HVAC guy in a
+  // small ZIP with 20mi default would silently get 0 leads. With it, we
+  // climb to 60mi → 120mi → national-top-score before giving up.
+  const baseRadius = Math.max(1, Math.min(150, profile.service_radius_mi ?? 25))
+  const radiusLadder = [baseRadius, Math.min(150, baseRadius * 2.5), 150]
+  const dedup = new Set<string>()
+  type Candidate = {
+    id: string
+    lead_score: number | null
+    source: string
+    trade_match: string[]
+    zip: string
+    street_address: string | null
+    source_details: Record<string, unknown> | null
+    city: string | null
+    state: string | null
+  }
+  const candidates: Candidate[] = []
+  let radiusUsed = baseRadius
 
-  // Expand home ZIPs to full radius coverage
-  const expanded = new Set<string>(homeZips)
-  for (const hz of homeZips) {
-    const { data: nearby } = await supabase.rpc('zips_within_miles', {
-      primary_zip: hz,
-      radius_mi: radius,
-    })
-    if (Array.isArray(nearby)) {
-      for (const r of nearby) {
-        if (r?.zip) expanded.add(r.zip)
+  for (const r of radiusLadder) {
+    radiusUsed = r
+    const expanded = new Set<string>(homeZips)
+    for (const hz of homeZips) {
+      const { data: nearby } = await supabase.rpc('zips_within_miles', {
+        primary_zip: hz,
+        radius_mi: r,
+      })
+      if (Array.isArray(nearby)) {
+        for (const z of nearby) {
+          if (z?.zip) expanded.add(z.zip)
+        }
+      }
+    }
+    const eligibleZips = [...expanded]
+    if (eligibleZips.length === 0) continue
+
+    const { data: cs } = await supabase
+      .from('leads')
+      .select('id, lead_score, source, trade_match, zip, street_address, source_details, city, state')
+      .contains('trade_match', [tradeFilter])
+      .in('zip', eligibleZips)
+      .order('lead_score', { ascending: false })
+      .limit(remaining * 5)
+
+    type CandidateRow = Candidate
+    for (const c of (cs ?? []) as CandidateRow[]) {
+      if (!dedup.has(c.id)) {
+        dedup.add(c.id)
+        candidates.push(c)
+      }
+    }
+    if (candidates.length >= remaining * 2) break
+  }
+
+  // National top-score fallback if all radii exhausted and we're still short.
+  if (candidates.length < remaining) {
+    const { data: nat } = await supabase
+      .from('leads')
+      .select('id, lead_score, source, trade_match, zip, street_address, source_details, city, state')
+      .contains('trade_match', [tradeFilter])
+      .order('lead_score', { ascending: false })
+      .limit(remaining * 3)
+    type CandidateRow = Candidate
+    for (const c of (nat ?? []) as CandidateRow[]) {
+      if (!dedup.has(c.id)) {
+        dedup.add(c.id)
+        candidates.push(c)
       }
     }
   }
-  const eligibleZips = [...expanded]
-  if (eligibleZips.length === 0) return { assigned: 0, skipped_reason: 'no_service_zips' }
 
-  const { data: candidates } = await supabase
-    .from('leads')
-    .select('id, lead_score, source, trade_match, zip, street_address')
-    .contains('trade_match', [tradeFilter])
-    .in('zip', eligibleZips)
-    .order('lead_score', { ascending: false })
-    .limit(remaining * 3)
-
-  if (!candidates || candidates.length === 0) {
+  if (candidates.length === 0) {
+    console.warn(`[lead-engine] no candidates for ${profile.user_id} (radius_used=${radiusUsed}mi, trade=${tradeFilter})`)
     return { assigned: 0, skipped_reason: 'no_candidates' }
+  }
+
+  // Apply min_ticket filter — drop anything below the contractor's floor.
+  // Stored on the candidate via source_details.reported_cost (set by
+  // permit scrapers). Falls through if cost not on the lead.
+  let pool = candidates
+  if (profile.min_ticket && profile.min_ticket > 0) {
+    type CandidateWithDetails = (typeof candidates)[number] & { source_details?: { reported_cost?: number | string } | null }
+    pool = candidates.filter((c) => {
+      const cd = (c as CandidateWithDetails).source_details?.reported_cost
+      const cost = typeof cd === 'string' ? parseFloat(cd) : (cd ?? 0)
+      // If we don't know the cost, keep the lead — better to surface
+      // borderline matches than over-filter. The contractor can still pass.
+      if (!cost || !isFinite(cost)) return true
+      return cost >= (profile.min_ticket as number)
+    })
+    if (pool.length === 0) pool = candidates // floor too aggressive — fall back
   }
 
   const { data: already } = await supabase
     .from('lead_drops')
     .select('lead_id')
     .eq('user_id', profile.user_id)
-    .in('lead_id', candidates.map((c) => c.id))
+    .in('lead_id', pool.map((c) => c.id))
   const alreadySet = new Set((already || []).map((r) => r.lead_id))
-  const fresh = candidates.filter((c) => !alreadySet.has(c.id)).slice(0, remaining)
+  const fresh = pool.filter((c) => !alreadySet.has(c.id)).slice(0, remaining)
 
   if (fresh.length === 0) return { assigned: 0, skipped_reason: 'all_already_received' }
 
@@ -130,7 +199,74 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
     return { assigned: 0, skipped_reason: 'insert_failed' }
   }
 
+  // ── Skip-trace enrichment ────────────────────────────────────────
+  // For every freshly-dropped lead that hasn't been skip-traced yet,
+  // call BatchData (~$0.10/lookup) and write the result back to the
+  // leads row. Runs inline so the contractor sees the phone number
+  // the moment the lead lands on their dashboard. Budget caps at
+  // $1.00 per drop call (~10 traces) to keep cost predictable when
+  // a backfill or quota-bump fires a big batch.
+  enrichDropsInBackground(fresh.map((f) => f.id)).catch((e) => {
+    console.error('[lead-engine] background skip-trace failed:', e)
+  })
+
   return { assigned: fresh.length }
+}
+
+/**
+ * Skip-trace the just-dropped leads. Fire-and-forget so the assign
+ * function returns quickly to the webhook / cron caller. Each lookup
+ * costs ~$0.10. Writes phone + owner_name back to the leads row so the
+ * customer's dashboard shows them on the next render.
+ *
+ * Only traces leads that haven't been attempted yet.
+ */
+async function enrichDropsInBackground(leadIds: string[]): Promise<void> {
+  if (leadIds.length === 0) return
+
+  const { data: rows } = await supabase
+    .from('leads')
+    .select('id, street_address, city, state, zip, skip_trace_attempted_at')
+    .in('id', leadIds)
+
+  type LeadRow = {
+    id: string
+    street_address: string | null
+    city: string | null
+    state: string | null
+    zip: string | null
+    skip_trace_attempted_at: string | null
+  }
+  const toTrace = ((rows ?? []) as LeadRow[]).filter((l) => !l.skip_trace_attempted_at && l.street_address)
+  if (toTrace.length === 0) return
+
+  let spent = 0
+  const MAX_BUDGET = 1000 // $10 max per drop call
+
+  for (const l of toTrace) {
+    if (spent + 10 > MAX_BUDGET) break
+    const r = await skipTraceAddress({
+      street: l.street_address!,
+      city: l.city ?? undefined,
+      state: l.state ?? undefined,
+      zip: l.zip ?? undefined,
+    })
+    spent += r.cost_cents
+    const update: Record<string, unknown> = {
+      skip_trace_attempted_at: new Date().toISOString(),
+      skip_trace_hit: r.hit,
+      skip_trace_cost_cents: r.cost_cents,
+      updated_at: new Date().toISOString(),
+    }
+    if (r.hit) {
+      if (r.owner_name) update.owner_name = r.owner_name
+      if (r.owner_phones && r.owner_phones.length > 0) update.owner_phone = r.owner_phones[0]
+      if (r.owner_emails && r.owner_emails.length > 0) update.owner_email = r.owner_emails[0]
+      update.skip_trace_raw = r.raw_response
+    }
+    await supabase.from('leads').update(update).eq('id', l.id)
+  }
+  console.log(`[lead-engine] skip-trace batch: ${toTrace.length} attempted, $${(spent / 100).toFixed(2)} spent`)
 }
 
 /**
@@ -140,7 +276,7 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
 export async function fireLeadEngineForUser(userId: string): Promise<AssignResult & { user_id: string }> {
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('user_id, plan_tier, service_area, service_zips, service_radius_mi, business_type, is_active')
+    .select('user_id, plan_tier, service_area, service_zips, service_radius_mi, business_type, is_active, sub_trade, min_ticket')
     .eq('user_id', userId)
     .maybeSingle()
 

@@ -57,6 +57,12 @@ type FormData = {
   serviceArea: string
   trades: string[]
   greetingStyle: GreetingStyle
+  // 2026-06-06 additions — improve lead-engine targeting + receptionist
+  // personalization. All optional; omitting any of them just means we
+  // use the trade-default behavior for that customer.
+  businessDescription: string  // 1-sentence "what makes you you" — read by Emma + used in lead pitch script
+  subTrade: string             // free-text specialty inside the trade (e.g. "porches + decks" for handyman)
+  minTicket: number | null     // skip leads under this $ amount so roofers don't get $400 jobs
 }
 
 export default function OnboardingPage() {
@@ -90,6 +96,9 @@ function OnboardingInner() {
     serviceArea: '',
     trades: [],
     greetingStyle: 'friendly_intro',
+    businessDescription: '',
+    subTrade: '',
+    minTicket: null,
   })
 
   // ZIP → "City, ST" resolution via zippopotam.us. Free, no key. Fires
@@ -210,6 +219,13 @@ function OnboardingInner() {
           service_zips: [form.zip],
           service_radius_mi: defaultRadius,
           services_offered: resolvedTrade,
+          // 2026-06-06 additions — populated to profiles columns of the
+          // same name. Lead engine reads min_ticket + sub_trade to filter
+          // the candidate pool; Vapi prompt builder reads business_description
+          // so Emma can answer "what do you guys do?" with a real sentence.
+          business_description: form.businessDescription.trim() || null,
+          sub_trade: form.subTrade.trim() || null,
+          min_ticket: form.minTicket && form.minTicket > 0 ? form.minTicket : null,
           ai_tone: 'friendly',
           ai_language: 'en',
           revenue_range: '',
@@ -452,6 +468,60 @@ function OnboardingInner() {
                       onChange={e => set('serviceArea', e.target.value)}
                     />
                   )}
+                </div>
+
+                {/* What makes you you — 1-sentence elevator pitch. Emma reads
+                    this when callers ask "what do you guys do?", and the
+                    lead engine uses it to refine the pitch script per lead. */}
+                <div>
+                  <label style={labelStyle}>One sentence — what makes your business different? <span style={{ color: '#A0BCC2', fontWeight: 500 }}>(optional)</span></label>
+                  <input
+                    style={inputStyle}
+                    placeholder={`e.g. "Family-owned Phoenix HVAC, same-day service, no sub-contractors"`}
+                    value={form.businessDescription}
+                    maxLength={140}
+                    onChange={e => set('businessDescription', e.target.value)}
+                  />
+                  <p style={{ fontSize: 11, color: '#A0BCC2', marginTop: 5, lineHeight: 1.55 }}>
+                    Your AI receptionist reads this when callers ask &ldquo;what do you guys do?&rdquo; — also used to personalize every lead pitch script.
+                  </p>
+                </div>
+
+                {/* Specialty inside your trade — helps lead-engine filter
+                    candidates. Handymen: porches vs drywall. Roofers: shingle
+                    vs flat. HVAC: residential vs light commercial. Optional. */}
+                <div>
+                  <label style={labelStyle}>Your specialty inside {form.businessType || 'your trade'} <span style={{ color: '#A0BCC2', fontWeight: 500 }}>(optional)</span></label>
+                  <input
+                    style={inputStyle}
+                    placeholder={`e.g. "porches + decks + garage doors"`}
+                    value={form.subTrade}
+                    maxLength={120}
+                    onChange={e => set('subTrade', e.target.value)}
+                  />
+                  <p style={{ fontSize: 11, color: '#A0BCC2', marginTop: 5, lineHeight: 1.55 }}>
+                    We&apos;ll prioritize leads matching your specialty so you don&apos;t get jobs you don&apos;t want.
+                  </p>
+                </div>
+
+                {/* Min ticket — skip leads under this $ amount. Roofers don't
+                    want $400 repairs; handymen don't want $20K renos. Default
+                    null = no filter. Stored as integer USD. */}
+                <div>
+                  <label style={labelStyle}>Minimum job size you&apos;ll take ($) <span style={{ color: '#A0BCC2', fontWeight: 500 }}>(optional)</span></label>
+                  <input
+                    style={inputStyle}
+                    placeholder="e.g. 500"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={1000000}
+                    value={form.minTicket ?? ''}
+                    onChange={e => set('minTicket', e.target.value ? Math.max(0, parseInt(e.target.value, 10) || 0) : null)}
+                  />
+                  <p style={{ fontSize: 11, color: '#A0BCC2', marginTop: 5, lineHeight: 1.55 }}>
+                    Leads with estimated job value below this won&apos;t be dropped to your dashboard. Leave blank to see everything.
+                  </p>
                 </div>
               </motion.div>
             )}

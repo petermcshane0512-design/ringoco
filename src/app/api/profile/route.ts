@@ -63,6 +63,11 @@ const SAFE_PROFILE_COLUMNS = new Set([
   // /api/crons/lead-engine — every lead is filtered to ZIPs within
   // service_radius_mi of any of these. Captured at onboarding.
   'service_zips', 'service_radius_mi',
+  // ── 2026-06-06 onboarding deltas (sql/2026-06-06-onboarding-fields.sql)
+  // business_description — 1-sentence pitch for Emma + lead pitch script
+  // sub_trade            — free-text specialty filter for lead engine
+  // min_ticket           — USD floor under which leads are dropped
+  'business_description', 'sub_trade', 'min_ticket',
 ])
 
 export async function POST(req: NextRequest) {
