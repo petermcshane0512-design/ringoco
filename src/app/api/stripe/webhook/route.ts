@@ -525,6 +525,56 @@ export async function POST(req: NextRequest) {
           console.error('payment_succeeded is_active flip failed:', e)
         }
       }
+
+      // ── Customer-to-customer referral credit (pivot 2026-06-06) ──
+      // When this paying customer was REFERRED by another paying customer
+      // (profiles.referred_by points to another profile's referral_code),
+      // credit the REFERRER's Stripe account w/ 1 month free ($297) on
+      // their next invoice. One-time per referred customer, gated by
+      // creator_referral_credited_at flag (same column reused — when set,
+      // either IG creator OR customer referrer has been credited).
+      const profileForReferrer = await supabase
+        .from('profiles')
+        .select('user_id, referred_by, creator_referral_credited_at')
+        .eq('stripe_customer_id', customerId)
+        .maybeSingle()
+
+      const refByCode = (profileForReferrer.data as { referred_by?: string | null } | null)?.referred_by
+      const alreadyCredited = (profileForReferrer.data as { creator_referral_credited_at?: string | null } | null)?.creator_referral_credited_at
+      if (
+        refByCode &&
+        !alreadyCredited &&
+        invoice.amount_paid &&
+        invoice.amount_paid > 0
+      ) {
+        try {
+          // Find the REFERRER profile by their referral_code
+          const { data: referrer } = await supabase
+            .from('profiles')
+            .select('user_id, stripe_customer_id')
+            .eq('referral_code', refByCode)
+            .maybeSingle()
+
+          if (referrer?.stripe_customer_id) {
+            // Credit referrer's Stripe balance with $297 (1 month off next invoice)
+            await stripe.customers.createBalanceTransaction(referrer.stripe_customer_id, {
+              amount: -29700, // negative = credit (Stripe convention)
+              currency: 'usd',
+              description: `BellAveGo referral credit — 1 month free for referring a paid customer`,
+            })
+            // Stamp the credited flag so we don't double-credit on renewals
+            await supabase
+              .from('profiles')
+              .update({ creator_referral_credited_at: new Date().toISOString() })
+              .eq('user_id', (profileForReferrer.data as { user_id: string }).user_id)
+            console.log(`[customer-referral] credited referrer ${referrer.user_id} $297 for new paid customer w/ code ${refByCode}`)
+          } else {
+            console.warn(`[customer-referral] no referrer found for code ${refByCode}`)
+          }
+        } catch (e) {
+          console.error('[customer-referral] credit failed:', e)
+        }
+      }
     }
   }
 

@@ -28,6 +28,7 @@ const nav = [
   { label: 'Calendar',           href: '/dashboard/calendar' },
   { label: 'Neighborhood Leads', href: '/dashboard/leads', dot: true },
   { label: 'Lead Reports',       href: '/dashboard/reports' },
+  { label: 'Refer & Earn',       href: '/dashboard/refer', dot: true },
   { label: 'Call Forwarding',    href: '/dashboard/forwarding' },
   { label: 'AI Receptionist',    href: '/dashboard/receptionist' },
 ]
