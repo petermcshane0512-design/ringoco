@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { LEADS, TAG_STYLES, CALLS, usd } from '@/components/ConsultingShowcase'
+import { LEADS, TAG_STYLES, CALLS, usd } from '@/lib/sampleLeads'
 
 /**
  * /monthly-report — public, no-auth, the "what you actually get each month"
