@@ -735,7 +735,7 @@ export default function HomePage() {
                 </div>
                 <div className="hero-trust-item">
                   <span className="hero-trust-num">7‑day</span>
-                  <span className="hero-trust-lab">Free trial</span>
+                  <span className="hero-trust-lab">30-day money back</span>
                 </div>
               </div>
             </div>
@@ -1395,7 +1395,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <Image src="/logo.png" alt="BellAveGo" width={300} height={100} style={{ objectFit: 'contain' }} />
           <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
-          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>AI receptionist and growth platform for HVAC, plumbing, electrical, roofing, and handyman pros · From $147/mo · 7-day free trial · Cancel anytime</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>AI receptionist for HVAC, plumbing, electrical, roofing, and handyman pros · $297/mo · 30-day money-back guarantee · Cancel anytime</p>
           <p style={{ margin: '8px 0 0', fontSize: 11, color: '#3D5A62' }}>
             <Link href="/privacy" style={{ color: '#7AAAB2', textDecoration: 'none' }}>Privacy</Link>
             {' · '}

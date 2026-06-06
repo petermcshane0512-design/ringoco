@@ -174,7 +174,7 @@ export default function Page() {
                 boxShadow: '0 8px 24px rgba(232,116,43,0.42)',
               }}
             >
-              Start 7-day free trial →
+              Get started — 30-day money back →
             </Link>
             <a
               href="tel:+16514677829"

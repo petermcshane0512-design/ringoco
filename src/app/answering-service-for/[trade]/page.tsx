@@ -87,7 +87,7 @@ export default async function Page({ params }: { params: Promise<{ trade: string
               color: '#fff', textDecoration: 'none', borderRadius: 12,
               fontSize: 16, fontWeight: 800, boxShadow: '0 8px 24px rgba(232,116,43,0.42)',
             }}>
-              Start 7-day free trial →
+              Get started — 30-day money back →
             </Link>
             <a href="tel:+16514677829" style={{
               padding: '15px 22px', background: 'rgba(255,255,255,0.08)', color: '#fff',
@@ -172,7 +172,7 @@ export default async function Page({ params }: { params: Promise<{ trade: string
             color: '#fff', textDecoration: 'none', borderRadius: 12,
             fontSize: 17, fontWeight: 800, boxShadow: '0 10px 28px rgba(232,116,43,0.42)',
           }}>
-            Start your 7-day free trial →
+            Get started — 30-day money back →
           </Link>
           <div style={{ marginTop: 14, fontSize: 12, color: '#7AAAB2' }}>
             No card required for trial. Card on file billed day 8 only if you stay.

@@ -491,7 +491,7 @@ export default function DashboardPreview({ compact = false }: { compact?: boolea
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ fontSize: 10, fontWeight: 700, color: '#0B1F3A', marginBottom: 2 }}>Subscription · Pro · $297/mo</div>
-                    <div style={{ fontSize: 8.5, color: '#4A7A80' }}>7-day free trial · Cancel anytime — no refunds after trial</div>
+                    <div style={{ fontSize: 8.5, color: '#4A7A80' }}>30-day money-back guarantee · Cancel anytime</div>
                   </div>
                   <span style={{ fontSize: 8, fontWeight: 700, padding: '3px 9px', borderRadius: 10, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', flexShrink: 0 }}>Active</span>
                 </div>

@@ -489,7 +489,7 @@ export default function PricingPage() {
                   </button>
                 )}
                 <p style={{ fontSize: 11, color: plan.popular ? 'rgba(255,255,255,0.45)' : '#7AAAB2', textAlign: 'center', marginTop: 10, marginBottom: 0, fontWeight: 500 }}>
-                  7-day free trial · Cancel anytime
+                  30-day money-back guarantee · Cancel anytime
                 </p>
               </div>
             )
@@ -602,7 +602,7 @@ export default function PricingPage() {
               },
               {
                 q: 'What if the AI says something wrong?',
-                a: 'Every call is recorded + transcribed in your dashboard. You can customize Emma\'s instructions (services, hours, tone) at any time. Start with a 7-day free trial — if she\'s not pulling her weight, cancel before day 8 and no charge ever fires.',
+                a: 'Every call is recorded + transcribed in your dashboard. You can customize Emma\'s instructions (services, hours, tone) at any time. Backed by a 30-day money-back guarantee — if she\'s not pulling her weight in the first 30 days, click cancel and we refund every penny.',
               },
               {
                 q: 'Do I have to sign a contract?',

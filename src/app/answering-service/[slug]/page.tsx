@@ -119,7 +119,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
                 boxShadow: '0 8px 24px rgba(232,116,43,0.42)',
               }}
             >
-              Start 7-day free trial — $0 setup →
+              Get started — 30-day money back →
             </Link>
             <a
               href="tel:+16514677829"
@@ -222,7 +222,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
                 Get a free missed-call audit for your business — see exactly how many leads BellAveGo would recover.{' '}
               </span>
               <Link href={autoCheckoutUrl} style={{ color: '#0AA89F', fontWeight: 800, textDecoration: 'none' }}>
-                Start free trial →
+                Get started →
               </Link>
             </div>
           </div>
@@ -245,7 +245,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
             borderRadius: 12, fontSize: 17, fontWeight: 800,
             boxShadow: '0 10px 28px rgba(232,116,43,0.42)',
           }}>
-            Start your 7-day free trial →
+            Get started — 30-day money back →
           </Link>
           <div style={{ marginTop: 14, fontSize: 12, color: '#7AAAB2' }}>
             No card required for trial. Card on file billed day 8 only if you stay.

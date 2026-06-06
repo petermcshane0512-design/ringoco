@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     template: "%s · BellAveGo",
   },
   description:
-    "AI answers every call, books the job, follows up on quotes, recovers past-due invoices, and runs your marketing — automatically. Built for HVAC, plumbing, electrical, roofing, and handyman pros of 1–15. From $147/mo. 7-day free trial, cancel anytime.",
+    "AI answers every call, books the job, delivers 5 fresh neighborhood leads every Monday. Built for HVAC, plumbing, electrical, roofing, and handyman pros. $297/mo. 30-day money-back guarantee. Cancel anytime.",
   applicationName: "BellAveGo",
   keywords: [
     "AI receptionist",
