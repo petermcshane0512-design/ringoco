@@ -96,29 +96,71 @@ export async function POST(req: NextRequest) {
   // (2026-06-06) uses promo_code (the personalized Stripe promotion_code).
   const free_trial_code = `BAVG-${handle.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6).padEnd(6, '0')}`
 
-  const { data: created, error } = await supabase
+  // Schema has UNIQUE INDEX (lower(handle)) — a functional index, not a
+  // plain UNIQUE column constraint. Supabase's upsert `onConflict: 'handle'`
+  // requires a real column constraint and 500s otherwise with:
+  //   "there is no unique or exclusion constraint matching the ON CONFLICT specification"
+  //
+  // Fix: plain INSERT; on 23505 (unique_violation), fetch the existing row
+  // and patch the fields. Same pattern used by the ig-creator-discovery cron.
+  const insertPayload = {
+    handle,
+    followers: body.followers ?? null,
+    trade: body.trade || null,
+    hashtag_source: body.hashtag_source || null,
+    notes: body.notes || null,
+    status: body.status && VALID_STATUS.includes(body.status) ? body.status : 'saved',
+    free_trial_code,
+    updated_at: new Date().toISOString(),
+  }
+
+  let created: Record<string, unknown> | null = null
+  const insertRes = await supabase
     .from('ig_creator_outreach')
-    .upsert({
-      handle,
-      followers: body.followers ?? null,
-      trade: body.trade || null,
-      hashtag_source: body.hashtag_source || null,
-      notes: body.notes || null,
-      status: body.status && VALID_STATUS.includes(body.status) ? body.status : 'saved',
-      free_trial_code,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'handle' })
+    .insert(insertPayload)
     .select('*')
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (insertRes.error) {
+    // 23505 = unique_violation. Find by handle (case-insensitive) and update.
+    const code = (insertRes.error as { code?: string }).code
+    if (code !== '23505') {
+      return NextResponse.json({ error: insertRes.error.message }, { status: 500 })
+    }
+    const { data: existing } = await supabase
+      .from('ig_creator_outreach')
+      .select('*')
+      .ilike('handle', handle)
+      .maybeSingle()
+    if (!existing) {
+      return NextResponse.json({ error: 'unique violation but no matching row found' }, { status: 500 })
+    }
+    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() }
+    if (body.followers != null) patch.followers = body.followers
+    if (body.trade) patch.trade = body.trade
+    if (body.hashtag_source) patch.hashtag_source = body.hashtag_source
+    if (body.notes) patch.notes = body.notes
+    if (body.status && VALID_STATUS.includes(body.status)) patch.status = body.status
+    const { data: patched, error: patchErr } = await supabase
+      .from('ig_creator_outreach')
+      .update(patch)
+      .eq('id', (existing as { id: string }).id)
+      .select('*')
+      .single()
+    if (patchErr) return NextResponse.json({ error: patchErr.message }, { status: 500 })
+    created = patched as Record<string, unknown>
+  } else {
+    created = insertRes.data as Record<string, unknown>
+  }
+
+  if (!created) return NextResponse.json({ error: 'no row produced' }, { status: 500 })
 
   // Auto-mint the personalized Stripe promotion_code so the row is fully
   // shareable the moment Peter sees it on the admin page. Wrapped in
   // try/catch — if Stripe is down, the creator still exists and we can
   // re-run /generate-promo-code later. Don't block the response.
-  let promo_code: string | null = created.promo_code ?? null
-  let stripe_promotion_code_id: string | null = created.stripe_promotion_code_id ?? null
+  let promo_code: string | null = (created.promo_code as string | null | undefined) ?? null
+  let stripe_promotion_code_id: string | null = (created.stripe_promotion_code_id as string | null | undefined) ?? null
   if (!promo_code) {
     try {
       const base = vanityCodeFromHandle(handle)
