@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ trade: st
   const { trade: tradeSlug } = await params
   const trade = getTrade(tradeSlug)
   if (!trade) return { title: 'BellAveGo' }
-  const title = `AI Receptionist for ${trade.pluralLabel} — $147/mo · BellAveGo`
+  const title = `AI Receptionist for ${trade.pluralLabel} — $297/mo · BellAveGo`
   const description = `${trade.metaDesc('the United States')} Available in 50+ US metros.`
   const canonical = `https://www.bellavego.com/answering-service-for-${tradeSlug}`
   return {
@@ -60,7 +60,7 @@ export default async function Page({ params }: { params: Promise<{ trade: string
     description: trade.metaDesc('the United States'),
   }
 
-  const autoCheckoutUrl = `/pricing?tier=receptionist&interval=monthly&autocheckout=1&utm_source=seo&utm_medium=organic&utm_campaign=trade-hub-${trade.slug}`
+  const autoCheckoutUrl = `/pricing?tier=officemgr&interval=monthly&autocheckout=1&utm_source=seo&utm_medium=organic&utm_campaign=trade-hub-${trade.slug}`
 
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", color: '#0B1F3A', background: '#F5FDFB' }}>
@@ -107,7 +107,7 @@ export default async function Page({ params }: { params: Promise<{ trade: string
             Why {trade.pluralLabel.toLowerCase()} switch to BellAveGo
           </h2>
           <p style={{ fontSize: 15, color: '#4A6670', lineHeight: 1.6, marginBottom: 28 }}>
-            A US receptionist costs $40,000–$55,000/year in salary, benefits, and payroll tax. Emma costs $147/month — and works 24/7, never calls in sick, never quits.
+            A US receptionist costs $40,000–$55,000/year in salary, benefits, and payroll tax. Emma costs $297/month — and works 24/7, never calls in sick, never quits.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
             {[
@@ -162,10 +162,10 @@ export default async function Page({ params }: { params: Promise<{ trade: string
       <section style={{ padding: '50px 24px', background: '#fff' }}>
         <div style={{ maxWidth: 720, margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{ fontSize: 28, fontWeight: 900, letterSpacing: '-0.02em', marginBottom: 10 }}>
-            $147/mo. No setup fee.
+            $297/mo. No setup fee.
           </h2>
-          <div style={{ fontSize: 60, fontWeight: 900, color: '#0AA89F', letterSpacing: '-2px', lineHeight: 1 }}>$147</div>
-          <div style={{ fontSize: 14, color: '#7AAAB2', marginBottom: 22 }}>per month · 60 calls included · cancel anytime</div>
+          <div style={{ fontSize: 60, fontWeight: 900, color: '#0AA89F', letterSpacing: '-2px', lineHeight: 1 }}>$297</div>
+          <div style={{ fontSize: 14, color: '#7AAAB2', marginBottom: 22 }}>per month · unlimited calls · 5 fresh leads every Monday · cancel anytime</div>
           <Link href={autoCheckoutUrl} style={{
             display: 'inline-block', padding: '18px 36px',
             background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 100%)',
@@ -175,7 +175,7 @@ export default async function Page({ params }: { params: Promise<{ trade: string
             Get started — 30-day money back →
           </Link>
           <div style={{ marginTop: 14, fontSize: 12, color: '#7AAAB2' }}>
-            No card required for trial. Card on file billed day 8 only if you stay.
+            30-day money-back guarantee. Cancel any time from your dashboard, we refund every penny.
           </div>
         </div>
       </section>

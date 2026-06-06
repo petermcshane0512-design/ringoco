@@ -727,7 +727,7 @@ export function ReportView({ report, sample = false, personalized = false }: { r
             Text us — (773) 710-9565
           </a>
           <Link href="/sign-up" className="cr-bar-btn cr-btn-primary">
-            Start 7-day trial
+            Get started
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
@@ -1039,9 +1039,9 @@ export function ReportView({ report, sample = false, personalized = false }: { r
 
           {/* Mid-report HEAR-EMMA CTA #3 — after upsells, before action plan */}
           <a href="tel:+16514677829" className="cr-hear-emma-inline">
-            <strong>Skip the $40K front desk hire. AI does the same job for $147/mo.</strong>
+            <strong>Skip the $40K front desk hire. AI does the same job for $297/mo.</strong>
             <span className="cr-hear-emma-inline-num">📞 (651) 467-7829</span>
-            <span className="cr-hear-emma-inline-sub">7-day free trial · cancel any time · call to hear it first.</span>
+            <span className="cr-hear-emma-inline-sub">30-day money-back guarantee · cancel any time · call to hear it first.</span>
           </a>
 
           {/* 7. Action plan */}
@@ -1134,11 +1134,11 @@ export function ReportView({ report, sample = false, personalized = false }: { r
               <div className="cr-cta-eyebrow">This is a preview. Real reports use YOUR data.</div>
               <h3 className="cr-cta-title">Get this report monthly for {r.meta.businessName}.</h3>
               <p className="cr-cta-body">
-                Real call volume. Real bookings. Real local-market shifts. The AI receptionist answers every missed call, and BellAveGo Consulting compiles your actual numbers into the next report — automatically, on your plan&apos;s cadence. 7-day free trial, cancel anytime.
+                Real call volume. Real bookings. Real local-market shifts. The AI receptionist answers every missed call, and BellAveGo compiles your actual numbers into your weekly Monday lead drop — automatically. 30-day money-back guarantee.
               </p>
               <div className="cr-cta-row">
                 <Link href="/pricing?tier=officemgr&interval=monthly&autocheckout=1" className="cr-cta-pri">
-                  Start 7-day free trial →
+                  Get started — 30-day money back →
                 </Link>
                 <a
                   href={`sms:+17737109565?body=${encodeURIComponent(`Hi, I want to set up BellAveGo for ${r.meta.businessName}. Saw your report.`)}`}
@@ -1147,11 +1147,11 @@ export function ReportView({ report, sample = false, personalized = false }: { r
                   📱 Text us — (773) 710-9565
                 </a>
                 <Link href="/pricing" className="cr-cta-sec">
-                  See all 3 plans
+                  See pricing
                 </Link>
               </div>
               <div className="cr-cta-fineprint">
-                ${TIER_METADATA.officemgr.monthly}/mo for the {TIER_METADATA.officemgr.name} tier (most popular) after the 7-day free trial. Cancel anytime during the trial — no charge fires. Prefer to talk first? Text (773) 710-9565 — we text back within an hour.
+                ${TIER_METADATA.officemgr.monthly}/mo · 30-day money-back guarantee — if you don&apos;t love it in 30 days, click cancel in your dashboard and we refund every penny. Prefer to talk first? Text (773) 710-9565 — we text back within an hour.
               </div>
             </section>
           )}

@@ -399,29 +399,15 @@ export default function DashboardPage() {
       iconBg: "#EFF6FF", iconColor: "#2563EB", accentColor: "#3B82F6",
       icon: <><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></>,
     },
-    // Monthly cap card — fed by /api/calls/count. Counts call_logs rows
-    // since the 1st of the current calendar month + tier cap from
-    // TIER_CALL_CAP. Unlimited tiers (Elite + legacy) show the count-up
-    // form ("23 calls this month") with no remaining number.
-    callCapUnlimited
-      ? {
-          label: "Calls This Month", value: String(callsUsedThisMonth),
-          sub: "Unlimited plan — no monthly cap",
-          iconBg: "#F0FDF4", iconColor: "#16A34A", accentColor: "#22C55E",
-          icon: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>,
-        }
-      : {
-          label: "Calls Left This Month",
-          value: callCapMonth != null ? `${Math.max(0, callCapMonth - callsUsedThisMonth)} / ${callCapMonth}` : '—',
-          sub:
-            callCapMonth == null
-              ? 'Counting your calls…'
-              : callsUsedThisMonth >= callCapMonth
-                ? 'Cap reached. Upgrade for more.'
-                : `${callsUsedThisMonth} of ${callCapMonth} used`,
-          iconBg: "#F5F3FF", iconColor: "#7C3AED", accentColor: "#8B5CF6",
-          icon: <><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></>,
-        },
+    // Calls-left card — single-tier $297 plan is unlimited, so the value
+    // is always ∞. Legacy capped tiers (Starter/Pro from v7) still see ∞
+    // here, by design: Peter does not want numbers in this card.
+    {
+      label: "Calls Left This Month", value: "∞",
+      sub: `${callsUsedThisMonth} answered so far this month`,
+      iconBg: "#F0FDF4", iconColor: "#16A34A", accentColor: "#22C55E",
+      icon: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>,
+    },
   ];
 
   // Dashboard zoom-out 2026-06-01 — Peter said the home dashboard was too
@@ -590,7 +576,7 @@ export default function DashboardPage() {
               <div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: "#92400E" }}>Activate your AI receptionist</div>
                 <div style={{ fontSize: 12, color: "#78350F", marginTop: 3, lineHeight: 1.5 }}>
-                  Pick a plan. We auto-provision your number, register A2P SMS, and tune your prompt after checkout. 7-day free trial, cancel anytime.
+                  Pick a plan. We auto-provision your number, register A2P SMS, and tune your prompt after checkout. 30-day money-back guarantee.
                 </div>
               </div>
               <div style={{ display: "flex", background: "#fff", border: "1px solid #FDE68A", borderRadius: 10, padding: 3, fontSize: 11, fontWeight: 700 }}>
@@ -625,7 +611,7 @@ export default function DashboardPage() {
               <div style={{ fontSize: 12, color: "#78350F" }}>
                 <span style={{ fontWeight: 700 }}>${totalToday.toLocaleString()}</span> charged today
                 {cur.setup > 0 ? ` ($${subToday.toLocaleString()} ${billingCycle} + $${cur.setup} setup)` : ""}.
-                {billingCycle === "monthly" ? " 1-week free trial · cancel anytime." : " 12 months for the price of 10."}
+                {billingCycle === "monthly" ? " 30-day money-back · cancel anytime." : " 12 months for the price of 10."}
               </div>
               <button onClick={startCheckout} disabled={checkoutLoading} style={{ padding: "12px 26px", borderRadius: 10, border: "none", fontSize: 13, fontWeight: 800, cursor: checkoutLoading ? "wait" : "pointer", background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)", color: "#fff", boxShadow: "0 4px 14px rgba(34,197,94,0.32)", whiteSpace: "nowrap" }}>
                 {checkoutLoading ? "Loading…" : `Let's get started →`}

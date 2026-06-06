@@ -285,7 +285,7 @@ function renderBody(input: {
     `Full personalized report (no signup, 2 min):`,
     input.report_url,
     '',
-    `We're BellAveGo — AI receptionist for HVAC shops that don't have one yet. You're probably answering your own phone between jobs right now, losing 2-3 jobs/week when you can't pick up. We answer those calls for you, capture the lead, text it to your phone in 10 seconds — so you can stay on the wrench AND book the job. 7-day free trial, $147/mo. No risk, cancel anytime.`,
+    `We're BellAveGo — AI receptionist for HVAC shops that don't have one yet. You're probably answering your own phone between jobs right now, losing 2-3 jobs/week when you can't pick up. We answer those calls for you, capture the lead, text it to your phone in 10 seconds — so you can stay on the wrench AND book the job. $297/mo, 30-day money-back guarantee. No risk, cancel anytime.`,
     '',
     `— Peter`,
     `BellAveGo · (773) 710-9565`,

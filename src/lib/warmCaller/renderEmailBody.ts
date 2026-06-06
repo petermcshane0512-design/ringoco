@@ -74,12 +74,12 @@ export function renderEmailText(input: RenderEmailInput): string {
     '',
     `📞 Hear Emma answer your phone right now — (651) 467-7829`,
     '',
-    `Skip the $40K front-desk hire — $147/mo, 7-day free trial, cancel any time.`,
+    `Skip the $40K front-desk hire — $297/mo, 30-day money-back guarantee, cancel any time.`,
     '',
     `— Peter`,
     `BellAveGo · (773) 710-9565`,
     '',
-    `P.S. Want to skip the trial and talk first? Text (773) 710-9565 — our team replies within the hour.`,
+    `P.S. Want to talk first? Text (773) 710-9565 — our team replies within the hour.`,
   ].join('\n')
 }
 
@@ -107,7 +107,7 @@ export function renderEmailTextLegacy(input: RenderEmailInput): string {
     `Full personalized report (no signup, 2 min):`,
     trackedUrl,
     '',
-    `We're BellAveGo — AI receptionist for HVAC shops that don't have one yet. You're probably answering your own phone between jobs right now, losing 2-3 jobs/week when you can't pick up. We answer those calls for you, capture the lead, text it to your phone in 10 seconds — so you can stay on the wrench AND book the job. 7-day free trial, $147/mo. No risk, cancel anytime.`,
+    `We're BellAveGo — AI receptionist for HVAC shops that don't have one yet. You're probably answering your own phone between jobs right now, losing 2-3 jobs/week when you can't pick up. We answer those calls for you, capture the lead, text it to your phone in 10 seconds — so you can stay on the wrench AND book the job. $297/mo, 30-day money-back guarantee. No risk, cancel anytime.`,
     '',
     `— Peter`,
     `BellAveGo · (773) 710-9565`,

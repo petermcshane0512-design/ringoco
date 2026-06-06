@@ -66,7 +66,7 @@ export default function ReferralBanner() {
           🎁 Refer a shop, both get 1 month free
         </div>
         <div style={{ fontSize: 14, fontWeight: 700 }}>
-          Each {data.code} signup that survives 7-day trial = $147 credit for you.
+          Each {data.code} signup that pays first month = $297 credit for you.
           {data.creditedCount > 0 && (
             <span style={{ marginLeft: 8, fontWeight: 800, color: '#FEF3C7' }}>
               You&apos;ve earned ${data.totalCreditDollars} so far.

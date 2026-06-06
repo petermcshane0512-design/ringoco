@@ -367,7 +367,7 @@ export default function PlanManagementPage() {
               )}
               {interval === 'monthly' && (
                 <div style={{ fontSize: 11, color: '#4A6670', marginBottom: 12 }}>
-                  Cancel anytime · 7-day free trial
+                  Cancel anytime · 30-day money back
                 </div>
               )}
 

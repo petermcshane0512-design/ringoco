@@ -45,7 +45,7 @@ export default function Page() {
   const result = useMemo(() => {
     const monthly = missedPerWeek * 4.33 * closeRate * avgTicket
     const yearly = monthly * 12
-    const bellaveSaves = monthly - 147 // assuming Emma recovers ALL missed
+    const bellaveSaves = monthly - 297 // assuming Emma recovers ALL missed
     return { monthly, yearly, bellaveSaves }
   }, [missedPerWeek, closeRate, avgTicket])
 
@@ -155,7 +155,7 @@ export default function Page() {
               With BellAveGo
             </div>
             <div style={{ fontSize: 17, fontWeight: 800, lineHeight: 1.4 }}>
-              Emma answers every missed call · captures every lead · costs <strong style={{ color: '#5EEAD4' }}>$147/mo</strong>
+              Emma answers every missed call · captures every lead · costs <strong style={{ color: '#5EEAD4' }}>$297/mo</strong>
             </div>
             <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.82)', marginTop: 8 }}>
               Net win: <strong style={{ color: '#5EEAD4' }}>{usd(result.bellaveSaves)} / month</strong> back in your pocket.
@@ -163,7 +163,7 @@ export default function Page() {
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <Link
-              href="/pricing?tier=receptionist&interval=monthly&autocheckout=1&utm_source=calculator&utm_medium=tool&utm_campaign=missed-call"
+              href="/pricing?tier=officemgr&interval=monthly&autocheckout=1&utm_source=calculator&utm_medium=tool&utm_campaign=missed-call"
               style={{
                 padding: '16px 28px',
                 background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 100%)',

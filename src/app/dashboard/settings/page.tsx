@@ -791,8 +791,8 @@ export default function SettingsPage() {
               I&apos;m not satisfied with BellAveGo — cancel my subscription
             </div>
             <p style={{ fontSize: 13, color: '#4A6670', lineHeight: 1.55, margin: '0 0 12px' }}>
-              Cancel during your 7-day free trial → <strong>no charge ever fires.</strong>{' '}
-              Cancel after day 8 → stops the next renewal. Service stays live until the end of the current cycle. No refund issued for the current cycle.
+              Within 30 days of your first paid charge → <strong>full refund.</strong>{' '}
+              After day 30 → stops the next renewal, service stays live until end of cycle, no refund on the current cycle.
             </p>
             <button
               onClick={openCancelModal}

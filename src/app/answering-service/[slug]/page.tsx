@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const trade = getTrade(parsed.tradeSlug)
   const city = getCity(parsed.citySlug)
   if (!trade || !city) return { title: 'BellAveGo' }
-  const title = `Best AI Receptionist for ${trade.pluralLabel} in ${city.label}, ${city.state} — $147/mo`
+  const title = `Best AI Receptionist for ${trade.pluralLabel} in ${city.label}, ${city.state} — $297/mo`
   const description = trade.metaDesc(`${city.label}, ${city.state}`)
   const canonical = `https://www.bellavego.com/answering-service/${slug}`
   return {
@@ -84,7 +84,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     description: trade.metaDesc(cityFull),
   }
 
-  const autoCheckoutUrl = `/pricing?tier=receptionist&interval=monthly&autocheckout=1&utm_source=seo&utm_medium=organic&utm_campaign=${trade.slug}-${city.slug}`
+  const autoCheckoutUrl = `/pricing?tier=officemgr&interval=monthly&autocheckout=1&utm_source=seo&utm_medium=organic&utm_campaign=${trade.slug}-${city.slug}`
 
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", color: '#0B1F3A', background: '#F5FDFB' }}>
@@ -158,7 +158,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
               { icon: '📞', title: '24/7 call answering', body: 'Emma picks up after the first ring, every time. Even at 2 AM Sunday.' },
               { icon: '⚡', title: '10-second lead alert', body: 'Push + SMS + email the moment Emma captures a job. You call back warm.' },
               { icon: '📅', title: 'Books appointments', body: 'Optional: connect Google or Outlook. Emma offers real slots from your free time.' },
-              { icon: '💰', title: '$40K cheaper than hiring', body: 'A US receptionist costs $40K+/yr. Emma is $147/mo. Same job. Better hours.' },
+              { icon: '💰', title: '$40K cheaper than hiring', body: 'A US receptionist costs $40K+/yr. Emma is $297/mo. Same job. Better hours.' },
             ].map((b) => (
               <div key={b.title} style={{
                 background: '#F5FDFB',
@@ -235,8 +235,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
           <h2 style={{ fontSize: 26, fontWeight: 900, letterSpacing: '-0.02em', marginBottom: 10 }}>
             One price. No setup fee. Cancel any time.
           </h2>
-          <div style={{ fontSize: 60, fontWeight: 900, color: '#0AA89F', letterSpacing: '-2px', lineHeight: 1 }}>$147</div>
-          <div style={{ fontSize: 14, color: '#7AAAB2', marginBottom: 22 }}>per month · 60 calls included</div>
+          <div style={{ fontSize: 60, fontWeight: 900, color: '#0AA89F', letterSpacing: '-2px', lineHeight: 1 }}>$297</div>
+          <div style={{ fontSize: 14, color: '#7AAAB2', marginBottom: 22 }}>per month · unlimited calls · 5 fresh leads every Monday</div>
           <Link href={autoCheckoutUrl} style={{
             display: 'inline-block',
             padding: '18px 36px',
@@ -248,7 +248,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
             Get started — 30-day money back →
           </Link>
           <div style={{ marginTop: 14, fontSize: 12, color: '#7AAAB2' }}>
-            No card required for trial. Card on file billed day 8 only if you stay.
+            30-day money-back guarantee. Cancel any time from your dashboard, we refund every penny.
           </div>
         </div>
       </section>

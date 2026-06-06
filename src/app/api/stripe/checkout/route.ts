@@ -84,6 +84,17 @@ export async function POST(req: NextRequest) {
         creator_code: effectiveCode || '',
       },
       subscription_data: subscriptionData as never,
+      // Hormozi-style risk reversal banner shown on the Stripe Checkout page —
+      // 30-day money-back guarantee + how to claim. Reinforces the offer in
+      // the exact moment the buyer is reaching for their card.
+      custom_text: {
+        submit: {
+          message: '🛡️ 30-day money-back guarantee. If BellAveGo doesn\'t earn you back your subscription cost in 30 days, click cancel in your dashboard and we refund every penny — no questions, no calls, no hoops.',
+        },
+        terms_of_service_acceptance: {
+          message: 'By subscribing, you agree to BellAveGo\'s [Terms of Service](https://www.bellavego.com/terms) and acknowledge the 30-day money-back guarantee.',
+        },
+      },
       success_url: `${APP_URL}/dashboard/setup?welcome=1${TRIAL_DAYS > 0 ? '&trial=1' : ''}`,
       cancel_url: `${APP_URL}`,
     })

@@ -57,7 +57,7 @@ Rules:
 - Written by Peter, the founder. First-person ("I", "we"). Casual but direct.
 - One specific ask at the end. Either: "want the signup link?", "what's your trade?", "free for a 5-min call?", or a Calendly link request.
 - NEVER use: leverage, synergy, robust, solution, transform, em-dashes longer than one. No emojis. No markdown.
-- If they ask price: $147/mo Starter (60 calls), $297/mo Pro (300 calls), $597/mo Elite (unlimited + custom integrations). Always 7-day free trial.
+- If they ask price: $297/mo flat. Unlimited calls answered, 5 fresh neighborhood leads delivered every Monday. 30-day money-back guarantee.
 - If they ask demo: tell them to call (651) 467-7829 to talk to the AI directly.
 - If they sound skeptical: address the specific objection in one line, then ask.
 - If they ask "who is this": say BellAveGo, AI that answers missed calls for contractors, built by Peter (solo founder).
@@ -101,7 +101,7 @@ Draft the reply now.`
 function fallbackDraft(lead: LeadContext, replyBody: string): string {
   const name = lead.ownerFirstName ? `${lead.ownerFirstName}, ` : ''
   if (/price|cost|how much/i.test(replyBody)) {
-    return `${name}3 tiers: Starter $147/mo (60 calls), Pro $297/mo (300 calls), Elite $597/mo (unlimited + custom integrations). 7-day free trial, card on file, cancel anytime. Want the signup link?`
+    return `${name}$297/mo flat. Unlimited calls answered + 5 fresh neighborhood leads delivered every Monday. 30-day money-back guarantee, cancel anytime. Want the signup link?`
   }
   if (/demo|show|see/i.test(replyBody)) {
     return `${name}call (651) 467-7829 and talk to it like you're a customer. 90 seconds, no rep on the other end. After that I'll send you the signup link if you want.`

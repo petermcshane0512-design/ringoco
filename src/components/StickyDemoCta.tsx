@@ -37,7 +37,7 @@ export default function StickyDemoCta() {
 
   if (hidden) return null
   const rightHref = isSignedIn ? '/dashboard' : '/sign-up'
-  const rightLabel = isSignedIn ? 'Open Dashboard' : 'Start free trial'
+  const rightLabel = isSignedIn ? 'Open Dashboard' : 'Get started'
 
   return (
     <>

@@ -258,7 +258,7 @@ export const TIER_FEATURES: Record<Tier, TierFeatures> = {
       'Lead alerts land on your phone within 10 seconds of every call — push notification + SMS + email with caller name, problem, and tap-to-call link',
       'Auto-books appointments to the BellAveGo Calendar — mirrors to Google Calendar + Microsoft Outlook (optional, one-click)',
       'Emergency outbound voice call to your cell when caller flags urgency',
-      'No contract · 7-day free trial · cancel anytime',
+      'No contract · 30-day money-back guarantee · cancel anytime',
     ],
   },
   officemgr: {

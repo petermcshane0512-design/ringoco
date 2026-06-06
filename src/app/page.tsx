@@ -459,7 +459,7 @@ export default function HomePage() {
             @media (max-width: 768px) {
               /* Top-LEFT alignment for hero content. Tight bottom padding
                  (12px) so the hero ends right after the trust strip — no
-                 trailing empty space below "7-day free trial". */
+                 trailing empty space below the guarantee badge. */
               .hero-grid {
                 /* Headline hugs the bottom edge of the nav — top padding 6px.
                  Trust strip is the last thing in the dark navy stage. */
