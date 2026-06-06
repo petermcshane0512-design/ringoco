@@ -733,10 +733,6 @@ export default function HomePage() {
                   <span className="hero-trust-num">24/7</span>
                   <span className="hero-trust-lab">Always on</span>
                 </div>
-                <div className="hero-trust-item">
-                  <span className="hero-trust-num">7‑day</span>
-                  <span className="hero-trust-lab">30-day money back</span>
-                </div>
               </div>
             </div>
 
