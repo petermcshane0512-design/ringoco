@@ -34,28 +34,42 @@ function normalizeCreatorCode(raw: string | undefined | null): string | null {
 }
 
 /**
- * Resolve a creator code to the Stripe promotion_code object so checkout
- * can apply the $200-off discount. New personalized codes are stored
- * directly in `ig_creator_outreach.promo_code`. Legacy BAVG-XXXXXX codes
- * never had a Stripe promotion_code minted, so they fall through to
- * attribution-only (no discount).
+ * Resolve a creator code to a Stripe promotion_code so checkout can apply
+ * the right discount. Two code lookups in order:
+ *   1. PUBLIC  ($200 off first month, multi-use)  — code stored in promo_code
+ *   2. PERSONAL (3 months free, single-use)       — code stored in personal_promo_code
+ *   3. LEGACY BAVG-XXXXXX                          — attribution-only, no Stripe discount
  *
- * Returns { promotionCodeId, attributionCode } | null.
+ * Returns the discount target + the attribution string we stamp on the
+ * subscription metadata so the webhook can credit the right creator.
  */
 async function lookupPromoCode(code: string): Promise<{ promotionCodeId: string | null; attributionCode: string }> {
-  // Legacy → attribution only, no Stripe discount object
   if (LEGACY_BAVG_REGEX.test(code)) {
     return { promotionCodeId: null, attributionCode: code }
   }
-  const { data } = await supabase
+
+  // Try public code first.
+  const pub = await supabase
     .from('ig_creator_outreach')
     .select('stripe_promotion_code_id, promo_code')
     .eq('promo_code', code)
     .limit(1)
-    .single()
-  if (data?.stripe_promotion_code_id) {
-    return { promotionCodeId: data.stripe_promotion_code_id as string, attributionCode: code }
+    .maybeSingle()
+  if (pub.data?.stripe_promotion_code_id) {
+    return { promotionCodeId: pub.data.stripe_promotion_code_id as string, attributionCode: code }
   }
+
+  // Fall through to personal code (creator signing up themselves).
+  const personal = await supabase
+    .from('ig_creator_outreach')
+    .select('personal_stripe_promotion_code_id, personal_promo_code')
+    .eq('personal_promo_code', code)
+    .limit(1)
+    .maybeSingle()
+  if (personal.data?.personal_stripe_promotion_code_id) {
+    return { promotionCodeId: personal.data.personal_stripe_promotion_code_id as string, attributionCode: code }
+  }
+
   return { promotionCodeId: null, attributionCode: code }
 }
 

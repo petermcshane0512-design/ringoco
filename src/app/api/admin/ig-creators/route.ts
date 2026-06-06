@@ -2,7 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
-import { vanityCodeFromHandle, findAvailableCode, mintPromotionCode, ensureSharedCoupon } from '@/lib/creatorCodes'
+import {
+  vanityCodeFromHandle,
+  personalCodeFromHandle,
+  findAvailableCode,
+  mintPromotionCode,
+  mintPersonalPromotionCode,
+  ensureSharedCoupon,
+  ensurePersonalCoupon,
+} from '@/lib/creatorCodes'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2026-04-22.dahlia',
@@ -155,18 +163,23 @@ export async function POST(req: NextRequest) {
 
   if (!created) return NextResponse.json({ error: 'no row produced' }, { status: 500 })
 
-  // Auto-mint the personalized Stripe promotion_code so the row is fully
-  // shareable the moment Peter sees it on the admin page. Wrapped in
-  // try/catch — if Stripe is down, the creator still exists and we can
-  // re-run /generate-promo-code later. Don't block the response.
+  // Auto-mint BOTH promo codes for this creator:
+  //   PUBLIC   ($200 off first month for fans, multi-use)        → promo_code
+  //   PERSONAL (3 months free Pro for the creator, single-use)   → personal_promo_code
+  //
+  // Each stage wrapped — if Stripe blips on one, the creator still
+  // exists and we can re-run via /generate-promo-code later.
   let promo_code: string | null = (created.promo_code as string | null | undefined) ?? null
   let stripe_promotion_code_id: string | null = (created.stripe_promotion_code_id as string | null | undefined) ?? null
+  let personal_promo_code: string | null = (created.personal_promo_code as string | null | undefined) ?? null
+  let personal_stripe_promotion_code_id: string | null = (created.personal_stripe_promotion_code_id as string | null | undefined) ?? null
+
   if (!promo_code) {
     try {
       const base = vanityCodeFromHandle(handle)
       if (base) {
         await ensureSharedCoupon(stripe)
-        const finalCode = await findAvailableCode(supabase, base)
+        const finalCode = await findAvailableCode(supabase, base, 'promo_code')
         const promo = await mintPromotionCode(stripe, finalCode, {
           creator_id: String(created.id),
           creator_handle: handle,
@@ -183,13 +196,51 @@ export async function POST(req: NextRequest) {
         stripe_promotion_code_id = promo.id
       }
     } catch (e) {
-      console.warn('[admin/ig-creators] promo_code auto-mint failed for', handle, e)
+      console.warn('[admin/ig-creators] public promo_code mint failed for', handle, e)
+    }
+  }
+
+  if (!personal_promo_code) {
+    try {
+      const base = personalCodeFromHandle(handle)
+      if (base) {
+        await ensurePersonalCoupon(stripe)
+        const finalCode = await findAvailableCode(supabase, base, 'personal_promo_code')
+        const promo = await mintPersonalPromotionCode(stripe, finalCode, {
+          creator_id: String(created.id),
+          creator_handle: handle,
+          kind: 'personal_3mo_free',
+        })
+        await supabase
+          .from('ig_creator_outreach')
+          .update({
+            personal_promo_code: finalCode,
+            personal_stripe_promotion_code_id: promo.id,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', created.id)
+        personal_promo_code = finalCode
+        personal_stripe_promotion_code_id = promo.id
+      }
+    } catch (e) {
+      console.warn('[admin/ig-creators] personal promo_code mint failed for', handle, e)
     }
   }
 
   return NextResponse.json({
     ok: true,
-    creator: { ...created, promo_code, stripe_promotion_code_id },
-    ref_url: promo_code ? `https://www.bellavego.com/ref/${promo_code}` : null,
+    creator: {
+      ...created,
+      promo_code,
+      stripe_promotion_code_id,
+      personal_promo_code,
+      personal_stripe_promotion_code_id,
+    },
+    public_ref_url: promo_code ? `https://www.bellavego.com/ref/${promo_code}` : null,
+    personal_signup_code: personal_promo_code,
+    // Convenience block — paste-ready for Peter's DM follow-up.
+    dm_block: promo_code && personal_promo_code
+      ? `Your personal 3-months-free code: ${personal_promo_code}\nSignup: https://www.bellavego.com/pricing\nApply ${personal_promo_code} at checkout.\n\nYour fan code (give to your followers): ${promo_code}\nThey use https://www.bellavego.com/ref/${promo_code} and get $97 first month.`
+      : null,
   })
 }

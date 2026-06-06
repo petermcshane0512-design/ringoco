@@ -1,45 +1,70 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
-import { ensureSharedCoupon, COUPON_ID } from '@/lib/creatorCodes'
+import { ensureSharedCoupon, ensurePersonalCoupon, COUPON_ID, PERSONAL_COUPON_ID } from '@/lib/creatorCodes'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2026-04-22.dahlia',
 })
 
 /**
- * Idempotent setup of the shared "$200 off first month" creator coupon.
+ * Idempotent setup of the TWO creator coupons:
+ *   PUBLIC   "$200 off first month"  → fans of creator get $97 first month
+ *   PERSONAL "3 months free"         → creator's own subscription
  *
- * POST /api/admin/setup-creator-coupon  — creates the coupon if missing
- * GET  /api/admin/setup-creator-coupon  — returns its current state
- *
- * Hit this once after deploy. After that, the coupon exists forever and
- * every creator's personal promotion_code points at it.
+ * POST creates whichever is missing; GET reports current state.
+ * Hit this once per environment after deploy.
  */
+function summarize(c: Stripe.Coupon) {
+  return {
+    id: c.id,
+    name: c.name,
+    amount_off: c.amount_off,
+    percent_off: c.percent_off,
+    duration: c.duration,
+    duration_in_months: c.duration_in_months,
+    times_redeemed: c.times_redeemed,
+    valid: c.valid,
+  }
+}
+
 export async function POST() {
-  const gate = await requireAdmin()
-  if (!gate.ok) return gate.res
-  const coupon = await ensureSharedCoupon(stripe)
-  return NextResponse.json({
-    ok: true,
-    coupon: {
-      id: coupon.id,
-      name: coupon.name,
-      amount_off: coupon.amount_off,
-      duration: coupon.duration,
-      times_redeemed: coupon.times_redeemed,
-      valid: coupon.valid,
-    },
-  })
+  try {
+    const gate = await requireAdmin()
+    if (!gate.ok) return gate.res
+    const publicCoupon = await ensureSharedCoupon(stripe)
+    const personalCoupon = await ensurePersonalCoupon(stripe)
+    return NextResponse.json({
+      ok: true,
+      public_coupon: summarize(publicCoupon),
+      personal_coupon: summarize(personalCoupon),
+    })
+  } catch (e) {
+    const err = e as { message?: string; raw?: { message?: string } }
+    return NextResponse.json({
+      ok: false,
+      error: err.raw?.message || err.message || String(e),
+    }, { status: 500 })
+  }
 }
 
 export async function GET() {
   const gate = await requireAdmin()
   if (!gate.ok) return gate.res
+  const out: Record<string, unknown> = { ok: true }
   try {
-    const coupon = await stripe.coupons.retrieve(COUPON_ID)
-    return NextResponse.json({ ok: true, exists: true, coupon })
+    const c = await stripe.coupons.retrieve(COUPON_ID)
+    out.public_coupon = summarize(c)
+    out.public_exists = true
   } catch {
-    return NextResponse.json({ ok: true, exists: false })
+    out.public_exists = false
   }
+  try {
+    const c = await stripe.coupons.retrieve(PERSONAL_COUPON_ID)
+    out.personal_coupon = summarize(c)
+    out.personal_exists = true
+  } catch {
+    out.personal_exists = false
+  }
+  return NextResponse.json(out)
 }

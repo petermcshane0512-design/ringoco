@@ -25,6 +25,10 @@ export const COUPON_ID = 'BAVG_200_OFF_FIRST_MONTH'
 export const COUPON_AMOUNT_OFF_CENTS = 20000   // $200.00
 export const COUPON_DURATION: Stripe.CouponCreateParams.Duration = 'once'
 
+// Personal creator coupon: 100% off × 3 months. Single Stripe coupon,
+// many single-use promotion_codes pointing at it (one per creator).
+export const PERSONAL_COUPON_ID = 'BAVG_3_MONTHS_FREE_CREATOR'
+
 /**
  * Sanitize an IG handle into a Stripe promotion_code string.
  *   "@hvac.mike"     → "HVACMIKE"
@@ -43,10 +47,15 @@ export function vanityCodeFromHandle(handle: string): string {
 /**
  * Try a vanity code; if Supabase says it's taken, append numeric suffix
  * until free. Returns the final code (never null).
+ *
+ * `column` chooses which slot to check uniqueness against — defaults to
+ * the public promo_code column; pass 'personal_promo_code' when minting
+ * a creator's single-use 3-month-free code.
  */
 export async function findAvailableCode(
   supabase: AnySupabase,
   base: string,
+  column: 'promo_code' | 'personal_promo_code' = 'promo_code',
 ): Promise<string> {
   if (!base) base = 'CREATOR'
   for (let attempt = 0; attempt < 200; attempt++) {
@@ -54,12 +63,24 @@ export async function findAvailableCode(
     const { data } = await supabase
       .from('ig_creator_outreach')
       .select('id')
-      .eq('promo_code', candidate)
+      .eq(column, candidate)
       .limit(1)
     if (!data || data.length === 0) return candidate
   }
   // Fallback — should never hit with 200 tries.
   return `${base}${Date.now().toString(36).toUpperCase()}`
+}
+
+/**
+ * Derive a personal vanity string from an IG handle: `{HANDLE}3MO`.
+ * Caps at 16 chars total (Stripe allows 64, but shorter reads better).
+ */
+export function personalCodeFromHandle(handle: string): string {
+  const base = vanityCodeFromHandle(handle)
+  if (!base) return 'CREATOR3MO'
+  const suffix = '3MO'
+  const maxBase = 16 - suffix.length
+  return `${base.slice(0, maxBase)}${suffix}`
 }
 
 /**
@@ -87,6 +108,32 @@ export async function ensureSharedCoupon(stripe: Stripe): Promise<Stripe.Coupon>
 }
 
 /**
+ * Creates the personal-creator coupon: 100% off × 3 months. Each creator
+ * gets their own single-use promotion_code pointing at this coupon. Lets
+ * them use BellAveGo Pro free for 3 months as their joining incentive
+ * (Hormozi value stack — $891 of product handed over to lock the partner).
+ */
+export async function ensurePersonalCoupon(stripe: Stripe): Promise<Stripe.Coupon> {
+  try {
+    return await stripe.coupons.retrieve(PERSONAL_COUPON_ID)
+  } catch (e) {
+    const err = e as { code?: string }
+    if (err.code !== 'resource_missing') throw e
+    return await stripe.coupons.create({
+      id: PERSONAL_COUPON_ID,
+      name: '3 months free — creator partner',
+      percent_off: 100,
+      duration: 'repeating',
+      duration_in_months: 3,
+      metadata: {
+        purpose: 'creator-personal',
+        created_by: 'src/lib/creatorCodes.ts',
+      },
+    })
+  }
+}
+
+/**
  * Mints a Stripe promotion_code for a creator, pointing at the shared
  * coupon. Idempotent on the (code, coupon) pair — if the code already
  * exists in Stripe, returns the existing object.
@@ -98,6 +145,37 @@ export async function ensureSharedCoupon(stripe: Stripe): Promise<Stripe.Coupon>
 // version header so `coupon` is still accepted. Other Stripe calls in the
 // codebase continue to use the default dahlia version.
 const PROMOTION_CODE_API_VERSION = '2024-11-20.acacia'
+
+/**
+ * Mints a SINGLE-USE personal promotion_code (max_redemptions = 1)
+ * pointing at the 3-months-free creator coupon. Used when a creator
+ * joins as a partner — their personal code lets ONLY them get the 3
+ * months free; sharing it with friends has no effect after first use.
+ */
+export async function mintPersonalPromotionCode(
+  stripe: Stripe,
+  code: string,
+  metadata: Record<string, string>,
+): Promise<Stripe.PromotionCode> {
+  // Reuse if it already exists (idempotent).
+  const existing = await stripe.promotionCodes.list(
+    { code, limit: 1 },
+    { apiVersion: PROMOTION_CODE_API_VERSION },
+  )
+  if (existing.data[0]) return existing.data[0]
+
+  const params = {
+    coupon: PERSONAL_COUPON_ID,
+    code,
+    metadata,
+    active: true,
+    max_redemptions: 1,
+  } as unknown as Stripe.PromotionCodeCreateParams
+  return await stripe.promotionCodes.create(
+    params,
+    { apiVersion: PROMOTION_CODE_API_VERSION },
+  )
+}
 
 export async function mintPromotionCode(
   stripe: Stripe,
