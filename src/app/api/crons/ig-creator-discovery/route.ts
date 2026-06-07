@@ -31,13 +31,25 @@ const supabase = createClient(
 const APIFY_TOKEN = process.env.APIFY_TOKEN || process.env.APIFY_API_TOKEN
 const HASHTAG_ACTOR = 'apify~instagram-hashtag-scraper'
 
+// 2026-06-07 PIVOT — hashtag list rewired to find YOUNG face-on-camera
+// trades creators (TikTok-style personality accounts), not faceless
+// brand pages. Old list pulled too many corporate accounts that don't
+// move product through personal influence.
 const TARGET_HASHTAGS = [
-  'hvactech', 'hvaclife', 'hvacowner', 'hvacguy',
-  'plumberlife', 'youngplumber', 'plumbinglife',
-  'electricianlife', 'youngelectrician',
-  'roofingcontractor', 'rooferlife',
-  'handymanlife', 'generalcontractor',
-  'servicebusiness', 'youngcontractor', 'tradesmanlife',
+  // Personality + TikTok-crossover tags (where face-on-camera creators live)
+  'hvactiktok', 'plumbertiktok', 'electriciantiktok', 'tradestiktok',
+  'hvactok', 'plumbertok', 'electriciantok',
+  'tradesguy', 'tradesbro', 'tradeschick', 'youngtrades',
+  'apprenticelife', 'hvacapprentice', 'plumberapprentice', 'electricianapprentice',
+  'dayinthelifeofatradesman', 'dayinthelifehvac',
+  // Hustle / personality tags
+  'hvachustle', 'plumberhustle', 'tradeslife',
+  'tradesmanlife', 'youngcontractor', 'youngplumber', 'youngelectrician',
+  // Self-employed / solo / lifestyle markers
+  'selfemployedlife', 'smallbusinesslife', 'ownerop',
+  // Legacy trade tags (kept — some real personalities still post here)
+  'hvactech', 'hvaclife', 'plumberlife', 'electricianlife',
+  'roofingcontractor', 'rooferlife', 'handymanlife',
 ]
 
 const TRADE_KEYWORDS = {
