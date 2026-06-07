@@ -318,7 +318,7 @@ export async function POST(req: NextRequest) {
         if (contractor?.owner_phone && !contractor.welcomed_at) {
           // 1. Welcome SMS — fast, immediate, ringtone-grade alert.
           await twilioClient.messages.create({
-            body: `Welcome to BellAveGo, ${contractor.business_name || 'partner'}! Your AI receptionist is live at ${provisionedNumber}. Next step: set up call forwarding so missed calls ring through — walkthrough: https://www.bellavego.com/dashboard/forwarding. You're in your 7-day free trial — first charge hits day 8 unless you cancel. — BellAveGo team`,
+            body: `🎯 Welcome to BellAveGo, ${contractor.business_name || 'partner'}! Your AI receptionist is LIVE at ${provisionedNumber}. Next step: forward your business line so missed calls ring through — 60-sec walkthrough: https://www.bellavego.com/dashboard/forwarding. Your first 5 neighborhood leads land in your dashboard within 24h. 30-day money-back guarantee — cancel anytime in your dashboard if you're not booking more jobs. — Peter, BellAveGo`,
             from: provisionedNumber,
             to: contractor.owner_phone,
           })

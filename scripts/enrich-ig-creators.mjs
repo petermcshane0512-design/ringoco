@@ -46,7 +46,7 @@ const ACTOR_ID = 'apify~instagram-profile-scraper'
 const MIN_FOLLOWERS = 800
 const MAX_FOLLOWERS = 12700
 const MIN_ENGAGEMENT_RATE = 2.0     // % — below this = ghost account or bot-followed
-const MIN_VIDEO_RATIO     = 0.50    // ≥50% recent posts must be Video/Reel (face on camera proxy)
+const MIN_VIDEO_RATIO     = 0.35    // ≥35% recent posts must be Video/Reel (was 0.50 — too strict, killed mixed-content creators)
 const PROTECTED_STATUSES = new Set(['active_creator', 'paid_bonus_hit', 'replied_yes', 'dmed'])
 
 // Bio patterns that suggest faceless brand / corporate account.

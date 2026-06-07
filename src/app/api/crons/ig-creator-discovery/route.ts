@@ -31,25 +31,33 @@ const supabase = createClient(
 const APIFY_TOKEN = process.env.APIFY_TOKEN || process.env.APIFY_API_TOKEN
 const HASHTAG_ACTOR = 'apify~instagram-hashtag-scraper'
 
-// 2026-06-07 PIVOT — hashtag list rewired to find YOUNG face-on-camera
-// trades creators (TikTok-style personality accounts), not faceless
-// brand pages. Old list pulled too many corporate accounts that don't
-// move product through personal influence.
+// 2026-06-07 PIVOT — face-on-camera young trades creators only. 2026-06-07
+// EXPANSION: added 25 regional + niche tags to grow daily candidate pool
+// large enough to clear strict enrichment filters and net 30-75 qualified
+// creators per day.
 const TARGET_HASHTAGS = [
-  // Personality + TikTok-crossover tags (where face-on-camera creators live)
+  // Personality + TikTok-crossover tags
   'hvactiktok', 'plumbertiktok', 'electriciantiktok', 'tradestiktok',
   'hvactok', 'plumbertok', 'electriciantok',
   'tradesguy', 'tradesbro', 'tradeschick', 'youngtrades',
   'apprenticelife', 'hvacapprentice', 'plumberapprentice', 'electricianapprentice',
   'dayinthelifeofatradesman', 'dayinthelifehvac',
-  // Hustle / personality tags
   'hvachustle', 'plumberhustle', 'tradeslife',
   'tradesmanlife', 'youngcontractor', 'youngplumber', 'youngelectrician',
-  // Self-employed / solo / lifestyle markers
   'selfemployedlife', 'smallbusinesslife', 'ownerop',
-  // Legacy trade tags (kept — some real personalities still post here)
+  // Legacy trade tags
   'hvactech', 'hvaclife', 'plumberlife', 'electricianlife',
   'roofingcontractor', 'rooferlife', 'handymanlife',
+  // ── 2026-06-07 regional expansion (Sun Belt + secondary metros) ──
+  'texashvac', 'dallashvac', 'houstonhvac', 'austinhvac', 'phoenixhvac',
+  'chicagohvac', 'chicagoplumber', 'chicagoelectrician',
+  'floridahvac', 'orlandohvac', 'tampahvac', 'miamiplumber',
+  'atlantahvac', 'atlantaplumber', 'georgiacontractor',
+  'lasvegashvac', 'denverhvac', 'coloradoplumber',
+  // ── 2026-06-07 niche / lifestyle markers (high face-on-camera odds) ──
+  'tradeschoolgrad', 'firstgenbusiness', 'familybusinessowner',
+  'bluecollarmillionaire', 'bluecollarbusiness', 'bluecollarboss',
+  'truckandtrade',
 ]
 
 const TRADE_KEYWORDS = {
