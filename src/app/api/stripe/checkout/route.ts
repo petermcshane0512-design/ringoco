@@ -97,60 +97,88 @@ export async function POST(req: NextRequest) {
     { price: subPriceId, quantity: 1 },
   ]
 
-  try {
-    // 2026-06-06 PIVOT — no public trial, no creator trial. Single 30-day
-    // money-back guarantee for everyone. Creator code attaches a $200-off
-    // first-month promotion_code (Hormozi sub-$100 trip-wire — fan pays
-    // $97 first month, $297 from month 2).
-    const subscriptionData: Record<string, unknown> = {
-      metadata: {
-        userId,
-        tier,
-        interval,
-        creator_code: promoLookup?.attributionCode || '',
+  // 2026-06-06 PIVOT — no public trial, no creator trial. Single 30-day
+  // money-back guarantee for everyone. Creator code attaches a $200-off
+  // first-month promotion_code (Hormozi sub-$100 trip-wire — fan pays
+  // $97 first month, $297 from month 2).
+  //
+  // 2026-06-07 — discounts field shape changed in dahlia API. Pin checkout
+  // to the older API version so promotion_code references work. Plus add
+  // fallback: if the discounts-with-promo-id path fails for any reason,
+  // retry with allow_promotion_codes: true so the customer can paste the
+  // code into Stripe's built-in field. We never lose the sale to a
+  // promo-code rejection.
+  const CHECKOUT_API_VERSION = '2024-11-20.acacia'
+
+  const subscriptionData: Record<string, unknown> = {
+    metadata: {
+      userId,
+      tier,
+      interval,
+      creator_code: promoLookup?.attributionCode || '',
+    },
+  }
+
+  const baseParams = {
+    payment_method_types: ['card'] as const,
+    mode: 'subscription' as const,
+    line_items,
+    payment_method_collection: 'always' as const,
+    metadata: {
+      userId,
+      tier,
+      interval,
+      creator_code: promoLookup?.attributionCode || '',
+    },
+    subscription_data: subscriptionData,
+    custom_text: {
+      submit: {
+        message: '30-day money-back guarantee. If BellAveGo does not earn you back your subscription cost in 30 days, click cancel in your dashboard and we refund every penny — no questions, no calls, no hoops.',
       },
+    },
+    success_url: `${APP_URL}/dashboard/setup?welcome=1`,
+    cancel_url: `${APP_URL}`,
+  }
+
+  // ── Attempt 1: pre-apply the discount via promotion_code id ──
+  if (promoLookup?.promotionCodeId) {
+    try {
+      const session = await stripe.checkout.sessions.create({
+        ...baseParams,
+        allow_promotion_codes: false,
+        discounts: [{ promotion_code: promoLookup.promotionCodeId }],
+      } as never, { apiVersion: CHECKOUT_API_VERSION })
+      return NextResponse.json({ url: session.url })
+    } catch (err) {
+      const errObj = err as { message?: string; code?: string; type?: string; raw?: { message?: string } }
+      const detail = errObj.raw?.message || errObj.message || String(err)
+      console.warn('[checkout] discounts-with-promo-id failed, retrying with allow_promotion_codes:', {
+        promotionCodeId: promoLookup.promotionCodeId,
+        attributionCode: promoLookup.attributionCode,
+        detail,
+        code: errObj.code,
+        type: errObj.type,
+      })
+      // fall through to attempt 2
     }
+  }
 
-    const discounts = promoLookup?.promotionCodeId
-      ? [{ promotion_code: promoLookup.promotionCodeId }]
-      : undefined
-
+  // ── Attempt 2 (fallback / no creator code): standard checkout, manual promo entry allowed ──
+  try {
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      mode: 'subscription',
-      line_items,
-      // If we have a personalized creator code, we pre-apply the Stripe
-      // promotion_code via `discounts`. We also disable manual promo entry
-      // in that flow (allow_promotion_codes=false) so the user can't stack
-      // a second one. Without a creator code, we allow promo entry so
-      // future seasonal discounts still work.
-      allow_promotion_codes: !discounts,
-      ...(discounts ? { discounts } : {}),
-      payment_method_collection: 'always',
-      metadata: {
-        userId,
-        tier,
-        interval,
-        creator_code: promoLookup?.attributionCode || '',
-      },
-      subscription_data: subscriptionData as never,
-      // Risk-reversal banner shown above the Subscribe button on Stripe
-      // Checkout. Reinforces the 30-day money-back guarantee at the moment
-      // of card entry.
-      custom_text: {
-        submit: {
-          message: '30-day money-back guarantee. If BellAveGo does not earn you back your subscription cost in 30 days, click cancel in your dashboard and we refund every penny — no questions, no calls, no hoops.',
-        },
-      },
-      success_url: `${APP_URL}/dashboard/setup?welcome=1`,
-      cancel_url: `${APP_URL}`,
+      ...baseParams,
+      allow_promotion_codes: true,
+    } as never, { apiVersion: CHECKOUT_API_VERSION })
+    return NextResponse.json({
+      url: session.url,
+      ...(promoLookup?.attributionCode ? {
+        notice: `Apply code "${promoLookup.attributionCode}" on the Stripe page for your discount.`,
+      } : {}),
     })
-
-    return NextResponse.json({ url: session.url })
   } catch (err) {
     const errObj = err as { message?: string; code?: string; type?: string; raw?: { message?: string } }
     const detail = errObj.raw?.message || errObj.message || String(err)
-    console.error('[checkout] Stripe error:', { tier, interval, subPriceId, detail, type: errObj.type, code: errObj.code })
+    console.error('[checkout] Stripe error (final attempt):', { tier, interval, subPriceId, detail, type: errObj.type, code: errObj.code })
     return NextResponse.json(
       { error: detail, code: errObj.code, type: errObj.type, tier, interval },
       { status: 500 },
