@@ -74,8 +74,12 @@ const PLANS: Plan[] = TIER_ORDER.map((tier) => {
 export default function PricingPage() {
   const { isSignedIn, isLoaded } = useAuth()
   const router = useRouter()
-  // Default to ANNUAL per Hormozi cash-collection — most prepay = 17% off + 12mo lock
-  const [interval, setInterval] = useState<Interval>('annual')
+  // 2026-06-07 — default flipped to MONTHLY per Peter. Annual still
+  // available via toggle but monthly is the headline price ($297/mo) so
+  // first-time visitors anchor on the sticker, not the $2,970/yr total.
+  // Annual cash-collection still wins where it matters (creator code +
+  // 30-day MBG means most pay annually after they've used it for 30 days).
+  const [interval, setInterval] = useState<Interval>('monthly')
   const [loading, setLoading] = useState<Tier | null>(null)
   const isAnnual = interval === 'annual'
 
