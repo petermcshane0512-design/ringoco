@@ -85,6 +85,14 @@
       "schedule": "0 14 * * 5"
     },
     {
+      "path": "/api/crons/creator-nudge",
+      "schedule": "0 16 * * *"
+    },
+    {
+      "path": "/api/crons/reactivation-sweep",
+      "schedule": "0 17 * * 2"
+    },
+    {
       "path": "/api/crons/auto-load-instantly",
       "schedule": "0 */12 * * *"
     },

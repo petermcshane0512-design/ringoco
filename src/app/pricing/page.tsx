@@ -128,25 +128,17 @@ export default function PricingPage() {
       return
     }
     setLoading(tier)
-    // HARD GATE — every checkout, whether autocheckout or organic-click,
-    // must go through /onboarding first if it's not done. Otherwise
-    // owner_phone is null at provision time and Twilio picks a random
-    // area code (Peter hit this on 2026-06-01, got 610 in Chicago).
-    try {
-      const profileRes = await fetch('/api/profile')
-      const profileJson = await profileRes.json().catch(() => null)
-      if (!profileJson?.onboarding_complete) {
-        const back = encodeURIComponent(`/pricing?tier=${tier}&interval=${intv}&autocheckout=1`)
-        router.push(`/onboarding?redirect_url=${back}`)
-        return
-      }
-    } catch {
-      // Profile fetch failed — better to route through onboarding than
-      // skip the gate. /onboarding creates the row if missing.
-      const back = encodeURIComponent(`/pricing?tier=${tier}&interval=${intv}&autocheckout=1`)
-      router.push(`/onboarding?redirect_url=${back}`)
-      return
-    }
+    // 2026-06-07 PIVOT — payment-first onboarding (Hormozi $100M Money
+    // Models: cash collection before info-collection). We no longer gate
+    // checkout behind /onboarding. Customer pays, THEN gets routed to
+    // /dashboard/setup wizard which collects business info post-payment.
+    //
+    // Twilio provisions with the billing zip from Stripe as fallback when
+    // owner_phone is missing — they update real number in the wizard.
+    // Welcome SMS still sends.
+    //
+    // Trade-off: slight risk that 5-10% pay and never finish onboarding.
+    // 30-day MBG covers that — they refund cleanly.
     try {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',

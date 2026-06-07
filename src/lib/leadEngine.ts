@@ -154,6 +154,31 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
     return { assigned: 0, skipped_reason: 'no_candidates' }
   }
 
+  // Apply sub_trade BOOST first — promote leads matching the contractor's
+  // specialty keywords to the top of the candidate list. Doesn't filter
+  // anything out, just re-ranks.
+  if (profile.sub_trade && profile.sub_trade.trim()) {
+    type CandidateWithDetails = (typeof candidates)[number] & { source_details?: { description?: string; work_class?: string; permit_type?: string } | null }
+    const subKeywords = profile.sub_trade
+      .toLowerCase()
+      .split(/[,;/]| and | & /)
+      .map((s) => s.trim())
+      .filter((s) => s.length >= 3)
+    if (subKeywords.length > 0) {
+      candidates.sort((a, b) => {
+        const aDetails = (a as CandidateWithDetails).source_details
+        const bDetails = (b as CandidateWithDetails).source_details
+        const aBlob = `${aDetails?.description ?? ''} ${aDetails?.work_class ?? ''} ${aDetails?.permit_type ?? ''}`.toLowerCase()
+        const bBlob = `${bDetails?.description ?? ''} ${bDetails?.work_class ?? ''} ${bDetails?.permit_type ?? ''}`.toLowerCase()
+        const aMatch = subKeywords.some((k) => aBlob.includes(k))
+        const bMatch = subKeywords.some((k) => bBlob.includes(k))
+        if (aMatch && !bMatch) return -1
+        if (bMatch && !aMatch) return 1
+        return (b.lead_score ?? 0) - (a.lead_score ?? 0)
+      })
+    }
+  }
+
   // Apply min_ticket filter — drop anything below the contractor's floor.
   // Stored on the candidate via source_details.reported_cost (set by
   // permit scrapers). Falls through if cost not on the lead.

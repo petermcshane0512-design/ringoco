@@ -576,6 +576,47 @@ export async function POST(req: NextRequest) {
               })
               .eq('id', creator.id)
             console.log(`[creator-payout] PAYABLE +$200 to ${promoCode} (fan second paid charge) — total refs now ${nextCount}`)
+
+            // ── Founder text-line unlock at 5 paid refs (Hormozi loyalty hook) ──
+            // Auto-SMS the creator with Peter's direct cell so top performers
+            // feel like partners not affiliates. Fires once per creator.
+            if (nextCount === 5) {
+              try {
+                const { data: creatorFull } = await supabase
+                  .from('ig_creator_outreach')
+                  .select('handle, notes')
+                  .eq('id', creator.id)
+                  .maybeSingle()
+                // We don't have creator's own phone in ig_creator_outreach.
+                // Look up via profiles where referred_by_promo_code points
+                // back at this creator (if they signed up themselves with
+                // their personal code) — that gives us their owner_phone.
+                const { data: creatorProfile } = await supabase
+                  .from('profiles')
+                  .select('owner_phone, business_name')
+                  .eq('referred_by_promo_code', (creatorFull as { handle?: string } | null)?.handle || '')
+                  .maybeSingle()
+                const phone = (creatorProfile as { owner_phone?: string } | null)?.owner_phone
+                if (phone) {
+                  const FOUNDER_CELL = process.env.FOUNDER_CELL ?? '+17737109565'
+                  await twilioClient.messages.create({
+                    body: `🔥 5 paid refs hit. $1K bonus on its way Friday. You're in the inner circle now — my personal cell: ${FOUNDER_CELL}. Text me anytime with what you need. Let's get you to 15. — Peter, BellAveGo`,
+                    from: process.env.TWILIO_PHONE_NUMBER!,
+                    to: phone,
+                  })
+                  await supabase
+                    .from('ig_creator_outreach')
+                    .update({
+                      notes: ((creatorFull as { notes?: string } | null)?.notes || '') + ` | ${new Date().toISOString().slice(0,10)} founder-text unlocked at 5 refs`,
+                      updated_at: new Date().toISOString(),
+                    })
+                    .eq('id', creator.id)
+                  console.log(`[founder-unlock] SMS sent to ${phone} for creator at 5 refs`)
+                }
+              } catch (e) {
+                console.warn('[founder-unlock] failed:', (e as Error).message)
+              }
+            }
           }
         } catch (e) {
           console.error('[creator-payout] staging failed:', e)
