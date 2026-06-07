@@ -200,6 +200,49 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
   // This cuts skip-trace cost from $2.20/customer/mo to ~$1.50, only
   // spending on leads the contractor actually wants to call.
 
+  // 2026-06-07 — stamp first_lead_drop_at on first successful drop +
+  // SMS the contractor. Dashboard reads this column to swap the
+  // "leads within 24h" countdown for the real leads view.
+  //
+  // Atomic update — only stamps if NULL, so we don't re-notify on
+  // every weekly Monday drop. Fires the SMS only on the first transition.
+  supabase
+    .from('profiles')
+    .update({ first_lead_drop_at: new Date().toISOString() })
+    .eq('user_id', profile.user_id)
+    .is('first_lead_drop_at', null)
+    .select('user_id, owner_phone, business_name, twilio_number')
+    .single()
+    .then(async ({ data, error }) => {
+      if (error) {
+        // PGRST116 = no row matched (already stamped earlier — expected on weekly drops)
+        if ((error as { code?: string }).code !== 'PGRST116') {
+          console.warn('[lead-engine] first_lead_drop_at stamp failed:', error.message)
+        }
+        return
+      }
+      if (!data) return
+      const row = data as { user_id: string; owner_phone: string | null; business_name: string | null }
+      try {
+        const accountSid = process.env.TWILIO_ACCOUNT_SID
+        const authToken = process.env.TWILIO_AUTH_TOKEN
+        const fromNumber = process.env.TWILIO_PHONE_NUMBER
+        if (!accountSid || !authToken || !fromNumber || !row.owner_phone) return
+        const body = `🎯 BellAveGo: Your first 5 neighborhood leads just landed for ${row.business_name ?? 'your business'}. View them: https://www.bellavego.com/dashboard/leads`
+        const params = new URLSearchParams({ From: fromNumber, To: row.owner_phone, Body: body })
+        await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
+          method: 'POST',
+          headers: {
+            Authorization: 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64'),
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: params.toString(),
+        })
+      } catch (e) {
+        console.warn('[lead-engine] first-drop SMS failed:', (e as Error).message)
+      }
+    })
+
   return { assigned: fresh.length }
 }
 

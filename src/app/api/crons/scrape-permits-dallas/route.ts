@@ -2,13 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import { scrapeCityPermits } from '@/lib/permitScraper'
 
 export const runtime = 'nodejs'
-export const maxDuration = 60
+export const maxDuration = 300
 
 /**
  * GET /api/crons/scrape-permits-dallas
  *
  * City of Dallas Building Inspection Permits.
- * Source: dallasopendata.com resource e7gq-4sah
+ *
+ * Previous resource (e7gq-4sah) returned zero records in the 2026-06-06
+ * backfill — dataset rotated upstream. 2026-06-07 update: trying the
+ * actively-maintained "Issued Building Permits" resource (m9zn-99zg)
+ * with the correct field names per Dallas Open Data current schema.
+ *
+ * If this also fails: tenants in DFW fall through to census-aging via
+ * /api/agents/discover-for-tenant.
+ *
  * Daily 5am UTC.
  */
 
@@ -21,16 +29,19 @@ export async function GET(req: NextRequest) {
   }
 
   const url = new URL(req.url)
-  // Dallas dataset has 'mapped_location' with lat/lng inside, plus a separate
-  // 'work_description' field. Some rows have 'permit_address' as combined.
+  // 2026-06-07 — switched from e7gq-4sah (returned 0) to the active
+  // Dallas Open Data resource. Field names verified against current
+  // schema. If Dallas rotates again, run:
+  //   curl 'https://www.dallasopendata.com/api/views/metadata/v1?q=building+permit'
+  // to discover the live resource id.
   const result = await scrapeCityPermits({
     cityLabel: 'Dallas TX',
-    socrataUrl: 'https://www.dallasopendata.com/resource/e7gq-4sah.json',
+    socrataUrl: 'https://www.dallasopendata.com/resource/m9zn-99zg.json',
     fields: {
       issueDate: 'issued_date',
       workDescription: 'work_description',
       permitType: 'permit_type',
-      cost: 'value',
+      cost: 'estimated_cost',
       fullAddress: 'street_address',
       zip: 'zip_code',
     },

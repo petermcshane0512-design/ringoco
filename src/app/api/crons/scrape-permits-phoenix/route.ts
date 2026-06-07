@@ -30,12 +30,56 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
-// Phoenix CKAN endpoint. Resource ID below is the active "Building Permit
-// Data" dataset (verified via package_search on 2026-06-04). If the city
-// rotates IDs, re-discover via:
-//   https://www.phoenixopendata.com/api/3/action/package_search?q=building+permit
-const PHOENIX_PERMITS_URL =
-  'https://www.phoenixopendata.com/api/3/action/datastore_search?resource_id=1c61b4b2-1968-4c4b-8ff8-eb44f573e47a&limit=500'
+// Phoenix CKAN base. Resource IDs rotate without notice — pinning one
+// caused the 2026-06-06 outage (returned 22 records / 0 kept). Now we
+// discover the active "Building Permit" resource at runtime via the
+// CKAN package_search API, then query its datastore. Cached for the
+// lifetime of one request (~1 sec savings on cold starts is not worth
+// process-level state given Vercel's cold-start behavior).
+const PHOENIX_CKAN_BASE = 'https://www.phoenixopendata.com/api/3/action'
+
+async function resolveActiveResourceId(): Promise<string | null> {
+  try {
+    const r = await fetch(`${PHOENIX_CKAN_BASE}/package_search?q=building+permits&rows=20`, {
+      headers: { Accept: 'application/json' },
+    })
+    if (!r.ok) {
+      console.warn('[phoenix-permits] package_search HTTP', r.status)
+      return null
+    }
+    const j = await r.json() as {
+      result?: { results?: Array<{
+        name?: string
+        title?: string
+        resources?: Array<{ id?: string; format?: string; datastore_active?: boolean; name?: string }>
+      }> }
+    }
+    // Prefer the most recently issued / active CSV/JSON resource that is
+    // datastore-active (datastore_active=true means it's queryable via
+    // datastore_search). Match on common dataset names.
+    const candidates: { id: string; score: number; label: string }[] = []
+    for (const pkg of j.result?.results ?? []) {
+      const pkgName = (pkg.name || pkg.title || '').toLowerCase()
+      if (!/permit|building/.test(pkgName)) continue
+      for (const res of pkg.resources ?? []) {
+        if (!res.id || !res.datastore_active) continue
+        let score = 50
+        const resName = (res.name || '').toLowerCase()
+        if (resName.includes('building')) score += 30
+        if (resName.includes('permit')) score += 20
+        if (resName.includes('current') || resName.includes('issued')) score += 10
+        candidates.push({ id: res.id, score, label: res.name || res.id })
+      }
+    }
+    if (candidates.length === 0) return null
+    candidates.sort((a, b) => b.score - a.score)
+    console.log(`[phoenix-permits] resolved resource ${candidates[0].label} (${candidates[0].id})`)
+    return candidates[0].id
+  } catch (e) {
+    console.warn('[phoenix-permits] resource discovery failed:', (e as Error).message)
+    return null
+  }
+}
 
 type RawPermit = {
   PermitNumber?: string
@@ -97,13 +141,30 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
+  const resourceId = await resolveActiveResourceId()
+  if (!resourceId) {
+    return NextResponse.json({
+      ok: false,
+      source: 'phoenix_permits',
+      error: 'no active building-permit resource found via package_search',
+      hint: 'Phoenix may have removed the dataset entirely; tenants in PHX fall back to census-aging via discover-for-tenant',
+      records_seen: 0,
+      candidates_kept: 0,
+      inserted_or_dedup: 0,
+    })
+  }
+
+  const url2 = new URL(req.url)
+  const limit = Math.min(5000, parseInt(url2.searchParams.get('limit') ?? '1500', 10))
+  const phoenixUrl = `${PHOENIX_CKAN_BASE}/datastore_search?resource_id=${resourceId}&limit=${limit}`
+
   let raw: { result?: { records?: RawPermit[] } } | null = null
   try {
-    const r = await fetch(PHOENIX_PERMITS_URL, { headers: { Accept: 'application/json' } })
-    if (!r.ok) return NextResponse.json({ error: `Phoenix HTTP ${r.status}` }, { status: 502 })
+    const r = await fetch(phoenixUrl, { headers: { Accept: 'application/json' } })
+    if (!r.ok) return NextResponse.json({ error: `Phoenix HTTP ${r.status}`, resource_id: resourceId }, { status: 502 })
     raw = await r.json()
   } catch (e) {
-    return NextResponse.json({ error: `Phoenix fetch err: ${(e as Error).message}` }, { status: 502 })
+    return NextResponse.json({ error: `Phoenix fetch err: ${(e as Error).message}`, resource_id: resourceId }, { status: 502 })
   }
 
   const records = raw?.result?.records ?? []

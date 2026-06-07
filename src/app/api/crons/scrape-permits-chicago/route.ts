@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'nodejs'
-export const maxDuration = 60
+// Chicago Socrata responses can be slow under load (especially the
+// reverse-geocode-to-ZIP loop). Bumped from 60→300 after the 2026-06-06
+// backfill test silently timed out with no response logged.
+export const maxDuration = 300
 
 /**
  * GET /api/crons/scrape-permits-chicago

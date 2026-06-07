@@ -68,6 +68,12 @@ const SAFE_PROFILE_COLUMNS = new Set([
   // sub_trade            — free-text specialty filter for lead engine
   // min_ticket           — USD floor under which leads are dropped
   'business_description', 'sub_trade', 'min_ticket',
+  // ── 2026-06-07 first-drop tracking (sql/2026-06-07-first-drop-tracking.sql) ──
+  // first_lead_drop_at — set by lead engine on first successful drop.
+  // Read by the dashboard to swap the "leads within 24h" countdown for
+  // the real leads view. Not user-writable from this route, but listed
+  // here for the GET-side select shape.
+  'first_lead_drop_at',
 ])
 
 export async function POST(req: NextRequest) {
