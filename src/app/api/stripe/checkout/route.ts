@@ -140,30 +140,33 @@ export async function POST(req: NextRequest) {
     cancel_url: `${APP_URL}`,
   }
 
-  // ── Attempt 1: pre-apply the discount via promotion_code id ──
+  // Stripe rejects sessions that send BOTH `allow_promotion_codes` and
+  // `discounts` — even when allow_promotion_codes is false. The keys are
+  // mutually exclusive, so we omit the unused one entirely.
+
+  // ── Attempt 1: pre-apply discount via promotion_code id (omit allow_promotion_codes) ──
   if (promoLookup?.promotionCodeId) {
     try {
       const session = await stripe.checkout.sessions.create({
         ...baseParams,
-        allow_promotion_codes: false,
         discounts: [{ promotion_code: promoLookup.promotionCodeId }],
       } as never, { apiVersion: CHECKOUT_API_VERSION })
       return NextResponse.json({ url: session.url })
     } catch (err) {
       const errObj = err as { message?: string; code?: string; type?: string; raw?: { message?: string } }
       const detail = errObj.raw?.message || errObj.message || String(err)
-      console.warn('[checkout] discounts-with-promo-id failed, retrying with allow_promotion_codes:', {
+      console.warn('[checkout] discounts path failed, falling back to allow_promotion_codes:', {
         promotionCodeId: promoLookup.promotionCodeId,
         attributionCode: promoLookup.attributionCode,
         detail,
         code: errObj.code,
         type: errObj.type,
       })
-      // fall through to attempt 2
+      // fall through to attempt 2 — customer pastes code manually
     }
   }
 
-  // ── Attempt 2 (fallback / no creator code): standard checkout, manual promo entry allowed ──
+  // ── Attempt 2 (fallback / no creator code): manual promo entry allowed (omit discounts) ──
   try {
     const session = await stripe.checkout.sessions.create({
       ...baseParams,
