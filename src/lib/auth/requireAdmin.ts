@@ -23,7 +23,12 @@ import { timingSafeEqual } from 'crypto'
  * Every successful auth logs which path was used so usage can be audited from Vercel logs.
  */
 
-const DEFAULT_ADMIN_EMAILS = ['pmcshane@fordham.edu', 'peter@bellavego.com']
+// Fallback list if ADMIN_EMAILS env var is unset on Vercel. Real source of
+// truth lives in Vercel → Settings → Environment Variables → ADMIN_EMAILS.
+// 2026-06-07: pmcshane@fordham.edu deleted from Clerk — primary admin now
+// bellavegollc@gmail.com. Keeping the old fordham entry in the fallback
+// is harmless (account no longer exists in Clerk, so verification fails).
+const DEFAULT_ADMIN_EMAILS = ['bellavegollc@gmail.com', 'pmcshane@fordham.edu', 'peter@bellavego.com']
 
 function loadAdminEmails(): Set<string> {
   const raw = process.env.ADMIN_EMAILS ?? ''
