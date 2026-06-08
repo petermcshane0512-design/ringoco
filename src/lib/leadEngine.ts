@@ -236,6 +236,15 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
     return { assigned: 0, skipped_reason: 'insert_failed' }
   }
 
+  // 2026-06-08 — rolling 7-day cadence. Stamp next_lead_drop_at = now + 7d
+  // on every successful drop. Dashboard countdown reads this column. Cron
+  // filter only fires drops for tenants whose next_lead_drop_at has passed.
+  const nextDropAt = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString()
+  await supabase
+    .from('profiles')
+    .update({ next_lead_drop_at: nextDropAt })
+    .eq('user_id', profile.user_id)
+
   // 2026-06-06 PIVOT — no auto-enrich on drop. Click-to-reveal pattern:
   // skip-trace only fires when the contractor taps "Reveal phone" on a
   // specific lead in the dashboard (POST /api/leads/[id]/reveal-phone).

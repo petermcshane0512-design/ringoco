@@ -8,8 +8,11 @@ export const maxDuration = 60
 /**
  * GET /api/crons/lead-engine
  *
- * Daily 4am CST. Iterates every active tenant, runs assignLeadsForTenant.
- * Tier cadence enforced inside the shared lib.
+ * Hourly (was daily 10am UTC). Iterates active tenants whose
+ * next_lead_drop_at has passed (or is NULL), runs assignLeadsForTenant.
+ * Frontend countdown on /dashboard/leads also fires the same drop logic
+ * via /api/leads/check-and-drop when its timer hits zero — this cron is
+ * the fallback for tenants who don't visit the dashboard.
  *
  * For on-signup day-1 backfill, see fireLeadEngineForUser() in
  * src/lib/leadEngine.ts — called directly from Stripe webhook.
@@ -28,12 +31,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
+  // 2026-06-08 — only fire for tenants whose 7-day rolling timer has
+  // elapsed (or who never received a first drop). PostgREST `.or` filter:
+  // next_lead_drop_at IS NULL OR next_lead_drop_at <= now().
+  const nowIso = new Date().toISOString()
   const { data: profiles, error } = await supabase
     .from('profiles')
-    .select('user_id, plan_tier, service_area, service_zips, service_radius_mi, business_type, services_offered, is_active, sub_trade, min_ticket')
+    .select('user_id, plan_tier, service_area, service_zips, service_radius_mi, business_type, services_offered, is_active, sub_trade, min_ticket, next_lead_drop_at')
     .eq('is_active', true)
     .in('plan_tier', ['receptionist', 'officemgr', 'concierge'])
     .not('twilio_number', 'is', null)
+    .or(`next_lead_drop_at.is.null,next_lead_drop_at.lte.${nowIso}`)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (!profiles || profiles.length === 0) {

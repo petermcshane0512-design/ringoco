@@ -90,7 +90,7 @@
     },
     {
       "path": "/api/crons/lead-engine",
-      "schedule": "0 10 * * *"
+      "schedule": "0 * * * *"
     },
     {
       "path": "/api/crons/scrape-permits-chicago",

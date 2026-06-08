@@ -34,7 +34,7 @@ export async function GET() {
   // Resolve tenant by Clerk userId → profile
   const { data: profile } = await supabase
     .from('profiles')
-    .select('user_id, plan_tier')
+    .select('user_id, plan_tier, next_lead_drop_at')
     .eq('user_id', userId)
     .maybeSingle()
 
@@ -86,5 +86,6 @@ export async function GET() {
       per_drop: cadence.per,
       used_this_period: usedThisPeriod,
     },
+    next_lead_drop_at: profile.next_lead_drop_at,
   })
 }

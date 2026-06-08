@@ -43,17 +43,45 @@ export default function LeadsPage() {
   const [drops, setDrops] = useState<LeadDrop[]>([])
   const [quota, setQuota] = useState<QuotaInfo | null>(null)
   const [loading, setLoading] = useState(true)
+  // 2026-06-08 — per-tenant rolling 7-day countdown anchored to last drop.
+  const [nextDropAt, setNextDropAt] = useState<string | null>(null)
+  const [nowTick, setNowTick] = useState<number>(() => Date.now())
+  const [firing, setFiring] = useState(false)
+
+  async function loadLeads() {
+    const r = await fetch('/api/leads/list')
+    const j = await r.json().catch(() => ({}))
+    if (j.drops) setDrops(j.drops)
+    if (j.quota) setQuota(j.quota)
+    if (j.next_lead_drop_at !== undefined) setNextDropAt(j.next_lead_drop_at)
+  }
 
   useEffect(() => {
-    fetch('/api/leads/list')
+    loadLeads().finally(() => setLoading(false))
+  }, [])
+
+  // Tick every 1s so the countdown updates live.
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  // When the timer hits zero, POST /api/leads/check-and-drop to force-fire
+  // the assignment now (instead of waiting for the hourly cron), then refresh
+  // the leads list. Guard against double-fire with `firing`.
+  useEffect(() => {
+    if (!nextDropAt || firing) return
+    const dueAt = new Date(nextDropAt).getTime()
+    if (nowTick < dueAt) return
+    setFiring(true)
+    fetch('/api/leads/check-and-drop', { method: 'POST' })
       .then((r) => r.json())
-      .then((j) => {
-        if (j.drops) setDrops(j.drops)
-        if (j.quota) setQuota(j.quota)
+      .then(async (j) => {
+        if (j.ok) await loadLeads()
       })
       .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
+      .finally(() => setFiring(false))
+  }, [nextDropAt, nowTick, firing])
 
   async function updateStatus(dropId: string, newStatus: LeadDrop['status']) {
     setDrops((prev) => prev.map((d) => (d.id === dropId ? { ...d, status: newStatus } : d)))
@@ -97,22 +125,24 @@ export default function LeadsPage() {
         <Link href="/dashboard" style={{ fontSize: 12, fontWeight: 700, color: '#0AA89F', textDecoration: 'none' }}>
           ← Back to dashboard
         </Link>
-        {/* Small next-drop countdown — top right per Peter 2026-06-07. */}
+        {/* Per-tenant 7-day rolling countdown — 2026-06-08. Anchored to
+            profiles.next_lead_drop_at (stamped now()+7d on every drop).
+            When it hits zero, the page POSTs /api/leads/check-and-drop and
+            refreshes the list. */}
         <div style={{ fontSize: 11, color: '#7AAAB2', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontWeight: 700, color: '#7AAAB2' }}>Next drop:</span>
           <span style={{ fontWeight: 800, color: '#E8742B', fontVariantNumeric: 'tabular-nums' }}>
             {(() => {
-              const now = new Date()
-              const day = now.getUTCDay()
-              const hoursToMonday10 = (((1 - day + 7) % 7) * 24) + (10 - now.getUTCHours()) - (now.getUTCMinutes() / 60)
-              const next = new Date(now.getTime() + hoursToMonday10 * 3600 * 1000)
-              const ms = next.getTime() - now.getTime()
-              if (ms <= 0) return 'any minute'
+              if (!nextDropAt) return firing ? 'dropping now…' : '—'
+              const ms = new Date(nextDropAt).getTime() - nowTick
+              if (ms <= 0) return firing ? 'dropping now…' : 'any second'
               const days = Math.floor(ms / 86_400_000)
               const hrs = Math.floor((ms % 86_400_000) / 3_600_000)
               const mins = Math.floor((ms % 3_600_000) / 60_000)
+              const secs = Math.floor((ms % 60_000) / 1000)
               if (days > 0) return `${days}d ${hrs}h ${mins}m`
-              return `${hrs}h ${mins}m`
+              if (hrs > 0) return `${hrs}h ${mins}m ${secs}s`
+              return `${mins}m ${secs}s`
             })()}
           </span>
         </div>
