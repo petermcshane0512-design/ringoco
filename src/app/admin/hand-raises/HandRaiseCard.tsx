@@ -14,14 +14,32 @@ type Lead = {
   opens: number
   clicks: number
   replies: number
+  step_id: string | null
+  step_label: string | null
+  last_contact_at: string | null
+  last_open_at: string | null
+  last_click_at: string | null
   staged_email: string | null
   staged_at: string | null
   staged_open_count: number | null
   outreach_id: string | null
+  pushed_at: string | null
   call_attempted_at: string | null
   call_outcome: string | null
   notes: string | null
   hotness: number
+}
+
+function relTime(iso: string | null): string {
+  if (!iso) return ''
+  const ms = Date.now() - new Date(iso).getTime()
+  if (ms < 0) return 'just now'
+  const min = Math.floor(ms / 60_000)
+  if (min < 60) return `${min}m ago`
+  const hr = Math.floor(min / 60)
+  if (hr < 24) return `${hr}h ago`
+  const d = Math.floor(hr / 24)
+  return `${d}d ago`
 }
 
 export default function HandRaiseCard({ lead, called }: { lead: Lead; called?: boolean }) {
@@ -96,6 +114,24 @@ export default function HandRaiseCard({ lead, called }: { lead: Lead; called?: b
             {lead.email}
             {lead.city && ` · ${lead.city}${lead.state ? ', ' + lead.state : ''}`}
             {lead.owner_first_name && ` · owner: ${lead.owner_first_name}`}
+          </div>
+          {/* Activity timeline */}
+          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 8, fontSize: 11, color: 'rgba(255,255,255,0.50)' }}>
+            {lead.step_label && (
+              <span>📧 <strong style={{ color: 'rgba(255,255,255,0.75)' }}>{lead.step_label}</strong></span>
+            )}
+            {lead.last_contact_at && (
+              <span>last sent <strong style={{ color: 'rgba(255,255,255,0.75)' }}>{relTime(lead.last_contact_at)}</strong></span>
+            )}
+            {lead.last_open_at && (
+              <span>👀 last opened <strong style={{ color: '#5EEAD4' }}>{relTime(lead.last_open_at)}</strong></span>
+            )}
+            {lead.last_click_at && (
+              <span>🔥 last click <strong style={{ color: '#FF9D5A' }}>{relTime(lead.last_click_at)}</strong></span>
+            )}
+            {lead.pushed_at && !lead.last_open_at && (
+              <span>queued <strong style={{ color: 'rgba(255,255,255,0.75)' }}>{relTime(lead.pushed_at)}</strong></span>
+            )}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
