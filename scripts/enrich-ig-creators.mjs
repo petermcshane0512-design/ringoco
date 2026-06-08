@@ -43,11 +43,47 @@ if (!APIFY_TOKEN || !SUPABASE_URL || !SUPABASE_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } })
 const ACTOR_ID = 'apify~instagram-profile-scraper'
-const MIN_FOLLOWERS = 800
+const MIN_FOLLOWERS = 801           // 2026-06-08 (v2): Peter rule — strictly more than 800 followers
 const MAX_FOLLOWERS = 12700
 const MIN_ENGAGEMENT_RATE = 2.0     // % — below this = ghost account or bot-followed
-const MIN_VIDEO_RATIO     = 0.35    // ≥35% recent posts must be Video/Reel (was 0.50 — too strict, killed mixed-content creators)
+const MIN_VIDEO_RATIO     = 0.35    // ≥35% recent posts must be Video/Reel
+const MIN_TOPIC_CAPTION_RATIO = 0.5 // 2026-06-08: ≥50% recent post captions must be day-in-life / their work
 const PROTECTED_STATUSES = new Set(['active_creator', 'paid_bonus_hit', 'replied_yes', 'dmed'])
+
+// Trade keywords mirror scripts/discover-ig-creators.mjs — keep in sync.
+const TRADE_KEYWORDS = {
+  hvac:       ['hvac', 'air condition', 'heating', 'cooling', 'furnace', 'heat pump', 'ac unit', 'mini split', 'condenser', 'r410', 'r32', 'refrigerant'],
+  plumbing:   ['plumber', 'plumbing', 'water heater', 'pipe', 'drain', 'leak', 'sewer', 'faucet', 'pex', 'pvc'],
+  electrical: ['electrician', 'electrical', 'wiring', 'panel', 'breaker', 'outlet', 'voltage', 'romex', 'conduit'],
+  roofing:    ['roof', 'shingle', 'gutter', 'flashing', 'tpo', 'underlayment'],
+  handyman:   ['handyman', 'general contractor', 'repair', 'remodel', 'renovation'],
+}
+
+// Day-in-life / "their work" patterns — energetic young operators showing what they do.
+const WORK_LIFE_PATTERNS = [
+  /day in the life/i, /\bditl\b/i, /day in my life/i,
+  /on the job/i, /jobsite/i, /job site/i, /on site/i,
+  /install(ed|ing|ation)?/i, /service call/i, /tech life/i,
+  /apprentice/i, /journeyman/i, /master tech/i,
+  /work flow/i, /workflow/i, /\bcrew\b/i, /\btruck\b/i,
+  /tool talk/i, /tool of the day/i, /tool review/i,
+  /before.*after/i, /finished product/i, /clean install/i,
+  /grind/i, /hustle/i, /the life/i,
+]
+
+function topicCaptionRatio(trade, posts) {
+  if (!posts || !posts.length) return 0
+  const tradeKws = TRADE_KEYWORDS[trade] || []
+  let hits = 0
+  for (const p of posts) {
+    const caption = p.caption || ''
+    const lc = caption.toLowerCase()
+    const tradeHit = tradeKws.some((k) => lc.includes(k))
+    const lifeHit = WORK_LIFE_PATTERNS.some((re) => re.test(caption))
+    if (tradeHit || lifeHit) hits++
+  }
+  return hits / posts.length
+}
 
 // Bio patterns that suggest faceless brand / corporate account.
 const CORPORATE_PATTERNS = [
@@ -67,7 +103,7 @@ async function run() {
 
   let q = supabase
     .from('ig_creator_outreach')
-    .select('id, handle, enriched_at, followers, status')
+    .select('id, handle, enriched_at, followers, status, trade')
     .order('updated_at', { ascending: true })
     .limit(300)
   if (!all && !reEvaluate) q = q.is('enriched_at', null)
@@ -144,7 +180,9 @@ async function run() {
     const goodEngagement = engagementRate != null && engagementRate >= MIN_ENGAGEMENT_RATE
     const faceForward = videoRatio >= MIN_VIDEO_RATIO
     const personality = !looksCorporate(p.biography)
-    const qualifies = inRange && goodEngagement && faceForward && personality
+    const topicRatio = topicCaptionRatio(matched?.trade, slimPosts)
+    const onTopic = topicRatio >= MIN_TOPIC_CAPTION_RATIO
+    const qualifies = inRange && goodEngagement && faceForward && personality && onTopic
 
     const update = {
       followers,

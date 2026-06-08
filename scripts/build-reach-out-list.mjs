@@ -102,20 +102,50 @@ function buildDmScript(c) {
   const _tradeBucket = tradeLabel(c.trade)
   const minted = !!(c.personal_promo_code && c.promo_code)
   const closeLine = minted
-    ? `Your codes are already live — DMing them in the next message.`
-    : `Hit me back if you want the codes — I'll send them within the hour.`
+    ? `Your codes are already activated — DMing them next.`
+    : `If interested, I'll fire up your free 3-month code AND your fan/friends code to help them start making more — just hit me back.`
 
-  return [
-    `Hey ${namePart} — saw your ${c.trade || 'home-service'} posts. I built BellAveGo: AI receptionist that picks up every missed call 24/7, books the appointment straight into your calendar, and drops you 5 real leads in your neighborhood every Monday — real homeowners with real phone numbers and the real reason they need work (new move-ins, aging units, permit filings, rebate windows, storm-damage zones).`,
+  // Personalized "you can hit 50 refs" math when we know follower count.
+  // Conservative assumptions: 2% bio-link click rate, 10% sign-up rate.
+  // That works out to ~0.002 monthly paid refs per follower.
+  let personalProof = ''
+  if (c.followers && c.followers >= 800) {
+    const monthlyRefs = Math.round(c.followers * 0.002)
+    const monthsTo50 = monthlyRefs > 0 ? Math.ceil(50 / monthlyRefs) : 99
+    if (monthsTo50 <= 12) {
+      personalProof = `You've got ${c.followers.toLocaleString()} followers. At a conservative 2% bio-click rate and 10% sign-up rate, that's ~${monthlyRefs} paid refs/month — 50 in ${monthsTo50 <= 6 ? 'under 6' : monthsTo50} months. With weekly stories pushing your code, this is real.`
+    } else {
+      // Smaller accounts — frame the 5/10 milestones as the realistic bullseye
+      personalProof = `You've got ${c.followers.toLocaleString()} followers. Conservative math says 5-10 paid refs in your first 6 months is realistic — that's $2K-$5K in your pocket. The $33K ceiling is for top performers; the 5 and 10 tiers are layups for any active creator.`
+    }
+  }
+
+  const part1 = [
+    `Hey ${namePart} — saw your ${c.trade || 'home-service'} posts. I built BellAveGo: AI receptionist that picks up every missed call 24/7, books appointments to your calendar, drops you 5 real leads in your area every Monday (real homeowners, real phone numbers, real reasons — new move-ins, aging units, permits, rebates, storm zones).`,
     ``,
-    `Want to give you a personal code worth 3 months totally free — $891 of product, no card-charge risk. Try it on your own shop, see if it pays for itself.`,
+    `Reaching out because your audience is contractors losing $$ to missed calls. You can leverage your account two ways: put a tool in their hands that pays for itself, AND earn serious side income by dropping a code in your bio.`,
     ``,
-    `If you like it, I'll also send you a fan code with your name on it. Drop it in your bio + one story. Your followers get $200 off their first month ($97 instead of $297, with 30-day money-back). The moment they pay their second month, you get $200 cash. $1K bonus at 5 refs, $3K at 15. Paid every Friday via ACH.`,
+    `Two things for you:`,
+    `1) Personal code → 3 months Pro free ($891), use on your own shop.`,
+    `2) Fan code → drop in bio + one story. Fans save $200 on month 1 ($97 vs $297, 30-day money-back). EVERY one who pays month 2 = $200 to you.`,
+  ].join('\n')
+
+  const part2 = [
+    `Earnings ladder:`,
+    `  • 1 paid ref  →  $200`,
+    `  • 5 paid refs →  $2,000 ($1K cash + $1K bonus)`,
+    `  • 10 paid refs → $5,000 ($2K cash + $1K + $2K bonus)`,
+    `  • 25 paid refs → $13,000 ($5K cash + $1K + $2K + $5K bonus)`,
+    `  • 50 paid refs → $33,000 ($10K cash + $1K + $2K + $5K + $15K)`,
+    ...(personalProof ? [``, personalProof] : []),
     ``,
     closeLine,
     ``,
     `— Peter, BellAveGo`,
   ].join('\n')
+
+  // Combined view (still useful for the "DM Script" column).
+  return { part1, part2, combined: `${part1}\n\n${part2}` }
 }
 
 async function run() {
@@ -155,7 +185,8 @@ async function run() {
 
   ws.columns = [
     { header: 'IG Handle',     key: 'handle',         width: 26 },
-    { header: 'DM Script',     key: 'dm_script',      width: 90 },
+    { header: 'DM Part 1',     key: 'dm_part1',       width: 70 },
+    { header: 'DM Part 2',     key: 'dm_part2',       width: 70 },
     { header: 'Notes',         key: 'notes',          width: 38 },
     { header: 'Personal Code', key: 'personal_code',  width: 18 },
     { header: 'Fan Code',      key: 'fan_code',       width: 18 },
@@ -181,16 +212,22 @@ async function run() {
     if (c.lifetime_paid_cents) notesParts.push(`$${(c.lifetime_paid_cents / 100).toFixed(0)} lifetime paid`)
     if (c.notes) notesParts.push(c.notes)
 
+    const script = buildDmScript(c)
     const row = ws.addRow({
       handle: '@' + c.handle,
-      dm_script: buildDmScript(c),
+      dm_part1: script.part1,
+      dm_part2: script.part2,
       notes: notesParts.join(' · '),
       personal_code: minted ? personalCode : `${personalCode} (preview)`,
       fan_code: minted ? publicCode : `${publicCode} (preview)`,
     })
     row.alignment = { vertical: 'top', wrapText: true }
-    // Auto-height so the DM script is fully visible
-    row.height = Math.max(80, Math.min(220, Math.ceil(buildDmScript(c).length / 90) * 18))
+    // Row height: count wrap lines for each part, take the taller.
+    function linesFor(s, colWidth = 68) {
+      return s.split('\n').reduce((sum, ln) => sum + Math.max(1, Math.ceil(ln.length / colWidth)), 0)
+    }
+    const partLines = Math.max(linesFor(script.part1), linesFor(script.part2))
+    row.height = Math.max(120, Math.min(420, partLines * 16))
 
     // Color-band by status
     const color = c.status === 'active_creator' ? 'FFD1FAE5'
@@ -203,6 +240,49 @@ async function run() {
       : 'FFFFFFFF'
     row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: color } }
   })
+
+  // ── Commission summary footer ──
+  ws.addRow({})  // blank spacer
+  const headerRow = ws.addRow({
+    handle: 'COMMISSION KEY',
+    dm_part1: 'What each creator earns',
+    dm_part2: '',
+    notes: '',
+    personal_code: '',
+    fan_code: '',
+  })
+  headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 }
+  headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0B1F3A' } }
+  headerRow.alignment = { vertical: 'middle', horizontal: 'left' }
+
+  const commissionRows = [
+    ['Personal perk (signup)', '3 months free BellAveGo Pro ($891 product value)', '', '', ''],
+    ['Per paid referral',      '$200 cash, paid Friday after fan pays month 2',     '', '', ''],
+    ['Bonus @ 5 paid refs',    '+$1,000 cash bonus (instant)',                       '', '', ''],
+    ['Bonus @ 10 paid refs',   '+$2,000 cash bonus (instant)',                       '', '', ''],
+    ['Bonus @ 25 paid refs',   '+$5,000 cash bonus (instant)',                       '', '', ''],
+    ['Bonus @ 50 paid refs',   '+$15,000 cash bonus (quit-your-job tier)',           '', '', ''],
+    ['',                       '',                                                    '', '', ''],
+    ['EXAMPLE — 1 paid ref',   '$200',                                                '', '', ''],
+    ['EXAMPLE — 5 paid refs',  '$200 × 5 = $1,000 + $1,000 bonus = $2,000',          '', '', ''],
+    ['EXAMPLE — 10 paid refs', '$200 × 10 = $2,000 + $1,000 + $2,000 = $5,000',      '', '', ''],
+    ['EXAMPLE — 25 paid refs', '$200 × 25 = $5,000 + $1,000 + $2,000 + $5,000 = $13,000', '', '', ''],
+    ['EXAMPLE — 50 paid refs', '$200 × 50 = $10,000 + $1,000 + $2,000 + $5,000 + $15,000 = $33,000', '', '', ''],
+    ['',                       '',                                                    '', '', ''],
+    ['Top-performer year-1 ceiling', '50 paid refs in 12 months = $33,000 cash + $891 Pro = ~$33,891', '', '', ''],
+  ]
+  for (const [a, b, c, d, e] of commissionRows) {
+    const r = ws.addRow({ handle: a, dm_part1: b, dm_part2: '', notes: c, personal_code: d, fan_code: e })
+    r.alignment = { vertical: 'top', wrapText: true }
+    if (a.startsWith('EXAMPLE')) {
+      r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFBEB' } }
+    } else if (a.includes('ceiling')) {
+      r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } }
+      r.font = { bold: true }
+    } else if (a) {
+      r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFF6FF' } }
+    }
+  }
 
   const dateStamp = new Date().toISOString().slice(0, 10)
   const outPath = resolve(here, '..', `reach-out-list-${dateStamp}.xlsx`)

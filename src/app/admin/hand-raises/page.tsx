@@ -75,7 +75,7 @@ async function fetchInstantlyLeads(): Promise<InstantlyLead[]> {
     const r = await fetch('https://api.instantly.ai/api/v2/leads/list', {
       method: 'POST',
       headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ campaign: CAMPAIGN_ID, limit: 300 }),
+      body: JSON.stringify({ campaign_ids: [CAMPAIGN_ID], limit: 300 }),
       cache: 'no-store',
     })
     if (!r.ok) return []
