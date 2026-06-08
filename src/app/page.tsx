@@ -768,6 +768,40 @@ export default function HomePage() {
       {/* CONSULTING PREVIEW */}
       <ConsultingShowcase />
 
+      {/* SOCIAL PROOF — Founding-100 framing instead of fake testimonials.
+          Honest, FTC-safe. Replace with real quotes as the first cohort
+          lands real wins. */}
+      <section style={{ padding: '50px 24px 30px', background: '#FFF7EE', borderTop: '1px solid rgba(232,116,43,0.18)' }}>
+        <div style={{ maxWidth: 1180, margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 10 }}>
+            🔥 Founding-100 · $297 locked for life
+          </div>
+          <h2 style={{ fontSize: 'clamp(26px, 3.4vw, 38px)', fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.03em', margin: '0 0 12px' }}>
+            Get in while we&rsquo;re building the first cohort.
+          </h2>
+          <p style={{ fontSize: 15, color: '#4A6670', lineHeight: 1.55, maxWidth: 640, margin: '0 auto 24px' }}>
+            We&rsquo;re onboarding the first 100 home-service shops nationwide. Founding members get $297 locked-for-life pricing (we plan to raise to $397+ after 100 customers), direct founder text access for setup, and white-glove onboarding from Peter himself.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, maxWidth: 880, margin: '0 auto' }}>
+            {[
+              { num: '$297/mo', lab: 'locked for life · Founding-100 only' },
+              { num: '30-day', lab: 'money-back guarantee · refund any reason' },
+              { num: '24/7', lab: 'AI answers every missed call' },
+              { num: '5/wk', lab: 'real neighborhood leads delivered every Monday' },
+            ].map((s) => (
+              <div key={s.lab} style={{
+                background: '#fff', borderRadius: 12,
+                padding: '14px 16px',
+                border: '1px solid rgba(232,116,43,0.18)',
+              }}>
+                <div style={{ fontSize: 20, fontWeight: 900, color: '#C84B26', letterSpacing: '-0.5px', marginBottom: 4 }}>{s.num}</div>
+                <div style={{ fontSize: 11, color: '#4A6670', lineHeight: 1.4 }}>{s.lab}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* APPOINTMENTS — Two-mode workflow.
           One section, both modes BellAveGo handles new jobs:
           (a) MANUAL — texts the owner a summary with one-tap actions

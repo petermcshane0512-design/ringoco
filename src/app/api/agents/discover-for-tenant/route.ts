@@ -182,9 +182,26 @@ async function discoverForTenant(userId: string): Promise<{
     steps.push({ kind: 'scrape:census-aging', ok: true, detail: 'pool sufficient, skipped' })
   }
 
-  // 2026-06-06 PIVOT — no auto skip-trace here either. Phones are
-  // revealed click-by-click in the dashboard via POST /api/leads/[id]/
-  // reveal-phone (paid customer engagement gates the spend).
+  // 2026-06-07 — UNIVERSAL FALLBACK via BatchData Property Search.
+  // After city scrape + census-aging, fire find-real-leads to populate
+  // address-level leads for ANY US zip — handles every city without a
+  // dedicated scraper. Costs ~$0.05/property × 15 = $0.75 per tenant.
+  try {
+    const r = await fetch(`${APP_URL}/api/agents/find-real-leads`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-secret': process.env.ADMIN_API_SECRET || '',
+      },
+      body: JSON.stringify({ user_id: userId }),
+    })
+    const json = await r.json().catch(() => ({}))
+    steps.push({ kind: 'find_real_leads', ok: r.ok && json.ok, detail: `assigned=${json.assigned ?? 0} spent_cents=${json.spent_cents ?? 0}${json.reason ? ` reason=${json.reason}` : ''}` })
+  } catch (e) {
+    steps.push({ kind: 'find_real_leads', ok: false, detail: (e as Error).message })
+  }
+
+  // Click-to-reveal phones — no enrichment at discovery time.
   steps.push({ kind: 'skip_trace', ok: true, detail: 'click-to-reveal — no enrichment at discovery time' })
 
   const { count: poolAfter } = await supabase
