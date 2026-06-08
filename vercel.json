@@ -147,6 +147,14 @@
     {
       "path": "/api/crons/prioritize-tomorrow-dials",
       "schedule": "30 23 * * 1-5"
+    },
+    {
+      "path": "/api/crons/refill-outreach-queue",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/crons/outreach-health-check",
+      "schedule": "0 13 * * 1-6"
     }
   ],
   "functions": {
@@ -166,6 +174,9 @@
       "maxDuration": 300
     },
     "src/app/api/crons/ig-creator-discovery/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/crons/refill-outreach-queue/route.ts": {
       "maxDuration": 300
     }
   }

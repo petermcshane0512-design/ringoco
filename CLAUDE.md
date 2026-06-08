@@ -144,7 +144,9 @@ These were questioned and cut. Do not rebuild them without an explicit paying cu
 
 **KEPT (previously marked for deletion — reversed May 2026):**
 - **YES/NO contractor SMS approval** — Kept. Contractors need control over what gets booked. Auto-book is a trust problem with new customers.
-- **Consulting reports** — Kept as AI-generated feature. It IS the moat. Competitors won't bother.
+
+**RE-DELETED 2026-06-08:**
+- **Consulting / market-intel / neighborhood / competitor reports as sales hook** — Removed. Outreach now leads with "5 fresh homeowner leads every Monday" as the grand-slam offer. The lead-engine (`leads` table, `find-real-leads` agent, `discover-for-tenant` chain) replaces the consulting report as the moat. Internal sample_reports cache can stay for legacy URLs but is NOT referenced in any new cold-email copy, landing page hero, or onboarding flow.
 
 ### What SIMPLIFIES (Step 3)
 
@@ -206,10 +208,12 @@ Every one of these has been embedded as an assumption. Challenge them before act
 
 ### Five Things That Matter (Everything Else is Noise)
 
+**Positioning pivot 2026-06-08:** Offer is NOW lead reports only. 5 fresh homeowner leads delivered every Monday in the customer's service area. No neighborhood intel reports. No competitor/review consulting reports. Sales copy + outreach must lead with leads, not reports.
+
 1. Multi-tenant Twilio — ✅ shipped May 2026, auto-provisioned on Stripe checkout via `provisionNumberForUser`
-2. Stripe billing live — ✅ shipped, three-tier subscription + auto-suspend on payment failure
-3. AI-generated revenue intelligence report — this IS the moat, not the call answering
-4. AI Marketing Operations agent (Elite tier) — Phase 1 of build, see tasks #1–#12
+2. Stripe billing live — ✅ shipped, single-tier $297/mo + 30-day money-back guarantee
+3. **5 fresh homeowner leads / week — THIS IS THE MOAT.** Real public-record events (permits, aging units, property turnover). Delivered Monday mornings via discover-for-tenant agent + Vercel cron. AI receptionist is the secondary value. Consulting/review/market-intel reports are DEPRECATED as the lead magnet — too consulting-firm feel, low conversion vs raw leads.
+4. AI receptionist on every missed call — the trust + retention layer behind the leads-as-hook
 5. 70% of time selling, not coding, until 10 paying customers exist
 
 ---
