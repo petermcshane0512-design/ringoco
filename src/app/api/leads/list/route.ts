@@ -19,9 +19,11 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
+// 2026-06-07 — officemgr (the single public tier) drops 5/week = 20/month.
+// Display reads "of 20 this month" instead of the prior 15.
 const TIER_CADENCE: Record<Tier, { period: 'quarterly' | 'monthly' | 'weekly'; per: number; label: string }> = {
-  receptionist: { period: 'quarterly', per: 5, label: 'this quarter' },
-  officemgr:    { period: 'monthly',   per: 15, label: 'this month' },
+  receptionist: { period: 'quarterly', per: 5,  label: 'this quarter' },
+  officemgr:    { period: 'monthly',   per: 20, label: 'this month' },
   concierge:    { period: 'weekly',    per: 25, label: 'this week' },
 }
 
