@@ -26,7 +26,155 @@
  */
 
 const BATCHDATA_API = 'https://api.batchdata.com/api/v1/property/skip-trace'
+const BATCHDATA_SEARCH_API = 'https://api.batchdata.com/api/v1/property/search'
 const REQUEST_TIMEOUT_MS = 10_000
+
+/**
+ * BatchData Property Search — finds REAL homeowners at REAL addresses in
+ * a given ZIP, filtered by trade-relevant criteria. Returns owner name +
+ * full address + year built + last sale date. NO phone — that requires a
+ * follow-up skip-trace call ($0.10 each).
+ *
+ * Cost: ~$0.05 per property returned.
+ *
+ * Used by /api/agents/find-real-leads to populate address-level leads
+ * for any US ZIP — replacing the useless census-aging "ZIP only"
+ * inferences that have no phone, no name, no actual house.
+ */
+
+export type PropertySearchInput = {
+  zip: string
+  yearBuiltMin?: number
+  yearBuiltMax?: number
+  recentSaleWithinDays?: number      // owner bought in last N days
+  ownerOccupiedOnly?: boolean
+  resultsLimit?: number              // default 25
+}
+
+export type PropertyResult = {
+  street_address: string | null
+  city: string | null
+  state: string | null
+  zip: string | null
+  owner_name: string | null
+  year_built: number | null
+  last_sale_date: string | null
+  last_sale_price: number | null
+  home_value_est: number | null
+  sqft: number | null
+}
+
+export type PropertySearchResult = {
+  ok: boolean
+  cost_cents: number
+  properties: PropertyResult[]
+  error?: string
+}
+
+type BatchDataPropertyAddress = {
+  street?: string; city?: string; state?: string; zip?: string
+}
+type BatchDataPropertyOwner = {
+  name?: { full?: string }
+  fullName?: string
+}
+type BatchDataPropertyRow = {
+  address?: BatchDataPropertyAddress
+  owner?: BatchDataPropertyOwner
+  building?: { yearBuilt?: number; totalBuildingAreaSquareFeet?: number }
+  sale?: { lastSale?: { saleDate?: string; saleAmount?: number } }
+  valuation?: { estimatedValue?: number }
+}
+type BatchDataSearchResponse = {
+  results?: { properties?: BatchDataPropertyRow[] }
+  status?: { code?: number; text?: string }
+}
+
+export async function batchdataPropertySearch(input: PropertySearchInput): Promise<PropertySearchResult> {
+  const key = process.env.BATCHDATA_API_KEY
+  if (!key) {
+    return { ok: false, cost_cents: 0, properties: [], error: 'BATCHDATA_API_KEY not configured' }
+  }
+
+  const requestPayload: Record<string, unknown> = {
+    searchCriteria: {
+      query: input.zip,                          // BatchData accepts ZIP as primary query
+      ...(input.yearBuiltMin || input.yearBuiltMax ? {
+        building: {
+          yearBuilt: {
+            min: input.yearBuiltMin,
+            max: input.yearBuiltMax,
+          },
+        },
+      } : {}),
+      ...(input.recentSaleWithinDays ? {
+        sale: {
+          lastSale: {
+            saleDate: {
+              min: new Date(Date.now() - input.recentSaleWithinDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+            },
+          },
+        },
+      } : {}),
+      ...(input.ownerOccupiedOnly ? {
+        owner: { occupied: true },
+      } : {}),
+    },
+    options: {
+      take: Math.min(50, input.resultsLimit ?? 25),
+    },
+  }
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
+  try {
+    const res = await fetch(BATCHDATA_SEARCH_API, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${key}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(requestPayload),
+      signal: controller.signal,
+    })
+    clearTimeout(timer)
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '')
+      return { ok: false, cost_cents: 0, properties: [], error: `batchdata search HTTP ${res.status}: ${txt.slice(0, 200)}` }
+    }
+
+    const json = await res.json() as BatchDataSearchResponse
+    const rows = json.results?.properties ?? []
+    const props: PropertyResult[] = rows.map((r) => ({
+      street_address: r.address?.street ?? null,
+      city: r.address?.city ?? null,
+      state: r.address?.state ?? null,
+      zip: r.address?.zip ?? null,
+      owner_name: r.owner?.name?.full ?? r.owner?.fullName ?? null,
+      year_built: r.building?.yearBuilt ?? null,
+      last_sale_date: r.sale?.lastSale?.saleDate ?? null,
+      last_sale_price: r.sale?.lastSale?.saleAmount ?? null,
+      home_value_est: r.valuation?.estimatedValue ?? null,
+      sqft: r.building?.totalBuildingAreaSquareFeet ?? null,
+    })).filter((p) => p.street_address)  // drop rows with no address
+
+    return {
+      ok: true,
+      cost_cents: props.length * 5,  // $0.05 per returned property
+      properties: props,
+    }
+  } catch (e) {
+    clearTimeout(timer)
+    const err = e as { name?: string; message?: string }
+    if (err.name === 'AbortError') {
+      return { ok: false, cost_cents: 0, properties: [], error: 'batchdata search timeout (10s)' }
+    }
+    return { ok: false, cost_cents: 0, properties: [], error: err.message || String(e) }
+  }
+}
 
 export type SkipTraceInput = {
   street: string

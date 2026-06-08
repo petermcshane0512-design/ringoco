@@ -28,10 +28,11 @@ export async function POST() {
   if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   try {
-    // First trigger the discovery agent (city scraper or census-aging fallback)
     const appUrl = process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost')
       ? process.env.NEXT_PUBLIC_APP_URL
       : 'https://www.bellavego.com'
+
+    // 1. Discovery (city scraper if registered, else census-aging fallback)
     await fetch(`${appUrl}/api/agents/discover-for-tenant`, {
       method: 'POST',
       headers: {
@@ -41,7 +42,20 @@ export async function POST() {
       body: JSON.stringify({ user_id: userId }),
     }).catch(() => {})
 
-    // Then drop 5 leads
+    // 2. find-real-leads — populate REAL address-level leads via BatchData
+    //    Property API for this tenant's zip + trade. Replaces useless
+    //    census-aging "ZIP only" inferences with actual homeowner addresses.
+    await fetch(`${appUrl}/api/agents/find-real-leads`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-secret': process.env.ADMIN_API_SECRET || '',
+      },
+      body: JSON.stringify({ user_id: userId }),
+    }).catch(() => {})
+
+    // 3. Drop 5 leads — engine sorts by score, real address-level leads
+    //    outrank census-aging because of the +25 recent-sale bump.
     const result = await fireLeadEngineForUser(userId)
     return NextResponse.json({ ok: true, ...result })
   } catch (e) {
