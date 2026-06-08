@@ -67,9 +67,13 @@ type Lead = {
   email_open_count?: number | null  // populated by Instantly sync
 }
 
-async function fetchHotInstantlyLeads(): Promise<Map<string, number>> {
-  // Pull leads w/ open_count >= 3 from Instantly v2 leads/list (filtered server-side
-  // by perf hits). Map email → open count for join against outreach_leads.
+type HotSignal = { opens: number; clicks: number; reason: 'click' | 'opens' }
+
+async function fetchHotInstantlyLeads(): Promise<Map<string, HotSignal>> {
+  // Pull leads from Instantly v2 leads/list and filter to hand-raisers.
+  // TRIGGERS (any one):
+  //   - ≥1 link click (strongest signal — overrides opens threshold)
+  //   - ≥3 opens AND not bounced AND not replied negative
   const KEY = process.env.INSTANTLY_API_KEY!
   const r = await fetch('https://api.instantly.ai/api/v2/leads/list', {
     method: 'POST',
@@ -79,11 +83,17 @@ async function fetchHotInstantlyLeads(): Promise<Map<string, number>> {
   if (!r.ok) return new Map()
   const j = await r.json()
   const items = j.items || j.data || []
-  const map = new Map<string, number>()
+  const map = new Map<string, HotSignal>()
   for (const lead of items) {
     const opens = lead.email_open_count ?? lead.opens ?? 0
-    if (opens >= HAND_RAISE_THRESHOLD_OPENS) {
-      map.set((lead.email || '').toLowerCase(), opens)
+    const clicks = lead.email_click_count ?? lead.clicks ?? 0
+    const replies = lead.email_reply_count ?? lead.replies ?? 0
+    // Skip anyone who replied — pester not allowed
+    if (replies > 0) continue
+    if (clicks >= 1) {
+      map.set((lead.email || '').toLowerCase(), { opens, clicks, reason: 'click' })
+    } else if (opens >= HAND_RAISE_THRESHOLD_OPENS) {
+      map.set((lead.email || '').toLowerCase(), { opens, clicks, reason: 'opens' })
     }
   }
   return map
@@ -175,19 +185,20 @@ export async function GET(req: NextRequest) {
   // 3. For each: Sonnet-write 1-to-1 email, stage to supabase, SMS Peter
   let processed = 0
   for (const l of leads as Lead[]) {
-    const openCount = hotMap.get(l.email.toLowerCase()) || 0
-    const email = await generateHandRaiseEmail(l, openCount)
+    const signal = hotMap.get(l.email.toLowerCase())
+    if (!signal) continue
+    const email = await generateHandRaiseEmail(l, signal.opens)
     if (!email) continue
     await sendViaInstantlyReply(l, email)
     await supabase
       .from('outreach_leads')
       .update({
         hand_raise_followup_sent_at: new Date().toISOString(),
-        hand_raise_open_count_at_send: openCount,
-        hand_raise_followup_body: `Subject: ${email.subject}\n\n${email.body}`,
+        hand_raise_open_count_at_send: signal.opens,
+        hand_raise_followup_body: `Subject: ${email.subject}\n\n${email.body}\n\n[signal: ${signal.reason}, opens=${signal.opens}, clicks=${signal.clicks}]`,
       })
       .eq('id', l.id)
-    await smsHandRaiseAlert(l, openCount)
+    await smsHandRaiseAlert(l, signal.opens)
     processed++
   }
 
