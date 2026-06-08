@@ -36,21 +36,24 @@ const sb = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY,
 )
 
-const STEP_0_SUBJECT = '5 fresh {{city}} HVAC leads every Monday'
+const STEP_0_SUBJECT = '{{firstName}} — 2-3 extra {{city}} jobs/wk for {{companyName}}'
 const STEP_0_BODY = `Hey {{firstName}},
 
-We deliver 5 fresh homeowner leads to {{companyName}} every Monday morning. Real names, real addresses in your service area — all flagged by recent public-record events (permits filed, aging systems, property changes).
+Built BellAveGo for solo + 1-3 person {{city}} crews like {{companyName}}. Two things you don't have time for:
 
-You wake up Monday, open your dashboard, see 5 ready-to-call jobs nobody else in {{city}} is prospecting yet.
+1. Prospecting new homeowners every Monday morning
+2. Picking up the phone every time it rings while you're on a job
 
-That's the whole offer:
-- 5 fresh homeowner leads / week (real names + addresses)
-- AI receptionist answers every missed call 24/7 — books the job, texts you
-- $297/mo flat. No setup. No per-call fee.
-- 30-day money-back guarantee. Cancel anytime.
+We solve both:
 
-Hear our AI (Emma) live in 1 ring: (651) 467-7829
-See this Monday's 5 leads for your zip: bellavego.com/start
+— **5 fresh homeowner leads every Monday** in your service area. Real names + addresses. Public-record events: permits filed, aging units, property changes. You call em.
+
+— **AI receptionist (Emma)** answers every missed call 24/7 — sounds human, asks the right questions, books the job, texts you the appt. So you can stay under the truck w/o losing the lead.
+
+$297/mo flat. No setup. No per-call fee. 30-day money-back. Cancel anytime.
+
+Hear Emma live in 1 ring: (651) 467-7829
+See this Monday's 5 leads: bellavego.com/start
 
 — Peter
 BellAveGo · (773) 710-9565`

@@ -77,6 +77,12 @@ type MapsItem = {
   zip?: string
   categoryName?: string
   reviewsCount?: number
+  // signals used for 1-3 person crew filter
+  totalScore?: number
+  permanentlyClosed?: boolean
+  openingHours?: unknown
+  imageUrls?: string[]
+  additionalInfo?: Record<string, unknown>
 }
 
 type ContactItem = {
@@ -95,8 +101,29 @@ function classifyTrade(category?: string): string | null {
   return null
 }
 
+// 2026-06-08 tighter ICP — Peter's "team of 1-3 looking for couple extra
+// jobs a week + receptionist so they never answer the phone." Drop
+// anything that smells like an established crew of 5+:
+//   - reviewsCount > 40 (over 40 reviews ≈ 5+ years operating, multi-truck)
+//   - title contains "& Sons", "Brothers", "Plumbing Co", "HVAC Inc" (multi-tech vibe)
+//   - imageUrls > 12 (heavy marketing budget = not solo)
+//   - openingHours 24/7 (24/7 dispatch = staffed team)
+function passesSoloOrSmallCrewFilter(m: MapsItem): boolean {
+  if (!m.website || m.permanentlyClosed) return false
+  const reviews = m.reviewsCount ?? 0
+  if (reviews > 40) return false  // too established for 1-3 person crew
+  const title = (m.title || '').toLowerCase()
+  if (/&\s+sons|brothers|family/.test(title)) return false  // multi-tech signals
+  if (/\b(company|co\.|inc\.?|corp\.?|group|services llc)\b/.test(title)) {
+    // could go either way — keep only if reviews ≤20 (newer/smaller)
+    if (reviews > 20) return false
+  }
+  if ((m.imageUrls?.length ?? 0) > 12) return false  // marketing-heavy
+  return true
+}
+
 async function scrapeCity(city: string, targetCount: number): Promise<MapsItem[]> {
-  console.log(`[refill] scraping ${city} for ${targetCount} small-dog shops`)
+  console.log(`[refill] scraping ${city} for ${targetCount} solo/1-3 person crew shops`)
   const items = await apifyRunSync<MapsItem>(APIFY_MAPS_ACTOR, {
     searchStringsArray: TRADE_KEYWORDS.map((kw) => `${kw} ${city}`),
     maxCrawledPlacesPerSearch: Math.ceil(targetCount / TRADE_KEYWORDS.length),
@@ -105,8 +132,9 @@ async function scrapeCity(city: string, targetCount: number): Promise<MapsItem[]
     skipClosedPlaces: true,
     onlyDataFromSearchPage: false,
   })
-  // ICP filter: small dogs ≤150 reviews per project_icp_small_dogs memory
-  return items.filter((m) => (m.reviewsCount ?? 0) <= 150 && m.website)
+  const filtered = items.filter(passesSoloOrSmallCrewFilter)
+  console.log(`[refill] ${city}: ${items.length} raw → ${filtered.length} pass 1-3 person crew filter`)
+  return filtered
 }
 
 async function enrichEmails(websites: string[]): Promise<Map<string, string>> {
