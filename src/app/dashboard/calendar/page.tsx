@@ -49,12 +49,17 @@ function CalendarPageInner() {
   const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [savingSettings, setSavingSettings] = useState(false)
   const [savedTick, setSavedTick] = useState(false)
+  // Auto-book vs summarize-only mode. Default ON (Hormozi: don't let
+  // anything slow down the close). Persist to profile.auto_booking_enabled.
+  const [autoBookEnabled, setAutoBookEnabled] = useState<boolean>(true)
+  const [savingAutoBook, setSavingAutoBook] = useState(false)
 
   useEffect(() => {
     fetch('/api/profile').then(r => r.json()).then((p) => {
       if (p && !p.error) {
         if (typeof p.default_job_duration_min === 'number') setDurationMin(p.default_job_duration_min)
         if (typeof p.travel_buffer_min === 'number') setBufferMin(p.travel_buffer_min)
+        if (typeof p.auto_booking_enabled === 'boolean') setAutoBookEnabled(p.auto_booking_enabled)
       }
       setSettingsLoaded(true)
     }).catch(() => setSettingsLoaded(true))
@@ -420,7 +425,58 @@ function CalendarPageInner() {
             <p style={{ margin: '0 0 8px' }}><strong>The BellAveGo calendar IS your calendar.</strong> Every appointment your AI receptionist books lands here in real time. You can also click any empty slot and add manual appointments yourself.</p>
             <p style={{ margin: '0 0 8px' }}><strong>Optional — mirror to Google.</strong> Connect Google Calendar (right side) and every BellAveGo appointment auto-pushes to your phone&apos;s Google Calendar app. Edits flow OUT, not IN — BellAveGo stays the source of truth.</p>
             <p style={{ margin: '0 0 8px' }}><strong>How Emma uses it.</strong> When a caller asks for a time, Emma reads your free/busy windows here, never offers a slot you&apos;re already booked in, then writes the new appointment back into this calendar with the customer&apos;s name + reason + phone.</p>
-            <p style={{ margin: 0 }}><strong>You stay in control.</strong> Every booking can be edited, rescheduled, or cancelled with one click. Block lunch + vacation by adding manual appointments on those slots.</p>
+            <p style={{ margin: '0 0 14px' }}><strong>You stay in control.</strong> Every booking can be edited, rescheduled, or cancelled with one click. Block lunch + vacation by adding manual appointments on those slots.</p>
+
+            {/* Auto-book vs summarize-only toggle. Recommended ON (Hormozi:
+                kill friction in the close). Off = Emma takes a message,
+                texts you the lead, you call back. */}
+            <div style={{
+              marginTop: 14, padding: '12px 14px',
+              background: autoBookEnabled ? 'rgba(34,197,94,0.06)' : '#FFF7EE',
+              border: autoBookEnabled ? '1px solid rgba(34,197,94,0.30)' : '1px solid rgba(232,116,43,0.30)',
+              borderRadius: 10,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: 200 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 800, color: '#0B1F3A' }}>
+                    {autoBookEnabled ? '✅ Auto-book ON (recommended)' : '⚠️ Summarize-only mode'}
+                  </div>
+                  <div style={{ fontSize: 11.5, color: '#4A6670', marginTop: 4, lineHeight: 1.5 }}>
+                    {autoBookEnabled
+                      ? `Emma offers real time slots and books the appointment live on the call. Highest close rate — beats competitors who make customers wait for a callback.`
+                      : `Emma takes the customer's name + reason and tells them you'll call back within an hour. You get an SMS + dashboard alert. We strongly recommend auto-book — every minute a caller waits, your competitor gets the job.`}
+                  </div>
+                </div>
+                <button
+                  onClick={async () => {
+                    setSavingAutoBook(true)
+                    try {
+                      const next = !autoBookEnabled
+                      await fetch('/api/profile', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ auto_booking_enabled: next }),
+                      })
+                      setAutoBookEnabled(next)
+                    } catch { /* ignore */ }
+                    setSavingAutoBook(false)
+                  }}
+                  disabled={savingAutoBook || !settingsLoaded}
+                  style={{
+                    padding: '8px 14px', borderRadius: 8,
+                    background: autoBookEnabled
+                      ? 'linear-gradient(135deg, #FF9D5A, #E8742B)'
+                      : 'linear-gradient(135deg, #22C55E, #16A34A)',
+                    color: '#fff', border: 'none',
+                    fontSize: 12, fontWeight: 800,
+                    cursor: savingAutoBook ? 'wait' : 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {savingAutoBook ? 'Saving…' : autoBookEnabled ? 'Switch to summarize-only' : 'Turn auto-book back on'}
+                </button>
+              </div>
+            </div>
           </div>
         </details>
 

@@ -124,8 +124,8 @@ export default function SupportWidget() {
               <div style={{ fontSize: 9, fontWeight: 900, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 2 }}>
                 BellAveGo Support
               </div>
-              <div style={{ fontSize: 16, fontWeight: 900, letterSpacing: '-0.02em' }}>
-                Text Peter directly
+              <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '-0.01em', lineHeight: 1.25 }}>
+                Text the BellAveGo team directly for questions the AI chat box can&apos;t answer · (773) 710-9565
               </div>
             </div>
             <button

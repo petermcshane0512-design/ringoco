@@ -92,10 +92,31 @@ export default function LeadsPage() {
   const pctUsed = quota ? Math.min(100, Math.round((quota.used_this_period / quota.per_drop) * 100)) : 0
 
   return (
-    <main style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 24px 80px', fontFamily: "'Inter', system-ui, sans-serif" }}>
-      <Link href="/dashboard" style={{ fontSize: 12, fontWeight: 700, color: '#0AA89F', textDecoration: 'none' }}>
-        ← Back to dashboard
-      </Link>
+    <main style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 24px 80px', fontFamily: "'Inter', system-ui, sans-serif", position: 'relative' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Link href="/dashboard" style={{ fontSize: 12, fontWeight: 700, color: '#0AA89F', textDecoration: 'none' }}>
+          ← Back to dashboard
+        </Link>
+        {/* Small next-drop countdown — top right per Peter 2026-06-07. */}
+        <div style={{ fontSize: 11, color: '#7AAAB2', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontWeight: 700, color: '#7AAAB2' }}>Next drop:</span>
+          <span style={{ fontWeight: 800, color: '#E8742B', fontVariantNumeric: 'tabular-nums' }}>
+            {(() => {
+              const now = new Date()
+              const day = now.getUTCDay()
+              const hoursToMonday10 = (((1 - day + 7) % 7) * 24) + (10 - now.getUTCHours()) - (now.getUTCMinutes() / 60)
+              const next = new Date(now.getTime() + hoursToMonday10 * 3600 * 1000)
+              const ms = next.getTime() - now.getTime()
+              if (ms <= 0) return 'any minute'
+              const days = Math.floor(ms / 86_400_000)
+              const hrs = Math.floor((ms % 86_400_000) / 3_600_000)
+              const mins = Math.floor((ms % 3_600_000) / 60_000)
+              if (days > 0) return `${days}d ${hrs}h ${mins}m`
+              return `${hrs}h ${mins}m`
+            })()}
+          </span>
+        </div>
+      </div>
 
       {/* HERO */}
       <header style={{
@@ -132,31 +153,6 @@ export default function LeadsPage() {
                 background: 'linear-gradient(90deg, #FF9D5A, #E8742B)',
                 transition: 'width 0.4s ease',
               }} />
-            </div>
-            {/* Countdown to NEXT lead drop. Weekly cron fires Monday 10:00 UTC
-                (4am ET / 5am CT). Always renders here so user sees when more
-                leads are landing. (Moved off /dashboard 2026-06-07 per Peter.) */}
-            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.14)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                Next drop
-              </div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: '#FFD9A8', fontVariantNumeric: 'tabular-nums' }}>
-                {(() => {
-                  const now = new Date()
-                  const next = new Date(now)
-                  // Next Monday 10:00 UTC. If today is Monday before 10 UTC, that's today.
-                  const day = now.getUTCDay()
-                  const hoursToMonday10 = (((1 - day + 7) % 7) * 24) + (10 - now.getUTCHours()) - (now.getUTCMinutes() / 60)
-                  next.setTime(now.getTime() + hoursToMonday10 * 3600 * 1000)
-                  const ms = next.getTime() - now.getTime()
-                  if (ms <= 0) return 'Dropping any minute…'
-                  const days = Math.floor(ms / 86_400_000)
-                  const hrs = Math.floor((ms % 86_400_000) / 3_600_000)
-                  const mins = Math.floor((ms % 3_600_000) / 60_000)
-                  if (days > 0) return `${days}d ${hrs}h ${mins}m`
-                  return `${hrs}h ${mins}m`
-                })()}
-              </div>
             </div>
           </div>
         )}
