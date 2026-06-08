@@ -36,7 +36,7 @@ const sb = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY,
 )
 
-const STEP_0_SUBJECT = '{{firstName}} — 2-3 extra {{city}} jobs/wk for {{companyName}}'
+const STEP_0_SUBJECT = '{{firstName}} — first month $97 for {{companyName}}'
 const STEP_0_BODY = `Hey {{firstName}},
 
 Built BellAveGo for solo + 1-3 person {{city}} crews like {{companyName}}. Two things you don't have time for:
@@ -50,34 +50,34 @@ We solve both:
 
 — **AI receptionist (Emma)** answers every missed call 24/7 — sounds human, asks the right questions, books the job, texts you the appt. So you can stay under the truck w/o losing the lead.
 
-$297/mo flat. No setup. No per-call fee. 30-day money-back. Cancel anytime.
+**First month $97** (save $200) w/ code **FIRST200** at checkout. Then $297/mo flat after. 30-day money-back. Cancel anytime.
 
 Hear Emma live in 1 ring: (651) 467-7829
-See this Monday's 5 leads: bellavego.com/start
+Claim your $200 off: bellavego.com/start?promo=FIRST200
 
 — Peter
 BellAveGo · (773) 710-9565`
 
-const STEP_1_SUBJECT = 're: 5 {{city}} leads'
+const STEP_1_SUBJECT = 're: $97 first month for {{companyName}}'
 const STEP_1_BODY = `{{firstName}},
 
-Did those 5 {{city}} homeowner leads land for you?
+Did that $200-off code land for you?
 
 Quick recap on what {{companyName}} gets:
 - 5 fresh homeowner addresses every Monday in your service area
 - AI receptionist answering 24/7 — books the job, texts you the booking
-- $297/mo flat, 30-day money-back
+- **First month $97** w/ code **FIRST200** (then $297/mo flat)
+- 30-day money-back
 
-Want to hear what the AI sounds like first? Call our demo line — Emma picks up in 1 ring: (651) 467-7829
-
-bellavego.com/start
+Hear Emma live in 1 ring: (651) 467-7829
+Claim: bellavego.com/start?promo=FIRST200
 
 Or reply w/ questions — I read every one.
 
 — Peter
 BellAveGo · (773) 710-9565`
 
-const STEP_2_SUBJECT = 'last one from me'
+const STEP_2_SUBJECT = '$97 first month closes Friday'
 const STEP_2_BODY = `{{firstName}} — closing the loop.
 
 {{city}} HVAC owners are missing ~12 calls/mo on avg. Each missed call is a $400-$1,200 job in someone else's truck. Plus the leads you're not getting because nobody's prospecting Mon morning for you.
@@ -85,10 +85,11 @@ const STEP_2_BODY = `{{firstName}} — closing the loop.
 BellAveGo fixes both:
 - 5 fresh homeowner leads every Monday (real names + addresses)
 - AI receptionist on every missed call, 24/7
-- $297/mo flat, 30-day money-back guarantee
+- **First month $97 w/ code FIRST200** (then $297/mo flat)
+- 30-day money-back guarantee
 
-Hear our AI answer live in 1 ring: (651) 467-7829
-Start trial: bellavego.com/start
+Hear Emma live: (651) 467-7829
+Claim: bellavego.com/start?promo=FIRST200
 
 Either way, good luck out there.
 

@@ -31,8 +31,10 @@ const SYSTEM = `You write cold email copy for BellAveGo, a SaaS for solo + 1-3 p
 OFFER:
 - 5 fresh homeowner leads delivered every Monday (real names + addresses, public-record events)
 - AI receptionist (named Emma) answers every missed call 24/7, books the job, texts the contractor
-- $297/mo flat. No setup. No per-call fee. 30-day money-back guarantee. Cancel anytime.
+- **First month $97 w/ code FIRST200** (saves $200). Then $297/mo flat after.
+- No setup. No per-call fee. 30-day money-back guarantee. Cancel anytime.
 - Demo line: (651) 467-7829
+- CTA URL: bellavego.com/start?promo=FIRST200
 
 RULES:
 - Personalize w/ {{firstName}} {{companyName}} {{city}} merge tags
