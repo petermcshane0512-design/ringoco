@@ -159,6 +159,14 @@
     {
       "path": "/api/crons/trade-segmenter",
       "schedule": "30 1 * * *"
+    },
+    {
+      "path": "/api/crons/hot-opener-trigger",
+      "schedule": "0 14-22 * * 1-6"
+    },
+    {
+      "path": "/api/crons/personalize-queued-leads",
+      "schedule": "0 7 * * *"
     }
   ],
   "functions": {
