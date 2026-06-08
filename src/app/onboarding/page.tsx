@@ -251,6 +251,13 @@ function OnboardingInner() {
     // fire-and-forget so they don't add 1-2s of perceived latency.
     user?.update({ unsafeMetadata: { onboardingComplete: true } }).catch(() => {})
     fetch('/api/onboarding/resolve-place', { method: 'POST' }).catch(() => {})
+    // 2026-06-07 — Trigger the first lead drop NOW that business_type +
+    // service_zips are populated. Payment-first signups previously
+    // attempted the first drop in the Stripe webhook BEFORE this wizard
+    // saved, which meant business_type=null and the lead engine fell
+    // back to default 'hvac' → wrong-trade leads. Now the drop fires
+    // here, with full profile populated.
+    fetch('/api/agents/fire-first-drop', { method: 'POST' }).catch(() => {})
     fetch('/api/diagnostics', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

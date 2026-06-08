@@ -290,7 +290,17 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
             }}>
               🔓 Reveal phone
             </button>
-          ) : null}
+          ) : (
+            <div style={{
+              padding: '10px 14px', borderRadius: 10,
+              background: '#F5F1EA', color: '#7AAAB2',
+              fontSize: 11, fontWeight: 700, textAlign: 'center',
+              lineHeight: 1.4,
+            }}>
+              Neighborhood lead<br />
+              <span style={{ fontSize: 10, color: '#A0BCC2' }}>(no specific address)</span>
+            </div>
+          )}
         </div>
       </div>
 

@@ -29,13 +29,20 @@ export const TIER_DROP_TARGET: Record<Tier, { period: 'quarterly' | 'monthly' | 
 const VALID_TRADES = ['hvac', 'plumbing', 'electrical', 'roofing', 'handyman'] as const
 type Trade = (typeof VALID_TRADES)[number]
 
-export function normalizeTrade(raw: string | null | undefined): Trade {
+// 2026-06-07 — null/empty input now returns null (NOT 'hvac' default).
+// Previously, payment-first signups whose webhook fired before the
+// onboarding wizard saved business_type were getting HVAC leads dropped
+// regardless of their actual trade. Lead engine now refuses to drop
+// anything until trade is explicitly set.
+export function normalizeTrade(raw: string | null | undefined): Trade | null {
   const t = (raw || '').toLowerCase().trim()
+  if (!t) return null
   if (t.includes('plumb')) return 'plumbing'
   if (t.includes('elect')) return 'electrical'
   if (t.includes('roof')) return 'roofing'
   if (t.includes('handy')) return 'handyman'
-  return 'hvac'
+  if (t.includes('hvac') || t.includes('air') || t.includes('heat') || t.includes('cool')) return 'hvac'
+  return null  // unknown trade → no drop
 }
 
 export type ProfileRow = {
@@ -77,6 +84,9 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
   if (remaining <= 0) return { assigned: 0, skipped_reason: 'quota_filled' }
 
   const tradeFilter = normalizeTrade(profile.business_type)
+  if (!tradeFilter) {
+    return { assigned: 0, skipped_reason: 'no_business_type_set — fill out onboarding wizard' }
+  }
   const homeZips = (profile.service_zips || []).filter(Boolean)
   if (homeZips.length === 0) return { assigned: 0, skipped_reason: 'no_service_zips' }
 

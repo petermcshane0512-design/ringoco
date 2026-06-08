@@ -197,6 +197,15 @@ export default function CalendarGrid({ events, onRefresh, onEventClick, onSlotCl
         weekends
         eventTimeFormat={{ hour: 'numeric', minute: '2-digit', meridiem: 'short' }}
         slotLabelFormat={{ hour: 'numeric', minute: '2-digit', meridiem: 'short' }}
+        /* 2026-06-07 — Restrict week/day timegrid to business hours so the
+           view isn't a 24-hour wall of empty 1am-5am slots. Contractors
+           book jobs 6am-9pm. Keeps the grid scannable. */
+        slotMinTime="06:00:00"
+        slotMaxTime="21:00:00"
+        scrollTime="08:00:00"
+        allDaySlot={false}
+        slotDuration="00:30:00"
+        expandRows
       />
 
       {/* Detail card overlay when an event is clicked */}

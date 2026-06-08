@@ -27,7 +27,8 @@ const nav = [
   { label: 'Command Center',     href: '/dashboard' },
   { label: 'Calendar',           href: '/dashboard/calendar' },
   { label: 'Neighborhood Leads', href: '/dashboard/leads', dot: true },
-  { label: 'Lead Reports',       href: '/dashboard/reports' },
+  // 2026-06-07 — Lead Reports nav removed. Monthly report now appears
+  // as a section at the bottom of /dashboard/leads instead of its own page.
   { label: 'Refer & Earn',       href: '/dashboard/refer', dot: true },
   { label: 'Call Forwarding',    href: '/dashboard/forwarding' },
   { label: 'AI Receptionist',    href: '/dashboard/receptionist' },
@@ -128,10 +129,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {
             href: '/dashboard/leads', label: 'Neighborhood Leads', dot: true,
             icon: <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></>,
-          },
-          {
-            href: '/dashboard/reports', label: 'Lead Reports',
-            icon: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></>,
           },
           {
             href: '/dashboard/forwarding', label: 'Call Forwarding',
@@ -253,8 +250,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               svg: <><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></> },
             { href: '/dashboard/leads', label: 'Leads',
               svg: <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></> },
-            { href: '/dashboard/reports', label: 'Reports',
-              svg: <><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-7"/></> },
             { href: '/dashboard/forwarding', label: 'Forward',
               svg: <><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></> },
             { href: '/dashboard/receptionist', label: 'AI',
