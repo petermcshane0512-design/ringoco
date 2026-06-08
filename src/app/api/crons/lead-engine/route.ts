@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 
   const { data: profiles, error } = await supabase
     .from('profiles')
-    .select('user_id, plan_tier, service_area, service_zips, service_radius_mi, business_type, is_active, sub_trade, min_ticket')
+    .select('user_id, plan_tier, service_area, service_zips, service_radius_mi, business_type, services_offered, is_active, sub_trade, min_ticket')
     .eq('is_active', true)
     .in('plan_tier', ['receptionist', 'officemgr', 'concierge'])
     .not('twilio_number', 'is', null)

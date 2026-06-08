@@ -40,6 +40,7 @@ const supabase = createClient(
 type Profile = {
   user_id: string
   business_type: string | null
+  services_offered: string | null
   service_zips: string[] | null
   sub_trade: string | null
 }
@@ -89,12 +90,12 @@ export async function POST(req: NextRequest) {
     // Step 2 — fetch current profile state
     const { data: profileRaw } = await supabase
       .from('profiles')
-      .select('user_id, business_type, service_zips, sub_trade')
+      .select('user_id, business_type, services_offered, service_zips, sub_trade')
       .eq('user_id', body.user_id)
       .maybeSingle()
     const profile = profileRaw as Profile | null
     if (!profile) return NextResponse.json({ error: 'profile not found', trace }, { status: 404 })
-    trace.push({ step: 'fetch_profile', ok: true, detail: { business_type: profile.business_type, service_zips: profile.service_zips } })
+    trace.push({ step: 'fetch_profile', ok: true, detail: { business_type: profile.business_type, services_offered: profile.services_offered, service_zips: profile.service_zips } })
 
     // Step 3 — wipe existing lead_drops + reset first_lead_drop_at
     const { count: dropsBefore } = await supabase
@@ -106,11 +107,14 @@ export async function POST(req: NextRequest) {
     trace.push({ step: 'wipe_drops', ok: true, detail: { dropped: dropsBefore } })
 
     // Step 4 — BatchData property search for each service zip
-    if (!profile.business_type || !profile.service_zips?.length) {
-      trace.push({ step: 'batchdata_search', ok: false, detail: 'no business_type or service_zips after patch' })
+    const resolvedTrade = (profile.business_type && profile.business_type.toLowerCase() !== 'other')
+      ? profile.business_type
+      : (profile.services_offered || profile.business_type || '')
+    if (!resolvedTrade || !profile.service_zips?.length) {
+      trace.push({ step: 'batchdata_search', ok: false, detail: `no resolved trade or service_zips. business_type="${profile.business_type}" services_offered="${profile.services_offered}"` })
       return NextResponse.json({ ok: false, trace })
     }
-    const cfg = tradeFiltersFor(profile.business_type)
+    const cfg = tradeFiltersFor(resolvedTrade)
     const zipResults: Array<{ zip: string; ok: boolean; count: number; error?: string }> = []
     let insertedReal = 0
     for (const zip of profile.service_zips.slice(0, 3)) {

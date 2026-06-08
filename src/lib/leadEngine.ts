@@ -29,20 +29,25 @@ export const TIER_DROP_TARGET: Record<Tier, { period: 'quarterly' | 'monthly' | 
 const VALID_TRADES = ['hvac', 'plumbing', 'electrical', 'roofing', 'handyman'] as const
 type Trade = (typeof VALID_TRADES)[number]
 
-// 2026-06-07 — null/empty input now returns null (NOT 'hvac' default).
-// Previously, payment-first signups whose webhook fired before the
-// onboarding wizard saved business_type were getting HVAC leads dropped
-// regardless of their actual trade. Lead engine now refuses to drop
-// anything until trade is explicitly set.
-export function normalizeTrade(raw: string | null | undefined): Trade | null {
-  const t = (raw || '').toLowerCase().trim()
-  if (!t) return null
-  if (t.includes('plumb')) return 'plumbing'
-  if (t.includes('elect')) return 'electrical'
-  if (t.includes('roof')) return 'roofing'
-  if (t.includes('handy')) return 'handyman'
-  if (t.includes('hvac') || t.includes('air') || t.includes('heat') || t.includes('cool')) return 'hvac'
-  return null  // unknown trade → no drop
+// 2026-06-07 — normalizeTrade now reads BOTH business_type AND
+// services_offered. When business_type is the literal string "Other"
+// (or unknown), services_offered's free-text gets mapped against the
+// same keyword buckets. Fixes the silent-drop bug where contractors
+// picked "Other" + typed "Handyman services" — business_type stayed
+// "Other" and the lead engine refused to drop anything.
+//
+// Returns null only if NEITHER field resolves to a known trade.
+export function normalizeTrade(raw: string | null | undefined, servicesOffered?: string | null): Trade | null {
+  const candidates = [raw, servicesOffered].filter(Boolean).map((s) => (s as string).toLowerCase().trim())
+  for (const t of candidates) {
+    if (!t) continue
+    if (t.includes('plumb')) return 'plumbing'
+    if (t.includes('elect')) return 'electrical'
+    if (t.includes('roof')) return 'roofing'
+    if (t.includes('handy') || t.includes('general') || t.includes('repair') || t.includes('remodel') || t.includes('renovation') || t.includes('carpentr') || t.includes('drywall') || t.includes('paint') || t.includes('fence') || t.includes('deck') || t.includes('porch') || t.includes('garage')) return 'handyman'
+    if (t.includes('hvac') || t.includes('air condition') || t.includes('a/c') || t.includes('ac ') || t.includes('furnace') || t.includes('heat pump') || t.includes('cooling') || t.includes('heating')) return 'hvac'
+  }
+  return null  // genuinely unknown trade → no drop (correct guard)
 }
 
 export type ProfileRow = {
@@ -52,10 +57,12 @@ export type ProfileRow = {
   service_zips: string[] | null
   service_radius_mi: number | null
   business_type: string | null
+  // 2026-06-07 — services_offered carries the free-text trade name when
+  // business_type is the literal "Other". normalizeTrade reads BOTH.
+  services_offered?: string | null
   is_active: boolean | null
-  // 2026-06-06 — optional onboarding fields used to refine the lead pool
   sub_trade?: string | null
-  min_ticket?: number | null   // USD
+  min_ticket?: number | null
 }
 
 export type AssignResult = { assigned: number; skipped_reason?: string }
@@ -83,9 +90,9 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
   const remaining = cadence.perDrop - used
   if (remaining <= 0) return { assigned: 0, skipped_reason: 'quota_filled' }
 
-  const tradeFilter = normalizeTrade(profile.business_type)
+  const tradeFilter = normalizeTrade(profile.business_type, profile.services_offered)
   if (!tradeFilter) {
-    return { assigned: 0, skipped_reason: 'no_business_type_set — fill out onboarding wizard' }
+    return { assigned: 0, skipped_reason: `unrecognized_trade — business_type="${profile.business_type}" services_offered="${profile.services_offered}". Edit in Settings.` }
   }
   const homeZips = (profile.service_zips || []).filter(Boolean)
   if (homeZips.length === 0) return { assigned: 0, skipped_reason: 'no_service_zips' }
@@ -288,7 +295,7 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
 export async function fireLeadEngineForUser(userId: string): Promise<AssignResult & { user_id: string }> {
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('user_id, plan_tier, service_area, service_zips, service_radius_mi, business_type, is_active, sub_trade, min_ticket')
+    .select('user_id, plan_tier, service_area, service_zips, service_radius_mi, business_type, services_offered, is_active, sub_trade, min_ticket')
     .eq('user_id', userId)
     .maybeSingle()
 

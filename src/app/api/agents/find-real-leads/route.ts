@@ -40,6 +40,7 @@ type ProfileRow = {
   user_id: string
   service_zips: string[] | null
   business_type: string | null
+  services_offered: string | null
   service_area: string | null
   sub_trade: string | null
 }
@@ -100,7 +101,7 @@ function tradeFiltersFor(trade: string): {
 async function findLeadsForTenant(userId: string): Promise<{ ok: boolean; assigned: number; reason?: string; spent_cents?: number }> {
   const { data: profileRaw, error: profileErr } = await supabase
     .from('profiles')
-    .select('user_id, service_zips, business_type, service_area, sub_trade')
+    .select('user_id, service_zips, business_type, services_offered, service_area, sub_trade')
     .eq('user_id', userId)
     .maybeSingle()
   if (profileErr || !profileRaw) {
@@ -109,9 +110,13 @@ async function findLeadsForTenant(userId: string): Promise<{ ok: boolean; assign
   const profile = profileRaw as ProfileRow
   const zips = (profile.service_zips || []).filter(Boolean)
   if (zips.length === 0) return { ok: false, assigned: 0, reason: 'no service_zips' }
-  if (!profile.business_type) return { ok: false, assigned: 0, reason: 'no business_type' }
+  // Resolve trade from business_type with services_offered fallback for "Other" picks.
+  const resolvedTrade = (profile.business_type && profile.business_type.toLowerCase() !== 'other')
+    ? profile.business_type
+    : (profile.services_offered || profile.business_type || '')
+  if (!resolvedTrade) return { ok: false, assigned: 0, reason: 'no business_type or services_offered' }
 
-  const cfg = tradeFiltersFor(profile.business_type)
+  const cfg = tradeFiltersFor(resolvedTrade)
   let spentCents = 0
   let insertedTotal = 0
 
@@ -132,10 +137,11 @@ async function findLeadsForTenant(userId: string): Promise<{ ok: boolean; assign
       continue
     }
 
-    const tradeNormalized = profile.business_type.toLowerCase().includes('handy') ? 'handyman'
-      : profile.business_type.toLowerCase().includes('plumb') ? 'plumbing'
-      : profile.business_type.toLowerCase().includes('elect') ? 'electrical'
-      : profile.business_type.toLowerCase().includes('roof') ? 'roofing'
+    const blob = resolvedTrade.toLowerCase()
+    const tradeNormalized = blob.includes('handy') || blob.includes('general') || blob.includes('repair') ? 'handyman'
+      : blob.includes('plumb') ? 'plumbing'
+      : blob.includes('elect') ? 'electrical'
+      : blob.includes('roof') ? 'roofing'
       : 'hvac'
 
     // Insert each property as a lead row. Dedup via UNIQUE (street_address, source).
