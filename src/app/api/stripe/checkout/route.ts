@@ -70,6 +70,19 @@ async function lookupPromoCode(code: string): Promise<{ promotionCodeId: string 
     return { promotionCodeId: personal.data.personal_stripe_promotion_code_id as string, attributionCode: code }
   }
 
+  // 2026-06-08 — generic public promo fallback (FIRST200 cold-email funnel,
+  // future public marketing codes). Code isn't in ig_creator_outreach so
+  // check Stripe directly for any active promotion code matching this string.
+  try {
+    const stripeList = await stripe.promotionCodes.list({ code, limit: 5, active: true })
+    const hit = stripeList.data.find((p) => p.code === code && p.active)
+    if (hit) {
+      return { promotionCodeId: hit.id, attributionCode: code }
+    }
+  } catch (e) {
+    console.warn('[checkout] Stripe promotionCodes.list failed for', code, (e as Error).message)
+  }
+
   return { promotionCodeId: null, attributionCode: code }
 }
 
@@ -140,16 +153,30 @@ export async function POST(req: NextRequest) {
     cancel_url: `${APP_URL}`,
   }
 
-  // 2026-06-07 — switched from `discounts` pre-apply to
-  // `allow_promotion_codes: true` always. Stripe locks pre-applied
-  // discounts (the X is hidden), so users couldn't swap QUE97 for
-  // QUE3MON or fix typos. Letting Stripe handle code entry means users
-  // can paste any code, remove it, retype, etc.
-  //
-  // Trade-off accepted: slight conversion friction (paste vs auto-apply)
-  // for full UX flexibility on code swapping. The /pricing page surfaces
-  // the resolved attribution code prominently above the CTA so users
-  // know what to paste.
+  // 2026-06-08 — restore pre-apply path when promo resolves cleanly
+  // (cold email FIRST200, creator codes from /ref/[code]). Pre-apply =
+  // user sees discount without typing. If pre-apply throws, fall back to
+  // allow_promotion_codes so the sale never dies on a promo-code edge case.
+  try {
+    const session = promoLookup?.promotionCodeId
+      ? await stripe.checkout.sessions.create({
+          ...baseParams,
+          discounts: [{ promotion_code: promoLookup.promotionCodeId }],
+        } as never, { apiVersion: CHECKOUT_API_VERSION })
+      : await stripe.checkout.sessions.create({
+          ...baseParams,
+          allow_promotion_codes: true,
+        } as never, { apiVersion: CHECKOUT_API_VERSION })
+    return NextResponse.json({
+      url: session.url,
+      ...(promoLookup?.attributionCode ? {
+        notice: `Discount ${promoLookup.attributionCode} applied.`,
+      } : {}),
+    })
+  } catch (preApplyErr) {
+    console.warn('[checkout] pre-apply failed, falling back to allow_promotion_codes:', (preApplyErr as Error).message)
+  }
+
   try {
     const session = await stripe.checkout.sessions.create({
       ...baseParams,

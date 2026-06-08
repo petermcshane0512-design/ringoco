@@ -140,10 +140,15 @@ export default function PricingPage() {
     // Trade-off: slight risk that 5-10% pay and never finish onboarding.
     // 30-day MBG covers that — they refund cleanly.
     try {
+      // 2026-06-08 — promo from cold-email /start?promo=FIRST200 or URL param.
+      // Falls back to cookie set by /start route (survives Clerk sign-up bounce).
+      const urlPromo = new URLSearchParams(window.location.search).get('promo') || ''
+      const cookiePromo = (document.cookie.match(/bavg_promo=([^;]+)/)?.[1] || '')
+      const promoCode = (urlPromo || cookiePromo).trim().toUpperCase()
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier, interval: intv }),
+        body: JSON.stringify({ tier, interval: intv, creatorCode: promoCode || undefined }),
       })
       const data = await res.json()
       if (data.waitlist && data.redirect) {
