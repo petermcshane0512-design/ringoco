@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { createClient } from '@supabase/supabase-js'
 import HandRaiseCard from './HandRaiseCard'
@@ -92,7 +93,7 @@ function hotnessScore(opens: number, clicks: number): number {
 
 export default async function HandRaisesPage() {
   const gate = await requireAdmin()
-  if (!gate.ok) return gate.res
+  if (!gate.ok) redirect('/sign-in?redirect_url=/admin/hand-raises')
 
   const [instantlyLeads, outreachRows] = await Promise.all([
     fetchInstantlyLeads(),
