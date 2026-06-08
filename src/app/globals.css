@@ -477,8 +477,10 @@ html { overflow-x: hidden; }
      the slide-out sidebar. Matches the sunset palette + tall enough for
      comfortable thumb taps. */
   .dash-mobile-tabbar {
+    /* 2026-06-07 — 6 nav items → 2 rows × 3 cols. Bigger thumb targets,
+       no horizontal scroll, fits all 6 (Home/Calendar/Leads/Forward/AI/Settings). */
     display: grid !important;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     grid-auto-rows: 1fr;
     gap: 6px;
     position: fixed;

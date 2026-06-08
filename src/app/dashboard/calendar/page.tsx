@@ -365,7 +365,7 @@ function CalendarPageInner() {
               <div style={{ fontSize: 11.5, color: '#7AAAB2', marginTop: 2 }}>
                 {googleConnection
                   ? `Connected · ${googleConnection.email || 'synced'}${googleConnection.lastSyncedAt ? ` · last sync ${new Date(googleConnection.lastSyncedAt).toLocaleString()}` : ''}`
-                  : 'Optional. Every BellAveGo appointment pushes to your Google Calendar app on your phone.'}
+                  : 'Optional. Every BellAveGo appointment pushes to your Google Calendar on your phone. Google approval coming in ~6 days — meanwhile, click Continue on the "unverified app" screen to proceed (safe, it\'s us).'}
               </div>
             </div>
           </div>
@@ -396,6 +396,115 @@ function CalendarPageInner() {
             </Link>
           )}
         </div>
+      </section>
+
+      {/* Bottom action row — 2 collapsible cards. Left = how the calendar
+          works (manual + Google sync explainer). Right = booking rules
+          (avg job time, travel buffer). Both collapsed by default so they
+          don't take space on the daily-use surface. (2026-06-07 per Peter) */}
+      <section style={{ marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
+        <details style={{
+          background: '#fff',
+          border: '1px solid rgba(10,168,159,0.16)',
+          borderRadius: 12,
+          padding: '14px 16px',
+          fontSize: 13,
+          color: '#0B1F3A',
+        }}>
+          <summary style={{ cursor: 'pointer', fontWeight: 800, listStyle: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 16 }}>📅</span>
+            How the BellAveGo Calendar works
+            <span style={{ marginLeft: 'auto', fontSize: 11, color: '#7AAAB2' }}>▼</span>
+          </summary>
+          <div style={{ marginTop: 12, fontSize: 12.5, color: '#4A6670', lineHeight: 1.6 }}>
+            <p style={{ margin: '0 0 8px' }}><strong>The BellAveGo calendar IS your calendar.</strong> Every appointment your AI receptionist books lands here in real time. You can also click any empty slot and add manual appointments yourself.</p>
+            <p style={{ margin: '0 0 8px' }}><strong>Optional — mirror to Google.</strong> Connect Google Calendar (right side) and every BellAveGo appointment auto-pushes to your phone&apos;s Google Calendar app. Edits flow OUT, not IN — BellAveGo stays the source of truth.</p>
+            <p style={{ margin: '0 0 8px' }}><strong>How Emma uses it.</strong> When a caller asks for a time, Emma reads your free/busy windows here, never offers a slot you&apos;re already booked in, then writes the new appointment back into this calendar with the customer&apos;s name + reason + phone.</p>
+            <p style={{ margin: 0 }}><strong>You stay in control.</strong> Every booking can be edited, rescheduled, or cancelled with one click. Block lunch + vacation by adding manual appointments on those slots.</p>
+          </div>
+        </details>
+
+        <details style={{
+          background: '#fff',
+          border: '1px solid rgba(232,116,43,0.22)',
+          borderRadius: 12,
+          padding: '14px 16px',
+          fontSize: 13,
+          color: '#0B1F3A',
+        }}>
+          <summary style={{ cursor: 'pointer', fontWeight: 800, listStyle: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 16 }}>⚙️</span>
+            Booking rules (job time + travel buffer)
+            <span style={{ marginLeft: 'auto', fontSize: 11, color: '#7AAAB2' }}>▼</span>
+          </summary>
+          <div style={{ marginTop: 14 }}>
+            <p style={{ fontSize: 12, color: '#7AAAB2', margin: '0 0 12px', lineHeight: 1.55 }}>
+              Tell Emma how long the average job takes and how much travel time to leave between appointments. She uses these every time she books a customer over the phone.
+            </p>
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#0B1F3A', marginBottom: 4 }}>
+                Average job duration: <span style={{ color: '#E8742B' }}>{durationMin} min</span>
+              </label>
+              <input
+                type="range" min={30} max={240} step={15}
+                value={durationMin}
+                onChange={(e) => setDurationMin(parseInt(e.target.value, 10))}
+                style={{ width: '100%', accentColor: '#E8742B' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#A0BCC2' }}>
+                <span>30 min</span><span>2 hrs</span><span>4 hrs</span>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#0B1F3A', marginBottom: 4 }}>
+                Travel buffer between jobs: <span style={{ color: '#E8742B' }}>{bufferMin} min</span>
+              </label>
+              <input
+                type="range" min={0} max={90} step={5}
+                value={bufferMin}
+                onChange={(e) => setBufferMin(parseInt(e.target.value, 10))}
+                style={{ width: '100%', accentColor: '#E8742B' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#A0BCC2' }}>
+                <span>0 min</span><span>45 min</span><span>90 min</span>
+              </div>
+            </div>
+
+            <button
+              onClick={async () => {
+                setSavingSettings(true)
+                try {
+                  await fetch('/api/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      default_job_duration_min: durationMin,
+                      travel_buffer_min: bufferMin,
+                      appointment_settings_at: new Date().toISOString(),
+                    }),
+                  })
+                  setSavedTick(true)
+                  setTimeout(() => setSavedTick(false), 2200)
+                } catch { /* ignore */ }
+                setSavingSettings(false)
+              }}
+              disabled={savingSettings}
+              style={{
+                width: '100%', padding: '10px 16px', borderRadius: 10,
+                background: savedTick
+                  ? 'linear-gradient(135deg, #22C55E, #16A34A)'
+                  : 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+                color: '#fff', border: 'none',
+                fontSize: 12, fontWeight: 800,
+                cursor: savingSettings ? 'wait' : 'pointer',
+              }}
+            >
+              {savingSettings ? 'Saving…' : savedTick ? '✓ Saved' : 'Save rules'}
+            </button>
+          </div>
+        </details>
       </section>
 
       {/* Appointment modal — mounted last so it overlays everything */}
