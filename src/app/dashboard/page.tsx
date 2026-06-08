@@ -505,47 +505,10 @@ export default function DashboardPage() {
               </>
             )}
           </div>
-        ) : profile?.plan_tier && (TIER_METADATA[profile.plan_tier as Tier]) && (
-          // Customer-facing tier badge — shows ONLY their tier, plus an Upgrade
-          // button to /pricing unless they're already on the top tier. No
-          // sibling-tier names visible to customers (those were leaking the
-          // admin tier switcher's vocabulary, e.g. "Mission Control / Operator /
-          // Concierge" all at once which made customers think they had access
-          // to features they hadn't bought).
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 8,
-              padding: "6px 14px",
-              background: "#FFF7EE", borderRadius: 99,
-              border: "1px solid rgba(232,116,43,0.22)",
-            }}>
-              <span style={{
-                fontSize: 9, fontWeight: 800, color: "#C84B26",
-                letterSpacing: "0.12em", textTransform: "uppercase",
-              }}>
-                Your plan
-              </span>
-              <span style={{ fontSize: 13, fontWeight: 800, color: "#0B1F3A", letterSpacing: "-0.2px" }}>
-                {TIER_METADATA[profile.plan_tier as Tier].name}
-              </span>
-            </div>
-            {profile.plan_tier !== 'concierge' && (
-              <Link
-                href="/dashboard/upgrade"
-                style={{
-                  display: "inline-flex", alignItems: "center", gap: 5,
-                  padding: "6px 14px", borderRadius: 99,
-                  background: "linear-gradient(135deg, #FF9D5A 0%, #E8742B 100%)",
-                  color: "#fff", fontSize: 12, fontWeight: 800,
-                  textDecoration: "none",
-                  boxShadow: "0 4px 12px rgba(232,116,43,0.32)",
-                }}
-              >
-                Upgrade plan →
-              </Link>
-            )}
-          </div>
-        )}
+        ) : null}
+        {/* 2026-06-07 — Single-tier ($297/mo) pivot: no more "Your plan" badge
+            or "Upgrade plan" button. Removed entirely so the dashboard
+            header reads cleanly. */}
       </div>
 
       {/* Summary fetch error — surfaces server problems instead of silently
@@ -651,22 +614,11 @@ export default function DashboardPage() {
           and nothing happens. Sticky warning until forwarding_verified_at
           is stamped (set by /api/onboarding/verify-forwarding when our
           test call lands on Vapi within 90s). */}
-      {profile?.is_active && profile.twilio_number && !((profile as { forwarding_verified_at?: string | null }).forwarding_verified_at) && (
-        <div style={{ marginBottom: 22, padding: isMobile ? "14px 16px" : "16px 22px", background: "linear-gradient(135deg, #FFF7EE 0%, #FEF3C7 100%)", border: "1px solid rgba(232,116,43,0.40)", borderRadius: 14, display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "stretch" : "center", justifyContent: "space-between", gap: isMobile ? 12 : 16, boxShadow: "0 8px 24px rgba(232,116,43,0.10)" }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: "#C84B26", display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 16 }}>⚠️</span>
-              Call forwarding isn&apos;t set up yet — Emma can&apos;t answer your calls
-            </div>
-            <div style={{ fontSize: 12, color: "#92400E", marginTop: 4, lineHeight: 1.55 }}>
-              Your AI number ({profile.twilio_number}) is live, but your business line still rings your old voicemail. Forward your line to Emma so missed calls actually reach her — 2-minute walkthrough.
-            </div>
-          </div>
-          <Link href="/dashboard/forwarding" style={{ padding: "10px 20px", borderRadius: 10, fontSize: 12, fontWeight: 800, background: "linear-gradient(135deg, #FF9D5A, #E8742B)", color: "#fff", textDecoration: "none", whiteSpace: "nowrap", boxShadow: "0 6px 18px rgba(232,116,43,0.32)", flexShrink: 0 }}>
-            Set up forwarding →
-          </Link>
-        </div>
-      )}
+      {/* 2026-06-07 — Removed dashboard "Set up forwarding" warning. Forwarding
+          setup happens during the post-checkout /dashboard/setup wizard
+          BEFORE the dashboard renders. If they actually skip it (or test-call
+          fails), the setup wizard's own retry flow handles it — no need for
+          a permanent warning on the dashboard. */}
 
       {/* Dashboard shell — always rendered. Pre-activation users see empty
           state behind the activation banner above (sells with desire, not a wall). */}
