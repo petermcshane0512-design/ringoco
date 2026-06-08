@@ -79,7 +79,7 @@ async function fetchInstantlyLeads(): Promise<InstantlyLead[]> {
   // Pull up to 500 leads, filter by lead.campaign client-side.
   const all: LeadWithCampaign[] = []
   let cursor: string | undefined
-  for (let page = 0; page < 5; page++) {
+  for (let page = 0; page < 10; page++) {
     try {
       const body: Record<string, unknown> = { limit: 100 }
       if (cursor) body.starting_after = cursor
@@ -93,8 +93,9 @@ async function fetchInstantlyLeads(): Promise<InstantlyLead[]> {
       const j = await r.json()
       const items = (j.items || j.data || []) as LeadWithCampaign[]
       all.push(...items)
-      if (items.length < 100) break
-      cursor = items[items.length - 1].id as string | undefined
+      // Instantly returns the next page token in `next_starting_after`.
+      // Stop when token absent (end of list).
+      cursor = j.next_starting_after as string | undefined
       if (!cursor) break
     } catch {
       break

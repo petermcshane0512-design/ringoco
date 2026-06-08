@@ -78,7 +78,7 @@ async function fetchHotInstantlyLeads(): Promise<Map<string, HotSignal>> {
   // No server-side campaign filter — paginate then filter client-side
   const items: Array<{ email?: string; email_open_count?: number; email_click_count?: number; email_reply_count?: number; opens?: number; clicks?: number; replies?: number; campaign?: string; id?: string }> = []
   let cursor: string | undefined
-  for (let page = 0; page < 5; page++) {
+  for (let page = 0; page < 10; page++) {
     const body: Record<string, unknown> = { limit: 100 }
     if (cursor) body.starting_after = cursor
     const r = await fetch('https://api.instantly.ai/api/v2/leads/list', {
@@ -90,8 +90,7 @@ async function fetchHotInstantlyLeads(): Promise<Map<string, HotSignal>> {
     const j = await r.json()
     const batch = (j.items || j.data || []) as typeof items
     items.push(...batch.filter((l) => l.campaign === CAMPAIGN_ID))
-    if (batch.length < 100) break
-    cursor = batch[batch.length - 1].id
+    cursor = j.next_starting_after as string | undefined
     if (!cursor) break
   }
   const map = new Map<string, HotSignal>()
