@@ -624,55 +624,43 @@ export default function DashboardPage() {
           state behind the activation banner above (sells with desire, not a wall). */}
       <>
 
-      {/* ── First-drop countdown (2026-06-07) ──
-          Shown to ACTIVE subscribers whose first lead drop hasn't landed
-          yet. Banner promises "within 24h" — the daily lead-engine cron
-          retries any tenant whose day-1 drop missed, so worst case the
-          customer waits one nightly tick. Hides automatically the moment
-          first_lead_drop_at is stamped on the profile. */}
-      {profile?.is_active && !profile?.first_lead_drop_at && (() => {
-        const created = profile.created_at ? new Date(profile.created_at).getTime() : Date.now()
-        const eta = created + 24 * 60 * 60 * 1000
-        const remainingMs = Math.max(0, eta - Date.now())
-        const h = Math.floor(remainingMs / 3_600_000)
-        const m = Math.floor((remainingMs % 3_600_000) / 60_000)
-        return (
-          <div style={{
-            marginBottom: 18,
-            padding: '16px 20px',
-            background: 'linear-gradient(135deg, rgba(232,116,43,0.10) 0%, rgba(255,157,90,0.08) 100%)',
-            border: '1px solid rgba(232,116,43,0.32)',
-            borderRadius: 14,
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            gap: 14, flexWrap: 'wrap',
-          }}>
-            <div style={{ flex: 1, minWidth: 240 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#C84B26', marginBottom: 6 }}>
-                🎯 Curating your first 5 leads
-              </div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A', marginBottom: 4 }}>
-                Your first lead drop lands within 24 hours.
-              </div>
-              <div style={{ fontSize: 12, color: '#4A6670', lineHeight: 1.5 }}>
-                BellAveGo is scanning permits, deed transfers, and aging-HVAC homes in your service area right now. We&apos;ll push + text you the moment your 5 leads are ready.
-              </div>
+      {/* ── Leads CTA banner (2026-06-07) ──
+          Replaced the "first-drop countdown" with a simple click-through
+          to /dashboard/leads. The countdown UX lives on the leads page
+          itself where it belongs (covers both first-drop AND next-Monday-
+          drop states). Command center stays focused on calls + revenue. */}
+      {profile?.is_active && (
+        <Link href="/dashboard/leads" style={{
+          marginBottom: 18,
+          padding: '14px 20px',
+          background: 'linear-gradient(135deg, rgba(232,116,43,0.10) 0%, rgba(255,157,90,0.08) 100%)',
+          border: '1px solid rgba(232,116,43,0.32)',
+          borderRadius: 14,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          gap: 14, flexWrap: 'wrap',
+          textDecoration: 'none',
+          color: 'inherit',
+          cursor: 'pointer',
+        }}>
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1F3A' }}>
+              📍 Click Leads to find more business in your neighborhood
             </div>
-            <div style={{ flexShrink: 0, textAlign: 'right' }}>
-              <div style={{ fontSize: 10, fontWeight: 800, color: '#8B5A3D', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>
-                Estimated arrival
-              </div>
-              <div style={{
-                fontSize: 26, fontWeight: 900,
-                background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
-                WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-                letterSpacing: '-0.5px', lineHeight: 1, fontVariantNumeric: 'tabular-nums',
-              }}>
-                {h}h {m}m
-              </div>
+            <div style={{ fontSize: 12, color: '#7AAAB2', marginTop: 3 }}>
+              5 fresh homeowners every Monday — addresses + reasons to call.
             </div>
           </div>
-        )
-      })()}
+          <div style={{
+            padding: '8px 16px', borderRadius: 10,
+            background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+            color: '#fff', fontSize: 12, fontWeight: 800,
+            boxShadow: '0 4px 12px rgba(232,116,43,0.32)',
+            whiteSpace: 'nowrap',
+          }}>
+            Go to Leads →
+          </div>
+        </Link>
+      )}
 
       {/* Metric cards — big bold numbers, alternating orange + teal glows */}
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fit, minmax(180px, 1fr))", gap: isMobile ? 10 : 14, marginBottom: isMobile ? 18 : 24 }}>
