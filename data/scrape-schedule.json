@@ -247,50 +247,62 @@
     },
     {
       "date": "2026-06-09",
-      "send_target": 50,
-      "scrape_target": 75,
+      "send_target": 450,
+      "scrape_target": 700,
       "cities": [
-        "Phoenix, AZ"
+        "Phoenix, AZ",
+        "Mesa, AZ",
+        "Tempe, AZ"
       ]
     },
     {
       "date": "2026-06-10",
-      "send_target": 50,
-      "scrape_target": 75,
+      "send_target": 450,
+      "scrape_target": 700,
       "cities": [
-        "Las Vegas, NV"
+        "Las Vegas, NV",
+        "Henderson, NV",
+        "North Las Vegas, NV"
       ]
     },
     {
       "date": "2026-06-11",
-      "send_target": 50,
-      "scrape_target": 75,
+      "send_target": 450,
+      "scrape_target": 700,
       "cities": [
-        "Dallas, TX"
+        "Dallas, TX",
+        "Plano, TX",
+        "Garland, TX"
       ]
     },
     {
       "date": "2026-06-12",
-      "send_target": 50,
-      "scrape_target": 75,
+      "send_target": 450,
+      "scrape_target": 700,
       "cities": [
-        "Tampa, FL"
+        "Tampa, FL",
+        "St Petersburg, FL",
+        "Clearwater, FL"
       ]
     },
     {
       "date": "2026-06-13",
-      "send_target": 50,
-      "scrape_target": 75,
+      "send_target": 450,
+      "scrape_target": 700,
       "cities": [
-        "Houston, TX"
+        "Houston, TX",
+        "Pearland, TX",
+        "Sugar Land, TX"
       ]
     },
     {
       "date": "2026-06-14",
-      "send_target": 50,
-      "scrape_target": 75,
+      "send_target": 450,
+      "scrape_target": 700,
       "cities": [
-        "Orlando, FL"
+        "Orlando, FL",
+        "Kissimmee, FL",
+        "Sanford, FL"
       ]
     },
     {
