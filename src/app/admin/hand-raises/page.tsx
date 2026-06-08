@@ -69,22 +69,38 @@ type Merged = {
   hotness: number  // composite score for sort
 }
 
+type LeadWithCampaign = InstantlyLead & { campaign?: string }
+
 async function fetchInstantlyLeads(): Promise<InstantlyLead[]> {
   const KEY = process.env.INSTANTLY_API_KEY
   if (!KEY) return []
-  try {
-    const r = await fetch('https://api.instantly.ai/api/v2/leads/list', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ campaign_ids: [CAMPAIGN_ID], limit: 300 }),
-      cache: 'no-store',
-    })
-    if (!r.ok) return []
-    const j = await r.json()
-    return (j.items || j.data || []) as InstantlyLead[]
-  } catch {
-    return []
+  // Paginate w/ small limit to avoid Instantly rate-limit. No server-side
+  // filter (campaign_ids param is unreliable — returns 0 intermittently).
+  // Pull up to 500 leads, filter by lead.campaign client-side.
+  const all: LeadWithCampaign[] = []
+  let cursor: string | undefined
+  for (let page = 0; page < 5; page++) {
+    try {
+      const body: Record<string, unknown> = { limit: 100 }
+      if (cursor) body.starting_after = cursor
+      const r = await fetch('https://api.instantly.ai/api/v2/leads/list', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        cache: 'no-store',
+      })
+      if (!r.ok) break
+      const j = await r.json()
+      const items = (j.items || j.data || []) as LeadWithCampaign[]
+      all.push(...items)
+      if (items.length < 100) break
+      cursor = items[items.length - 1].id as string | undefined
+      if (!cursor) break
+    } catch {
+      break
+    }
   }
+  return all.filter((l) => l.campaign === CAMPAIGN_ID)
 }
 
 function hotnessScore(opens: number, clicks: number): number {

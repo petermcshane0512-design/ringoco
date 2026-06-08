@@ -75,14 +75,25 @@ async function fetchHotInstantlyLeads(): Promise<Map<string, HotSignal>> {
   //   - ≥1 link click (strongest signal — overrides opens threshold)
   //   - ≥3 opens AND not bounced AND not replied negative
   const KEY = process.env.INSTANTLY_API_KEY!
-  const r = await fetch('https://api.instantly.ai/api/v2/leads/list', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ campaign_ids: [CAMPAIGN_ID], limit: 200 }),
-  })
-  if (!r.ok) return new Map()
-  const j = await r.json()
-  const items = j.items || j.data || []
+  // No server-side campaign filter — paginate then filter client-side
+  const items: Array<{ email?: string; email_open_count?: number; email_click_count?: number; email_reply_count?: number; opens?: number; clicks?: number; replies?: number; campaign?: string; id?: string }> = []
+  let cursor: string | undefined
+  for (let page = 0; page < 5; page++) {
+    const body: Record<string, unknown> = { limit: 100 }
+    if (cursor) body.starting_after = cursor
+    const r = await fetch('https://api.instantly.ai/api/v2/leads/list', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (!r.ok) break
+    const j = await r.json()
+    const batch = (j.items || j.data || []) as typeof items
+    items.push(...batch.filter((l) => l.campaign === CAMPAIGN_ID))
+    if (batch.length < 100) break
+    cursor = batch[batch.length - 1].id
+    if (!cursor) break
+  }
   const map = new Map<string, HotSignal>()
   for (const lead of items) {
     const opens = lead.email_open_count ?? lead.opens ?? 0
