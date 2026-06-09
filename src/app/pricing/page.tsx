@@ -133,14 +133,14 @@ export default function PricingPage() {
             lineHeight: 1.05, margin: '0 0 18px',
             color: '#0B1F3A',
           }}>
-            One plan.{' '}
             <span style={{
-              background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 50%, #C84B26 100%)',
+              background: 'linear-gradient(135deg, #22C55E 0%, #16803F 100%)',
               WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-            }}>10 fresh leads / week.</span>
+            }}>$97</span> first month.
+            <br />Then $497/mo if it works.
           </h1>
           <p style={{ fontSize: 'clamp(16px, 1.6vw, 18px)', color: '#3D5A66', lineHeight: 1.65, margin: '0 auto 28px', maxWidth: 620 }}>
-            10 fresh exclusive homeowner leads delivered to your dashboard every Monday (40/month) — real names, addresses, verified phones, a pre-written outreach script per lead, all flagged by recent permits, aged units, or property changes in your zip. AI texts + emails each one as you. Need more mid-week? Extra leads $25 each. <strong>If we don&rsquo;t book you 1 paying job in 30 days, full refund.</strong>
+            10 fresh exclusive homeowner leads delivered to your dashboard every Monday (40/month) — real names, addresses, verified phones, a pre-written outreach script per lead. AI texts + emails each one as you. <strong>If we don&rsquo;t book you 1 paying job in 30 days, full refund + $200 cash for your time + you keep every lead.</strong>
           </p>
         </div>
       </section>
@@ -173,24 +173,26 @@ export default function PricingPage() {
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               padding: '5px 12px', borderRadius: 99,
-              background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+              background: 'linear-gradient(135deg, #22C55E, #16803F)',
               color: '#fff', fontSize: 10.5, fontWeight: 900, letterSpacing: '0.10em', textTransform: 'uppercase',
               marginBottom: 14,
-            }}>Lead-Gen Pro</div>
+            }}>First month · code FIRST400</div>
 
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
-              <span style={{ fontSize: 'clamp(40px, 6vw, 64px)', fontWeight: 900, color: '#0B1F3A', letterSpacing: '-2px', lineHeight: 1 }}>
-                ${monthlyPrice}
-              </span>
-              <span style={{ fontSize: 16, fontWeight: 700, color: '#4A6670' }}>/mo</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 4 }}>
+              <span style={{
+                fontSize: 'clamp(64px, 9vw, 96px)', fontWeight: 900,
+                letterSpacing: '-0.04em', lineHeight: 0.95,
+                background: 'linear-gradient(135deg, #22C55E 0%, #16803F 100%)',
+                WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+              }}>$97</span>
+              <span style={{ fontSize: 16, fontWeight: 700, color: '#4A6670' }}>first month</span>
             </div>
-            <div style={{ fontSize: 13, color: '#4A6670', marginBottom: 6 }}>
-              {interval === 'annual'
-                ? `Billed $${totalBilled.toLocaleString()}/yr · Save $${savings}`
-                : 'Billed monthly · Cancel anytime'}
+            <div style={{ fontSize: 13.5, color: '#0B1F3A', marginBottom: 6, fontWeight: 600 }}>
+              &mdash; then <strong>${monthlyPrice}/mo</strong> if it books you a job.
+              {interval === 'annual' && ` Billed $${totalBilled.toLocaleString()}/yr · Save $${savings}.`}
             </div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: '#C84B26', marginBottom: 18 }}>
-              First month $97 with code FIRST400 ($400 off)
+            <div style={{ fontSize: 11.5, color: '#7AAAB2', marginBottom: 18 }}>
+              Cancel anytime · No setup · 30-day money-back + $200 cash if no job booked
             </div>
 
             <ul style={{ listStyle: 'none', padding: 0, margin: '20px 0 22px', display: 'grid', gap: 9 }}>
@@ -200,7 +202,7 @@ export default function PricingPage() {
                 'Pre-written outreach script per lead — sent automatically as YOU',
                 'Phone notification the second a homeowner replies',
                 'Need more mid-week? Extra leads $25 each',
-                'Performance guarantee: 1 paying job in 30 days or full refund',
+                'Guarantee: 1 paying job in 30 days OR full refund + $200 cash + you keep every lead',
                 '30-day money-back · Cancel anytime',
                 'No setup, no phone numbers, no integration',
               ].map((line) => (

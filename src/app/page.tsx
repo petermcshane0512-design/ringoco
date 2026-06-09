@@ -161,7 +161,7 @@ export default function Home() {
                 complete checkout (CXL + Cialdini consistency principle). */}
             <HeroZipForm />
             <p style={{ fontSize: 13, color: '#4A6670', margin: '14px 0 18px', maxWidth: 540 }}>
-              <strong style={{ color: '#0B1F3A' }}>$97 first month</strong> w/ code <strong>FIRST400</strong>, then $497/mo · book 1 job in 30 days or full refund + keep all leads · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
+              <strong style={{ color: '#16803F', fontSize: 16 }}>$97</strong> first month w/ code <strong>FIRST400</strong>. Book 1 job in 30 days or full refund + <strong>$200 cash</strong> + keep every lead. $497/mo only if it works · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
             </p>
           </div>
 
@@ -206,15 +206,25 @@ export default function Home() {
             padding: 32,
             boxShadow: '0 30px 80px rgba(232,116,43,0.16)',
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 10, marginBottom: 18 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 10, marginBottom: 18 }}>
               <div>
-                <div style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.12em', textTransform: 'uppercase' }}>BellAveGo Pro</div>
-                <div style={{ fontSize: 38, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.04em', lineHeight: 1 }}>$497<span style={{ fontSize: 18, color: '#7AAAB2', fontWeight: 700 }}>/mo</span></div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: '#16803F', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 2 }}>
+                  First month w/ code FIRST400
+                </div>
+                <div style={{
+                  fontSize: 'clamp(56px, 8vw, 84px)', fontWeight: 900,
+                  letterSpacing: '-0.05em', lineHeight: 0.95,
+                  background: 'linear-gradient(135deg, #22C55E 0%, #16803F 100%)',
+                  WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+                }}>$97</div>
+                <div style={{ fontSize: 11.5, color: '#4A6670', marginTop: 4 }}>
+                  &mdash; then $497/mo if it books you a job
+                </div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: '#16803F', letterSpacing: '0.12em', textTransform: 'uppercase' }}>First month</div>
-                <div style={{ fontSize: 28, fontWeight: 900, color: '#16803F', letterSpacing: '-0.03em' }}>$97</div>
-                <div style={{ fontSize: 11, color: '#4A6670' }}>code FIRST400</div>
+                <div style={{ fontSize: 10.5, fontWeight: 800, color: '#7AAAB2', letterSpacing: '0.12em', textTransform: 'uppercase' }}>BellAveGo Pro</div>
+                <div style={{ fontSize: 14, color: '#0B1F3A', fontWeight: 800, marginTop: 2 }}>$497<span style={{ color: '#7AAAB2', fontWeight: 600 }}>/mo after trial</span></div>
+                <div style={{ fontSize: 11, color: '#4A6670', marginTop: 2 }}>or $4,997/yr · save $968</div>
               </div>
             </div>
             <ul style={{ margin: '0 0 22px', padding: 0, listStyle: 'none', display: 'grid', gap: 10 }}>
@@ -243,7 +253,7 @@ export default function Home() {
             }}>
               <div style={{ fontSize: 11, fontWeight: 800, color: '#0B7B70', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>The guarantee, plain English</div>
               <div style={{ fontSize: 14, color: '#0B1F3A', lineHeight: 1.6 }}>
-                Book at least <strong>1 paying job in 30 days</strong> or we refund every dollar — AND you keep every lead we sent. No clawback. No questions. No phone call required.
+                Book at least <strong>1 paying job in 30 days</strong> or we refund every dollar &mdash; <strong>AND we PayPal you $200 cash</strong> for your time. AND you keep every lead we sent. No clawback. No questions. No phone call required.
               </div>
             </div>
             <Link href="/start?promo=FIRST400" style={{ ...ctaHeroPrimary, width: '100%', justifyContent: 'center', padding: '17px 28px', fontSize: 16 }}>
@@ -285,7 +295,7 @@ export default function Home() {
           Your zip is still open.<br />Lock it before your competitor does.
         </h2>
         <p style={{ color: 'rgba(255,255,255,0.94)', fontSize: 16, maxWidth: 560, margin: '0 auto 28px', lineHeight: 1.6 }}>
-          $97 first month w/ <strong>FIRST400</strong> → $497/mo. Book 1 job in 30 days or full refund + keep all leads. One shop per zip.
+          <strong>$97</strong> first month w/ <strong>FIRST400</strong>. Book 1 paying job in 30 days OR full refund + <strong>$200 cash</strong> + keep every lead. One shop per zip. $497/mo after only if it works.
         </p>
         <Link href="/start?promo=FIRST400" style={ctaFinal}>
           Start $97 trial — lock your zip →
@@ -661,14 +671,15 @@ function HeroZipForm() {
  */
 function TripleGuaranteeBadge() {
   const stamps = [
-    { top: '30-DAY', bot: 'Refund' },
-    { top: '1-JOB', bot: 'or Free' },
+    { top: '1-JOB', bot: 'or Refund' },
+    { top: '+$200', bot: 'cash to you' },
     { top: 'KEEP', bot: 'All Leads' },
+    { top: 'CANCEL', bot: 'Anytime' },
   ]
   return (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: 'repeat(3, 1fr)',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
       gap: 10,
       marginBottom: 18,
     }}>
