@@ -7,6 +7,8 @@ import Image from 'next/image'
 import { useAuth } from '@clerk/nextjs'
 import LiveAIPipeline from '@/components/LiveAIPipeline'
 import LiveDashboardPreview from '@/components/LiveDashboardPreview'
+import LiveActivityMarquee from '@/components/LiveActivityMarquee'
+import AnimatedRevenueCounter from '@/components/AnimatedRevenueCounter'
 
 /**
  * Homepage — 2026-06-09 Hormozi/Elon CLOSE STACK for $10M ARR by May 12 2027.
@@ -294,21 +296,66 @@ function HomeContent() {
 
       <Nav isSignedIn={!!isSignedIn} />
 
-      {/* HERO */}
+      {/* LIVE ACTIVITY MARQUEE — scrolling proof bar */}
+      <LiveActivityMarquee />
+
+      {/* HERO — aurora animated blobs behind content */}
       <section style={{
-        padding: 'clamp(16px, 3vw, 32px) clamp(16px, 5vw, 48px) clamp(24px, 4vw, 40px)',
-        background: 'radial-gradient(ellipse at 60% 10%, rgba(255,217,168,0.4) 0%, rgba(255,248,240,0) 60%)',
+        position: 'relative',
+        padding: 'clamp(20px, 3vw, 36px) clamp(16px, 5vw, 48px) clamp(28px, 4vw, 48px)',
+        background: '#FFF8F0',
+        overflow: 'hidden',
       }}>
-        <div style={{ maxWidth: 1240, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.1fr)', gap: 'clamp(24px, 4vw, 44px)', alignItems: 'center' }} className="hero-grid">
+        {/* Aurora animated blobs */}
+        <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+          <div style={{
+            position: 'absolute', top: '-20%', right: '-10%',
+            width: '60%', height: '120%', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255,157,90,0.32), transparent 65%)',
+            filter: 'blur(60px)',
+            animation: 'auroraDriftA 14s ease-in-out infinite alternate',
+          }} />
+          <div style={{
+            position: 'absolute', bottom: '-30%', left: '-15%',
+            width: '70%', height: '130%', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(94,234,212,0.18), transparent 65%)',
+            filter: 'blur(70px)',
+            animation: 'auroraDriftB 17s ease-in-out infinite alternate',
+          }} />
+          <div style={{
+            position: 'absolute', top: '20%', left: '40%',
+            width: '40%', height: '80%', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(232,116,43,0.18), transparent 65%)',
+            filter: 'blur(80px)',
+            animation: 'auroraDriftC 19s ease-in-out infinite alternate',
+          }} />
+        </div>
+        <style jsx global>{`
+          @keyframes auroraDriftA {
+            0%   { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-60px, 40px) scale(1.15); }
+          }
+          @keyframes auroraDriftB {
+            0%   { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(80px, -50px) scale(1.20); }
+          }
+          @keyframes auroraDriftC {
+            0%   { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-40px, -60px) scale(1.18); }
+          }
+        `}</style>
+        <div style={{ position: 'relative', maxWidth: 1240, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.1fr)', gap: 'clamp(24px, 4vw, 44px)', alignItems: 'center' }} className="hero-grid">
           <div>
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '6px 14px', borderRadius: 99,
-              background: '#FFE9D2',
-              border: '1.5px solid #FFC58A',
-              fontSize: 11.5, fontWeight: 800, color: '#A33C18',
-              marginBottom: 14,
-            }}>{variant.scarcityPill}</span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 14, alignItems: 'center' }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '6px 14px', borderRadius: 99,
+                background: '#FFE9D2',
+                border: '1.5px solid #FFC58A',
+                fontSize: 11.5, fontWeight: 800, color: '#A33C18',
+              }}>{variant.scarcityPill}</span>
+              <AnimatedRevenueCounter />
+            </div>
 
             {/* Hormozi $100M Offers: H1 = dream outcome + specificity.
                 Old "Your competitor is using AI" was fear-frame abstract;
@@ -328,7 +375,7 @@ function HomeContent() {
               {variant.h1Suffix}
             </h1>
             <p style={{ fontSize: 'clamp(15px, 1.4vw, 17px)', color: '#3D5A66', lineHeight: 1.55, margin: '0 0 20px', maxWidth: 560 }}>
-              Real names, addresses, phones — pulled overnight from permits, aging HVAC, storm strikes, new move-ins. AI sends the intro text + email for you. You only call back the YES’s. <strong style={{ color: '#0B1F3A' }}>One shop per zip. Locked all year.</strong>
+              Real names, addresses, phones — pulled overnight from permits, aging HVAC, storm strikes, new move-ins. Each lead arrives w/ a <strong style={{ color: '#0B1F3A' }}>pre-written intro script</strong> — call, text, or email it your way. You stay in control. <strong style={{ color: '#0B1F3A' }}>One shop per zip. Locked all year.</strong>
             </p>
 
             {/* Hormozi micro-commitment: zip lookup AS primary CTA.
@@ -408,7 +455,7 @@ function HomeContent() {
               {[
                 '10 fresh homeowner leads / week (40 / month) exclusive to your zip',
                 'Verified phone number per lead (skip-traced, not guessed)',
-                'Pre-written outreach script per lead — auto-sent from your number as you',
+                'Pre-written outreach script per lead — call, text, or email it your way',
                 'Zip-code exclusivity — locked all 12 months',
                 'Storm + permit + new move-in alerts (real-time)',
                 'AI lead scoring 1-100 per lead',
@@ -459,7 +506,7 @@ function HomeContent() {
           fontSize: 16, color: '#0B1F3A', fontWeight: 700, lineHeight: 1.6,
         }}>
           HomeAdvisor: <strong style={{ color: '#A33C18' }}>$40–300/lead</strong>, shared w/ 4 other shops.<br />
-          BellAveGo: <strong style={{ color: '#C84B26' }}>$12.43/lead</strong>, exclusive to YOU, AI sends the intro.
+          BellAveGo: <strong style={{ color: '#C84B26' }}>$12.43/lead</strong>, exclusive to YOU, AI-written intro script attached.
         </p>
       </section>
 
