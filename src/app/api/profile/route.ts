@@ -74,6 +74,17 @@ const SAFE_PROFILE_COLUMNS = new Set([
   // the real leads view. Not user-writable from this route, but listed
   // here for the GET-side select shape.
   'first_lead_drop_at',
+  // ── 2026-06-09 LEADS-ONLY PIVOT ────────────────────────────────────
+  // 10-step "unbreakable" onboarding collects everything needed to
+  // (a) source the right leads and (b) personalize auto-outreach AI prompt.
+  // SQL: sql/2026-06-09-leads-pivot-profile-cols.sql (apply via Studio).
+  'owner_last_name',          // sender personalization
+  'job_types',                // text[] — residential service / install / commercial / etc
+  'min_job_value_cents',      // int — filter out small-ticket leads
+  'years_in_business',        // int — credibility line in outreach
+  'value_props',              // text[] — financing/warranty/family-owned/etc
+  'outreach_tone',            // casual | professional | direct
+  'outreach_prompt_template', // Sonnet-generated prompt template (set by /api/leads/generate-outreach-prompt)
 ])
 
 export async function POST(req: NextRequest) {
