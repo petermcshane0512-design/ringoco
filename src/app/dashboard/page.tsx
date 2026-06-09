@@ -36,15 +36,26 @@ import { motion, AnimatePresence } from 'framer-motion'
  * empty-state hero — "your first Monday will look like this").
  */
 
+// 2026-06-09 — RICH shape now returned by /api/dashboard/leads-summary.
+// owner_name + pitch_script + source_details (incl. why_tags) are what
+// the killer Monday brief needs to render every lead as a full card.
 type LeadStub = {
   id: string
   street_address: string | null
-  zip: string | null
   city: string | null
+  state: string | null
+  zip: string | null
+  owner_name: string | null
+  owner_phone: string | null
+  owner_email: string | null
+  year_built: number | null
+  home_value_est: number | null
   trade_match: string[] | null
   source: string | null
+  source_details: Record<string, unknown> | null
   source_event_date: string | null
-  created_at: string | null
+  lead_score: number | null
+  pitch_script: string | null
 }
 
 type SimplifiedSummary = {
@@ -272,6 +283,105 @@ const STATUS_PILL: Record<RichLead['status'], { bg: string; fg: string; label: s
   'NO-REPLY': { bg: '#FEE2E2', fg: '#991B1B', label: '⏱ Awaiting' },
 }
 
+/**
+ * Map a real lead row from /api/dashboard/leads-summary into a RichLead
+ * for the killer Monday brief. Uses source_details.why_tags array shipped
+ * in find-real-leads (Batch Data foundation) + pitch_script for the email
+ * body. Falls back to sensible defaults so a partial row still renders.
+ *
+ * Was a TODO for weeks — caused every paying customer's dashboard to
+ * render empty when real leads existed. Fixed 2026-06-09.
+ */
+function enrichLeadsForDashboard(rows: LeadStub[]): RichLead[] {
+  return rows.map((row) => {
+    const sd = (row.source_details || {}) as {
+      why_tags?: string[]
+      tag?: string
+      last_sale_date?: string
+      last_sale_price?: number
+      provider?: string
+    }
+    const fullName = (row.owner_name || '').trim()
+    const firstName = fullName.split(/\s+/)[0] || 'Homeowner'
+
+    // Map BatchData/scraper source.tag → killer-brief signal taxonomy.
+    const tag = (sd.tag || row.source || '').toLowerCase()
+    let signal: RichLead['signal'] = 'AGED'
+    if (tag.includes('permit')) signal = 'PERMIT'
+    else if (tag.includes('storm') || tag.includes('hail') || tag.includes('noaa')) signal = 'STORM'
+    else if (tag.includes('recent-buyer') || tag.includes('move') || sd.last_sale_date) signal = 'MOVE-IN'
+    else if (tag.includes('aging') || tag.includes('aged') || tag.includes('panel') || tag.includes('roof')) signal = 'AGED'
+
+    const tradeMatch = (row.trade_match && row.trade_match[0]) || 'hvac'
+    const trade = tradeMatch.toUpperCase()
+
+    // why_tags array → 3-4 reason lines per Hormozi specificity = credibility.
+    const whyTags = Array.isArray(sd.why_tags) ? sd.why_tags : []
+    const why = whyTags.length > 0
+      ? whyTags.join(' · ')
+      : (row.pitch_script || `Owner-occupied. ${row.year_built ? `Built ${row.year_built}.` : ''} Verified address.`).slice(0, 280)
+
+    // Pitch script from find-real-leads = a single-sentence angle. Use
+    // verbatim for the angle field. SMS + email derive from it w/ light
+    // template wrap until we wire per-lead Sonnet generation per customer.
+    const angle = row.pitch_script || `Reach out about ${trade.toLowerCase()} services — owner-occupied verified.`
+    const smsBody = `Hey ${firstName} — saw your address in our overnight pull. ${angle}`.slice(0, 320)
+    const emailBody = `Subject: Quick note about your home\n\nHi ${firstName},\n\n${angle}\n\nFree quick look this week — Tue or Wed?\n\n— your local pro`
+
+    // Job estimate from source_details.estimated_cost OR home_value-driven floor.
+    const estCost = Number((row.source_details || {} as Record<string, unknown>).estimated_cost) || 0
+    const estJob = estCost > 0
+      ? `$${Math.round(estCost * 0.85).toLocaleString()}–${Math.round(estCost * 1.15).toLocaleString()}`
+      : pickEstJobByTrade(tradeMatch, signal)
+
+    return {
+      id: row.id,
+      owner: fullName || 'Homeowner',
+      firstName,
+      street: row.street_address || 'Verified address (tap to reveal)',
+      zip: row.zip || '',
+      city: row.city || '',
+      state: row.state || '',
+      trade,
+      signal,
+      score: row.lead_score ?? 75,
+      phone: row.owner_phone || '••• ••• ••••',
+      email: row.owner_email || '',
+      yearBuilt: row.year_built,
+      homeValue: row.home_value_est,
+      estJob,
+      status: 'NEW',
+      strategy: {
+        why,
+        angle,
+        sms: smsBody,
+        email: emailBody,
+        callWindow: pickCallWindow(signal),
+        followUp: signal === 'STORM'
+          ? 'No reply by Thu → text: "Insurance claim window closes soon — still worth a 15-min check?"'
+          : 'No reply by Wed → text reminder + 2nd-opinion angle.',
+      },
+    }
+  })
+}
+
+function pickEstJobByTrade(trade: string, signal: RichLead['signal']): string {
+  const t = trade.toLowerCase()
+  if (t === 'roofing') return signal === 'STORM' ? '$11,500–18,200' : '$8,400–14,200'
+  if (t === 'plumbing') return signal === 'AGED' ? '$1,400–3,800' : '$800–2,400'
+  if (t === 'electrical') return '$2,400–6,800'
+  if (t === 'handyman') return '$400–2,200'
+  // HVAC default
+  return signal === 'PERMIT' ? '$3,200–4,800' : signal === 'STORM' ? '$8,400–12,000' : '$4,200–7,100'
+}
+
+function pickCallWindow(signal: RichLead['signal']): string {
+  if (signal === 'STORM') return 'Today 4-6pm (storm-hit owners check phone after work — strike while it stings)'
+  if (signal === 'PERMIT') return 'Tue 4-6pm (permit owners shop installers after work)'
+  if (signal === 'MOVE-IN') return 'Sat 10am-noon (new homeowner Saturday-morning project window)'
+  return 'Thu 5-7pm (high-intent for aged-system owners after work)'
+}
+
 const OVERNIGHT_LOG = [
   { time: '11:02pm', icon: '🛰', txt: 'Scraper fired — Plano TX permits' },
   { time: '11:18pm', icon: '🏛', txt: '12 new permits pulled · 4 match your trade' },
@@ -348,7 +458,7 @@ export default function KillerDashboard() {
   // Use real leads when available, fall back to SAMPLE_WEEK so empty dashboards
   // still demo the killer state.
   const hasRealLeads = (summary?.this_week_count ?? 0) > 0
-  const weekLeads = hasRealLeads ? [] /* TODO: enrich real leads w/ strategy */ : SAMPLE_WEEK
+  const weekLeads = hasRealLeads ? enrichLeadsForDashboard(summary?.this_week_leads || []) : SAMPLE_WEEK
 
   const stats = useMemo(() => ({
     pulled: weekLeads.length,

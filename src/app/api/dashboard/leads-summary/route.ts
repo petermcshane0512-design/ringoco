@@ -35,12 +35,20 @@ type ProfileRow = {
 type LeadRow = {
   id: string
   street_address: string | null
+  city: string | null
+  state: string | null
   zip: string | null
+  owner_name: string | null
+  owner_phone: string | null
+  owner_email: string | null
+  year_built: number | null
+  home_value_est: number | null
   trade_match: string[] | null
   source: string | null
   source_details: Record<string, unknown> | null
   source_event_date: string | null
   lead_score: number | null
+  pitch_script: string | null
   created_at: string | null
 }
 
@@ -106,7 +114,7 @@ export async function GET() {
   // This week's leads
   const { data: weekLeads } = await supabase
     .from('leads')
-    .select('id, street_address, zip, trade_match, source, source_details, source_event_date, lead_score, created_at')
+    .select('id, street_address, city, state, zip, owner_name, owner_phone, owner_email, year_built, home_value_est, trade_match, source, source_details, source_event_date, lead_score, pitch_script, created_at')
     .contains('trade_match', [tradeFilter])
     .in('zip', zipsArr.slice(0, 200))
     .gte('created_at', weekStart)
@@ -117,7 +125,7 @@ export async function GET() {
   // This month's leads
   const { data: monthLeads } = await supabase
     .from('leads')
-    .select('id, street_address, zip, trade_match, source, source_details, source_event_date, lead_score, created_at')
+    .select('id, street_address, city, state, zip, owner_name, owner_phone, owner_email, year_built, home_value_est, trade_match, source, source_details, source_event_date, lead_score, pitch_script, created_at')
     .contains('trade_match', [tradeFilter])
     .in('zip', zipsArr.slice(0, 200))
     .gte('created_at', monthStart)
@@ -128,7 +136,7 @@ export async function GET() {
   // All-time leads
   const { data: allLeads } = await supabase
     .from('leads')
-    .select('id, street_address, zip, trade_match, source, source_details, source_event_date, lead_score, created_at')
+    .select('id, street_address, city, state, zip, owner_name, owner_phone, owner_email, year_built, home_value_est, trade_match, source, source_details, source_event_date, lead_score, pitch_script, created_at')
     .contains('trade_match', [tradeFilter])
     .in('zip', zipsArr.slice(0, 200))
     .order('created_at', { ascending: false })
@@ -141,11 +149,28 @@ export async function GET() {
     valueCents += cost * 100
   }
 
-  const slim = (rows: LeadRow[]) => rows.map((l) => ({
-    id: l.id, street_address: l.street_address, zip: l.zip,
-    trade_match: l.trade_match, source: l.source,
+  // 2026-06-09 — return RICH lead rows so the killer Monday brief on
+  // /dashboard can render owner names, addresses, AI pitch scripts, and
+  // the per-lead why_tags array from source_details. The old slim()
+  // shape stripped everything the rich-card UI needs, which is why
+  // every paying customer was seeing an empty dashboard.
+  const rich = (rows: LeadRow[]) => rows.map((l) => ({
+    id: l.id,
+    street_address: l.street_address,
+    city: l.city,
+    state: l.state,
+    zip: l.zip,
+    owner_name: l.owner_name,
+    owner_phone: l.owner_phone,
+    owner_email: l.owner_email,
+    year_built: l.year_built,
+    home_value_est: l.home_value_est,
+    trade_match: l.trade_match,
+    source: l.source,
+    source_details: l.source_details,
     source_event_date: l.source_event_date,
     lead_score: l.lead_score,
+    pitch_script: l.pitch_script,
   }))
 
   return NextResponse.json({
@@ -157,9 +182,9 @@ export async function GET() {
     outreach_sent: 0,
     outreach_replied: 0,
     hot_replies: [],
-    this_week_leads: slim(weekRows),
-    this_month_leads: slim(monthRows),
-    all_leads: slim(allRows),
-    recent_leads: slim(allRows.slice(0, 20)),
+    this_week_leads: rich(weekRows),
+    this_month_leads: rich(monthRows),
+    all_leads: rich(allRows),
+    recent_leads: rich(allRows.slice(0, 20)),
   })
 }

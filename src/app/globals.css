@@ -900,3 +900,18 @@ html { overflow-x: hidden; }
   margin: 32px 0;
   border: none;
 }
+
+/* Aurora hero blob keyframes (page.tsx hero bg).
+   Defined here as true global so multiple inline-style usages can ref. */
+@keyframes auroraDriftA {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-60px, 40px) scale(1.15); }
+}
+@keyframes auroraDriftB {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(80px, -50px) scale(1.20); }
+}
+@keyframes auroraDriftC {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-40px, -60px) scale(1.18); }
+}

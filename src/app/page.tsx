@@ -330,20 +330,6 @@ function HomeContent() {
             animation: 'auroraDriftC 19s ease-in-out infinite alternate',
           }} />
         </div>
-        <style jsx global>{`
-          @keyframes auroraDriftA {
-            0%   { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(-60px, 40px) scale(1.15); }
-          }
-          @keyframes auroraDriftB {
-            0%   { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(80px, -50px) scale(1.20); }
-          }
-          @keyframes auroraDriftC {
-            0%   { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(-40px, -60px) scale(1.18); }
-          }
-        `}</style>
         <div style={{ position: 'relative', maxWidth: 1240, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.1fr)', gap: 'clamp(24px, 4vw, 44px)', alignItems: 'center' }} className="hero-grid">
           <div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 14, alignItems: 'center' }}>
