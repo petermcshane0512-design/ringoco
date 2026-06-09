@@ -9,29 +9,21 @@ import SupportWidget from '@/components/SupportWidget'
 
 const ADMIN_EMAILS = new Set(['pmcshane@fordham.edu', 'peter@bellavego.com'])
 
-// Workspace nav order — 2026-06-04 PIVOT (Peter):
-// Stripped to ONLY the product's core promise: answer calls + book
-// calendar + deliver neighborhood leads. Invoicing + Office-Manager
-// "Pro" tabs removed (feature bloat that didn't align with the new
-// lead-focused tier structure). The 6 tabs left ALL serve the product
-// story directly.
+// Workspace nav — 2026-06-09 LEADS-ONLY PIVOT.
+// Receptionist tabs (Call Forwarding, AI Receptionist, Calendar) hidden
+// from the default flow. Code preserved but not in nav.
 //
-// 1. Command Center       — hub, everyone lands here first
-// 2. Calendar             — where bookings live + manual adds
-// 3. Neighborhood Leads   — NEW: tier-quota'd lead drops (5/qtr / 15/mo / 25/wk)
-// 4. Lead Reports         — periodic neighborhood-intel reports
-// 5. Call Forwarding      — critical onboarding step
-// 6. AI Receptionist      — phone product details + Emma config
-// (Settings + Account live in the separate "Account" section below.)
+// 1. Dashboard      — leads-focused root w/ this-week summary + hot replies
+// 2. Leads          — full leads list w/ Generate-AI-message per lead
+// 3. AI Outreach    — template view/edit page
+// 4. Refer & Earn   — customer referral compounding loop
+// 5. Settings       — re-open onboarding wizard
 const nav = [
-  { label: 'Command Center',     href: '/dashboard' },
-  { label: 'Calendar',           href: '/dashboard/calendar' },
-  { label: 'Neighborhood Leads', href: '/dashboard/leads', dot: true },
-  // 2026-06-07 — Lead Reports nav removed. Monthly report now appears
-  // as a section at the bottom of /dashboard/leads instead of its own page.
-  { label: 'Refer & Earn',       href: '/dashboard/refer', dot: true },
-  { label: 'Call Forwarding',    href: '/dashboard/forwarding' },
-  { label: 'AI Receptionist',    href: '/dashboard/receptionist' },
+  { label: 'Dashboard',     href: '/dashboard' },
+  { label: 'Leads',         href: '/dashboard/leads', dot: true },
+  { label: 'AI Outreach',   href: '/dashboard/settings/outreach' },
+  { label: 'Refer & Earn',  href: '/dashboard/refer', dot: true },
+  { label: 'Settings',      href: '/dashboard/setup' },
 ]
 
 function formatUS(num: string) {
