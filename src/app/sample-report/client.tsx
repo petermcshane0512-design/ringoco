@@ -719,7 +719,7 @@ export function ReportView({ report, sample = false, personalized = false }: { r
           <a
             href={`sms:+17737109565?body=${encodeURIComponent(`Hi, I want to set up BellAveGo for ${personalized ? report.meta.businessName : 'my shop'}. Saw your report.`)}`}
             className="cr-bar-btn cr-btn-text"
-            aria-label="Text Peter at BellAveGo"
+            aria-label="Text BellAveGo team"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>

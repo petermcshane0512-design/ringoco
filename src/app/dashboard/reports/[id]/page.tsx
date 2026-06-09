@@ -149,7 +149,7 @@ export default async function ReportViewerPage({
         </div>
       ) : (
         <div style={{ padding: 28, background: "#FFF7ED", border: "1px solid #FED7AA", borderRadius: 12, color: "#7C2D12", fontSize: 13 }}>
-          PDF is still rendering. Refresh in a minute, or text Peter at (773) 710-9565 if it&apos;s been more than 10 minutes.
+          PDF is still rendering. Refresh in a minute, or text us at (773) 710-9565 if it&apos;s been more than 10 minutes.
         </div>
       )}
     </div>

@@ -222,13 +222,16 @@ export default function FounderPage() {
           <p>
             My buddy was the first one to try it. He went from one job a day to fully booked inside a month. Now he&rsquo;s hiring his first helper. That&rsquo;s the whole reason this exists. Small home-service operators have always been the backbone of their neighborhoods, but they&rsquo;ve never had access to the kind of automated lead-gen that the big franchise chains pay marketing agencies five figures a month for. BellAveGo changes that &mdash; built into a product priced for a one-truck operator, not a corporation.
           </p>
+          <p>
+            Behind the scenes it&rsquo;s a tight team &mdash; <strong>four software engineers</strong> writing the code, training the AI, and keeping the lead pipeline clean every single day. We&rsquo;re small on purpose. Every line of code, every email the AI sends on your behalf, every lead delivered to your dashboard goes through people who actually know your industry and care whether you book the job.
+          </p>
 
           <div className="fv4-end">
             <Link href="/start?promo=FIRST400" className="try">
               Try BellAveGo &mdash; $97 first month
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </Link>
-            <a className="call" href="tel:+17737109565">or text me: (773) 710-9565</a>
+            <a className="call" href="tel:+17737109565">or text us: (773) 710-9565</a>
           </div>
         </div>
       </article>

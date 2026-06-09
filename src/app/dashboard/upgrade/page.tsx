@@ -486,7 +486,7 @@ export default function PlanManagementPage() {
       </div>
 
       <div style={{ textAlign: 'center', fontSize: 12, color: '#4A6670' }}>
-        Need help? Text Peter at{' '}
+        Need help? Text us at{' '}
         <a href="sms:+17737109565" style={{ color: '#0AA89F', fontWeight: 700, textDecoration: 'none' }}>
           (773) 710-9565
         </a>

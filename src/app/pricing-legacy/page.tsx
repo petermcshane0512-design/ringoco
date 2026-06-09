@@ -84,7 +84,7 @@ const PLANS: Plan[] = [
       'AI Financing Closer — Wisetack / GreenSky integration',
       'AI Recruiter — post jobs + screen technicians automatically',
       'Jobber / HousecallPro / ServiceTitan native integration',
-      'White-glove onboarding (Peter wires up your CRM live on call)',
+      'White-glove onboarding (we wire up your CRM live on call)',
       'Priority support — 24h SLA, dedicated Slack',
       'API access for custom integrations',
       '12 monthly AI consulting reports/year',
@@ -130,7 +130,7 @@ export default function PricingPage() {
         console.error('checkout error', data)
         setLoading(null)
         const reason = data?.error || 'Unknown error'
-        alert(`Checkout failed: ${reason}\n\nText Peter at 773-710-9565 with this message.`)
+        alert(`Checkout failed: ${reason}\n\nText us at 773-710-9565 with this message.`)
       }
     } catch (err) {
       console.error(err)

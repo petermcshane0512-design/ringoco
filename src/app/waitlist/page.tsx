@@ -63,12 +63,12 @@ function WaitlistForm() {
       })
       const j = await res.json()
       if (!res.ok) {
-        setError(j.error || 'Something went wrong — text Peter at (773) 710-9565')
+        setError(j.error || 'Something went wrong — text us at (773) 710-9565')
       } else {
         setSuccess(true)
       }
     } catch {
-      setError('Network error — try again or text Peter at (773) 710-9565')
+      setError('Network error — try again or text us at (773) 710-9565')
     }
     setSubmitting(false)
   }

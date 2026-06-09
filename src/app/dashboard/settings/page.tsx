@@ -210,7 +210,7 @@ export default function SettingsPage() {
       setTimeout(() => { setCancelModalOpen(false); loadProfile() }, 2500)
     } else {
       setCancelStatus('error')
-      setCancelMessage(json.error || 'Could not cancel — please text Peter at (773) 710-9565.')
+      setCancelMessage(json.error || 'Could not cancel — please text us at (773) 710-9565.')
     }
   }
 
@@ -245,12 +245,12 @@ export default function SettingsPage() {
         setTimeout(() => { window.location.href = '/goodbye' }, 3500)
       } else {
         setDeleteStatus('error')
-        setDeleteMessage(json.error || 'Could not delete — please text Peter at (773) 710-9565 and we\'ll handle it manually.')
+        setDeleteMessage(json.error || 'Could not delete — please text us at (773) 710-9565 and we\'ll handle it manually.')
       }
     } catch (e) {
       setDeleting(false)
       setDeleteStatus('error')
-      setDeleteMessage((e as Error).message || 'Network error — please text Peter at (773) 710-9565.')
+      setDeleteMessage((e as Error).message || 'Network error — please text us at (773) 710-9565.')
     }
   }
 

@@ -59,7 +59,7 @@ export default function SupportPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 900, color: '#0B1F3A', margin: 0, letterSpacing: '-0.5px' }}>Support</h1>
-          <p style={{ fontSize: 13, color: '#64748B', margin: '4px 0 0' }}>Direct line to Peter. Responses within 24 hours (4 hours on Elite).</p>
+          <p style={{ fontSize: 13, color: '#64748B', margin: '4px 0 0' }}>Direct line to the team. Responses within 24 hours (4 hours on Elite).</p>
         </div>
         <button onClick={() => setShowForm(!showForm)} style={{ padding: '11px 22px', background: 'linear-gradient(135deg, #0AA89F, #0D8F87)', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer', fontWeight: 800, fontSize: 13 }}>
           {showForm ? 'Cancel' : '+ New ticket'}
@@ -88,7 +88,7 @@ export default function SupportPage() {
           />
           <div style={{ marginTop: 14, textAlign: 'right' }}>
             <button onClick={submit} disabled={submitting} style={{ padding: '11px 24px', background: submitting ? '#94A3B8' : '#22C55E', color: '#fff', border: 'none', borderRadius: 10, cursor: submitting ? 'wait' : 'pointer', fontWeight: 800, fontSize: 13 }}>
-              {submitting ? 'Submitting…' : 'Send to Peter →'}
+              {submitting ? 'Submitting…' : 'Send to team →'}
             </button>
           </div>
         </div>
@@ -100,7 +100,7 @@ export default function SupportPage() {
         <div style={{ ...card, textAlign: 'center', padding: '48px 24px' }}>
           <p style={{ fontSize: 28, marginBottom: 8 }}>💬</p>
           <p style={{ fontWeight: 700, color: '#0B1F3A', marginBottom: 4 }}>No tickets yet</p>
-          <p style={{ fontSize: 13, color: '#94A3B8' }}>Hit "+ New ticket" if anything comes up. Peter sees every ticket on his phone.</p>
+          <p style={{ fontSize: 13, color: '#94A3B8' }}>Hit "+ New ticket" if anything comes up. We see every ticket on our phones.</p>
         </div>
       ) : (
         <div style={{ display: 'grid', gap: 12 }}>
@@ -121,7 +121,7 @@ export default function SupportPage() {
                 {(t.thread ?? []).map((e, i) => (
                   <div key={i} style={{ padding: '10px 0', borderBottom: i < t.thread.length - 1 ? '1px solid #F8FAFC' : 'none' }}>
                     <p style={{ fontSize: 11, fontWeight: 700, color: e.from === 'peter' ? '#0AA89F' : '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>
-                      {e.from === 'peter' ? '🛠 Peter' : 'You'} · {new Date(e.at).toLocaleString()}
+                      {e.from === 'peter' ? '🛠 Team' : 'You'} · {new Date(e.at).toLocaleString()}
                     </p>
                     <p style={{ fontSize: 13, color: '#0B1F3A', whiteSpace: 'pre-wrap', margin: 0, lineHeight: 1.55 }}>{e.body}</p>
                   </div>

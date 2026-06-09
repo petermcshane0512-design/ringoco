@@ -151,7 +151,7 @@ const CARRIERS: Record<CarrierKey, CarrierDef> = {
       { title: "Test it", body: "Call your business number from another phone, don't answer for ~15s. The AI should pick up." },
       { title: "If the code rejects, call your carrier", body: "Tell them: 'Please set up conditional call forwarding to (your BellAveGo number) when I don't answer for 15 seconds.' It's free." },
     ],
-    note: "If you have an old prepaid plan that rejects the code, text Peter at (773) 710-9565 and we'll arrange it with your carrier directly.",
+    note: "If you have an old prepaid plan that rejects the code, text us at (773) 710-9565 and we'll arrange it with your carrier directly.",
   },
 };
 

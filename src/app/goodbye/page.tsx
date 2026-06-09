@@ -98,7 +98,7 @@ export default function GoodbyePage() {
           color: '#7AAAB2',
           lineHeight: 1.55,
         }}>
-          Questions? Text Peter at{' '}
+          Questions? Text us at{' '}
           <a href="tel:7737109565" style={{ color: '#0AA89F', fontWeight: 700, textDecoration: 'none' }}>(773) 710-9565</a>.
         </div>
       </div>
