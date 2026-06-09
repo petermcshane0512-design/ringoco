@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@clerk/nextjs'
@@ -67,28 +68,204 @@ type SampleLead = {
   score: number
 }
 
-const HERO_LEAD: SampleLead = {
-  name: 'Mike Coleman',
-  addr: '7842 Oak Ridge Dr',
-  city: 'Plano, TX 75024',
-  phoneRedacted: '(214) ●●●-●167',
-  propertyValue: '$485K',
-  yearBuilt: 1998,
-  signalType: 'PERMIT FILED',
-  signalDetail: 'AC condenser permit · filed 3 days ago',
-  hvacAge: '14 yrs',
-  jobValue: '$3,200 – $4,800',
-  score: 92,
+type TeaserLead = { name: string; signal: string; value: string; isMore?: boolean }
+
+type TradeVariant = {
+  slug: string
+  label: string                  // e.g. "HVAC", "Roofing"
+  scarcityPill: string
+  h1Verb: string                 // "Book", "Land"
+  h1Highlight: string            // "4–8 install jobs this month"
+  h1Suffix: string               // "from 80 fresh homeowner leads in your zip."
+  heroSubtext: string
+  heroLead: SampleLead
+  teaserLeads: TeaserLead[]
+  cardHeader: string             // "Sample · Plano TX 75024 · HVAC"
+  signalSourcesLine: string      // pulled overnight from X, Y, Z
 }
 
-const TEASER_LEADS: { name: string; signal: string; value: string; isMore?: boolean }[] = [
-  { name: 'Sarah W. · 75093',  signal: 'PROPERTY SOLD',    value: '$1.8K – $6.4K' },
-  { name: 'Carlos R. · 75035', signal: 'AGED SYSTEM FLAG', value: '$5.4K – $9.2K' },
-  { name: '+ 7 more this week in your zip', signal: '',  value: '', isMore: true },
-]
+const HVAC_VARIANT: TradeVariant = {
+  slug: 'hvac',
+  label: 'HVAC',
+  scarcityPill: '⚠ 47 zip codes locked · 953 still open',
+  h1Verb: 'Book',
+  h1Highlight: '1–3 install jobs this month',
+  h1Suffix: 'from 10 fresh homeowner leads/week in your zip.',
+  heroSubtext: 'Real names, addresses, phones — pulled overnight from permits, aging HVAC, storm strikes, new move-ins. AI sends the intro text + email for you. You only call back the YES’s.',
+  heroLead: {
+    name: 'Mike Coleman',
+    addr: '7842 Oak Ridge Dr',
+    city: 'Plano, TX 75024',
+    phoneRedacted: '(214) ●●●-●167',
+    propertyValue: '$485K',
+    yearBuilt: 1998,
+    signalType: 'PERMIT FILED',
+    signalDetail: 'AC condenser permit · filed 3 days ago',
+    hvacAge: '14 yrs',
+    jobValue: '$3,200 – $4,800',
+    score: 92,
+  },
+  teaserLeads: [
+    { name: 'Sarah W. · 75093',  signal: 'PROPERTY SOLD',    value: '$1.8K – $6.4K' },
+    { name: 'Carlos R. · 75035', signal: 'AGED SYSTEM FLAG', value: '$5.4K – $9.2K' },
+    { name: '+ 77 more this month in your zip', signal: '', value: '', isMore: true },
+  ],
+  cardHeader: 'Sample · Plano TX 75024 · HVAC',
+  signalSourcesLine: 'permits · aged HVAC · move-ins · storms',
+}
+
+const ROOFING_VARIANT: TradeVariant = {
+  slug: 'roofing',
+  label: 'Roofing',
+  scarcityPill: '⚠ Hail hit 47 metros this week · 17 zips still open',
+  h1Verb: 'Land',
+  h1Highlight: '3–5 storm-damaged roofs this month',
+  h1Suffix: 'from 10 insurance-ready leads/week in your zip.',
+  heroSubtext: 'NOAA-verified hail strikes + aging asphalt + insurance-claim windows — names, addresses, photos of damaged roofs. AI sends the intro for you. You only call back the YES’s.',
+  heroLead: {
+    name: 'Tom Sutton',
+    addr: '4421 Maple Crest',
+    city: 'Plano, TX 75093',
+    phoneRedacted: '(214) ●●●-●142',
+    propertyValue: '$612K',
+    yearBuilt: 2002,
+    signalType: 'HAIL STRIKE',
+    signalDetail: 'NOAA 1.75" hail · 5 days ago · roof flagged',
+    jobValue: '$11,500 – $18,200',
+    score: 96,
+  },
+  teaserLeads: [
+    { name: 'Sarah W. · 75093',  signal: 'HAIL DAMAGE',  value: '$8.4K – $14.2K' },
+    { name: 'Carlos R. · 75035', signal: 'AGING ROOF',   value: '$9.8K – $16.4K' },
+    { name: '+ 77 more this month in your zip', signal: '', value: '', isMore: true },
+  ],
+  cardHeader: 'Sample · Plano TX 75024 · ROOFING',
+  signalSourcesLine: 'NOAA hail · insurance permits · aging asphalt · move-ins',
+}
+
+const PLUMBING_VARIANT: TradeVariant = {
+  slug: 'plumbing',
+  label: 'Plumbing',
+  scarcityPill: '⚠ 47 zip codes locked · 953 still open',
+  h1Verb: 'Book',
+  h1Highlight: '1–3 install jobs this month',
+  h1Suffix: 'from 10 verified homeowner leads/week in your zip.',
+  heroSubtext: 'Water-heater age data + sewer-permit feeds + new homeowners — owner-occupied verified. AI sends the intro for you. You only call back the YES’s.',
+  heroLead: {
+    name: 'Lisa Carter',
+    addr: '6618 Aspen Trail',
+    city: 'Allen, TX 75002',
+    phoneRedacted: '(214) ●●●-●119',
+    propertyValue: '$398K',
+    yearBuilt: 2008,
+    signalType: 'WATER HEATER AGE',
+    signalDetail: 'Tank age ~16 yrs · permit replacement window',
+    jobValue: '$1,400 – $3,800',
+    score: 90,
+  },
+  teaserLeads: [
+    { name: 'Sarah W. · 75093',  signal: 'NEW OWNER',   value: '$800 – $2,400' },
+    { name: 'Carlos R. · 75035', signal: 'SEWER PERMIT', value: '$4,200 – $8,600' },
+    { name: '+ 77 more this month in your zip', signal: '', value: '', isMore: true },
+  ],
+  cardHeader: 'Sample · Allen TX 75002 · PLUMBING',
+  signalSourcesLine: 'permits · water-heater age · move-ins',
+}
+
+const ELECTRICAL_VARIANT: TradeVariant = {
+  slug: 'electrical',
+  label: 'Electrical',
+  scarcityPill: '⚠ 47 zip codes locked · 953 still open',
+  h1Verb: 'Book',
+  h1Highlight: '1–3 panel upgrades this month',
+  h1Suffix: 'from 10 fresh homeowner leads/week in your zip.',
+  heroSubtext: 'Pre-1990 panel feeds + EV-charger permit data + solar adopters — owner-occupied verified. AI sends the intro for you. You only call back the YES’s.',
+  heroLead: {
+    name: 'David Park',
+    addr: '388 Cedar Park Way',
+    city: 'McKinney, TX 75072',
+    phoneRedacted: '(972) ●●●-●133',
+    propertyValue: '$555K',
+    yearBuilt: 1985,
+    signalType: 'PANEL UPGRADE',
+    signalDetail: 'Pre-1990 build · 100A panel risk · EV adoption zone',
+    jobValue: '$2,400 – $6,800',
+    score: 91,
+  },
+  teaserLeads: [
+    { name: 'Sarah W. · 75093',  signal: 'EV CHARGER', value: '$1,200 – $3,400' },
+    { name: 'Carlos R. · 75035', signal: 'SOLAR REWIRE', value: '$4,800 – $9,200' },
+    { name: '+ 77 more this month in your zip', signal: '', value: '', isMore: true },
+  ],
+  cardHeader: 'Sample · McKinney TX 75072 · ELECTRICAL',
+  signalSourcesLine: 'panel permits · EV charger filings · solar adopters',
+}
+
+const HANDYMAN_VARIANT: TradeVariant = {
+  slug: 'handyman',
+  label: 'Handyman',
+  scarcityPill: '⚠ 47 zip codes locked · 953 still open',
+  h1Verb: 'Book',
+  h1Highlight: '4–8 jobs this month',
+  h1Suffix: 'from 10 fresh homeowner leads/week in your zip.',
+  heroSubtext: 'Fresh move-ins + aging-home flags + small-project permits — owner-occupied verified. AI sends the intro for you. You only call back the YES’s.',
+  heroLead: {
+    name: 'James Patel',
+    addr: '388 Cedar Park Way',
+    city: 'McKinney, TX 75072',
+    phoneRedacted: '(972) ●●●-●133',
+    propertyValue: '$555K',
+    yearBuilt: 2004,
+    signalType: 'NEW OWNER · 6 WK',
+    signalDetail: 'Sold 6 weeks ago · deferred-maintenance window',
+    jobValue: '$400 – $2,200',
+    score: 84,
+  },
+  teaserLeads: [
+    { name: 'Sarah W. · 75093',  signal: 'NEW OWNER',  value: '$280 – $1,400' },
+    { name: 'Carlos R. · 75035', signal: 'AGING HOME', value: '$600 – $1,800' },
+    { name: '+ 77 more this month in your zip', signal: '', value: '', isMore: true },
+  ],
+  cardHeader: 'Sample · McKinney TX 75072 · HANDYMAN',
+  signalSourcesLine: 'move-ins · small-job permits · aging homes',
+}
+
+const VARIANTS: Record<string, TradeVariant> = {
+  hvac: HVAC_VARIANT,
+  roofing: ROOFING_VARIANT,
+  plumbing: PLUMBING_VARIANT,
+  electrical: ELECTRICAL_VARIANT,
+  handyman: HANDYMAN_VARIANT,
+}
+
+function resolveVariant(raw: string | null | undefined): TradeVariant {
+  if (!raw) return HVAC_VARIANT
+  const k = raw.toLowerCase().trim()
+  if (k.startsWith('roof')) return ROOFING_VARIANT
+  if (k.startsWith('plumb')) return PLUMBING_VARIANT
+  if (k.startsWith('elect')) return ELECTRICAL_VARIANT
+  if (k.startsWith('handy') || k.startsWith('general')) return HANDYMAN_VARIANT
+  return VARIANTS[k] || HVAC_VARIANT
+}
 
 export default function Home() {
+  // Suspense required because HomeContent reads useSearchParams (forces
+  // dynamic). Fallback = minimal page chrome until params resolve client-side.
+  return (
+    <Suspense fallback={
+      <main style={{ minHeight: '100vh', background: '#FFF8F0' }} />
+    }>
+      <HomeContent />
+    </Suspense>
+  )
+}
+
+function HomeContent() {
   const { isSignedIn } = useAuth()
+  const sp = useSearchParams()
+  const variant = resolveVariant(sp?.get('trade'))
+  const HERO_LEAD = variant.heroLead
+  const TEASER_LEADS = variant.teaserLeads
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#FFF8F0', color: '#0B1F3A', minHeight: '100vh', overflowX: 'hidden', paddingBottom: 70 }}>
       {/* TRUST STRIP — top, navy, full-width.
@@ -131,7 +308,7 @@ export default function Home() {
               border: '1.5px solid #FFC58A',
               fontSize: 11.5, fontWeight: 800, color: '#A33C18',
               marginBottom: 14,
-            }}>⚠ 47 zip codes locked · 953 still open</span>
+            }}>{variant.scarcityPill}</span>
 
             {/* Hormozi $100M Offers: H1 = dream outcome + specificity.
                 Old "Your competitor is using AI" was fear-frame abstract;
@@ -143,12 +320,12 @@ export default function Home() {
               lineHeight: 1.04, margin: '0 0 14px',
               color: '#0B1F3A',
             }}>
-              Book{' '}
+              {variant.h1Verb}{' '}
               <span style={{
                 background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 60%, #C84B26 100%)',
                 WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-              }}>1–3 install jobs this month</span>{' '}
-              from 10 fresh homeowner leads/week in your zip.
+              }}>{variant.h1Highlight}</span>{' '}
+              {variant.h1Suffix}
             </h1>
             <p style={{ fontSize: 'clamp(15px, 1.4vw, 17px)', color: '#3D5A66', lineHeight: 1.55, margin: '0 0 20px', maxWidth: 560 }}>
               Real names, addresses, phones — pulled overnight from permits, aging HVAC, storm strikes, new move-ins. AI sends the intro text + email for you. You only call back the YES’s. <strong style={{ color: '#0B1F3A' }}>One shop per zip. Locked all year.</strong>
@@ -166,7 +343,7 @@ export default function Home() {
           </div>
 
           <div className="hero-stage">
-            <LeadsCard />
+            <LeadsCard variant={variant} />
           </div>
         </div>
       </section>
@@ -400,8 +577,10 @@ function Nav({ isSignedIn }: { isSignedIn: boolean }) {
   )
 }
 
-function LeadsCard() {
+function LeadsCard({ variant }: { variant: TradeVariant }) {
   const [zip, setZip] = useState('')
+  const HERO_LEAD = variant.heroLead
+  const TEASER_LEADS = variant.teaserLeads
   return (
     <div style={{
       borderRadius: 20,
@@ -462,7 +641,7 @@ function LeadsCard() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Sample · Plano TX 75024 · HVAC</div>
+          <div style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{variant.cardHeader}</div>
           <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2, color: '#4A6670' }}>1 of 10 leads delivered this week</div>
         </div>
         <div style={{
