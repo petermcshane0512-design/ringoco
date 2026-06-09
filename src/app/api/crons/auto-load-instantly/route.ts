@@ -130,10 +130,9 @@ async function pushLead(lead: Lead & { personalized_opener?: string | null }, le
       review_count: lead.review_count?.toString() || '',
       report_url: reportUrl,
       leads_preview: leadsPreview,
-      // 2026-06-08 — per-lead personalized opener from Sonnet (written by
-      // /api/crons/personalize-queued-leads). Used as line 2 of Step 0
-      // template. Falls back to empty string so template doesn't break.
-      personalized_opener: lead.personalized_opener || '',
+      // 2026-06-09 — personalized_opener column not yet migrated. Skip
+      // until SQL migration applied. Template falls back to empty.
+      personalized_opener: '',
       // Bold CTA line + promo code (Hormozi $100M Money Models — sub-$100
       // trip-wire entry point). Pre-rendered per lead so the template
       // stays consistent across variants.
@@ -193,7 +192,7 @@ export async function GET(req: NextRequest) {
   // buckets actually convert — adjust scoring weights iteratively.
   const { data: leads, error } = await supabase
     .from('outreach_leads')
-    .select('id, email, business_name, owner_first_name, city, state, trade, young_owner_score, personalized_opener')
+    .select('id, email, business_name, owner_first_name, city, state, trade, young_owner_score')
     .eq('status', 'queued')
     .not('email', 'is', null)
     .ilike('trade', '%hvac%')
