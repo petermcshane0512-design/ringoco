@@ -239,9 +239,57 @@ export default function LeadsPage() {
   )
 }
 
+type GeneratedMessage = { email_subject: string; email_body: string; sms: string }
+
 function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id: string, s: LeadDrop['status']) => void; onReveal: (leadId: string) => void }) {
   const l = drop.lead
   const fullAddr = [l.street_address, l.city, l.state, l.zip].filter(Boolean).join(', ')
+  const [aiOpen, setAiOpen] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiMsg, setAiMsg] = useState<GeneratedMessage | null>(null)
+  const [aiError, setAiError] = useState<string | null>(null)
+  const [sendingSms, setSendingSms] = useState(false)
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [smsSent, setSmsSent] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
+
+  async function generateMessage() {
+    setAiLoading(true); setAiError(null)
+    try {
+      const r = await fetch(`/api/leads/${l.id}/generate-message`, { method: 'POST' })
+      const j = await r.json()
+      if (!r.ok || !j.ok) { setAiError(j.error || 'failed'); return }
+      setAiMsg({ email_subject: j.email_subject, email_body: j.email_body, sms: j.sms })
+      setAiOpen(true)
+    } catch (e) { setAiError((e as Error).message) }
+    setAiLoading(false)
+  }
+
+  async function sendSms() {
+    if (!aiMsg || !l.owner_phone) return
+    setSendingSms(true)
+    try {
+      const r = await fetch(`/api/leads/${l.id}/send-outreach`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channel: 'sms', body: aiMsg.sms }),
+      })
+      if (r.ok) setSmsSent(true)
+    } catch {/* */}
+    setSendingSms(false)
+  }
+
+  async function sendEmail() {
+    if (!aiMsg || !l.owner_email) return
+    setSendingEmail(true)
+    try {
+      const r = await fetch(`/api/leads/${l.id}/send-outreach`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channel: 'email', subject: aiMsg.email_subject, body: aiMsg.email_body }),
+      })
+      if (r.ok) setEmailSent(true)
+    } catch {/* */}
+    setSendingEmail(false)
+  }
   const sourceLabel = ({
     move_in: '🏠 New Mover',
     permit: '🏗️ Permit Filed',
@@ -354,6 +402,76 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
           )}
         </div>
       </div>
+
+      {/* AI Outreach Message */}
+      {(l.owner_phone || l.owner_email) && (
+        <div style={{ marginTop: 14 }}>
+          {!aiOpen ? (
+            <button
+              onClick={generateMessage}
+              disabled={aiLoading}
+              style={{
+                width: '100%', padding: '11px 18px', borderRadius: 10,
+                background: aiLoading ? 'rgba(11,31,58,0.3)' : 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+                color: '#fff', border: 'none', cursor: aiLoading ? 'wait' : 'pointer',
+                fontSize: 13, fontWeight: 900,
+                boxShadow: '0 4px 12px rgba(232,116,43,0.30)',
+              }}
+            >
+              {aiLoading ? '✨ Writing your message…' : `✨ Generate AI intro message ${l.owner_phone ? `→ ${l.owner_phone}` : ''}`}
+            </button>
+          ) : aiMsg && (
+            <div style={{ background: 'linear-gradient(155deg, #0B1F3A 0%, #163356 100%)', borderRadius: 12, padding: '14px 16px', color: '#fff' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: '#FF9D5A', letterSpacing: '0.10em', textTransform: 'uppercase' }}>
+                  Pre-written by AI · ready to send as you
+                </div>
+                <button onClick={() => setAiOpen(false)} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.6)', fontSize: 12, cursor: 'pointer' }}>✕</button>
+              </div>
+              {l.owner_phone && (
+                <div style={{ marginBottom: 10, padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>SMS to {l.owner_phone}</div>
+                  <div style={{ fontSize: 13, lineHeight: 1.55, marginBottom: 8 }}>{aiMsg.sms}</div>
+                  <button
+                    onClick={sendSms}
+                    disabled={sendingSms || smsSent}
+                    style={{
+                      padding: '7px 14px', borderRadius: 7,
+                      background: smsSent ? '#22C55E' : sendingSms ? 'rgba(255,255,255,0.18)' : '#fff',
+                      color: smsSent ? '#fff' : '#0B1F3A', border: 'none',
+                      fontSize: 11.5, fontWeight: 900, cursor: smsSent ? 'default' : 'pointer',
+                    }}
+                  >
+                    {smsSent ? '✓ Sent' : sendingSms ? 'Sending…' : '📱 Send SMS now'}
+                  </button>
+                </div>
+              )}
+              {l.owner_email && (
+                <div style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>Email to {l.owner_email}</div>
+                  <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 4 }}>{aiMsg.email_subject}</div>
+                  <div style={{ fontSize: 12.5, lineHeight: 1.6, marginBottom: 8, whiteSpace: 'pre-wrap' }}>{aiMsg.email_body}</div>
+                  <button
+                    onClick={sendEmail}
+                    disabled={sendingEmail || emailSent}
+                    style={{
+                      padding: '7px 14px', borderRadius: 7,
+                      background: emailSent ? '#22C55E' : sendingEmail ? 'rgba(255,255,255,0.18)' : '#fff',
+                      color: emailSent ? '#fff' : '#0B1F3A', border: 'none',
+                      fontSize: 11.5, fontWeight: 900, cursor: emailSent ? 'default' : 'pointer',
+                    }}
+                  >
+                    {emailSent ? '✓ Sent' : sendingEmail ? 'Sending…' : '✉ Send Email now'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          {aiError && (
+            <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: '#FEE2E2', color: '#991B1B', fontSize: 12 }}>{aiError}</div>
+          )}
+        </div>
+      )}
 
       {/* Status pills */}
       <div style={{ display: 'flex', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>
