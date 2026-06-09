@@ -270,29 +270,8 @@ function HomeContent() {
   const TEASER_LEADS = variant.teaserLeads
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#FFF8F0', color: '#0B1F3A', minHeight: '100vh', overflowX: 'hidden', paddingBottom: 70 }}>
-      {/* TRUST STRIP — top, navy, full-width.
-          Cialdini: authority cue (BBB, rating) + accessibility (phone)
-          above the F-pattern start. */}
-      <div style={{
-        background: '#0B1F3A',
-        color: '#FFF8F0',
-        padding: '8px clamp(12px, 4vw, 28px)',
-        fontSize: 12,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: 16,
-        flexWrap: 'wrap',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <span style={{ color: 'rgba(255,255,255,0.78)' }}>Built for HVAC, plumbing, electrical, roofing &amp; handyman shops</span>
-          <span style={{ color: 'rgba(255,255,255,0.42)' }}>·</span>
-          <span style={{ color: 'rgba(255,255,255,0.78)' }}>30-day money-back</span>
-        </div>
-        <a href={FOUNDER_PHONE_HREF} style={{ color: '#FF9D5A', textDecoration: 'none', fontWeight: 800, whiteSpace: 'nowrap' }}>
-          📞 {FOUNDER_PHONE}
-        </a>
-      </div>
+      {/* Trust strip killed 2026-06-09 per Peter — phone now lives in
+          nav CTA cluster + repeats in offer card + footer. */}
 
       <Nav isSignedIn={!!isSignedIn} />
 
@@ -592,17 +571,20 @@ function Nav({ isSignedIn }: { isSignedIn: boolean }) {
       position: 'sticky', top: 0, zIndex: 100,
     }}>
       <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
-        <Image src="/logo.png" alt="BellAveGo" width={300} height={92} style={{ objectFit: 'contain', maxWidth: 'min(46vw, 300px)', height: 'auto' }} priority />
+        <Image src="/logo.png" alt="BellAveGo" width={380} height={118} style={{ objectFit: 'contain', maxWidth: 'min(52vw, 380px)', height: 'auto' }} priority />
       </Link>
-      <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-        <Link href="/founder" style={{ color: '#4A6670', textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>Founder</Link>
-        <Link href="/pricing" style={{ color: '#4A6670', textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>Pricing</Link>
+      <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
+        <Link href="/founder" style={navLinkBig}>Founder</Link>
+        <Link href="/pricing" style={navLinkBig}>Pricing</Link>
+        <a href={FOUNDER_PHONE_HREF} style={{ ...navLinkBig, color: '#C84B26', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          📞 {FOUNDER_PHONE}
+        </a>
         {isSignedIn ? (
-          <Link href="/dashboard" style={ctaNavPrimary}>Dashboard →</Link>
+          <Link href="/dashboard" style={ctaNavPrimaryBig}>Dashboard →</Link>
         ) : (
           <>
-            <Link href="/sign-in" style={{ color: '#4A6670', textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>Sign in</Link>
-            <Link href="/start?promo=FIRST400" style={ctaNavPrimary}>$97 first month →</Link>
+            <Link href="/sign-in" style={navLinkBig}>Sign in</Link>
+            <Link href="/start?promo=FIRST400" style={ctaNavPrimaryBig}>$97 first month →</Link>
           </>
         )}
       </div>
@@ -778,6 +760,23 @@ const ctaNavPrimary: React.CSSProperties = {
   color: '#fff', textDecoration: 'none',
   fontWeight: 900, fontSize: 13,
   boxShadow: '0 6px 18px rgba(232,116,43,0.32)',
+}
+
+const navLinkBig: React.CSSProperties = {
+  color: '#0B1F3A', textDecoration: 'none',
+  fontWeight: 800, fontSize: 16,
+  padding: '8px 4px',
+  letterSpacing: '-0.01em',
+}
+
+const ctaNavPrimaryBig: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', gap: 8,
+  padding: '14px 24px', borderRadius: 12,
+  background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 50%, #C84B26 100%)',
+  color: '#fff', textDecoration: 'none',
+  fontWeight: 900, fontSize: 16,
+  letterSpacing: '-0.01em',
+  boxShadow: '0 10px 26px rgba(232,116,43,0.40)',
 }
 
 const ctaHeroPrimary: React.CSSProperties = {
