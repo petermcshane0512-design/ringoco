@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 /**
  * /dashboard/buy-leads
  *
- * 2026-06-09 LEADS-ONLY PIVOT — à la carte extra leads.
+ * 2026-06-09 LEADS-ONLY PIVOT — extra leads (one-time purchase).
  *
  * Pack selector page. Customer clicks a pack → POST /api/stripe/checkout-alacarte
  * → redirect to Stripe Checkout. On success, returns here w/ ?ok=1 + session_id.
@@ -90,7 +90,7 @@ function BuyLeadsPage() {
             <Link href="/dashboard" style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>← Dashboard</Link>
           </div>
           <h1 style={{ fontSize: 'clamp(28px, 3.4vw, 38px)', fontWeight: 900, margin: '0 0 10px', letterSpacing: '-0.03em' }}>
-            Need more leads? <span style={{ color: '#FF9D5A' }}>Buy à la carte.</span>
+            Need more leads? <span style={{ color: '#FF9D5A' }}>Buy extras.</span>
           </h1>
           <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.65)', maxWidth: 620, marginBottom: 28, lineHeight: 1.6 }}>
             Real homeowner leads in your zip, delivered to your dashboard within 24 hours. Exclusive to you. One-time charge — no subscription changes.

@@ -8,7 +8,7 @@ export const runtime = 'nodejs'
 /**
  * POST /api/stripe/checkout-alacarte
  *
- * 2026-06-09 LEADS-ONLY PIVOT — à la carte extra-leads purchase.
+ * 2026-06-09 LEADS-ONLY PIVOT — extra-leads one-time purchase.
  *
  * Existing active subscriber wants more leads mid-month. They click
  * "Buy more leads" on /dashboard/buy-leads, pick a pack size, this
@@ -26,7 +26,7 @@ export const runtime = 'nodejs'
  *   - PACK_25: 25 leads @ $300  ($12/lead — bigger bulk discount)
  *
  * Auth: signed-in Clerk user must have active subscription. We don't
- * sell à la carte to non-customers — keeps the trip-wire intact.
+ * sell extras to non-customers — keeps the trip-wire intact.
  */
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -45,7 +45,7 @@ const APP_URL =
     : 'https://www.bellavego.com'
 
 // 2026-06-09 — custom-amount only. $25/lead flat (Hormozi bump from $15
-// — at base $497/mo customer pays $6.21/lead, so à la carte $25 stacks
+// — at base $497/mo customer pays $6.21/lead, so extras at $25 stack
 // $18.79 margin per add-on). Min 1, max 200.
 // Old preset packs (SINGLE/PACK_5/PACK_10/PACK_25 w/ bulk discounts) dropped
 // per Peter request — dashboard now uses a single qty input that multiplies
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
   const p = pRaw as { stripe_customer_id: string | null; is_active: boolean | null; business_name: string | null; owner_phone: string | null } | null
   if (!p || !p.is_active) {
-    return NextResponse.json({ error: 'Active subscription required to buy à la carte leads' }, { status: 403 })
+    return NextResponse.json({ error: 'Active subscription required to buy extra leads' }, { status: 403 })
   }
 
   try {

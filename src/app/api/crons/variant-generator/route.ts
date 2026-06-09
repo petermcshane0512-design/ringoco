@@ -33,7 +33,7 @@ OFFER:
 - AUTO-OUTREACH: one-click button — AI sends personalized email + SMS to each delivered lead as if from the contractor. Contractor gets phone notification when homeowner replies. Saves them 1-2 hrs/day of cold-reachout.
 - EXCLUSIVE territory — leads never shared like HomeAdvisor/Angie/Networx.
 - **First month $97 w/ code FIRST400** (saves $400). Then $497/mo flat.
-- À la carte: $25/extra lead when they want more mid-month.
+- Need more mid-month? Extra leads $25 each (any amount).
 - **Performance guarantee**: 1 paying job booked in 30 days or full refund.
 - 30-day money-back guarantee. Cancel anytime. No setup. No phone numbers required. No integration.
 - CTA URL: bellavego.com/start?promo=FIRST400

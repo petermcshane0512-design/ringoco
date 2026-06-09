@@ -204,7 +204,7 @@ export default function PricingPage() {
           <span style={{ background: 'linear-gradient(135deg, #5EEAD4 0%, #2DD4BF 50%, #0AA89F 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Try risk-free for 30 days.</span>
         </h1>
         <p style={{ fontSize: 18, color: '#4A6670', maxWidth: 720, margin: '0 auto 12px', lineHeight: 1.55, fontWeight: 500 }}>
-          80 fresh exclusive homeowner leads delivered to your dashboard every month — real names, addresses, phones, all flagged by recent permits/aged units/property changes in your zip. We auto-email + SMS each lead as YOU. Phone notification when they reply. À la carte $25/lead when you want more. <strong>If we don&rsquo;t book you 1 paying job in 30 days, full refund.</strong>
+          80 fresh exclusive homeowner leads delivered to your dashboard every month — real names, addresses, phones, all flagged by recent permits/aged units/property changes in your zip. We auto-email + SMS each lead as YOU. Phone notification when they reply. Need more mid-month? Extra leads $25 each. <strong>If we don&rsquo;t book you 1 paying job in 30 days, full refund.</strong>
         </p>
         <p style={{ fontSize: 15, color: '#7AAAB2', maxWidth: 600, margin: '0 auto', lineHeight: 1.55 }}>
           Use it 30 days. If you don&apos;t love it, click one button in your dashboard. Full refund. No questions, no phone call.

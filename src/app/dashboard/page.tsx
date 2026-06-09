@@ -195,7 +195,7 @@ export default function DashboardSimplified() {
                   Need more leads this week?
                 </div>
                 <h3 style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.02em', margin: '0 0 8px' }}>
-                  Buy any amount à la carte
+                  Buy extra leads — any amount
                 </h3>
                 <p style={{ fontSize: 13.5, color: '#4A6670', lineHeight: 1.55, margin: 0 }}>
                   $25 per extra lead. Same exclusive territory. Delivered within 24 hrs. One-time charge — no subscription changes.

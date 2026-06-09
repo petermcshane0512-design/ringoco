@@ -166,7 +166,7 @@ export default async function AffiliateKitPage({ params }: { params: Params }) {
               '"This is BellAveGo. 80 homeowner leads/month in my zip, EXCLUSIVE — never shared. Sourced from permits, aged units, property changes. Real intent."',
               '"And it auto-emails + SMS\'s each lead as ME. Personalized. Sounds human. I just respond to the ones who say yes."',
               '[40-55s] Back to you, walking to next truck.',
-              '"$97 first month w/ FIRST400. Then $497 flat. À la carte $25/lead if I want more. 30-day money-back if it doesn\'t pay for itself."',
+              '"$97 first month w/ FIRST400. Then $497 flat. Extra leads $25 each if I want more. 30-day money-back if it doesn\'t pay for itself."',
               '[55-60s] Close-up.',
               `"Code ${code} in bio. Go look."`,
             ]}
@@ -194,7 +194,7 @@ export default async function AffiliateKitPage({ params }: { params: Params }) {
               '[5-15s] Cut to BellAveGo dashboard pricing.',
               '"BellAveGo: 80 leads/month for $497 = $6.21/lead. Exclusive. Never shared. They even reach out to em for you."',
               '[15-25s] Show side-by-side math.',
-              '"And $25/lead à la carte when I need more mid-week. Stupid cheap compared to anything else."',
+              '"And $25/lead extra when I need more mid-week. Stupid cheap compared to anything else."',
               '[25-30s] Camera back on you.',
               `"$97 first month. Code ${code} for 30-day money-back."`,
             ]}

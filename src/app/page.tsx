@@ -18,7 +18,7 @@ import { useAuth } from '@clerk/nextjs'
  * gap) + 3 teaser rows. Final CTA single button.
  *
  * 2026-06-09 HORMOZI BUMP per Peter for $10M ARR by May 12 2027:
- * $97 first month w/ FIRST400 → $497/mo flat. À la carte $25/lead.
+ * $97 first month w/ FIRST400 → $497/mo flat. Extra leads $25 each.
  * Performance guarantee: 1 job booked in 30 days or full refund.
  */
 
@@ -212,7 +212,7 @@ export default function Home() {
             </table>
           </div>
           <p style={{ textAlign: 'center', marginTop: 24, fontSize: 13, color: '#4A6670' }}>
-            $6.21/lead at 80 leads/mo for $497. À la carte $25/lead when you want more. 1 paying job booked in 30 days or full refund.
+            $6.21/lead at 80 leads/mo for $497. Want more mid-month? Extra leads $25 each. 1 paying job booked in 30 days or full refund.
           </p>
         </div>
       </section>
