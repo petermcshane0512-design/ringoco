@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@clerk/nextjs'
+import LiveAIPipeline from '@/components/LiveAIPipeline'
 
 /**
  * Homepage — 2026-06-09 Hormozi/Elon CLOSE STACK for $10M ARR by May 12 2027.
@@ -169,12 +170,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* LIVE SCRAPER FEED — animated real-time-events terminal.
-          Replaces the wordy WITH/WITHOUT cards. Visual > prose. Owner
-          sees product PHYSICALLY WORKING NOW: permits being pulled,
-          storms hitting zips, skip-trace verifying phones, leads
-          delivered. Holy-shit moment in 5 seconds vs 60-second read. */}
-      <LiveScraperFeed />
+      {/* LIVE AI PIPELINE — 5-stage scraper + AI writer w/ phone mockup.
+          Replaces the wordy WITH/WITHOUT cards + 1st-gen scraper feed.
+          Shows: (1) we scrape signals, (2) AI scores, (3) skip-trace
+          verifies phone, (4) AI WRITES the outreach SMS character-by-
+          character to the homeowner, (5) delivered to shop. Right side
+          is a phone mockup typing the actual SMS in real time. */}
+      <LiveAIPipeline />
 
       {/* THE MATH — compressed to one horizontal stat bar. Was a full
           section w/ 4 cards + ROI block + footnote. Now one line: spend
@@ -1013,228 +1015,4 @@ function ExitIntentPopup() {
   )
 }
 
-/**
- * LiveScraperFeed — checkmark-table real-time feed.
- *
- * Per Peter 2026-06-09: bring back the old check-mark-by-check-mark
- * table style. Each row enters w/ an amber "verifying" spinner, ticks
- * to a green ✓ "Verified" after ~700ms — visually shows the scraper
- * checking off leads one at a time. Older rows stay checked, newest
- * row always pending then verified. Counter ticks up forever.
- *
- * Replaces wordy explainer copy w/ a visual that says "the machine is
- * working RIGHT NOW for someone else — could be working for you."
- */
-function LiveScraperFeed() {
-  type Row = {
-    id: number
-    signal: 'PERMIT' | 'STORM' | 'AGED' | 'MOVE-IN'
-    owner: string
-    zip: string
-    trade: string
-    score: number
-    status: 'pending' | 'verified'
-  }
-
-  const SAMPLES: Omit<Row, 'id' | 'status'>[] = [
-    { signal: 'PERMIT',  owner: 'Mike Coleman',    zip: '75024', trade: 'HVAC',      score: 92 },
-    { signal: 'STORM',   owner: 'Sarah Whitman',   zip: '75093', trade: 'Roofing',   score: 88 },
-    { signal: 'AGED',    owner: 'Carlos Reyes',    zip: '75035', trade: 'HVAC',      score: 81 },
-    { signal: 'MOVE-IN', owner: 'James Patel',     zip: '75070', trade: 'Plumbing',  score: 76 },
-    { signal: 'PERMIT',  owner: 'Linda Hong',      zip: '75002', trade: 'Electric',  score: 84 },
-    { signal: 'STORM',   owner: 'Tony Suarez',     zip: '85710', trade: 'Roofing',   score: 90 },
-    { signal: 'AGED',    owner: 'Maria Lopez',     zip: '85016', trade: 'HVAC',      score: 79 },
-    { signal: 'MOVE-IN', owner: 'David Kim',       zip: '85254', trade: 'Handyman',  score: 72 },
-    { signal: 'PERMIT',  owner: 'Rachel Brooks',   zip: '30301', trade: 'HVAC',      score: 86 },
-    { signal: 'STORM',   owner: 'Jamal Wright',    zip: '30329', trade: 'Roofing',   score: 91 },
-    { signal: 'AGED',    owner: 'Susan O’Neal', zip: '32801', trade: 'HVAC',    score: 83 },
-    { signal: 'MOVE-IN', owner: 'Chris Vega',      zip: '33139', trade: 'Plumbing',  score: 77 },
-    { signal: 'PERMIT',  owner: 'Tyler Brooks',    zip: '37203', trade: 'Electric',  score: 80 },
-    { signal: 'AGED',    owner: 'Nina Patel',      zip: '78704', trade: 'HVAC',      score: 87 },
-    { signal: 'STORM',   owner: 'Greg Foster',     zip: '76137', trade: 'Roofing',   score: 89 },
-  ]
-
-  const SIGNAL_STYLE: Record<Row['signal'], { bg: string; fg: string; label: string }> = {
-    'PERMIT':  { bg: '#E0F2FE', fg: '#0369A1', label: '🏛 Permit'   },
-    'STORM':   { bg: '#FEF3C7', fg: '#92400E', label: '⛈ Storm'    },
-    'AGED':    { bg: '#FCE7F3', fg: '#9D174D', label: '🌡 Aged'    },
-    'MOVE-IN': { bg: '#DCFCE7', fg: '#166534', label: '🏠 Move-in' },
-  }
-
-  const [rows, setRows] = useState<Row[]>(() =>
-    SAMPLES.slice(0, 6).map((s, i) => ({ ...s, id: i, status: 'verified' as const }))
-  )
-  const [counter, setCounter] = useState(2847)
-  const [pulse, setPulse] = useState(true)
-  const idRef = useRef(6)
-
-  useEffect(() => {
-    const tick = setInterval(() => {
-      const next = SAMPLES[Math.floor(Math.random() * SAMPLES.length)]
-      idRef.current += 1
-      const newId = idRef.current
-      setRows((prev) => {
-        const verified = prev.map((r) => ({ ...r, status: 'verified' as const }))
-        return [{ ...next, id: newId, status: 'pending' as const }, ...verified].slice(0, 6)
-      })
-      setCounter((c) => c + Math.floor(Math.random() * 3) + 1)
-      setTimeout(() => {
-        setRows((prev) => prev.map((r) => r.id === newId ? { ...r, status: 'verified' as const } : r))
-      }, 720)
-    }, 1500)
-    const pulseTick = setInterval(() => setPulse((p) => !p), 700)
-    return () => { clearInterval(tick); clearInterval(pulseTick) }
-  }, [])
-
-  return (
-    <section style={{ padding: '56px clamp(16px, 5vw, 48px)', background: '#FFF8F0' }}>
-      <div style={{ maxWidth: 1080, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 22 }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 10,
-            padding: '8px 16px', borderRadius: 99,
-            background: 'rgba(34,197,94,0.12)',
-            border: '1.5px solid rgba(34,197,94,0.40)',
-            fontSize: 12, fontWeight: 800, color: '#16803F',
-            letterSpacing: '0.10em', textTransform: 'uppercase',
-          }}>
-            <span style={{
-              width: 8, height: 8, borderRadius: '50%',
-              background: '#22C55E',
-              boxShadow: pulse ? '0 0 14px #22C55E' : '0 0 4px #22C55E',
-              transition: 'box-shadow 700ms ease',
-            }} />
-            Verifying leads · live right now
-          </div>
-          <h2 style={{ fontSize: 'clamp(26px, 3vw, 38px)', fontWeight: 900, letterSpacing: '-0.03em', margin: '16px 0 8px', color: '#0B1F3A' }}>
-            Watch us check off your next install.
-          </h2>
-          <p style={{ fontSize: 15, color: '#4A6670', margin: 0, lineHeight: 1.55 }}>
-            Permits, NOAA storms, MLS move-ins, aged HVAC — verified one at a time, every night, across every US zip.
-          </p>
-        </div>
-
-        <div style={{
-          borderRadius: 18,
-          background: '#FFFFFF',
-          padding: '6px 6px 22px',
-          boxShadow: '0 30px 80px rgba(11,31,58,0.10), 0 4px 14px rgba(232,116,43,0.06)',
-          border: '1px solid rgba(232,116,43,0.20)',
-          overflow: 'hidden',
-        }}>
-          {/* Table header */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1.4fr 0.7fr 0.9fr 0.7fr 1.1fr',
-            gap: 10,
-            padding: '14px 18px 12px',
-            borderBottom: '1px solid rgba(11,31,58,0.08)',
-            fontSize: 10.5, fontWeight: 900, color: '#7AAAB2',
-            letterSpacing: '0.14em', textTransform: 'uppercase',
-          }}>
-            <div>Signal</div>
-            <div>Owner</div>
-            <div>ZIP</div>
-            <div>Trade</div>
-            <div>Score</div>
-            <div style={{ textAlign: 'right' }}>Status</div>
-          </div>
-
-          {/* Rows */}
-          <div style={{ padding: '0 6px' }}>
-            {rows.map((r) => {
-              const sig = SIGNAL_STYLE[r.signal]
-              return (
-                <div
-                  key={r.id}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1.4fr 0.7fr 0.9fr 0.7fr 1.1fr',
-                    gap: 10,
-                    alignItems: 'center',
-                    padding: '12px 12px',
-                    borderRadius: 10,
-                    background: r.status === 'pending' ? 'rgba(255,217,168,0.32)' : 'transparent',
-                    borderBottom: '1px solid rgba(11,31,58,0.04)',
-                    animation: 'bavgRowIn 360ms ease',
-                    transition: 'background 400ms ease',
-                    fontSize: 13.5,
-                  }}
-                >
-                  <div>
-                    <span style={{
-                      display: 'inline-block',
-                      padding: '3px 9px',
-                      borderRadius: 7,
-                      background: sig.bg, color: sig.fg,
-                      fontSize: 11, fontWeight: 800,
-                      letterSpacing: '0.04em',
-                    }}>{sig.label}</span>
-                  </div>
-                  <div style={{ fontWeight: 700, color: '#0B1F3A' }}>{r.owner}</div>
-                  <div style={{ color: '#4A6670', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{r.zip}</div>
-                  <div style={{ color: '#4A6670', fontWeight: 600 }}>{r.trade}</div>
-                  <div style={{ color: '#C84B26', fontWeight: 900, fontVariantNumeric: 'tabular-nums' }}>{r.score}</div>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6 }}>
-                    {r.status === 'pending' ? (
-                      <>
-                        <span style={{
-                          width: 14, height: 14,
-                          borderRadius: '50%',
-                          border: '2.2px solid #E8742B',
-                          borderTopColor: 'transparent',
-                          animation: 'bavgSpin 700ms linear infinite',
-                        }} />
-                        <span style={{ fontSize: 11.5, fontWeight: 800, color: '#C84B26', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Verifying…</span>
-                      </>
-                    ) : (
-                      <>
-                        <span style={{
-                          width: 18, height: 18,
-                          borderRadius: '50%',
-                          background: '#22C55E',
-                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                          color: '#fff', fontSize: 11, fontWeight: 900,
-                          animation: 'bavgPop 280ms cubic-bezier(0.34,1.56,0.64,1)',
-                        }}>✓</span>
-                        <span style={{ fontSize: 11.5, fontWeight: 800, color: '#16803F', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Verified</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Counter footer */}
-          <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '16px 20px 4px',
-            flexWrap: 'wrap', gap: 10,
-            borderTop: '1px solid rgba(11,31,58,0.06)',
-            marginTop: 6,
-          }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#7AAAB2', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              📍 24 metros · 🏛 nightly permits · ⛈ NOAA · 🤖 AI intros
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 900, color: '#16803F', letterSpacing: '0.05em' }}>
-              {counter.toLocaleString()} leads verified today
-            </div>
-          </div>
-        </div>
-
-        <p style={{
-          textAlign: 'center', marginTop: 16, fontSize: 13, color: '#4A6670', maxWidth: 640, marginInline: 'auto',
-        }}>
-          Lock your zip → this engine runs every night for YOUR shop. Monday 6am, the checked-off leads land in your dashboard.
-        </p>
-      </div>
-
-      <style jsx global>{`
-        @keyframes bavgRowIn { from { opacity: 0; transform: translateY(-10px) } to { opacity: 1; transform: translateY(0) } }
-        @keyframes bavgSpin  { to { transform: rotate(360deg) } }
-      `}</style>
-    </section>
-  )
-}
 
