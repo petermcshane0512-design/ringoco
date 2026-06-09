@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import fs from 'node:fs'
 import path from 'node:path'
 import { verifyEmail } from '@/lib/verifyEmail'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -155,11 +156,11 @@ async function enrichEmails(websites: string[]): Promise<Map<string, string>> {
 }
 
 export async function GET(req: NextRequest) {
+  // Allow: Vercel cron header OR Clerk admin session OR x-admin-secret
   const isCron = req.headers.get('x-vercel-cron') === '1'
-  const expected = process.env.ADMIN_API_SECRET
-  const adminSecret = req.headers.get('x-admin-secret')
-  if (!isCron && (!expected || adminSecret !== expected)) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  if (!isCron) {
+    const gate = await requireAdmin()
+    if (!gate.ok) return gate.res
   }
   if (!APIFY_TOKEN) {
     return NextResponse.json({ ok: false, error: 'APIFY_TOKEN missing' }, { status: 500 })
