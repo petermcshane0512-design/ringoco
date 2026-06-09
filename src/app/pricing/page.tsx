@@ -140,7 +140,7 @@ export default function PricingPage() {
     // Trade-off: slight risk that 5-10% pay and never finish onboarding.
     // 30-day MBG covers that — they refund cleanly.
     try {
-      // 2026-06-08 — promo from cold-email /start?promo=FIRST200 or URL param.
+      // 2026-06-08 — promo from cold-email /start?promo=FIRST400 or URL param.
       // Falls back to cookie set by /start route (survives Clerk sign-up bounce).
       const urlPromo = new URLSearchParams(window.location.search).get('promo') || ''
       const cookiePromo = (document.cookie.match(/bavg_promo=([^;]+)/)?.[1] || '')
@@ -193,7 +193,7 @@ export default function PricingPage() {
       <section style={{ padding: '72px 24px 32px', textAlign: 'center', maxWidth: 1100, margin: '0 auto' }}>
         <div style={{ display: 'inline-flex', gap: 8, marginBottom: 18, flexWrap: 'wrap', justifyContent: 'center' }}>
           <div style={{ background: 'rgba(220,38,38,0.10)', color: '#DC2626', fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 999, letterSpacing: '0.10em', textTransform: 'uppercase' }}>
-            🔥 Founding-100 price · $297 locked for life
+            🔥 Founding-100 price · $497/mo locked for life
           </div>
           <div style={{ background: 'rgba(34,197,94,0.10)', color: '#16A34A', fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 999, letterSpacing: '0.10em', textTransform: 'uppercase' }}>
             🎯 30-day money back
@@ -204,7 +204,7 @@ export default function PricingPage() {
           <span style={{ background: 'linear-gradient(135deg, #5EEAD4 0%, #2DD4BF 50%, #0AA89F 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Try risk-free for 30 days.</span>
         </h1>
         <p style={{ fontSize: 18, color: '#4A6670', maxWidth: 720, margin: '0 auto 12px', lineHeight: 1.55, fontWeight: 500 }}>
-          80 fresh exclusive homeowner leads delivered to your dashboard every month — real names, addresses, phones, all flagged by recent permits/aged units/property changes in your zip. We auto-email + SMS each lead as YOU. Phone notification when they reply. À la carte $15/lead when you want more. Cancel anytime first 30 days for full refund.
+          80 fresh exclusive homeowner leads delivered to your dashboard every month — real names, addresses, phones, all flagged by recent permits/aged units/property changes in your zip. We auto-email + SMS each lead as YOU. Phone notification when they reply. À la carte $25/lead when you want more. <strong>If we don&rsquo;t book you 1 paying job in 30 days, full refund.</strong>
         </p>
         <p style={{ fontSize: 15, color: '#7AAAB2', maxWidth: 600, margin: '0 auto', lineHeight: 1.55 }}>
           Use it 30 days. If you don&apos;t love it, click one button in your dashboard. Full refund. No questions, no phone call.
@@ -259,7 +259,7 @@ export default function PricingPage() {
               <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', fontWeight: 600, alignSelf: 'flex-end', marginBottom: 18, marginLeft: 6 }}>/mo</span>
             </div>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', margin: '4px 0 0', fontWeight: 600 }}>
-              {isAnnual ? 'Billed $2,970/yr once. Save $594. Cancel anytime.' : 'Billed monthly. Cancel anytime.'}
+              {isAnnual ? 'Billed $4,997/yr once. Save $968. Cancel anytime.' : 'Billed monthly. Cancel anytime.'}
             </p>
             <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', margin: '6px 0 0' }}>
               Lifetime price lock — your rate never goes up.
@@ -365,7 +365,7 @@ export default function PricingPage() {
             {[
               { label: 'HomeAdvisor leads', cost: '$40-300/lead', flaw: 'Shared 3-5 ways. Bait. You chase em.' },
               { label: 'Voicemail', cost: '$0', flaw: 'Loses $2,300/mo in unbooked jobs.' },
-              { label: 'BellAveGo', cost: '$297/mo', flaw: '80 leads/mo EXCLUSIVE + auto-outreach + 30-day refund', highlight: true },
+              { label: 'BellAveGo', cost: '$497/mo', flaw: '80 leads/mo EXCLUSIVE + auto-outreach + 1-job-in-30-days guarantee', highlight: true },
             ].map((item) => (
               <div key={item.label} style={{
                 background: item.highlight ? '#F0FDF4' : '#F8FAFC',

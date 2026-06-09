@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation'
  *   - This week's leads
  *   - This month's leads
  *   - All past leads
- *   - "Buy more leads manually" — custom-amount input (any qty × $15)
+ *   - "Buy more leads manually" — custom-amount input (any qty × $25)
  *
  * Removed every other widget (call_logs, calendar, Vapi status,
  * outreach prompt status, etc). Customer lands here, sees their leads,
@@ -114,7 +114,7 @@ export default function DashboardSimplified() {
   const currentCount = tab === 'week' ? summary?.this_week_count
     : tab === 'month' ? summary?.this_month_count
     : summary?.all_count
-  const customTotal = customQty * 15
+  const customTotal = customQty * 25
 
   return (
     <main style={{
@@ -198,7 +198,7 @@ export default function DashboardSimplified() {
                   Buy any amount à la carte
                 </h3>
                 <p style={{ fontSize: 13.5, color: '#4A6670', lineHeight: 1.55, margin: 0 }}>
-                  $15 per extra lead. Same exclusive territory. Delivered within 24 hrs. One-time charge — no subscription changes.
+                  $25 per extra lead. Same exclusive territory. Delivered within 24 hrs. One-time charge — no subscription changes.
                 </p>
               </div>
 
@@ -223,7 +223,7 @@ export default function DashboardSimplified() {
                   >+5</button>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <span style={{ fontSize: 12, color: '#4A6670' }}>{customQty} × $15</span>
+                  <span style={{ fontSize: 12, color: '#4A6670' }}>{customQty} × $25</span>
                   <span style={{ fontSize: 28, fontWeight: 900, color: '#C84B26', letterSpacing: '-0.5px' }}>${customTotal}</span>
                 </div>
                 <button

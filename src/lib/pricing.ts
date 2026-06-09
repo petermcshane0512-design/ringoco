@@ -189,7 +189,11 @@ export const TIER_METADATA_V2: Record<LegacyTier, {
   setup: number
 }> = {
   receptionist: { name: 'Starter', monthly: 147, annual: 122, setup: 0 }, // $1,460/yr ÷ 12 = $121.67
-  officemgr:    { name: 'Pro',     monthly: 297, annual: 248, setup: 0 }, // $2,970/yr ÷ 12 = $247.50
+  // 2026-06-09 HORMOZI BUMP: $297 → $497/mo. Annual $4,997/yr = $416.41/mo display.
+  // PRICE_IDS_V2.officemgr Stripe price ID needs to be regenerated for $497/mo
+  // (current price_1TaJOd... is the legacy $297). Peter creating new Stripe product
+  // + price in dashboard 2026-06-09 mid-day. New price ID drops in PRICE_IDS_V2.
+  officemgr:    { name: 'Pro',     monthly: 497, annual: 417, setup: 0 }, // $4,997/yr ÷ 12 = $416.41
   concierge:    { name: 'Elite',   monthly: 597, annual: 498, setup: 0 }, // $5,970/yr ÷ 12 = $497.50
 }
 

@@ -32,10 +32,11 @@ OFFER:
 - 80 fresh exclusive homeowner leads per month delivered Monday morning (~20/wk), in the contractor's zip+trade. Real names + addresses + phone. Sourced from public-record events (permits, aged HVAC units, property turnover, code-violation listings).
 - AUTO-OUTREACH: one-click button — AI sends personalized email + SMS to each delivered lead as if from the contractor. Contractor gets phone notification when homeowner replies. Saves them 1-2 hrs/day of cold-reachout.
 - EXCLUSIVE territory — leads never shared like HomeAdvisor/Angie/Networx.
-- **First month $97 w/ code FIRST200** (saves $200). Then $297/mo flat.
-- À la carte: $15/extra lead OR $75/5-pack when they want more mid-month.
+- **First month $97 w/ code FIRST400** (saves $400). Then $497/mo flat.
+- À la carte: $25/extra lead when they want more mid-month.
+- **Performance guarantee**: 1 paying job booked in 30 days or full refund.
 - 30-day money-back guarantee. Cancel anytime. No setup. No phone numbers required. No integration.
-- CTA URL: bellavego.com/start?promo=FIRST200
+- CTA URL: bellavego.com/start?promo=FIRST400
 
 NEVER USE THESE PHRASES — they reference the deprecated receptionist product:
 "AI receptionist", "Emma", "answers your calls", "voice AI", "books the job", "phone AI", "24/7 answering", demo line phone number, anything about phones answering or call routing.
@@ -46,7 +47,7 @@ RULES:
 - Body ≤ 180 words
 - Direct, plain language. No jargon. No marketing-speak.
 - Talk to a guy under a truck, not a CFO.
-- ALWAYS include: demo line, bellavego.com/start CTA, $297/30-day MBG
+- ALWAYS include: bellavego.com/start CTA, $497/30-day MBG, performance guarantee (1 job in 30 days or refund)
 - Hormozi $100M Offers principles: dream outcome + perceived likelihood + low time-delay + low effort
 - Each variant must be MEANINGFULLY DIFFERENT in angle from existing variants (don't just reshuffle words)
 - ABSOLUTELY NEVER: "consulting report", "review count", "market intel", "ranked vs competitors", "competitor analysis"

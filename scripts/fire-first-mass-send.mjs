@@ -50,10 +50,10 @@ We solve both:
 
 — **AI receptionist (Emma)** answers every missed call 24/7 — sounds human, asks the right questions, books the job, texts you the appt. So you can stay under the truck w/o losing the lead.
 
-**First month $97** (save $200) w/ code **FIRST200** at checkout. Then $297/mo flat after. 30-day money-back. Cancel anytime.
+**First month $97** (save $400) w/ code **FIRST400** at checkout. Then $497/mo flat after. 30-day money-back. Cancel anytime.
 
 Hear Emma live in 1 ring: (651) 467-7829
-Claim your $200 off: bellavego.com/start?promo=FIRST200
+Claim your $200 off: bellavego.com/start?promo=FIRST400
 
 — Peter
 BellAveGo · (773) 710-9565`
@@ -66,11 +66,11 @@ Did that $200-off code land for you?
 Quick recap on what {{companyName}} gets:
 - 5 fresh homeowner addresses every Monday in your service area
 - AI receptionist answering 24/7 — books the job, texts you the booking
-- **First month $97** w/ code **FIRST200** (then $297/mo flat)
+- **First month $97** w/ code **FIRST400** (then $497/mo flat)
 - 30-day money-back
 
 Hear Emma live in 1 ring: (651) 467-7829
-Claim: bellavego.com/start?promo=FIRST200
+Claim: bellavego.com/start?promo=FIRST400
 
 Or reply w/ questions — I read every one.
 
@@ -85,11 +85,11 @@ const STEP_2_BODY = `{{firstName}} — closing the loop.
 BellAveGo fixes both:
 - 5 fresh homeowner leads every Monday (real names + addresses)
 - AI receptionist on every missed call, 24/7
-- **First month $97 w/ code FIRST200** (then $297/mo flat)
+- **First month $97 w/ code FIRST400** (then $497/mo flat)
 - 30-day money-back guarantee
 
 Hear Emma live: (651) 467-7829
-Claim: bellavego.com/start?promo=FIRST200
+Claim: bellavego.com/start?promo=FIRST400
 
 Either way, good luck out there.
 

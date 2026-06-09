@@ -44,11 +44,13 @@ const APP_URL =
     ? process.env.NEXT_PUBLIC_APP_URL
     : 'https://www.bellavego.com'
 
-// 2026-06-09 — custom-amount only. $15/lead flat. Min 1, max 200.
+// 2026-06-09 — custom-amount only. $25/lead flat (Hormozi bump from $15
+// — at base $497/mo customer pays $6.21/lead, so à la carte $25 stacks
+// $18.79 margin per add-on). Min 1, max 200.
 // Old preset packs (SINGLE/PACK_5/PACK_10/PACK_25 w/ bulk discounts) dropped
 // per Peter request — dashboard now uses a single qty input that multiplies
 // by $15.
-const PRICE_PER_LEAD_CENTS = 1500
+const PRICE_PER_LEAD_CENTS = 2500
 const MAX_QTY_PER_PURCHASE = 200
 
 export async function POST(req: NextRequest) {

@@ -166,11 +166,11 @@ export default async function AffiliateKitPage({ params }: { params: Params }) {
               '"This is BellAveGo. 80 homeowner leads/month in my zip, EXCLUSIVE — never shared. Sourced from permits, aged units, property changes. Real intent."',
               '"And it auto-emails + SMS\'s each lead as ME. Personalized. Sounds human. I just respond to the ones who say yes."',
               '[40-55s] Back to you, walking to next truck.',
-              '"$97 first month w/ FIRST200. Then $297 flat. À la carte $15/lead if I want more. 30-day money-back if it doesn\'t pay for itself."',
+              '"$97 first month w/ FIRST400. Then $497 flat. À la carte $25/lead if I want more. 30-day money-back if it doesn\'t pay for itself."',
               '[55-60s] Close-up.',
               `"Code ${code} in bio. Go look."`,
             ]}
-            caption={`Stopped paying HomeAdvisor $80/lead for shared bait. BellAveGo gives me 80 EXCLUSIVE homeowner leads/mo + auto-emails them as me. Code ${code} for $97 first month → ${refLink}\n\n30-day money-back. $297/mo flat after. For solo + 1-3 person crews.`}
+            caption={`Stopped paying HomeAdvisor $80/lead for shared bait. BellAveGo gives me 80 EXCLUSIVE homeowner leads/mo + auto-emails them as me. Code ${code} for $97 first month → ${refLink}\n\n30-day money-back. $497/mo flat after. For solo + 1-3 person crews.`}
           />
 
           <ReelScript
@@ -192,13 +192,13 @@ export default async function AffiliateKitPage({ params }: { params: Params }) {
               '[0-5s] You holding phone, showing competitor pricing.',
               '"HomeAdvisor: $80/lead, shared 5 ways. Yelp leads: $60, shared. Networx: $45, shared."',
               '[5-15s] Cut to BellAveGo dashboard pricing.',
-              '"BellAveGo: 80 leads/month for $297 = $3.71/lead. Exclusive. Never shared. They even reach out to em for you."',
+              '"BellAveGo: 80 leads/month for $497 = $6.21/lead. Exclusive. Never shared. They even reach out to em for you."',
               '[15-25s] Show side-by-side math.',
-              '"And $15/lead à la carte when I need more mid-week. Stupid cheap compared to anything else."',
+              '"And $25/lead à la carte when I need more mid-week. Stupid cheap compared to anything else."',
               '[25-30s] Camera back on you.',
               `"$97 first month. Code ${code} for 30-day money-back."`,
             ]}
-            caption={`Did the math on every lead-gen platform. BellAveGo destroys all of them — $3.71/lead exclusive vs $40-300/lead shared elsewhere. Code ${code} → ${refLink}`}
+            caption={`Did the math on every lead-gen platform. BellAveGo destroys all of them — $6.21/lead exclusive vs $40-300/lead shared elsewhere. Code ${code} → ${refLink}`}
           />
         </div>
       </section>

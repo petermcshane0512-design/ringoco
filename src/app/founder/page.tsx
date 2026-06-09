@@ -38,7 +38,7 @@ export default function FounderPage() {
           {isSignedIn ? (
             <Link href="/dashboard" style={ctaNavPrimary}>Dashboard →</Link>
           ) : (
-            <Link href="/start?promo=FIRST200" style={ctaNavPrimary}>$97 first month →</Link>
+            <Link href="/start?promo=FIRST400" style={ctaNavPrimary}>$97 first month →</Link>
           )}
         </div>
       </nav>
@@ -75,10 +75,10 @@ export default function FounderPage() {
             I&rsquo;m 22. My closest friends — guys 23, 24 — went out on their own as HVAC techs and plumbers two summers ago. I watched them grind 12-hour days finding ONE job and barely making rent. Meanwhile, the family-business guys our parents&rsquo; age were coasting on inherited customers. So I figured out a system — AI that finds them homeowner leads + reaches out as them. Now those same friends are pulling $300K/yr fully booked from 9-7, no more cold-calling, no more HomeAdvisor bait.
           </p>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 12 }}>
-            <Link href="/start?promo=FIRST200" style={ctaHeroPrimary}>Claim $97 first month →</Link>
+            <Link href="/start?promo=FIRST400" style={ctaHeroPrimary}>Claim $97 first month →</Link>
             <Link href="/pricing" style={ctaHeroSecondary}>See pricing</Link>
           </div>
-          <p style={{ fontSize: 12, color: '#7AAAB2', marginTop: 4 }}>$97 first month with FIRST200 · 30-day money back · cancel anytime</p>
+          <p style={{ fontSize: 12, color: '#7AAAB2', marginTop: 4 }}>$97 first month with FIRST400 · 30-day money back · cancel anytime</p>
         </div>
       </section>
 
@@ -105,7 +105,7 @@ export default function FounderPage() {
           }}>
             <div style={{ fontSize: 13, fontWeight: 800, color: '#C84B26', letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 8 }}>The math</div>
             <p style={{ fontSize: 18, fontWeight: 700, color: '#0B1F3A', lineHeight: 1.5, margin: 0 }}>
-              80 fresh exclusive leads × 15% close × $400 avg job = <span style={{ color: '#C84B26' }}>$4,800/mo new revenue</span> from a $297 spend. That&rsquo;s what gets a 23-year-old from one job a day to $300K/yr.
+              80 fresh exclusive leads × 15% close × $400 avg job = <span style={{ color: '#C84B26' }}>$4,800/mo new revenue</span> from a $497 spend. That&rsquo;s what gets a 23-year-old from one job a day to $300K/yr.
             </p>
           </div>
 
@@ -137,7 +137,7 @@ export default function FounderPage() {
         <p style={{ color: 'rgba(255,255,255,0.92)', fontSize: 16, maxWidth: 540, margin: '0 auto 28px', lineHeight: 1.6 }}>
           80 fresh leads / mo, AI emails + SMS them as you, you only reply when they say yes. Cancel anytime in first 30 days for full refund.
         </p>
-        <Link href="/start?promo=FIRST200" style={ctaFinal}>Claim $97 first month →</Link>
+        <Link href="/start?promo=FIRST400" style={ctaFinal}>Claim $97 first month →</Link>
       </section>
 
       {/* FOOTER */}
@@ -190,7 +190,7 @@ const STORY_BLOCKS: Array<{ h?: string; body: string[] }> = [
 
 const STORY_END = [
   `I'm building BellAveGo for them. For Carlos and every other 22, 23, 24-year-old who went into the trades, started their own thing, and is now sitting at home Saturday night cold-calling because they have no other way to fill Monday.`,
-  `If you're one of those guys — or if you\'re just tired of paying HomeAdvisor $80 a lead that 4 other people already have — try BellAveGo for a month. $97 first month w/ FIRST200. If it doesn't book you at least one job in 30 days, full refund, no calls, no hoops.`,
+  `If you're one of those guys — or if you\'re just tired of paying HomeAdvisor $80 a lead that 4 other people already have — try BellAveGo for a month. $97 first month w/ FIRST400. If it doesn't book you at least one job in 30 days, full refund, no calls, no hoops.`,
   `Text me anytime — (773) 710-9565. I'm not going to send you to a chatbot. — Peter`,
 ]
 
