@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@clerk/nextjs'
 import LiveAIPipeline from '@/components/LiveAIPipeline'
+import LiveDashboardPreview from '@/components/LiveDashboardPreview'
 
 /**
  * Homepage — 2026-06-09 Hormozi/Elon CLOSE STACK for $10M ARR by May 12 2027.
@@ -118,18 +119,18 @@ export default function Home() {
 
       {/* HERO */}
       <section style={{
-        padding: 'clamp(36px, 6vw, 72px) clamp(16px, 5vw, 48px) 56px',
+        padding: 'clamp(16px, 3vw, 32px) clamp(16px, 5vw, 48px) clamp(24px, 4vw, 40px)',
         background: 'radial-gradient(ellipse at 60% 10%, rgba(255,217,168,0.4) 0%, rgba(255,248,240,0) 60%)',
       }}>
-        <div style={{ maxWidth: 1240, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.1fr)', gap: 'clamp(28px, 5vw, 56px)', alignItems: 'center' }} className="hero-grid">
+        <div style={{ maxWidth: 1240, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.1fr)', gap: 'clamp(24px, 4vw, 44px)', alignItems: 'center' }} className="hero-grid">
           <div>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '7px 16px', borderRadius: 99,
+              padding: '6px 14px', borderRadius: 99,
               background: '#FFE9D2',
               border: '1.5px solid #FFC58A',
-              fontSize: 12, fontWeight: 800, color: '#A33C18',
-              marginBottom: 22,
+              fontSize: 11.5, fontWeight: 800, color: '#A33C18',
+              marginBottom: 14,
             }}>⚠ 47 zip codes locked · 953 still open</span>
 
             {/* Hormozi $100M Offers: H1 = dream outcome + specificity.
@@ -137,9 +138,9 @@ export default function Home() {
                 new is concrete + measurable. Book = verb. 4-8 install jobs
                 = specific number range = credibility. */}
             <h1 style={{
-              fontSize: 'clamp(36px, 5.2vw, 60px)',
+              fontSize: 'clamp(30px, 4.2vw, 48px)',
               fontWeight: 900, letterSpacing: '-0.04em',
-              lineHeight: 1.04, margin: '0 0 18px',
+              lineHeight: 1.04, margin: '0 0 14px',
               color: '#0B1F3A',
             }}>
               Book{' '}
@@ -149,7 +150,7 @@ export default function Home() {
               }}>4–8 install jobs this month</span>{' '}
               from 80 fresh homeowner leads in your zip.
             </h1>
-            <p style={{ fontSize: 'clamp(16px, 1.55vw, 18px)', color: '#3D5A66', lineHeight: 1.6, margin: '0 0 26px', maxWidth: 580 }}>
+            <p style={{ fontSize: 'clamp(15px, 1.4vw, 17px)', color: '#3D5A66', lineHeight: 1.55, margin: '0 0 20px', maxWidth: 560 }}>
               Real names, addresses, phones — pulled overnight from permits, aging HVAC, storm strikes, new move-ins. AI sends the intro text + email for you. You only call back the YES’s. <strong style={{ color: '#0B1F3A' }}>One shop per zip. Locked all year.</strong>
             </p>
 
@@ -177,6 +178,11 @@ export default function Home() {
           character to the homeowner, (5) delivered to shop. Right side
           is a phone mockup typing the actual SMS in real time. */}
       <LiveAIPipeline />
+
+      {/* LIVE DASHBOARD PREVIEW — animated mockup of Week/Month dashboard
+          view. Shows prospects how leads stack + book over time. Auto
+          toggles week ↔ month every 6s. */}
+      <LiveDashboardPreview />
 
       {/* MATH stat bar + Carlos case-study quote deleted 2026-06-09 per
           Peter. Offer card already states $497/mo + book-1-job guarantee.
@@ -359,14 +365,14 @@ function Nav({ isSignedIn }: { isSignedIn: boolean }) {
   return (
     <nav style={{
       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: '14px clamp(16px, 4vw, 56px)',
+      padding: '8px clamp(16px, 4vw, 56px)',
       background: 'rgba(255,248,240,0.92)',
       backdropFilter: 'blur(12px)',
       borderBottom: '1px solid rgba(232,116,43,0.18)',
       position: 'sticky', top: 0, zIndex: 100,
     }}>
       <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
-        <Image src="/logo.png" alt="BellAveGo" width={420} height={130} style={{ objectFit: 'contain', maxWidth: 'min(58vw, 420px)', height: 'auto' }} priority />
+        <Image src="/logo.png" alt="BellAveGo" width={300} height={92} style={{ objectFit: 'contain', maxWidth: 'min(46vw, 300px)', height: 'auto' }} priority />
       </Link>
       <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
         <Link href="/founder" style={{ color: '#4A6670', textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>Founder</Link>
