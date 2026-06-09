@@ -85,33 +85,6 @@ const TEASER_LEADS: { name: string; signal: string; value: string; isMore?: bool
   { name: '+ 77 more this month in your zip', signal: '',  value: '', isMore: true },
 ]
 
-const FAQS: { q: string; a: string }[] = [
-  {
-    q: 'What if my zip code is already locked?',
-    a: 'Enter your zip at signup — we tell you instantly if it’s open. If it’s gone, we hold your spot for the next 7 days as backup. No charge to check.',
-  },
-  {
-    q: 'Where do the names + phones come from? Is this legal?',
-    a: 'Public records. Building permits (filed at city hall), county property records, MLS sold data, NOAA storm data, USPS move-in data. All public. Then a paid skip-trace pulls the verified phone. All compliant — same data Angi + HomeAdvisor use, except we don’t share it.',
-  },
-  {
-    q: 'Do I have to cold-call all 80 leads?',
-    a: 'No. AI sends a friendly intro text + email to each one from YOUR number, signed by YOU, mentioning YOUR shop. You only call back the people who reply YES. Avg reply rate ~9%.',
-  },
-  {
-    q: 'What if I cancel — do I lose the leads?',
-    a: 'Keep every lead we ever sent you. No clawback. No re-billing. Cancel in dashboard in 2 clicks.',
-  },
-  {
-    q: 'How is this different from HomeAdvisor / Angi?',
-    a: 'HomeAdvisor: $40-300/lead, sold to 4-5 shops, you cold-call. Us: $6.21/lead, exclusive to you, AI sends the intro for you. Opposite product, opposite model.',
-  },
-  {
-    q: 'I’m a 1-truck shop. Is this overkill?',
-    a: 'It’s built for 1-5 employee shops. Our first beta tester was a solo HVAC in Mesa — went from 1 job/day to fully booked. Bigger shops already have receptionists + marketing teams. Small dogs win here.',
-  },
-]
-
 export default function Home() {
   const { isSignedIn } = useAuth()
   return (
@@ -354,17 +327,8 @@ export default function Home() {
         </p>
       </section>
 
-      {/* FAQ — objection killer. Closes top 5 calls before they pick up
-          the phone. Reduces support load + raises conversion (CXL research:
-          FAQ on landing page +10-15% conversion when objections are real). */}
-      <section style={{ padding: '64px clamp(16px, 5vw, 48px)', background: '#FFF8F0' }}>
-        <div style={{ maxWidth: 760, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 'clamp(26px, 3vw, 38px)', fontWeight: 900, letterSpacing: '-0.03em', margin: '0 0 28px', textAlign: 'center', color: '#0B1F3A' }}>
-            Real questions guys ask before signing up.
-          </h2>
-          <FAQList />
-        </div>
-      </section>
+      {/* FAQ deleted 2026-06-09 per Peter — too wordy at bottom. Top
+          objections live in offer card + guarantee + risk-reversal copy. */}
 
       {/* FINAL CTA — mirrors hero. Hormozi: never make them scroll back. */}
       <section style={{ padding: '72px clamp(16px, 5vw, 48px)', background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 50%, #C84B26 100%)', textAlign: 'center' }}>
@@ -458,8 +422,8 @@ function Nav({ isSignedIn }: { isSignedIn: boolean }) {
       borderBottom: '1px solid rgba(232,116,43,0.18)',
       position: 'sticky', top: 0, zIndex: 100,
     }}>
-      <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-        <Image src="/logo.png" alt="BellAveGo" width={260} height={80} style={{ objectFit: 'contain' }} priority />
+      <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
+        <Image src="/logo.png" alt="BellAveGo" width={420} height={130} style={{ objectFit: 'contain', maxWidth: 'min(58vw, 420px)', height: 'auto' }} priority />
       </Link>
       <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
         <Link href="/founder" style={{ color: '#4A6670', textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>Founder</Link>
@@ -474,44 +438,6 @@ function Nav({ isSignedIn }: { isSignedIn: boolean }) {
         )}
       </div>
     </nav>
-  )
-}
-
-function FAQList() {
-  const [open, setOpen] = useState<number | null>(0)
-  return (
-    <div style={{ display: 'grid', gap: 10 }}>
-      {FAQS.map((f, i) => {
-        const isOpen = open === i
-        return (
-          <div key={i} style={{
-            borderRadius: 14,
-            background: '#FFFFFF',
-            border: isOpen ? '1.5px solid rgba(232,116,43,0.40)' : '1px solid rgba(232,116,43,0.18)',
-            overflow: 'hidden',
-            transition: 'all 200ms ease',
-          }}>
-            <button
-              onClick={() => setOpen(isOpen ? null : i)}
-              style={{
-                width: '100%', padding: '16px 20px',
-                background: 'transparent', border: 'none',
-                textAlign: 'left',
-                fontSize: 15.5, fontWeight: 800, color: '#0B1F3A',
-                cursor: 'pointer',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
-              }}
-            >
-              <span>{f.q}</span>
-              <span style={{ fontSize: 20, color: '#E8742B', fontWeight: 900, flexShrink: 0, transform: isOpen ? 'rotate(45deg)' : 'rotate(0)', transition: 'transform 200ms ease' }}>+</span>
-            </button>
-            {isOpen && (
-              <div style={{ padding: '0 20px 18px', fontSize: 14.5, color: '#4A6670', lineHeight: 1.65 }} dangerouslySetInnerHTML={{ __html: f.a }} />
-            )}
-          </div>
-        )
-      })}
-    </div>
   )
 }
 
@@ -1088,51 +1014,55 @@ function ExitIntentPopup() {
 }
 
 /**
- * LiveScraperFeed — animated real-time event stream.
+ * LiveScraperFeed — checkmark-table real-time feed.
  *
- * Centerpiece visual that makes the homepage "unbelievable" to a blue-collar
- * owner. Terminal-style cascade of events: permits scraped → leads scored →
- * skip-trace verified → AI message ready → delivered. Auto-cycles forever.
+ * Per Peter 2026-06-09: bring back the old check-mark-by-check-mark
+ * table style. Each row enters w/ an amber "verifying" spinner, ticks
+ * to a green ✓ "Verified" after ~700ms — visually shows the scraper
+ * checking off leads one at a time. Older rows stay checked, newest
+ * row always pending then verified. Counter ticks up forever.
  *
- * Pulse dot + counter that ticks up = product PHYSICALLY WORKING NOW.
- * Replaces 5+ paragraphs of explainer copy. Holy-shit moment in 5 sec.
- *
- * Performance: 200ms cycle, capped at 8 visible rows, single setInterval.
- * Counter increments randomized 1-3/tick to look organic, never round.
+ * Replaces wordy explainer copy w/ a visual that says "the machine is
+ * working RIGHT NOW for someone else — could be working for you."
  */
 function LiveScraperFeed() {
-  const EVENTS: { icon: string; txt: string; tone: 'scan' | 'hit' | 'storm' | 'deliver' }[] = [
-    { icon: '🏛', txt: 'Scraping Plano TX permits…', tone: 'scan' },
-    { icon: '✓',  txt: 'Mike Coleman · 7842 Oak Ridge · HVAC permit · Plano TX', tone: 'hit' },
-    { icon: '⛈',  txt: 'NOAA storm strike · ZIP 75024 · 47 roofs flagged', tone: 'storm' },
-    { icon: '🏠', txt: 'Sarah Whitman · sold 11 days ago · new-owner flag · Plano TX', tone: 'hit' },
-    { icon: '📡', txt: 'Pulling Census ACS aging data · TX-DFW metro', tone: 'scan' },
-    { icon: '✓',  txt: 'Carlos Reyes · 1923 Briarwood · HVAC 16yr · Frisco TX', tone: 'hit' },
-    { icon: '📞', txt: 'Skip-trace verified · (214) ●●●-●167', tone: 'scan' },
-    { icon: '🔥', txt: 'Lead score 92 · est. job $3,200–4,800', tone: 'hit' },
-    { icon: '🤖', txt: 'AI wrote intro message · ready to send', tone: 'scan' },
-    { icon: '⛈',  txt: 'Hail 1.75in · ZIP 75035 · 23 roofs in damage zone', tone: 'storm' },
-    { icon: '✓',  txt: 'James Patel · 388 Cedar Park · move-in 6wk ago · McKinney TX', tone: 'hit' },
-    { icon: '🏛', txt: 'Austin TX building dept · 14 new HVAC permits', tone: 'scan' },
-    { icon: '✓',  txt: 'Linda Hong · 6618 Aspen · permit re-pull · Allen TX', tone: 'hit' },
-    { icon: '✉',  txt: 'Delivered → BellAveGo dashboards · ZIP 75024 · HVAC', tone: 'deliver' },
-    { icon: '📡', txt: 'Pulling Tucson AZ permits…', tone: 'scan' },
-    { icon: '✓',  txt: 'Tony Suarez · 4218 Catalina · furnace permit · Tucson AZ', tone: 'hit' },
-    { icon: '⛈',  txt: 'NOAA storm strike · ZIP 85710 · 31 roofs flagged', tone: 'storm' },
-    { icon: '🏠', txt: 'Maria Lopez · sold 8 days ago · new-owner flag · Phoenix AZ', tone: 'hit' },
-    { icon: '🤖', txt: 'AI intro queued · 12 messages ready', tone: 'scan' },
-    { icon: '✉',  txt: 'Delivered → BellAveGo dashboards · ZIP 85710 · roofing', tone: 'deliver' },
-  ]
-
-  const TONE: Record<typeof EVENTS[number]['tone'], string> = {
-    scan: '#FFC58A',
-    hit: '#5EEAD4',
-    storm: '#FF9D5A',
-    deliver: '#22C55E',
+  type Row = {
+    id: number
+    signal: 'PERMIT' | 'STORM' | 'AGED' | 'MOVE-IN'
+    owner: string
+    zip: string
+    trade: string
+    score: number
+    status: 'pending' | 'verified'
   }
 
-  const [lines, setLines] = useState<{ id: number; e: typeof EVENTS[number] }[]>(
-    () => EVENTS.slice(0, 6).map((e, i) => ({ id: i, e }))
+  const SAMPLES: Omit<Row, 'id' | 'status'>[] = [
+    { signal: 'PERMIT',  owner: 'Mike Coleman',    zip: '75024', trade: 'HVAC',      score: 92 },
+    { signal: 'STORM',   owner: 'Sarah Whitman',   zip: '75093', trade: 'Roofing',   score: 88 },
+    { signal: 'AGED',    owner: 'Carlos Reyes',    zip: '75035', trade: 'HVAC',      score: 81 },
+    { signal: 'MOVE-IN', owner: 'James Patel',     zip: '75070', trade: 'Plumbing',  score: 76 },
+    { signal: 'PERMIT',  owner: 'Linda Hong',      zip: '75002', trade: 'Electric',  score: 84 },
+    { signal: 'STORM',   owner: 'Tony Suarez',     zip: '85710', trade: 'Roofing',   score: 90 },
+    { signal: 'AGED',    owner: 'Maria Lopez',     zip: '85016', trade: 'HVAC',      score: 79 },
+    { signal: 'MOVE-IN', owner: 'David Kim',       zip: '85254', trade: 'Handyman',  score: 72 },
+    { signal: 'PERMIT',  owner: 'Rachel Brooks',   zip: '30301', trade: 'HVAC',      score: 86 },
+    { signal: 'STORM',   owner: 'Jamal Wright',    zip: '30329', trade: 'Roofing',   score: 91 },
+    { signal: 'AGED',    owner: 'Susan O’Neal', zip: '32801', trade: 'HVAC',    score: 83 },
+    { signal: 'MOVE-IN', owner: 'Chris Vega',      zip: '33139', trade: 'Plumbing',  score: 77 },
+    { signal: 'PERMIT',  owner: 'Tyler Brooks',    zip: '37203', trade: 'Electric',  score: 80 },
+    { signal: 'AGED',    owner: 'Nina Patel',      zip: '78704', trade: 'HVAC',      score: 87 },
+    { signal: 'STORM',   owner: 'Greg Foster',     zip: '76137', trade: 'Roofing',   score: 89 },
+  ]
+
+  const SIGNAL_STYLE: Record<Row['signal'], { bg: string; fg: string; label: string }> = {
+    'PERMIT':  { bg: '#E0F2FE', fg: '#0369A1', label: '🏛 Permit'   },
+    'STORM':   { bg: '#FEF3C7', fg: '#92400E', label: '⛈ Storm'    },
+    'AGED':    { bg: '#FCE7F3', fg: '#9D174D', label: '🌡 Aged'    },
+    'MOVE-IN': { bg: '#DCFCE7', fg: '#166534', label: '🏠 Move-in' },
+  }
+
+  const [rows, setRows] = useState<Row[]>(() =>
+    SAMPLES.slice(0, 6).map((s, i) => ({ ...s, id: i, status: 'verified' as const }))
   )
   const [counter, setCounter] = useState(2847)
   const [pulse, setPulse] = useState(true)
@@ -1140,11 +1070,18 @@ function LiveScraperFeed() {
 
   useEffect(() => {
     const tick = setInterval(() => {
-      const next = EVENTS[Math.floor(Math.random() * EVENTS.length)]
+      const next = SAMPLES[Math.floor(Math.random() * SAMPLES.length)]
       idRef.current += 1
-      setLines((prev) => [...prev.slice(-7), { id: idRef.current, e: next }])
+      const newId = idRef.current
+      setRows((prev) => {
+        const verified = prev.map((r) => ({ ...r, status: 'verified' as const }))
+        return [{ ...next, id: newId, status: 'pending' as const }, ...verified].slice(0, 6)
+      })
       setCounter((c) => c + Math.floor(Math.random() * 3) + 1)
-    }, 1400)
+      setTimeout(() => {
+        setRows((prev) => prev.map((r) => r.id === newId ? { ...r, status: 'verified' as const } : r))
+      }, 720)
+    }, 1500)
     const pulseTick = setInterval(() => setPulse((p) => !p), 700)
     return () => { clearInterval(tick); clearInterval(pulseTick) }
   }, [])
@@ -1167,95 +1104,135 @@ function LiveScraperFeed() {
               boxShadow: pulse ? '0 0 14px #22C55E' : '0 0 4px #22C55E',
               transition: 'box-shadow 700ms ease',
             }} />
-            Pulling leads · live right now
+            Verifying leads · live right now
           </div>
           <h2 style={{ fontSize: 'clamp(26px, 3vw, 38px)', fontWeight: 900, letterSpacing: '-0.03em', margin: '16px 0 8px', color: '#0B1F3A' }}>
-            Watch us find your next install.
+            Watch us check off your next install.
           </h2>
           <p style={{ fontSize: 15, color: '#4A6670', margin: 0, lineHeight: 1.55 }}>
-            Every night, scrapers hit permits, NOAA storms, move-ins, aged HVAC — across every US zip. Sample:
+            Permits, NOAA storms, MLS move-ins, aged HVAC — verified one at a time, every night, across every US zip.
           </p>
         </div>
 
         <div style={{
           borderRadius: 18,
-          background: 'linear-gradient(165deg, #0B1F3A 0%, #163356 100%)',
-          padding: 22,
-          boxShadow: '0 30px 80px rgba(11,31,58,0.32)',
-          border: '1px solid rgba(94,234,212,0.18)',
+          background: '#FFFFFF',
+          padding: '6px 6px 22px',
+          boxShadow: '0 30px 80px rgba(11,31,58,0.10), 0 4px 14px rgba(232,116,43,0.06)',
+          border: '1px solid rgba(232,116,43,0.20)',
           overflow: 'hidden',
         }}>
-          {/* Terminal header w/ counter */}
+          {/* Table header */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1.4fr 0.7fr 0.9fr 0.7fr 1.1fr',
+            gap: 10,
+            padding: '14px 18px 12px',
+            borderBottom: '1px solid rgba(11,31,58,0.08)',
+            fontSize: 10.5, fontWeight: 900, color: '#7AAAB2',
+            letterSpacing: '0.14em', textTransform: 'uppercase',
+          }}>
+            <div>Signal</div>
+            <div>Owner</div>
+            <div>ZIP</div>
+            <div>Trade</div>
+            <div>Score</div>
+            <div style={{ textAlign: 'right' }}>Status</div>
+          </div>
+
+          {/* Rows */}
+          <div style={{ padding: '0 6px' }}>
+            {rows.map((r) => {
+              const sig = SIGNAL_STYLE[r.signal]
+              return (
+                <div
+                  key={r.id}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1.4fr 0.7fr 0.9fr 0.7fr 1.1fr',
+                    gap: 10,
+                    alignItems: 'center',
+                    padding: '12px 12px',
+                    borderRadius: 10,
+                    background: r.status === 'pending' ? 'rgba(255,217,168,0.32)' : 'transparent',
+                    borderBottom: '1px solid rgba(11,31,58,0.04)',
+                    animation: 'bavgRowIn 360ms ease',
+                    transition: 'background 400ms ease',
+                    fontSize: 13.5,
+                  }}
+                >
+                  <div>
+                    <span style={{
+                      display: 'inline-block',
+                      padding: '3px 9px',
+                      borderRadius: 7,
+                      background: sig.bg, color: sig.fg,
+                      fontSize: 11, fontWeight: 800,
+                      letterSpacing: '0.04em',
+                    }}>{sig.label}</span>
+                  </div>
+                  <div style={{ fontWeight: 700, color: '#0B1F3A' }}>{r.owner}</div>
+                  <div style={{ color: '#4A6670', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{r.zip}</div>
+                  <div style={{ color: '#4A6670', fontWeight: 600 }}>{r.trade}</div>
+                  <div style={{ color: '#C84B26', fontWeight: 900, fontVariantNumeric: 'tabular-nums' }}>{r.score}</div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6 }}>
+                    {r.status === 'pending' ? (
+                      <>
+                        <span style={{
+                          width: 14, height: 14,
+                          borderRadius: '50%',
+                          border: '2.2px solid #E8742B',
+                          borderTopColor: 'transparent',
+                          animation: 'bavgSpin 700ms linear infinite',
+                        }} />
+                        <span style={{ fontSize: 11.5, fontWeight: 800, color: '#C84B26', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Verifying…</span>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{
+                          width: 18, height: 18,
+                          borderRadius: '50%',
+                          background: '#22C55E',
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                          color: '#fff', fontSize: 11, fontWeight: 900,
+                          animation: 'bavgPop 280ms cubic-bezier(0.34,1.56,0.64,1)',
+                        }}>✓</span>
+                        <span style={{ fontSize: 11.5, fontWeight: 800, color: '#16803F', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Verified</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Counter footer */}
           <div style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            paddingBottom: 12, marginBottom: 12,
-            borderBottom: '1px solid rgba(255,197,138,0.18)',
+            padding: '16px 20px 4px',
             flexWrap: 'wrap', gap: 10,
+            borderTop: '1px solid rgba(11,31,58,0.06)',
+            marginTop: 6,
           }}>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#FF5F56' }} />
-              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#FFBD2E' }} />
-              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#27C93F' }} />
-              <span style={{ marginLeft: 14, fontSize: 11, fontWeight: 700, color: '#FFC58A', letterSpacing: '0.10em', textTransform: 'uppercase' }}>bellavego · scraper feed</span>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#7AAAB2', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              📍 24 metros · 🏛 nightly permits · ⛈ NOAA · 🤖 AI intros
             </div>
-            <div style={{ fontSize: 11, fontWeight: 800, color: '#5EEAD4', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              {counter.toLocaleString()} leads pulled today
+            <div style={{ fontSize: 13, fontWeight: 900, color: '#16803F', letterSpacing: '0.05em' }}>
+              {counter.toLocaleString()} leads verified today
             </div>
-          </div>
-
-          {/* Stream */}
-          <div style={{
-            fontFamily: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace',
-            fontSize: 13.5,
-            lineHeight: 1.7,
-            color: '#FFF8F0',
-            display: 'grid', gap: 4,
-            minHeight: 280,
-          }}>
-            {lines.map((l, i) => (
-              <div
-                key={l.id}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '4px 6px',
-                  borderRadius: 6,
-                  background: i === lines.length - 1 ? 'rgba(94,234,212,0.08)' : 'transparent',
-                  animation: i === lines.length - 1 ? 'bavgFeedIn 360ms ease' : undefined,
-                  opacity: i < lines.length - 5 ? 0.42 : 1,
-                  transition: 'opacity 280ms ease',
-                }}
-              >
-                <span style={{ fontSize: 14, lineHeight: 1, width: 18, textAlign: 'center' }}>{l.e.icon}</span>
-                <span style={{ color: TONE[l.e.tone], fontWeight: 700, letterSpacing: '0.02em' }}>{l.e.txt}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Footer stat row */}
-          <div style={{
-            marginTop: 16, paddingTop: 14,
-            borderTop: '1px solid rgba(255,197,138,0.18)',
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12,
-            fontSize: 11, fontWeight: 700, color: 'rgba(255,248,240,0.62)', letterSpacing: '0.06em', textTransform: 'uppercase',
-            textAlign: 'center',
-          }}>
-            <div>📍 24 metros</div>
-            <div>🏛 nightly permits</div>
-            <div>⛈ NOAA storms</div>
-            <div>🤖 AI intros</div>
-            <div>✉ Monday 6am drop</div>
           </div>
         </div>
 
         <p style={{
           textAlign: 'center', marginTop: 16, fontSize: 13, color: '#4A6670', maxWidth: 640, marginInline: 'auto',
         }}>
-          When you lock your zip, this entire engine runs for YOUR shop overnight.
+          Lock your zip → this engine runs every night for YOUR shop. Monday 6am, the checked-off leads land in your dashboard.
         </p>
       </div>
 
       <style jsx global>{`
-        @keyframes bavgFeedIn { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: translateY(0) } }
+        @keyframes bavgRowIn { from { opacity: 0; transform: translateY(-10px) } to { opacity: 1; transform: translateY(0) } }
+        @keyframes bavgSpin  { to { transform: rotate(360deg) } }
       `}</style>
     </section>
   )

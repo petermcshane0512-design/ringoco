@@ -61,7 +61,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             border: '1px solid rgba(232,116,43,0.20)',
             background: '#FFF7EE',
           }}>Settings</Link>
-          <UserButton afterSignOutUrl="/" />
+          <UserButton />
         </div>
       </header>
 
