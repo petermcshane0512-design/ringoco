@@ -26,7 +26,7 @@ export async function GET(_req: NextRequest) {
   const gate = await requireAdmin()
   if (!gate.ok) return gate.res
 
-  const APIFY_TOKEN = process.env.APIFY_TOKEN || process.env.APIFY_API_KEY
+  const APIFY_TOKEN = process.env.APIFY_TOKEN || process.env.APIFY_API_TOKEN || process.env.APIFY_API_KEY
   const today = new Date().toISOString().slice(0, 10)
 
   // Load schedule
@@ -74,7 +74,9 @@ export async function GET(_req: NextRequest) {
     ok: true,
     apify: {
       token_set: !!APIFY_TOKEN,
-      token_env_var: APIFY_TOKEN ? (process.env.APIFY_TOKEN ? 'APIFY_TOKEN' : 'APIFY_API_KEY') : null,
+      token_env_var: APIFY_TOKEN
+        ? (process.env.APIFY_TOKEN ? 'APIFY_TOKEN' : process.env.APIFY_API_TOKEN ? 'APIFY_API_TOKEN' : 'APIFY_API_KEY')
+        : null,
       reachable: apifyReachable,
       error: apifyError,
     },

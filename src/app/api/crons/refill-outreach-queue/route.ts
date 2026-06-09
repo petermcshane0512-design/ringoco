@@ -30,7 +30,7 @@ export const maxDuration = 300
  * was proven working end-to-end (June 8 2026 — first 119 sent live).
  */
 
-const APIFY_TOKEN = process.env.APIFY_TOKEN || process.env.APIFY_API_KEY
+const APIFY_TOKEN = process.env.APIFY_TOKEN || process.env.APIFY_API_TOKEN || process.env.APIFY_API_KEY
 const APIFY_MAPS_ACTOR = 'compass~crawler-google-places'
 const APIFY_CONTACT_ACTOR = 'lukaskrivka~contact-info-scraper'
 
