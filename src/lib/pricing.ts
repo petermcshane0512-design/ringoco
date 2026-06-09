@@ -1,9 +1,20 @@
 /**
  * Single source of truth for tier definitions, Stripe price IDs, and tier-gate sets.
  *
+ * ─── 2026-06-09 LEADS-ONLY PIVOT ───
+ * BellAveGo pivoted from AI receptionist SaaS to pure homeowner lead-gen.
+ * The PUBLIC product is now a SINGLE PLAN:
+ *
+ *   Pro (slug 'officemgr') — $297/mo regular, $97 first month via FIRST200 promo.
+ *   Annual: $2,970/yr. 80 leads/mo. 30-day money-back. Cancel anytime.
+ *
+ * Receptionist + Concierge slugs are NO LONGER active new-signup tiers — they
+ * remain in PRICE_TO_TIER + PRICE_IDS_V2/V1 ONLY so grandfathered subscribers
+ * continue to renew and resolve correctly through the Stripe webhook. New code
+ * MUST NOT expose them as selectable tiers.
+ *
  * Update this file when:
  *   - Stripe prices change (create new IDs in Stripe Dashboard, then update PRICE_IDS_V2)
- *   - New tier introduced (add to Tier type, PRICE_IDS_V2, PRICE_TO_TIER, and relevant tier set)
  *   - Tier renamed (legacy aliases preserved in TIER_*_V1 — do not delete)
  *
  * Imported by: stripe/checkout, stripe/webhook, twilio/voice, office-manager/list,
@@ -13,24 +24,19 @@
  * Why this file exists: before May 2026 the Stripe price IDs lived in two route files
  * and the tier-gate sets lived in six. A new tier required edits in 8 places. Now: 1.
  *
- * ─── v2 PRICING (May 23 2026) ───
- * Slugs are unchanged ('receptionist' / 'officemgr' / 'concierge') — only displayed
- * labels and prices changed. The slug-based gates and DB columns continue to work.
- *
- *   Mission Control ($397) → Starter ($147), 60 calls/mo cap
- *   Operator        ($797) → Pro     ($297), 300 calls/mo cap
- *   Concierge      ($1997) → Elite   ($597), UNLIMITED — LIVE since 2026-05-27
- *
- * The PRICING_VERSION env var ('v1_legacy' | 'v2_new', default v2_new) controls
- * which display + price ID set the pricing page advertises. Both sets of price IDs
- * resolve correctly in the Stripe webhook regardless of which version is active,
- * so legacy customers keep working.
+ * NOTE: Stripe price ID strings are UNCHANGED — Vercel env relies on
+ * PRICE_IDS_V2.officemgr being stable. Do not rename or rewrite those IDs.
  *
  * Rollback: set PRICING_VERSION=v1_legacy in Vercel + redeploy + re-run
  * scripts/bake-sales-prompt-into-assistant.mjs. See docs/pricing-rollback.md.
  */
 
+// Active new-signup tier is officemgr only (post 2026-06-09 pivot).
+// Tier type kept wide for back-compat — webhook handlers, lead engine,
+// dashboard upgrade page all check receptionist/concierge for grandfathered
+// subscribers. New signups land on 'officemgr' only (gated by isValidTier()).
 export type Tier = 'receptionist' | 'officemgr' | 'concierge'
+export type LegacyTier = Tier
 export type Interval = 'monthly' | 'annual'
 export type PricingVersion = 'v1_legacy' | 'v2_new'
 
@@ -43,7 +49,7 @@ export const CURRENT_PRICING_VERSION: PricingVersion =
 // Created by scripts/create-v7-prices.mjs. Preserved verbatim for rollback safety
 // and so grandfathered customers on these prices continue to renew at their original
 // price point. NEVER delete these IDs from PRICE_TO_TIER below.
-export const PRICE_IDS_V1: Record<Tier, { monthly: string; annual: string; setup: string }> = {
+export const PRICE_IDS_V1: Record<LegacyTier, { monthly: string; annual: string; setup: string }> = {
   receptionist: {
     monthly: 'price_1TWTwsGrkP7VQmUjYdnvv7ZU', // $397/mo
     annual:  'price_1TWTwsGrkP7VQmUjVH673Rny', // $3,960/yr (10 mo of monthly, 2 free)
@@ -68,7 +74,7 @@ export const PRICE_IDS_V1: Record<Tier, { monthly: string; annual: string; setup
 //   Concierge    product: prod_UVUwZwbvhdpRwR
 // All v2 prices have metadata.version='v8' and lookup_keys like
 // 'bellavego-{tier}-v8-{interval}'. No setup fees (founding-partner pricing).
-export const PRICE_IDS_V2: Record<Tier, { monthly: string; annual: string; setup: string }> = {
+export const PRICE_IDS_V2: Record<LegacyTier, { monthly: string; annual: string; setup: string }> = {
   receptionist: {
     monthly: 'price_1TaJOcGrkP7VQmUj8qSiEx2b', // $147/mo Starter
     annual:  'price_1TaJOcGrkP7VQmUj4AMGChWp', // $1,460/yr Starter (~17% off)
@@ -87,14 +93,14 @@ export const PRICE_IDS_V2: Record<Tier, { monthly: string; annual: string; setup
 }
 
 // Active price IDs based on PRICING_VERSION env. Pricing page + checkout read from here.
-export const PRICE_IDS: Record<Tier, { monthly: string; annual: string; setup: string }> =
+export const PRICE_IDS: Record<LegacyTier, { monthly: string; annual: string; setup: string }> =
   CURRENT_PRICING_VERSION === 'v1_legacy' ? PRICE_IDS_V1 : PRICE_IDS_V2
 
 // ── Reverse map: Stripe price ID → tier + call-cap ──────────────
 // MUST include both v1 AND v2 prices so the Stripe webhook resolves any
 // customer (legacy or new) to the right tier. Existing customers on v1 prices
 // stay on v1 calls cap (250 for receptionist). New v2 customers get unlimited.
-export const PRICE_TO_TIER: Record<string, { tier: Tier; calls: number }> = {
+export const PRICE_TO_TIER: Record<string, { tier: LegacyTier; calls: number }> = {
   // v2 active (May 23 2026 — Starter $147 / Pro $297 / Elite $597)
   'price_1TaJOcGrkP7VQmUj8qSiEx2b': { tier: 'receptionist', calls: 60 },    // Starter monthly — 60/mo cap (forces upgrade to Pro)
   'price_1TaJOcGrkP7VQmUj4AMGChWp': { tier: 'receptionist', calls: 60 },    // Starter annual  — 60/mo cap
@@ -165,7 +171,7 @@ export const TIER_CALL_CAP: Record<string, number> = {
 // `setup` is the one-time setup fee in USD ($0 in both v1 and v2 — see comment
 // on PRICE_IDS_V1.receptionist.setup for re-enablement instructions).
 
-export const TIER_METADATA_V1: Record<Tier, {
+export const TIER_METADATA_V1: Record<LegacyTier, {
   name: string
   monthly: number
   annual: number
@@ -176,7 +182,7 @@ export const TIER_METADATA_V1: Record<Tier, {
   concierge:    { name: 'Concierge',       monthly: 1997, annual: 1660, setup: 0 },
 }
 
-export const TIER_METADATA_V2: Record<Tier, {
+export const TIER_METADATA_V2: Record<LegacyTier, {
   name: string
   monthly: number
   annual: number
@@ -187,7 +193,7 @@ export const TIER_METADATA_V2: Record<Tier, {
   concierge:    { name: 'Elite',   monthly: 597, annual: 498, setup: 0 }, // $5,970/yr ÷ 12 = $497.50
 }
 
-export const TIER_METADATA: Record<Tier, {
+export const TIER_METADATA: Record<LegacyTier, {
   name: string
   monthly: number
   annual: number
@@ -234,7 +240,7 @@ export type TierFeatures = {
 //   3. Send you fresh leads in your neighborhood
 // Everything else was stripped per Peter's spec — feature bloat was killing
 // the value prop. The tier ladder is now ONE axis (volume of calls + leads).
-export const TIER_FEATURES: Record<Tier, TierFeatures> = {
+export const TIER_FEATURES: Record<LegacyTier, TierFeatures> = {
   receptionist: {
     tagline: 'Answer every call. Land 5 fresh neighborhood leads each quarter.',
     callCap: '60 calls/mo',
@@ -324,19 +330,25 @@ export const TIER_FEATURES: Record<Tier, TierFeatures> = {
 }
 
 // ── Helpers ─────────────────────────────────────────────────────
-export function priceFor(tier: Tier, interval: Interval): string {
-  return PRICE_IDS[tier][interval]
+// Post 2026-06-09 pivot: new signups always land on officemgr ($297 monthly /
+// $2,970 annual). `tier` arg is accepted for back-compat with legacy callers
+// but ignored — the public surface returns the officemgr price unconditionally.
+export function priceFor(_tier: Tier | LegacyTier, interval: Interval): string {
+  return PRICE_IDS.officemgr[interval]
 }
 
-export function setupPriceFor(tier: Tier): string {
-  return PRICE_IDS[tier].setup
+export function setupPriceFor(_tier: Tier | LegacyTier): string {
+  return PRICE_IDS.officemgr.setup
 }
 
+// Only 'officemgr' is a valid new-signup tier post 2026-06-09. Legacy slugs
+// ('receptionist' | 'concierge') still resolve in PRICE_TO_TIER for grandfathered
+// subscribers but MUST NOT be selectable from new code paths.
 export function isValidTier(t: string): t is Tier {
-  return t === 'receptionist' || t === 'officemgr' || t === 'concierge'
+  return t === 'officemgr'
 }
 
-export function tierForPriceId(priceId: string): Tier | undefined {
+export function tierForPriceId(priceId: string): LegacyTier | undefined {
   return PRICE_TO_TIER[priceId]?.tier
 }
 
@@ -367,7 +379,7 @@ export function callCapForTier(planTier: string | null | undefined): number {
  * Pass an explicit `version` to force a specific display (useful for admin
  * UIs that need to show both names side by side).
  */
-export function displayTierName(slug: Tier, version: PricingVersion = CURRENT_PRICING_VERSION): string {
+export function displayTierName(slug: LegacyTier, version: PricingVersion = CURRENT_PRICING_VERSION): string {
   return (version === 'v1_legacy' ? TIER_METADATA_V1 : TIER_METADATA_V2)[slug].name
 }
 
@@ -378,7 +390,7 @@ export function displayTierName(slug: Tier, version: PricingVersion = CURRENT_PR
  * "Mission Control · $397/mo" even after PRICING_VERSION flips to v2_new.
  */
 export function displayInfoForPriceId(priceId: string): {
-  tier: Tier
+  tier: LegacyTier
   name: string
   monthly: number
   isLegacy: boolean

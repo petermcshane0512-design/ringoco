@@ -1,6 +1,10 @@
 /**
  * Public appointment page — `/appointment/[token]`
  *
+ * LEGACY-RECEPTIONIST SURFACE (mothballed 2026-06-09 pivot to pure lead-gen).
+ * Kept intact for grandfathered customers whose Vapi-booked appointments
+ * still need a confirmation page. NOT part of the default flow.
+ *
  * Homeowner clicks the link in the BellAveGo confirmation SMS and lands
  * here. NO LOGIN REQUIRED. The token (HMAC-signed) identifies the
  * appointment and is the only auth.
@@ -219,7 +223,7 @@ export default async function PublicAppointmentPage({ params }: PageProps) {
 
         {/* Footer */}
         <div style={{ marginTop: 36, textAlign: 'center', fontSize: 11, color: '#7AAAB2', lineHeight: 1.6 }}>
-          Powered by <Link href="/" style={{ color: '#0AA89F', fontWeight: 700, textDecoration: 'none' }}>BellAveGo</Link> — AI receptionist for home-service contractors.
+          Powered by <Link href="/" style={{ color: '#0AA89F', fontWeight: 700, textDecoration: 'none' }}>BellAveGo</Link> — exclusive homeowner leads for home-service contractors.
         </div>
       </div>
     </main>

@@ -54,7 +54,7 @@ export default function ReferPage() {
 
   function shareSMS() {
     if (!data) return
-    const text = `Yo — I've been using BellAveGo (AI receptionist that answers missed calls + books jobs + sends me 5 leads/wk). Honest game-changer. Free 14-day trial w/ my link: ${data.referral_link}`
+    const text = `Yo — I've been using BellAveGo (exclusive homeowner leads delivered Monday + AI lead outreach that reaches out to homeowners for me). Honest game-changer. Free 14-day trial w/ my link: ${data.referral_link}`
     window.location.href = `sms:?body=${encodeURIComponent(text)}`
   }
 

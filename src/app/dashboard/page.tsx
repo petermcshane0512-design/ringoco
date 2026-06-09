@@ -7,56 +7,65 @@ import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 
 /**
- * /dashboard — 2026-06-09 LEADS-ONLY REWRITE.
+ * /dashboard — 2026-06-09 LEADS-ONLY SIMPLIFIED.
  *
- * Old: 1244-line receptionist dashboard w/ call logs, missed calls,
- * Vapi assistant status, A2P 10DLC widgets, AI prompt editor.
+ * Per Peter: dashboard should ONLY surface:
+ *   - This week's leads
+ *   - This month's leads
+ *   - All past leads
+ *   - "Buy more leads manually" — custom-amount input (any qty × $15)
  *
- * New: clean dark-theme leads dashboard.
- *  - This week's leads (count + value)
- *  - Auto-outreach status (X of Y emailed, Z replied)
- *  - Recent replies (hot list, top of fold)
- *  - Recent leads grid
- *  - Quick links: /dashboard/leads, settings, setup
- *
- * Routes through /dashboard/setup if onboarding not complete.
+ * Removed every other widget (call_logs, calendar, Vapi status,
+ * outreach prompt status, etc). Customer lands here, sees their leads,
+ * can buy more if they need more, opens any lead for full detail.
  */
-
-type Profile = {
-  user_id: string
-  business_name?: string | null
-  owner_first_name?: string | null
-  setup_complete?: boolean | null
-  first_lead_drop_at?: string | null
-  outreach_prompt_template?: string | null
-}
 
 type LeadStub = {
   id: string
   street_address: string | null
   zip: string | null
+  city: string | null
   trade_match: string[] | null
   source: string | null
-  lead_score: number | null
   source_event_date: string | null
+  created_at: string | null
 }
 
-type DashboardSummary = {
+type SimplifiedSummary = {
   ok: boolean
   this_week_count: number
-  this_week_value_cents: number
-  outreach_sent: number
-  outreach_replied: number
-  hot_replies: LeadStub[]
-  recent_leads: LeadStub[]
+  this_month_count: number
+  all_count: number
+  this_week_leads: LeadStub[]
+  this_month_leads: LeadStub[]
+  all_leads: LeadStub[]
 }
 
-export default function DashboardLeadsRoot() {
+type Profile = {
+  business_name?: string | null
+  owner_first_name?: string | null
+  setup_complete?: boolean | null
+}
+
+type Tab = 'week' | 'month' | 'all'
+
+const SIGNAL_LABEL: Record<string, string> = {
+  permit: '🏗️ Permit',
+  aging_hvac: '🌡️ Aged HVAC',
+  storm: '⛈️ Storm',
+  move_in: '🏠 New owner',
+}
+
+export default function DashboardSimplified() {
   const router = useRouter()
   const { isLoaded, isSignedIn } = useUser()
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [summary, setSummary] = useState<DashboardSummary | null>(null)
+  const [summary, setSummary] = useState<SimplifiedSummary | null>(null)
   const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState<Tab>('week')
+  const [customQty, setCustomQty] = useState<number>(5)
+  const [buying, setBuying] = useState(false)
+  const [buyErr, setBuyErr] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isLoaded) return
@@ -75,116 +84,170 @@ export default function DashboardLeadsRoot() {
           }
         }
         if (s) setSummary(s)
-      } catch { /* swallow */ }
+      } catch {/* */}
       setLoading(false)
     })()
   }, [isLoaded, isSignedIn, router])
 
-  if (loading || !isLoaded) {
-    return (
-      <main style={loadingStyle}>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Loading…</div>
-      </main>
-    )
+  async function buyCustom() {
+    if (customQty < 1) { setBuyErr('Pick at least 1 lead'); return }
+    if (customQty > 200) { setBuyErr('Max 200 per purchase. Buy multiple if you need more.'); return }
+    setBuying(true); setBuyErr(null)
+    try {
+      const r = await fetch('/api/stripe/checkout-alacarte', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ qty: customQty }),
+      })
+      const j = await r.json()
+      if (!r.ok) { setBuyErr(j.error || 'Checkout failed'); setBuying(false); return }
+      if (j.url) window.location.href = j.url
+    } catch (e) { setBuyErr((e as Error).message); setBuying(false) }
   }
 
-  const tplGenerated = !!profile?.outreach_prompt_template
+  if (loading || !isLoaded) {
+    return <main style={loadingStyle}><div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Loading…</div></main>
+  }
+
+  const currentLeads = tab === 'week' ? summary?.this_week_leads
+    : tab === 'month' ? summary?.this_month_leads
+    : summary?.all_leads
+  const currentCount = tab === 'week' ? summary?.this_week_count
+    : tab === 'month' ? summary?.this_month_count
+    : summary?.all_count
+  const customTotal = customQty * 15
 
   return (
     <main style={{
       minHeight: '100vh',
-      background: 'linear-gradient(180deg, #050E1F 0%, #0B1F3A 65%, #112C4A 100%)',
-      color: '#fff',
+      background: '#FFF8F0',
+      color: '#0B1F3A',
       fontFamily: "'Inter', system-ui, sans-serif",
     }}>
-      <Nav profile={profile} />
+      <Nav />
 
       <section style={{ padding: '32px clamp(16px, 4vw, 40px)' }}>
-        <div style={{ maxWidth: 1180, margin: '0 auto' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, marginBottom: 20 }}>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 800, color: '#5EEAD4', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>
-                {profile?.business_name || 'Your dashboard'}
-              </div>
-              <h1 style={{ fontSize: 'clamp(26px, 3.2vw, 36px)', fontWeight: 900, letterSpacing: '-0.04em', margin: 0 }}>
-                {profile?.owner_first_name ? `Hey ${profile.owner_first_name} — ` : ''}This week&rsquo;s leads
-              </h1>
+        <div style={{ maxWidth: 1080, margin: '0 auto' }}>
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>
+              {profile?.business_name || 'Your dashboard'}
             </div>
-            <Link href="/dashboard/leads" style={ctaSecondary}>See all leads →</Link>
+            <h1 style={{ fontSize: 'clamp(28px, 3.4vw, 40px)', fontWeight: 900, letterSpacing: '-0.04em', margin: 0 }}>
+              {profile?.owner_first_name ? `Hey ${profile.owner_first_name} —` : 'Your leads'}
+            </h1>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
-            gap: 14,
-            padding: '20px 24px',
-            background: 'linear-gradient(165deg, rgba(15,37,66,0.6) 0%, rgba(10,27,51,0.7) 100%)',
-            border: '1px solid rgba(94,234,212,0.22)',
-            borderRadius: 16,
-            marginBottom: 24,
-          }}>
-            <Stat label="Fresh leads this week" value={String(summary?.this_week_count ?? 0)} tone="teal" />
-            <Stat label="Pipeline value" value={dollars(summary?.this_week_value_cents ?? 0)} tone="money" />
-            <Stat label="Auto-outreach sent" value={String(summary?.outreach_sent ?? 0)} tone="teal" />
-            <Stat label="Homeowners replied" value={String(summary?.outreach_replied ?? 0)} tone="money" hot={(summary?.outreach_replied ?? 0) > 0} />
+          {/* Stat cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 14, marginBottom: 26 }}>
+            <StatCard
+              label="This week"
+              value={summary?.this_week_count ?? 0}
+              active={tab === 'week'}
+              onClick={() => setTab('week')}
+            />
+            <StatCard
+              label="This month"
+              value={summary?.this_month_count ?? 0}
+              active={tab === 'month'}
+              onClick={() => setTab('month')}
+            />
+            <StatCard
+              label="All past"
+              value={summary?.all_count ?? 0}
+              active={tab === 'all'}
+              onClick={() => setTab('all')}
+            />
           </div>
 
-          <div style={{
-            padding: '20px 24px', borderRadius: 14,
-            background: tplGenerated
-              ? 'linear-gradient(135deg, rgba(34,197,94,0.10) 0%, rgba(15,37,66,0.5) 100%)'
-              : 'linear-gradient(135deg, rgba(232,116,43,0.15) 0%, rgba(15,37,66,0.5) 100%)',
-            border: tplGenerated ? '1px solid rgba(34,197,94,0.40)' : '1px solid rgba(232,116,43,0.40)',
-            marginBottom: 24,
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap',
-          }}>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 800, color: tplGenerated ? '#22C55E' : '#FF9D5A', letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 4 }}>
-                {tplGenerated ? '✓ AI Outreach · live' : '⚠ AI Outreach · not configured'}
-              </div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>
-                {tplGenerated
-                  ? 'Every new lead gets a personalized email + SMS within 6 hrs of delivery.'
-                  : 'Finish onboarding so we can write your outreach prompt and start contacting homeowners for you.'}
-              </div>
-            </div>
-            <Link href={tplGenerated ? '/dashboard/settings/outreach' : '/dashboard/setup'} style={tplGenerated ? ctaSecondary : ctaPrimary}>
-              {tplGenerated ? 'Edit template →' : 'Finish setup →'}
-            </Link>
-          </div>
-
-          {summary && summary.hot_replies.length > 0 && (
-            <section style={{ marginBottom: 28 }}>
-              <h2 style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#FF9D5A', marginBottom: 10 }}>
-                🔥 Hot replies · call within the hour
+          {/* Leads list */}
+          <section style={{ marginBottom: 36 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <h2 style={{ fontSize: 14, fontWeight: 800, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#C84B26', margin: 0 }}>
+                {tab === 'week' ? 'This week' : tab === 'month' ? 'This month' : 'All past leads'} · {currentCount ?? 0}
               </h2>
+              <Link href="/dashboard/leads" style={ctaSecondary}>Open lead manager →</Link>
+            </div>
+            {currentLeads && currentLeads.length > 0 ? (
               <div style={{ display: 'grid', gap: 10 }}>
-                {summary.hot_replies.map((l) => <LeadCard key={l.id} lead={l} hot />)}
-              </div>
-            </section>
-          )}
-
-          <section>
-            <h2 style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#5EEAD4', marginBottom: 10 }}>
-              Recent leads
-            </h2>
-            {summary && summary.recent_leads.length > 0 ? (
-              <div style={{ display: 'grid', gap: 10 }}>
-                {summary.recent_leads.slice(0, 10).map((l) => <LeadCard key={l.id} lead={l} />)}
+                {currentLeads.slice(0, 25).map((l) => <LeadRow key={l.id} l={l} />)}
               </div>
             ) : (
-              <div style={{
-                padding: 28, textAlign: 'center', borderRadius: 14,
-                background: 'rgba(15,37,66,0.45)',
-                border: '1px dashed rgba(94,234,212,0.30)',
-                color: 'rgba(255,255,255,0.65)',
-                fontSize: 14,
-              }}>
-                {profile?.first_lead_drop_at
-                  ? 'No leads delivered yet this week. Next drop fires Monday.'
-                  : 'Your first lead drop arrives within 24 hrs of finishing onboarding. Sit tight.'}
+              <div style={emptyState}>
+                {tab === 'week'
+                  ? 'No leads delivered this week yet. Next drop fires Monday morning.'
+                  : tab === 'month'
+                    ? 'No leads this month yet.'
+                    : 'No leads delivered yet. Your first drop arrives within 24 hrs of finishing onboarding.'}
               </div>
             )}
+          </section>
+
+          {/* Buy more leads */}
+          <section style={{
+            padding: 'clamp(24px, 3vw, 32px)',
+            borderRadius: 18,
+            background: 'linear-gradient(165deg, #FFFFFF 0%, #FFF8F0 100%)',
+            border: '1.5px solid rgba(232,116,43,0.22)',
+            boxShadow: '0 14px 36px rgba(11,31,58,0.08)',
+          }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <div style={{ flex: '1 1 280px', minWidth: 280 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>
+                  Need more leads this week?
+                </div>
+                <h3 style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.02em', margin: '0 0 8px' }}>
+                  Buy any amount à la carte
+                </h3>
+                <p style={{ fontSize: 13.5, color: '#4A6670', lineHeight: 1.55, margin: 0 }}>
+                  $15 per extra lead. Same exclusive territory. Delivered within 24 hrs. One-time charge — no subscription changes.
+                </p>
+              </div>
+
+              <div style={{ flex: '0 1 320px', minWidth: 280 }}>
+                <label style={{ fontSize: 11, fontWeight: 800, color: '#4A6670', letterSpacing: '0.10em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+                  How many?
+                </label>
+                <div style={{ display: 'flex', alignItems: 'stretch', gap: 8, marginBottom: 10 }}>
+                  <button
+                    onClick={() => setCustomQty(Math.max(1, customQty - 5))}
+                    style={qtyBtn}
+                  >−5</button>
+                  <input
+                    type="number" min={1} max={200}
+                    value={customQty}
+                    onChange={(e) => setCustomQty(Math.max(1, Math.min(200, parseInt(e.target.value || '1', 10))))}
+                    style={qtyInput}
+                  />
+                  <button
+                    onClick={() => setCustomQty(Math.min(200, customQty + 5))}
+                    style={qtyBtn}
+                  >+5</button>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                  <span style={{ fontSize: 12, color: '#4A6670' }}>{customQty} × $15</span>
+                  <span style={{ fontSize: 28, fontWeight: 900, color: '#C84B26', letterSpacing: '-0.5px' }}>${customTotal}</span>
+                </div>
+                <button
+                  onClick={buyCustom}
+                  disabled={buying}
+                  style={{
+                    width: '100%', padding: '14px 18px', borderRadius: 12,
+                    background: buying ? 'rgba(11,31,58,0.3)' : 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 50%, #C84B26 100%)',
+                    color: '#fff', border: 'none', cursor: buying ? 'wait' : 'pointer',
+                    fontSize: 14, fontWeight: 900,
+                    boxShadow: '0 10px 28px rgba(232,116,43,0.40)',
+                    letterSpacing: '-0.01em',
+                  }}
+                >
+                  {buying ? 'Redirecting to Stripe…' : `Buy ${customQty} ${customQty === 1 ? 'lead' : 'leads'} for $${customTotal} →`}
+                </button>
+                {buyErr && (
+                  <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)', color: '#991B1B', fontSize: 12 }}>{buyErr}</div>
+                )}
+                <div style={{ fontSize: 10.5, color: '#7AAAB2', marginTop: 8, textAlign: 'center' }}>
+                  Min 1 · Max 200 per purchase
+                </div>
+              </div>
+            </div>
           </section>
         </div>
       </section>
@@ -192,111 +255,114 @@ export default function DashboardLeadsRoot() {
   )
 }
 
-function Nav({ profile }: { profile: Profile | null }) {
+function Nav() {
   return (
     <nav style={{
       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: '16px clamp(16px, 4vw, 40px)',
-      background: 'rgba(5,14,31,0.85)',
-      backdropFilter: 'blur(10px)',
-      borderBottom: '1px solid rgba(94,234,212,0.18)',
+      padding: '14px clamp(16px, 4vw, 40px)',
+      background: 'rgba(255,248,240,0.92)',
+      backdropFilter: 'blur(12px)',
+      borderBottom: '1px solid rgba(232,116,43,0.18)',
       position: 'sticky', top: 0, zIndex: 50,
     }}>
       <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-        <Image src="/logo.png" alt="BellAveGo" width={160} height={48} style={{ objectFit: 'contain' }} priority />
+        <Image src="/logo.png" alt="BellAveGo" width={220} height={68} style={{ objectFit: 'contain' }} priority />
       </Link>
-      <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-        <Link href="/dashboard/leads" style={navLink}>Leads</Link>
-        <Link href="/dashboard/settings/outreach" style={navLink}>Outreach</Link>
-        <Link href="/dashboard/setup" style={navLink}>{profile?.setup_complete ? 'Settings' : 'Finish setup'}</Link>
+      <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
+        <Link href="/dashboard/leads" style={navLink}>All leads</Link>
+        <Link href="/dashboard/settings/outreach" style={navLink}>AI Outreach</Link>
+        <Link href="/dashboard/setup" style={navLink}>Settings</Link>
       </div>
     </nav>
   )
 }
 
-function LeadCard({ lead, hot }: { lead: LeadStub; hot?: boolean }) {
+function StatCard({ label, value, active, onClick }: { label: string; value: number; active: boolean; onClick: () => void }) {
   return (
-    <div style={{
-      padding: '14px 16px', borderRadius: 12,
-      background: hot ? 'rgba(232,116,43,0.10)' : 'rgba(15,37,66,0.60)',
-      border: hot ? '1.5px solid rgba(232,116,43,0.45)' : '1px solid rgba(94,234,212,0.18)',
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+    <button
+      onClick={onClick}
+      style={{
+        padding: '18px 22px', borderRadius: 14, textAlign: 'left',
+        background: active ? 'linear-gradient(135deg, #FFD9A8 0%, #FFFFFF 100%)' : '#FFFFFF',
+        border: active ? '2px solid #E8742B' : '1.5px solid rgba(232,116,43,0.22)',
+        boxShadow: active ? '0 10px 24px rgba(232,116,43,0.20)' : '0 6px 18px rgba(11,31,58,0.05)',
+        cursor: 'pointer', transition: 'all 180ms ease',
+      }}
+    >
+      <div style={{ fontSize: 11, fontWeight: 800, color: active ? '#C84B26' : '#4A6670', letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 6 }}>
+        {label}
+      </div>
+      <div style={{
+        fontSize: 32, fontWeight: 900, letterSpacing: '-1.2px',
+        background: 'linear-gradient(135deg, #FF9D5A, #C84B26)',
+        WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+        lineHeight: 1.05,
+      }}>{value}</div>
+      <div style={{ fontSize: 11.5, color: '#7AAAB2', marginTop: 4, fontWeight: 600 }}>
+        {value === 1 ? 'lead' : 'leads'}
+      </div>
+    </button>
+  )
+}
+
+function LeadRow({ l }: { l: LeadStub }) {
+  const sig = l.source ? SIGNAL_LABEL[l.source] || `🔔 ${l.source}` : ''
+  return (
+    <Link href={`/dashboard/leads/${l.id}`} style={{
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 14,
+      padding: '14px 18px', borderRadius: 12,
+      background: '#FFFFFF',
+      border: '1px solid rgba(232,116,43,0.14)',
+      boxShadow: '0 4px 12px rgba(11,31,58,0.04)',
+      textDecoration: 'none', color: 'inherit',
+      transition: 'transform 120ms ease, box-shadow 120ms ease',
     }}>
       <div style={{ minWidth: 0, flex: 1 }}>
-        <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>
-          {lead.street_address || `ZIP ${lead.zip ?? '—'}`}
+        <div style={{ fontSize: 14, fontWeight: 800, color: '#0B1F3A' }}>
+          {l.street_address || `ZIP ${l.zip ?? '—'}`}
         </div>
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.60)', marginTop: 3 }}>
-          {(lead.trade_match || []).join(' · ')} · {lead.source || 'lead'}
-          {lead.source_event_date && ` · ${new Date(lead.source_event_date).toLocaleDateString()}`}
+        <div style={{ fontSize: 11.5, color: '#4A6670', marginTop: 3 }}>
+          {(l.trade_match || []).join(' · ')}
+          {sig && ` · ${sig}`}
+          {l.source_event_date && ` · ${new Date(l.source_event_date).toLocaleDateString()}`}
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        {typeof lead.lead_score === 'number' && (
-          <div style={{ fontSize: 11, fontWeight: 800, color: '#5EEAD4', padding: '3px 8px', borderRadius: 6, background: 'rgba(94,234,212,0.15)' }}>
-            {lead.lead_score}
-          </div>
-        )}
-        <Link href={`/dashboard/leads/${lead.id}`} style={ctaTiny}>Open →</Link>
-      </div>
-    </div>
+      <div style={{ fontSize: 12, fontWeight: 800, color: '#E8742B' }}>Open →</div>
+    </Link>
   )
-}
-
-function Stat({ label, value, tone, hot }: { label: string; value: string; tone: 'teal' | 'money'; hot?: boolean }) {
-  return (
-    <div style={hot ? { padding: '8px 12px', borderRadius: 10, background: 'rgba(232,116,43,0.10)', border: '1px solid rgba(232,116,43,0.30)' } : {}}>
-      <div style={{
-        fontSize: 22, fontWeight: 900,
-        background: tone === 'money'
-          ? 'linear-gradient(135deg, #FFD9A8, #FF9D5A 50%, #E8742B)'
-          : 'linear-gradient(135deg, #5EEAD4, #14B8A6)',
-        WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-        letterSpacing: '-0.5px', lineHeight: 1.1,
-      }}>{value}</div>
-      <div style={{ fontSize: 10.5, fontWeight: 700, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 4 }}>{label}</div>
-    </div>
-  )
-}
-
-function dollars(cents: number): string {
-  return ((cents ?? 0) / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 }
 
 const loadingStyle: React.CSSProperties = {
-  minHeight: '100vh',
-  background: '#050E1F',
-  color: '#fff',
+  minHeight: '100vh', background: '#FFF8F0', color: '#0B1F3A',
   fontFamily: "'Inter', system-ui, sans-serif",
   display: 'flex', alignItems: 'center', justifyContent: 'center',
 }
-
-const navLink: React.CSSProperties = {
-  color: 'rgba(255,255,255,0.75)', textDecoration: 'none',
-  fontSize: 13, fontWeight: 700,
-}
-
-const ctaPrimary: React.CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', gap: 6,
-  padding: '11px 18px', borderRadius: 10,
-  background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
-  color: '#0B1F3A', textDecoration: 'none',
-  fontWeight: 900, fontSize: 13,
-  boxShadow: '0 6px 18px rgba(232,116,43,0.42)',
-}
-
+const navLink: React.CSSProperties = { color: '#4A6670', textDecoration: 'none', fontSize: 13, fontWeight: 700 }
 const ctaSecondary: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: 6,
   padding: '9px 14px', borderRadius: 9,
-  background: 'rgba(94,234,212,0.10)',
-  border: '1px solid rgba(94,234,212,0.30)',
-  color: '#5EEAD4', textDecoration: 'none',
+  background: 'rgba(232,116,43,0.10)',
+  border: '1px solid rgba(232,116,43,0.30)',
+  color: '#C84B26', textDecoration: 'none',
   fontWeight: 800, fontSize: 12.5,
 }
-
-const ctaTiny: React.CSSProperties = {
-  padding: '6px 11px', borderRadius: 7,
-  background: '#5EEAD4',
-  color: '#0B1F3A', textDecoration: 'none',
-  fontWeight: 800, fontSize: 11.5,
+const emptyState: React.CSSProperties = {
+  padding: 28, textAlign: 'center', borderRadius: 14,
+  background: '#FFFFFF',
+  border: '1px dashed rgba(232,116,43,0.30)',
+  color: '#4A6670', fontSize: 14,
+}
+const qtyBtn: React.CSSProperties = {
+  padding: '10px 14px', borderRadius: 10,
+  background: '#FFFFFF',
+  border: '1.5px solid rgba(232,116,43,0.30)',
+  color: '#0B1F3A', cursor: 'pointer',
+  fontSize: 13, fontWeight: 800,
+}
+const qtyInput: React.CSSProperties = {
+  flex: 1, padding: '10px 14px', borderRadius: 10,
+  border: '1.5px solid rgba(232,116,43,0.30)',
+  background: '#FFFFFF', color: '#0B1F3A',
+  fontSize: 18, fontWeight: 800, textAlign: 'center',
+  outline: 'none',
 }

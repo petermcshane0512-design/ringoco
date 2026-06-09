@@ -53,6 +53,13 @@ function startOfWeekUtc(): Date {
   return d
 }
 
+function startOfMonthUtc(): Date {
+  const d = new Date()
+  d.setUTCDate(1)
+  d.setUTCHours(0, 0, 0, 0)
+  return d
+}
+
 export async function GET() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -93,17 +100,40 @@ export async function GET() {
     : trade.includes('handy') ? 'handyman'
     : 'hvac'
 
-  // This week's leads
   const weekStart = startOfWeekUtc().toISOString()
+  const monthStart = startOfMonthUtc().toISOString()
+
+  // This week's leads
   const { data: weekLeads } = await supabase
     .from('leads')
     .select('id, street_address, zip, trade_match, source, source_details, source_event_date, lead_score, created_at')
     .contains('trade_match', [tradeFilter])
     .in('zip', zipsArr.slice(0, 200))
     .gte('created_at', weekStart)
-    .order('lead_score', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
     .limit(50)
   const weekRows = (weekLeads || []) as LeadRow[]
+
+  // This month's leads
+  const { data: monthLeads } = await supabase
+    .from('leads')
+    .select('id, street_address, zip, trade_match, source, source_details, source_event_date, lead_score, created_at')
+    .contains('trade_match', [tradeFilter])
+    .in('zip', zipsArr.slice(0, 200))
+    .gte('created_at', monthStart)
+    .order('created_at', { ascending: false })
+    .limit(100)
+  const monthRows = (monthLeads || []) as LeadRow[]
+
+  // All-time leads
+  const { data: allLeads } = await supabase
+    .from('leads')
+    .select('id, street_address, zip, trade_match, source, source_details, source_event_date, lead_score, created_at')
+    .contains('trade_match', [tradeFilter])
+    .in('zip', zipsArr.slice(0, 200))
+    .order('created_at', { ascending: false })
+    .limit(300)
+  const allRows = (allLeads || []) as LeadRow[]
 
   let valueCents = 0
   for (const l of weekRows) {
@@ -111,30 +141,25 @@ export async function GET() {
     valueCents += cost * 100
   }
 
-  // Recent (last 30 days), top by lead_score
-  const { data: recent } = await supabase
-    .from('leads')
-    .select('id, street_address, zip, trade_match, source, source_event_date, lead_score, created_at')
-    .contains('trade_match', [tradeFilter])
-    .in('zip', zipsArr.slice(0, 200))
-    .order('lead_score', { ascending: false, nullsFirst: false })
-    .limit(20)
+  const slim = (rows: LeadRow[]) => rows.map((l) => ({
+    id: l.id, street_address: l.street_address, zip: l.zip,
+    trade_match: l.trade_match, source: l.source,
+    source_event_date: l.source_event_date,
+    lead_score: l.lead_score,
+  }))
 
   return NextResponse.json({
     ok: true,
     this_week_count: weekRows.length,
+    this_month_count: monthRows.length,
+    all_count: allRows.length,
     this_week_value_cents: Math.round(valueCents),
     outreach_sent: 0,
     outreach_replied: 0,
     hot_replies: [],
-    recent_leads: (recent || []).map((l) => ({
-      id: l.id,
-      street_address: l.street_address,
-      zip: l.zip,
-      trade_match: l.trade_match,
-      source: l.source,
-      lead_score: l.lead_score,
-      source_event_date: l.source_event_date,
-    })),
+    this_week_leads: slim(weekRows),
+    this_month_leads: slim(monthRows),
+    all_leads: slim(allRows),
+    recent_leads: slim(allRows.slice(0, 20)),
   })
 }
