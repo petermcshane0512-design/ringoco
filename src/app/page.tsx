@@ -178,68 +178,9 @@ export default function Home() {
           is a phone mockup typing the actual SMS in real time. */}
       <LiveAIPipeline />
 
-      {/* THE MATH — compressed to one horizontal stat bar. Was a full
-          section w/ 4 cards + ROI block + footnote. Now one line: spend
-          → return → multiplier. Owner does the rest in his head. */}
-      <section style={{ padding: '48px clamp(16px, 5vw, 48px)', background: '#FFF8F0' }}>
-        <div style={{
-          maxWidth: 920, margin: '0 auto',
-          padding: '24px 28px',
-          borderRadius: 18,
-          background: 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)',
-          color: '#FFF8F0',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: 18,
-          alignItems: 'center',
-          textAlign: 'center',
-          boxShadow: '0 18px 48px rgba(11,31,58,0.14)',
-        }}>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 800, color: '#FFC58A', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>You spend</div>
-            <div style={{ fontSize: 34, fontWeight: 900, letterSpacing: '-0.02em' }}>$497<span style={{ fontSize: 14, color: 'rgba(255,248,240,0.62)' }}>/mo</span></div>
-          </div>
-          <div style={{ fontSize: 22, color: '#FF9D5A', fontWeight: 900 }}>→</div>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 800, color: '#FFC58A', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>You book</div>
-            <div style={{ fontSize: 34, fontWeight: 900, letterSpacing: '-0.02em' }}>$4,320<span style={{ fontSize: 14, color: 'rgba(255,248,240,0.62)' }}>/mo</span></div>
-          </div>
-          <div style={{ fontSize: 22, color: '#FF9D5A', fontWeight: 900 }}>=</div>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 800, color: '#FFC58A', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>ROI</div>
-            <div style={{ fontSize: 34, fontWeight: 900, letterSpacing: '-0.02em', color: '#5EEAD4' }}>8.7×</div>
-          </div>
-        </div>
-      </section>
-
-      {/* CASE STUDY — compressed to single inline quote + badge. */}
-      <section style={{ padding: '40px clamp(16px, 5vw, 48px)', background: '#FFFFFF' }}>
-        <div style={{
-          maxWidth: 760, margin: '0 auto',
-          display: 'flex', alignItems: 'center', gap: 18,
-          padding: '18px 22px',
-          borderRadius: 16,
-          background: 'linear-gradient(135deg, #FFD9A8 0%, #FFF8F0 100%)',
-          border: '1.5px solid rgba(232,116,43,0.30)',
-          flexWrap: 'wrap',
-        }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: '50%',
-            background: 'linear-gradient(135deg, #0B1F3A, #163356)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#FFC58A', fontSize: 20, fontWeight: 900,
-            flexShrink: 0,
-          }}>CR</div>
-          <div style={{ flex: 1, minWidth: 240 }}>
-            <p style={{ fontSize: 15, fontStyle: 'italic', color: '#0B1F3A', margin: 0, lineHeight: 1.5 }}>
-              &ldquo;Stopped fighting for leads. They just show up Monday morning now.&rdquo;
-            </p>
-            <p style={{ fontSize: 12, color: '#4A6670', margin: '4px 0 0', fontWeight: 700 }}>
-              Carlos R. · HVAC · Mesa AZ · went 1 job/day → <strong style={{ color: '#C84B26' }}>$300K/yr</strong> in 12 months
-            </p>
-          </div>
-        </div>
-      </section>
+      {/* MATH stat bar + Carlos case-study quote deleted 2026-06-09 per
+          Peter. Offer card already states $497/mo + book-1-job guarantee.
+          Carlos quote was a fake testimonial — legal risk per earlier sweep. */}
 
       {/* OFFER STACK — Hormozi grand slam single offer card.
           One price. One guarantee. Risk reversal STACKED (refund + keep
