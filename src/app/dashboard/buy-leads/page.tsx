@@ -1,10 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useUser } from '@clerk/nextjs'
 import { useRouter, useSearchParams } from 'next/navigation'
+
+export const dynamic = 'force-dynamic'
 
 /**
  * /dashboard/buy-leads
@@ -27,7 +29,15 @@ const PACKS: Pack[] = [
   { key: 'PACK_25', qty: 25, total: 300, per: 12, label: '25 leads' },
 ]
 
-export default function BuyLeadsPage() {
+export default function BuyLeadsPageWrap() {
+  return (
+    <Suspense fallback={<main style={{ minHeight: '100vh', background: '#050E1F', color: '#fff', fontFamily: "'Inter', system-ui, sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Loading…</div></main>}>
+      <BuyLeadsPage />
+    </Suspense>
+  )
+}
+
+function BuyLeadsPage() {
   const router = useRouter()
   const { isLoaded, isSignedIn } = useUser()
   const sp = useSearchParams()

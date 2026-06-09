@@ -124,27 +124,26 @@ export default function Home() {
           <div>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '6px 14px', borderRadius: 99,
-              background: 'rgba(232,116,43,0.10)',
-              border: '1.5px solid rgba(232,116,43,0.30)',
-              fontSize: 11, fontWeight: 800, color: '#C84B26',
-              letterSpacing: '0.18em', textTransform: 'uppercase',
+              padding: '7px 16px', borderRadius: 99,
+              background: '#FFE9D2',
+              border: '1.5px solid #FFC58A',
+              fontSize: 12, fontWeight: 800, color: '#A33C18',
               marginBottom: 22,
-            }}>🔥 Exclusive leads · 80/mo · auto-outreach</span>
+            }}>👋 Made for solo + small home-service crews</span>
             <h1 style={{
-              fontSize: 'clamp(34px, 5.2vw, 60px)',
-              fontWeight: 900, letterSpacing: '-0.045em',
-              lineHeight: 1.03, margin: '0 0 22px',
+              fontSize: 'clamp(36px, 5.4vw, 60px)',
+              fontWeight: 900, letterSpacing: '-0.04em',
+              lineHeight: 1.05, margin: '0 0 20px',
               color: '#0B1F3A',
             }}>
-              If you don&rsquo;t use AI to find your customers,{' '}
+              80 fresh homeowner leads.{' '}
               <span style={{
-                background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 50%, #C84B26 100%)',
+                background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 60%, #C84B26 100%)',
                 WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-              }}>your competitors will.</span>
+              }}>Delivered to you every month.</span>
             </h1>
-            <p style={{ fontSize: 'clamp(16px, 1.55vw, 18px)', color: '#4A6670', lineHeight: 1.6, margin: '0 0 28px', maxWidth: 580 }}>
-              BellAveGo delivers <strong style={{ color: '#0B1F3A' }}>80 fresh exclusive homeowner leads</strong> to your dashboard every month — real names, addresses, phones, all flagged by permits + aged units + property changes in YOUR zip. Then our AI emails + texts each one <strong style={{ color: '#0B1F3A' }}>as YOU</strong>, using a script tailored to your business. You only respond when they say yes.
+            <p style={{ fontSize: 'clamp(17px, 1.6vw, 19px)', color: '#3D5A66', lineHeight: 1.65, margin: '0 0 28px', maxWidth: 580 }}>
+              Real names, addresses, and phone numbers of folks in your zip code who need work done right now — permits filed, AC units past their lifespan, new homeowners. We even text + email each one <strong style={{ color: '#0B1F3A' }}>as you</strong>. You only respond when they say yes. Easy.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 32 }}>
               <Link href="/start?promo=FIRST200" style={ctaHeroPrimary}>
@@ -184,16 +183,17 @@ export default function Home() {
       <section style={{ padding: '76px clamp(16px, 5vw, 48px)', background: '#FFFFFF' }}>
         <div style={{ maxWidth: 1180, margin: '0 auto' }}>
           <h2 style={{ fontSize: 'clamp(28px, 3.2vw, 40px)', fontWeight: 900, letterSpacing: '-0.03em', margin: '0 0 14px', textAlign: 'center', color: '#0B1F3A' }}>
-            Find leads. Close them. <span style={{ color: '#E8742B' }}>Without lifting a finger.</span>
+            How it works.{' '}
+            <span style={{ color: '#E8742B' }}>Simple as 1-2-3.</span>
           </h2>
-          <p style={{ fontSize: 16, color: '#4A6670', textAlign: 'center', maxWidth: 620, margin: '0 auto 48px', lineHeight: 1.55 }}>
-            Three things happen every Monday. You wake up, you check your dashboard, you respond only to homeowners who replied yes.
+          <p style={{ fontSize: 16, color: '#3D5A66', textAlign: 'center', maxWidth: 620, margin: '0 auto 48px', lineHeight: 1.6 }}>
+            Wake up Monday. Check your phone. Respond to the homeowners who already said yes. That&rsquo;s it.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 22 }}>
             {[
-              { n: '1', title: 'We find the leads', body: 'Every Monday, we scan public-record events in YOUR zip — permit filings, AC/heating units past their service lifespan, property turnover, code-violation listings. Real intent signal. Real names, addresses, phones. EXCLUSIVE — never shared like HomeAdvisor.' },
-              { n: '2', title: 'AI emails + texts them as YOU', body: 'Our AI writes a custom script using your business name, years in business, value props, and tone preference. It then emails AND texts each delivered lead within 6 hours — sounds human, signed by you, totally personalized.' },
-              { n: '3', title: 'You only reply to interested ones', body: 'Phone notification the second a homeowner replies. You see the thread, the original lead info, their answer. Call them, text back, or push to your CRM. No cold-prospecting. No HomeAdvisor bait. Just real conversations.' },
+              { n: '1', title: 'We find the leads for you', body: 'Every Monday, we pull permit filings, aged HVAC units, new homeowners, and other "they need work done" signals in YOUR zip code. Real folks, real addresses, real phones. Only YOU get them — never shared like HomeAdvisor.' },
+              { n: '2', title: 'We reach out as you', body: 'A friendly intro email + text goes to each homeowner, signed by you, written in your voice, mentioning your business and what you do. They have no idea anything was automated. Just feels like a real local pro reaching out.' },
+              { n: '3', title: 'You answer when they say yes', body: 'Get a phone alert the moment someone responds. Open their thread, see what they need, give them a quick call. No cold-dialing strangers. No chasing dead leads. Just real conversations with folks who already raised their hand.' },
             ].map((s) => (
               <div key={s.n} style={{
                 padding: 28, borderRadius: 18,
@@ -221,10 +221,10 @@ export default function Home() {
       <section style={{ padding: '76px clamp(16px, 5vw, 48px)', background: '#FFF8F0' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto' }}>
           <h2 style={{ fontSize: 'clamp(28px, 3.2vw, 40px)', fontWeight: 900, letterSpacing: '-0.03em', margin: '0 0 14px', textAlign: 'center', color: '#0B1F3A' }}>
-            Stupid cheap compared to anything else.
+            Way cheaper than HomeAdvisor.<br />And the leads are actually yours.
           </h2>
-          <p style={{ fontSize: 16, color: '#4A6670', textAlign: 'center', maxWidth: 640, margin: '0 auto 36px', lineHeight: 1.55 }}>
-            HomeAdvisor sells you bait. Yelp shares it 5 ways. We give you exclusive territory and reach out for you.
+          <p style={{ fontSize: 16, color: '#3D5A66', textAlign: 'center', maxWidth: 640, margin: '0 auto 36px', lineHeight: 1.6 }}>
+            HomeAdvisor charges you $40-300 a lead and shares it with 4 other guys. Yelp does the same thing. We don&rsquo;t.
           </p>
           <div style={{ overflowX: 'auto', borderRadius: 16, background: '#FFFFFF', border: '1px solid rgba(232,116,43,0.18)', boxShadow: '0 14px 40px rgba(11,31,58,0.06)' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
@@ -273,16 +273,16 @@ export default function Home() {
       {/* FINAL CTA */}
       <section style={{ padding: '80px clamp(16px, 5vw, 48px)', background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 50%, #C84B26 100%)', textAlign: 'center' }}>
         <h2 style={{ fontSize: 'clamp(30px, 4.2vw, 50px)', fontWeight: 900, marginBottom: 18, letterSpacing: '-0.5px', lineHeight: 1.1, color: '#fff' }}>
-          Your competitors are using AI<br />to find customers. Are you?
+          Tired of chasing leads?<br />Let them come to you.
         </h2>
-        <p style={{ color: 'rgba(255,255,255,0.92)', fontSize: 17, maxWidth: 560, margin: '0 auto 32px', lineHeight: 1.65 }}>
-          80 fresh homeowner leads in your zip every month. We email + SMS each one as you. $97 first month w/ <strong>FIRST200</strong>. 30-day money-back. No setup.
+        <p style={{ color: 'rgba(255,255,255,0.94)', fontSize: 17, maxWidth: 560, margin: '0 auto 32px', lineHeight: 1.7 }}>
+          80 fresh leads / month delivered to your dashboard. We text + email them for you. You only respond to the ones who say yes. <strong>$97 first month with code FIRST200.</strong> 30-day money-back, cancel any time.
         </p>
         <Link href="/start?promo=FIRST200" style={ctaFinal}>
-          Claim $97 first month →
+          Try it for $97 →
         </Link>
-        <p style={{ marginTop: 22, fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>
-          Cancel anytime · No phone numbers required · No integration · Onboarding in 90 seconds
+        <p style={{ marginTop: 22, fontSize: 12, color: 'rgba(255,255,255,0.88)' }}>
+          Onboarding takes 90 seconds · No phone numbers needed · No setup fees · Cancel anytime
         </p>
       </section>
 

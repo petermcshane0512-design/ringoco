@@ -1,21 +1,21 @@
 'use client'
 
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
 
 /**
  * /onboarding — 2026-06-09 LEADS-ONLY PIVOT.
  *
- * Legacy receptionist onboarding (trade picker + AI greeting style chooser)
- * deprecated. The actual onboarding now lives at /dashboard/setup which
- * collects everything needed for lead-gen + auto-outreach.
+ * Legacy receptionist onboarding deprecated. Thin redirect to /dashboard/setup
+ * kept for back-compat with cached marketing links.
  *
- * This page is now a thin redirect kept for backward compat — any link
- * pointing to /onboarding (old emails, cached search results) still works.
+ * force-dynamic + Suspense boundary because useSearchParams() can't prerender.
  */
 
-export default function OnboardingRedirect() {
+export const dynamic = 'force-dynamic'
+
+function Inner() {
   const router = useRouter()
   const { isLoaded, isSignedIn } = useUser()
   const sp = useSearchParams()
@@ -30,15 +30,22 @@ export default function OnboardingRedirect() {
     }
   }, [isLoaded, isSignedIn, router, sp])
 
+  return null
+}
+
+export default function OnboardingRedirect() {
   return (
     <main style={{
       minHeight: '100vh',
-      background: '#050E1F',
-      color: '#fff',
+      background: '#FFF8F0',
+      color: '#0B1F3A',
       fontFamily: "'Inter', system-ui, sans-serif",
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
-      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Redirecting…</div>
+      <Suspense fallback={<div style={{ fontSize: 13, color: '#4A6670' }}>Redirecting…</div>}>
+        <Inner />
+      </Suspense>
+      <div style={{ fontSize: 13, color: '#4A6670' }}>Redirecting…</div>
     </main>
   )
 }
