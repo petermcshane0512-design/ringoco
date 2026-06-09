@@ -79,8 +79,9 @@ export default function LiveDashboardPreview() {
   }, [])
 
   const rows = view === 'week' ? WEEK_ROWS : MONTH_ROWS
+  const totalForView = view === 'week' ? 10 : 40
   const stats = {
-    total: rows.length,
+    total: totalForView,
     booked: rows.filter((r) => r.status === 'BOOKED').length,
     replied: rows.filter((r) => r.status === 'REPLIED').length,
     revenue: rows.filter((r) => r.status === 'BOOKED').reduce((acc, r) => {

@@ -208,7 +208,7 @@ export default function FounderPage() {
             I started BellAveGo because my buddy &mdash; a solo handyman &mdash; was getting <strong>one job a day</strong>. Twenty hours a week scrolling Nextdoor, posting in Facebook groups, paying $80 for shared HomeAdvisor leads. Great at the work. Broke finding it.
           </p>
           <p>
-            Homeowners who need work done aren&rsquo;t hard to find &mdash; permits, sold houses, aging units, storm damage. All public data. The franchise shops surface it with five-figure marketing budgets. Solo operators don&rsquo;t. So we built BellAveGo: <strong>80 fresh leads delivered every Monday</strong>, exclusive to you, never shared. Our AI writes the intro text + email in your voice. You only call back the ones who say yes.
+            Homeowners who need work done aren&rsquo;t hard to find &mdash; permits, sold houses, aging units, storm damage. All public data. The franchise shops surface it with five-figure marketing budgets. Solo operators don&rsquo;t. So we built BellAveGo: <strong>10 fresh leads delivered every Monday</strong> (40/month), exclusive to you, never shared. Each lead comes w/ a verified phone + pre-written outreach script our AI sends as you. You only call back the ones who say yes.
           </p>
           <p>
             Behind the scenes &mdash; <strong>four software engineers</strong>. Small on purpose. My buddy went from one job a day to fully booked inside a month. That&rsquo;s the whole reason this exists.

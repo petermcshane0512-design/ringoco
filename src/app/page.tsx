@@ -84,7 +84,7 @@ const HERO_LEAD: SampleLead = {
 const TEASER_LEADS: { name: string; signal: string; value: string; isMore?: boolean }[] = [
   { name: 'Sarah W. · 75093',  signal: 'PROPERTY SOLD',    value: '$1.8K – $6.4K' },
   { name: 'Carlos R. · 75035', signal: 'AGED SYSTEM FLAG', value: '$5.4K – $9.2K' },
-  { name: '+ 77 more this month in your zip', signal: '',  value: '', isMore: true },
+  { name: '+ 7 more this week in your zip', signal: '',  value: '', isMore: true },
 ]
 
 export default function Home() {
@@ -147,8 +147,8 @@ export default function Home() {
               <span style={{
                 background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 60%, #C84B26 100%)',
                 WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-              }}>4–8 install jobs this month</span>{' '}
-              from 80 fresh homeowner leads in your zip.
+              }}>1–3 install jobs this month</span>{' '}
+              from 10 fresh homeowner leads/week in your zip.
             </h1>
             <p style={{ fontSize: 'clamp(15px, 1.4vw, 17px)', color: '#3D5A66', lineHeight: 1.55, margin: '0 0 20px', maxWidth: 560 }}>
               Real names, addresses, phones — pulled overnight from permits, aging HVAC, storm strikes, new move-ins. AI sends the intro text + email for you. You only call back the YES’s. <strong style={{ color: '#0B1F3A' }}>One shop per zip. Locked all year.</strong>
@@ -219,13 +219,13 @@ export default function Home() {
             </div>
             <ul style={{ margin: '0 0 22px', padding: 0, listStyle: 'none', display: 'grid', gap: 10 }}>
               {[
-                '80 real homeowner leads/month exclusive to your zip',
-                'AI-written intro text + email per lead, sent from your number',
+                '10 fresh homeowner leads / week (40 / month) exclusive to your zip',
+                'Verified phone number per lead (skip-traced, not guessed)',
+                'Pre-written outreach script per lead — auto-sent from your number as you',
                 'Zip-code exclusivity — locked all 12 months',
                 'Storm + permit + new move-in alerts (real-time)',
-                'Skip-traced phones (verified, not guessed)',
-                'AI lead scoring 1-100 + pitch script per lead',
-                'Dashboard, mobile app, weekly delivery — all included',
+                'AI lead scoring 1-100 per lead',
+                'Dashboard, mobile app, Monday 6am delivery — all included',
               ].map((b, i) => (
                 <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 15, color: '#0B1F3A', lineHeight: 1.5 }}>
                   <span style={{ color: '#16803F', fontWeight: 900, flexShrink: 0, fontSize: 16 }}>✓</span>
@@ -272,7 +272,7 @@ export default function Home() {
           fontSize: 16, color: '#0B1F3A', fontWeight: 700, lineHeight: 1.6,
         }}>
           HomeAdvisor: <strong style={{ color: '#A33C18' }}>$40–300/lead</strong>, shared w/ 4 other shops.<br />
-          BellAveGo: <strong style={{ color: '#C84B26' }}>$6.21/lead</strong>, exclusive to YOU, AI sends the intro.
+          BellAveGo: <strong style={{ color: '#C84B26' }}>$12.43/lead</strong>, exclusive to YOU, AI sends the intro.
         </p>
       </section>
 
@@ -453,7 +453,7 @@ function LeadsCard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <div>
           <div style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Sample · Plano TX 75024 · HVAC</div>
-          <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2, color: '#4A6670' }}>1 of 80 leads pulled overnight</div>
+          <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2, color: '#4A6670' }}>1 of 10 leads delivered this week</div>
         </div>
         <div style={{
           padding: '5px 11px', borderRadius: 99,
