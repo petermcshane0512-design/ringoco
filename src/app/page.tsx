@@ -186,7 +186,7 @@ export default function Home() {
                 complete checkout (CXL + Cialdini consistency principle). */}
             <HeroZipForm />
             <p style={{ fontSize: 13, color: '#4A6670', margin: '14px 0 18px', maxWidth: 540 }}>
-              <strong style={{ color: '#0B1F3A' }}>$97 first month</strong> w/ code <strong>FIRST400</strong>, then $497/mo · book 1 job in 30 days or full refund + keep all leads · or call Peter: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
+              <strong style={{ color: '#0B1F3A' }}>$97 first month</strong> w/ code <strong>FIRST400</strong>, then $497/mo · book 1 job in 30 days or full refund + keep all leads · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
             </p>
           </div>
 
@@ -440,17 +440,15 @@ export default function Home() {
               Start $97 trial — lock your zip →
             </Link>
             <p style={{ fontSize: 12, color: '#4A6670', textAlign: 'center', margin: '14px 0 0' }}>
-              90-second checkout · No setup fees · Cancel any time · or call Peter: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
+              90-second checkout · No setup fees · Cancel any time · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
             </p>
           </div>
         </div>
       </section>
 
-      {/* FOUNDER BAR — Loom-placeholder + direct phone.
-          Loom-placeholder click currently opens a modal w/ "Loom drops
-          this week — text Peter now". Once real Loom recorded, swap
-          LOOM_URL constant only. Pattern: trust expectation > silence. */}
-      <FounderVideoCard />
+      {/* FounderVideoCard removed 2026-06-09 per Peter. Founder phone
+          still surfaces in trust strip, hero CTA line, offer card line,
+          final CTA, and footer — coverage retained without the section. */}
 
       {/* HOW IT WORKS — compressed to 3 lines. Old 3-card grid deleted —
           consumed real estate without changing conversion. */}
@@ -546,7 +544,7 @@ export default function Home() {
           Start $97 trial — lock your zip →
         </Link>
         <p style={{ marginTop: 18, fontSize: 13, color: 'rgba(255,255,255,0.92)' }}>
-          Or talk to Peter direct: <a href={FOUNDER_PHONE_HREF} style={{ color: '#FFF8F0', fontWeight: 800, textDecoration: 'underline' }}>{FOUNDER_PHONE}</a>
+          Or talk to the team direct: <a href={FOUNDER_PHONE_HREF} style={{ color: '#FFF8F0', fontWeight: 800, textDecoration: 'underline' }}>{FOUNDER_PHONE}</a>
         </p>
       </section>
 
@@ -983,17 +981,12 @@ function TripleGuaranteeBadge() {
 }
 
 /**
- * FounderVideoCard — Loom placeholder w/ direct phone fallback.
- *
- * Even WITHOUT a recorded Loom, the placeholder w/ "Coming Wed — text Peter
- * now" sets the trust expectation. Once Peter records, swap LOOM_EMBED_URL
- * and the placeholder becomes the real player.
- *
- * Cialdini liking + authority: face + name + phone = SMB-owner trust
- * formula. Blue-collar owners hate chatbots; love direct lines.
+ * FounderVideoCard — REMOVED 2026-06-09 per Peter. Founder phone surfaces
+ * in trust strip + hero CTA line + offer card line + final CTA + footer.
+ * Component kept dormant (underscore-prefixed) for fast reinstatement.
  */
-const LOOM_EMBED_URL: string | null = null // set when Peter records
-function FounderVideoCard() {
+const LOOM_EMBED_URL: string | null = null
+function _FounderVideoCardRemoved() {
   const [showModal, setShowModal] = useState(false)
   return (
     <section style={{ padding: '56px clamp(16px, 5vw, 48px)', background: '#FFFFFF' }}>
@@ -1015,7 +1008,7 @@ function FounderVideoCard() {
                 src={LOOM_EMBED_URL}
                 style={{ width: '100%', height: '100%', border: 'none' }}
                 allow="autoplay; fullscreen; picture-in-picture"
-                title="Why I built BellAveGo — Peter McShane"
+                title="Why we built BellAveGo"
               />
             </div>
           ) : (
@@ -1048,7 +1041,7 @@ function FounderVideoCard() {
                   <span style={{ fontSize: 26, marginLeft: 4 }}>▶</span>
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 800, color: '#FFC58A', letterSpacing: '0.10em', textTransform: 'uppercase' }}>
-                  Peter explains it · 90 sec
+                  We explain it · 90 sec
                 </div>
                 <div style={{ fontSize: 11, color: 'rgba(255,248,240,0.62)' }}>
                   (Loom drops this week)
@@ -1069,7 +1062,7 @@ function FounderVideoCard() {
               }}>PM</div>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Built by</div>
-                <div style={{ fontSize: 18, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.01em' }}>Peter McShane, 22</div>
+                <div style={{ fontSize: 18, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.01em' }}>BellAveGo team</div>
               </div>
             </div>
             <p style={{ fontSize: 14.5, color: '#4A6670', margin: '0 0 14px', lineHeight: 1.6 }}>
@@ -1081,8 +1074,8 @@ function FounderVideoCard() {
                 padding: '11px 18px', borderRadius: 10,
                 background: '#0B1F3A', color: '#FFF8F0', textDecoration: 'none',
                 fontWeight: 800, fontSize: 13.5,
-              }}>📞 Call / text Peter: {FOUNDER_PHONE}</a>
-              <a href={`sms:+17737109565?&body=Hey Peter — saw BellAveGo, want to lock my zip.`} style={{
+              }}>📞 Call / text us: {FOUNDER_PHONE}</a>
+              <a href={`sms:+17737109565?&body=Hey BellAveGo — saw your site, want to lock my zip.`} style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
                 padding: '11px 18px', borderRadius: 10,
                 background: 'transparent', color: '#0B1F3A', textDecoration: 'none',
@@ -1117,9 +1110,9 @@ function FounderVideoCard() {
             }}
           >
             <div style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>Loom drops Wed</div>
-            <h3 style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', margin: '0 0 12px', letterSpacing: '-0.02em' }}>Don’t want to wait? Text me right now.</h3>
+            <h3 style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', margin: '0 0 12px', letterSpacing: '-0.02em' }}>Don’t want to wait? Text us right now.</h3>
             <p style={{ fontSize: 14, color: '#4A6670', margin: '0 0 18px', lineHeight: 1.6 }}>
-              I&rsquo;ll personally walk you through exactly how BellAveGo finds leads in your zip in under 90 seconds. No chatbot. No sales pitch. Just text &ldquo;BellAveGo&rdquo; and your zip.
+              We&rsquo;ll walk you through exactly how BellAveGo finds leads in your zip in under 90 seconds. No chatbot. No sales pitch. Just text &ldquo;BellAveGo&rdquo; and your zip.
             </p>
             <div style={{ display: 'grid', gap: 8 }}>
               <a href={`sms:+17737109565?&body=BellAveGo`} style={{
@@ -1128,7 +1121,7 @@ function FounderVideoCard() {
                 background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
                 color: '#fff', textDecoration: 'none',
                 fontWeight: 900, fontSize: 15,
-              }}>💬 Text Peter: {FOUNDER_PHONE}</a>
+              }}>💬 Text us: {FOUNDER_PHONE}</a>
               <button
                 onClick={() => setShowModal(false)}
                 style={{
@@ -1239,7 +1232,7 @@ function ExitIntentPopup() {
           fontWeight: 800, fontSize: 13,
           marginBottom: 8,
         }}>
-          📞 Or call Peter: {FOUNDER_PHONE}
+          📞 Or call us: {FOUNDER_PHONE}
         </a>
         <button
           onClick={close}
