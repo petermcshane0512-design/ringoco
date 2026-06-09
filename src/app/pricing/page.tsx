@@ -140,7 +140,7 @@ export default function PricingPage() {
             <br />Then $497/mo if it works.
           </h1>
           <p style={{ fontSize: 'clamp(16px, 1.6vw, 18px)', color: '#3D5A66', lineHeight: 1.65, margin: '0 auto 28px', maxWidth: 620 }}>
-            10 fresh exclusive homeowner leads delivered to your dashboard every Monday (40/month) — real names, addresses, verified phones, a pre-written outreach script per lead. AI texts + emails each one as you. <strong>If we don&rsquo;t book you 1 paying job in 30 days, full refund + $200 cash for your time + you keep every lead.</strong>
+            10 fresh exclusive homeowner leads delivered to your dashboard every Monday (40/month) — real names, addresses, verified phones, a pre-written outreach script per lead. AI texts + emails each one as you. <strong>If we don&rsquo;t book you 1 paying job in 30 days, full refund + next 30 days FREE until you book + you keep every lead.</strong>
           </p>
         </div>
       </section>
@@ -192,7 +192,7 @@ export default function PricingPage() {
               {interval === 'annual' && ` Billed $${totalBilled.toLocaleString()}/yr · Save $${savings}.`}
             </div>
             <div style={{ fontSize: 11.5, color: '#7AAAB2', marginBottom: 18 }}>
-              Cancel anytime · No setup · 30-day money-back + $200 cash if no job booked
+              Cancel anytime · No setup · 30-day money-back + free month 2 until you book a job
             </div>
 
             <ul style={{ listStyle: 'none', padding: 0, margin: '20px 0 22px', display: 'grid', gap: 9 }}>
@@ -202,7 +202,7 @@ export default function PricingPage() {
                 'Pre-written outreach script per lead — sent automatically as YOU',
                 'Phone notification the second a homeowner replies',
                 'Need more mid-week? Extra leads $25 each',
-                'Guarantee: 1 paying job in 30 days OR full refund + $200 cash + you keep every lead',
+                'Guarantee: 1 paying job in 30 days OR full refund + next 30 days FREE + you keep every lead',
                 '30-day money-back · Cancel anytime',
                 'No setup, no phone numbers, no integration',
               ].map((line) => (
