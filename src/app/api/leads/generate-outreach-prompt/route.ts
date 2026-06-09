@@ -46,6 +46,9 @@ type Profile = {
   years_in_business: number | null
   value_props: string[] | null
   outreach_tone: string | null
+  sub_specialties: string[] | null
+  manufacturer_certs: string[] | null
+  ideal_customer_desc: string | null
 }
 
 const TONE_INSTRUCTIONS: Record<string, string> = {
@@ -92,7 +95,7 @@ export async function POST(_req: NextRequest) {
 
   const { data: pRaw, error } = await supabase
     .from('profiles')
-    .select('user_id, business_name, owner_first_name, owner_last_name, owner_phone, business_type, services_offered, service_zips, job_types, min_job_value_cents, years_in_business, value_props, outreach_tone')
+    .select('user_id, business_name, owner_first_name, owner_last_name, owner_phone, business_type, services_offered, service_zips, job_types, min_job_value_cents, years_in_business, value_props, outreach_tone, sub_specialties, manufacturer_certs, ideal_customer_desc')
     .eq('user_id', userId)
     .maybeSingle()
   if (error || !pRaw) return NextResponse.json({ ok: false, error: 'profile not found' }, { status: 404 })
@@ -111,18 +114,23 @@ export async function POST(_req: NextRequest) {
     : 'years-in-business not provided — skip referencing it'
   const jobTypes = (p.job_types || []).join(', ') || 'general home-service work'
 
+  const subSpecs = (p.sub_specialties || []).join(', ') || '(general)'
+  const mfrCerts = (p.manufacturer_certs || []).join(', ')
+  const ideal = p.ideal_customer_desc || ''
+
   const userPrompt = `Contractor profile:
 - Business name: ${p.business_name}
 - Owner first name: ${p.owner_first_name}
 - Owner last name: ${p.owner_last_name || '(not provided)'}
 - Trade: ${trade}
-- Job types they want: ${jobTypes}
+- Sub-specialties: ${subSpecs}
+${mfrCerts ? `- Manufacturer certifications (PREMIUM POSITIONING — use one if relevant): ${mfrCerts}\n` : ''}- Job types they want: ${jobTypes}
 - Years in business: ${yearsLine}
 - Value props (use AT LEAST ONE): ${valueProps}
-- Tone preference: ${tone}
+${ideal ? `- Their ideal customer description: "${ideal}"\n` : ''}- Tone preference: ${tone}
 - Tone instruction: ${toneInstruction}
 
-Write the email + SMS templates. Use the merge tags. Sign emails with ${p.owner_first_name}. Make it sound like ${p.owner_first_name} personally wrote it.`
+Write the email + SMS templates. Use the merge tags. Sign emails with ${p.owner_first_name}. Make it sound like ${p.owner_first_name} personally wrote it. If they have a manufacturer cert relevant to the signal, reference it as a credibility booster.`
 
   let result: { email_subject?: string; email_body?: string; sms?: string }
   try {

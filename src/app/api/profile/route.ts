@@ -85,6 +85,18 @@ const SAFE_PROFILE_COLUMNS = new Set([
   'value_props',              // text[] — financing/warranty/family-owned/etc
   'outreach_tone',            // casual | professional | direct
   'outreach_prompt_template', // Sonnet-generated prompt template (set by /api/leads/generate-outreach-prompt)
+  // ── 2026-06-09 17-step onboarding extension (sql/2026-06-09-onboarding-17-fields.sql)
+  // All used by lead-engine to filter BatchData/Apify candidates so the
+  // 80 leads/mo delivered actually match the contractor's ICP exactly.
+  'sub_specialties',          // text[] — sub-trade specialty (AC install, heat pump, mini-split, drain cleaning, etc)
+  'manufacturer_certs',       // text[] — Carrier dealer, Trane factory authorized, etc — high-margin signals
+  'avg_ticket_cents',         // int — their typical job size, drives lead-property-value bracket matching
+  'work_days',                // text[] — ['mon','tue','wed','thu','fri','sat']
+  'work_hours_start',         // text — '07:00' (skip leads requested outside window)
+  'work_hours_end',           // text — '19:00'
+  'equipment_capabilities',   // text[] — EPA 608, NATE, ductwork install, IAQ certified, low-volt license
+  'ideal_customer_desc',      // text — 1-line free-text 'who's your best customer?' — feeds lookalike-finder
+  'exclusions',               // text[] — 'no commercial', 'no new construction', 'no rental properties'
 ])
 
 export async function POST(req: NextRequest) {

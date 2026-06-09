@@ -50,6 +50,16 @@ type Profile = {
   outreach_tone?: string | null;
   outreach_prompt_template?: string | null;
   setup_complete?: boolean | null;
+  // 2026-06-09 17-step extension
+  sub_specialties?: string[] | null;
+  manufacturer_certs?: string[] | null;
+  avg_ticket_cents?: number | null;
+  work_days?: string[] | null;
+  work_hours_start?: string | null;
+  work_hours_end?: string | null;
+  equipment_capabilities?: string[] | null;
+  ideal_customer_desc?: string | null;
+  exclusions?: string[] | null;
 };
 
 const TRADE_OPTIONS = ["HVAC", "Plumbing", "Electrical", "Roofing", "Handyman", "Multi-trade"];
@@ -62,6 +72,28 @@ const JOB_TYPE_OPTIONS = [
   "Multi-family / apartments",
   "New construction",
 ];
+const SUB_SPECIALTY_BY_TRADE: Record<string, string[]> = {
+  HVAC: ["AC install / replace", "Heat pump", "Mini-split", "Furnace replace", "Ductwork", "Indoor air quality", "Commercial RTU"],
+  Plumbing: ["Drain cleaning", "Sewer / main line", "Water heater", "Repipe", "Bathroom remodel", "Fixture install", "Slab leak"],
+  Electrical: ["Panel upgrade", "EV charger install", "Generator install", "Solar / battery", "Service rewire", "Smart home", "Lighting install"],
+  Roofing: ["Shingle replace", "Tile / metal roof", "Storm repair", "Skylight", "Gutters / soffits", "Commercial flat roof", "Inspection"],
+  Handyman: ["Drywall / paint", "Carpentry", "Door / window", "Deck / fence", "Garage door", "Light plumbing fix", "Light electrical fix", "Kitchen / bath cosmetic"],
+};
+const MFR_CERTS_BY_TRADE: Record<string, string[]> = {
+  HVAC: ["Carrier Factory Authorized", "Trane Comfort Specialist", "Lennox Premier Dealer", "Rheem Pro Partner", "Goodman Dealer", "Daikin Comfort Pro", "Mitsubishi Diamond Contractor"],
+  Plumbing: ["Rheem Pro Partner (water heaters)", "Bradford White Authorized", "Rinnai Authorized", "Moen Pro", "Kohler Authorized", "Pfister Pro"],
+  Electrical: ["Generac PowerPro", "Kohler Generators Authorized", "Tesla Powerwall Certified", "Enphase Installer", "Schneider Electric Authorized", "Square D Pro"],
+  Roofing: ["GAF Master Elite", "Owens Corning Platinum Preferred", "CertainTeed SELECT ShingleMaster", "TAMKO Pro Roofer", "IKO Shield Pro"],
+  Handyman: [], // typically no mfr certs
+};
+const EQUIPMENT_BY_TRADE: Record<string, string[]> = {
+  HVAC: ["EPA 608 cert", "NATE cert", "Ductwork install", "Sheet metal fab", "IAQ certified", "Commercial license", "Refrigerant recovery"],
+  Plumbing: ["Master plumber license", "Backflow cert", "Medical gas cert", "Sewer camera", "Hydrojetter", "Trenchless capability"],
+  Electrical: ["Master electrician license", "Low-voltage license", "Generator cert", "Solar PV cert", "Lift truck", "Underground service drop"],
+  Roofing: ["Shingle install", "Tile install", "Metal roof install", "TPO/EPDM (flat)", "Drone inspection", "Insurance claim handling"],
+  Handyman: ["Pickup truck", "Trailer", "Ladder (24ft+)", "Power tools complete kit", "Insured for commercial work", "Licensed for plumbing repair", "Licensed for electrical repair"],
+};
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const VALUE_PROP_OPTIONS = [
   "Financing available",
   "5-year warranty",
@@ -104,6 +136,16 @@ export default function SetupWizardLeads() {
   const [yearsInBusiness, setYearsInBusiness] = useState<number | "">("");
   const [valueProps, setValueProps] = useState<string[]>([]);
   const [tone, setTone] = useState<string>("casual");
+  // 2026-06-09 17-step extension
+  const [subSpecialties, setSubSpecialties] = useState<string[]>([]);
+  const [mfrCerts, setMfrCerts] = useState<string[]>([]);
+  const [avgTicket, setAvgTicket] = useState(1500);
+  const [workDays, setWorkDays] = useState<string[]>(["Mon","Tue","Wed","Thu","Fri","Sat"]);
+  const [workStart, setWorkStart] = useState("07:00");
+  const [workEnd, setWorkEnd] = useState("19:00");
+  const [equipment, setEquipment] = useState<string[]>([]);
+  const [idealCustomer, setIdealCustomer] = useState("");
+  const [exclusions, setExclusions] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -124,6 +166,15 @@ export default function SetupWizardLeads() {
           if (p.years_in_business != null) setYearsInBusiness(p.years_in_business);
           if (Array.isArray(p.value_props)) setValueProps(p.value_props);
           if (p.outreach_tone) setTone(p.outreach_tone);
+          if (Array.isArray(p.sub_specialties)) setSubSpecialties(p.sub_specialties);
+          if (Array.isArray(p.manufacturer_certs)) setMfrCerts(p.manufacturer_certs);
+          if (p.avg_ticket_cents != null) setAvgTicket(Math.round(p.avg_ticket_cents / 100));
+          if (Array.isArray(p.work_days)) setWorkDays(p.work_days);
+          if (p.work_hours_start) setWorkStart(p.work_hours_start);
+          if (p.work_hours_end) setWorkEnd(p.work_hours_end);
+          if (Array.isArray(p.equipment_capabilities)) setEquipment(p.equipment_capabilities);
+          if (p.ideal_customer_desc) setIdealCustomer(p.ideal_customer_desc);
+          if (Array.isArray(p.exclusions)) setExclusions(p.exclusions);
         }
       } catch { /* allow new */ }
       setLoading(false);
@@ -165,6 +216,15 @@ export default function SetupWizardLeads() {
       years_in_business: typeof yearsInBusiness === "number" ? yearsInBusiness : null,
       value_props: valueProps,
       outreach_tone: tone,
+      sub_specialties: subSpecialties,
+      manufacturer_certs: mfrCerts,
+      avg_ticket_cents: avgTicket * 100,
+      work_days: workDays,
+      work_hours_start: workStart,
+      work_hours_end: workEnd,
+      equipment_capabilities: equipment,
+      ideal_customer_desc: idealCustomer.trim() || null,
+      exclusions: exclusions,
       setup_complete: true,
     };
     const ok = await save(payload);
@@ -180,8 +240,12 @@ export default function SetupWizardLeads() {
 
   if (loading) return <main style={{ padding: 40, color: "#0B1F3A", fontFamily: "system-ui" }}>Loading…</main>;
 
-  const totalSteps = 10;
+  const totalSteps = 17;
   const pct = Math.round((step / totalSteps) * 100);
+  const primaryTrade = trades[0] || "HVAC";
+  const subSpecOptions = SUB_SPECIALTY_BY_TRADE[primaryTrade] || SUB_SPECIALTY_BY_TRADE.HVAC;
+  const mfrCertOptions = MFR_CERTS_BY_TRADE[primaryTrade] || [];
+  const equipmentOptions = EQUIPMENT_BY_TRADE[primaryTrade] || EQUIPMENT_BY_TRADE.HVAC;
 
   return (
     <main style={{
@@ -289,7 +353,7 @@ export default function SetupWizardLeads() {
           )}
 
           {step === 10 && (
-            <Step title="Pick your outreach tone" desc="This is how the AI will talk to homeowners on your behalf. Pick what sounds most like YOU — they'll feel it.">
+            <Step title="Pick your outreach tone" desc="How AI talks to homeowners on your behalf. Pick what sounds most like YOU — they'll feel it.">
               <div style={{ display: "grid", gap: 10 }}>
                 {TONE_OPTIONS.map((opt) => (
                   <label key={opt.value} style={{
@@ -307,6 +371,111 @@ export default function SetupWizardLeads() {
                   </label>
                 ))}
               </div>
+            </Step>
+          )}
+
+          {step === 11 && (
+            <Step title={`What ${primaryTrade.toLowerCase()} work do you specialize in?`} desc="Sub-specialties inside your trade. We'll filter leads to match — no point getting heat-pump leads if you only do AC, etc.">
+              <Multi options={subSpecOptions} value={subSpecialties} onToggle={(v) => toggleArr(setSubSpecialties, subSpecialties, v)} />
+            </Step>
+          )}
+
+          {step === 12 && mfrCertOptions.length > 0 && (
+            <Step title="Manufacturer dealer status?" desc="Optional but huge — drives premium positioning in your outreach (e.g. 'Carrier Factory Authorized') and unlocks rebate conversations w/ homeowners.">
+              <Multi options={mfrCertOptions} value={mfrCerts} onToggle={(v) => toggleArr(setMfrCerts, mfrCerts, v)} />
+              <div style={{ fontSize: 11, color: "#7AAAB2", marginTop: 10 }}>Skip if you&rsquo;re not factory-authorized — no problem.</div>
+            </Step>
+          )}
+          {step === 12 && mfrCertOptions.length === 0 && (
+            <Step title="What's your average job size?" desc="Skipping mfr-cert step (not common in your trade). Let&rsquo;s nail down your typical ticket so we filter out small jobs.">
+              <label style={{ fontSize: 13, fontWeight: 600, color: "#4A6670", display: "flex", justifyContent: "space-between" }}>
+                Average job size
+                <span style={{ color: "#0B1F3A", fontWeight: 800 }}>${avgTicket.toLocaleString()}</span>
+              </label>
+              <input type="range" min={100} max={20000} step={50} value={avgTicket} onChange={(e) => setAvgTicket(parseInt(e.target.value, 10))} style={{ width: "100%", marginTop: 8 }} />
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#7AAAB2", marginTop: 4 }}>
+                <span>$100</span><span>$20,000+</span>
+              </div>
+            </Step>
+          )}
+
+          {step === 13 && (
+            <Step title="What's your average job size?" desc="Your typical ticket. Used to filter out homes too small/big for your sweet spot — better lead-customer fit = higher close rate.">
+              <label style={{ fontSize: 13, fontWeight: 600, color: "#4A6670", display: "flex", justifyContent: "space-between" }}>
+                Average job size
+                <span style={{ color: "#0B1F3A", fontWeight: 800 }}>${avgTicket.toLocaleString()}</span>
+              </label>
+              <input type="range" min={100} max={20000} step={50} value={avgTicket} onChange={(e) => setAvgTicket(parseInt(e.target.value, 10))} style={{ width: "100%", marginTop: 8 }} />
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#7AAAB2", marginTop: 4 }}>
+                <span>$100 (small repairs)</span>
+                <span>$20,000+ (whole-home installs)</span>
+              </div>
+            </Step>
+          )}
+
+          {step === 14 && (
+            <Step title="What days + hours do you actually work?" desc="No point sending leads when you're off the clock. We hold them for your next working window.">
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: "#4A6670", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>Days</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {DAYS.map((d) => {
+                    const active = workDays.includes(d);
+                    return (
+                      <button key={d} onClick={() => toggleArr(setWorkDays, workDays, d)} style={{
+                        padding: "10px 14px", borderRadius: 10,
+                        border: active ? "2px solid #14B8A6" : "1.5px solid #DCE9E2",
+                        background: active ? "rgba(94,234,212,0.15)" : "#fff",
+                        color: active ? "#0B1F3A" : "#4A6670",
+                        fontSize: 13, fontWeight: 800, cursor: "pointer",
+                      }}>{d}</button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: "#4A6670", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Start</div>
+                  <input type="time" value={workStart} onChange={(e) => setWorkStart(e.target.value)} style={timeInput} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: "#4A6670", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>End</div>
+                  <input type="time" value={workEnd} onChange={(e) => setWorkEnd(e.target.value)} style={timeInput} />
+                </div>
+              </div>
+            </Step>
+          )}
+
+          {step === 15 && (
+            <Step title="What equipment + licenses do you have?" desc="Lets us match you to leads that need your specific capabilities. EPA-cert tech? Send refrigerant work. Sewer-camera? Send drain leads.">
+              <Multi options={equipmentOptions} value={equipment} onToggle={(v) => toggleArr(setEquipment, equipment, v)} />
+            </Step>
+          )}
+
+          {step === 16 && (
+            <Step title="Describe your IDEAL customer in 1 sentence" desc="No wrong answer. Free-text. Our 'lookalike' AI uses this to find more homeowners just like the ones you love working with.">
+              <textarea
+                value={idealCustomer}
+                onChange={(e) => setIdealCustomer(e.target.value.slice(0, 280))}
+                placeholder="e.g. Suburban homeowner, $400K+ house, willing to invest in quality, values long-term relationship, not a tire-kicker."
+                rows={4}
+                style={{
+                  width: "100%", padding: "12px 14px",
+                  fontSize: 14, fontWeight: 500,
+                  border: "1.5px solid #DCE9E2", borderRadius: 11,
+                  background: "#fff", color: "#0B1F3A", outline: "none",
+                  fontFamily: "inherit", resize: "vertical",
+                }}
+              />
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#7AAAB2", marginTop: 6 }}>
+                <span>Optional but powerful</span>
+                <span>{idealCustomer.length}/280</span>
+              </div>
+            </Step>
+          )}
+
+          {step === 17 && (
+            <Step title="What kinds of jobs do you NOT want?" desc="Check anything we should NEVER send. We&rsquo;ll drop these from your feed before they even hit the dashboard.">
+              <Multi options={["No commercial", "No new construction", "No warranty work", "No rental properties", "No mobile homes", "No properties >50mi", "No insurance jobs", "No DIY-help calls"]} value={exclusions} onToggle={(v) => toggleArr(setExclusions, exclusions, v)} />
             </Step>
           )}
 
@@ -335,13 +504,13 @@ export default function SetupWizardLeads() {
             {step < totalSteps ? (
               <button
                 onClick={() => setStep(step + 1)}
-                disabled={!canAdvance(step, { businessName, firstName, lastName, ownerPhone, trades, primaryZip, jobTypes, valueProps })}
+                disabled={!canAdvance(step, { businessName, firstName, lastName, ownerPhone, trades, primaryZip, jobTypes, valueProps, subSpecialties, workDays })}
                 style={{
                   padding: "13px 28px", borderRadius: 10,
                   background: "linear-gradient(135deg, #14B8A6 0%, #06B6D4 100%)",
                   border: "none", color: "#fff", fontSize: 14, fontWeight: 900,
                   cursor: "pointer",
-                  opacity: canAdvance(step, { businessName, firstName, lastName, ownerPhone, trades, primaryZip, jobTypes, valueProps }) ? 1 : 0.4,
+                  opacity: canAdvance(step, { businessName, firstName, lastName, ownerPhone, trades, primaryZip, jobTypes, valueProps, subSpecialties, workDays }) ? 1 : 0.4,
                   boxShadow: "0 6px 18px rgba(20,184,166,0.32)",
                 }}
               >
@@ -373,7 +542,7 @@ export default function SetupWizardLeads() {
   );
 }
 
-function canAdvance(step: number, s: { businessName: string; firstName: string; lastName: string; ownerPhone: string; trades: string[]; primaryZip: string; jobTypes: string[]; valueProps: string[] }): boolean {
+function canAdvance(step: number, s: { businessName: string; firstName: string; lastName: string; ownerPhone: string; trades: string[]; primaryZip: string; jobTypes: string[]; valueProps: string[]; subSpecialties: string[]; workDays: string[] }): boolean {
   if (step === 1) return s.businessName.trim().length > 1;
   if (step === 2) return s.firstName.trim().length > 0 && s.lastName.trim().length > 0;
   if (step === 3) return s.ownerPhone.replace(/\D/g, "").length === 10;
@@ -383,6 +552,14 @@ function canAdvance(step: number, s: { businessName: string; firstName: string; 
   if (step === 7) return true;
   if (step === 8) return true;
   if (step === 9) return s.valueProps.length > 0;
+  if (step === 10) return true;
+  if (step === 11) return s.subSpecialties.length > 0;
+  if (step === 12) return true; // mfr certs optional OR avg-ticket slider always valid
+  if (step === 13) return true; // avg ticket always valid
+  if (step === 14) return s.workDays.length > 0;
+  if (step === 15) return true; // equipment optional
+  if (step === 16) return true; // ideal-customer optional
+  if (step === 17) return true; // exclusions optional
   return true;
 }
 
@@ -416,6 +593,13 @@ function Input({ value, onChange, placeholder, type = "text", autoFocus }: { val
     />
   );
 }
+
+const timeInput: React.CSSProperties = {
+  width: "100%", padding: "12px 14px",
+  fontSize: 15, fontWeight: 700,
+  border: "1.5px solid #DCE9E2", borderRadius: 11,
+  background: "#fff", color: "#0B1F3A", outline: "none",
+};
 
 function Multi({ options, value, onToggle }: { options: string[]; value: string[]; onToggle: (v: string) => void }) {
   return (
