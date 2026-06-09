@@ -205,25 +205,13 @@ export default function FounderPage() {
           </div>
 
           <p>
-            I didn&rsquo;t start BellAveGo because AI was trending. I started it because I watched my buddy work harder than anyone I know and still only get <strong>one job a day</strong>. He runs a handyman business out of his pickup truck &mdash; drywall repair, fence builds, garage door fixes, the stuff every homeowner needs and no one knows how to do anymore. He&rsquo;s great at the work. He&rsquo;s broke finding it.
+            I started BellAveGo because my buddy &mdash; a solo handyman &mdash; was getting <strong>one job a day</strong>. Twenty hours a week scrolling Nextdoor, posting in Facebook groups, paying $80 for shared HomeAdvisor leads. Great at the work. Broke finding it.
           </p>
           <p>
-            Last summer I was helping him knock out a fence install when we sat down at lunch and he showed me his calendar. He&rsquo;d spent <strong>twenty hours that week</strong> scrolling Nextdoor, posting in neighborhood Facebook groups, paying $80 a pop for HomeAdvisor leads that three other guys also got, and cold-calling random addresses he pulled off Zillow. He landed <em>one</em> paying gig. While the kids down the street whose parents owned the area HVAC company were posting Instagram reels from their boats.
+            Homeowners who need work done aren&rsquo;t hard to find &mdash; permits, sold houses, aging units, storm damage. All public data. The franchise shops surface it with five-figure marketing budgets. Solo operators don&rsquo;t. So we built BellAveGo: <strong>80 fresh leads delivered every Monday</strong>, exclusive to you, never shared. Our AI writes the intro text + email in your voice. You only call back the ones who say yes.
           </p>
           <p>
-            I went home that night and started digging. Turns out the homeowners who need work done are <strong>not hard to find</strong> if you know where to look. People file building permits. They sell houses. They pull move-in records. Their AC units age. Their roofs get hit by storms. All of it is <em>public data</em>. The problem isn&rsquo;t that the leads don&rsquo;t exist. The problem is that one solo handyman, or one solo HVAC tech, or one solo plumber, has no way to surface them &mdash; while the franchise shops with marketing budgets do.
-          </p>
-          <p>
-            So we built BellAveGo. Every Monday morning, we deliver 80 fresh homeowner leads to your dashboard. Real people in your zip code. Real names, real addresses, real phone numbers. All flagged by something specific: a permit they just filed, a unit aging out, a property they just bought, a storm that hit their neighborhood last week. <strong>Exclusive to you &mdash; never shared with five other contractors like HomeAdvisor does.</strong>
-          </p>
-          <p>
-            And we don&rsquo;t stop there. Our AI writes a personalized intro text and email to each homeowner, signed by you, mentioning your shop, in your voice. You only call back the ones who say yes. No more cold-dialing. No more posting in 14 Facebook groups. No more refreshing HomeAdvisor at midnight hoping for a shared lead. <strong>The work comes to you.</strong>
-          </p>
-          <p>
-            My buddy was the first one to try it. He went from one job a day to fully booked inside a month. Now he&rsquo;s hiring his first helper. That&rsquo;s the whole reason this exists. Small home-service operators have always been the backbone of their neighborhoods, but they&rsquo;ve never had access to the kind of automated lead-gen that the big franchise chains pay marketing agencies five figures a month for. BellAveGo changes that &mdash; built into a product priced for a one-truck operator, not a corporation.
-          </p>
-          <p>
-            Behind the scenes it&rsquo;s a tight team &mdash; <strong>four software engineers</strong> writing the code, training the AI, and keeping the lead pipeline clean every single day. We&rsquo;re small on purpose. Every line of code, every email the AI sends on your behalf, every lead delivered to your dashboard goes through people who actually know your industry and care whether you book the job.
+            Behind the scenes &mdash; <strong>four software engineers</strong>. Small on purpose. My buddy went from one job a day to fully booked inside a month. That&rsquo;s the whole reason this exists.
           </p>
 
           <div className="fv4-end">
