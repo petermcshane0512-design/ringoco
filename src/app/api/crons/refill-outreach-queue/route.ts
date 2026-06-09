@@ -179,10 +179,16 @@ export async function GET(req: NextRequest) {
   // ?city=Phoenix, AZ → scrape ONE city (fits in 5-min Vercel timeout)
   // No ?city → scrape ALL cities in schedule (only safe if total raw is small;
   // cron sets this once-per-day at 1am UTC where 5-min limit is OK).
+  // 2026-06-09 — city param can OVERRIDE today's schedule. Falls through to
+  // schedule list only if the city name matches one already there.
   const singleCity = url.searchParams.get('city')
-  const citiesToScrape = singleCity
-    ? day.cities.filter((c) => c.toLowerCase().startsWith(singleCity.toLowerCase().slice(0, 6)))
-    : day.cities
+  let citiesToScrape: string[] = day.cities
+  if (singleCity) {
+    const matchInSchedule = day.cities.find((c) => c.toLowerCase().startsWith(singleCity.toLowerCase().slice(0, 6)))
+    citiesToScrape = matchInSchedule
+      ? [matchInSchedule]
+      : [singleCity.includes(',') ? singleCity : `${singleCity}, FL`]  // ad-hoc override; assumes FL if no state given
+  }
 
   // Optional ?trades=plumbing,roofing override (default = top 3 by yield)
   const tradesParam = url.searchParams.get('trades')
