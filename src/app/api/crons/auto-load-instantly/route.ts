@@ -115,7 +115,7 @@ function buildReportUrl(lead: Lead): string {
   return `https://www.bellavego.com/sample-report?${params.toString()}`
 }
 
-async function pushLead(lead: Lead, leadsPreview: string): Promise<{ ok: boolean; error?: string }> {
+async function pushLead(lead: Lead & { personalized_opener?: string | null }, leadsPreview: string): Promise<{ ok: boolean; error?: string }> {
   const reportUrl = buildReportUrl(lead)
   const body = {
     campaign: CAMPAIGN_ID,
@@ -129,11 +129,16 @@ async function pushLead(lead: Lead, leadsPreview: string): Promise<{ ok: boolean
       trade: lead.trade || 'HVAC',
       review_count: lead.review_count?.toString() || '',
       report_url: reportUrl,
-      // Hormozi $100M Offers lead-magnet: 5 real homeowner leads from
-      // this prospect's state, pre-formatted. Template references via
-      // {{leads_preview}}. Empty string fallback if pool has nothing for
-      // this state (cron pre-checked).
       leads_preview: leadsPreview,
+      // 2026-06-08 — per-lead personalized opener from Sonnet (written by
+      // /api/crons/personalize-queued-leads). Used as line 2 of Step 0
+      // template. Falls back to empty string so template doesn't break.
+      personalized_opener: lead.personalized_opener || '',
+      // Bold CTA line + promo code (Hormozi $100M Money Models — sub-$100
+      // trip-wire entry point). Pre-rendered per lead so the template
+      // stays consistent across variants.
+      promo_code: 'FIRST200',
+      promo_url: 'bellavego.com/start?promo=FIRST200',
     },
     skip_if_in_workspace: true,
     skip_if_in_campaign: true,
@@ -188,7 +193,7 @@ export async function GET(req: NextRequest) {
   // buckets actually convert — adjust scoring weights iteratively.
   const { data: leads, error } = await supabase
     .from('outreach_leads')
-    .select('id, email, business_name, owner_first_name, city, state, trade, review_count, young_owner_score')
+    .select('id, email, business_name, owner_first_name, city, state, trade, review_count, young_owner_score, personalized_opener')
     .eq('status', 'queued')
     .not('email', 'is', null)
     .ilike('trade', '%hvac%')

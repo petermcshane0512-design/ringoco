@@ -1,7 +1,18 @@
 import { redirect } from 'next/navigation'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
+import { createHash } from 'node:crypto'
 
 export const dynamic = 'force-dynamic'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+)
+
+function hashIp(ip: string): string {
+  return createHash('sha256').update(ip + (process.env.ADMIN_API_SECRET || 'salt')).digest('hex').slice(0, 32)
+}
 
 /**
  * /start?promo=FIRST200
@@ -24,6 +35,22 @@ export default async function StartPage({ searchParams }: { searchParams: SP }) 
   const sp = await searchParams
   const promo = (sp.promo || '').trim().toUpperCase()
   const ref = (sp.ref || '').trim()
+
+  // 2026-06-08 — server-log every /start hit so we capture clicks Apple
+  // Mail proxy strips from Instantly's tracking pixel. Non-blocking; never
+  // fails the redirect even if supabase is down.
+  try {
+    const h = await headers()
+    const ip = (h.get('x-forwarded-for') || h.get('x-real-ip') || '').split(',')[0]?.trim() || ''
+    await supabase.from('outreach_link_clicks').insert({
+      path: '/start',
+      promo: promo || null,
+      ref: ref || null,
+      referer: h.get('referer') || null,
+      user_agent: h.get('user-agent')?.slice(0, 500) || null,
+      ip_hash: ip ? hashIp(ip) : null,
+    })
+  } catch { /* non-fatal */ }
 
   if (promo) {
     const cookieStore = await cookies()

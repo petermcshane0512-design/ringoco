@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import fs from 'node:fs'
 import path from 'node:path'
+import { verifyEmail } from '@/lib/verifyEmail'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -179,11 +180,15 @@ export async function GET(req: NextRequest) {
       const websites = [...new Set(places.map((p) => p.website!).filter(Boolean))].slice(0, 200)
       const emails = await enrichEmails(websites)
       let cityCount = 0
+      let cityDropped = 0
       for (const p of places) {
         if (!p.website) continue
         const email = emails.get(p.website)
         const trade = classifyTrade(p.categoryName)
         if (!email || !trade) continue
+        // 2026-06-08 pre-insert email verify — MX check + bad-pattern filter
+        const v = await verifyEmail(email)
+        if (!v.ok) { cityDropped++; continue }
         const row = {
           email,
           business_name: p.title?.slice(0, 200) || null,
@@ -197,6 +202,7 @@ export async function GET(req: NextRequest) {
         if (!error) { inserted.push(email); cityCount++ }
         // UNIQUE(email) violations are expected dedup behavior — ignore silently
       }
+      console.log(`[refill] ${city}: inserted ${cityCount}, dropped ${cityDropped} (failed email verify)`)
       console.log(`[refill] ${city}: inserted ${cityCount}`)
     } catch (e) {
       errors.push(`${city}: ${(e as Error).message}`)
