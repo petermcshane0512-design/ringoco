@@ -81,8 +81,11 @@ export const PRICE_IDS_V2: Record<LegacyTier, { monthly: string; annual: string;
     setup:   '', // no setup fee in v2 — empty string sentinel; checkout skips line if empty
   },
   officemgr: {
-    monthly: 'price_1TaJOdGrkP7VQmUjVLsHnueB', // $297/mo Pro
-    annual:  'price_1TaJOdGrkP7VQmUjwJuIdiKA', // $2,970/yr Pro (~17% off)
+    // 2026-06-09 HORMOZI BUMP — v9 prices for $497/mo + $4,997/yr.
+    // Old v8 prices ($297/$2,970) preserved in PRICE_TO_TIER below for
+    // grandfathered subscribers — webhook resolves their tier the same way.
+    monthly: 'price_1TgUZFGrkP7VQmUjw9c5gEXv', // $497/mo Pro (v9 leads-only)
+    annual:  'price_1TgUanGrkP7VQmUjujaifNI0', // $4,997/yr Pro (v9 leads-only, save $968)
     setup:   '',
   },
   concierge: {
@@ -101,11 +104,14 @@ export const PRICE_IDS: Record<LegacyTier, { monthly: string; annual: string; se
 // customer (legacy or new) to the right tier. Existing customers on v1 prices
 // stay on v1 calls cap (250 for receptionist). New v2 customers get unlimited.
 export const PRICE_TO_TIER: Record<string, { tier: LegacyTier; calls: number }> = {
-  // v2 active (May 23 2026 — Starter $147 / Pro $297 / Elite $597)
+  // v9 ACTIVE (2026-06-09 Hormozi bump — $497/mo + $4,997/yr leads-only)
+  'price_1TgUZFGrkP7VQmUjw9c5gEXv': { tier: 'officemgr', calls: 99999 }, // Pro monthly $497 — leads-only, calls cap unused but kept for back-compat schema
+  'price_1TgUanGrkP7VQmUjujaifNI0': { tier: 'officemgr', calls: 99999 }, // Pro annual $4,997
+  // v2 grandfathered (May 23 2026 — Starter $147 / Pro $297 / Elite $597)
   'price_1TaJOcGrkP7VQmUj8qSiEx2b': { tier: 'receptionist', calls: 60 },    // Starter monthly — 60/mo cap (forces upgrade to Pro)
   'price_1TaJOcGrkP7VQmUj4AMGChWp': { tier: 'receptionist', calls: 60 },    // Starter annual  — 60/mo cap
-  'price_1TaJOdGrkP7VQmUjVLsHnueB': { tier: 'officemgr',    calls: 300 },   // Pro monthly — 300/mo cap (Elite for unlimited)
-  'price_1TaJOdGrkP7VQmUjwJuIdiKA': { tier: 'officemgr',    calls: 300 },   // Pro annual  — 300/mo cap
+  'price_1TaJOdGrkP7VQmUjVLsHnueB': { tier: 'officemgr',    calls: 300 },   // Pro $297 monthly — grandfathered
+  'price_1TaJOdGrkP7VQmUjwJuIdiKA': { tier: 'officemgr',    calls: 300 },   // Pro $297 annual — grandfathered
   'price_1TaJOdGrkP7VQmUjrLltX596': { tier: 'concierge',    calls: 99999 }, // Elite monthly — UNLIMITED
   'price_1TaJOdGrkP7VQmUja2CDmocA': { tier: 'concierge',    calls: 99999 }, // Elite annual  — UNLIMITED
   // v1 legacy (May 12 2026 — $397/$797/$1997)
