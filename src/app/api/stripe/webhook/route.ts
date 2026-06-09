@@ -667,9 +667,10 @@ export async function POST(req: NextRequest) {
             .maybeSingle()
 
           if (referrer?.stripe_customer_id) {
-            // Credit referrer's Stripe balance with $297 (1 month off next invoice)
+            // Credit referrer's Stripe balance with $497 (1 month off next invoice).
+            // 2026-06-09: bumped 297 -> 497 to match v9 leads-only pricing.
             await stripe.customers.createBalanceTransaction(referrer.stripe_customer_id, {
-              amount: -29700, // negative = credit (Stripe convention)
+              amount: -49700, // negative = credit (Stripe convention)
               currency: 'usd',
               description: `BellAveGo referral credit — 1 month free for referring a paid customer`,
             })
@@ -678,7 +679,7 @@ export async function POST(req: NextRequest) {
               .from('profiles')
               .update({ creator_referral_credited_at: new Date().toISOString() })
               .eq('user_id', (profileForReferrer.data as { user_id: string }).user_id)
-            console.log(`[customer-referral] credited referrer ${referrer.user_id} $297 for new paid customer w/ code ${refByCode}`)
+            console.log(`[customer-referral] credited referrer ${referrer.user_id} $497 for new paid customer w/ code ${refByCode}`)
           } else {
             console.warn(`[customer-referral] no referrer found for code ${refByCode}`)
           }

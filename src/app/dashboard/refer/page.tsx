@@ -54,7 +54,7 @@ export default function ReferPage() {
 
   function shareSMS() {
     if (!data) return
-    const text = `Yo — I've been using BellAveGo (exclusive homeowner leads delivered Monday + AI lead outreach that reaches out to homeowners for me). Honest game-changer. Free 14-day trial w/ my link: ${data.referral_link}`
+    const text = `Yo — using BellAveGo: 10 fresh homeowner leads in my zip every Monday, AI texts each one as me, I only call the YES's. $97 first month w/ my link: ${data.referral_link}`
     window.location.href = `sms:?body=${encodeURIComponent(text)}`
   }
 
@@ -75,14 +75,14 @@ export default function ReferPage() {
         boxShadow: '0 14px 40px rgba(7,27,58,0.22)',
       }}>
         <div style={{ fontSize: 11, fontWeight: 800, color: '#5EEAD4', letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 8 }}>
-          💰 Refer a friend · Earn free months
+          💰 Refer a buddy · Earn free months
         </div>
         <h1 style={{ fontSize: 28, fontWeight: 900, letterSpacing: '-0.5px', margin: '0 0 8px' }}>
-          Send your HVAC buddies. Get free BellAveGo.
+          Send your contractor buddies. Get free BellAveGo.
         </h1>
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.78)', lineHeight: 1.55, margin: 0 }}>
-          Every buddy who signs up + pays = <strong style={{ color: '#5EEAD4' }}>1 month free for you</strong>.
-          They get 14-day $1 trial. Win/win.
+          Every buddy who signs up + pays month 1 = <strong style={{ color: '#5EEAD4' }}>1 full month free for you</strong> (auto-applied to your next invoice).
+          They get the same $97 first-month deal as everyone else. Win/win.
         </p>
       </header>
 
@@ -134,10 +134,11 @@ export default function ReferPage() {
       <section style={{ ...card, marginTop: 14 }}>
         <h2 style={h2}>How it works</h2>
         <ol style={{ margin: 0, paddingLeft: 20, fontSize: 14, color: '#0B1F3A', lineHeight: 1.7 }}>
-          <li>Share your link with HVAC / plumbing / electrical / roofing buddies</li>
-          <li>They sign up via your link → get 14-day $1 trial (no full price upfront)</li>
-          <li>When they pay their first month → <strong style={{ color: '#22C55E' }}>you get 1 month free</strong> (applied to your next invoice)</li>
-          <li>No cap. Refer 12 friends = full year of BellAveGo free.</li>
+          <li>Share your link w/ HVAC, plumbing, electrical, roofing, or handyman buddies</li>
+          <li>They sign up via your link → $97 first month (same trial price as anyone)</li>
+          <li>The moment they pay → <strong style={{ color: '#22C55E' }}>you get 1 full month free</strong>, auto-applied to your next Stripe invoice. No code to redeem. No email to send.</li>
+          <li>No cap. Refer 12 buddies = full year of BellAveGo free.</li>
+          <li>You stay subscribed for the credit to apply. Cancel and the credits expire.</li>
         </ol>
       </section>
 

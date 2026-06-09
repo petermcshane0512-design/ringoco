@@ -46,9 +46,23 @@ export async function GET(
   const res = NextResponse.redirect(target)
   res.cookies.set('bavg_creator_code', code, {
     maxAge: 180 * 24 * 60 * 60,
-    httpOnly: false, // readable client-side so checkout JS can grab it
+    httpOnly: false,
     sameSite: 'lax',
     path: '/',
   })
+  // 2026-06-09 fix: customer-to-customer refs (BAVG-XXXXXX) need a
+  // SECOND cookie (`bavg_ref`) because /api/profile reads `bavg_ref`
+  // (not `bavg_creator_code`) when populating `referred_by` on first
+  // profile create. Without this the referral credit chain dies
+  // silently. Personalized creator codes (HVACMIKE etc.) still flow
+  // through the original `bavg_creator_code` cookie.
+  if (isLegacy) {
+    res.cookies.set('bavg_ref', code, {
+      maxAge: 180 * 24 * 60 * 60,
+      httpOnly: false,
+      sameSite: 'lax',
+      path: '/',
+    })
+  }
   return res
 }
