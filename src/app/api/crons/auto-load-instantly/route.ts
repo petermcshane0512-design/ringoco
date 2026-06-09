@@ -37,7 +37,7 @@ type Lead = {
   city: string | null
   state: string | null
   trade: string | null
-  review_count: number | null
+  review_count?: number | null
 }
 
 type NeighborhoodLead = {
@@ -193,7 +193,7 @@ export async function GET(req: NextRequest) {
   // buckets actually convert — adjust scoring weights iteratively.
   const { data: leads, error } = await supabase
     .from('outreach_leads')
-    .select('id, email, business_name, owner_first_name, city, state, trade, review_count, young_owner_score, personalized_opener')
+    .select('id, email, business_name, owner_first_name, city, state, trade, young_owner_score, personalized_opener')
     .eq('status', 'queued')
     .not('email', 'is', null)
     .ilike('trade', '%hvac%')
