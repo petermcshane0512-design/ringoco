@@ -12,30 +12,30 @@ export const maxDuration = 60
  * subscription activates AND from a 6-hourly per-tenant cron to keep the
  * pool fresh.
  *
- * Architecture (Peter spec 2026-06-06):
- *   "You don't have to scrape these leads now. Just when someone signs
- *    up you have to be able to have that agent go find them for them."
+ * 2026-06-09 REWRITE — nationwide instant coverage.
  *
- * The agent — given a tenant's ZIPs + trade — does up to 3 things in
- * priority order, stopping when it has enough fresh leads in their radius:
+ * Old shape: tried city scraper first (only 5 cities work), then fell back
+ * to BatchData. Small-metro signups got nothing instant.
  *
- *   1. KNOWN-CITY SCRAPE   — if the tenant's metro has a city-specific
- *                            permit scraper registered, fire it on-demand
- *                            (last 30 days, scoped to their state).
- *   2. CENSUS AGING-HVAC   — Census ACS aging-housing already runs
- *                            nationally; if their ZIPs are stale, trigger
- *                            a targeted refresh for just their state.
- *   3. SKIP-TRACE PASS     — for every lead in their 50mi radius that has
- *                            no phone yet, BatchData lookup ($0.10/each).
+ * New shape: BatchData `find-real-leads` runs FIRST as the foundation.
+ * Every US zip works day 1. City scrapers + census refresh layer on TOP as
+ * bonus signals when available. Idempotent. Safe to re-call.
  *
- * Idempotent. Safe to re-call. Auth: x-admin-secret OR Clerk admin session
- * OR an internal `internal_user_id` query param signed via webhook trust.
+ * Order:
+ *   0. BATCHDATA NATIONAL PULL — find-real-leads pulls up to 80 owner-
+ *                                occupied candidates across tenant's primary
+ *                                zips + radius expansion. Skip-traces top
+ *                                20 for verified phones. ~$6 CAC.
+ *   1. CITY SCRAPE OPPORTUNISTIC — if tenant's metro matches a registered
+ *                                   scraper, fire it for bonus permit-driven
+ *                                   leads on top of the BatchData base.
+ *   2. CENSUS AGING TOP-UP        — fire only if pool still light (<25)
+ *                                   after foundation + city scrape.
  *
- * Body / query:
- *   { user_id: string }   — required
+ * Auth: x-admin-secret OR Clerk admin session.
  *
- * Output:
- *   { ok, steps: [...], leads_in_radius, skip_traced }
+ * Body:  { user_id: string }
+ * Output: { ok, steps, leads_in_radius, service_area, zip, trade }
  */
 
 const supabase = createClient(
@@ -159,33 +159,10 @@ async function discoverForTenant(userId: string): Promise<{
 
   steps.push({ kind: 'count_pool_before', ok: true, detail: `${poolBefore ?? 0} candidates in ${eligibleZips.size} ZIPs` })
 
-  // Step 1 — city scraper if tenant's metro matches a registered scraper.
-  const area = (profile.service_area || '').toString()
-  const cityMatch = CITY_SCRAPERS.find((c) => c.match.test(area))
-  if (cityMatch) {
-    steps.push(await fireCityScraper(cityMatch.route, 30))
-  } else {
-    steps.push({ kind: 'scrape:city', ok: true, detail: `no city scraper registered for "${area}" — falling through to census-aging` })
-  }
-
-  // Step 2 — census-aging targeted refresh ONLY if pool is still light.
-  // Re-count after city scrape; if still under 15 candidates, fire aging.
-  const { count: poolAfterCity } = await supabase
-    .from('leads')
-    .select('id', { count: 'exact', head: true })
-    .contains('trade_match', [tradeFilter])
-    .in('zip', [...eligibleZips])
-
-  if ((poolAfterCity ?? 0) < 15) {
-    steps.push(await fireCensusAging())
-  } else {
-    steps.push({ kind: 'scrape:census-aging', ok: true, detail: 'pool sufficient, skipped' })
-  }
-
-  // 2026-06-07 — UNIVERSAL FALLBACK via BatchData Property Search.
-  // After city scrape + census-aging, fire find-real-leads to populate
-  // address-level leads for ANY US zip — handles every city without a
-  // dedicated scraper. Costs ~$0.05/property × 15 = $0.75 per tenant.
+  // STEP 0 — BATCHDATA NATIONAL FOUNDATION (2026-06-09 reorder).
+  // Was last; now first. Guarantees every US zip gets ~80 candidates +
+  // 20 skip-traced phones day 1. ~$6 CAC. The lead-engine cron later
+  // delivers from this pool to the dashboard.
   try {
     const r = await fetch(`${APP_URL}/api/agents/find-real-leads`, {
       method: 'POST',
@@ -193,16 +170,44 @@ async function discoverForTenant(userId: string): Promise<{
         'Content-Type': 'application/json',
         'x-admin-secret': process.env.ADMIN_API_SECRET || '',
       },
-      body: JSON.stringify({ user_id: userId }),
+      body: JSON.stringify({ user_id: userId, max_candidates: 80, skip_trace_top_n: 20 }),
     })
     const json = await r.json().catch(() => ({}))
-    steps.push({ kind: 'find_real_leads', ok: r.ok && json.ok, detail: `assigned=${json.assigned ?? 0} spent_cents=${json.spent_cents ?? 0}${json.reason ? ` reason=${json.reason}` : ''}` })
+    steps.push({
+      kind: 'find_real_leads',
+      ok: r.ok && json.ok,
+      detail: `assigned=${json.assigned ?? 0} zips=${json.zips_searched ?? 0} skip_traced=${json.skip_traced ?? 0} spent_cents=${json.spent_cents ?? 0}${json.reason ? ` reason=${json.reason}` : ''}`,
+    })
   } catch (e) {
     steps.push({ kind: 'find_real_leads', ok: false, detail: (e as Error).message })
   }
 
-  // Click-to-reveal phones — no enrichment at discovery time.
-  steps.push({ kind: 'skip_trace', ok: true, detail: 'click-to-reveal — no enrichment at discovery time' })
+  // STEP 1 — city scraper layered on top. Bonus permit-driven leads on
+  // top of the BatchData foundation when tenant happens to be in a metro
+  // we already scrape. No-op for everyone else (foundation already covers).
+  const area = (profile.service_area || '').toString()
+  const cityMatch = CITY_SCRAPERS.find((c) => c.match.test(area))
+  if (cityMatch) {
+    steps.push(await fireCityScraper(cityMatch.route, 30))
+  } else {
+    steps.push({ kind: 'scrape:city', ok: true, detail: `no city scraper for "${area}" — BatchData foundation covers it` })
+  }
+
+  // STEP 2 — census-aging refresh ONLY if pool is still light after
+  // foundation + city scrape. Should almost never fire now.
+  const { count: poolAfterFoundation } = await supabase
+    .from('leads')
+    .select('id', { count: 'exact', head: true })
+    .contains('trade_match', [tradeFilter])
+    .in('zip', [...eligibleZips])
+
+  if ((poolAfterFoundation ?? 0) < 25) {
+    steps.push(await fireCensusAging())
+  } else {
+    steps.push({ kind: 'scrape:census-aging', ok: true, detail: `pool sufficient (${poolAfterFoundation}), skipped` })
+  }
+
+  steps.push({ kind: 'skip_trace', ok: true, detail: 'top-20 verified during find-real-leads; remainder click-to-reveal' })
 
   const { count: poolAfter } = await supabase
     .from('leads')
