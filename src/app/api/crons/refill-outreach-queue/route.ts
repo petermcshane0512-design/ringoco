@@ -129,14 +129,17 @@ function passesSoloOrSmallCrewFilter(m: MapsItem): boolean {
 
 async function scrapeCity(city: string, targetCount: number, tradeKeywords: string[]): Promise<MapsItem[]> {
   console.log(`[refill] scraping ${city} for ${targetCount} solo/1-3 person crew shops across ${tradeKeywords.length} trades`)
+  // 2026-06-09 — Apify actor itself times out at scale. Cap at 25 places
+  // per trade keyword × 3 keywords = 75 raw places per call. Fits in 4 min.
   const items = await apifyRunSync<MapsItem>(APIFY_MAPS_ACTOR, {
     searchStringsArray: tradeKeywords.map((kw) => `${kw} ${city}`),
-    maxCrawledPlacesPerSearch: Math.min(60, Math.ceil(targetCount / tradeKeywords.length)),
+    maxCrawledPlacesPerSearch: Math.min(25, Math.ceil(targetCount / tradeKeywords.length)),
     language: 'en',
     countryCode: 'us',
     skipClosedPlaces: true,
-    onlyDataFromSearchPage: false,
-  }, 180_000)  // 3 min cap on maps actor
+    onlyDataFromSearchPage: true,  // faster — no deep page crawl
+    includeWebResults: false,
+  }, 240_000)  // 4 min cap on maps actor (leaves 1 min for enrichment + insert)
   const filtered = items.filter(passesSoloOrSmallCrewFilter)
   console.log(`[refill] ${city}: ${items.length} raw → ${filtered.length} pass 1-3 person crew filter`)
   return filtered
