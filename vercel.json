@@ -167,9 +167,16 @@
     {
       "path": "/api/crons/personalize-queued-leads",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/crons/personalize-sample-leads",
+      "schedule": "30 7 * * *"
     }
   ],
   "functions": {
+    "src/app/api/crons/personalize-sample-leads/route.ts": {
+      "maxDuration": 300
+    },
     "src/app/api/sample-report/personalize/route.ts": {
       "maxDuration": 300
     },

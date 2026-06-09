@@ -38,6 +38,8 @@ type Lead = {
   state: string | null
   trade: string | null
   review_count?: number | null
+  personalized_opener?: string | null
+  sample_lead_snippet?: string | null
 }
 
 type NeighborhoodLead = {
@@ -115,7 +117,7 @@ function buildReportUrl(lead: Lead): string {
   return `https://www.bellavego.com/sample-report?${params.toString()}`
 }
 
-async function pushLead(lead: Lead & { personalized_opener?: string | null }, leadsPreview: string): Promise<{ ok: boolean; error?: string }> {
+async function pushLead(lead: Lead, leadsPreview: string): Promise<{ ok: boolean; error?: string }> {
   const reportUrl = buildReportUrl(lead)
   const body = {
     campaign: CAMPAIGN_ID,
@@ -130,9 +132,13 @@ async function pushLead(lead: Lead & { personalized_opener?: string | null }, le
       review_count: lead.review_count?.toString() || '',
       report_url: reportUrl,
       leads_preview: leadsPreview,
-      // 2026-06-09 — personalized_opener column not yet migrated. Skip
-      // until SQL migration applied. Template falls back to empty.
-      personalized_opener: '',
+      // 2026-06-09 — both fields powered by separate nightly crons:
+      //   personalize-queued-leads → personalized_opener (Sonnet 1-line hook)
+      //   personalize-sample-leads → sample_lead_snippet (1 real Batch Data
+      //                              owner-occupied lead in recipient's city)
+      // Template merges both. Falls back to empty if either not yet written.
+      personalized_opener: lead.personalized_opener || '',
+      sample_lead_snippet: lead.sample_lead_snippet || '',
       // Bold CTA line + promo code (Hormozi $100M Money Models — sub-$100
       // trip-wire entry point). Pre-rendered per lead so the template
       // stays consistent across variants.
@@ -191,7 +197,7 @@ export async function GET(req: NextRequest) {
   // buckets actually convert — adjust scoring weights iteratively.
   const { data: leads, error } = await supabase
     .from('outreach_leads')
-    .select('id, email, business_name, owner_first_name, city, state, trade, young_owner_score')
+    .select('id, email, business_name, owner_first_name, city, state, trade, young_owner_score, personalized_opener, sample_lead_snippet')
     .eq('status', 'queued')
     .not('email', 'is', null)
     // 2026-06-09 — opened up to all home-service trades, not just HVAC,
