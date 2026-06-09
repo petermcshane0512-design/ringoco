@@ -32,7 +32,7 @@ export const maxDuration = 300
 
 const APIFY_TOKEN = process.env.APIFY_TOKEN || process.env.APIFY_API_TOKEN || process.env.APIFY_API_KEY
 const APIFY_MAPS_ACTOR = 'compass~crawler-google-places'
-const APIFY_CONTACT_ACTOR = 'lukaskrivka~contact-info-scraper'
+const APIFY_CONTACT_ACTOR = 'vdrmota~contact-info-scraper'
 
 const SCHEDULE_PATH = path.join(process.cwd(), 'data', 'scrape-schedule.json')
 
