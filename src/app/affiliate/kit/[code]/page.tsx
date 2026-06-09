@@ -131,71 +131,74 @@ export default async function AffiliateKitPage({ params }: { params: Params }) {
             length="15 sec · The Hook"
             script={[
               '[0-3s] Camera on you, hand on a tool/truck/job-site.',
-              '"Most home-service guys miss 12 calls a month. That\'s 12 jobs in someone else\'s truck."',
-              '[3-10s] Cut to phone screen.',
-              '"My buddy Peter built BellAveGo. AI answers your missed calls. 24/7. Books the job. Texts you."',
+              '"If you\'re not using AI to find customers, your competitors already are."',
+              '[3-10s] Cut to phone showing dashboard w/ list of leads.',
+              '"My buddy Peter built BellAveGo. 80 fresh homeowner leads/month, exclusive to your zip, delivered to your dashboard. They even auto-email + SMS them as YOU."',
               '[10-15s] Camera back on you.',
-              `"Code ${code} in my bio. Try it 30 days, money-back."`,
+              `"Code ${code} in my bio. $97 first month, 30-day money-back."`,
             ]}
-            caption={`Most of us miss 12 calls a month. That\'s 12 paychecks gone. My boy built an AI that answers every one of em + books the job + texts you. $297/mo flat. Code ${code} → ${refLink}\n\n#hvaclife #plumberlife #electricianlife #contractorlife #smallbusinessowner`}
+            caption={`If you\'re not using AI to find customers your competitors are. My boy built BellAveGo — 80 exclusive homeowner leads/mo in your zip + auto outreach as YOU. $97 first mo w/ ${code} → ${refLink}\n\n#hvaclife #plumberlife #electricianlife #contractorlife #smallbusinessowner`}
           />
 
           <ReelScript
             length="30 sec · The Day-in-the-Life"
             script={[
               '[0-5s] You under a truck, on a job. Phone vibrates.',
-              '"Phone\'s ringing again. Can\'t pick up — I\'m elbow deep."',
-              '[5-15s] Cut to phone showing missed call → AI receptionist screen.',
-              '"This is what I do now. AI named Emma picks up. Asks them what\'s broke. Books the appt. Texts me when."',
-              '[15-25s] Cut to text message from Emma: "Booked: Smith, 3PM, AC tune-up, 5840 Elm St."',
-              '"Job\'s on my calendar before I even crawl out from under this truck."',
+              '"Used to be I\'d wake up Mondays w/ no jobs lined up. Hustle for hours just to find work."',
+              '[5-15s] Cut to phone showing dashboard w/ 20 leads.',
+              '"Now I wake up Monday, open BellAveGo, see 20 fresh homeowners in my zip ready to call. Names, addresses, phones. Real public-record events."',
+              '[15-25s] Cut to text: "Mike from 7842 Oak St — yes please send a quote for AC".',
+              '"The crazy part — BellAveGo emails + texts each one as ME. I only respond when they say yes."',
               '[25-30s] Camera close, smile.',
-              `"$297 a month. Code ${code} in bio. 30-day money-back."`,
+              `"$97 first month, code ${code}. 30-day money-back."`,
             ]}
-            caption={`Stopped picking up my phone on jobs. AI does it for me now. Books appts straight to my calendar while I work. Game changer for a 1-2 man crew. Code ${code} for 30-day money-back trial → ${refLink}\n\n#hvactech #plumber #1099life #smallbusinessowner`}
+            caption={`Wake up Monday, 20 fresh homeowner leads in my zip — names, addresses, phones. AI emails them as me, I only respond when they say yes. Code ${code} for $97 first month → ${refLink}\n\n#hvactech #plumber #1099life #smallbusinessowner`}
           />
 
           <ReelScript
             length="60 sec · The Story Sell"
             script={[
               '[0-10s] You at the truck, mid-job. Wipe sweat.',
-              '"Real talk for solo guys + 2-3 man crews. Last summer I lost a $1,400 AC install because I couldn\'t pick up the phone — I was on a roof in Mesa."',
-              '[10-25s] Pan to phone, show messy missed-calls list.',
-              '"By Friday I had 8 missed calls. Probably 2-3 real jobs. Gone."',
-              '[25-40s] Cut to screen recording — BellAveGo dashboard, Emma answering a test call.',
-              '"This is BellAveGo. AI receptionist. Answers every call 24/7. Sounds like a person. Asks the right questions. Books the appt."',
-              '"Plus it drops 5 fresh homeowner leads in your dashboard every Monday. People w/ broken systems in YOUR zip."',
+              '"Real talk for solo guys + 2-3 man crews. Last summer I burned 15 hrs/wk cold-calling random homeowners and HomeAdvisor leads that 4 other guys already had."',
+              '[10-25s] Pan to phone, show old "leads" from competitors.',
+              '"HomeAdvisor charged me $80/lead. Shared 5 ways. Bait. Never booked anything."',
+              '[25-40s] Cut to BellAveGo dashboard.',
+              '"This is BellAveGo. 80 homeowner leads/month in my zip, EXCLUSIVE — never shared. Sourced from permits, aged units, property changes. Real intent."',
+              '"And it auto-emails + SMS\'s each lead as ME. Personalized. Sounds human. I just respond to the ones who say yes."',
               '[40-55s] Back to you, walking to next truck.',
-              '"$297 a month. Flat. No setup. Cancel anytime. 30-day money-back if it doesn\'t pay for itself."',
+              '"$97 first month w/ FIRST200. Then $297 flat. À la carte $15/lead if I want more. 30-day money-back if it doesn\'t pay for itself."',
               '[55-60s] Close-up.',
               `"Code ${code} in bio. Go look."`,
             ]}
-            caption={`Lost a $1,400 install last summer because I couldn\'t pick up the phone. Don\'t be me. BellAveGo answers every call + books the appt + drops 5 fresh homeowner leads in your dashboard every Mon. Code ${code} → ${refLink}\n\n30-day money-back. $297/mo flat. For solo + 1-3 person crews.`}
+            caption={`Stopped paying HomeAdvisor $80/lead for shared bait. BellAveGo gives me 80 EXCLUSIVE homeowner leads/mo + auto-emails them as me. Code ${code} for $97 first month → ${refLink}\n\n30-day money-back. $297/mo flat after. For solo + 1-3 person crews.`}
           />
 
           <ReelScript
             length="15 sec · Quick Plug"
             script={[
-              '[0-3s] You holding phone up showing missed-call list.',
-              '"23 missed calls this week."',
-              '[3-9s] Cut to text from Emma.',
-              '"Now I get a text every time someone calls and books a job. AI does it. Bot named Emma."',
+              '[0-3s] You holding phone up showing dashboard w/ leads list.',
+              '"80 fresh homeowner leads this month."',
+              '[3-9s] Cut to inbox: notification "Bill from 4421 Maple St replied — wants a quote".',
+              '"All emailed automatically as me. I only respond when they\'re a yes."',
               '[9-15s] Camera on you.',
-              `"$297 flat. Code ${code} in bio."`,
+              `"$97 first month w/ ${code} in bio."`,
             ]}
-            caption={`23 missed calls became 14 booked jobs since I started using BellAveGo. Code ${code} for trial → ${refLink}\n\n#hvac #plumber #electrician`}
+            caption={`80 exclusive homeowner leads this month + the AI emails them as me. Code ${code} → ${refLink}\n\n#hvac #plumber #electrician`}
           />
 
           <ReelScript
-            length="30 sec · The Demo Call"
+            length="30 sec · The Math"
             script={[
-              '[0-5s] You holding phone, screen visible.',
-              '"Watch this. I\'m calling the BellAveGo demo line. See what Emma sounds like."',
-              '[5-25s] Call (651) 467-7829. Let Emma answer + ask the booking questions live. Record the convo.',
+              '[0-5s] You holding phone, showing competitor pricing.',
+              '"HomeAdvisor: $80/lead, shared 5 ways. Yelp leads: $60, shared. Networx: $45, shared."',
+              '[5-15s] Cut to BellAveGo dashboard pricing.',
+              '"BellAveGo: 80 leads/month for $297 = $3.71/lead. Exclusive. Never shared. They even reach out to em for you."',
+              '[15-25s] Show side-by-side math.',
+              '"And $15/lead à la carte when I need more mid-week. Stupid cheap compared to anything else."',
               '[25-30s] Camera back on you.',
-              `"That\'s my receptionist now. 24/7. $297 a month. Code ${code} for 30-day trial."`,
+              `"$97 first month. Code ${code} for 30-day money-back."`,
             ]}
-            caption={`Called the BellAveGo demo line on camera. Listen to Emma (their AI) answer a service call like a real receptionist would. This is what handles my missed calls now. Code ${code} → ${refLink}`}
+            caption={`Did the math on every lead-gen platform. BellAveGo destroys all of them — $3.71/lead exclusive vs $40-300/lead shared elsewhere. Code ${code} → ${refLink}`}
           />
         </div>
       </section>

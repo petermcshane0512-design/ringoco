@@ -204,7 +204,7 @@ export default function PricingPage() {
           <span style={{ background: 'linear-gradient(135deg, #5EEAD4 0%, #2DD4BF 50%, #0AA89F 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Try risk-free for 30 days.</span>
         </h1>
         <p style={{ fontSize: 18, color: '#4A6670', maxWidth: 720, margin: '0 auto 12px', lineHeight: 1.55, fontWeight: 500 }}>
-          AI answers every missed call 24/7. Books the appointment. Texts you the lead. Drops 5 ready-to-quote homeowner leads in your neighborhood every Monday morning. Cancel any time first 30 days for full refund.
+          80 fresh exclusive homeowner leads delivered to your dashboard every month — real names, addresses, phones, all flagged by recent permits/aged units/property changes in your zip. We auto-email + SMS each lead as YOU. Phone notification when they reply. À la carte $15/lead when you want more. Cancel anytime first 30 days for full refund.
         </p>
         <p style={{ fontSize: 15, color: '#7AAAB2', maxWidth: 600, margin: '0 auto', lineHeight: 1.55 }}>
           Use it 30 days. If you don&apos;t love it, click one button in your dashboard. Full refund. No questions, no phone call.
@@ -272,7 +272,7 @@ export default function PricingPage() {
               📦 Here&apos;s everything you get
             </p>
             {[
-              { item: '24/7 AI receptionist · UNLIMITED calls answered', val: '$200/mo' },
+              { item: '80 exclusive homeowner leads / month in your zip', val: '$640/mo' },
               { item: 'Auto-books appointments to your calendar live', val: '$97/mo' },
               { item: '5 fresh neighborhood leads delivered every Monday', val: '$500/mo' },
               { item: 'AI pitch script for every lead', val: '$50/mo' },
@@ -363,9 +363,9 @@ export default function PricingPage() {
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
             {[
-              { label: 'Human receptionist', cost: '$2,500/mo', flaw: 'Closes 6pm. No leads. No weekends.' },
+              { label: 'HomeAdvisor leads', cost: '$40-300/lead', flaw: 'Shared 3-5 ways. Bait. You chase em.' },
               { label: 'Voicemail', cost: '$0', flaw: 'Loses $2,300/mo in unbooked jobs.' },
-              { label: 'BellAveGo', cost: '$297/mo', flaw: '24/7 + auto-book + 5 leads/wk + 30-day refund', highlight: true },
+              { label: 'BellAveGo', cost: '$297/mo', flaw: '80 leads/mo EXCLUSIVE + auto-outreach + 30-day refund', highlight: true },
             ].map((item) => (
               <div key={item.label} style={{
                 background: item.highlight ? '#F0FDF4' : '#F8FAFC',
@@ -529,7 +529,7 @@ export default function PricingPage() {
               For franchises, chains, &amp; roll-ups
             </h2>
             <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.78)', lineHeight: 1.6, marginBottom: 24 }}>
-              5+ locations? Every shop gets its own AI receptionist, its own number, its own custom prompt — under one HQ dashboard. Built for Apex, Authority Brands, Neighborly partners, and PE-backed service companies.
+              5+ locations? Every shop gets its own zip-exclusive lead feed + dedicated auto-outreach pipeline + dashboard, all under one HQ. Built for Apex, Authority Brands, Neighborly partners, and PE-backed service companies.
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 28 }}>
               {[
@@ -603,7 +603,7 @@ export default function PricingPage() {
               },
               {
                 q: 'What if the AI says something wrong?',
-                a: 'Every call is recorded + transcribed in your dashboard. You can customize Emma\'s instructions (services, hours, tone) at any time. Backed by a 30-day money-back guarantee — if she\'s not pulling her weight in the first 30 days, click cancel and we refund every penny.',
+                a: 'Every lead delivered is logged in your dashboard with full source data (permit details, owner history, property age). Backed by a 30-day money-back guarantee — if the leads don\'t book you at least one job in 30 days, click cancel and we refund every penny.',
               },
               {
                 q: 'Do I have to sign a contract?',
@@ -615,7 +615,7 @@ export default function PricingPage() {
               },
               {
                 q: 'Will it auto-book appointments without my approval?',
-                a: 'Only if you turn auto-booking ON. Default is OFF — Emma takes a message and texts/emails it to you. When you opt in, you can also restrict the AI to only book inside a time window (e.g. "only after 5pm").',
+                a: 'Auto-outreach default is ON — every new lead delivered Monday morning gets a personalized email + SMS sent as YOU within 6 hours. You can pause auto-outreach per lead or globally. Replies come straight to your phone via SMS notification — you just respond.',
               },
               {
                 q: 'Who owns my data?',
@@ -629,7 +629,7 @@ export default function PricingPage() {
             ))}
           </div>
           <p style={{ fontSize: 13, color: '#7AAAB2', textAlign: 'center', marginTop: 22 }}>
-            Other questions? Email <a href="mailto:peter@bellavego.com" style={{ color: '#C84B26', fontWeight: 700, textDecoration: 'none' }}>peter@bellavego.com</a> or call the demo line at <a href="tel:+16514677829" style={{ color: '#C84B26', fontWeight: 700, textDecoration: 'none' }}>(651) 467-7829</a>.
+            Other questions? Email <a href="mailto:peter@bellavego.com" style={{ color: '#C84B26', fontWeight: 700, textDecoration: 'none' }}>peter@bellavego.com</a> or text Peter at <a href="tel:+17737109565" style={{ color: '#C84B26', fontWeight: 700, textDecoration: 'none' }}>(773) 710-9565</a>.
           </p>
         </div>
       </section>
@@ -668,7 +668,7 @@ export default function PricingPage() {
       </section>
 
       <footer style={{ padding: '36px 40px', background: '#0B1F3A', textAlign: 'center' }}>
-        <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>BellAveGo · AI receptionist for HVAC, plumbing, electrical, roofing, and handyman pros · Cancel anytime</p>
+        <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>BellAveGo · Exclusive homeowner lead-gen for HVAC, plumbing, electrical, roofing, and handyman pros · Cancel anytime</p>
         <p style={{ margin: '8px 0 0', fontSize: 11, color: '#3D5A62' }}>
           <Link href="/privacy" style={{ color: '#7AAAB2', textDecoration: 'none' }}>Privacy</Link>
           {' · '}

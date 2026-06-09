@@ -111,7 +111,9 @@ The Idiot Index **finds** the targets. The Algorithm **fixes** them. Always run 
 *Run by Opus agent. Treat as living document — update when decisions change.*
 
 ### The Product in Ten Words
-"An AI that answers your missed calls and books the job."
+"Fresh exclusive homeowner leads delivered Mondays. We outreach for you."
+
+*(Pivoted 2026-06-09. Old: "AI that answers your missed calls and books the job." Receptionist mothballed — see Five Things That Matter below.)*
 
 ### Idiot Index: Current State
 
@@ -208,13 +210,15 @@ Every one of these has been embedded as an assumption. Challenge them before act
 
 ### Five Things That Matter (Everything Else is Noise)
 
-**Positioning pivot 2026-06-08:** Offer is NOW lead reports only. 5 fresh homeowner leads delivered every Monday in the customer's service area. No neighborhood intel reports. No competitor/review consulting reports. Sales copy + outreach must lead with leads, not reports.
+**MAJOR PIVOT 2026-06-09:** AI receptionist DROPPED as product. BellAveGo is now PURE lead-gen for home-service contractors. Receptionist code mothballed (Vapi/Twilio infrastructure retained for future v2 upsell, but NOT pitched, NOT in default signup flow, NOT in any user-facing copy). billyGO closed Tuesday morning — opened email 26 times BUT their existing in-house receptionist was comparison-shopping, not the owner. Proved owners w/ receptionists don't buy ours, owners w/o them distrust AI for phone (hallucinations, false bookings, high-stakes).
 
-1. Multi-tenant Twilio — ✅ shipped May 2026, auto-provisioned on Stripe checkout via `provisionNumberForUser`
-2. Stripe billing live — ✅ shipped, single-tier $297/mo + 30-day money-back guarantee
-3. **5 fresh homeowner leads / week — THIS IS THE MOAT.** Real public-record events (permits, aging units, property turnover). Delivered Monday mornings via discover-for-tenant agent + Vercel cron. AI receptionist is the secondary value. Consulting/review/market-intel reports are DEPRECATED as the lead magnet — too consulting-firm feel, low conversion vs raw leads.
-4. AI receptionist on every missed call — the trust + retention layer behind the leads-as-hook
+1. **5-20-50 fresh homeowner leads/week delivered Monday morning** — THIS IS THE PRODUCT. Real public-record events (permits filed, aged HVAC systems, property turnover). Exclusive per zip+trade — never shared like HomeAdvisor.
+2. **AUTO-OUTREACH (NEXT BUILD)** — one-click button: AI emails + SMS each delivered lead personalized as if from contractor ("Hi Mike, saw your 2014 AC may be aging — Mike's HVAC, can quote a tune-up..."). Phone notification when homeowner responds. Contractor can also manually call. THE MOAT — competitors give you leads but you have to chase them. We chase for you.
+3. **Hormozi single-plan pricing 2026-06-09:** $97 first month (FIRST200) → $297/mo from month 2. 80 leads/mo. À la carte: $15/lead OR $75/5-pack. 30-day money-back. Cancel anytime. No setup. No phone numbers required. No integration.
+4. **Stripe billing simple** — single tier, one Stripe product, à la carte one-time charges via Stripe Checkout for extras
 5. 70% of time selling, not coding, until 10 paying customers exist
+
+**DROPPED FROM DEFAULT FLOW 2026-06-09:** AI receptionist hero, Vapi prompts in any sales copy, multi-tenant Twilio at signup, A2P 10DLC at onboarding, demo line CTA in cold email, "Emma" character references, receptionist features on /pricing, call-log dashboard widgets on /dashboard root. Code still exists (Twilio voice route, Vapi assistant config, call_logs schema) — preserve for v2 future upsell. DO NOT pitch them.
 
 ---
 

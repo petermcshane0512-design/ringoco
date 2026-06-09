@@ -682,17 +682,14 @@ export default function HomePage() {
             <div>
               <div className="hero-eyebrow">Built for HVAC, Plumbing, Electrical, Roofing, and Handyman pros</div>
               <h1 className="hero-h1">
-                Never lose another job<br />
-                <span className="accent">to voicemail.</span>
+                If you don&rsquo;t use AI to find your customers,<br />
+                <span className="accent">your competitors will.</span>
               </h1>
-              {/* Subhead — desktop keeps the long sales-y version, mobile
-                  gets a short scannable one. Both Pads use the same .hero-sub
-                  base styles; .dt-only / .mb-only-block control visibility. */}
               <p className="hero-sub dt-only-block">
-                BellAveGo answers when you can&apos;t, captures the job, and texts you the details in 20 seconds. One booked job pays for the month.
+                BellAveGo delivers 80 fresh, exclusive homeowner leads to your dashboard every month — real names, addresses, phones, all flagged by recent permits, aging units, and property changes in YOUR zip. We even auto-email + SMS each one as YOU. Phone notification when they reply. One booked job pays for the month.
               </p>
               <p className="hero-sub mb-only-block">
-                BellAveGo answers missed calls, captures the job, and texts you the next step in seconds.
+                80 fresh exclusive homeowner leads/month. We email + SMS them as you. You only respond when they say yes.
               </p>
 
               <div className="hero-actions">
@@ -706,32 +703,30 @@ export default function HomePage() {
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                   </svg>
                 </Link>
-                <a href="tel:+16514677829" className="hero-cta-secondary" title="Tap to dial on mobile · (651) 467-7829">
+                <Link href="/start?promo=FIRST200" className="hero-cta-secondary" title="See sample leads">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    <path d="M9 12l2 2 4-4M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
                   </svg>
-                  {/* Desktop: single inline line. Mobile: label on top,
-                      phone number on a smaller line beneath. */}
                   <span className="hero-cta-secondary-label">
-                    <span className="hero-cta-secondary-line1">Call the AI Demo</span>
+                    <span className="hero-cta-secondary-line1">$97 first month</span>
                     <span className="hero-cta-secondary-sep"> · </span>
-                    <span className="hero-cta-secondary-line2">(651) 467-7829</span>
+                    <span className="hero-cta-secondary-line2">FIRST200 code</span>
                   </span>
-                </a>
+                </Link>
               </div>
 
               <div className="hero-trust">
                 <div className="hero-trust-item">
-                  <span className="hero-trust-num">100%</span>
-                  <span className="hero-trust-lab">Picked up before voicemail</span>
+                  <span className="hero-trust-num">80</span>
+                  <span className="hero-trust-lab">Fresh leads / month</span>
                 </div>
                 <div className="hero-trust-item">
-                  <span className="hero-trust-num">10s</span>
-                  <span className="hero-trust-lab">Call summary after every call</span>
+                  <span className="hero-trust-num">$3.71</span>
+                  <span className="hero-trust-lab">Per lead, exclusive</span>
                 </div>
                 <div className="hero-trust-item">
-                  <span className="hero-trust-num">24/7</span>
-                  <span className="hero-trust-lab">Always on</span>
+                  <span className="hero-trust-num">30d</span>
+                  <span className="hero-trust-lab">Money back · cancel anytime</span>
                 </div>
               </div>
             </div>
@@ -759,7 +754,7 @@ export default function HomePage() {
             What you see when you log in
           </div>
           <div style={{ fontSize: 22, fontWeight: 900, color: '#5EEAD4', letterSpacing: '-0.6px', textAlign: 'center', marginBottom: 18, lineHeight: 1.18 }}>
-            Every call, lead and dollar — live, in one place.
+            Every lead, every outreach, every booked job — live, in one place.
           </div>
           <DashboardPreview compact />
         </div>
@@ -786,7 +781,7 @@ export default function HomePage() {
             {[
               { num: '$297/mo', lab: 'locked for life · Founding-100 only' },
               { num: '30-day', lab: 'money-back guarantee · refund any reason' },
-              { num: '24/7', lab: 'AI answers every missed call' },
+              { num: '$15', lab: 'À la carte extra lead' },
               { num: '5/wk', lab: 'real neighborhood leads delivered every Monday' },
             ].map((s) => (
               <div key={s.lab} style={{
@@ -1320,14 +1315,14 @@ export default function HomePage() {
               📦 Here&apos;s everything you get
             </p>
             {[
-              { item: '24/7 AI receptionist · UNLIMITED calls answered', val: '$200/mo' },
-              { item: 'Auto-books appointments to your calendar live', val: '$97/mo' },
-              { item: '5 fresh neighborhood leads delivered every Monday', val: '$500/mo' },
-              { item: 'AI pitch script for every lead', val: '$50/mo' },
-              { item: 'FREE dedicated phone number', val: '$50/mo' },
-              { item: 'FREE white-glove onboarding (<10 min)', val: '$500 once' },
+              { item: '80 EXCLUSIVE homeowner leads / month in your zip', val: '$640/mo' },
+              { item: 'Real names + addresses + phones (not bait lists)', val: '$200/mo' },
+              { item: 'AUTO-OUTREACH: we email + SMS each lead as YOU', val: '$300/mo' },
+              { item: 'Phone notification the second a homeowner replies', val: '$50/mo' },
+              { item: 'Public-record signal (permits, aged units, property change)', val: '$150/mo' },
+              { item: 'À la carte add-ons — buy 5 more for $75 mid-month', val: 'flexible' },
+              { item: 'FREE 30-day money-back guarantee', val: 'risk-free' },
               { item: 'Lifetime price lock — never raised', val: 'priceless' },
-              { item: "Performance guarantee — refund if it doesn't work", val: 'risk-free' },
             ].map((row) => (
               <div key={row.item} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '6px 0' }}>
                 <div style={{ width: 18, height: 18, background: '#22C55E', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
@@ -1342,7 +1337,7 @@ export default function HomePage() {
             <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px dashed rgba(255,255,255,0.18)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                 <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>Total equivalent value:</span>
-                <span style={{ fontSize: 18, color: '#fff', fontWeight: 900, textDecoration: 'line-through', textDecorationColor: 'rgba(220,38,38,0.7)' }}>$847/mo + $500</span>
+                <span style={{ fontSize: 18, color: '#fff', fontWeight: 900, textDecoration: 'line-through', textDecorationColor: 'rgba(220,38,38,0.7)' }}>$1,340/mo</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 15, color: '#22C55E', fontWeight: 800 }}>Your price today:</span>
@@ -1396,10 +1391,10 @@ export default function HomePage() {
       {/* FINAL CTA */}
       <section style={{ padding: '88px 48px', background: 'linear-gradient(135deg, #0B1F3A 0%, #163356 100%)', textAlign: 'center' }}>
         <h2 style={{ fontSize: 'clamp(30px, 4.5vw, 50px)', fontWeight: 900, marginBottom: 16, color: '#fff', letterSpacing: '-1.5px', lineHeight: 1.1 }}>
-          Stop letting missed calls<br />become missed jobs.
+          Your competitors are using AI<br />to find customers. Are you?
         </h2>
-        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 17, maxWidth: 460, margin: '0 auto 40px', lineHeight: 1.8 }}>
-          Sign up in 5 minutes. The AI is live before you finish your next job.
+        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 17, maxWidth: 540, margin: '0 auto 40px', lineHeight: 1.8 }}>
+          80 fresh homeowner leads in your zip every month. We auto-email + SMS each one as you. $97 first month w/ code FIRST200. 30-day money-back. No setup.
         </p>
         <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
           {isSignedIn ? (
@@ -1407,13 +1402,10 @@ export default function HomePage() {
               Dashboard →
             </Link>
           ) : (
-            <Link href="/pricing" className="cta-pulse" style={{ padding: '16px 46px', background: '#22C55E', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 16 }}>
-              Get started →
+            <Link href="/start?promo=FIRST200" className="cta-pulse" style={{ padding: '16px 46px', background: '#22C55E', borderRadius: 12, textDecoration: 'none', color: '#fff', fontWeight: 900, fontSize: 16 }}>
+              Claim $97 first month →
             </Link>
           )}
-          <a href="tel:+16514677829" style={{ padding: '16px 30px', background: 'rgba(255,255,255,0.08)', borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.18)', color: '#fff', fontWeight: 700, fontSize: 16, textDecoration: 'none' }} title="Tap to dial on mobile · live AI demo">
-            📞 (651) 467-7829
-          </a>
         </div>
       </section>
 
@@ -1421,8 +1413,8 @@ export default function HomePage() {
       <footer style={{ padding: '44px 40px', background: '#0B1F3A', textAlign: 'center' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <Image src="/logo.png" alt="BellAveGo" width={300} height={100} style={{ objectFit: 'contain' }} />
-          <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>We don&apos;t just answer calls. We grow your business.</p>
-          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>AI receptionist for HVAC, plumbing, electrical, roofing, and handyman pros · $297/mo · 30-day money-back guarantee · Cancel anytime</p>
+          <p style={{ margin: 0, fontSize: 14, color: '#7AAAB2', fontStyle: 'italic' }}>If you don&apos;t use AI to find your customers, your competitors will.</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#3D5A62' }}>Exclusive homeowner lead-gen for HVAC, plumbing, electrical, roofing, and handyman pros · $97 first month w/ FIRST200 → $297/mo · 30-day money-back · Cancel anytime</p>
           <p style={{ margin: '8px 0 0', fontSize: 11, color: '#3D5A62' }}>
             <Link href="/privacy" style={{ color: '#7AAAB2', textDecoration: 'none' }}>Privacy</Link>
             {' · '}
@@ -1433,8 +1425,9 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* Sticky "Hear the AI live" CTA — bottom-right pill desktop, full-width strip mobile */}
-      <StickyDemoCta />
+      {/* 2026-06-09 — sticky demo CTA hidden per pivot to leads-only.
+          Component preserved for future v2 receptionist upsell. */}
+      {/* <StickyDemoCta /> */}
 
     </main>
   )
