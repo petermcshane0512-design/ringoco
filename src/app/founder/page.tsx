@@ -1,229 +1,260 @@
 'use client'
-
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@clerk/nextjs'
 
 /**
- * /founder — 2026-06-09 LEADS-ONLY REWRITE.
+ * Founder page — magazine single-article layout.
  *
- * Old script was about Peter's missed-calls + Emma the AI receptionist story.
- * New script per Peter 2026-06-09: his contractor friends in their early
- * 20s — solo, fighting to find ONE job a day, watching family-business
- * guys their parents' age coast on inherited customers — until they
- * started running BellAveGo and went from 1 job/day to $300K/yr fully
- * booked.
- *
- * Tone: warm, direct, working-class hero. Light theme matches new homepage.
+ * Old layout w/ floated portrait + prose-wrap restored 2026-06-09 per
+ * Peter request. Story rewritten for leads-only pivot: friend doing
+ * handyman work struggling to find homeowners in his area → built
+ * BellAveGo to surface those homeowners automatically.
  */
-
 export default function FounderPage() {
   const { isSignedIn } = useAuth()
+
   return (
-    <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#FFF8F0', color: '#0B1F3A', minHeight: '100vh' }}>
-      {/* NAV */}
+    <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#FFF8F0', color: '#0B1F3A', overflowX: 'hidden' }}>
+
+      {/* Nav */}
       <nav style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '14px clamp(16px, 4vw, 56px)',
+        padding: '14px clamp(16px, 4vw, 48px)',
         background: 'rgba(255,248,240,0.92)',
-        backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(232,116,43,0.18)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        borderBottom: '1px solid rgba(232,116,43,0.16)',
         position: 'sticky', top: 0, zIndex: 100,
       }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
           <Image src="/logo.png" alt="BellAveGo" width={260} height={80} style={{ objectFit: 'contain' }} priority />
         </Link>
-        <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
-          <Link href="/pricing" style={{ color: '#4A6670', textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>Pricing</Link>
-          {isSignedIn ? (
-            <Link href="/dashboard" style={ctaNavPrimary}>Dashboard →</Link>
-          ) : (
-            <Link href="/start?promo=FIRST400" style={ctaNavPrimary}>$97 first month →</Link>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+          {isSignedIn && <Link href="/dashboard" style={navCTA}>Dashboard →</Link>}
+          <Link href="/" style={navLink}>Home</Link>
+          <Link href="/pricing" style={navLink}>Pricing</Link>
+          {!isSignedIn && (
+            <>
+              <Link href="/sign-in" style={navLink}>Sign in</Link>
+              <Link href="/start?promo=FIRST400" style={navCTA}>$97 first month →</Link>
+            </>
           )}
         </div>
       </nav>
 
-      {/* HERO */}
-      <section style={{
-        padding: 'clamp(48px, 7vw, 88px) clamp(16px, 5vw, 48px) 32px',
-        textAlign: 'center',
-      }}>
-        <div style={{ maxWidth: 720, margin: '0 auto' }}>
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '6px 14px', borderRadius: 99,
-            background: 'rgba(232,116,43,0.10)',
-            border: '1.5px solid rgba(232,116,43,0.30)',
-            fontSize: 11, fontWeight: 800, color: '#C84B26',
-            letterSpacing: '0.18em', textTransform: 'uppercase',
-            marginBottom: 22,
-          }}>Why I built BellAveGo</span>
-          <h1 style={{
-            fontSize: 'clamp(34px, 5vw, 56px)',
-            fontWeight: 900, letterSpacing: '-0.045em',
-            lineHeight: 1.05, margin: '0 0 22px',
-            color: '#0B1F3A',
-          }}>
-            My buddies were fighting for{' '}
-            <span style={{
-              background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 50%, #C84B26 100%)',
-              WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-            }}>one job a day.</span>{' '}
-            Now they&rsquo;re fully booked.
-          </h1>
-          <p style={{ fontSize: 'clamp(16px, 1.7vw, 19px)', color: '#4A6670', lineHeight: 1.65, margin: '0 auto 32px', maxWidth: 600 }}>
-            I&rsquo;m 22. My closest friends — guys 23, 24 — went out on their own as HVAC techs and plumbers two summers ago. I watched them grind 12-hour days finding ONE job and barely making rent. Meanwhile, the family-business guys our parents&rsquo; age were coasting on inherited customers. So I figured out a system — AI that finds them homeowner leads + reaches out as them. Now those same friends are pulling $300K/yr fully booked from 9-7, no more cold-calling, no more HomeAdvisor bait.
+      <style>{`
+        .fv4-article {
+          max-width: 940px;
+          margin: 0 auto;
+          padding: 56px 32px 72px;
+          position: relative;
+        }
+        .fv4-eyebrow {
+          display: inline-flex; align-items: center; gap: 10px;
+          font-size: 11px; font-weight: 800;
+          color: #C84B26;
+          letter-spacing: 0.24em; text-transform: uppercase;
+          margin: 0 0 18px;
+        }
+        .fv4-eyebrow::before {
+          content: ''; width: 24px; height: 1px;
+          background: currentColor;
+          opacity: 0.55;
+        }
+        .fv4-h1 {
+          font-size: clamp(34px, 4.6vw, 56px);
+          font-weight: 900;
+          letter-spacing: -0.04em;
+          line-height: 1.03;
+          color: #0B1F3A;
+          margin: 0 0 32px;
+          max-width: 720px;
+        }
+        .fv4-h1 .accent {
+          background: linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+          filter: drop-shadow(0 2px 12px rgba(232,116,43,0.22));
+        }
+        .fv4-portrait {
+          float: right;
+          width: 300px;
+          aspect-ratio: 1/1;
+          margin: 4px 0 18px 32px;
+          position: relative;
+          border-radius: 50%;
+          overflow: hidden;
+          background:
+            radial-gradient(circle at 28% 22%, rgba(255,217,168,0.85), transparent 60%),
+            radial-gradient(circle at 76% 78%, rgba(255,233,200,0.55), transparent 65%),
+            linear-gradient(160deg, #FFF1E2 0%, #FFE5C7 55%, #FFD9A8 100%);
+          border: 1px solid rgba(232,116,43,0.22);
+          box-shadow:
+            0 24px 50px -18px rgba(11,31,58,0.18),
+            0 0 0 1px rgba(232,116,43,0.08),
+            inset 0 1px 0 rgba(255,255,255,0.65);
+          transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.45s ease, border-color 0.45s ease, filter 0.45s ease;
+        }
+        .fv4-portrait:hover {
+          transform: scale(1.035) translateY(-5px);
+          border-color: rgba(232,116,43,0.42);
+          box-shadow: 0 38px 72px -18px rgba(11,31,58,0.26), 0 0 0 1px rgba(232,116,43,0.20), 0 0 80px -10px rgba(232,116,43,0.35), inset 0 1px 0 rgba(255,255,255,0.75);
+          filter: brightness(1.04);
+        }
+        .fv4-portrait::before {
+          content: '';
+          position: absolute; top: -12%; left: -10%;
+          width: 55%; height: 55%; border-radius: 50%;
+          background: radial-gradient(circle, rgba(255,157,90,0.38), transparent 60%);
+          filter: blur(34px);
+          animation: fv4DriftA 11s ease-in-out infinite alternate;
+          pointer-events: none;
+        }
+        .fv4-portrait::after {
+          content: '';
+          position: absolute; bottom: -16%; right: -12%;
+          width: 60%; height: 60%; border-radius: 50%;
+          background: radial-gradient(circle, rgba(232,116,43,0.22), transparent 65%);
+          filter: blur(38px);
+          animation: fv4DriftB 13s ease-in-out infinite alternate;
+          pointer-events: none;
+        }
+        @keyframes fv4DriftA {
+          0%   { transform: translate(0,0) scale(1); opacity: 0.65; }
+          100% { transform: translate(28px, 22px) scale(1.14); opacity: 0.92; }
+        }
+        @keyframes fv4DriftB {
+          0%   { transform: translate(0,0) scale(1); opacity: 0.6; }
+          100% { transform: translate(-22px, -28px) scale(1.12); opacity: 0.88; }
+        }
+        .fv4-portrait img {
+          position: absolute; inset: 0;
+          object-fit: cover;
+          z-index: 2;
+        }
+
+        .fv4-prose {
+          font-size: 17px;
+          line-height: 1.7;
+          color: #3D5A62;
+          letter-spacing: -0.005em;
+        }
+        .fv4-prose p { margin: 0 0 20px; }
+        .fv4-prose p:last-of-type { margin-bottom: 0; }
+        .fv4-prose strong { color: #0B1F3A; font-weight: 700; }
+        .fv4-prose em { font-style: italic; }
+        .fv4-prose::after { content: ''; display: block; clear: both; }
+
+        .fv4-end {
+          margin-top: 32px;
+          padding-top: 22px;
+          border-top: 1px solid rgba(232,116,43,0.20);
+          display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+          font-size: 13.5px; color: #7AAAB2;
+        }
+        .fv4-end a.try {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 12px 20px;
+          border-radius: 11px;
+          background: linear-gradient(135deg, #FF9D5A 0%, #E8742B 55%, #C84B26 100%);
+          color: #fff;
+          font-size: 13.5px; font-weight: 800;
+          letter-spacing: -0.1px;
+          text-decoration: none;
+          box-shadow: 0 10px 24px rgba(232,116,43,0.36), inset 0 1px 0 rgba(255,255,255,0.25);
+          transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), filter 0.22s;
+        }
+        .fv4-end a.try:hover { transform: translateY(-2px) scale(1.02); filter: brightness(1.06); }
+        .fv4-end a.call { color: #C84B26; font-weight: 700; text-decoration: none; }
+        .fv4-end a.call:hover { text-decoration: underline; }
+
+        @media (max-width: 720px) {
+          .fv4-article { padding: 40px 22px 56px; }
+          .fv4-h1 { font-size: clamp(34px, 8.5vw, 44px); margin-bottom: 24px; }
+          .fv4-portrait {
+            float: none;
+            width: 100%;
+            max-width: 280px;
+            margin: 0 auto 28px;
+            display: block;
+          }
+          .fv4-prose { font-size: 16.5px; line-height: 1.68; }
+          .fv4-prose p { margin-bottom: 18px; }
+        }
+      `}</style>
+
+      <article className="fv4-article">
+        <p className="fv4-eyebrow">Founder &middot; Peter McShane</p>
+        <h1 className="fv4-h1">
+          Hi, I&rsquo;m Peter, and I founded{' '}
+          <span className="accent">BellAveGo.</span>
+        </h1>
+
+        <div className="fv4-prose">
+          <div className="fv4-portrait">
+            <Image
+              src="/peter.png"
+              alt="Peter McShane, founder of BellAveGo"
+              fill
+              sizes="(max-width: 720px) 280px, 300px"
+              priority
+              onError={(e) => { e.currentTarget.style.display = 'none' }}
+            />
+          </div>
+
+          <p>
+            I didn&rsquo;t start BellAveGo because AI was trending. I started it because I watched my buddy work harder than anyone I know and still only get <strong>one job a day</strong>. He runs a handyman business out of his pickup truck &mdash; drywall repair, fence builds, garage door fixes, the stuff every homeowner needs and no one knows how to do anymore. He&rsquo;s great at the work. He&rsquo;s broke finding it.
           </p>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 12 }}>
-            <Link href="/start?promo=FIRST400" style={ctaHeroPrimary}>Claim $97 first month →</Link>
-            <Link href="/pricing" style={ctaHeroSecondary}>See pricing</Link>
-          </div>
-          <p style={{ fontSize: 12, color: '#7AAAB2', marginTop: 4 }}>$97 first month with FIRST400 · 30-day money back · cancel anytime</p>
-        </div>
-      </section>
+          <p>
+            Last summer I was helping him knock out a fence install when we sat down at lunch and he showed me his calendar. He&rsquo;d spent <strong>twenty hours that week</strong> scrolling Nextdoor, posting in neighborhood Facebook groups, paying $80 a pop for HomeAdvisor leads that three other guys also got, and cold-calling random addresses he pulled off Zillow. He landed <em>one</em> paying gig. While the kids down the street whose parents owned the area HVAC company were posting Instagram reels from their boats.
+          </p>
+          <p>
+            I went home that night and started digging. Turns out the homeowners who need work done are <strong>not hard to find</strong> if you know where to look. People file building permits. They sell houses. They pull move-in records. Their AC units age. Their roofs get hit by storms. All of it is <em>public data</em>. The problem isn&rsquo;t that the leads don&rsquo;t exist. The problem is that one solo handyman, or one solo HVAC tech, or one solo plumber, has no way to surface them &mdash; while the franchise shops with marketing budgets do.
+          </p>
+          <p>
+            So we built BellAveGo. Every Monday morning, we deliver 80 fresh homeowner leads to your dashboard. Real people in your zip code. Real names, real addresses, real phone numbers. All flagged by something specific: a permit they just filed, a unit aging out, a property they just bought, a storm that hit their neighborhood last week. <strong>Exclusive to you &mdash; never shared with five other contractors like HomeAdvisor does.</strong>
+          </p>
+          <p>
+            And we don&rsquo;t stop there. Our AI writes a personalized intro text and email to each homeowner, signed by you, mentioning your shop, in your voice. You only call back the ones who say yes. No more cold-dialing. No more posting in 14 Facebook groups. No more refreshing HomeAdvisor at midnight hoping for a shared lead. <strong>The work comes to you.</strong>
+          </p>
+          <p>
+            My buddy was the first one to try it. He went from one job a day to fully booked inside a month. Now he&rsquo;s hiring his first helper. That&rsquo;s the whole reason this exists. Small home-service operators have always been the backbone of their neighborhoods, but they&rsquo;ve never had access to the kind of automated lead-gen that the big franchise chains pay marketing agencies five figures a month for. BellAveGo changes that &mdash; built into a product priced for a one-truck operator, not a corporation.
+          </p>
 
-      {/* STORY */}
-      <section style={{ padding: '40px clamp(16px, 5vw, 48px)' }}>
-        <div style={{ maxWidth: 720, margin: '0 auto' }}>
-          {STORY_BLOCKS.map((b, i) => (
-            <div key={i} style={{ marginBottom: 28 }}>
-              {b.h && (
-                <h2 style={{ fontSize: 'clamp(22px, 2.6vw, 30px)', fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.02em', margin: '0 0 14px' }}>{b.h}</h2>
-              )}
-              {b.body.map((para, j) => (
-                <p key={j} style={{ fontSize: 16.5, color: '#0B1F3A', lineHeight: 1.7, margin: '0 0 14px' }}>{para}</p>
-              ))}
-            </div>
-          ))}
-
-          {/* Inline pull-quote */}
-          <div style={{
-            padding: '24px 26px', borderRadius: 16,
-            background: 'linear-gradient(135deg, #FFD9A8 0%, #FFF8F0 100%)',
-            border: '1.5px solid rgba(232,116,43,0.30)',
-            margin: '24px 0',
-          }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#C84B26', letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 8 }}>The math</div>
-            <p style={{ fontSize: 18, fontWeight: 700, color: '#0B1F3A', lineHeight: 1.5, margin: 0 }}>
-              80 fresh exclusive leads × 15% close × $400 avg job = <span style={{ color: '#C84B26' }}>$4,800/mo new revenue</span> from a $497 spend. That&rsquo;s what gets a 23-year-old from one job a day to $300K/yr.
-            </p>
-          </div>
-
-          {STORY_END.map((para, j) => (
-            <p key={j} style={{ fontSize: 16.5, color: '#0B1F3A', lineHeight: 1.7, margin: '0 0 14px' }}>{para}</p>
-          ))}
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 32 }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontWeight: 900, fontSize: 22, color: '#fff',
-              boxShadow: '0 8px 20px rgba(232,116,43,0.30)',
-            }}>PM</div>
-            <div>
-              <div style={{ fontSize: 17, fontWeight: 900, color: '#0B1F3A' }}>Peter McShane</div>
-              <div style={{ fontSize: 13, color: '#4A6670' }}>Founder, BellAveGo · Text me anytime: (773) 710-9565</div>
-            </div>
+          <div className="fv4-end">
+            <Link href="/start?promo=FIRST400" className="try">
+              Try BellAveGo &mdash; $97 first month
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </Link>
+            <a className="call" href="tel:+17737109565">or text me: (773) 710-9565</a>
           </div>
         </div>
-      </section>
+      </article>
 
-      {/* FINAL CTA */}
-      <section style={{ padding: '64px clamp(16px, 5vw, 48px)', background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 100%)', textAlign: 'center' }}>
-        <h2 style={{ fontSize: 'clamp(26px, 3.4vw, 38px)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', margin: '0 0 14px', lineHeight: 1.15 }}>
-          Same thing that got my buddies fully booked.<br />Try it $97 first month.
-        </h2>
-        <p style={{ color: 'rgba(255,255,255,0.92)', fontSize: 16, maxWidth: 540, margin: '0 auto 28px', lineHeight: 1.6 }}>
-          80 fresh leads / mo, AI emails + SMS them as you, you only reply when they say yes. Cancel anytime in first 30 days for full refund.
+      <footer style={{ padding: '28px 40px', background: '#FFF7EE', borderTop: '1px solid rgba(232,116,43,0.18)', textAlign: 'center' }}>
+        <p style={{ margin: 0, fontSize: 12, color: '#7AAAB2' }}>
+          © 2026 BellAveGo LLC &middot; Built by Peter McShane &middot; <a href="mailto:peter@bellavego.com" style={{ color: '#C84B26', textDecoration: 'none', fontWeight: 700 }}>peter@bellavego.com</a>
         </p>
-        <Link href="/start?promo=FIRST400" style={ctaFinal}>Claim $97 first month →</Link>
-      </section>
-
-      {/* FOOTER */}
-      <footer style={{ padding: '32px 24px', background: '#0B1F3A', textAlign: 'center' }}>
-        <Image src="/logo.png" alt="BellAveGo" width={220} height={68} style={{ objectFit: 'contain', marginBottom: 10, filter: 'brightness(1.1)' }} />
-        <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
-          <Link href="/" style={{ color: '#FF9D5A', textDecoration: 'none' }}>Home</Link>
+        <p style={{ margin: '8px 0 0', fontSize: 11, color: '#7AAAB2' }}>
+          <Link href="/privacy" style={{ color: 'inherit', textDecoration: 'none' }}>Privacy</Link>
           {' · '}
-          <Link href="/pricing" style={{ color: '#5EEAD4', textDecoration: 'none' }}>Pricing</Link>
-          {' · '}© 2026 BellAveGo LLC
+          <Link href="/terms" style={{ color: 'inherit', textDecoration: 'none' }}>Terms</Link>
         </p>
       </footer>
     </main>
   )
 }
 
-const STORY_BLOCKS: Array<{ h?: string; body: string[] }> = [
-  {
-    h: 'I&rsquo;m 22 and watching my friends struggle.',
-    body: [
-      'I went to high school w/ a lot of trade guys. HVAC, plumbing, electrical. Real guys who picked up tools the day after they got their diploma and went to work. The ones who are out on their own at 23, 24 right now — they all hit the same wall.',
-      'They\'re INSANELY good at their craft. They\'ll fix anything. But the second they go solo and step away from a family-owned shop with a 30-year-old customer list, they\'re back to square one. Cold-calling. Scrolling neighborhood Facebook groups. Paying HomeAdvisor $80 a lead that gets shared with five other guys.',
-      'Last summer I watched one of them — Carlos, runs his own HVAC out of Mesa — work 14-hour days and book ONE actual paying job. The rest of his week was spent finding people who might need work.',
-    ],
-  },
-  {
-    h: 'Meanwhile the family-business guys coast.',
-    body: [
-      'Guys in their 40s and 50s who took over their dad\'s plumbing company? They never have to look for work. The customer list is just THERE. Generations of word-of-mouth.',
-      'And that imbalance pissed me off. Carlos was better at the actual job than half the guys with inherited businesses. He just couldn\'t crack the lead problem.',
-    ],
-  },
-  {
-    h: 'So I built BellAveGo.',
-    body: [
-      'I started looking at what data actually exists about homeowners who NEED work done. Permit filings. Property records. HVAC system ages from public utility data. Real-estate transactions.',
-      'Turns out it\'s all sitting there in plain sight. Carlos didn\'t need to cold-call random houses — he needed someone (or some AI) to tell him: "Hey, the person at 4421 Maple Crest just bought the place. Their AC is 14 years old. Here\'s their name, phone, and a personalized intro message ready to send."',
-      'That\'s what BellAveGo does. Every Monday, 80 fresh leads in your zip — homeowner names, addresses, phones, intent signal. Then AI sends a personalized text + email to each one signed by YOU. You only respond when they reply yes.',
-    ],
-  },
-  {
-    h: 'Carlos went from 1 job a day to fully booked.',
-    body: [
-      'He was one of my first beta testers. Within 30 days of switching to BellAveGo, he stopped cold-calling entirely. His weeks went from "find work + try to finish it" to "execute on jobs already booked."',
-      'He cleared $300K his second year fully booked. At 24 years old. From his own one-truck operation in Mesa.',
-      'My other friends followed. Two HVAC guys, a plumber, an electrician. All in their early 20s. All running their own shops. All locked in at $250-400K/yr because they stopped fighting for leads.',
-    ],
-  },
-]
-
-const STORY_END = [
-  `I'm building BellAveGo for them. For Carlos and every other 22, 23, 24-year-old who went into the trades, started their own thing, and is now sitting at home Saturday night cold-calling because they have no other way to fill Monday.`,
-  `If you're one of those guys — or if you\'re just tired of paying HomeAdvisor $80 a lead that 4 other people already have — try BellAveGo for a month. $97 first month w/ FIRST400. If it doesn't book you at least one job in 30 days, full refund, no calls, no hoops.`,
-  `Text me anytime — (773) 710-9565. I'm not going to send you to a chatbot. — Peter`,
-]
-
-const ctaNavPrimary: React.CSSProperties = {
+const navLink: React.CSSProperties = {
+  color: '#4A6670', textDecoration: 'none', fontWeight: 700, fontSize: 14,
+}
+const navCTA: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: 6,
-  padding: '10px 18px', borderRadius: 10,
-  background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 100%)',
+  padding: '10px 16px', borderRadius: 10,
+  background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
   color: '#fff', textDecoration: 'none',
   fontWeight: 900, fontSize: 13,
   boxShadow: '0 6px 18px rgba(232,116,43,0.32)',
-}
-const ctaHeroPrimary: React.CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', gap: 8,
-  padding: '14px 26px', borderRadius: 12,
-  background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 50%, #C84B26 100%)',
-  color: '#fff', textDecoration: 'none',
-  fontWeight: 900, fontSize: 14.5,
-  boxShadow: '0 12px 32px rgba(232,116,43,0.42)',
-  letterSpacing: '-0.01em',
-}
-const ctaHeroSecondary: React.CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', gap: 8,
-  padding: '14px 24px', borderRadius: 12,
-  background: '#FFFFFF',
-  border: '1.5px solid rgba(11,31,58,0.20)',
-  color: '#0B1F3A', textDecoration: 'none',
-  fontWeight: 800, fontSize: 14.5,
-}
-const ctaFinal: React.CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', gap: 8,
-  padding: '16px 36px', borderRadius: 14,
-  background: '#FFFFFF',
-  color: '#C84B26', textDecoration: 'none',
-  fontWeight: 900, fontSize: 15.5,
-  boxShadow: '0 14px 36px rgba(11,31,58,0.18)',
 }

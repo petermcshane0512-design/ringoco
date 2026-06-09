@@ -131,13 +131,12 @@ export default function Home() {
         flexWrap: 'wrap',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <span style={{ color: '#FFC58A', fontWeight: 800, letterSpacing: '0.08em' }}>★★★★★ 4.9</span>
-          <span style={{ color: 'rgba(255,255,255,0.78)' }}>Trusted by HVAC, plumbing, electrical &amp; roofing shops</span>
+          <span style={{ color: 'rgba(255,255,255,0.78)' }}>Built for HVAC, plumbing, electrical, roofing &amp; handyman shops</span>
           <span style={{ color: 'rgba(255,255,255,0.42)' }}>·</span>
           <span style={{ color: 'rgba(255,255,255,0.78)' }}>30-day money-back</span>
         </div>
         <a href={FOUNDER_PHONE_HREF} style={{ color: '#FF9D5A', textDecoration: 'none', fontWeight: 800, whiteSpace: 'nowrap' }}>
-          📞 Talk to Peter (founder): {FOUNDER_PHONE}
+          📞 {FOUNDER_PHONE}
         </a>
       </div>
 

@@ -239,7 +239,7 @@ export default async function AffiliateKitPage({ params }: { params: Params }) {
             See live leaderboard →
           </Link>
           <div style={{ marginTop: 18, fontSize: 11, color: 'rgba(255,255,255,0.40)' }}>
-            Questions? Text Peter directly: (773) 710-9565
+            Questions? Text us: (773) 710-9565
           </div>
         </div>
       </section>

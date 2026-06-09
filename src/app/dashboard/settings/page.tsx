@@ -855,7 +855,7 @@ export default function SettingsPage() {
             textAlign: 'center',
             lineHeight: 1.55,
           }}>
-            Need help instead? Text Peter directly at{' '}
+            Need help instead? Text us at{' '}
             <a href="tel:7737109565" style={{ color: '#0AA89F', fontWeight: 700, textDecoration: 'none' }}>(773) 710-9565</a>
             {' '}— replies in under 10 minutes during business hours.
           </div>

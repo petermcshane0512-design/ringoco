@@ -184,7 +184,7 @@ export default function CancelPage() {
         )}
 
         <p style={{ fontSize: 11, color: '#A0BCC2', textAlign: 'center', marginTop: 22 }}>
-          Questions? Text Peter directly at <a href="tel:+17737109565" style={{ color: '#0AA89F', fontWeight: 700, textDecoration: 'none' }}>(773) 710-9565</a>
+          Questions? Text us at <a href="tel:+17737109565" style={{ color: '#0AA89F', fontWeight: 700, textDecoration: 'none' }}>(773) 710-9565</a>
         </p>
       </div>
     </main>
