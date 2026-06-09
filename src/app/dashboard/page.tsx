@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 
@@ -117,14 +116,7 @@ export default function DashboardSimplified() {
   const customTotal = customQty * 25
 
   return (
-    <main style={{
-      minHeight: '100vh',
-      background: '#FFF8F0',
-      color: '#0B1F3A',
-      fontFamily: "'Inter', system-ui, sans-serif",
-    }}>
-      <Nav />
-
+    <div style={{ color: '#0B1F3A' }}>
       <section style={{ padding: '32px clamp(16px, 4vw, 40px)' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto' }}>
           <div style={{ marginBottom: 24 }}>
@@ -251,29 +243,7 @@ export default function DashboardSimplified() {
           </section>
         </div>
       </section>
-    </main>
-  )
-}
-
-function Nav() {
-  return (
-    <nav style={{
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: '14px clamp(16px, 4vw, 40px)',
-      background: 'rgba(255,248,240,0.92)',
-      backdropFilter: 'blur(12px)',
-      borderBottom: '1px solid rgba(232,116,43,0.18)',
-      position: 'sticky', top: 0, zIndex: 50,
-    }}>
-      <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-        <Image src="/logo.png" alt="BellAveGo" width={220} height={68} style={{ objectFit: 'contain' }} priority />
-      </Link>
-      <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
-        <Link href="/dashboard/leads" style={navLink}>All leads</Link>
-        <Link href="/dashboard/settings/outreach" style={navLink}>AI Outreach</Link>
-        <Link href="/dashboard/setup" style={navLink}>Settings</Link>
-      </div>
-    </nav>
+    </div>
   )
 }
 
@@ -337,7 +307,6 @@ const loadingStyle: React.CSSProperties = {
   fontFamily: "'Inter', system-ui, sans-serif",
   display: 'flex', alignItems: 'center', justifyContent: 'center',
 }
-const navLink: React.CSSProperties = { color: '#4A6670', textDecoration: 'none', fontSize: 13, fontWeight: 700 }
 const ctaSecondary: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: 6,
   padding: '9px 14px', borderRadius: 9,
