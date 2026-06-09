@@ -92,7 +92,10 @@ type ContactItem = {
   emails?: string[]
 }
 
-const TRADE_KEYWORDS = ['hvac', 'air conditioning', 'heating', 'plumbing', 'electrical', 'roofing']
+// Top 3 highest-yield trades only — keeps Apify scrape under 300s timeout.
+// Use ?trades= query param to override (e.g. ?trades=plumbing,roofing for
+// dedicated trade-expansion runs).
+const DEFAULT_TRADE_KEYWORDS = ['hvac', 'plumbing', 'electrical']
 
 function classifyTrade(category?: string): string | null {
   const c = (category || '').toLowerCase()
@@ -124,16 +127,16 @@ function passesSoloOrSmallCrewFilter(m: MapsItem): boolean {
   return true
 }
 
-async function scrapeCity(city: string, targetCount: number): Promise<MapsItem[]> {
-  console.log(`[refill] scraping ${city} for ${targetCount} solo/1-3 person crew shops`)
+async function scrapeCity(city: string, targetCount: number, tradeKeywords: string[]): Promise<MapsItem[]> {
+  console.log(`[refill] scraping ${city} for ${targetCount} solo/1-3 person crew shops across ${tradeKeywords.length} trades`)
   const items = await apifyRunSync<MapsItem>(APIFY_MAPS_ACTOR, {
-    searchStringsArray: TRADE_KEYWORDS.map((kw) => `${kw} ${city}`),
-    maxCrawledPlacesPerSearch: Math.ceil(targetCount / TRADE_KEYWORDS.length),
+    searchStringsArray: tradeKeywords.map((kw) => `${kw} ${city}`),
+    maxCrawledPlacesPerSearch: Math.min(60, Math.ceil(targetCount / tradeKeywords.length)),
     language: 'en',
     countryCode: 'us',
     skipClosedPlaces: true,
     onlyDataFromSearchPage: false,
-  })
+  }, 180_000)  // 3 min cap on maps actor
   const filtered = items.filter(passesSoloOrSmallCrewFilter)
   console.log(`[refill] ${city}: ${items.length} raw → ${filtered.length} pass 1-3 person crew filter`)
   return filtered
@@ -173,21 +176,41 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, error: `no schedule entry for ${targetDate}` })
   }
 
+  // ?city=Phoenix, AZ → scrape ONE city (fits in 5-min Vercel timeout)
+  // No ?city → scrape ALL cities in schedule (only safe if total raw is small;
+  // cron sets this once-per-day at 1am UTC where 5-min limit is OK).
+  const singleCity = url.searchParams.get('city')
+  const citiesToScrape = singleCity
+    ? day.cities.filter((c) => c.toLowerCase().startsWith(singleCity.toLowerCase().slice(0, 6)))
+    : day.cities
+
+  // Optional ?trades=plumbing,roofing override (default = top 3 by yield)
+  const tradesParam = url.searchParams.get('trades')
+  const tradeKeywords = tradesParam
+    ? tradesParam.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
+    : DEFAULT_TRADE_KEYWORDS
+
+  // Per-city scrape target capped at 180 raw places (fits in single-call budget)
+  const perCityScrapeTarget = Math.min(180, Math.ceil(day.scrape_target / day.cities.length))
+
   const inserted: string[] = []
   const errors: string[] = []
-  for (const city of day.cities) {
+  const cityResults: Array<{ city: string; raw: number; passed_icp: number; verified: number; inserted: number }> = []
+
+  for (const city of citiesToScrape) {
     try {
-      const places = await scrapeCity(city, day.scrape_target)
-      const websites = [...new Set(places.map((p) => p.website!).filter(Boolean))].slice(0, 200)
+      const places = await scrapeCity(city, perCityScrapeTarget, tradeKeywords)
+      const websites = [...new Set(places.map((p) => p.website!).filter(Boolean))].slice(0, 120)
       const emails = await enrichEmails(websites)
       let cityCount = 0
+      let cityVerified = 0
       let cityDropped = 0
       for (const p of places) {
         if (!p.website) continue
         const email = emails.get(p.website)
         const trade = classifyTrade(p.categoryName)
         if (!email || !trade) continue
-        // 2026-06-08 pre-insert email verify — MX check + bad-pattern filter
+        cityVerified++
         const v = await verifyEmail(email)
         if (!v.ok) { cityDropped++; continue }
         const row = {
@@ -201,10 +224,10 @@ export async function GET(req: NextRequest) {
         }
         const { error } = await supabase.from('outreach_leads').insert(row)
         if (!error) { inserted.push(email); cityCount++ }
-        // UNIQUE(email) violations are expected dedup behavior — ignore silently
+        // UNIQUE(email) violations silently dropped (dedup behavior)
       }
-      console.log(`[refill] ${city}: inserted ${cityCount}, dropped ${cityDropped} (failed email verify)`)
-      console.log(`[refill] ${city}: inserted ${cityCount}`)
+      cityResults.push({ city, raw: places.length, passed_icp: places.length, verified: cityVerified, inserted: cityCount })
+      console.log(`[refill] ${city}: raw=${places.length}, verified=${cityVerified}, inserted=${cityCount}, dropped=${cityDropped}`)
     } catch (e) {
       errors.push(`${city}: ${(e as Error).message}`)
     }
@@ -213,9 +236,14 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     target_date: targetDate,
-    cities_scraped: day.cities,
+    trades: tradeKeywords,
+    cities_scraped: citiesToScrape,
     inserted_count: inserted.length,
+    per_city: cityResults,
     errors,
+    next_url_for_remaining: !singleCity
+      ? null
+      : `/api/crons/refill-outreach-queue?date=${targetDate}&city=<next-city-prefix>`,
     checked_at: new Date().toISOString(),
   })
 }
