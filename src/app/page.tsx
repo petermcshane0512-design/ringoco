@@ -88,11 +88,11 @@ const TEASER_LEADS: { name: string; signal: string; value: string; isMore?: bool
 const FAQS: { q: string; a: string }[] = [
   {
     q: 'What if my zip code is already locked?',
-    a: 'Enter your zip at signup — we tell you instantly if it&rsquo;s open. If it&rsquo;s gone, we hold your spot for the next 7 days as backup. No charge to check.',
+    a: 'Enter your zip at signup — we tell you instantly if it’s open. If it’s gone, we hold your spot for the next 7 days as backup. No charge to check.',
   },
   {
     q: 'Where do the names + phones come from? Is this legal?',
-    a: 'Public records. Building permits (filed at city hall), county property records, MLS sold data, NOAA storm data, USPS move-in data. All public. Then a paid skip-trace pulls the verified phone. All compliant — same data Angi + HomeAdvisor use, except we don&rsquo;t share it.',
+    a: 'Public records. Building permits (filed at city hall), county property records, MLS sold data, NOAA storm data, USPS move-in data. All public. Then a paid skip-trace pulls the verified phone. All compliant — same data Angi + HomeAdvisor use, except we don’t share it.',
   },
   {
     q: 'Do I have to cold-call all 80 leads?',
@@ -107,8 +107,8 @@ const FAQS: { q: string; a: string }[] = [
     a: 'HomeAdvisor: $40-300/lead, sold to 4-5 shops, you cold-call. Us: $6.21/lead, exclusive to you, AI sends the intro for you. Opposite product, opposite model.',
   },
   {
-    q: 'I&rsquo;m a 1-truck shop. Is this overkill?',
-    a: 'It&rsquo;s built for 1-5 employee shops. Our first beta tester was a solo HVAC in Mesa — went from 1 job/day to fully booked. Bigger shops already have receptionists + marketing teams. Small dogs win here.',
+    q: 'I’m a 1-truck shop. Is this overkill?',
+    a: 'It’s built for 1-5 employee shops. Our first beta tester was a solo HVAC in Mesa — went from 1 job/day to fully booked. Bigger shops already have receptionists + marketing teams. Small dogs win here.',
   },
 ]
 
@@ -177,7 +177,7 @@ export default function Home() {
               from 80 fresh homeowner leads in your zip.
             </h1>
             <p style={{ fontSize: 'clamp(16px, 1.55vw, 18px)', color: '#3D5A66', lineHeight: 1.6, margin: '0 0 26px', maxWidth: 580 }}>
-              Real names, addresses, phones — pulled overnight from permits, aging HVAC, storm strikes, new move-ins. AI sends the intro text + email for you. You only call back the YES&rsquo;s. <strong style={{ color: '#0B1F3A' }}>One shop per zip. Locked all year.</strong>
+              Real names, addresses, phones — pulled overnight from permits, aging HVAC, storm strikes, new move-ins. AI sends the intro text + email for you. You only call back the YES’s. <strong style={{ color: '#0B1F3A' }}>One shop per zip. Locked all year.</strong>
             </p>
 
             {/* Elon: single CTA. Killed "See pricing" secondary — was
@@ -249,7 +249,7 @@ export default function Home() {
               boxShadow: '0 10px 32px rgba(232,116,43,0.10)',
             }}>
               <div style={{ fontSize: 12, fontWeight: 800, color: '#C84B26', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>With BellAveGo</div>
-              <h3 style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', margin: '0 0 14px', letterSpacing: '-0.02em' }}>You wake up Monday with 20 leads + 2 YES&rsquo;s waiting.</h3>
+              <h3 style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', margin: '0 0 14px', letterSpacing: '-0.02em' }}>You wake up Monday with 20 leads + 2 YES’s waiting.</h3>
               <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 10 }}>
                 {[
                   '20 fresh homeowner leads in your dashboard by 6am',
@@ -280,7 +280,7 @@ export default function Home() {
       <section style={{ padding: '64px clamp(16px, 5vw, 48px)', background: '#FFF8F0' }}>
         <div style={{ maxWidth: 920, margin: '0 auto' }}>
           <h2 style={{ fontSize: 'clamp(26px, 3vw, 38px)', fontWeight: 900, letterSpacing: '-0.03em', margin: '0 0 14px', textAlign: 'center', color: '#0B1F3A' }}>
-            Here&rsquo;s the math one booked install pays for the year.
+            Here’s the math one booked install pays for the year.
           </h2>
           <p style={{ fontSize: 16, color: '#3D5A66', textAlign: 'center', maxWidth: 640, margin: '0 auto 36px', lineHeight: 1.55 }}>
             Conservative numbers. Real industry close rates. No fluff.
@@ -337,7 +337,7 @@ export default function Home() {
               </div>
             </div>
             <p style={{ fontSize: 13, color: '#4A6670', textAlign: 'center', margin: '18px 0 0', lineHeight: 1.55 }}>
-              That&rsquo;s <strong style={{ color: '#0B1F3A' }}>$51,840/year new revenue from a $5,964/year tool</strong>. ONE booked install pays for the whole year.
+              That’s <strong style={{ color: '#0B1F3A' }}>$51,840/year new revenue from a $5,964/year tool</strong>. ONE booked install pays for the whole year.
             </p>
           </div>
         </div>
@@ -476,7 +476,7 @@ export default function Home() {
                 Peter McShane, 22. I built BellAveGo for my buddies.
               </h3>
               <p style={{ fontSize: 14.5, color: '#4A6670', margin: '0 0 12px', lineHeight: 1.6 }}>
-                Watched my friends grind 14-hour days for ONE paying job. Watched family-business guys our parents&rsquo; age coast on inherited customers. Built this so the next 22-year-old going solo doesn&rsquo;t have to choose between sleep and finding work.
+                Watched my friends grind 14-hour days for ONE paying job. Watched family-business guys our parents’ age coast on inherited customers. Built this so the next 22-year-old going solo doesn’t have to choose between sleep and finding work.
               </p>
               <a href={FOUNDER_PHONE_HREF} style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -500,9 +500,9 @@ export default function Home() {
           </h2>
           <div style={{ display: 'grid', gap: 14 }}>
             {[
-              { n: '1', t: 'Lock your zip Sunday.', d: '90-second checkout. If your zip is open, it&rsquo;s yours all 12 months.' },
+              { n: '1', t: 'Lock your zip Sunday.', d: '90-second checkout. If your zip is open, it’s yours all 12 months.' },
               { n: '2', t: 'Monday 6am — 20 fresh leads in your dashboard.', d: 'Pulled overnight from permits, aged HVAC, storms, new move-ins.' },
-              { n: '3', t: 'AI texted them Sunday night. You call the YES&rsquo;s.', d: 'Skip the cold dial. Reply rate ~9%. You close 2-3 installs/week.' },
+              { n: '3', t: 'AI texted them Sunday night. You call the YES’s.', d: 'Skip the cold dial. Reply rate ~9%. You close 2-3 installs/week.' },
             ].map((s) => (
               <div key={s.n} style={{
                 display: 'grid', gridTemplateColumns: '52px 1fr', gap: 18,
@@ -592,7 +592,7 @@ export default function Home() {
       {/* FOOTER */}
       <footer style={{ padding: '32px 24px 70px', background: '#0B1F3A', textAlign: 'center' }}>
         <Image src="/logo.png" alt="BellAveGo" width={260} height={80} style={{ objectFit: 'contain', marginBottom: 12, filter: 'brightness(1.1)' }} />
-        <p style={{ margin: '0 0 6px', fontSize: 13, color: '#7AAAB2', fontStyle: 'italic' }}>If you don&rsquo;t use AI to find your customers, your competitors will.</p>
+        <p style={{ margin: '0 0 6px', fontSize: 13, color: '#7AAAB2', fontStyle: 'italic' }}>If you don’t use AI to find your customers, your competitors will.</p>
         <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Exclusive homeowner lead-gen for HVAC, plumbing, electrical, roofing, and handyman pros · Cancel anytime</p>
         <p style={{ margin: '12px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
           <Link href="/founder" style={{ color: '#FF9D5A', textDecoration: 'none' }}>Founder</Link>
