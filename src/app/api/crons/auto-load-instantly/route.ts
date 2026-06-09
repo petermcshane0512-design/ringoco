@@ -141,7 +141,6 @@ async function pushLead(lead: Lead & { personalized_opener?: string | null }, le
     },
     skip_if_in_workspace: true,
     skip_if_in_campaign: true,
-    blocklist_id: null,
     verify_leads_for_lead_finder: false,
     verify_leads_on_import: false,
   }
@@ -195,7 +194,9 @@ export async function GET(req: NextRequest) {
     .select('id, email, business_name, owner_first_name, city, state, trade, young_owner_score')
     .eq('status', 'queued')
     .not('email', 'is', null)
-    .ilike('trade', '%hvac%')
+    // 2026-06-09 — opened up to all home-service trades, not just HVAC,
+    // per trade-expansion plan + FL batch loaded today
+    .not('trade', 'is', null)
     .order('young_owner_score', { ascending: false, nullsFirst: false })
     .order('pushed_at', { ascending: true })
     .limit(limit)
