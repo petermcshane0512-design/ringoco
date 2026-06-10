@@ -93,7 +93,21 @@ type TradeConfig = {
   sourceTag: string
 }
 
-function tradeFiltersFor(trade: string): TradeConfig {
+// 2026-06-10 — Recipe Lab climate buckets (scripts/recipes/REPORT.md).
+// HVAC compressor / furnace lifetime varies sharply by climate. Single
+// 1985-2005 window was wrong for hot metros — pre-2008 Phoenix homes have
+// already replaced their AC 1-2 times. Cold-state furnaces last longer.
+const HOT_STATES = new Set(['AZ', 'NV', 'TX', 'FL', 'NM', 'GA', 'AL', 'MS', 'LA', 'SC'])
+const COLD_STATES = new Set(['MN', 'WI', 'IL', 'MI', 'NY', 'ME', 'NH', 'VT', 'MA', 'ND', 'SD', 'IA', 'MT', 'ID', 'WY', 'AK', 'CT', 'RI'])
+
+function classifyClimate(state: string | null | undefined): 'hot' | 'cold' | 'mild' {
+  const s = (state || '').toUpperCase()
+  if (HOT_STATES.has(s)) return 'hot'
+  if (COLD_STATES.has(s)) return 'cold'
+  return 'mild'
+}
+
+function tradeFiltersFor(trade: string, state?: string | null): TradeConfig {
   const t = (trade || '').toLowerCase()
   if (t.includes('handy') || t.includes('general')) {
     return {
@@ -111,30 +125,48 @@ function tradeFiltersFor(trade: string): TradeConfig {
     }
   }
   if (t.includes('plumb')) {
+    // 2026-06-10 — Recipe Lab v1. Was: owner-occupied any age (no signal).
+    // Now: 1900-1995 union of galvanized (1900-1969) + polybutylene
+    // (1978-1995). 1970-1977 gap accepted as v1 noise; cast-iron-sewer
+    // (1900-1980) fully covered by galvanized window.
     return {
+      yearBuiltMin: 1900,
+      yearBuiltMax: 1995,
       ownerOccupiedOnly: true,
-      pitchTemplate: (o, y) => `${o} is the owner-occupant${y ? ` of a ${y}-built home` : ''}. Reach out for water heater age check + sewer line inspection.`,
-      whyTagBuilder: (y, sale, age) => [
-        'Owner-occupied verified via Batch Data',
-        y ? `Plumbing infrastructure age: ~${age}yr` : 'Owner-occupied',
-        y && age >= 12 ? 'Water heater likely past 10yr service life' : 'Service-call window',
-        sale ? `Last sold ${daysAgo(sale)}d ago` : 'Long-term owner — relationship play',
-      ].filter(Boolean),
-      sourceTag: 'property:owner-occupied-plumbing',
+      pitchTemplate: (o, y) => {
+        const era =
+          y && y <= 1969 ? 'galvanized supply lines past 40-60yr life'
+          : y && y >= 1978 ? 'polybutylene piping (Cox v. Shell class-action era)'
+          : 'aging supply / drain infrastructure'
+        return `${o}'s home was built in ${y || 'pre-1995'} — ${era}. Pitch free leak inspection + repipe quote.`
+      },
+      whyTagBuilder: (y, sale, age) => {
+        const tags = ['Owner-occupied verified']
+        if (y && y <= 1969) tags.push(`Built ${y} — galvanized supply lines past 40-60yr life`)
+        else if (y && y >= 1978 && y <= 1995) tags.push(`Built ${y} — polybutylene piping (mass-replacement class)`)
+        else if (y) tags.push(`Built ${y} (${age}yr) — aging plumbing infrastructure`)
+        if (y && y <= 1980) tags.push('Cast-iron drain stack era — sewer-line backup risk')
+        if (sale) tags.push(`Last sold ${daysAgo(sale)}d ago`)
+        return tags
+      },
+      sourceTag: 'property:aging-plumbing',
     }
   }
   if (t.includes('elect')) {
+    // 2026-06-10 — Recipe Lab v1. Was yearBuiltMax=1990. Recipe Lab says
+    // 1980 (Federal Pacific Stab-Lok era ended; aluminum branch wiring
+    // installed 1965-1975 lives entirely inside this window).
     return {
-      yearBuiltMax: 1990,
+      yearBuiltMax: 1980,
       ownerOccupiedOnly: true,
-      pitchTemplate: (o, y) => `${o}'s home was built in ${y || 'pre-1990'} — panel + wiring likely original. Offer free panel inspection + EV-charger upgrade pitch.`,
+      pitchTemplate: (o, y) => `${o}'s home was built in ${y || 'pre-1980'} — panel + wiring likely 60-100A original (FPE Stab-Lok / aluminum-wiring era). Offer free panel inspection + 200A service upgrade quote.`,
       whyTagBuilder: (y) => [
         'Owner-occupied verified',
-        y ? `Home built ${y} — panel likely original` : 'Pre-1990 build flagged',
-        'Aluminum-wiring + 100A panel risk window',
-        'EV-charger upgrade opportunity',
+        y ? `Home built ${y} — panel likely original` : 'Pre-1980 build flagged',
+        'Pre-1980 panel-brand risk window (FPE Stab-Lok, aluminum branch wiring)',
+        '60-100A panel → 200A service upgrade opportunity',
       ],
-      sourceTag: 'property:old-panel-electrical',
+      sourceTag: 'property:pre-1980-panel-electrical',
     }
   }
   if (t.includes('roof')) {
@@ -152,7 +184,45 @@ function tradeFiltersFor(trade: string): TradeConfig {
       sourceTag: 'property:aging-roof',
     }
   }
-  // HVAC default
+  // HVAC default — 2026-06-10 Recipe Lab climate-aware routing.
+  // Hot states (AZ/NV/TX/FL/NM/GA/AL/MS/LA/SC) → AC compressors fail
+  // 10-15yr in sustained 100°F+. Target 2008-2015 builds (11-18yr-old,
+  // first-replacement-cycle); pre-2008 hot-metro builds have replaced 1-2x.
+  // Cold states (MN/WI/IL/MI/NY/ME/NH/VT/MA/ND/SD/IA/MT/ID/WY/AK/CT/RI)
+  // → gas furnaces last 18-25yr. Target 1990-2008 first-replacement.
+  // Mild → keep 1985-2005 baseline (Recipe Lab `hvac-mild-baseline`).
+  const climate = classifyClimate(state)
+  if (climate === 'hot') {
+    return {
+      yearBuiltMin: 2008,
+      yearBuiltMax: 2015,
+      ownerOccupiedOnly: true,
+      pitchTemplate: (o, y, c) => `${o}'s ${y || '2008-2015'}-built home in ${c || 'your area'} — original AC compressor in this climate fails at 10-15yr. Pitch free system audit + replacement quote BEFORE peak heat.`,
+      whyTagBuilder: (y, _, age) => [
+        'Owner-occupied verified',
+        y ? `Home built ${y} — AC age ~${age}yr (hot climate)` : 'Hot-climate profile',
+        'Hot-climate AC compressor failure window (10-15yr)',
+        'First-replacement-cycle homeowner (pre-2008 builds already replaced)',
+      ],
+      sourceTag: 'property:hot-climate-hvac',
+    }
+  }
+  if (climate === 'cold') {
+    return {
+      yearBuiltMin: 1990,
+      yearBuiltMax: 2008,
+      ownerOccupiedOnly: true,
+      pitchTemplate: (o, y, c) => `${o}'s ${y || '1990-2008'}-built home in ${c || 'your area'} — gas furnace likely original, 18-25yr lifespan in cold climate. Pitch free combustion safety check + replacement quote.`,
+      whyTagBuilder: (y, _, age) => [
+        'Owner-occupied verified',
+        y ? `Home built ${y} — furnace age ~${age}yr (cold climate)` : 'Cold-climate profile',
+        'Cold-climate gas furnace replacement window (18-25yr)',
+        'First-replacement-cycle homeowner',
+      ],
+      sourceTag: 'property:cold-climate-hvac',
+    }
+  }
+  // Mild climate baseline.
   return {
     yearBuiltMin: 1985,
     yearBuiltMax: 2005,
@@ -222,7 +292,20 @@ async function findLeadsForTenant(
     : (profile.services_offered || profile.business_type || '')
   if (!resolvedTrade) return { ok: false, assigned: 0, reason: 'no business_type or services_offered' }
 
-  const cfg = tradeFiltersFor(resolvedTrade)
+  // 2026-06-10 — Recipe Lab climate routing. Look up state from
+  // zip_centroids on the tenant's primary zip so tradeFiltersFor can pick
+  // the HVAC hot/cold/mild recipe. Fail-soft: null state -> mild baseline.
+  let tenantState: string | null = null
+  if (homeZips[0]) {
+    const { data: zc } = await supabase
+      .from('zip_centroids')
+      .select('state')
+      .eq('zip', homeZips[0])
+      .maybeSingle()
+    tenantState = (zc as { state?: string } | null)?.state ?? null
+  }
+
+  const cfg = tradeFiltersFor(resolvedTrade, tenantState)
   const tradeNormalized = normalizeTrade(resolvedTrade)
 
   // 2026-06-10 — DYNAMIC radius via expansion ladder. Replaces prior PERMANENT
