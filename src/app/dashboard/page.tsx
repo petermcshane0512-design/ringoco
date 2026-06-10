@@ -383,19 +383,16 @@ function pickCallWindow(signal: RichLead['signal']): string {
 }
 
 const OVERNIGHT_LOG = [
-  { time: '11:02pm', icon: '🛰', txt: 'Scraper fired — Plano TX permits' },
-  { time: '11:18pm', icon: '🏛', txt: '12 new permits pulled · 4 match your trade' },
-  { time: '11:34pm', icon: '⛈', txt: 'NOAA storm strike flagged ZIP 75093' },
-  { time: '11:52pm', icon: '🏠', txt: '3 move-ins pulled from MLS · 75070 + 75002' },
-  { time: '12:08am', icon: '🌡', txt: 'Census + county aged-unit query → 2 hits' },
-  { time: '12:24am', icon: '📞', txt: 'Skip-trace verified all 10 phones' },
-  { time: '12:41am', icon: '🧠', txt: 'Claude Sonnet 4.6 scored 10 leads (avg 85.0)' },
-  { time: '01:02am', icon: '✍', txt: 'AI wrote 10 personalized SMS + 10 emails' },
-  { time: '08:42am', icon: '📨', txt: 'Sent 10 SMS from your number' },
-  { time: '08:43am', icon: '✉', txt: 'Sent 10 emails from your business addr' },
-  { time: '08:47am', icon: '💬', txt: 'Mike Coleman replied — wants quote Tue' },
-  { time: '09:14am', icon: '💬', txt: 'Sarah Whitman replied — deductible q' },
-  { time: '09:22am', icon: '🎯', txt: 'Tony Suarez signed combo-install quote' },
+  { time: '11:02pm', icon: '🛰', txt: 'Scraper fired across your zip(s)' },
+  { time: '11:18pm', icon: '🏛', txt: 'New permits pulled · matches filtered by trade' },
+  { time: '11:34pm', icon: '⛈', txt: 'NOAA storm strikes geo-flagged' },
+  { time: '11:52pm', icon: '🏠', txt: 'MLS move-ins + USPS forwards merged' },
+  { time: '12:08am', icon: '🌡', txt: 'Census + county aged-unit query complete' },
+  { time: '12:24am', icon: '📞', txt: 'Skip-trace fired on matched properties' },
+  { time: '12:41am', icon: '🧠', txt: 'Claude Sonnet scored leads (intent + value)' },
+  { time: '01:02am', icon: '✍', txt: 'Per-lead outreach scripts written (SMS + email + call opener)' },
+  { time: '06:00am', icon: '📨', txt: 'Leads + scripts delivered to your dashboard' },
+  { time: '06:00am', icon: '🎯', txt: 'Ready for you: open any lead → copy script → call, text, or email your way' },
 ]
 
 export default function KillerDashboard() {
@@ -458,9 +455,17 @@ export default function KillerDashboard() {
   // Use real leads when available, fall back to SAMPLE_WEEK so empty dashboards
   // still demo the killer state.
   const hasRealLeads = (summary?.this_week_count ?? 0) > 0
-  const weekLeads = hasRealLeads ? enrichLeadsForDashboard(summary?.this_week_leads || []) : SAMPLE_WEEK
-  const monthLeads = hasRealLeads ? enrichLeadsForDashboard(summary?.this_month_leads || []) : SAMPLE_WEEK
-  const allLeads = hasRealLeads ? enrichLeadsForDashboard(summary?.all_leads || []) : SAMPLE_WEEK
+  // Cap displayed leads per the leads-only pricing pivot: 10/week, 40/month.
+  // If the lead engine over-delivers, only show the contracted quantity.
+  const weekLeads = hasRealLeads
+    ? enrichLeadsForDashboard(summary?.this_week_leads || []).slice(0, 10)
+    : SAMPLE_WEEK
+  const monthLeads = hasRealLeads
+    ? enrichLeadsForDashboard(summary?.this_month_leads || []).slice(0, 40)
+    : SAMPLE_WEEK
+  const allLeads = hasRealLeads
+    ? enrichLeadsForDashboard(summary?.all_leads || [])
+    : SAMPLE_WEEK
 
   // 2026-06-09 — split the lead pool into tabs per Peter feedback. Was
   // dumping all 50 into one section, looked overwhelming. Now: This Week
@@ -509,7 +514,7 @@ export default function KillerDashboard() {
                   Hey {ownerFirst} — your AI worked all weekend.
                 </h1>
                 <p style={{ margin: '8px 0 0', fontSize: 15, color: 'rgba(255,248,240,0.72)', lineHeight: 1.55, maxWidth: 620 }}>
-                  Scraper pulled signals overnight. Sonnet wrote {stats.smsSent} personalized SMS + {stats.emailSent} emails. Sent at sunrise. Your only job today: call back the YES&apos;s.
+                  Scraper pulled signals overnight. Sonnet wrote {stats.smsSent} personalized scripts (SMS + email + call opener) for each lead below. <strong style={{ color: '#FFF8F0' }}>Open any lead, copy the script, then call / text / email — your way.</strong>
                 </p>
               </div>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 99, background: 'rgba(34,197,94,0.18)', border: '1.5px solid rgba(34,197,94,0.40)' }}>
@@ -524,9 +529,9 @@ export default function KillerDashboard() {
               marginBottom: 20,
             }}>
               <BriefStat label="Pulled" value={stats.pulled} sub="this week" />
-              <BriefStat label="SMS sent" value={stats.smsSent} sub="by AI · as you" />
-              <BriefStat label="Emails sent" value={stats.emailSent} sub="by AI · as you" />
-              <BriefStat label="Replied" value={stats.replied} sub={`${Math.round((stats.replied / Math.max(1, stats.pulled)) * 100)}% rate`} accent />
+              <BriefStat label="SMS scripts" value={stats.smsSent} sub="ready for you" />
+              <BriefStat label="Email scripts" value={stats.emailSent} sub="ready for you" />
+              <BriefStat label="Call openers" value={stats.smsSent} sub="ready for you" accent />
               <BriefStat label="Pipeline" value={`$${stats.pipeline.toLocaleString()}`} sub="est. job floor" />
             </div>
 
