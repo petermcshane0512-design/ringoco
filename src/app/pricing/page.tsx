@@ -145,13 +145,16 @@ export default function PricingPage() {
           lineHeight: 1.05, margin: '0 0 8px',
           color: '#0B1F3A',
         }}>
-          One plan. <span style={{
+          <span style={{
+            background: 'linear-gradient(135deg, #22C55E 0%, #16803F 100%)',
+            WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+          }}>40 fresh leads</span> for <span style={{
             background: 'linear-gradient(135deg, #22C55E 0%, #16803F 100%)',
             WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
           }}>$97</span> first month.
         </h1>
         <p style={{ fontSize: 14, color: '#4A6670', margin: '0 auto', maxWidth: 540, lineHeight: 1.5 }}>
-          One number — pick yes or no. No tiers. No sales call.
+          $2.42 per lead. HomeAdvisor charges $40-300 shared with 4 other shops. We don&rsquo;t.
         </p>
       </section>
 
