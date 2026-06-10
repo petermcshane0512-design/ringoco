@@ -17,7 +17,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import Link from 'next/link'
 import Image from 'next/image'
-import LiveActivityMarquee from '@/components/LiveActivityMarquee'
+// LiveActivityMarquee import removed 2026-06-09 per brief rule "no invented customer counts / activity".
 
 type Interval = 'monthly' | 'annual'
 
@@ -117,8 +117,7 @@ export default function PricingPage() {
         </div>
       </nav>
 
-      {/* LIVE ACTIVITY MARQUEE */}
-      <LiveActivityMarquee />
+      {/* LiveActivityMarquee removed 2026-06-09 per brief rule "no invented activity / customer counts" until we have real signups to render. */}
 
       {/* PRICE TIER FIRST — per Peter, price is the first thing the page shows.
           Compact pill above + the offer card directly below. No verbose hero. */}

@@ -1,49 +1,24 @@
 import type { MetadataRoute } from 'next'
-import { TRADES } from '@/lib/seo/trades'
-import { CITIES } from '@/lib/seo/cities'
 
 /**
  * Auto-generated sitemap.xml at https://www.bellavego.com/sitemap.xml.
  *
- * Now includes every programmatic /answering-service/[trade]-[city] page
- * (6 trades × 50 cities = 300 SEO landing pages).
- *
- * Submit once at search.google.com/search-console → Sitemaps:
- *   https://www.bellavego.com/sitemap.xml
+ * 2026-06-09 — Receptionist-era SEO surfaces (300 trade × city combos,
+ * /answering-service-for-*, /tools/missed-call-calculator, /monthly-report,
+ * /demo, /r/[reportId]) were sitemap-only or removed. They now 301 to / via
+ * next.config.ts redirects, and are excluded here.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = 'https://www.bellavego.com'
   const now = new Date()
-  const fixed: MetadataRoute.Sitemap = [
+  return [
     { url: `${base}/`,             lastModified: now, changeFrequency: 'weekly',  priority: 1.0 },
     { url: `${base}/pricing`,      lastModified: now, changeFrequency: 'weekly',  priority: 0.9 },
-    { url: `${base}/demo`,         lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${base}/sample-report`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${base}/founder`,      lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${base}/sample-report`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/sign-up`,      lastModified: now, changeFrequency: 'yearly',  priority: 0.5 },
     { url: `${base}/sign-in`,      lastModified: now, changeFrequency: 'yearly',  priority: 0.4 },
-    { url: `${base}/tools/missed-call-calculator`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${base}/privacy`,      lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
+    { url: `${base}/terms`,        lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
   ]
-  // National trade hub pages — 6 high-volume national keywords
-  // (e.g. "AI receptionist HVAC"). Higher priority than city pages
-  // because each anchors a topical cluster.
-  const tradeHubs: MetadataRoute.Sitemap = TRADES.map((t) => ({
-    url: `${base}/answering-service-for-${t.slug}`,
-    lastModified: now,
-    changeFrequency: 'weekly' as const,
-    priority: 0.85,
-  }))
-
-  // City × trade combo pages — 300 total
-  const seoPages: MetadataRoute.Sitemap = []
-  for (const t of TRADES) {
-    for (const c of CITIES) {
-      seoPages.push({
-        url: `${base}/answering-service/${t.slug}-${c.slug}`,
-        lastModified: now,
-        changeFrequency: 'weekly',
-        priority: 0.7,
-      })
-    }
-  }
-  return [...fixed, ...tradeHubs, ...seoPages]
 }
