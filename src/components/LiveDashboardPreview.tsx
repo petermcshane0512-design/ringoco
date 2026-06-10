@@ -43,26 +43,31 @@ const STATUS_PILL: Record<Status, { bg: string; fg: string; label: string }> = {
   BOOKED:  { bg: '#DCFCE7', fg: '#166534', label: '💰 Booked'       },
 }
 
+// 2026-06-10 — sanitized for public marketing page. Names = first + last
+// initial. Addresses = non-existent house numbers on generic "Sample" /
+// "Demo" / "Preview" streets so real homeowner addresses cannot leak.
+// Cities + zips preserved so the geographic context (Plano, Atlanta etc.)
+// stays believable.
 const WEEK_ROWS: Row[] = [
-  { id: 'w1', owner: 'Mike Coleman',    address: '7842 Oak Ridge',   zip: '75024', trade: 'HVAC',     signal: 'PERMIT',  score: 92, status: 'BOOKED',  jobValue: '$3,200–4,800' },
-  { id: 'w2', owner: 'Sarah Whitman',   address: '2188 Birch Ln',    zip: '75093', trade: 'Roofing',  signal: 'STORM',   score: 88, status: 'REPLIED', jobValue: '$8,400–12,000' },
-  { id: 'w3', owner: 'Carlos Reyes',    address: '1923 Briarwood',   zip: '75035', trade: 'HVAC',     signal: 'AGED',    score: 81, status: 'REPLIED', jobValue: '$5,400–9,200' },
-  { id: 'w4', owner: 'James Patel',     address: '388 Cedar Park',   zip: '75070', trade: 'Plumbing', signal: 'MOVE-IN', score: 76, status: 'NEW',     jobValue: '$1,800–3,400' },
-  { id: 'w5', owner: 'Linda Hong',      address: '6618 Aspen Way',   zip: '75002', trade: 'Electric', signal: 'PERMIT',  score: 84, status: 'NEW',     jobValue: '$2,200–4,100' },
+  { id: 'w1', owner: 'Mike C.',    address: '9999 Sample St',   zip: '75024', trade: 'HVAC',     signal: 'PERMIT',  score: 92, status: 'BOOKED',  jobValue: '$3,200–4,800' },
+  { id: 'w2', owner: 'Sarah W.',   address: '8888 Demo Ln',     zip: '75093', trade: 'Roofing',  signal: 'STORM',   score: 88, status: 'REPLIED', jobValue: '$8,400–12,000' },
+  { id: 'w3', owner: 'Carlos R.',  address: '7777 Preview Way', zip: '75035', trade: 'HVAC',     signal: 'AGED',    score: 81, status: 'REPLIED', jobValue: '$5,400–9,200' },
+  { id: 'w4', owner: 'James P.',   address: '6666 Sample Dr',   zip: '75070', trade: 'Plumbing', signal: 'MOVE-IN', score: 76, status: 'NEW',     jobValue: '$1,800–3,400' },
+  { id: 'w5', owner: 'Linda H.',   address: '5555 Demo Ave',    zip: '75002', trade: 'Electric', signal: 'PERMIT',  score: 84, status: 'NEW',     jobValue: '$2,200–4,100' },
 ]
 
 const MONTH_ROWS: Row[] = [
   ...WEEK_ROWS,
-  { id: 'm6',  owner: 'Tony Suarez',     address: '4218 Catalina',   zip: '85710', trade: 'HVAC',     signal: 'PERMIT',  score: 90, status: 'BOOKED',  jobValue: '$3,800–5,200' },
-  { id: 'm7',  owner: 'Maria Lopez',     address: '7711 Camelback',  zip: '85016', trade: 'HVAC',     signal: 'AGED',    score: 79, status: 'BOOKED',  jobValue: '$4,200–7,100' },
-  { id: 'm8',  owner: 'David Kim',       address: '5510 Indian Bend', zip: '85254', trade: 'Handyman', signal: 'MOVE-IN', score: 72, status: 'REPLIED', jobValue: '$600–1,800' },
-  { id: 'm9',  owner: 'Rachel Brooks',   address: '988 Peachtree',   zip: '30301', trade: 'HVAC',     signal: 'PERMIT',  score: 86, status: 'REPLIED', jobValue: '$3,400–5,600' },
-  { id: 'm10', owner: 'Jamal Wright',    address: '142 Edgewood',    zip: '30329', trade: 'Roofing',  signal: 'STORM',   score: 91, status: 'BOOKED',  jobValue: '$9,200–14,800' },
-  { id: 'm11', owner: 'Susan O’Neal',    address: '8800 Magnolia',   zip: '32801', trade: 'HVAC',     signal: 'AGED',    score: 83, status: 'REPLIED', jobValue: '$3,900–6,400' },
-  { id: 'm12', owner: 'Chris Vega',      address: '2202 Ocean Dr',   zip: '33139', trade: 'Plumbing', signal: 'MOVE-IN', score: 77, status: 'REPLIED', jobValue: '$1,400–3,200' },
-  { id: 'm13', owner: 'Tyler Brooks',    address: '419 Music Row',   zip: '37203', trade: 'Electric', signal: 'PERMIT',  score: 80, status: 'NEW',     jobValue: '$2,800–4,800' },
-  { id: 'm14', owner: 'Nina Patel',      address: '6601 Westgate',   zip: '78704', trade: 'HVAC',     signal: 'AGED',    score: 87, status: 'NEW',     jobValue: '$4,600–7,800' },
-  { id: 'm15', owner: 'Greg Foster',     address: '3304 Watauga',    zip: '76137', trade: 'Roofing',  signal: 'STORM',   score: 89, status: 'NEW',     jobValue: '$7,800–11,400' },
+  { id: 'm6',  owner: 'Tony S.',    address: '9999 Sample St',   zip: '85710', trade: 'HVAC',     signal: 'PERMIT',  score: 90, status: 'BOOKED',  jobValue: '$3,800–5,200' },
+  { id: 'm7',  owner: 'Maria L.',   address: '8888 Demo Ln',     zip: '85016', trade: 'HVAC',     signal: 'AGED',    score: 79, status: 'BOOKED',  jobValue: '$4,200–7,100' },
+  { id: 'm8',  owner: 'David K.',   address: '7777 Preview Way', zip: '85254', trade: 'Handyman', signal: 'MOVE-IN', score: 72, status: 'REPLIED', jobValue: '$600–1,800' },
+  { id: 'm9',  owner: 'Rachel B.',  address: '6666 Sample Dr',   zip: '30301', trade: 'HVAC',     signal: 'PERMIT',  score: 86, status: 'REPLIED', jobValue: '$3,400–5,600' },
+  { id: 'm10', owner: 'Jamal W.',   address: '5555 Demo Ave',    zip: '30329', trade: 'Roofing',  signal: 'STORM',   score: 91, status: 'BOOKED',  jobValue: '$9,200–14,800' },
+  { id: 'm11', owner: 'Susan O.',   address: '4444 Sample St',   zip: '32801', trade: 'HVAC',     signal: 'AGED',    score: 83, status: 'REPLIED', jobValue: '$3,900–6,400' },
+  { id: 'm12', owner: 'Chris V.',   address: '3333 Demo Ln',     zip: '33139', trade: 'Plumbing', signal: 'MOVE-IN', score: 77, status: 'REPLIED', jobValue: '$1,400–3,200' },
+  { id: 'm13', owner: 'Tyler B.',   address: '2222 Preview Way', zip: '37203', trade: 'Electric', signal: 'PERMIT',  score: 80, status: 'NEW',     jobValue: '$2,800–4,800' },
+  { id: 'm14', owner: 'Nina P.',    address: '1111 Sample Dr',   zip: '78704', trade: 'HVAC',     signal: 'AGED',    score: 87, status: 'NEW',     jobValue: '$4,600–7,800' },
+  { id: 'm15', owner: 'Greg F.',    address: '9090 Demo Ave',    zip: '76137', trade: 'Roofing',  signal: 'STORM',   score: 89, status: 'NEW',     jobValue: '$7,800–11,400' },
 ]
 
 export default function LiveDashboardPreview() {

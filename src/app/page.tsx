@@ -98,8 +98,8 @@ const HVAC_VARIANT: TradeVariant = {
   h1Suffix: `from ${LEADS_PER_WEEK} fresh homeowner leads/week in your zip.`,
   heroSubtext: 'Real names, addresses, phones — pulled overnight from permits, aging HVAC, storm strikes, new move-ins. AI sends the intro text + email for you. You only call back the YES’s.',
   heroLead: {
-    name: 'Mike Coleman',
-    addr: '7842 Oak Ridge Dr',
+    name: 'Mike C.',
+    addr: '9999 Sample St',
     city: 'Plano, TX 75024',
     phoneRedacted: '(214) ●●●-●167',
     propertyValue: '$485K',
@@ -128,8 +128,8 @@ const ROOFING_VARIANT: TradeVariant = {
   h1Suffix: `from ${LEADS_PER_WEEK} insurance-ready leads/week in your zip.`,
   heroSubtext: 'NOAA-verified hail strikes + aging asphalt + insurance-claim windows — names, addresses, photos of damaged roofs. AI sends the intro for you. You only call back the YES’s.',
   heroLead: {
-    name: 'Tom Sutton',
-    addr: '4421 Maple Crest',
+    name: 'Tom S.',
+    addr: '8888 Demo Ln',
     city: 'Plano, TX 75093',
     phoneRedacted: '(214) ●●●-●142',
     propertyValue: '$612K',
@@ -157,8 +157,8 @@ const PLUMBING_VARIANT: TradeVariant = {
   h1Suffix: `from ${LEADS_PER_WEEK} verified homeowner leads/week in your zip.`,
   heroSubtext: 'Water-heater age data + sewer-permit feeds + new homeowners — owner-occupied verified. AI sends the intro for you. You only call back the YES’s.',
   heroLead: {
-    name: 'Lisa Carter',
-    addr: '6618 Aspen Trail',
+    name: 'Lisa C.',
+    addr: '7777 Preview Way',
     city: 'Allen, TX 75002',
     phoneRedacted: '(214) ●●●-●119',
     propertyValue: '$398K',
@@ -186,8 +186,8 @@ const ELECTRICAL_VARIANT: TradeVariant = {
   h1Suffix: `from ${LEADS_PER_WEEK} fresh homeowner leads/week in your zip.`,
   heroSubtext: 'Pre-1990 panel feeds + EV-charger permit data + solar adopters — owner-occupied verified. AI sends the intro for you. You only call back the YES’s.',
   heroLead: {
-    name: 'David Park',
-    addr: '388 Cedar Park Way',
+    name: 'David P.',
+    addr: '6666 Sample Dr',
     city: 'McKinney, TX 75072',
     phoneRedacted: '(972) ●●●-●133',
     propertyValue: '$555K',
@@ -215,8 +215,8 @@ const HANDYMAN_VARIANT: TradeVariant = {
   h1Suffix: `from ${LEADS_PER_WEEK} fresh homeowner leads/week in your zip.`,
   heroSubtext: 'Fresh move-ins + aging-home flags + small-project permits — owner-occupied verified. AI sends the intro for you. You only call back the YES’s.',
   heroLead: {
-    name: 'James Patel',
-    addr: '388 Cedar Park Way',
+    name: 'James P.',
+    addr: '5555 Demo Ave',
     city: 'McKinney, TX 75072',
     phoneRedacted: '(972) ●●●-●133',
     propertyValue: '$555K',
@@ -655,7 +655,7 @@ function LeadsCard({ variant }: { variant: TradeVariant }) {
           background: 'rgba(34,197,94,0.12)',
           border: '1px solid rgba(34,197,94,0.40)',
           fontSize: 10, fontWeight: 800, color: '#16803F', letterSpacing: '0.08em',
-        }}>LIVE PREVIEW</div>
+        }}>SAMPLE</div>
       </div>
 
       {/* Scrollable dashboard preview — internal scroll so prospect can
