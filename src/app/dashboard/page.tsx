@@ -459,6 +459,19 @@ export default function KillerDashboard() {
   // still demo the killer state.
   const hasRealLeads = (summary?.this_week_count ?? 0) > 0
   const weekLeads = hasRealLeads ? enrichLeadsForDashboard(summary?.this_week_leads || []) : SAMPLE_WEEK
+  const monthLeads = hasRealLeads ? enrichLeadsForDashboard(summary?.this_month_leads || []) : SAMPLE_WEEK
+  const allLeads = hasRealLeads ? enrichLeadsForDashboard(summary?.all_leads || []) : SAMPLE_WEEK
+
+  // 2026-06-09 — split the lead pool into tabs per Peter feedback. Was
+  // dumping all 50 into one section, looked overwhelming. Now: This Week
+  // (current Monday's drop) · This Month (everything delivered this
+  // month) · All Time. Default = This Week.
+  const [leadTab, setLeadTab] = useState<'week' | 'month' | 'all'>('week')
+  const visibleLeads =
+    leadTab === 'week' ? weekLeads
+    : leadTab === 'month' ? monthLeads
+    : allLeads
+  const tabLabel = leadTab === 'week' ? 'This week' : leadTab === 'month' ? 'This month' : 'All time'
 
   const stats = useMemo(() => ({
     pulled: weekLeads.length,
@@ -557,14 +570,53 @@ export default function KillerDashboard() {
             </section>
           )}
 
-          {/* SECTION 3 — THIS WEEK'S 10 (rich expandable cards) */}
+          {/* SECTION 3 — TABBED LEAD POOL (week / month / all) */}
           <section>
             <div style={sectionHeader}>
-              <span>📋 This week&apos;s {weekLeads.length}</span>
+              <span>📋 {tabLabel} · {visibleLeads.length}</span>
               <span style={subHeader}>Click any card → full AI outreach strategy</span>
             </div>
+
+            {/* Tab pills */}
+            <div style={{
+              display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap',
+            }}>
+              {([
+                { k: 'week',  label: 'This week',  count: weekLeads.length },
+                { k: 'month', label: 'This month', count: monthLeads.length },
+                { k: 'all',   label: 'All time',   count: allLeads.length },
+              ] as const).map((t) => {
+                const active = leadTab === t.k
+                return (
+                  <button
+                    key={t.k}
+                    onClick={() => { setLeadTab(t.k); setExpanded(null) }}
+                    style={{
+                      padding: '9px 16px', borderRadius: 99,
+                      border: active ? '2px solid #FF9D5A' : '1.5px solid rgba(255,197,138,0.22)',
+                      background: active
+                        ? 'linear-gradient(135deg, rgba(255,157,90,0.16), rgba(232,116,43,0.14))'
+                        : 'rgba(255,248,240,0.04)',
+                      color: active ? '#FFC58A' : 'rgba(255,248,240,0.62)',
+                      fontWeight: 800, fontSize: 13,
+                      letterSpacing: '-0.01em', cursor: 'pointer',
+                      transition: 'all 160ms ease',
+                      display: 'inline-flex', alignItems: 'center', gap: 8,
+                    }}
+                  >
+                    <span>{t.label}</span>
+                    <span style={{
+                      padding: '1px 8px', borderRadius: 99,
+                      background: active ? 'rgba(255,197,138,0.22)' : 'rgba(255,248,240,0.08)',
+                      fontSize: 11, fontWeight: 900, color: active ? '#FFC58A' : 'rgba(255,248,240,0.54)',
+                    }}>{t.count}</span>
+                  </button>
+                )
+              })}
+            </div>
+
             <div style={{ display: 'grid', gap: 12 }}>
-              {weekLeads.map((l) => (
+              {visibleLeads.map((l) => (
                 <LeadCard
                   key={l.id}
                   lead={l}
