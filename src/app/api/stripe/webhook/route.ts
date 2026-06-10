@@ -11,6 +11,7 @@ import { lookupOwnerEmail } from '@/lib/notify'
 import { fireLeadEngineForUser } from '@/lib/leadEngine'
 import { LEADS_PER_WEEK } from '@/lib/offer'
 import { claimTerritory, releaseCustomerTerritories } from '@/lib/territory'
+import { geocodeBusinessAddress } from '@/lib/geocodeBusinessAddress'
 
 function escapeHtmlMin(s: string): string {
   return s
@@ -195,6 +196,26 @@ export async function POST(req: NextRequest) {
       paid_at: new Date().toISOString(),
     }
 
+    // 2026-06-10 — fix #5: stamp owner_phone, business_address, service_zips,
+    // business_type from /start/area metadata BEFORE find-real-leads fires.
+    // Also geocode the business address so find-real-leads can use the
+    // address-anchored tight-radius branch (3mi from business_lat/lng) on
+    // the very first pull, not just on subsequent pulls after the wizard.
+    const metaBusinessAddress = (session.metadata?.business_address || '').trim()
+    const metaOwnerPhoneDigits = (session.metadata?.owner_phone || '').replace(/\D/g, '')
+    const ownerPhoneE164 = metaOwnerPhoneDigits.length >= 10
+      ? (metaOwnerPhoneDigits.length === 10 ? `+1${metaOwnerPhoneDigits}` : `+${metaOwnerPhoneDigits}`)
+      : ''
+
+    let geocoded: { lat: number; lng: number; formatted: string } | null = null
+    if (metaBusinessAddress.length >= 8) {
+      try {
+        geocoded = await geocodeBusinessAddress(metaBusinessAddress)
+      } catch (e) {
+        console.warn(`[signup geocode] threw for ${userId}: ${(e as Error).message}`)
+      }
+    }
+
     await supabase.from('profiles').update({
       stripe_subscription_id: subscriptionId,
       stripe_customer_id: customerId,
@@ -205,10 +226,23 @@ export async function POST(req: NextRequest) {
         creator_referral_code: validCreatorCode,
         referred_by_promo_code: validCreatorCode,
       } : {}),
+      ...(metaBusinessAddress ? { business_address: metaBusinessAddress } : {}),
+      ...(ownerPhoneE164 ? { owner_phone: ownerPhoneE164 } : {}),
+      ...(geocoded ? {
+        business_lat: geocoded.lat,
+        business_lng: geocoded.lng,
+        business_geocoded_at: new Date().toISOString(),
+      } : {}),
+      // service_zips seeded from /start/area zip so find-real-leads has the
+      // primary search zip without waiting on the post-checkout wizard.
+      ...(session.metadata?.territory_zip ? { service_zips: [session.metadata.territory_zip] } : {}),
+      // business_type seeded from territory_trade so trade-recipe routing
+      // in find-real-leads + lead-engine works on day 1.
+      ...(session.metadata?.territory_trade ? { business_type: session.metadata.territory_trade } : {}),
       ...utmStamp,
     }).eq('user_id', userId)
 
-    console.log(`Subscription activated for user ${userId}: ${planTier}`)
+    console.log(`Subscription activated for user ${userId}: ${planTier}` + (geocoded ? ` (geocoded ${geocoded.lat.toFixed(4)}, ${geocoded.lng.toFixed(4)})` : ''))
 
     // 2026-06-10 — T3 territory enforcement. Claim the (zip, trade)
     // territory now that payment cleared. zip + trade were captured at
@@ -322,6 +356,34 @@ export async function POST(req: NextRequest) {
       console.log(`[founder alert] SMS sent to ${founderPhone} for new subscription ${userId}`)
     } catch (e) {
       console.error('[founder alert] SMS failed (non-blocking):', e)
+    }
+
+    // ── 2026-06-10 — fix #7: contractor welcome SMS ──────────────────
+    // Set expectation in the first minute after paying. Per Fable: include
+    // what Monday's list actually is — a concrete preview kills minute-1
+    // refund anxiety better than a generic "thanks for signing up." If
+    // we couldn't geocode the address we omit the street fragment instead
+    // of guessing — never fake a delivery promise.
+    if (ownerPhoneE164) {
+      try {
+        const tradeForCopy = (session.metadata?.territory_trade || '').toLowerCase() === 'roofing'
+          ? 'aging-roof homes'
+          : (session.metadata?.territory_trade || '').toLowerCase() === 'plumbing'
+            ? 'owner-occupied homes likely needing plumbing work'
+            : 'owner-occupied homes with aging HVAC systems'
+        const nearLine = geocoded ? ` near ${metaBusinessAddress}` : ''
+        const welcomeBody =
+          `BellAveGo: you're in. Your first ${LEADS_PER_WEEK} ${tradeForCopy}${nearLine} drop Monday morning.\n\n` +
+          `We'll text you the second any of them shows real interest. Reply HELP anytime.`
+        await twilioClient.messages.create({
+          body: welcomeBody,
+          from: process.env.TWILIO_PHONE_NUMBER!,
+          to: ownerPhoneE164,
+        })
+        console.log(`[welcome SMS] sent to ${ownerPhoneE164} for ${userId}`)
+      } catch (e) {
+        console.error(`[welcome SMS] send failed for ${userId} (non-blocking):`, e)
+      }
     }
 
     // ── Stage 1: record PENDING referral (anti-abuse) ──

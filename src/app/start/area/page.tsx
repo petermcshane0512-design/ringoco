@@ -29,6 +29,8 @@ import { LEADS_PER_WEEK, INTRO_PRICE_USD, INTRO_PROMO_CODE, SUPPORTED_TRADES } f
 
 const AREA_ZIP_COOKIE = 'bavg_area_zip'
 const AREA_TRADE_COOKIE = 'bavg_area_trade'
+const AREA_ADDR_COOKIE = 'bavg_area_addr'
+const AREA_PHONE_COOKIE = 'bavg_area_phone'
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 14 // 14 days
 
 function readCookie(name: string): string {
@@ -52,6 +54,8 @@ function StartAreaContent() {
 
   const [zip, setZip] = useState('')
   const [trade, setTrade] = useState<string>('')
+  const [address, setAddress] = useState('')
+  const [phone, setPhone] = useState('')
   const [checking, setChecking] = useState(false)
   const [result, setResult] = useState<null | { status: 'open' | 'claimed' | 'grace' | 'unserved' }>(null)
   const [waitlistEmail, setWaitlistEmail] = useState('')
@@ -66,10 +70,12 @@ function StartAreaContent() {
     const urlTrade = (sp?.get('trade') || '').toLowerCase().trim()
     setZip((prev) => prev || urlZip || readCookie(AREA_ZIP_COOKIE))
     setTrade((prev) => prev || urlTrade || decodeURIComponent(readCookie(AREA_TRADE_COOKIE)))
+    setAddress((prev) => prev || decodeURIComponent(readCookie(AREA_ADDR_COOKIE)))
+    setPhone((prev) => prev || decodeURIComponent(readCookie(AREA_PHONE_COOKIE)))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const fireCheckout = useCallback(async (z: string, t: string) => {
+  const fireCheckout = useCallback(async (z: string, t: string, a: string, p: string) => {
     setChecking(true)
     try {
       const res = await fetch('/api/stripe/checkout', {
@@ -82,6 +88,8 @@ function StartAreaContent() {
           bizId: bizId || undefined,
           zip: z,
           trade: t,
+          address: a,
+          phone: p,
         }),
       })
       const data = await res.json()
@@ -103,8 +111,10 @@ function StartAreaContent() {
     if (!autoco || !isLoaded || !isSignedIn) return
     const z = readCookie(AREA_ZIP_COOKIE)
     const t = decodeURIComponent(readCookie(AREA_TRADE_COOKIE))
+    const a = decodeURIComponent(readCookie(AREA_ADDR_COOKIE))
+    const p = decodeURIComponent(readCookie(AREA_PHONE_COOKIE))
     if (!/^\d{5}$/.test(z) || !t) return
-    fireCheckout(z, t)
+    fireCheckout(z, t, a, p)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoco, isLoaded, isSignedIn])
 
@@ -121,6 +131,15 @@ function StartAreaContent() {
       setErr('Pick your trade.')
       return
     }
+    if (address.trim().length < 8) {
+      setErr('Enter your business address so we can pull leads within walking distance of it.')
+      return
+    }
+    const phoneDigits = phone.replace(/\D/g, '')
+    if (phoneDigits.length < 10) {
+      setErr('Enter a 10-digit phone number so we can text you when a hot lead opens.')
+      return
+    }
     setChecking(true)
     try {
       const r = await fetch(`/api/territory/check?zip=${zip}&trade=${trade}`)
@@ -131,13 +150,15 @@ function StartAreaContent() {
       }
       setResult({ status: j.status })
       if (j.status === 'open') {
-        // Save area so it survives the Clerk sign-up bounce, then either
-        // go straight to Stripe (already signed in) or sign-up → /start/area
-        // ?autoco=1 which fires checkout once auth lands.
+        // Save area + address + phone so they survive the Clerk sign-up
+        // bounce, then either go straight to Stripe (already signed in) or
+        // sign-up → /start/area?autoco=1 which fires checkout once auth lands.
         writeCookie(AREA_ZIP_COOKIE, zip)
         writeCookie(AREA_TRADE_COOKIE, trade)
+        writeCookie(AREA_ADDR_COOKIE, address.trim())
+        writeCookie(AREA_PHONE_COOKIE, phoneDigits)
         if (isSignedIn) {
-          await fireCheckout(zip, trade)
+          await fireCheckout(zip, trade, address.trim(), phoneDigits)
         } else {
           const back = encodeURIComponent('/start/area?autoco=1')
           router.push(`/sign-up?redirect_url=${back}`)
@@ -241,6 +262,31 @@ function StartAreaContent() {
               </button>
             ))}
           </div>
+
+          <label style={{ ...labelStyle, marginTop: 14 }}>Your business address</label>
+          <input
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="123 Main St, Chicago, IL 60615"
+            style={inputStyle}
+            autoComplete="street-address"
+          />
+          <p style={{ fontSize: 11, color: '#7AAAB2', marginTop: 6, marginBottom: 0 }}>
+            We deliver leads within a 3-mile radius of this address the first 4 weeks, then widen weekly.
+          </p>
+
+          <label style={{ ...labelStyle, marginTop: 14 }}>Your cell phone</label>
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="(773) 555-0100"
+            inputMode="tel"
+            style={inputStyle}
+            autoComplete="tel"
+          />
+          <p style={{ fontSize: 11, color: '#7AAAB2', marginTop: 6, marginBottom: 0 }}>
+            We text you the second a homeowner shows real interest. No other use.
+          </p>
 
           {err && (
             <p style={{ fontSize: 13, color: '#C84B26', margin: '12px 0 0', fontWeight: 700 }}>

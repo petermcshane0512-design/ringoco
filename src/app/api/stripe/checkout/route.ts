@@ -98,6 +98,8 @@ export async function POST(req: NextRequest) {
     bizId?: string
     zip?: string
     trade?: string
+    address?: string
+    phone?: string
   }
   const tier: Tier = isValidTier(body.tier ?? '') ? (body.tier as Tier) : 'officemgr'
   const interval: Interval = body.interval === 'annual' ? 'annual' : 'monthly'
@@ -108,6 +110,15 @@ export async function POST(req: NextRequest) {
   // exclusivity promise becomes mechanically real.
   const zip = (body.zip || '').replace(/\D/g, '').slice(0, 5)
   const trade = (body.trade || '').trim().toLowerCase()
+  // 2026-06-10 — fix #5: capture address + phone pre-Stripe so the webhook
+  // can geocode + stamp profile BEFORE find-real-leads fires. Without these
+  // the tight-radius branch in find-real-leads cannot activate on signup,
+  // so the first 80-property pull falls back to ZIP-radius (~5mi) instead
+  // of the address-anchored 3mi promised on the landing copy.
+  // Stripe metadata value cap is 500 chars; address rarely > 100. Truncate
+  // defensively. Phone is normalized to E.164-compatible digits string.
+  const businessAddress = (body.address || '').trim().slice(0, 200)
+  const ownerPhoneDigits = (body.phone || '').replace(/\D/g, '').slice(0, 16)
 
   // 2026-06-10 — T5 attribution. Forward first-touch UTM cookies (set
   // by /start) into Stripe metadata so the webhook can stamp them on
@@ -156,6 +167,8 @@ export async function POST(req: NextRequest) {
       biz_id: effectiveBizId || '',
       territory_zip: zip,
       territory_trade: trade,
+      business_address: businessAddress,
+      owner_phone: ownerPhoneDigits,
       ...utmMeta,
     },
   }
@@ -173,6 +186,8 @@ export async function POST(req: NextRequest) {
       biz_id: effectiveBizId || '',
       territory_zip: zip,
       territory_trade: trade,
+      business_address: businessAddress,
+      owner_phone: ownerPhoneDigits,
       ...utmMeta,
     },
     subscription_data: subscriptionData,
