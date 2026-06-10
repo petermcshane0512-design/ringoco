@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import twilio from 'twilio'
 import { canSpendBatchData, logBatchDataSpend } from '@/lib/batchdataSpend'
 
 export const runtime = 'nodejs'
@@ -31,7 +32,21 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
+const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
+
 const PROPERTY_SEARCH_COST_CENTS = 5  // $0.05
+
+// 2026-06-10 — hot-lead-call pivot. Number of distinct human-button-press
+// visits to the personalized landing that qualifies as "hot." Peter's
+// cell gets an SMS at this threshold so he can call within minutes.
+// Source of truth lives here, not in the SQL CHECK constraint, because
+// we may want to A/B-test 2 vs 3 without a migration.
+const HOT_VISIT_THRESHOLD = 2
+
+const SITE_URL =
+  process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost')
+    ? process.env.NEXT_PUBLIC_APP_URL
+    : 'https://www.bellavego.com'
 const BAD_UA_PATTERNS = [
   /bot/i,
   /crawl/i,
@@ -134,6 +149,12 @@ export async function POST(req: NextRequest) {
   if (!row) {
     return NextResponse.json({ ok: false, error: 'prospect not found' }, { status: 404 })
   }
+
+  // 2026-06-10 — hot-lead-call pivot. Every legitimate human POST (i.e.
+  // past isBot + row-exists gates) is a "visit." Bump the count + alert
+  // Peter if the threshold is hit.
+  await bumpVisitAndMaybeAlertHot(bizId, row)
+
   if (row.generation_completed_at && row.lead_owner_name) {
     // Cached hit — return existing
     return NextResponse.json({ ok: true, cached: true, lead: pluckLead(row) })
@@ -249,6 +270,80 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
 
   return NextResponse.json({ ok: true, cached: false, lead: pluckLead(updated.data as Record<string, unknown>) })
+}
+
+/**
+ * Increment visit_count + last_visited_at on every legitimate human POST.
+ * If the threshold is crossed and we haven't already SMS'd Peter, fire
+ * an SMS to his cell with the prospect's business + city + trade + the
+ * /free-lead URL so he can call them within minutes.
+ *
+ * Idempotent on the SMS: hot_call_sms_sent_at gates it so a contractor
+ * who hits visit 3, 4, 5 doesn't blast Peter's phone.
+ */
+async function bumpVisitAndMaybeAlertHot(
+  bizId: string,
+  rowBefore: Record<string, unknown>,
+): Promise<void> {
+  const priorCount = Number(rowBefore.visit_count ?? 0)
+  const nextCount = priorCount + 1
+  await supabase
+    .from('prospect_free_leads')
+    .update({
+      visit_count: nextCount,
+      last_visited_at: new Date().toISOString(),
+    })
+    .eq('biz_id', bizId)
+
+  if (nextCount < HOT_VISIT_THRESHOLD) return
+  if (rowBefore.hot_call_sms_sent_at) return
+
+  try {
+    // Pull contractor context from the joined outreach_leads row.
+    // prospect_free_leads.email is the contractor's email — the same key
+    // outreach_leads uses. business_name + owner_first_name + city +
+    // state + trade come from that join. No phone column on outreach_leads
+    // yet — Peter looks the phone up in Instantly/Apollo via the email.
+    const email = (rowBefore.email as string | null) || null
+    let businessName: string | null = null
+    let ownerFirstName: string | null = null
+    if (email) {
+      const ol = await supabase
+        .from('outreach_leads')
+        .select('business_name, owner_first_name')
+        .eq('email', email)
+        .maybeSingle()
+      businessName = (ol.data as { business_name?: string } | null)?.business_name ?? null
+      ownerFirstName = (ol.data as { owner_first_name?: string } | null)?.owner_first_name ?? null
+    }
+    const city = (rowBefore.city as string | null) || ''
+    const state = (rowBefore.state as string | null) || ''
+    const zip = (rowBefore.zip as string | null) || ''
+    const trade = (rowBefore.trade as string | null) || ''
+    const url = `${SITE_URL}/free-lead?b=${encodeURIComponent(bizId)}`
+
+    const founderPhone = process.env.FOUNDER_ALERT_PHONE ?? '+17737109565'
+    const sms =
+      `🔥 HOT LEAD — ${nextCount}× visit on free-lead landing\n\n` +
+      `${businessName || '(unknown shop)'}${ownerFirstName ? ` · ${ownerFirstName}` : ''}\n` +
+      `${trade.toUpperCase()} · ${city}${state ? `, ${state}` : ''} ${zip}\n` +
+      `Email: ${email || '—'}\n` +
+      `Their landing: ${url}\n\n` +
+      `Call them NOW. Speed-to-lead = close.`
+
+    await twilioClient.messages.create({
+      body: sms,
+      from: process.env.TWILIO_PHONE_NUMBER!,
+      to: founderPhone,
+    })
+    await supabase
+      .from('prospect_free_leads')
+      .update({ hot_call_sms_sent_at: new Date().toISOString() })
+      .eq('biz_id', bizId)
+    console.log(`[hot-lead] SMS sent to ${founderPhone} for biz=${bizId} visits=${nextCount}`)
+  } catch (e) {
+    console.error('[hot-lead] alert SMS failed (non-blocking):', (e as Error).message)
+  }
 }
 
 function pluckLead(row: Record<string, unknown>) {
