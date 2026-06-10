@@ -57,21 +57,12 @@ type ProfileRow = {
   first_lead_drop_at: string | null
 }
 
-// 2026-06-10 — SUPPLY-DRIVEN radius (replaces time-based ladder).
-// Algorithm step 2: deleted `dynamicRadiusFor()`, `RADIUS_TIGHT_WEEKS`,
-// `RADIUS_WEEKLY_STEP_MI`, `ONBOARDING_TIGHT_RADIUS_DAYS`. Time-based
-// widening was wrong abstraction — Peter's rule is "stay as close as
-// possible; widen ONLY when supply at current ring runs out."
-//
-// Step 3 simplification: this route now accepts an explicit `radius_mi`
-// from the caller. lib/leadEngine.ts walks its own 3->cap ladder against
-// the leads table and only fires this route when even the cap ring is
-// empty; when it does fire, it passes the widest radius it was willing to
-// try so BatchData fills that same ring.
-//
-// Default = 3mi when caller doesn't specify (e.g. admin direct invocation).
-// Hard cap = 20mi to match lib/leadEngine + onboarding subtext.
-const RADIUS_TIGHT_MI = 3
+// 2026-06-10 — SUPPLY-DRIVEN. Caller (lib/leadEngine) walks a 1mi -> cap
+// ladder against the `leads` table itself and only fires this route when
+// even the cap ring runs dry; the caller passes the radius it exhausted
+// in `radius_mi` so BatchData refills the same ring. Default 1mi when
+// caller does not specify (admin-direct invocation). Hard cap 20mi.
+const RADIUS_TIGHT_MI = 1
 const RADIUS_HARD_CAP_MI = 20
 
 function resolveRadius(profile: ProfileRow, requested?: number | null): number {

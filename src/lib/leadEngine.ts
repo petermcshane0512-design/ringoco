@@ -125,21 +125,16 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
   const homeZips = (profile.service_zips || []).filter(Boolean)
   if (homeZips.length === 0) return { assigned: 0, skipped_reason: 'no_service_zips' }
 
-  // 2026-06-10 — SUPPLY-DRIVEN radius (replaces prior time-based / setting-
-  // based ladder). Algorithm step 2: deleted prior `[base, base*1.5, cap]`
-  // ladder which started at the tenant's setting (default 20mi+) — every
-  // drop pulled from the WIDEST possible pool first, wasting close-in
-  // signal. Step 3: simplest correct rule = start at 3mi, expand 1mi at a
-  // time until candidate pool >= drop target OR user's max-tolerable
-  // commute reached.
+  // 2026-06-10 — SUPPLY-DRIVEN ring-by-ring ladder.
+  // Per Peter: every drop asks "is the 1mi ring enough? 2mi? 3mi? ..."
+  // and stops at the first ring that fills the quota. Closest leads
+  // always go out first; no time-based widening, no tenant-setting
+  // floor that would skip the close-in rings.
   //
-  // Per Peter: leads must be as close to the business address as possible.
-  // Only widen when a closer ring is genuinely dry.
-  //
-  // Hard cap drops 50 -> 20. Solo HVAC/plumb/roof shops don't drive past
-  // 20mi for a residential service call; widening past that surfaces leads
-  // they won't take.
-  const RADIUS_START_MI = 3
+  // Hard cap 20 (solo HVAC/plumb/roof don't drive past 20mi for
+  // residential service). userCap = min(profile.service_radius_mi,
+  // RADIUS_HARD_CAP); existing higher values clamped down silently.
+  const RADIUS_START_MI = 1
   const RADIUS_HARD_CAP = 20
   const RADIUS_STEP_MI = 1
   const userCap = Math.max(
@@ -165,6 +160,13 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
   }
   const candidates: Candidate[] = []
   let radiusUsed = RADIUS_START_MI
+  // 2026-06-10 — Defense-in-depth haversine filter inside the ring loop.
+  // Zip-based query bleeds past the literal mile boundary at zip edges.
+  // When we have a geocoded business location, drop any candidate whose
+  // straight-line distance exceeds the current ring. Without geocode, we
+  // trust the zip filter (legacy behavior).
+  const hasGeocode =
+    typeof profile.business_lat === 'number' && typeof profile.business_lng === 'number'
 
   for (const r of radiusLadder) {
     radiusUsed = r
@@ -193,10 +195,14 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
 
     type CandidateRow = Candidate
     for (const c of (cs ?? []) as CandidateRow[]) {
-      if (!dedup.has(c.id)) {
-        dedup.add(c.id)
-        candidates.push(c)
+      if (dedup.has(c.id)) continue
+      if (hasGeocode && typeof c.lat === 'number' && typeof c.lng === 'number') {
+        const miles = haversineMiles(profile.business_lat!, profile.business_lng!, c.lat, c.lng)
+        if (miles > r) continue
+        c._distMi = miles
       }
+      dedup.add(c.id)
+      candidates.push(c)
     }
     if (candidates.length >= remaining * 2) break
   }
@@ -226,10 +232,10 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
             'Content-Type': 'application/json',
             'x-admin-secret': process.env.ADMIN_API_SECRET || '',
           },
-          // 2026-06-10 — pass the widest rung from the supply-driven ladder
-          // so BatchData replenishes the SAME radius we already exhausted in
-          // the leads table. Never goes past userCap (= min(service_radius_mi,
-          // RADIUS_HARD_CAP=20)).
+          // Pass the widest rung from the supply-driven ladder so BatchData
+          // refills the SAME radius we already exhausted in leads — caps the
+          // spend ring + keeps replenished leads close to the business
+          // address. Never goes past userCap (= min(service_radius_mi, 20)).
           body: JSON.stringify({ user_id: profile.user_id, max_candidates: 80, skip_trace_top_n: 10, radius_mi: radiusUsed }),
         })
         const json = await r.json().catch(() => ({}))
