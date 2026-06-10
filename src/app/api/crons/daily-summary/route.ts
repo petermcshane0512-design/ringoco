@@ -1,21 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
+import { stripe } from '@/lib/stripeClient'
 import twilio from 'twilio'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-04-22.dahlia',
-})
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
 
 const PETER_PHONE = process.env.FALLBACK_OWNER_PHONE ?? '+17737109565'
 
 /**
- * Daily founder summary SMS — fires once a day at 02:00 UTC (= 9pm Central).
+ * Daily founder summary SMS â€” fires once a day at 02:00 UTC (= 9pm Central).
  *
  *   Cold-email funnel (last 24h)
  *   Hot reply drafts (sent / killed / pending)
@@ -50,7 +48,7 @@ export async function GET(req: NextRequest) {
   const dayAgoISO = dayAgo.toISOString()
   const in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000)
 
-  // ── 1. Cold-email funnel ──────────────────────────────────
+  // â”€â”€ 1. Cold-email funnel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const { count: sentCount } = await supabase
     .from('outreach_leads')
     .select('id', { count: 'exact', head: true })
@@ -81,7 +79,7 @@ export async function GET(req: NextRequest) {
     else if (r.classification === 'bounce') replies.bounce++
   }
 
-  // ── 2. Hot-reply drafts ───────────────────────────────────
+  // â”€â”€ 2. Hot-reply drafts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const { data: draftRows } = await supabase
     .from('outreach_pending_drafts')
     .select('status')
@@ -102,14 +100,14 @@ export async function GET(req: NextRequest) {
     else if (d.status === 'expired') drafts.expired++
   }
 
-  // ── 3. New signups today (profiles created in last 24h with stripe subscription) ──
+  // â”€â”€ 3. New signups today (profiles created in last 24h with stripe subscription) â”€â”€
   const { count: newSignups } = await supabase
     .from('profiles')
     .select('user_id', { count: 'exact', head: true })
     .gte('created_at', dayAgoISO)
     .not('stripe_subscription_id', 'is', null)
 
-  // ── 4. Trials ending in next 48h + MRR ────────────────────
+  // â”€â”€ 4. Trials ending in next 48h + MRR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const trialingSubs = await listAllSubs({ status: 'trialing' })
   const activeSubs = await listAllSubs({ status: 'active' })
 
@@ -129,7 +127,7 @@ export async function GET(req: NextRequest) {
   }, 0)
   const mrr = mrrCents / 100
 
-  // ── 5. Health alarms ──────────────────────────────────────
+  // â”€â”€ 5. Health alarms â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const sent = sentCount ?? 0
   const bounceRate = sent > 0 ? replies.bounce / sent : 0
   const unsubRate = sent > 0 ? replies.unsubscribe / sent : 0
@@ -138,7 +136,7 @@ export async function GET(req: NextRequest) {
   if (unsubRate > 0.01) alarms.push(`unsub ${(unsubRate * 100).toFixed(1)}%`)
   if (pushFailedCount && pushFailedCount > 0) alarms.push(`${pushFailedCount} push_failed`)
 
-  // ── 6. Compose SMS ────────────────────────────────────────
+  // â”€â”€ 6. Compose SMS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const dateLabel = now.toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
@@ -147,20 +145,20 @@ export async function GET(req: NextRequest) {
   })
 
   const lines: string[] = [
-    `BellAveGo daily — ${dateLabel}`,
+    `BellAveGo daily â€” ${dateLabel}`,
     '',
     `Cold email (24h):`,
-    `  ${sent} sent · ${replies.total} replies (${replies.positive}🔥 ${replies.objection}? ${replies.unsubscribe}stop ${replies.bounce}bounce)`,
+    `  ${sent} sent Â· ${replies.total} replies (${replies.positive}ðŸ”¥ ${replies.objection}? ${replies.unsubscribe}stop ${replies.bounce}bounce)`,
     '',
     `Hot drafts:`,
-    `  ${drafts.sent} shipped · ${drafts.pending} pending · ${drafts.killed} killed${drafts.failed ? ` · ${drafts.failed} FAILED` : ''}`,
+    `  ${drafts.sent} shipped Â· ${drafts.pending} pending Â· ${drafts.killed} killed${drafts.failed ? ` Â· ${drafts.failed} FAILED` : ''}`,
     '',
     `Signups: ${newSignups ?? 0} new today`,
-    `Trials:  ${trialingSubs.length} active · ${trialsEndingSoon.length} end <48h`,
+    `Trials:  ${trialingSubs.length} active Â· ${trialsEndingSoon.length} end <48h`,
     `MRR:     $${mrr.toLocaleString(undefined, { maximumFractionDigits: 0 })}/mo (${activeSubs.length} paying + ${trialingSubs.length} trial)`,
   ]
   if (alarms.length > 0) {
-    lines.push('', `⚠️ ${alarms.join(' · ')}`)
+    lines.push('', `âš ï¸ ${alarms.join(' Â· ')}`)
   }
   if (trialsEndingSoon.length > 0) {
     lines.push('', 'Trials ending <48h:')
@@ -171,7 +169,7 @@ export async function GET(req: NextRequest) {
         day: 'numeric',
         timeZone: 'America/Chicago',
       })
-      lines.push(`  ${s.customer as string} → ${end}`)
+      lines.push(`  ${s.customer as string} â†’ ${end}`)
     }
   }
   const messageBody = lines.join('\n')

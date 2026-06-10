@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { stripe } from '@/lib/stripeClient'
 import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
 import { provisionNumberForUser, deprovisionForUser } from '@/lib/provisionNumber'
@@ -22,7 +23,6 @@ function escapeHtmlMin(s: string): string {
     .replace(/'/g, '&#39;')
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -51,10 +51,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    // 2026-06-09 — stamp signed_up_at on prospect_free_leads if this
+    // 2026-06-09 â€” stamp signed_up_at on prospect_free_leads if this
     // checkout came from the /free-lead?b={biz_id} cold-email landing.
-    // 2026-06-10 — Fable 5: also skip-trace the FULL phone now (was
-    // redacted on the free-lead landing — phone unlocks on payment).
+    // 2026-06-10 â€” Fable 5: also skip-trace the FULL phone now (was
+    // redacted on the free-lead landing â€” phone unlocks on payment).
     const bizId = (session.metadata?.biz_id || '').slice(0, 64)
     if (bizId) {
       try {
@@ -66,12 +66,12 @@ export async function POST(req: NextRequest) {
           })
           .eq('biz_id', bizId)
           .is('signed_up_at', null)
-        console.log(`[free-lead] attributed signup user=${userId} → biz_id=${bizId}`)
+        console.log(`[free-lead] attributed signup user=${userId} â†’ biz_id=${bizId}`)
 
         // Fire skip-trace AFTER payment so the customer gets the real
         // phone number on first dashboard view. Cheap ($0.10) + only
         // fires for paying customers, no PII exposure to anonymous
-        // clickers. Non-fatal — if it fails, customer still has redacted
+        // clickers. Non-fatal â€” if it fails, customer still has redacted
         // phone visible + can call us for manual lookup.
         try {
           const { data: pfl } = await supabase
@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── Growth Wallet top-up (one-time payment, not subscription) ──
+    // â”€â”€ Growth Wallet top-up (one-time payment, not subscription) â”€â”€
     if (session.metadata?.kind === 'wallet_topup') {
       const amountCents = parseInt(session.metadata.amountCents ?? '0', 10)
       if (amountCents > 0) {
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
             supabase, userId, kind: 'topup',
             amountCents,
             stripeChargeId: session.payment_intent as string,
-            note: `Top-up via Stripe Checkout — $${(amountCents / 100).toLocaleString()}`,
+            note: `Top-up via Stripe Checkout â€” $${(amountCents / 100).toLocaleString()}`,
           })
           console.log(`Growth wallet top-up: +$${(amountCents / 100).toFixed(2)} for ${userId}`)
         } catch (e) {
@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
 
     // Get subscription details to find the price/tier.
     // Default to 'receptionist' (the lowest paying tier) so a price ID we
-    // don't recognize still produces a VALID tier slug — 'starter' was
+    // don't recognize still produces a VALID tier slug â€” 'starter' was
     // the previous fallback but isn't in TIER_METADATA, so any unknown
     // price would break dashboard tier lookups downstream. (Audit 2026-05-24)
     let planTier: string = 'receptionist'
@@ -166,7 +166,7 @@ export async function POST(req: NextRequest) {
         console.error(
           `[stripe webhook] Subscription ${subscriptionId} has price IDs not in PRICE_TO_TIER: ` +
             subscription.items.data.map((i) => i.price.id).join(', ') +
-            ` — defaulted to 'receptionist'. Update src/lib/pricing.ts PRICE_TO_TIER.`,
+            ` â€” defaulted to 'receptionist'. Update src/lib/pricing.ts PRICE_TO_TIER.`,
         )
       }
     }
@@ -182,7 +182,7 @@ export async function POST(req: NextRequest) {
     const isPersonalizedCode = /^[A-Z0-9]{1,12}$/.test(creatorCode) && !isLegacyCode
     const validCreatorCode = isLegacyCode || isPersonalizedCode ? creatorCode : null
 
-    // 2026-06-10 — T5 attribution. Read UTM fields off session metadata
+    // 2026-06-10 â€” T5 attribution. Read UTM fields off session metadata
     // (set by checkout from /start's cookies). All nullable for direct
     // and organic visitors.
     const utmStamp = {
@@ -196,7 +196,7 @@ export async function POST(req: NextRequest) {
       paid_at: new Date().toISOString(),
     }
 
-    // 2026-06-10 — fix #5: stamp owner_phone, business_address, service_zips,
+    // 2026-06-10 â€” fix #5: stamp owner_phone, business_address, service_zips,
     // business_type from /start/area metadata BEFORE find-real-leads fires.
     // Also geocode the business address so find-real-leads can use the
     // address-anchored tight-radius branch (3mi from business_lat/lng) on
@@ -244,11 +244,11 @@ export async function POST(req: NextRequest) {
 
     console.log(`Subscription activated for user ${userId}: ${planTier}` + (geocoded ? ` (geocoded ${geocoded.lat.toFixed(4)}, ${geocoded.lng.toFixed(4)})` : ''))
 
-    // 2026-06-10 — T3 territory enforcement. Claim the (zip, trade)
+    // 2026-06-10 â€” T3 territory enforcement. Claim the (zip, trade)
     // territory now that payment cleared. zip + trade were captured at
     // /start/area and forwarded through checkout metadata.
     // Fail-soft: if the territory was concurrently claimed by another
-    // shop (UNIQUE collision), log it for Peter to handle manually —
+    // shop (UNIQUE collision), log it for Peter to handle manually â€”
     // do NOT throw, the customer already paid and Stripe owns the truth.
     const territoryZip = session.metadata?.territory_zip || ''
     const territoryTrade = session.metadata?.territory_trade || ''
@@ -269,7 +269,7 @@ export async function POST(req: NextRequest) {
         })
         if (!claim.ok) {
           console.error(
-            `[territory] CONFLICT — user ${userId} paid for ${territoryZip}/${territoryTrade} ` +
+            `[territory] CONFLICT â€” user ${userId} paid for ${territoryZip}/${territoryTrade} ` +
             `but it is held by ${claim.conflict?.claimed_by_user_id ?? 'unknown'}. Peter needs to refund.`,
           )
         } else {
@@ -280,17 +280,17 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── Day-1 lead drop ──────────────────────────────────────────────
+    // â”€â”€ Day-1 lead drop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Fire lead-engine for this tenant NOW, not next 4am cron. Service
     // ZIPs + radius were captured during onboarding (before checkout),
     // so the profile is ready. Fire-and-forget so it doesn't block the
     // 200 we owe Stripe. Logs the assigned count for debugging.
-    // Step A — fire the discovery agent FIRST. This will:
+    // Step A â€” fire the discovery agent FIRST. This will:
     //   1. trigger any registered city scraper for the tenant's metro
     //   2. fall back to census-aging if the pool is light
     //   3. skip-trace untraced leads in their 50mi radius
-    // Step B — only THEN call fireLeadEngineForUser which actually drops
-    // 5 leads to their dashboard. Without A → B order, brand-new tenants
+    // Step B â€” only THEN call fireLeadEngineForUser which actually drops
+    // 5 leads to their dashboard. Without A â†’ B order, brand-new tenants
     // in metros we don't pre-scrape get 0 leads on day 1.
     //
     // Both run fire-and-forget so they don't block the 200 to Stripe.
@@ -308,7 +308,7 @@ export async function POST(req: NextRequest) {
       .then((r) => r.ok ? r.json() : Promise.resolve({ ok: false, status: r.status }))
       .then((d) => {
         console.log(`[discover-agent] tenant ${userId}: leads_in_radius=${d.leads_in_radius ?? '?'} steps=${(d.steps ?? []).length}`)
-        // Now drop the 5 leads — discovery has primed the pool.
+        // Now drop the 5 leads â€” discovery has primed the pool.
         return fireLeadEngineForUser(userId)
       })
       .then((r) => {
@@ -319,9 +319,9 @@ export async function POST(req: NextRequest) {
           console.log(`[day-1 leads] no drop for ${userId}: ${r.skipped_reason}`)
         }
       })
-      .catch((e) => console.error(`[day-1 leads] discover→drop chain threw for ${userId}:`, e))
+      .catch((e) => console.error(`[day-1 leads] discoverâ†’drop chain threw for ${userId}:`, e))
 
-    // ── 🎉 Peter's ALERT: SMS the founder on every new subscription ──
+    // â”€â”€ ðŸŽ‰ Peter's ALERT: SMS the founder on every new subscription â”€â”€
     // Per Peter 5/28: he wants real-time notifications when a small dog
     // signs up so he can text them personally within 60 sec. This converts
     // way better than waiting for the automated trial nurture to do it.
@@ -341,12 +341,12 @@ export async function POST(req: NextRequest) {
       const ownerPhoneClean = prof?.owner_phone?.replace(/[^\d+]/g, '') ?? ''
 
       const sms =
-        `🎉 NEW BELLAVEGO SIGNUP\n\n` +
+        `ðŸŽ‰ NEW BELLAVEGO SIGNUP\n\n` +
         `${businessName}${ownerName ? ` (${ownerName})` : ''}\n` +
         `Tier: ${tierName}\n` +
-        `Email: ${prof?.email ?? '—'}\n` +
-        `Phone: ${ownerPhoneClean || '—'}\n\n` +
-        `Trial just started. Text them in next 5 min — closes 2x faster.`
+        `Email: ${prof?.email ?? 'â€”'}\n` +
+        `Phone: ${ownerPhoneClean || 'â€”'}\n\n` +
+        `Trial just started. Text them in next 5 min â€” closes 2x faster.`
 
       await twilioClient.messages.create({
         body: sms,
@@ -358,12 +358,12 @@ export async function POST(req: NextRequest) {
       console.error('[founder alert] SMS failed (non-blocking):', e)
     }
 
-    // ── 2026-06-10 — fix #7: contractor welcome SMS ──────────────────
+    // â”€â”€ 2026-06-10 â€” fix #7: contractor welcome SMS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Set expectation in the first minute after paying. Per Fable: include
-    // what Monday's list actually is — a concrete preview kills minute-1
+    // what Monday's list actually is â€” a concrete preview kills minute-1
     // refund anxiety better than a generic "thanks for signing up." If
     // we couldn't geocode the address we omit the street fragment instead
-    // of guessing — never fake a delivery promise.
+    // of guessing â€” never fake a delivery promise.
     if (ownerPhoneE164) {
       try {
         const tradeForCopy = (session.metadata?.territory_trade || '').toLowerCase() === 'roofing'
@@ -386,10 +386,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── Stage 1: record PENDING referral (anti-abuse) ──
+    // â”€â”€ Stage 1: record PENDING referral (anti-abuse) â”€â”€
     // If this new customer was referred (profiles.referred_by set from the
     // bavg_ref cookie at signup), record a pending referral row. NO Stripe
-    // credit fires yet — that waits until the referred customer survives the
+    // credit fires yet â€” that waits until the referred customer survives the
     // 7-day trial AND completes their first full paid month (~day 38). The
     // actual credit grant happens in the invoice.payment_succeeded handler below.
     try {
@@ -401,7 +401,7 @@ export async function POST(req: NextRequest) {
           subscriptionCreatedISO: new Date(subForReferral.created * 1000).toISOString(),
         })
         if (referralResult.ok) {
-          console.log(`Pending referral recorded for ${userId} — credit fires after referred customer's day 31`)
+          console.log(`Pending referral recorded for ${userId} â€” credit fires after referred customer's day 31`)
         } else if (referralResult.reason && referralResult.reason !== 'no referral attribution') {
           console.warn(`Pending referral skipped for ${userId}: ${referralResult.reason}`)
         }
@@ -411,7 +411,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Provision a Twilio number now that they're paid. Idempotent.
-    // Failures are no longer silent — alert Peter + log to provisioning_failures
+    // Failures are no longer silent â€” alert Peter + log to provisioning_failures
     // so the half-hourly retry cron picks it up.
     let provisionedNumber: string | undefined
     let provisioningError: string | undefined
@@ -441,7 +441,7 @@ export async function POST(req: NextRequest) {
       // Log the failure for the retry cron + alert Peter immediately.
       // Two flavors:
       //   - provisioningError: nothing got bought, customer has no number.
-      //   - vapiImportError: number bought but stuck on legacy voice — still
+      //   - vapiImportError: number bought but stuck on legacy voice â€” still
       //     needs intervention because the customer paid for Cartesia/Claude.
       const { data: contractor } = await supabase
         .from('profiles')
@@ -471,8 +471,8 @@ export async function POST(req: NextRequest) {
 
       try {
         const headline = provisioningError
-          ? `🚨 Provisioning failed — ${contractor?.business_name || userId}`
-          : `⚠️ Vapi import failed — ${contractor?.business_name || userId}`
+          ? `ðŸš¨ Provisioning failed â€” ${contractor?.business_name || userId}`
+          : `âš ï¸ Vapi import failed â€” ${contractor?.business_name || userId}`
         const detail = provisioningError
           ? `Customer paid but has no Twilio number.`
           : `Customer has a working Twilio number on the LEGACY Polly voice. Cartesia/Claude won't activate until Vapi import succeeds.`
@@ -488,7 +488,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Welcome SMS to the contractor (idempotent — only sends if welcomed_at is null).
+    // Welcome SMS to the contractor (idempotent â€” only sends if welcomed_at is null).
     if (provisionedNumber) {
       try {
         const { data: contractor } = await supabase
@@ -498,14 +498,14 @@ export async function POST(req: NextRequest) {
           .maybeSingle()
 
         if (contractor?.owner_phone && !contractor.welcomed_at) {
-          // 1. Welcome SMS — fast, immediate, ringtone-grade alert.
+          // 1. Welcome SMS â€” fast, immediate, ringtone-grade alert.
           await twilioClient.messages.create({
-            body: `🎯 Welcome to BellAveGo, ${contractor.business_name || 'partner'}! Your first ${LEADS_PER_WEEK} neighborhood leads land in your dashboard within 24h. View them anytime: https://www.bellavego.com/dashboard/leads. 30-day money-back guarantee — cancel anytime in your dashboard if you're not booking more jobs. — Peter, BellAveGo`,
+            body: `ðŸŽ¯ Welcome to BellAveGo, ${contractor.business_name || 'partner'}! Your first ${LEADS_PER_WEEK} neighborhood leads land in your dashboard within 24h. View them anytime: https://www.bellavego.com/dashboard/leads. 30-day money-back guarantee â€” cancel anytime in your dashboard if you're not booking more jobs. â€” Peter, BellAveGo`,
             from: provisionedNumber,
             to: contractor.owner_phone,
           })
 
-          // 2. Welcome EMAIL — receipt-grade record of trial start.
+          // 2. Welcome EMAIL â€” receipt-grade record of trial start.
           // SMS can be missed / muted / land in unknown-sender. Email gives
           // them a paper trail with the charge-day-8 disclosure and the
           // dashboard link they can click from any device.
@@ -513,11 +513,11 @@ export async function POST(req: NextRequest) {
             const contractorEmail = await lookupOwnerEmail(userId)
             if (contractorEmail) {
               const biz = contractor.business_name || 'partner'
-              const subject = `Welcome to BellAveGo — your AI receptionist is live`
+              const subject = `Welcome to BellAveGo â€” your AI receptionist is live`
               const html =
                 `<div style="font-family:system-ui,-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0B1F3A;">` +
-                `<div style="text-align:center;margin-bottom:24px;"><div style="display:inline-block;background:#0AA89F;color:#fff;font-weight:800;padding:10px 18px;border-radius:10px;font-size:18px;letter-spacing:0.3px;">🔔 BellAveGo</div></div>` +
-                `<h1 style="font-size:22px;margin:0 0 12px;">Welcome, ${escapeHtmlMin(biz)} 👋</h1>` +
+                `<div style="text-align:center;margin-bottom:24px;"><div style="display:inline-block;background:#0AA89F;color:#fff;font-weight:800;padding:10px 18px;border-radius:10px;font-size:18px;letter-spacing:0.3px;">ðŸ”” BellAveGo</div></div>` +
+                `<h1 style="font-size:22px;margin:0 0 12px;">Welcome, ${escapeHtmlMin(biz)} ðŸ‘‹</h1>` +
                 `<p style="font-size:15px;line-height:1.55;margin:0 0 18px;">Your AI receptionist is live and ready to answer calls. Here's what's next:</p>` +
                 `<div style="background:#F5F1EA;border-radius:10px;padding:16px 18px;margin:0 0 20px;">` +
                   `<p style="margin:0 0 8px;font-size:13px;color:#4A6670;">Your dedicated number</p>` +
@@ -525,15 +525,15 @@ export async function POST(req: NextRequest) {
                 `</div>` +
                 `<h2 style="font-size:16px;margin:24px 0 8px;">Get up and running (5 min)</h2>` +
                 `<ol style="font-size:14px;line-height:1.7;padding-left:20px;margin:0 0 20px;">` +
-                  `<li><strong>Set up call forwarding</strong> so missed calls ring our AI. <a href="https://www.bellavego.com/dashboard/forwarding" style="color:#0AA89F;">Step-by-step walkthrough →</a></li>` +
+                  `<li><strong>Set up call forwarding</strong> so missed calls ring our AI. <a href="https://www.bellavego.com/dashboard/forwarding" style="color:#0AA89F;">Step-by-step walkthrough â†’</a></li>` +
                   `<li><strong>Save the dashboard to your phone home screen</strong> so you get push alerts the second a lead comes in.</li>` +
-                  `<li><strong>Test it</strong> — call your new number from a different phone and hear Emma in action.</li>` +
+                  `<li><strong>Test it</strong> â€” call your new number from a different phone and hear Emma in action.</li>` +
                 `</ol>` +
                 `<p style="text-align:center;margin:24px 0;"><a href="https://www.bellavego.com/dashboard" style="display:inline-block;background:#0AA89F;color:#fff;text-decoration:none;font-weight:800;padding:14px 28px;border-radius:10px;font-size:15px;">Open your dashboard</a></p>` +
                 `<div style="border-top:1px solid #E5E7EB;margin-top:24px;padding-top:16px;font-size:12px;color:#4A6670;line-height:1.6;">` +
-                  `<p style="margin:0 0 6px;"><strong>Trial details:</strong> You're in a 7-day free trial. Your card won't be charged until day 8. Cancel anytime from the billing tab — no questions, no fees.</p>` +
+                  `<p style="margin:0 0 6px;"><strong>Trial details:</strong> You're in a 7-day free trial. Your card won't be charged until day 8. Cancel anytime from the billing tab â€” no questions, no fees.</p>` +
                   `<p style="margin:0 0 6px;"><strong>Need help?</strong> Text Peter (founder) directly: (773) 710-9565. Replies under 10 min during business hours.</p>` +
-                  `<p style="margin:6px 0 0;">— BellAveGo team</p>` +
+                  `<p style="margin:6px 0 0;">â€” BellAveGo team</p>` +
                 `</div>` +
                 `</div>`
               const text =
@@ -542,10 +542,10 @@ export async function POST(req: NextRequest) {
                 `Get up and running (5 min):\n` +
                 `1. Set up call forwarding: https://www.bellavego.com/dashboard/forwarding\n` +
                 `2. Save the dashboard to your phone home screen for push alerts\n` +
-                `3. Test it — call your new number from a different phone\n\n` +
+                `3. Test it â€” call your new number from a different phone\n\n` +
                 `Dashboard: https://www.bellavego.com/dashboard\n\n` +
                 `Trial details: 7-day free trial. Card charged day 8 unless you cancel. Cancel anytime from the billing tab.\n\n` +
-                `Need help? Text Peter directly: (773) 710-9565.\n\n— BellAveGo team`
+                `Need help? Text Peter directly: (773) 710-9565.\n\nâ€” BellAveGo team`
               await sendEmail({ to: contractorEmail, subject, html, text })
             }
           } catch (e) {
@@ -583,7 +583,7 @@ export async function POST(req: NextRequest) {
 
       console.log(`Subscription cancelled for user ${profile.user_id}`)
 
-      // 2026-06-10 — T3 territory enforcement. Move owned territories into
+      // 2026-06-10 â€” T3 territory enforcement. Move owned territories into
       // a 14-day grace window so we don't double-sell during dunning/retry.
       // territory-release-grace cron flips them back to 'open' after the
       // window expires.
@@ -614,7 +614,7 @@ export async function POST(req: NextRequest) {
         console.error('auto-deprovision failed:', e)
       }
 
-      // Fallback email — ONLY when auto-deprovision didn't fully complete.
+      // Fallback email â€” ONLY when auto-deprovision didn't fully complete.
       // If everything released cleanly, no email needed.
       if (deprovisionFailed && profile.twilio_number) {
         try {
@@ -622,9 +622,9 @@ export async function POST(req: NextRequest) {
           const ownerEmail = process.env.FALLBACK_OWNER_EMAIL || 'bellavegollc@gmail.com'
           await sendEmail({
             to: ownerEmail,
-            subject: `⚠️ Cancellation — auto-deprovision FAILED for ${profile.business_name ?? 'unknown'}`,
+            subject: `âš ï¸ Cancellation â€” auto-deprovision FAILED for ${profile.business_name ?? 'unknown'}`,
             html: `<div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0B1F3A;">
-<h2 style="margin:0 0 12px;font-size:20px;font-weight:900;">Auto-deprovision failed — manual cleanup needed</h2>
+<h2 style="margin:0 0 12px;font-size:20px;font-weight:900;">Auto-deprovision failed â€” manual cleanup needed</h2>
 <p style="margin:0 0 14px;color:#7C2D12;font-size:13px;">Errors: ${deprovisionErrors.join('; ').slice(0, 400)}</p>
 <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:14px;">
   <tr><td style="padding:6px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;width:140px;">Business</td><td style="padding:6px 0;font-weight:700;">${profile.business_name ?? '(unknown)'}</td></tr>
@@ -633,16 +633,16 @@ export async function POST(req: NextRequest) {
   <tr><td style="padding:6px 0;color:#7AAAB2;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">Tier at cancel</td><td style="padding:6px 0;">${profile.plan_tier ?? '(unknown)'}</td></tr>
 </table>
 <div style="margin-top:22px;padding:16px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;">
-  <div style="font-weight:800;margin-bottom:8px;">Action — 2 minutes:</div>
+  <div style="font-weight:800;margin-bottom:8px;">Action â€” 2 minutes:</div>
   <ol style="margin:0;padding-left:20px;line-height:1.6;">
     <li><a href="${consoleUrl}" style="color:#C84B26;font-weight:700;">Open the number in Twilio Console</a></li>
-    <li>Bottom of page → <strong>"Release this number"</strong> → confirm</li>
+    <li>Bottom of page â†’ <strong>"Release this number"</strong> â†’ confirm</li>
     <li><a href="https://dashboard.vapi.ai/phone-numbers" style="color:#C84B26;font-weight:700;">Delete the matching number in Vapi dashboard</a></li>
   </ol>
 </div>
 <p style="margin-top:20px;font-size:12px;color:#7AAAB2;">Skipping this costs ~$1.15/mo per orphaned number on Twilio + a Vapi line item.</p>
 </div>`,
-            text: `Customer ${profile.business_name ?? 'unknown'} (owner ${profile.owner_phone ?? 'no phone'}, tier ${profile.plan_tier ?? 'unknown'}) cancelled. Release Twilio number ${profile.twilio_number} via console: ${consoleUrl} — then delete the matching Vapi import at https://dashboard.vapi.ai/phone-numbers. Skipping costs ~$1.15/mo per orphan.`,
+            text: `Customer ${profile.business_name ?? 'unknown'} (owner ${profile.owner_phone ?? 'no phone'}, tier ${profile.plan_tier ?? 'unknown'}) cancelled. Release Twilio number ${profile.twilio_number} via console: ${consoleUrl} â€” then delete the matching Vapi import at https://dashboard.vapi.ai/phone-numbers. Skipping costs ~$1.15/mo per orphan.`,
           })
         } catch (e) {
           console.error('cancellation cleanup email failed:', e)
@@ -666,7 +666,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── invoice.payment_succeeded — Stage 2 of referral credit + un-pause ──
+  // â”€â”€ invoice.payment_succeeded â€” Stage 2 of referral credit + un-pause â”€â”€
   // Fires on EVERY paid invoice (initial + renewals). Two jobs:
   //   1. Referral credit: no-op unless there's a pending referral for this
   //      subscription AND the subscription is >31 days old. When both true,
@@ -695,11 +695,11 @@ export async function POST(req: NextRequest) {
         .eq('stripe_customer_id', customerId)
         .maybeSingle()
 
-      // 2026-06-10 — T5 retention. Snapshot the pre-stamp state so the
+      // 2026-06-10 â€” T5 retention. Snapshot the pre-stamp state so the
       // creator branch downstream can still compute isFirstPaid /
       // isSecondPaid correctly (it depends on whether the columns were
       // already set BEFORE this invoice). Then stamp on every paid
-      // invoice for every customer — was previously only stamped for
+      // invoice for every customer â€” was previously only stamped for
       // creator-attributed signups, so non-creator retention was
       // invisible. second_paid_charge_at is the month-2 conversion
       // signal that powers /admin/retention.
@@ -724,25 +724,25 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // ── IG creator payout staging (pivot 2026-06-06, refined) ──
+      // â”€â”€ IG creator payout staging (pivot 2026-06-06, refined) â”€â”€
       // Two-stage flow tied to fan's first + second paid invoices:
       //
       //   FIRST  paid charge (~$97 with $200-off code applied):
-      //     • stamp profiles.first_paid_charge_at
-      //     • add $200 to creator.pending_payout_cents (in 30-day MBG window)
+      //     â€¢ stamp profiles.first_paid_charge_at
+      //     â€¢ add $200 to creator.pending_payout_cents (in 30-day MBG window)
       //
       //   SECOND paid charge (~$297, day ~30):
-      //     • stamp profiles.second_paid_charge_at
-      //     • move $200 from pending_payout_cents → payable_friday_cents
-      //     • bump paid_referrals_count
-      //     • flip status to 'paid_bonus_hit' at 5 refs
+      //     â€¢ stamp profiles.second_paid_charge_at
+      //     â€¢ move $200 from pending_payout_cents â†’ payable_friday_cents
+      //     â€¢ bump paid_referrals_count
+      //     â€¢ flip status to 'paid_bonus_hit' at 5 refs
       //
       // The Friday cron (/api/crons/creator-payout-batch) drains
       // payable_friday_cents and ACHs the creator.
       //
       // amount_paid > 0 filters out $0 invoices (trial extensions, etc.) so
       // we only count real cash collected. Each profile column is set
-      // exactly once — repeat invoices fall through.
+      // exactly once â€” repeat invoices fall through.
       const promoCode = profile?.referred_by_promo_code ?? profile?.creator_referral_code
       const isFirstPaid = !profile?.first_paid_charge_at && invoice.amount_paid && invoice.amount_paid > 0
       const isSecondPaid = !!profile?.first_paid_charge_at && !profile?.second_paid_charge_at && invoice.amount_paid && invoice.amount_paid > 0
@@ -797,9 +797,9 @@ export async function POST(req: NextRequest) {
                 updated_at: new Date().toISOString(),
               })
               .eq('id', creator.id)
-            console.log(`[creator-payout] PAYABLE +$200 to ${promoCode} (fan second paid charge) — total refs now ${nextCount}`)
+            console.log(`[creator-payout] PAYABLE +$200 to ${promoCode} (fan second paid charge) â€” total refs now ${nextCount}`)
 
-            // ── Founder text-line unlock at 5 paid refs (Hormozi loyalty hook) ──
+            // â”€â”€ Founder text-line unlock at 5 paid refs (Hormozi loyalty hook) â”€â”€
             // Auto-SMS the creator with Peter's direct cell so top performers
             // feel like partners not affiliates. Fires once per creator.
             if (nextCount === 5) {
@@ -812,7 +812,7 @@ export async function POST(req: NextRequest) {
                 // We don't have creator's own phone in ig_creator_outreach.
                 // Look up via profiles where referred_by_promo_code points
                 // back at this creator (if they signed up themselves with
-                // their personal code) — that gives us their owner_phone.
+                // their personal code) â€” that gives us their owner_phone.
                 const { data: creatorProfile } = await supabase
                   .from('profiles')
                   .select('owner_phone, business_name')
@@ -822,7 +822,7 @@ export async function POST(req: NextRequest) {
                 if (phone) {
                   const FOUNDER_CELL = process.env.FOUNDER_CELL ?? '+17737109565'
                   await twilioClient.messages.create({
-                    body: `🔥 5 paid refs hit. $1K bonus on its way Friday. You're in the inner circle now — my personal cell: ${FOUNDER_CELL}. Text me anytime with what you need. Let's get you to 15. — Peter, BellAveGo`,
+                    body: `ðŸ”¥ 5 paid refs hit. $1K bonus on its way Friday. You're in the inner circle now â€” my personal cell: ${FOUNDER_CELL}. Text me anytime with what you need. Let's get you to 15. â€” Peter, BellAveGo`,
                     from: process.env.TWILIO_PHONE_NUMBER!,
                     to: phone,
                   })
@@ -859,12 +859,12 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // ── Customer-to-customer referral credit (pivot 2026-06-06) ──
+      // â”€â”€ Customer-to-customer referral credit (pivot 2026-06-06) â”€â”€
       // When this paying customer was REFERRED by another paying customer
       // (profiles.referred_by points to another profile's referral_code),
       // credit the REFERRER's Stripe account w/ 1 month free ($297) on
       // their next invoice. One-time per referred customer, gated by
-      // creator_referral_credited_at flag (same column reused — when set,
+      // creator_referral_credited_at flag (same column reused â€” when set,
       // either IG creator OR customer referrer has been credited).
       const profileForReferrer = await supabase
         .from('profiles')
@@ -894,7 +894,7 @@ export async function POST(req: NextRequest) {
             await stripe.customers.createBalanceTransaction(referrer.stripe_customer_id, {
               amount: -49700, // negative = credit (Stripe convention)
               currency: 'usd',
-              description: `BellAveGo referral credit — 1 month free for referring a paid customer`,
+              description: `BellAveGo referral credit â€” 1 month free for referring a paid customer`,
             })
             // Stamp the credited flag so we don't double-credit on renewals
             await supabase
@@ -912,11 +912,11 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── Payment failure → pause service immediately + notify customer ──
+  // â”€â”€ Payment failure â†’ pause service immediately + notify customer â”€â”€
   // Stripe will continue retrying the card for ~3 days. During that window
   // we previously left is_active=true, which meant calls kept being answered
   // (and minutes burned) by a delinquent customer. Now we flip is_active=false
-  // right away — assistant-request returns the "service paused" message —
+  // right away â€” assistant-request returns the "service paused" message â€”
   // and invoice.payment_succeeded below flips it back when they pay.
   if (event.type === 'invoice.payment_failed') {
     const invoice = event.data.object as Stripe.Invoice
@@ -982,7 +982,7 @@ export async function POST(req: NextRequest) {
       try {
         await twilioClient.messages.create({
           body:
-            `⚠️ Card declined — ${profile.business_name || profile.user_id} (${profile.plan_tier || '?'})\n\n` +
+            `âš ï¸ Card declined â€” ${profile.business_name || profile.user_id} (${profile.plan_tier || '?'})\n\n` +
             `Stripe is retrying. If it ultimately fails the account will suspend.\n\nReach out personally for Concierge customers.`,
           from: process.env.TWILIO_PHONE_NUMBER!,
           to: process.env.FALLBACK_OWNER_PHONE!,
@@ -1024,7 +1024,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── customer.subscription.trial_will_end ───────────────────────────────
+  // â”€â”€ customer.subscription.trial_will_end â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Stripe fires this 72 hours before the trial ends. Send the contractor
   // a heads-up SMS so the first charge isn't a surprise. Stripe also fires
   // its own default email if email is configured on the customer object.
@@ -1055,14 +1055,14 @@ export async function POST(req: NextRequest) {
       try {
         await twilioClient.messages.create({
           body:
-            `Heads up — your 7-day BellAveGo free trial wraps up ${trialEndLabel}. ` +
+            `Heads up â€” your 7-day BellAveGo free trial wraps up ${trialEndLabel}. ` +
             `Your first month bills automatically that day. ` +
-            `Loving it? Do nothing. Want to cancel? Open your dashboard → Settings → Subscription before then. ` +
+            `Loving it? Do nothing. Want to cancel? Open your dashboard â†’ Settings â†’ Subscription before then. ` +
             `Questions: text Peter at (773) 710-9565.`,
           from: process.env.TWILIO_PHONE_NUMBER!,
           to: profile.owner_phone,
         })
-        console.log(`[trial_will_end] notified ${profile.user_id} — trial ends ${trialEndLabel}`)
+        console.log(`[trial_will_end] notified ${profile.user_id} â€” trial ends ${trialEndLabel}`)
       } catch (e) {
         console.error('trial_will_end SMS failed:', e)
       }

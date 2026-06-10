@@ -1,16 +1,14 @@
 import { NextResponse } from 'next/server'
 import { clerkClient } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
-import Stripe from 'stripe'
+import type Stripe from 'stripe'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
+import { stripe } from '@/lib/stripeClient'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-04-22.dahlia',
-})
 
 // Admin-only: list every signed-up customer with their tier + activity.
 // Used by /admin/customers (Peter's ops cockpit). Returns at most 500 rows.

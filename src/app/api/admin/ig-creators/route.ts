@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
+import { stripe } from '@/lib/stripeClient'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 import {
   vanityCodeFromHandle,
@@ -12,15 +13,11 @@ import {
   ensurePersonalCoupon,
 } from '@/lib/creatorCodes'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-04-22.dahlia',
-})
-
 export const runtime = 'nodejs'
 
 /**
- * GET  /api/admin/ig-creators              — list all, optional ?status=
- * POST /api/admin/ig-creators              — create new creator (body: handle, followers, trade, hashtag_source, notes)
+ * GET  /api/admin/ig-creators              â€” list all, optional ?status=
+ * POST /api/admin/ig-creators              â€” create new creator (body: handle, followers, trade, hashtag_source, notes)
  *
  * Manual IG creator outreach tracking. Peter sends DMs by hand,
  * logs progress here. NO SCRAPING per CLAUDE.md.
@@ -93,7 +90,7 @@ export async function POST(req: NextRequest) {
     hashtag_source?: string
     notes?: string
     status?: string
-    // 2026-06-06 — Peter wants to name codes manually. If provided, these
+    // 2026-06-06 â€” Peter wants to name codes manually. If provided, these
     // override the auto-derived `{HANDLE}` / `{HANDLE}3MO` strings.
     public_code?: string
     personal_code?: string
@@ -111,12 +108,12 @@ export async function POST(req: NextRequest) {
   const handle = (body.handle || '').trim().replace(/^@/, '').toLowerCase()
   if (!handle) return NextResponse.json({ error: 'handle required' }, { status: 400 })
 
-  // Legacy free_trial_code kept on the row for back-compat — anyone hitting
+  // Legacy free_trial_code kept on the row for back-compat â€” anyone hitting
   // /ref/BAVG-XXXXXX from old DMs still resolves. New attribution pivot
   // (2026-06-06) uses promo_code (the personalized Stripe promotion_code).
   const free_trial_code = `BAVG-${handle.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6).padEnd(6, '0')}`
 
-  // Schema has UNIQUE INDEX (lower(handle)) — a functional index, not a
+  // Schema has UNIQUE INDEX (lower(handle)) â€” a functional index, not a
   // plain UNIQUE column constraint. Supabase's upsert `onConflict: 'handle'`
   // requires a real column constraint and 500s otherwise with:
   //   "there is no unique or exclusion constraint matching the ON CONFLICT specification"
@@ -176,10 +173,10 @@ export async function POST(req: NextRequest) {
   if (!created) return NextResponse.json({ error: 'no row produced' }, { status: 500 })
 
   // Auto-mint BOTH promo codes for this creator:
-  //   PUBLIC   ($200 off first month for fans, multi-use)        → promo_code
-  //   PERSONAL (3 months free Pro for the creator, single-use)   → personal_promo_code
+  //   PUBLIC   ($200 off first month for fans, multi-use)        â†’ promo_code
+  //   PERSONAL (3 months free Pro for the creator, single-use)   â†’ personal_promo_code
   //
-  // Each stage wrapped — if Stripe blips on one, the creator still
+  // Each stage wrapped â€” if Stripe blips on one, the creator still
   // exists and we can re-run via /generate-promo-code later.
   let promo_code: string | null = (created.promo_code as string | null | undefined) ?? null
   let stripe_promotion_code_id: string | null = (created.stripe_promotion_code_id as string | null | undefined) ?? null
@@ -192,7 +189,7 @@ export async function POST(req: NextRequest) {
       if (base) {
         await ensureSharedCoupon(stripe)
         // If user provided an explicit override, fail loudly on collision
-        // rather than appending a suffix — they care about the exact string.
+        // rather than appending a suffix â€” they care about the exact string.
         let finalCode: string
         if (publicCodeOverride) {
           const { data: clash } = await supabase
@@ -283,7 +280,7 @@ export async function POST(req: NextRequest) {
     },
     public_ref_url: promo_code ? `https://www.bellavego.com/ref/${promo_code}` : null,
     personal_signup_code: personal_promo_code,
-    // Convenience block — paste-ready for Peter's DM follow-up.
+    // Convenience block â€” paste-ready for Peter's DM follow-up.
     dm_block: promo_code && personal_promo_code
       ? `Your personal 3-months-free code: ${personal_promo_code}\nSignup: https://www.bellavego.com/pricing\nApply ${personal_promo_code} at checkout.\n\nYour fan code (give to your followers): ${promo_code}\nThey use https://www.bellavego.com/ref/${promo_code} and get $97 first month.`
       : null,

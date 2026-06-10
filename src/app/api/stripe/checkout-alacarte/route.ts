@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { stripe } from '@/lib/stripeClient'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 
@@ -8,7 +9,7 @@ export const runtime = 'nodejs'
 /**
  * POST /api/stripe/checkout-alacarte
  *
- * 2026-06-09 LEADS-ONLY PIVOT — extra-leads one-time purchase.
+ * 2026-06-09 LEADS-ONLY PIVOT â€” extra-leads one-time purchase.
  *
  * Existing active subscriber wants more leads mid-month. They click
  * "Buy more leads" on /dashboard/buy-leads, pick a pack size, this
@@ -19,19 +20,15 @@ export const runtime = 'nodejs'
  * event, increments the customer's monthly lead quota, and fires
  * /api/agents/find-real-leads to immediately source the extra leads.
  *
- * Packs (Hormozi-style stacked deal — bigger pack = better unit price):
+ * Packs (Hormozi-style stacked deal â€” bigger pack = better unit price):
  *   - SINGLE: 1 lead @ $15  ($15/lead)
  *   - PACK_5: 5 leads @ $75  ($15/lead)
- *   - PACK_10: 10 leads @ $140  ($14/lead — small bulk discount)
- *   - PACK_25: 25 leads @ $300  ($12/lead — bigger bulk discount)
+ *   - PACK_10: 10 leads @ $140  ($14/lead â€” small bulk discount)
+ *   - PACK_25: 25 leads @ $300  ($12/lead â€” bigger bulk discount)
  *
  * Auth: signed-in Clerk user must have active subscription. We don't
- * sell extras to non-customers — keeps the trip-wire intact.
+ * sell extras to non-customers â€” keeps the trip-wire intact.
  */
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-04-22.dahlia',
-})
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -44,11 +41,11 @@ const APP_URL =
     ? process.env.NEXT_PUBLIC_APP_URL
     : 'https://www.bellavego.com'
 
-// 2026-06-09 — custom-amount only. $25/lead flat (Hormozi bump from $15
-// — at base $497/mo customer pays $6.21/lead, so extras at $25 stack
+// 2026-06-09 â€” custom-amount only. $25/lead flat (Hormozi bump from $15
+// â€” at base $497/mo customer pays $6.21/lead, so extras at $25 stack
 // $18.79 margin per add-on). Min 1, max 200.
 // Old preset packs (SINGLE/PACK_5/PACK_10/PACK_25 w/ bulk discounts) dropped
-// per Peter request — dashboard now uses a single qty input that multiplies
+// per Peter request â€” dashboard now uses a single qty input that multiplies
 // by $15.
 const PRICE_PER_LEAD_CENTS = 2500
 const MAX_QTY_PER_PURCHASE = 200
@@ -91,8 +88,8 @@ export async function POST(req: NextRequest) {
             currency: 'usd',
             unit_amount,
             product_data: {
-              name: `BellAveGo · ${label}`,
-              description: `${qty} extra exclusive homeowner ${qty === 1 ? 'lead' : 'leads'} in your zip · delivered within 24 hours.`,
+              name: `BellAveGo Â· ${label}`,
+              description: `${qty} extra exclusive homeowner ${qty === 1 ? 'lead' : 'leads'} in your zip Â· delivered within 24 hours.`,
             },
           },
         },

@@ -1,16 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { stripe } from '@/lib/stripeClient'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-04-22.dahlia' })
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
 
 const PETER_PHONE = process.env.FALLBACK_OWNER_PHONE ?? '+17737109565'
 
-// Structured cancel reasons — drives Peter's churn analysis.
+// Structured cancel reasons â€” drives Peter's churn analysis.
 const ALLOWED_REASONS = new Set([
   'voice_quality',
   'not_enough_calls',
@@ -29,9 +29,9 @@ const ALLOWED_REASONS = new Set([
  * As of the 7-day-free-trial migration this route NO LONGER issues refunds.
  * The new model:
  *
- *   • Trial users (days 0-7, status='trialing') → cancel immediately, NO
+ *   â€¢ Trial users (days 0-7, status='trialing') â†’ cancel immediately, NO
  *     charge ever fires. They get nothing to refund.
- *   • Paid users (status='active' post-trial) → cancel_at_period_end. They
+ *   â€¢ Paid users (status='active' post-trial) â†’ cancel_at_period_end. They
  *     keep service through the rest of their billing cycle, no refund.
  *
  * We do not run a money-back guarantee anymore. Hard cancels only.
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
 
   try {
     if (isTrialing) {
-      // Trial cancel — kill it now so no charge ever fires.
+      // Trial cancel â€” kill it now so no charge ever fires.
       cancellation = 'immediate'
       await stripe.subscriptions.cancel(profile.stripe_subscription_id, {
         invoice_now: false,
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
       })
       serviceActiveUntil = new Date().toISOString()
     } else {
-      // Active paid subscription — cancel at period end. Customer keeps
+      // Active paid subscription â€” cancel at period end. Customer keeps
       // service through the rest of the cycle they paid for. No refund.
       cancellation = 'period_end'
       const updated = (await stripe.subscriptions.update(profile.stripe_subscription_id, {
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
     .update({ plan_tier: 'cancelled' })
     .eq('user_id', userId)
 
-  // SMS Peter every cancel — churn signal.
+  // SMS Peter every cancel â€” churn signal.
   const reasonLabel: Record<string, string> = {
     voice_quality:      "AI doesn't sound human enough",
     not_enough_calls:   "Not getting enough leads",
@@ -111,15 +111,15 @@ export async function POST(req: NextRequest) {
     unspecified:        "(no reason given)",
   }
   try {
-    const trialPart = isTrialing ? ' (during 7-day trial — no charge)' : ' (paid subscriber)'
+    const trialPart = isTrialing ? ' (during 7-day trial â€” no charge)' : ' (paid subscriber)'
     await twilioClient.messages.create({
       body:
-        `⚠️ Cancel — ${profile.business_name ?? profile.user_id} (${profile.plan_tier ?? '?'})${trialPart}\n\n` +
-        `📊 Reason: ${reasonLabel[reason]}\n` +
-        (reasonDetail ? `💬 Detail: "${reasonDetail}"\n` : '') +
+        `âš ï¸ Cancel â€” ${profile.business_name ?? profile.user_id} (${profile.plan_tier ?? '?'})${trialPart}\n\n` +
+        `ðŸ“Š Reason: ${reasonLabel[reason]}\n` +
+        (reasonDetail ? `ðŸ’¬ Detail: "${reasonDetail}"\n` : '') +
         `\nMode: ${cancellation === 'immediate' ? 'immediate' : 'at period end'}\n` +
         `Service through: ${serviceActiveUntil ? new Date(serviceActiveUntil).toLocaleDateString() : '?'}\n\n` +
-        `Reach out — recover or learn.`,
+        `Reach out â€” recover or learn.`,
       from: process.env.TWILIO_PHONE_NUMBER!,
       to: PETER_PHONE,
     })
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
   }
 
   const message = isTrialing
-    ? 'Trial cancelled. No charge ever fired — your card was authorized but never billed.'
+    ? 'Trial cancelled. No charge ever fired â€” your card was authorized but never billed.'
     : `Cancelled. Service stays live until ${serviceActiveUntil ? new Date(serviceActiveUntil).toLocaleDateString() : 'end of billing cycle'}. No refund is issued for the current cycle.`
 
   return NextResponse.json({

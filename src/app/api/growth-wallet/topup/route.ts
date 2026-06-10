@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { stripe } from '@/lib/stripeClient'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-04-22.dahlia' })
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 const APP_URL =
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
           price_data: {
             currency: 'usd',
             unit_amount: amountCents,
-            product_data: { name: `Growth Wallet top-up — $${(amountCents / 100).toLocaleString()}` },
+            product_data: { name: `Growth Wallet top-up â€” $${(amountCents / 100).toLocaleString()}` },
           },
           quantity: 1,
         },

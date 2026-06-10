@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
+import { stripe } from '@/lib/stripeClient'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 import {
   vanityCodeFromHandle,
@@ -12,10 +13,6 @@ import {
   ensurePersonalCoupon,
 } from '@/lib/creatorCodes'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-04-22.dahlia',
-})
-
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -26,7 +23,7 @@ const supabase = createClient(
  * POST /api/admin/ig-creators/bulk
  *
  * Bulk creator onboarding. Designed for nights when Peter sends out 75
- * DMs and 10 of them respond yes — he pastes those 10 handles into one
+ * DMs and 10 of them respond yes â€” he pastes those 10 handles into one
  * request, gets back 10 pairs of codes ready to DM back.
  *
  * Body:
@@ -38,7 +35,7 @@ const supabase = createClient(
  *   - PERSONAL promo code (3 months free, single-use)
  *   - paste-ready DM block
  *
- * Idempotent on handle — if the row already exists, we add codes that
+ * Idempotent on handle â€” if the row already exists, we add codes that
  * are still missing without disturbing the rest of the record.
  */
 const VALID_STATUS = ['saved', 'dmed', 'replied_yes', 'replied_no', 'active_creator', 'paid_bonus_hit', 'dropped'] as const
@@ -158,7 +155,7 @@ async function provisionOne(handle: string, trade?: string): Promise<CreatorResu
 
   const public_ref_url = promo_code ? `https://www.bellavego.com/ref/${promo_code}` : null
   const dm_block = promo_code && personal_promo_code
-    ? `🔥 You're in. Two codes:\n\n` +
+    ? `ðŸ”¥ You're in. Two codes:\n\n` +
       `1) YOUR personal 3-months-free code: ${personal_promo_code}\n` +
       `   Sign up at https://www.bellavego.com/pricing, apply ${personal_promo_code} at checkout.\n\n` +
       `2) YOUR fan code (give to followers): ${promo_code}\n` +

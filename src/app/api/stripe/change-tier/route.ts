@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { stripe } from '@/lib/stripeClient'
 import { createClient } from '@supabase/supabase-js'
 import { auth } from '@clerk/nextjs/server'
 import { isValidTier, priceFor, type Tier, type Interval } from '@/lib/pricing'
@@ -8,15 +9,15 @@ import { isValidTier, priceFor, type Tier, type Interval } from '@/lib/pricing'
  * In-app tier change for EXISTING subscribers.
  *
  * Use cases:
- *   - Upgrade Starter → Pro
- *   - Downgrade Pro → Starter
- *   - Switch monthly ↔ annual on same tier
+ *   - Upgrade Starter â†’ Pro
+ *   - Downgrade Pro â†’ Starter
+ *   - Switch monthly â†” annual on same tier
  *
  * Differs from /api/stripe/checkout:
  *   - /checkout creates a NEW subscription (signup flow)
  *   - /change-tier UPDATES an existing subscription via subscriptions.update,
  *     which lets Stripe auto-prorate the difference. No new checkout window,
- *     no second credit card prompt — the change applies instantly.
+ *     no second credit card prompt â€” the change applies instantly.
  *
  * Stripe behavior:
  *   - Upgrade: customer charged the prorated difference today, new price
@@ -25,10 +26,9 @@ import { isValidTier, priceFor, type Tier, type Interval } from '@/lib/pricing'
  *     at next billing cycle (proration_behavior='create_prorations' default).
  *
  * Auth: Clerk session. Can only change YOUR OWN subscription.
- * Concierge tier changes are accepted normally — Elite went live 2026-05-27 (handled in /checkout
+ * Concierge tier changes are accepted normally â€” Elite went live 2026-05-27 (handled in /checkout
  * already; mirror here for defense in depth).
  */
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
   const newInterval: Interval = body.interval === 'annual' ? 'annual' : 'monthly'
 
   // Elite (concierge) went live 2026-05-27. Tier change to Elite goes
-  // through the normal Stripe subscription update path below — no waitlist
+  // through the normal Stripe subscription update path below â€” no waitlist
   // detour. White-glove FSM integration kicks off post-checkout via the
   // onboarding workflow (founder-led).
 
@@ -60,11 +60,11 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
 
   if (!profile?.stripe_customer_id) {
-    // No Stripe customer yet — they need to go through normal checkout
+    // No Stripe customer yet â€” they need to go through normal checkout
     // (signup flow). Tell the caller to redirect to /api/stripe/checkout.
     return NextResponse.json(
       {
-        error: 'No billing account — start a fresh checkout instead.',
+        error: 'No billing account â€” start a fresh checkout instead.',
         redirect_to_checkout: true,
       },
       { status: 400 },
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
     const sub = await stripe.subscriptions.retrieve(profile.stripe_subscription_id)
     const currentItem = sub.items.data[0]
     if (!currentItem) {
-      return NextResponse.json({ error: 'subscription has no items — contact support' }, { status: 500 })
+      return NextResponse.json({ error: 'subscription has no items â€” contact support' }, { status: 500 })
     }
 
     // If they're already on this exact price, nothing to do.
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
 
     // Update profiles.plan_tier IMMEDIATELY so the dashboard reflects the new
     // tier without waiting for the Stripe webhook to round-trip (~1-5 sec).
-    // The webhook will also fire and write the same value — harmless idempotent.
+    // The webhook will also fire and write the same value â€” harmless idempotent.
     await supabase
       .from('profiles')
       .update({ plan_tier: newTier })

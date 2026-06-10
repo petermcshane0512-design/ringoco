@@ -1,12 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { stripe } from '@/lib/stripeClient'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 /**
  * Stripe webhook event audit + auto-enable.
  *
- *   GET  /api/admin/stripe-webhook-audit  → diagnose only
- *   POST /api/admin/stripe-webhook-audit  → diagnose + auto-add missing events
+ *   GET  /api/admin/stripe-webhook-audit  â†’ diagnose only
+ *   POST /api/admin/stripe-webhook-audit  â†’ diagnose + auto-add missing events
  *
  * Required header: x-admin-secret: $ADMIN_API_SECRET
  *
@@ -14,7 +15,7 @@ import { requireAdmin } from '@/lib/auth/requireAdmin'
  * event types, but a webhook endpoint in Stripe Dashboard only fires the
  * events listed in its `enabled_events` array. If trial_will_end is not
  * in that array, the day-5 SMS to the customer silently never fires and
- * they get surprise-charged on day 8 → chargebacks.
+ * they get surprise-charged on day 8 â†’ chargebacks.
  *
  * This route lists every webhook endpoint pointing at bellavego.com,
  * checks each one's enabled_events covers all 6 required types, and on
@@ -28,10 +29,6 @@ const REQUIRED_EVENTS = [
   'invoice.payment_succeeded',
   'invoice.payment_failed',
 ] as const
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-04-22.dahlia',
-})
 
 type EndpointReport = {
   id: string
@@ -73,11 +70,11 @@ async function audit(): Promise<{ endpoints: EndpointReport[]; warnings: string[
   const bellavego = livemode.filter((e) => e.url.includes('bellavego.com'))
   if (bellavego.length === 0) {
     warnings.push(
-      'No live-mode webhook endpoint pointing at bellavego.com — production webhooks are not flowing. Add one in Stripe Dashboard → Webhooks → Add endpoint, target https://www.bellavego.com/api/stripe/webhook.',
+      'No live-mode webhook endpoint pointing at bellavego.com â€” production webhooks are not flowing. Add one in Stripe Dashboard â†’ Webhooks â†’ Add endpoint, target https://www.bellavego.com/api/stripe/webhook.',
     )
   }
   for (const ep of bellavego) {
-    if (ep.status !== 'enabled') warnings.push(`Endpoint ${ep.id} is ${ep.status} — Stripe will not deliver events to it. Re-enable in Stripe Dashboard.`)
+    if (ep.status !== 'enabled') warnings.push(`Endpoint ${ep.id} is ${ep.status} â€” Stripe will not deliver events to it. Re-enable in Stripe Dashboard.`)
   }
 
   return { endpoints, warnings }

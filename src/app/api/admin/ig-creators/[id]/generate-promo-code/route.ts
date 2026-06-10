@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
+import type Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
+import { stripe } from '@/lib/stripeClient'
 import {
   vanityCodeFromHandle,
   personalCodeFromHandle,
@@ -11,10 +12,6 @@ import {
   ensureSharedCoupon,
   ensurePersonalCoupon,
 } from '@/lib/creatorCodes'
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-04-22.dahlia',
-})
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

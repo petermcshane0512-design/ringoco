@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { stripe } from '@/lib/stripeClient'
 import { createClient } from '@supabase/supabase-js'
 import { auth } from '@clerk/nextjs/server'
 
@@ -8,13 +9,13 @@ export const runtime = 'nodejs'
 /**
  * POST /api/stripe/cancel-and-refund
  *
- * Honors the pricing-page guarantee: "5 jobs in 30 days OR full refund —
+ * Honors the pricing-page guarantee: "5 jobs in 30 days OR full refund â€”
  * one click cancel from your dashboard." This is the one click.
  *
  * Behavior:
  *   1. Look up customer's subscription via profiles.stripe_subscription_id
  *   2. Cancel the subscription IMMEDIATELY (Stripe `cancel()`, not period-end)
- *   3. If this is within 30 days of first paid charge → issue full refund
+ *   3. If this is within 30 days of first paid charge â†’ issue full refund
  *      of the most recent paid invoice
  *   4. Flip profiles.is_active = false, plan_tier = 'cancelled'
  *   5. Vapi assistant returns "service paused" message on any future call
@@ -23,10 +24,8 @@ export const runtime = 'nodejs'
  *   - Cancellation still fires (no charge on next renewal)
  *   - No refund issued (returns 200 with refund_issued: false)
  *
- * Body params: { reason?: string } — captured for analytics
+ * Body params: { reason?: string } â€” captured for analytics
  */
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -82,7 +81,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (invoices.data.length === 0) {
-      // Trial-only customer — nothing to refund. Cancel was enough.
+      // Trial-only customer â€” nothing to refund. Cancel was enough.
       outside_window = false
     } else {
       // Find FIRST paid invoice to anchor 30-day window
@@ -96,7 +95,7 @@ export async function POST(req: NextRequest) {
         outside_window = true
       } else {
         // Refund THE MOST RECENT paid invoice via payment_intent
-        // (Stripe API 2026-04 removed invoice.charge → use payment_intent).
+        // (Stripe API 2026-04 removed invoice.charge â†’ use payment_intent).
         const latestPaid = invoices.data[0] as Stripe.Invoice & { payment_intent?: string | null }
         const paymentIntentId = latestPaid.payment_intent ?? null
         if (paymentIntentId && latestPaid.amount_paid > 0) {
@@ -117,7 +116,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (e) {
     console.error('[cancel-and-refund] refund flow err:', e)
-    // Don't fail the request — cancel already succeeded.
+    // Don't fail the request â€” cancel already succeeded.
   }
 
   // Flip profile inactive + stamp refund details
@@ -151,7 +150,7 @@ export async function POST(req: NextRequest) {
     message: refund_issued
       ? `Refund of $${(refund_amount_cents / 100).toFixed(2)} issued. Subscription cancelled.`
       : outside_window
-      ? 'Cancelled. Outside 30-day guarantee window — no refund issued.'
+      ? 'Cancelled. Outside 30-day guarantee window â€” no refund issued.'
       : 'Cancelled. No paid invoice to refund.',
   })
 }

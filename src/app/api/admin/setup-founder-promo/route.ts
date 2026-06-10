@@ -1,10 +1,7 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { stripe } from '@/lib/stripeClient'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-04-22.dahlia',
-})
 
 const PROMO_API_VERSION = '2024-11-20.acacia'
 const COUPON_ID = 'BAVG_FOUNDER_FREE_FOREVER'
@@ -35,7 +32,7 @@ export async function POST() {
       if (err.code !== 'resource_missing') throw e
       coupon = await stripe.coupons.create({
         id: COUPON_ID,
-        name: 'Founder — 100% off forever (admin/test only)',
+        name: 'Founder â€” 100% off forever (admin/test only)',
         percent_off: 100,
         duration: 'forever',
         max_redemptions: 5,
@@ -76,7 +73,7 @@ export async function POST() {
         max_redemptions: promo.max_redemptions,
         times_redeemed: promo.times_redeemed,
       },
-      instructions: `Sign up at https://www.bellavego.com/sign-up with bellavegollc@gmail.com → checkout → paste code "${PROMO_CODE}" at Stripe → $0/mo forever.`,
+      instructions: `Sign up at https://www.bellavego.com/sign-up with bellavegollc@gmail.com â†’ checkout â†’ paste code "${PROMO_CODE}" at Stripe â†’ $0/mo forever.`,
     })
   } catch (e) {
     const err = e as { message?: string; raw?: { message?: string } }

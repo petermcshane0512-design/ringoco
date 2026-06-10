@@ -1,19 +1,20 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { stripe } from '@/lib/stripeClient'
 import { createClient } from '@supabase/supabase-js'
 import { PRICE_TO_TIER, type Tier } from '@/lib/pricing'
 
 /**
- * Nightly Stripe ↔ Supabase reconciliation cron.
+ * Nightly Stripe â†” Supabase reconciliation cron.
  *
  * Why this exists: webhook deliveries can fail (Vercel cold-starts, transient
  * 502s, Stripe retry exhaustion after 3 days). When a webhook misses, the
  * profile state drifts from Stripe truth:
- *   - Stripe cancelled but DB says is_active=true → customer keeps service
+ *   - Stripe cancelled but DB says is_active=true â†’ customer keeps service
  *     they shouldn't have
- *   - Stripe active but DB says is_active=false  → customer paid but sees
+ *   - Stripe active but DB says is_active=false  â†’ customer paid but sees
  *     activation banner
- *   - Tier downgraded in Stripe but DB still on old tier → wrong feature gate
+ *   - Tier downgraded in Stripe but DB still on old tier â†’ wrong feature gate
  *
  * Solution: a daily sweep that pulls every Supabase profile with a
  * stripe_subscription_id, fetches the live Stripe sub, and corrects any
@@ -23,7 +24,6 @@ import { PRICE_TO_TIER, type Tier } from '@/lib/pricing'
  * route blocked by Clerk middleware unless `/api/crons/*` is in the public
  * matcher (it already is per middleware.ts).
  */
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -32,7 +32,7 @@ const supabase = createClient(
 export async function GET(req: Request) {
   // Auth: Vercel cron signs every cron invocation with x-vercel-cron header.
   // Also accept x-admin-secret for manual curl from Peter's terminal.
-  // Without ONE of these, reject — prevents anyone from spamming this
+  // Without ONE of these, reject â€” prevents anyone from spamming this
   // endpoint and burning Stripe API quota.
   const isVercelCron = req.headers.get('x-vercel-cron') === '1'
   const adminSecret = req.headers.get('x-admin-secret')
@@ -83,7 +83,7 @@ export async function GET(req: Request) {
       const stripeCancelled =
         subStatus === 'canceled' || subStatus === 'incomplete_expired'
 
-      // Map Stripe price → our tier slug
+      // Map Stripe price â†’ our tier slug
       const currentPriceId = sub.items.data[0]?.price.id
       const stripeTier: Tier | undefined = currentPriceId
         ? PRICE_TO_TIER[currentPriceId]?.tier
@@ -95,19 +95,19 @@ export async function GET(req: Request) {
       // is_active correction
       if (stripeActive && p.is_active !== true) {
         updates.is_active = true
-        changes.push(`is_active: ${p.is_active} → true`)
+        changes.push(`is_active: ${p.is_active} â†’ true`)
       }
       if (stripeCancelled && p.is_active !== false) {
         updates.is_active = false
         updates.plan_tier = 'cancelled'
-        changes.push(`is_active: ${p.is_active} → false`)
-        changes.push(`plan_tier: ${p.plan_tier} → cancelled`)
+        changes.push(`is_active: ${p.is_active} â†’ false`)
+        changes.push(`plan_tier: ${p.plan_tier} â†’ cancelled`)
       }
 
       // plan_tier correction (only when subscription is alive)
       if (stripeActive && stripeTier && p.plan_tier !== stripeTier) {
         updates.plan_tier = stripeTier
-        changes.push(`plan_tier: ${p.plan_tier} → ${stripeTier}`)
+        changes.push(`plan_tier: ${p.plan_tier} â†’ ${stripeTier}`)
       }
 
       if (Object.keys(updates).length > 0) {
@@ -116,7 +116,7 @@ export async function GET(req: Request) {
           user_id: p.user_id,
           business: p.business_name,
           action: 'corrected',
-          detail: `${subStatus} — ${changes.join('; ')}`,
+          detail: `${subStatus} â€” ${changes.join('; ')}`,
         })
         console.log(`[stripe-reconcile] ${p.user_id} corrected: ${changes.join('; ')}`)
       } else {
@@ -124,7 +124,7 @@ export async function GET(req: Request) {
           user_id: p.user_id,
           business: p.business_name,
           action: 'no_change',
-          detail: `${subStatus} ${stripeTier ?? '?'} — already in sync`,
+          detail: `${subStatus} ${stripeTier ?? '?'} â€” already in sync`,
         })
       }
     } catch (e) {
@@ -145,7 +145,7 @@ export async function GET(req: Request) {
           user_id: p.user_id,
           business: p.business_name,
           action: 'sub_gone',
-          detail: 'Stripe subscription no longer exists — cleared',
+          detail: 'Stripe subscription no longer exists â€” cleared',
         })
       } else {
         results.push({

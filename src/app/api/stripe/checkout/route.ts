@@ -1,13 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { stripe } from '@/lib/stripeClient'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { type Tier, type Interval, priceFor, isValidTier } from '@/lib/pricing'
 import { readUtmFromCookieMap, utmToStripeMetadata } from '@/lib/utm'
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-04-22.dahlia',
-})
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,9 +34,9 @@ function normalizeCreatorCode(raw: string | undefined | null): string | null {
 /**
  * Resolve a creator code to a Stripe promotion_code so checkout can apply
  * the right discount. Two code lookups in order:
- *   1. PUBLIC  ($200 off first month, multi-use)  — code stored in promo_code
- *   2. PERSONAL (3 months free, single-use)       — code stored in personal_promo_code
- *   3. LEGACY BAVG-XXXXXX                          — attribution-only, no Stripe discount
+ *   1. PUBLIC  ($200 off first month, multi-use)  â€” code stored in promo_code
+ *   2. PERSONAL (3 months free, single-use)       â€” code stored in personal_promo_code
+ *   3. LEGACY BAVG-XXXXXX                          â€” attribution-only, no Stripe discount
  *
  * Returns the discount target + the attribution string we stamp on the
  * subscription metadata so the webhook can credit the right creator.
@@ -71,7 +68,7 @@ async function lookupPromoCode(code: string): Promise<{ promotionCodeId: string 
     return { promotionCodeId: personal.data.personal_stripe_promotion_code_id as string, attributionCode: code }
   }
 
-  // 2026-06-08 — generic public promo fallback (FIRST200 cold-email funnel,
+  // 2026-06-08 â€” generic public promo fallback (FIRST200 cold-email funnel,
   // future public marketing codes). Code isn't in ig_creator_outreach so
   // check Stripe directly for any active promotion code matching this string.
   try {
@@ -104,13 +101,13 @@ export async function POST(req: NextRequest) {
   const tier: Tier = isValidTier(body.tier ?? '') ? (body.tier as Tier) : 'officemgr'
   const interval: Interval = body.interval === 'annual' ? 'annual' : 'monthly'
 
-  // 2026-06-10 — T3 territory enforcement. zip + trade reach checkout
+  // 2026-06-10 â€” T3 territory enforcement. zip + trade reach checkout
   // via /start/area's URL params (passed through /pricing). The webhook
   // reads them out of metadata and calls claimTerritory() so the
   // exclusivity promise becomes mechanically real.
   const zip = (body.zip || '').replace(/\D/g, '').slice(0, 5)
   const trade = (body.trade || '').trim().toLowerCase()
-  // 2026-06-10 — fix #5: capture address + phone pre-Stripe so the webhook
+  // 2026-06-10 â€” fix #5: capture address + phone pre-Stripe so the webhook
   // can geocode + stamp profile BEFORE find-real-leads fires. Without these
   // the tight-radius branch in find-real-leads cannot activate on signup,
   // so the first 80-property pull falls back to ZIP-radius (~5mi) instead
@@ -120,7 +117,7 @@ export async function POST(req: NextRequest) {
   const businessAddress = (body.address || '').trim().slice(0, 200)
   const ownerPhoneDigits = (body.phone || '').replace(/\D/g, '').slice(0, 16)
 
-  // 2026-06-10 — T5 attribution. Forward first-touch UTM cookies (set
+  // 2026-06-10 â€” T5 attribution. Forward first-touch UTM cookies (set
   // by /start) into Stripe metadata so the webhook can stamp them on
   // the profile. Powers /admin/retention cohort math.
   const utm = readUtmFromCookieMap((name) => req.cookies.get(name)?.value)
@@ -133,8 +130,8 @@ export async function POST(req: NextRequest) {
 
   const promoLookup = effectiveCode ? await lookupPromoCode(effectiveCode) : null
 
-  // 2026-06-09 — pass bizId through from /free-lead?b={biz_id} → /start
-  // → checkout → Stripe metadata → webhook so we can attribute conversion
+  // 2026-06-09 â€” pass bizId through from /free-lead?b={biz_id} â†’ /start
+  // â†’ checkout â†’ Stripe metadata â†’ webhook so we can attribute conversion
   // back to the original cold-email prospect.
   const bizIdFromBody = (body.bizId || '').slice(0, 64)
   const bizIdFromCookie = (req.cookies.get('bavg_biz_id')?.value || '').slice(0, 64)
@@ -145,12 +142,12 @@ export async function POST(req: NextRequest) {
     { price: subPriceId, quantity: 1 },
   ]
 
-  // 2026-06-06 PIVOT — no public trial, no creator trial. Single 30-day
+  // 2026-06-06 PIVOT â€” no public trial, no creator trial. Single 30-day
   // money-back guarantee for everyone. Creator code attaches a $200-off
-  // first-month promotion_code (Hormozi sub-$100 trip-wire — fan pays
+  // first-month promotion_code (Hormozi sub-$100 trip-wire â€” fan pays
   // $97 first month, $297 from month 2).
   //
-  // 2026-06-07 — discounts field shape changed in dahlia API. Pin checkout
+  // 2026-06-07 â€” discounts field shape changed in dahlia API. Pin checkout
   // to the older API version so promotion_code references work. Plus add
   // fallback: if the discounts-with-promo-id path fails for any reason,
   // retry with allow_promotion_codes: true so the customer can paste the
@@ -193,14 +190,14 @@ export async function POST(req: NextRequest) {
     subscription_data: subscriptionData,
     custom_text: {
       submit: {
-        message: '30-day money-back guarantee. If BellAveGo does not earn you back your subscription cost in 30 days, click cancel in your dashboard and we refund every penny — no questions, no calls, no hoops.',
+        message: '30-day money-back guarantee. If BellAveGo does not earn you back your subscription cost in 30 days, click cancel in your dashboard and we refund every penny â€” no questions, no calls, no hoops.',
       },
     },
     success_url: `${APP_URL}/dashboard/setup?welcome=1`,
     cancel_url: `${APP_URL}`,
   }
 
-  // 2026-06-08 — restore pre-apply path when promo resolves cleanly
+  // 2026-06-08 â€” restore pre-apply path when promo resolves cleanly
   // (cold email FIRST200, creator codes from /ref/[code]). Pre-apply =
   // user sees discount without typing. If pre-apply throws, fall back to
   // allow_promotion_codes so the sale never dies on a promo-code edge case.

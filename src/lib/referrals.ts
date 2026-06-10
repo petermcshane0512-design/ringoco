@@ -1,5 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
+﻿import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
+import { stripe } from '@/lib/stripeClient'
 import twilio from 'twilio'
 import { TIER_METADATA, type Tier } from './pricing'
 
@@ -8,7 +9,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
 
 /**
@@ -19,27 +19,27 @@ const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_
  * captures the code into a 90-day cookie. When the visitor signs up, we save
  * the cookie value to profiles.referred_by.
  *
- * Two-stage credit flow (anti-abuse v3 — updated for 7-day-trial model):
- *   1. PENDING — on first Stripe checkout, recordPendingReferral() inserts a
+ * Two-stage credit flow (anti-abuse v3 â€” updated for 7-day-trial model):
+ *   1. PENDING â€” on first Stripe checkout, recordPendingReferral() inserts a
  *      'pending' referrals row. NO credit fires yet. Note: the first invoice
  *      is $0 because the customer is in their 7-day free trial.
- *   2. CREDITED — on any subsequent invoice.payment_succeeded for that
+ *   2. CREDITED â€” on any subsequent invoice.payment_succeeded for that
  *      subscription, applyPendingReferralCredit() checks if the referred
  *      customer's subscription is >38 days old (trial 7d + first paid month
  *      ~30d + 1d buffer). At that age we know they survived both the trial
  *      AND their first paid cycle, so the referrer's credit is durable.
- *   3. VOIDED — if the referred customer cancels during the trial OR before
+ *   3. VOIDED â€” if the referred customer cancels during the trial OR before
  *      day 38, voidPendingReferral() marks the referral 'voided' so it never
  *      converts.
  *
- * Why 38 days: under the new pricing model there is NO refund window — but
+ * Why 38 days: under the new pricing model there is NO refund window â€” but
  * there is a 7-day trial. A friend who signs up, completes the trial without
  * cancelling, then bails mid-first-month would still produce one paid invoice.
  * We don't want to credit referrers for those (they're closer to a $0 cost
  * acquisition than a real long-term customer). 38 days = trial + first full
  * paid month survived.
  *
- * Credit delivery: Stripe customer balance — Stripe automatically deducts
+ * Credit delivery: Stripe customer balance â€” Stripe automatically deducts
  * the credit from the referrer's next invoice. No manual ops.
  *
  * Anti-abuse v3:
@@ -85,7 +85,7 @@ export async function getOrCreateReferralCode(userId: string): Promise<string | 
       .update({ referral_code: code })
       .eq('user_id', userId)
     if (!error) return code
-    // 23505 = UNIQUE violation — try a new code
+    // 23505 = UNIQUE violation â€” try a new code
     if (!String(error.code).startsWith('23')) {
       console.error('getOrCreateReferralCode update failed:', error)
       return null
@@ -122,7 +122,7 @@ export async function attributeReferralOnSignup(args: {
     return { ok: false, reason: 'already attributed' }
   }
 
-  // Resolve code to a referrer user — must exist + not be the new user
+  // Resolve code to a referrer user â€” must exist + not be the new user
   const { data: referrer } = await supabase
     .from('profiles')
     .select('user_id, referral_code')
@@ -142,7 +142,7 @@ export async function attributeReferralOnSignup(args: {
 }
 
 /**
- * STAGE 1 — Called from Stripe webhook after checkout.session.completed.
+ * STAGE 1 â€” Called from Stripe webhook after checkout.session.completed.
  *
  * Records a PENDING referral row. NO Stripe credit fires yet. The actual
  * credit waits until applyPendingReferralCredit() sees the referred
@@ -187,7 +187,7 @@ export async function recordPendingReferral(args: {
 
   if (ref.user_id === newUserId) return { ok: false, reason: 'self-referral blocked' }
 
-  // Idempotency — UNIQUE on referred_user_id means re-insert will throw 23505
+  // Idempotency â€” UNIQUE on referred_user_id means re-insert will throw 23505
   const { data: existing } = await supabase
     .from('referrals')
     .select('id, status')
@@ -220,7 +220,7 @@ export async function recordPendingReferral(args: {
     try {
       await twilioClient.messages.create({
         body:
-          `🎉 ${newProfile.business_name ?? 'A new contractor'} just signed up using your BellAveGo referral link! ` +
+          `ðŸŽ‰ ${newProfile.business_name ?? 'A new contractor'} just signed up using your BellAveGo referral link! ` +
           `Once they finish their 7-day free trial AND complete their first paid month, your next bill ($${projectedAmount}) is on us.`,
         from: process.env.TWILIO_PHONE_NUMBER!,
         to: ref.owner_phone,
@@ -234,7 +234,7 @@ export async function recordPendingReferral(args: {
 }
 
 /**
- * STAGE 2 — Called from Stripe webhook on invoice.payment_succeeded.
+ * STAGE 2 â€” Called from Stripe webhook on invoice.payment_succeeded.
  *
  * For each invoice payment, checks if a pending referral exists for this
  * subscription AND the subscription is at least QUALIFYING_AGE_DAYS old.
@@ -270,13 +270,13 @@ export async function applyPendingReferralCredit(args: {
     status: string
   }
 
-  // Qualifying age check — referred sub must be older than the refund window
+  // Qualifying age check â€” referred sub must be older than the refund window
   const startedAt = pending.referred_subscription_started_at
     ? new Date(pending.referred_subscription_started_at).getTime()
     : 0
   const ageDays = startedAt > 0 ? (Date.now() - startedAt) / (1000 * 60 * 60 * 24) : 0
   if (ageDays < QUALIFYING_AGE_DAYS) {
-    return { ok: false, reason: `subscription only ${Math.floor(ageDays)} days old — needs ${QUALIFYING_AGE_DAYS}+` }
+    return { ok: false, reason: `subscription only ${Math.floor(ageDays)} days old â€” needs ${QUALIFYING_AGE_DAYS}+` }
   }
 
   // Load referrer current state
@@ -317,7 +317,7 @@ export async function applyPendingReferralCredit(args: {
     const txn = await stripe.customers.createBalanceTransaction(ref.stripe_customer_id, {
       amount: -amountCents,
       currency: 'usd',
-      description: `BellAveGo referral credit — ${refdName} (signed up via ${pending.referral_code}) completed month 2`,
+      description: `BellAveGo referral credit â€” ${refdName} (signed up via ${pending.referral_code}) completed month 2`,
     })
     stripeBalanceTxnId = txn.id
   } catch (e) {
@@ -343,7 +343,7 @@ export async function applyPendingReferralCredit(args: {
     try {
       await twilioClient.messages.create({
         body:
-          `🎁 Boom — ${refdName} stuck with BellAveGo past their second month, so your next bill ($${meta.monthly}) is on us. ` +
+          `ðŸŽ Boom â€” ${refdName} stuck with BellAveGo past their second month, so your next bill ($${meta.monthly}) is on us. ` +
           `Credit auto-applied to your account. Thanks for the referral!`,
         from: process.env.TWILIO_PHONE_NUMBER!,
         to: ref.owner_phone,
@@ -358,7 +358,7 @@ export async function applyPendingReferralCredit(args: {
 
 /**
  * Mark a pending referral as voided when the referred customer cancels or
- * fully refunds before reaching the qualifying age. Idempotent — only acts
+ * fully refunds before reaching the qualifying age. Idempotent â€” only acts
  * on rows in 'pending' status; already-credited referrals are untouched.
  */
 export async function voidPendingReferral(args: {

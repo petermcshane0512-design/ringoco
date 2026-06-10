@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
+import { stripe } from '@/lib/stripeClient'
 import twilio from 'twilio'
 import { sendEmail, renderInvoiceEmail } from '@/lib/email'
 import { lookupOwnerEmail } from '@/lib/notify'
@@ -10,7 +11,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID!,
   process.env.TWILIO_AUTH_TOKEN!
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     if (error) throw error
 
     // Deliver the payment link via SMS + email in parallel. Each channel is
-    // isolated in its own try/catch — Twilio A2P carrier blocks (error 30034)
+    // isolated in its own try/catch â€” Twilio A2P carrier blocks (error 30034)
     // must not kill the email path, and a Resend hiccup must not kill the SMS.
     // The Stripe invoice + DB row are already committed before this point.
     const channels: { sms: boolean; email: boolean; smsError?: string; emailError?: string } = {
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     if (customer_phone) {
       try {
         await twilioClient.messages.create({
-          body: `Hi ${customer_name}, you have an invoice for ${service_type} — $${parsedAmount.toFixed(2)}. Pay securely here: ${paymentLink.url} — ${businessName}`,
+          body: `Hi ${customer_name}, you have an invoice for ${service_type} â€” $${parsedAmount.toFixed(2)}. Pay securely here: ${paymentLink.url} â€” ${businessName}`,
           from: fromNumber,
           to: customer_phone,
         })

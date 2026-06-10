@@ -1,16 +1,13 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { stripe } from '@/lib/stripeClient'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { ensureSharedCoupon, ensurePersonalCoupon, COUPON_ID, PERSONAL_COUPON_ID } from '@/lib/creatorCodes'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-04-22.dahlia',
-})
-
 /**
  * Idempotent setup of the TWO creator coupons:
- *   PUBLIC   "$200 off first month"  → fans of creator get $97 first month
- *   PERSONAL "3 months free"         → creator's own subscription
+ *   PUBLIC   "$200 off first month"  â†’ fans of creator get $97 first month
+ *   PERSONAL "3 months free"         â†’ creator's own subscription
  *
  * POST creates whichever is missing; GET reports current state.
  * Hit this once per environment after deploy.
