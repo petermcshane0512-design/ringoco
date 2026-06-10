@@ -10,6 +10,7 @@ import LiveDashboardPreview from '@/components/LiveDashboardPreview'
 import LiveActivityMarquee from '@/components/LiveActivityMarquee'
 import AnimatedRevenueCounter from '@/components/AnimatedRevenueCounter'
 import { LEADS_PER_WEEK, LEADS_PER_MONTH } from '@/lib/offer'
+import HeroStatic from './HeroStatic'
 
 /**
  * Homepage — 2026-06-09 Hormozi/Elon CLOSE STACK for $10M ARR by May 12 2027.
@@ -252,12 +253,14 @@ function resolveVariant(raw: string | null | undefined): TradeVariant {
 }
 
 export default function Home() {
-  // Suspense required because HomeContent reads useSearchParams (forces
-  // dynamic). Fallback = minimal page chrome until params resolve client-side.
+  // 2026-06-10 — T2 SSR fix. The previous empty <main /> fallback was what
+  // search engines + crawlers received in raw HTML (page was bailing to CSR
+  // because HomeContent reads useSearchParams). Replaced with HeroStatic —
+  // a server-renderable hero with headline, price, guarantee, and CTA so
+  // bots index real content. After client-side hydration HomeContent
+  // takes over with full variant routing + interactive widgets.
   return (
-    <Suspense fallback={
-      <main style={{ minHeight: '100vh', background: '#FFF8F0' }} />
-    }>
+    <Suspense fallback={<HeroStatic />}>
       <HomeContent />
     </Suspense>
   )
