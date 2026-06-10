@@ -50,11 +50,12 @@ export async function GET(req: NextRequest) {
   // Stamp claimed_at on first reveal. Don't bump on repeats — preserves
   // attribution to the first touch.
   if (!data.claimed_at) {
-    await supabase
-      .from('prospect_free_leads')
-      .update({ claimed_at: new Date().toISOString() })
-      .eq('biz_id', bizId)
-      .catch(() => {})
+    try {
+      await supabase
+        .from('prospect_free_leads')
+        .update({ claimed_at: new Date().toISOString() })
+        .eq('biz_id', bizId)
+    } catch { /* non-fatal */ }
   }
 
   return NextResponse.json({

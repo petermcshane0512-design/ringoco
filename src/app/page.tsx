@@ -9,6 +9,7 @@ import LiveAIPipeline from '@/components/LiveAIPipeline'
 import LiveDashboardPreview from '@/components/LiveDashboardPreview'
 import LiveActivityMarquee from '@/components/LiveActivityMarquee'
 import AnimatedRevenueCounter from '@/components/AnimatedRevenueCounter'
+import { LEADS_PER_WEEK, LEADS_PER_MONTH } from '@/lib/offer'
 
 /**
  * Homepage — 2026-06-09 Hormozi/Elon CLOSE STACK for $10M ARR by May 12 2027.
@@ -78,7 +79,7 @@ type TradeVariant = {
   scarcityPill: string
   h1Verb: string                 // "Book", "Land"
   h1Highlight: string            // "4–8 install jobs this month"
-  h1Suffix: string               // "from 80 fresh homeowner leads in your zip."
+  h1Suffix: string               // "from N fresh homeowner leads in your zip." — N from LEADS_PER_WEEK
   heroSubtext: string
   heroLead: SampleLead
   teaserLeads: TeaserLead[]
@@ -92,7 +93,7 @@ const HVAC_VARIANT: TradeVariant = {
   scarcityPill: '⚠ 47 zip codes locked · 953 still open',
   h1Verb: 'Book',
   h1Highlight: '1–3 install jobs this month',
-  h1Suffix: 'from 10 fresh homeowner leads/week in your zip.',
+  h1Suffix: `from ${LEADS_PER_WEEK} fresh homeowner leads/week in your zip.`,
   heroSubtext: 'Real names, addresses, phones — pulled overnight from permits, aging HVAC, storm strikes, new move-ins. AI sends the intro text + email for you. You only call back the YES’s.',
   heroLead: {
     name: 'Mike Coleman',
@@ -122,7 +123,7 @@ const ROOFING_VARIANT: TradeVariant = {
   scarcityPill: '⚠ Hail hit 47 metros this week · 17 zips still open',
   h1Verb: 'Land',
   h1Highlight: '3–5 storm-damaged roofs this month',
-  h1Suffix: 'from 10 insurance-ready leads/week in your zip.',
+  h1Suffix: `from ${LEADS_PER_WEEK} insurance-ready leads/week in your zip.`,
   heroSubtext: 'NOAA-verified hail strikes + aging asphalt + insurance-claim windows — names, addresses, photos of damaged roofs. AI sends the intro for you. You only call back the YES’s.',
   heroLead: {
     name: 'Tom Sutton',
@@ -151,7 +152,7 @@ const PLUMBING_VARIANT: TradeVariant = {
   scarcityPill: '⚠ 47 zip codes locked · 953 still open',
   h1Verb: 'Book',
   h1Highlight: '1–3 install jobs this month',
-  h1Suffix: 'from 10 verified homeowner leads/week in your zip.',
+  h1Suffix: `from ${LEADS_PER_WEEK} verified homeowner leads/week in your zip.`,
   heroSubtext: 'Water-heater age data + sewer-permit feeds + new homeowners — owner-occupied verified. AI sends the intro for you. You only call back the YES’s.',
   heroLead: {
     name: 'Lisa Carter',
@@ -180,7 +181,7 @@ const ELECTRICAL_VARIANT: TradeVariant = {
   scarcityPill: '⚠ 47 zip codes locked · 953 still open',
   h1Verb: 'Book',
   h1Highlight: '1–3 panel upgrades this month',
-  h1Suffix: 'from 10 fresh homeowner leads/week in your zip.',
+  h1Suffix: `from ${LEADS_PER_WEEK} fresh homeowner leads/week in your zip.`,
   heroSubtext: 'Pre-1990 panel feeds + EV-charger permit data + solar adopters — owner-occupied verified. AI sends the intro for you. You only call back the YES’s.',
   heroLead: {
     name: 'David Park',
@@ -209,7 +210,7 @@ const HANDYMAN_VARIANT: TradeVariant = {
   scarcityPill: '⚠ 47 zip codes locked · 953 still open',
   h1Verb: 'Book',
   h1Highlight: '4–8 jobs this month',
-  h1Suffix: 'from 10 fresh homeowner leads/week in your zip.',
+  h1Suffix: `from ${LEADS_PER_WEEK} fresh homeowner leads/week in your zip.`,
   heroSubtext: 'Fresh move-ins + aging-home flags + small-project permits — owner-occupied verified. AI sends the intro for you. You only call back the YES’s.',
   heroLead: {
     name: 'James Patel',
@@ -330,7 +331,7 @@ function HomeContent() {
               }}>leads your competitors never see</span>.
             </h1>
             <p style={{ fontSize: 'clamp(15px, 1.4vw, 17px)', color: '#3D5A66', lineHeight: 1.55, margin: '0 0 14px', maxWidth: 580 }}>
-              <strong style={{ color: '#0B1F3A' }}>10 fresh homeowner leads in your service area every week</strong> — real names, addresses, phone numbers. Pulled overnight from new permits, aging systems, storm damage, and move-ins. Every lead arrives with a ready-to-send intro — call, text, or email in 60 seconds.
+              <strong style={{ color: '#0B1F3A' }}>{LEADS_PER_WEEK} fresh homeowner leads in your service area every week</strong> — real names, addresses, phone numbers. Pulled overnight from new permits, aging systems, storm damage, and move-ins. Every lead arrives with a ready-to-send intro — call, text, or email in 60 seconds.
             </p>
             <p style={{ fontSize: 'clamp(14px, 1.3vw, 16px)', color: '#0B1F3A', lineHeight: 1.5, margin: '0 0 18px', maxWidth: 580, fontWeight: 700 }}>
               One shop per area. When yours is taken, it&rsquo;s taken.
@@ -427,7 +428,7 @@ function HomeContent() {
             </div>
             <ul style={{ margin: '0 0 22px', padding: 0, listStyle: 'none', display: 'grid', gap: 10 }}>
               {[
-                '10 fresh homeowner leads / week (40 / month) exclusive to your zip',
+                `${LEADS_PER_WEEK} fresh homeowner leads / week (${LEADS_PER_MONTH} / month) exclusive to your zip`,
                 'Verified phone number per lead (skip-traced, not guessed)',
                 'Pre-written outreach script per lead — call, text, or email it your way',
                 'Zip-code exclusivity — locked all 12 months',

@@ -28,6 +28,17 @@ export const LEADS_PER_WEEK = 5
 export const LEADS_PER_MONTH = LEADS_PER_WEEK * 4 // marketing convenience
 
 /**
+ * Derived strings — import these so the number is impossible to drift.
+ * Anytime LEADS_PER_WEEK changes, every surface updates automatically.
+ *
+ * Keep this list LEAN — only add a label when it's used on 2+ surfaces.
+ */
+export const LEADS_PER_WEEK_LABEL = `${LEADS_PER_WEEK} fresh homeowner leads / week`
+export const LEADS_PER_MONTH_LABEL = `${LEADS_PER_MONTH} fresh homeowner leads / month`
+export const LEADS_CADENCE_SHORT = `${LEADS_PER_WEEK} leads every Monday`
+export const LEADS_PER_MONTH_HEADLINE = `${LEADS_PER_MONTH} fresh leads`
+
+/**
  * Pricing — single tier active for new signups.
  * Legacy tier slugs (receptionist/concierge) preserved internally for
  * grandfathered subscribers ONLY. Customer-facing surfaces use Pro.
@@ -37,6 +48,13 @@ export const PRICE_ANNUAL_USD = 4_997
 export const PRICE_ANNUAL_SAVINGS_USD = 968
 
 /**
+ * Per-lead price math — used in comparison tables ($X.XX/lead vs HomeAdvisor).
+ * Recomputed from PRICE_MONTHLY_USD / LEADS_PER_MONTH so it cannot drift.
+ */
+export const PRICE_PER_LEAD_USD = Number((PRICE_MONTHLY_USD / LEADS_PER_MONTH).toFixed(2))
+export const PRICE_PER_LEAD_LABEL = `$${PRICE_PER_LEAD_USD.toFixed(2)}/lead`
+
+/**
  * Intro discount mechanic — REAL.
  * FIRST400 is a Stripe promotion_code that applies $400 off the first
  * month, taking $497 → $97 on month 1.
@@ -44,6 +62,7 @@ export const PRICE_ANNUAL_SAVINGS_USD = 968
 export const INTRO_PRICE_USD = 97
 export const INTRO_PROMO_CODE = 'FIRST400'
 export const INTRO_DISCOUNT_USD = 400
+export const PRICE_PER_LEAD_INTRO_USD = Number((INTRO_PRICE_USD / LEADS_PER_MONTH).toFixed(2))
 
 /**
  * Stripe price IDs — v9 leads-only.
