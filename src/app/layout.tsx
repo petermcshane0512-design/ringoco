@@ -8,11 +8,11 @@ import "./globals.css";
 
 export const viewport: Viewport = {
   width: "device-width",
-  // Mobile zoom — bumped 0.6 → 0.66 (~10% larger) per Peter feedback that
-  // 0.6 was too small on the landing page. Dashboard tables still have
-  // their horizontal-scroll wrappers so the slight zoom-up is safe.
-  // Desktop ignores this entirely.
-  initialScale: 0.66,
+  // 2026-06-09 — fixed: was initialScale: 0.66 which forced mobile to
+  // render the page at 66% size (a fixed-width layout hack). T5 of the
+  // offer-rebuild plan requires initial-scale=1 + responsive Tailwind
+  // breakpoints on any element that previously overflowed at 375px.
+  initialScale: 1,
   maximumScale: 5,
   themeColor: "#0B1F3A",
 };
