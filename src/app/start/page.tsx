@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { cookies, headers } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { createHash } from 'node:crypto'
+import { extractUtmFromSearchParams, COOKIE_OPTS } from '@/lib/utm'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,7 +30,16 @@ function hashIp(ip: string): string {
  *     follow-up sequence window + a couple bonus days.
  */
 
-type SP = Promise<{ promo?: string; ref?: string; b?: string }>
+type SP = Promise<{
+  promo?: string
+  ref?: string
+  b?: string
+  utm_source?: string
+  utm_medium?: string
+  utm_campaign?: string
+  utm_term?: string
+  utm_content?: string
+}>
 
 export default async function StartPage({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams
@@ -39,6 +49,24 @@ export default async function StartPage({ searchParams }: { searchParams: SP }) 
   // Cookied so it survives sign-up bounce, then read by checkout to
   // stamp Stripe metadata for prospect_free_leads attribution.
   const bizId = (sp.b || '').trim().slice(0, 64)
+
+  // 2026-06-10 — T5 attribution. Capture UTM params at first touch
+  // into cookies so we can stamp them on the profile at checkout.
+  const h = await headers()
+  const incomingUrl = h.get('x-url') || h.get('referer') || null
+  const utmSp = new URLSearchParams()
+  if (sp.utm_source)   utmSp.set('utm_source',   sp.utm_source)
+  if (sp.utm_medium)   utmSp.set('utm_medium',   sp.utm_medium)
+  if (sp.utm_campaign) utmSp.set('utm_campaign', sp.utm_campaign)
+  if (sp.utm_term)     utmSp.set('utm_term',     sp.utm_term)
+  if (sp.utm_content)  utmSp.set('utm_content',  sp.utm_content)
+  const { cookies: utmCookies } = extractUtmFromSearchParams(utmSp, incomingUrl)
+  if (utmCookies.length > 0) {
+    const cookieStore = await cookies()
+    for (const c of utmCookies) {
+      cookieStore.set(c.name, c.value, COOKIE_OPTS)
+    }
+  }
 
   // 2026-06-08 — server-log every /start hit so we capture clicks Apple
   // Mail proxy strips from Instantly's tracking pixel. Non-blocking; never

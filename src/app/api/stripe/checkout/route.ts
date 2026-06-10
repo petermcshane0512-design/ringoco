@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { type Tier, type Interval, priceFor, isValidTier } from '@/lib/pricing'
+import { readUtmFromCookieMap, utmToStripeMetadata } from '@/lib/utm'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2026-04-22.dahlia',
@@ -108,6 +109,12 @@ export async function POST(req: NextRequest) {
   const zip = (body.zip || '').replace(/\D/g, '').slice(0, 5)
   const trade = (body.trade || '').trim().toLowerCase()
 
+  // 2026-06-10 — T5 attribution. Forward first-touch UTM cookies (set
+  // by /start) into Stripe metadata so the webhook can stamp them on
+  // the profile. Powers /admin/retention cohort math.
+  const utm = readUtmFromCookieMap((name) => req.cookies.get(name)?.value)
+  const utmMeta = utmToStripeMetadata(utm)
+
   // Read creator code from body OR cookie (set by /ref/[code] visit).
   const codeFromBody = normalizeCreatorCode(body.creatorCode)
   const codeFromCookie = normalizeCreatorCode(req.cookies.get('bavg_creator_code')?.value)
@@ -149,6 +156,7 @@ export async function POST(req: NextRequest) {
       biz_id: effectiveBizId || '',
       territory_zip: zip,
       territory_trade: trade,
+      ...utmMeta,
     },
   }
 
@@ -165,6 +173,7 @@ export async function POST(req: NextRequest) {
       biz_id: effectiveBizId || '',
       territory_zip: zip,
       territory_trade: trade,
+      ...utmMeta,
     },
     subscription_data: subscriptionData,
     custom_text: {

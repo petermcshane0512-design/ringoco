@@ -134,6 +134,20 @@ export async function POST(req: NextRequest) {
     const isPersonalizedCode = /^[A-Z0-9]{1,12}$/.test(creatorCode) && !isLegacyCode
     const validCreatorCode = isLegacyCode || isPersonalizedCode ? creatorCode : null
 
+    // 2026-06-10 — T5 attribution. Read UTM fields off session metadata
+    // (set by checkout from /start's cookies). All nullable for direct
+    // and organic visitors.
+    const utmStamp = {
+      utm_source:      session.metadata?.utm_source      || null,
+      utm_medium:      session.metadata?.utm_medium      || null,
+      utm_campaign:    session.metadata?.utm_campaign    || null,
+      utm_term:        session.metadata?.utm_term        || null,
+      utm_content:     session.metadata?.utm_content     || null,
+      first_touch_url: session.metadata?.first_touch_url || null,
+      first_touch_at:  session.metadata?.first_touch_at  || null,
+      paid_at: new Date().toISOString(),
+    }
+
     await supabase.from('profiles').update({
       stripe_subscription_id: subscriptionId,
       stripe_customer_id: customerId,
@@ -144,6 +158,7 @@ export async function POST(req: NextRequest) {
         creator_referral_code: validCreatorCode,
         referred_by_promo_code: validCreatorCode,
       } : {}),
+      ...utmStamp,
     }).eq('user_id', userId)
 
     console.log(`Subscription activated for user ${userId}: ${planTier}`)
@@ -570,6 +585,35 @@ export async function POST(req: NextRequest) {
         .select('user_id, is_active, plan_tier, creator_referral_code, referred_by_promo_code, first_paid_charge_at, second_paid_charge_at')
         .eq('stripe_customer_id', customerId)
         .maybeSingle()
+
+      // 2026-06-10 — T5 retention. Snapshot the pre-stamp state so the
+      // creator branch downstream can still compute isFirstPaid /
+      // isSecondPaid correctly (it depends on whether the columns were
+      // already set BEFORE this invoice). Then stamp on every paid
+      // invoice for every customer — was previously only stamped for
+      // creator-attributed signups, so non-creator retention was
+      // invisible. second_paid_charge_at is the month-2 conversion
+      // signal that powers /admin/retention.
+      const hadFirstPaidBefore = !!profile?.first_paid_charge_at
+      const hadSecondPaidBefore = !!profile?.second_paid_charge_at
+      if (profile?.user_id && invoice.amount_paid && invoice.amount_paid > 0) {
+        try {
+          if (!hadFirstPaidBefore) {
+            await supabase
+              .from('profiles')
+              .update({ first_paid_charge_at: new Date().toISOString() })
+              .eq('user_id', profile.user_id)
+          } else if (!hadSecondPaidBefore) {
+            await supabase
+              .from('profiles')
+              .update({ second_paid_charge_at: new Date().toISOString() })
+              .eq('user_id', profile.user_id)
+            console.log(`[retention] month-2 paid charge for ${profile.user_id}`)
+          }
+        } catch (e) {
+          console.error('[retention] first/second_paid stamp failed:', e)
+        }
+      }
 
       // ── IG creator payout staging (pivot 2026-06-06, refined) ──
       // Two-stage flow tied to fan's first + second paid invoices:
