@@ -40,6 +40,10 @@ const ORPHAN_PRICE_IDS = [
   'price_1TaJOcGrkP7VQmUj4AMGChWp', // Starter annual
   'price_1TaJOdGrkP7VQmUjrLltX596', // $597/mo Elite / concierge
   'price_1TaJOdGrkP7VQmUja2CDmocA', // Elite annual
+  // 2026-06-09 — Pro annual ($4,997/yr) added to orphan list per P3.
+  // Annual toggle removed from /pricing UI; this price is now unreachable
+  // from new checkouts but Stripe dashboard still lists it Active.
+  'price_1TgUanGrkP7VQmUjujaifNI0', // $4,997/yr Pro annual
 ]
 
 const ACTIVE_PRO_PRICE_ID = 'price_1TgUZFGrkP7VQmUjw9c5gEXv' // $497/mo Pro

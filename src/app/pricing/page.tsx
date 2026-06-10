@@ -20,7 +20,10 @@ import Image from 'next/image'
 import { GUARANTEE_SHORT } from '@/lib/offer'
 // LiveActivityMarquee import removed 2026-06-09 per brief rule "no invented customer counts / activity".
 
-type Interval = 'monthly' | 'annual'
+// 2026-06-09 — Annual toggle removed per P3 of pricing-fix brief. One
+// plan, one price, no decision-paralysis switcher. Interval type kept as
+// a literal for back-compat w/ checkout body shape (always 'monthly').
+type Interval = 'monthly'
 
 const FOUNDER_PHONE = '(773) 710-9565'
 const FOUNDER_PHONE_HREF = 'tel:+17737109565'
@@ -28,29 +31,30 @@ const FOUNDER_PHONE_HREF = 'tel:+17737109565'
 export default function PricingPage() {
   const { isSignedIn, isLoaded } = useAuth()
   const router = useRouter()
-  const [interval, setInterval] = useState<Interval>('monthly')
   const [loading, setLoading] = useState(false)
+  // Force interval to monthly always — annual price archived in Stripe
+  // (see docs/stripe-coupon-config-2026-06-09.md follow-up).
+  const interval: Interval = 'monthly'
 
   // Auto-resume checkout after sign-up redirect: /pricing?autocheckout=1
+  // 2026-06-09 — annual toggle removed; legacy ?interval=annual URL params
+  // coerced to 'monthly' so the checkout body shape stays correct.
   useEffect(() => {
     if (!isLoaded) return
     const params = new URLSearchParams(window.location.search)
-    const autoInterval = (params.get('interval') as Interval | null) || 'monthly'
     const autoCheckout = params.get('autocheckout') === '1'
     if (autoCheckout && isSignedIn) {
       fetch('/api/profile')
         .then(r => r.json())
         .then(p => {
           if (p?.onboarding_complete || p?.setup_complete) {
-            handleCheckout(autoInterval)
+            handleCheckout('monthly')
           } else {
-            const back = encodeURIComponent(`/pricing?interval=${autoInterval}&autocheckout=1`)
-            router.push(`/dashboard/setup?redirect_url=${back}`)
+            router.push(`/dashboard/setup?redirect_url=${encodeURIComponent('/pricing?autocheckout=1')}`)
           }
         })
         .catch(() => {
-          const back = encodeURIComponent(`/pricing?interval=${autoInterval}&autocheckout=1`)
-          router.push(`/dashboard/setup?redirect_url=${back}`)
+          router.push(`/dashboard/setup?redirect_url=${encodeURIComponent('/pricing?autocheckout=1')}`)
         })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -58,7 +62,7 @@ export default function PricingPage() {
 
   async function handleCheckout(intv: Interval) {
     if (!isSignedIn) {
-      const next = encodeURIComponent(`/pricing?interval=${intv}&autocheckout=1`)
+      const next = encodeURIComponent(`/pricing?autocheckout=1`)
       router.push(`/sign-up?redirect_url=${next}`)
       return
     }
@@ -84,9 +88,8 @@ export default function PricingPage() {
     }
   }
 
-  const monthlyPrice = interval === 'monthly' ? 497 : 417  // $4,997/12 = $416.41
-  const totalBilled = interval === 'monthly' ? 497 : 4997
-  const savings = interval === 'annual' ? 968 : 0
+  // 2026-06-09 — annual toggle removed; only monthly $497.
+  const monthlyPrice = 497
 
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#FFF8F0', color: '#0B1F3A', minHeight: '100vh' }}>
@@ -150,19 +153,7 @@ export default function PricingPage() {
       {/* PRICING CARD — now directly under the small hero */}
       <section style={{ padding: '0 clamp(16px, 5vw, 48px) 48px' }}>
         <div style={{ maxWidth: 540, margin: '0 auto' }}>
-          {/* Interval toggle */}
-          <div style={{
-            display: 'inline-flex', gap: 4, padding: 4, borderRadius: 12,
-            background: '#FFFFFF', border: '1.5px solid rgba(232,116,43,0.20)',
-            marginBottom: 18, width: '100%', justifyContent: 'space-between',
-          }}>
-            <button onClick={() => setInterval('monthly')} style={tabBtn(interval === 'monthly')}>
-              Monthly
-            </button>
-            <button onClick={() => setInterval('annual')} style={tabBtn(interval === 'annual')}>
-              Annual <span style={{ fontSize: 10, color: interval === 'annual' ? '#fff' : '#C84B26', marginLeft: 6 }}>SAVE $968</span>
-            </button>
-          </div>
+          {/* Monthly/Annual toggle removed 2026-06-09 per P3 — one plan, one price. */}
 
           {/* Card */}
           <div style={{
@@ -191,7 +182,6 @@ export default function PricingPage() {
             </div>
             <div style={{ fontSize: 13.5, color: '#0B1F3A', marginBottom: 6, fontWeight: 600 }}>
               &mdash; <strong>${monthlyPrice}/mo</strong> starting month 2. Didn&rsquo;t book a job in your first 30 days? Full refund and month 2 free.
-              {interval === 'annual' && ` Billed $${totalBilled.toLocaleString()}/yr · Save $${savings}.`}
             </div>
             <div style={{ fontSize: 11.5, color: '#7AAAB2', marginBottom: 18 }}>
               Cancel anytime · No setup · The 1-Job Guarantee covers your first 30 days
@@ -237,7 +227,7 @@ export default function PricingPage() {
                 boxShadow: '0 14px 36px rgba(232,116,43,0.40)',
               }}
             >
-              {loading ? 'Loading…' : `Try $97 first month → ${interval === 'annual' ? 'Annual' : 'Monthly'}`}
+              {loading ? 'Loading…' : 'Get my first month — $97'}
             </button>
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginTop: 14, fontSize: 11.5, color: '#7AAAB2' }}>
@@ -378,15 +368,7 @@ const navCTABig: React.CSSProperties = {
   letterSpacing: '-0.01em',
   boxShadow: '0 10px 26px rgba(232,116,43,0.40)',
 }
-function tabBtn(active: boolean): React.CSSProperties {
-  return {
-    flex: 1, padding: '10px 14px', borderRadius: 9,
-    background: active ? 'linear-gradient(135deg, #FF9D5A, #E8742B)' : 'transparent',
-    color: active ? '#fff' : '#4A6670',
-    border: 'none', cursor: 'pointer',
-    fontWeight: 800, fontSize: 13.5,
-  }
-}
+// tabBtn helper removed 2026-06-09 — annual toggle gone.
 const th: React.CSSProperties = {
   textAlign: 'left', padding: '14px 18px 10px',
   fontSize: 11, fontWeight: 800, letterSpacing: '0.10em',
