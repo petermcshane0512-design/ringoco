@@ -48,6 +48,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
+    // 2026-06-09 — stamp signed_up_at on prospect_free_leads if this
+    // checkout came from the /free-lead?b={biz_id} cold-email landing.
+    // Lets us measure click → conversion from the 450-prospect send.
+    const bizId = (session.metadata?.biz_id || '').slice(0, 64)
+    if (bizId) {
+      try {
+        await supabase
+          .from('prospect_free_leads')
+          .update({
+            signed_up_at: new Date().toISOString(),
+            signed_up_user_id: userId,
+          })
+          .eq('biz_id', bizId)
+          .is('signed_up_at', null)
+        console.log(`[free-lead] attributed signup user=${userId} → biz_id=${bizId}`)
+      } catch (e) {
+        console.warn('[free-lead] attribution stamp failed:', (e as Error).message)
+      }
+    }
+
     // ── Growth Wallet top-up (one-time payment, not subscription) ──
     if (session.metadata?.kind === 'wallet_topup') {
       const amountCents = parseInt(session.metadata.amountCents ?? '0', 10)

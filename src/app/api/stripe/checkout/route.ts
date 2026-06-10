@@ -94,6 +94,7 @@ export async function POST(req: NextRequest) {
     tier?: string
     interval?: Interval
     creatorCode?: string
+    bizId?: string
   }
   const tier: Tier = isValidTier(body.tier ?? '') ? (body.tier as Tier) : 'officemgr'
   const interval: Interval = body.interval === 'annual' ? 'annual' : 'monthly'
@@ -104,6 +105,13 @@ export async function POST(req: NextRequest) {
   const effectiveCode = codeFromBody || codeFromCookie
 
   const promoLookup = effectiveCode ? await lookupPromoCode(effectiveCode) : null
+
+  // 2026-06-09 — pass bizId through from /free-lead?b={biz_id} → /start
+  // → checkout → Stripe metadata → webhook so we can attribute conversion
+  // back to the original cold-email prospect.
+  const bizIdFromBody = (body.bizId || '').slice(0, 64)
+  const bizIdFromCookie = (req.cookies.get('bavg_biz_id')?.value || '').slice(0, 64)
+  const effectiveBizId = bizIdFromBody || bizIdFromCookie
 
   const subPriceId = priceFor(tier, interval)
   const line_items: { price: string; quantity: number }[] = [
@@ -129,6 +137,7 @@ export async function POST(req: NextRequest) {
       tier,
       interval,
       creator_code: promoLookup?.attributionCode || '',
+      biz_id: effectiveBizId || '',
     },
   }
 
@@ -142,6 +151,7 @@ export async function POST(req: NextRequest) {
       tier,
       interval,
       creator_code: promoLookup?.attributionCode || '',
+      biz_id: effectiveBizId || '',
     },
     subscription_data: subscriptionData,
     custom_text: {

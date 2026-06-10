@@ -29,12 +29,16 @@ function hashIp(ip: string): string {
  *     follow-up sequence window + a couple bonus days.
  */
 
-type SP = Promise<{ promo?: string; ref?: string }>
+type SP = Promise<{ promo?: string; ref?: string; b?: string }>
 
 export default async function StartPage({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams
   const promo = (sp.promo || '').trim().toUpperCase()
   const ref = (sp.ref || '').trim()
+  // 2026-06-09 — biz_id from /free-lead?b={biz_id} cold-email landing.
+  // Cookied so it survives sign-up bounce, then read by checkout to
+  // stamp Stripe metadata for prospect_free_leads attribution.
+  const bizId = (sp.b || '').trim().slice(0, 64)
 
   // 2026-06-08 — server-log every /start hit so we capture clicks Apple
   // Mail proxy strips from Instantly's tracking pixel. Non-blocking; never
@@ -72,10 +76,21 @@ export default async function StartPage({ searchParams }: { searchParams: SP }) 
       path: '/',
     })
   }
+  if (bizId) {
+    const cookieStore = await cookies()
+    cookieStore.set('bavg_biz_id', bizId, {
+      httpOnly: false,         // /pricing reads + posts to checkout
+      sameSite: 'lax',
+      secure: true,
+      maxAge: 60 * 60 * 24 * 14,
+      path: '/',
+    })
+  }
 
   // Send to pricing w/ promo in URL so banner shows + checkout sees it.
   const qs = new URLSearchParams()
   if (promo) qs.set('promo', promo)
   if (ref) qs.set('ref', ref)
+  if (bizId) qs.set('b', bizId)
   redirect(`/pricing${qs.toString() ? `?${qs.toString()}` : ''}`)
 }

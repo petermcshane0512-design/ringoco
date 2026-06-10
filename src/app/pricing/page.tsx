@@ -71,10 +71,15 @@ export default function PricingPage() {
       const urlPromo = new URLSearchParams(window.location.search).get('promo') || ''
       const cookiePromo = document.cookie.match(/bavg_promo=([^;]+)/)?.[1] || ''
       const promoCode = (urlPromo || cookiePromo).trim().toUpperCase() || 'FIRST400'
+      // Forward biz_id (from /free-lead cold-email landing) so Stripe
+      // webhook can attribute conversion back to prospect_free_leads.
+      const urlBiz = new URLSearchParams(window.location.search).get('b') || ''
+      const cookieBiz = document.cookie.match(/bavg_biz_id=([^;]+)/)?.[1] || ''
+      const bizId = (urlBiz || cookieBiz).trim().slice(0, 64)
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier: 'officemgr', interval: intv, creatorCode: promoCode }),
+        body: JSON.stringify({ tier: 'officemgr', interval: intv, creatorCode: promoCode, bizId: bizId || undefined }),
       })
       const data = await res.json()
       if (data.url) window.location.href = data.url
