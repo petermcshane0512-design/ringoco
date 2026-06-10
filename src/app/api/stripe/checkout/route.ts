@@ -197,30 +197,13 @@ export async function POST(req: NextRequest) {
     cancel_url: `${APP_URL}`,
   }
 
-  // 2026-06-08 â€” restore pre-apply path when promo resolves cleanly
-  // (cold email FIRST200, creator codes from /ref/[code]). Pre-apply =
-  // user sees discount without typing. If pre-apply throws, fall back to
-  // allow_promotion_codes so the sale never dies on a promo-code edge case.
-  try {
-    const session = promoLookup?.promotionCodeId
-      ? await stripe.checkout.sessions.create({
-          ...baseParams,
-          discounts: [{ promotion_code: promoLookup.promotionCodeId }],
-        } as never, { apiVersion: CHECKOUT_API_VERSION })
-      : await stripe.checkout.sessions.create({
-          ...baseParams,
-          allow_promotion_codes: true,
-        } as never, { apiVersion: CHECKOUT_API_VERSION })
-    return NextResponse.json({
-      url: session.url,
-      ...(promoLookup?.attributionCode ? {
-        notice: `Discount ${promoLookup.attributionCode} applied.`,
-      } : {}),
-    })
-  } catch (preApplyErr) {
-    console.warn('[checkout] pre-apply failed, falling back to allow_promotion_codes:', (preApplyErr as Error).message)
-  }
-
+  // 2026-06-10 — per Peter: always allow_promotion_codes so the user
+  // can REMOVE / SWAP a pre-applied code at the Stripe page. Pre-apply
+  // via `discounts: [{ promotion_code }]` LOCKS the code — visitor can
+  // not type a different one in the checkout UI. Trade: cold-email
+  // landings no longer see $97 auto-displayed; they paste FIRST400
+  // themselves. Attribution still stamped via metadata.creator_code
+  // regardless of whether the visitor actually types the code.
   try {
     const session = await stripe.checkout.sessions.create({
       ...baseParams,
@@ -229,7 +212,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       url: session.url,
       ...(promoLookup?.attributionCode ? {
-        notice: `Apply code "${promoLookup.attributionCode}" on the Stripe page for your discount.`,
+        notice: `Type code "${promoLookup.attributionCode}" on the Stripe page for your discount.`,
       } : {}),
     })
   } catch (err) {
