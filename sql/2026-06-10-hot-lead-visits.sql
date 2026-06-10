@@ -8,10 +8,14 @@
 -- Single source of truth for "hot lead" definition: visit_count >= 2.
 
 ALTER TABLE prospect_free_leads
-  ADD COLUMN IF NOT EXISTS visit_count          integer NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS last_visited_at      timestamptz,
-  ADD COLUMN IF NOT EXISTS hot_call_sms_sent_at timestamptz,
-  ADD COLUMN IF NOT EXISTS hot_call_dialed_at   timestamptz;
+  ADD COLUMN IF NOT EXISTS visit_count           integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS last_visited_at       timestamptz,
+  ADD COLUMN IF NOT EXISTS hot_call_sms_sent_at  timestamptz,
+  ADD COLUMN IF NOT EXISTS hot_call_dialed_at    timestamptz,
+  -- 2026-06-10 — used by /api/crons/hot-lead-stalled-nudge so Peter
+  -- gets a 2-hr "still uncalled" reminder once per lead, not on every
+  -- cron tick.
+  ADD COLUMN IF NOT EXISTS stalled_nudge_sent_at timestamptz;
 
 -- Index for the /admin/hot-leads dashboard sort (hot + not yet dialed first).
 CREATE INDEX IF NOT EXISTS prospect_free_leads_hot_idx
