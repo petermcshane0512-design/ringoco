@@ -63,14 +63,25 @@ function normalizeTrade(trade: string): TerritoryTrade | null {
 }
 
 /**
- * Look up territory status. Returns 'open' if no row exists — caller
- * should treat that as available.
+ * Look up territory status. Always returns 'open' as of 2026-06-10.
  *
- * Also auto-expires stale 'grace' rows: if status='grace' and
- * grace_expires_at has passed, returns 'open' even though the row still
- * exists. The release-grace cron is what actually flips the row, but
- * this read-path treatment prevents a race where a customer sees
- * 'grace' for a window that has technically expired.
+ * History: T3 plan (commit c825033) enforced one-shop-per-(zip,trade)
+ * via this gate. Rationale was a shared scraper pool — if two HVAC
+ * shops claimed 60643 they'd fight over the same permit rows. With the
+ * 2026-06-09 architecture pivot (per-tenant BatchData on signup, every
+ * tenant gets their OWN 80 owner-occupied properties around their
+ * business address), the shared-pool collision argument no longer
+ * holds. Two HVAC shops in 60643 each draw their own 80-home pool from
+ * BatchData with their own address-radius — overlap is statistical
+ * noise, not a delivery collision.
+ *
+ * Per Peter 2026-06-10: "we're not making it so only 1 person can use
+ * 1 zip code i hope not... if so fix that." Fixed.
+ *
+ * Lib + table preserved for back-compat (claim ledger / admin UI / SMS
+ * attribution remain useful) but the gate that blocked second-shop
+ * signups is dead. Existing claimed rows stay claimed for reporting
+ * but never block a new claim.
  */
 export async function checkTerritory(
   zipRaw: string,
@@ -79,30 +90,11 @@ export async function checkTerritory(
   const zip = normalizeZip(zipRaw)
   const trade = normalizeTrade(tradeRaw)
   if (!zip || !trade) return { status: 'unserved', row: null }
-  // 2026-06-10 — served-zips honesty gate. If we have no scraper
-  // coverage for this zip, do not let the user claim a territory we
-  // can't deliver into. Route them to waitlist instead.
+  // We can deliver to any valid US zip via per-tenant BatchData. Anything
+  // that isn't a valid 5-digit US zip is still 'unserved'.
   if (!isZipServed(zip)) return { status: 'unserved', row: null }
-  const { data, error } = await supabase
-    .from('territories')
-    .select('zip, trade, status, claimed_by_user_id, stripe_customer_id, stripe_subscription_id, business_name, metro, claimed_at, grace_expires_at')
-    .eq('zip', zip)
-    .eq('trade', trade)
-    .maybeSingle()
-  if (error) {
-    console.error('[territory.check]', error)
-    // Fail-open intentionally: if Supabase is unreachable, do not block
-    // checkout. Worst case = a double-claim that the webhook will catch
-    // and refund.
-    return { status: 'open', row: null }
-  }
-  if (!data) return { status: 'open', row: null }
-  const row = data as TerritoryRow
-  // Stale grace → treat as open.
-  if (row.status === 'grace' && row.grace_expires_at && new Date(row.grace_expires_at).getTime() < Date.now()) {
-    return { status: 'open', row }
-  }
-  return { status: row.status, row }
+  // Always open. Existing row state is informational; do not gate on it.
+  return { status: 'open', row: null }
 }
 
 /**
