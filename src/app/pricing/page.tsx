@@ -17,6 +17,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import Link from 'next/link'
 import Image from 'next/image'
+import LiveActivityMarquee from '@/components/LiveActivityMarquee'
 
 type Interval = 'monthly' | 'annual'
 
@@ -88,65 +89,66 @@ export default function PricingPage() {
 
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#FFF8F0', color: '#0B1F3A', minHeight: '100vh' }}>
-      {/* NAV */}
+      {/* NAV — bumped to match homepage */}
       <nav style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '14px clamp(16px, 4vw, 48px)',
+        padding: '8px clamp(16px, 4vw, 56px)',
         background: 'rgba(255,248,240,0.92)',
         backdropFilter: 'blur(12px)',
         borderBottom: '1px solid rgba(232,116,43,0.18)',
         position: 'sticky', top: 0, zIndex: 100,
       }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-          <Image src="/logo.png" alt="BellAveGo" width={260} height={80} style={{ objectFit: 'contain' }} priority />
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
+          <Image src="/logo.png" alt="BellAveGo" width={380} height={118} style={{ objectFit: 'contain', maxWidth: 'min(52vw, 380px)', height: 'auto' }} priority />
         </Link>
         <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
-          <Link href="/founder" style={navLink}>Founder</Link>
+          <Link href="/founder" style={navLinkBig}>Founder</Link>
+          <a href={FOUNDER_PHONE_HREF} style={{ ...navLinkBig, color: '#C84B26', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            📞 {FOUNDER_PHONE}
+          </a>
           {isSignedIn ? (
-            <Link href="/dashboard" style={navCTA}>Dashboard →</Link>
+            <Link href="/dashboard" style={navCTABig}>Dashboard →</Link>
           ) : (
             <>
-              <Link href="/sign-in" style={navLink}>Sign in</Link>
-              <Link href="/start?promo=FIRST400" style={navCTA}>$97 first month →</Link>
+              <Link href="/sign-in" style={navLinkBig}>Sign in</Link>
+              <Link href="/start?promo=FIRST400" style={navCTABig}>$97 first month →</Link>
             </>
           )}
         </div>
       </nav>
 
-      {/* HERO */}
-      <section style={{
-        padding: 'clamp(48px, 6vw, 80px) clamp(16px, 5vw, 48px) 32px',
-        textAlign: 'center',
-      }}>
-        <div style={{ maxWidth: 720, margin: '0 auto' }}>
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '7px 16px', borderRadius: 99,
-            background: '#FFE9D2',
-            border: '1.5px solid #FFC58A',
-            fontSize: 12, fontWeight: 800, color: '#A33C18',
-            marginBottom: 22,
-          }}>🔥 Founding-100 price · $497/mo locked for life</span>
-          <h1 style={{
-            fontSize: 'clamp(34px, 5vw, 56px)',
-            fontWeight: 900, letterSpacing: '-0.045em',
-            lineHeight: 1.05, margin: '0 0 18px',
-            color: '#0B1F3A',
-          }}>
-            <span style={{
-              background: 'linear-gradient(135deg, #22C55E 0%, #16803F 100%)',
-              WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-            }}>$97</span> first month.
-            <br />Then $497/mo if it works.
-          </h1>
-          <p style={{ fontSize: 'clamp(16px, 1.6vw, 18px)', color: '#3D5A66', lineHeight: 1.65, margin: '0 auto 28px', maxWidth: 620 }}>
-            10 fresh exclusive homeowner leads delivered to your dashboard every Monday (40/month) — real names, addresses, verified phones, a pre-written outreach script per lead. AI texts + emails each one as you. <strong>If we don&rsquo;t book you 1 paying job in 30 days, full refund + next 30 days FREE until you book + you keep every lead.</strong>
-          </p>
-        </div>
+      {/* LIVE ACTIVITY MARQUEE */}
+      <LiveActivityMarquee />
+
+      {/* PRICE TIER FIRST — per Peter, price is the first thing the page shows.
+          Compact pill above + the offer card directly below. No verbose hero. */}
+      <section style={{ padding: 'clamp(24px, 4vw, 44px) clamp(16px, 5vw, 48px) 28px', textAlign: 'center' }}>
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: 8,
+          padding: '7px 16px', borderRadius: 99,
+          background: '#FFE9D2',
+          border: '1.5px solid #FFC58A',
+          fontSize: 12, fontWeight: 800, color: '#A33C18',
+          marginBottom: 14,
+        }}>🔥 Founding-100 price · $497/mo locked for life</span>
+        <h1 style={{
+          fontSize: 'clamp(28px, 3.8vw, 42px)',
+          fontWeight: 900, letterSpacing: '-0.04em',
+          lineHeight: 1.05, margin: '0 0 8px',
+          color: '#0B1F3A',
+        }}>
+          One plan. <span style={{
+            background: 'linear-gradient(135deg, #22C55E 0%, #16803F 100%)',
+            WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+          }}>$97</span> first month.
+        </h1>
+        <p style={{ fontSize: 14, color: '#4A6670', margin: '0 auto', maxWidth: 540, lineHeight: 1.5 }}>
+          One number — pick yes or no. No tiers. No sales call.
+        </p>
       </section>
 
-      {/* PRICING CARD */}
-      <section style={{ padding: '8px clamp(16px, 5vw, 48px) 56px' }}>
+      {/* PRICING CARD — now directly under the small hero */}
+      <section style={{ padding: '0 clamp(16px, 5vw, 48px) 48px' }}>
         <div style={{ maxWidth: 540, margin: '0 auto' }}>
           {/* Interval toggle */}
           <div style={{
@@ -199,7 +201,7 @@ export default function PricingPage() {
               {[
                 '10 fresh exclusive homeowner leads / week (40 / month)',
                 'Verified phone number per lead (skip-traced, not guessed)',
-                'Pre-written outreach script per lead — sent automatically as YOU',
+                'Pre-written outreach script per lead — call, text, or email it your way',
                 'Phone notification the second a homeowner replies',
                 'Need more mid-week? Extra leads $25 each',
                 'Guarantee: 1 paying job in 30 days OR full refund + next 30 days FREE + you keep every lead',
@@ -361,6 +363,20 @@ const navCTA: React.CSSProperties = {
   color: '#fff', textDecoration: 'none',
   fontWeight: 900, fontSize: 13,
   boxShadow: '0 6px 18px rgba(232,116,43,0.32)',
+}
+const navLinkBig: React.CSSProperties = {
+  color: '#0B1F3A', textDecoration: 'none',
+  fontWeight: 800, fontSize: 16,
+  padding: '8px 4px', letterSpacing: '-0.01em',
+}
+const navCTABig: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', gap: 8,
+  padding: '14px 24px', borderRadius: 12,
+  background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 50%, #C84B26 100%)',
+  color: '#fff', textDecoration: 'none',
+  fontWeight: 900, fontSize: 16,
+  letterSpacing: '-0.01em',
+  boxShadow: '0 10px 26px rgba(232,116,43,0.40)',
 }
 function tabBtn(active: boolean): React.CSSProperties {
   return {
