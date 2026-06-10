@@ -7,7 +7,6 @@ import Image from 'next/image'
 import { useAuth } from '@clerk/nextjs'
 import LiveAIPipeline from '@/components/LiveAIPipeline'
 import LiveDashboardPreview from '@/components/LiveDashboardPreview'
-import LiveActivityMarquee from '@/components/LiveActivityMarquee'
 import AnimatedRevenueCounter from '@/components/AnimatedRevenueCounter'
 import { LEADS_PER_WEEK, LEADS_PER_MONTH } from '@/lib/offer'
 import HeroStatic from './HeroStatic'
@@ -276,10 +275,14 @@ function HomeContent() {
   const TEASER_LEADS = variant.teaserLeads
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#FFF8F0', color: '#0B1F3A', minHeight: '100vh', overflowX: 'hidden', paddingBottom: 70 }}>
-      {/* 2026-06-09 — marquee is now the FIRST visible element above the
-          nav (Peter feedback: 'blue ribbon needs to be higher'). Phone
-          number in nav also removed — repeats in offer card + footer. */}
-      <LiveActivityMarquee />
+      {/* 2026-06-10 — Live activity ticker REMOVED entirely. The events were
+          synthetic seed data ('Mike C. booked $4,200 install', 'ZIP 75024 just
+          locked' etc.) hardcoded in LiveActivityMarquee's SEED_EVENTS array.
+          Per Peter's 'no fabricated counts or events on customer-facing
+          surfaces' rule (2026-06-10), the component + its fake events were
+          deleted, not display:none'd. A future ticker may be reintroduced
+          ONLY if it renders from a real events table (and stays hidden while
+          that table is empty). */}
 
       <Nav isSignedIn={!!isSignedIn} />
 
