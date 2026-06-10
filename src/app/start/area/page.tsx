@@ -127,16 +127,16 @@ function StartAreaContent() {
     setErr('')
     setResult(null)
     setWaitlistedOk(false)
+    if (address.trim().length < 8) {
+      setErr('Enter your business address so we can pull leads within walking distance of it.')
+      return
+    }
     if (!/^\d{5}$/.test(zip)) {
       setErr('Enter a 5-digit zip code.')
       return
     }
     if (!trade) {
       setErr('Pick your trade.')
-      return
-    }
-    if (address.trim().length < 8) {
-      setErr('Enter your business address so we can pull leads within walking distance of it.')
       return
     }
     const phoneDigits = phone.replace(/\D/g, '')
@@ -264,7 +264,24 @@ function StartAreaContent() {
           border: '1.5px solid rgba(232,116,43,0.22)',
           boxShadow: '0 14px 40px rgba(11,31,58,0.06)',
         }}>
-          <label style={labelStyle}>Service-area zip code</label>
+          {/* 2026-06-10 — ADDRESS FIRST. Address is the actual lead-targeting
+              anchor (business_lat/lng = where leads get scraped from). Zip is
+              just the territory-exclusivity key. Asking for address first
+              matches what the engine actually uses. */}
+          <label style={labelStyle}>Your business address</label>
+          <input
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="123 Main St, Chicago, IL 60615"
+            style={inputStyle}
+            autoComplete="street-address"
+            autoFocus
+          />
+          <p style={{ fontSize: 11, color: '#7AAAB2', marginTop: 6, marginBottom: 0 }}>
+            We pull leads as close to this address as possible — starts at 3 miles, widens only when nearby supply runs low.
+          </p>
+
+          <label style={{ ...labelStyle, marginTop: 14 }}>Service-area zip code</label>
           <input
             value={zip}
             onChange={(e) => setZip(e.target.value.replace(/\D/g, '').slice(0, 5))}
@@ -272,7 +289,6 @@ function StartAreaContent() {
             inputMode="numeric"
             maxLength={5}
             style={inputStyle}
-            autoFocus
           />
 
           <label style={{ ...labelStyle, marginTop: 14 }}>Your trade</label>
@@ -297,18 +313,6 @@ function StartAreaContent() {
               </button>
             ))}
           </div>
-
-          <label style={{ ...labelStyle, marginTop: 14 }}>Your business address</label>
-          <input
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="123 Main St, Chicago, IL 60615"
-            style={inputStyle}
-            autoComplete="street-address"
-          />
-          <p style={{ fontSize: 11, color: '#7AAAB2', marginTop: 6, marginBottom: 0 }}>
-            We deliver leads within a 3-mile radius of this address the first 4 weeks, then widen weekly.
-          </p>
 
           <label style={{ ...labelStyle, marginTop: 14 }}>Your cell phone</label>
           <input
