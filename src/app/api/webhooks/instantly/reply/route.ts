@@ -97,6 +97,48 @@ export async function POST(req: NextRequest) {
       })
     } catch { /* swallow */ }
 
+    // 2026-06-09 — Free-lead auto-reply. If the reply email matches a
+    // prospect_free_leads row (cold-email recipient who never opened the
+    // landing) AND intent is NOT negative, hit the Instantly API to send
+    // them the /free-lead?b={biz_id} link as a 1-line reply. Closes the
+    // "interested but didn't click" gap that costs the most conversions.
+    if (intent !== 'negative' && email) {
+      try {
+        const { data: pfl } = await supabase
+          .from('prospect_free_leads')
+          .select('biz_id, claimed_at')
+          .eq('email', email.toLowerCase())
+          .maybeSingle()
+        if (pfl && !(pfl as { claimed_at?: string }).claimed_at) {
+          const bizId = (pfl as { biz_id: string }).biz_id
+          const replyLink = `https://www.bellavego.com/free-lead?b=${bizId}`
+          const autoBody = firstName
+            ? `${firstName} — your free homeowner lead is loaded here: ${replyLink}\n\nTake 30 sec, no signup needed to see it.\n\n— Peter`
+            : `Your free homeowner lead is loaded here: ${replyLink}\n\nTake 30 sec, no signup needed to see it.\n\n— Peter`
+          // Fire-and-forget — Instantly API auto-reply hook.
+          // INSTANTLY_API_KEY required. If not set, skip silently.
+          const instantlyKey = process.env.INSTANTLY_API_KEY
+          if (instantlyKey) {
+            await fetch('https://api.instantly.ai/api/v2/email/reply', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${instantlyKey}` },
+              body: JSON.stringify({
+                lead_email: email,
+                reply_subject: `Re: your free lead`,
+                reply_body: autoBody,
+                campaign_id: body.campaign_id,
+              }),
+            }).catch((e) => console.warn('[instantly-reply] auto-reply API error:', (e as Error).message))
+            console.log(`[free-lead-autoreply] sent free-lead link to ${email} (biz_id=${bizId})`)
+          } else {
+            console.log(`[free-lead-autoreply] would send to ${email} (biz_id=${bizId}) — INSTANTLY_API_KEY not set`)
+          }
+        }
+      } catch (e) {
+        console.warn('[free-lead-autoreply] failed:', (e as Error).message)
+      }
+    }
+
     // SMS Peter for positive intent only (avoids notification fatigue)
     if (intent === 'positive') {
       try {
