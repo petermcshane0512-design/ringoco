@@ -5,21 +5,35 @@
  * engine itself imports from this file. Do NOT hardcode prices or lead
  * counts elsewhere — they will drift.
  *
- * Last updated 2026-06-09 in the leads-only pivot.
+ * Last updated 2026-06-10 — leads-only pivot.
+ *
+ * FOUNDER-ONLY EDITS to LEADS_PER_WEEK, PRICE_MONTHLY_USD, INTRO_PRICE_USD,
+ * GUARANTEE_*, and SUPPORTED_TRADES. These are offer commitments — changing
+ * them silently in a side commit broke supply-floor planning on 2026-06-10
+ * when LEADS_PER_WEEK was bumped 5 → 10 by a parallel agent without
+ * recomputing per-metro customer ceilings. Any agent reading this: do not
+ * modify these constants without explicit founder approval in the message
+ * that opened the task.
  */
 
 /**
  * LEADS_PER_WEEK
  *
- * Bumped 5 → 10 on 2026-06-10 per Peter. The marketing offer is now
- * "10 fresh leads / week (40 / month)" — also makes the existing
- * $12.43/lead anchor (497 / 40) arithmetically consistent.
+ * Locked at 10 on 2026-06-10 by Peter. The marketing offer is
+ * "10 fresh leads / week (40 / month)" — also makes the $12.43/lead
+ * anchor (497 / 40) arithmetically consistent.
  *
- * Supply note: prior measurement (docs/lead-supply-measurement-2026-06-09.md)
- * showed scrapers sustaining only ~5/wk single-customer-per-zip. The 1-Job
- * Guarantee absorbs the supply gap for early customers; Phoenix scraper
- * fix + Sun Belt permit expansion + handyman/electrical sources still
- * outstanding to make 10/wk mechanically real long-term.
+ * Supply reality as of 2026-06-10 (scripts/supply-floor-per-metro.ts):
+ *   Chicago: 232 real-source qualified/wk → 11 customer slots @ 10×2 headroom
+ *   Austin:   68 real-source qualified/wk →  3 slots (BELOW 5-customer floor)
+ *   Orlando:   0 (GeoJSON fix shipped 49f1f07; ~110/wk forecast post-deploy)
+ *
+ * Synthetic aging_hvac source PURGED on 2026-06-10 — 27,479 placeholder
+ * rows deleted from leads table. Real-source pool is 1,943 rows total.
+ *
+ * The 1-Job Guarantee absorbs supply gap for early customers; outstanding
+ * to make 10/wk mechanically real long-term: Sun Belt scrape coverage +
+ * cron firing on schedule (telemetry shipped 45ded2d, awaiting 48h data).
  *
  * The lead engine (lib/leadEngine.ts) reads this value. The marketing site
  * reads this value. Per-lead price math + every customer surface derives
@@ -149,8 +163,8 @@ export const SITE_URL = 'https://www.bellavego.com'
  * Unified meta description — used by metadata, OG, and Twitter.
  * KEEP IDENTICAL across all three per the brief.
  */
-export const META_TITLE = `${BRAND_NAME} — ${LEADS_PER_WEEK} Fresh Contractor Leads Every Week | HVAC, Plumbing, Electrical`
-export const META_DESCRIPTION = `${LEADS_PER_WEEK} fresh leads in your service area, delivered every week. $${PRICE_MONTHLY_USD}/mo — first month $${INTRO_PRICE_USD}. Built for HVAC, plumbing, and electrical contractors. Cancel anytime.`
+export const META_TITLE = `${BRAND_NAME} — ${LEADS_PER_WEEK} Fresh Contractor Leads Every Week | HVAC, Plumbing, Roofing`
+export const META_DESCRIPTION = `${LEADS_PER_WEEK} fresh leads in your service area, delivered every week. $${PRICE_MONTHLY_USD}/mo — first month $${INTRO_PRICE_USD}. Built for HVAC, plumbing, and roofing contractors. Cancel anytime.`
 
 /**
  * Honest data-source description — for the homepage "what you get Monday"
@@ -162,7 +176,10 @@ export const LEAD_SOURCES_HUMAN = [
   'building permits filed at city hall',
   'NOAA-verified storm strikes in your zip',
   'MLS new-homeowner records',
-  'county data on aging systems',
+  // 2026-06-10 dropped "county data on aging systems" — that source was
+  // the synthetic aging_hvac generator (one placeholder row per US zip,
+  // no real homeowner). Purged from leads table same day. Do not re-add
+  // without a real BatchData-backed property feed.
 ] as const
 
 export const LEAD_FIELDS_HUMAN = [
