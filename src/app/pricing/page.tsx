@@ -115,7 +115,7 @@ export default function PricingPage() {
           ) : (
             <>
               <Link href="/sign-in" style={navLinkBig}>Sign in</Link>
-              <Link href="/start?promo=FIRST400" style={navCTABig}>$97 first month →</Link>
+              <Link href="/start?promo=FIRST400" style={navCTABig}>Get my first month — $97 →</Link>
             </>
           )}
         </div>
@@ -133,7 +133,7 @@ export default function PricingPage() {
           border: '1.5px solid #FFC58A',
           fontSize: 12, fontWeight: 800, color: '#A33C18',
           marginBottom: 14,
-        }}>🔥 Founding-100 price · $497/mo locked for life</span>
+        }}>Founding-100 price — $497/mo locked for life</span>
         <h1 style={{
           fontSize: 'clamp(28px, 3.8vw, 42px)',
           fontWeight: 900, letterSpacing: '-0.04em',
@@ -189,14 +189,12 @@ export default function PricingPage() {
 
             <ul style={{ listStyle: 'none', padding: 0, margin: '20px 0 22px', display: 'grid', gap: 9 }}>
               {[
-                '10 fresh exclusive homeowner leads / week (40 / month)',
-                'Verified phone number per lead (skip-traced, not guessed)',
-                'Pre-written outreach script per lead — call, text, or email it your way',
-                'Phone notification the second a homeowner replies',
-                'Need more mid-week? Extra leads $25 each',
+                '10 exclusive homeowner leads every week — 40/month, your area only',
+                'Verified phone number on every lead (skip-traced, not guessed)',
+                'Ready-to-send outreach script per lead — call, text, or email',
+                'Need more? Extra leads $25 each',
                 GUARANTEE_SHORT,
-                '30-day money-back · Cancel anytime',
-                'No setup, no phone numbers, no integration',
+                'Cancel anytime · No setup · Leads land in your inbox Monday morning',
               ].map((line) => (
                 <li key={line} style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
                   <span style={{
