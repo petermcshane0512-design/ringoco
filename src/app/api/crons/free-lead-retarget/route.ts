@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 
@@ -38,9 +38,16 @@ const FOUR_HOURS_MS = 4 * 60 * 60 * 1000
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000
 const RETARGET_CAP = 3
 
-export async function GET(req: Request) {
-  const gate = await requireAdmin()
-  if (!gate.ok) return gate.res
+export async function GET(req: NextRequest) {
+  // Vercel Cron path — auto-sends Authorization: Bearer ${CRON_SECRET}.
+  const cronSecret = process.env.CRON_SECRET
+  const auth = req.headers.get('authorization')
+  const isCronCall = !!(cronSecret && auth === `Bearer ${cronSecret}`)
+
+  if (!isCronCall) {
+    const gate = await requireAdmin()
+    if (!gate.ok) return gate.res
+  }
 
   const url = new URL(req.url)
   const mode = url.searchParams.get('mode') || 'list'

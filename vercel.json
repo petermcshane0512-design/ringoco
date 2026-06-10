@@ -171,6 +171,10 @@
     {
       "path": "/api/crons/personalize-sample-leads",
       "schedule": "30 7 * * *"
+    },
+    {
+      "path": "/api/crons/free-lead-retarget?mode=mark",
+      "schedule": "0 * * * *"
     }
   ],
   "functions": {
