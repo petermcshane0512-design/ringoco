@@ -125,19 +125,24 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
   const homeZips = (profile.service_zips || []).filter(Boolean)
   if (homeZips.length === 0) return { assigned: 0, skipped_reason: 'no_service_zips' }
 
-  // Radius ladder — start at tenant's setting, escalate twice if pool is
-  // light. HARD CAP 50mi (~1hr drive). These are 1-4 person teams, not
-  // regional contractors — surfacing a Maine HVAC guy leads in Boston is
-  // worse than surfacing nothing.
-  //   Per-trade base defaults set in onboarding:
-  //     handyman 10mi, plumbing 15mi, HVAC/electrical 20mi, roofing 30mi
-  const RADIUS_HARD_CAP = 50
-  const baseRadius = Math.max(1, Math.min(RADIUS_HARD_CAP, profile.service_radius_mi ?? 20))
-  const radiusLadder = [
-    baseRadius,
-    Math.min(RADIUS_HARD_CAP, Math.round(baseRadius * 1.5)),
-    RADIUS_HARD_CAP,
-  ]
+  // 2026-06-10 — SUPPLY-DRIVEN ring-by-ring ladder.
+  // Per Peter: every drop asks "is the 1mi ring enough? 2mi? 3mi? ..."
+  // and stops at the first ring that fills the quota. Closest leads
+  // always go out first; no time-based widening, no tenant-setting
+  // floor that would skip the close-in rings.
+  //
+  // Hard cap drops 50 -> 20 (solo HVAC/plumb/roof don't drive past 20mi
+  // for residential service). userCap = min(profile.service_radius_mi,
+  // RADIUS_HARD_CAP); clamping any existing higher values down silently.
+  const RADIUS_START_MI = 1
+  const RADIUS_HARD_CAP = 20
+  const RADIUS_STEP_MI = 1
+  const userCap = Math.max(
+    RADIUS_START_MI,
+    Math.min(RADIUS_HARD_CAP, profile.service_radius_mi ?? RADIUS_HARD_CAP),
+  )
+  const radiusLadder: number[] = []
+  for (let r = RADIUS_START_MI; r <= userCap; r += RADIUS_STEP_MI) radiusLadder.push(r)
   const dedup = new Set<string>()
   type Candidate = {
     id: string
@@ -154,7 +159,14 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
     _distMi?: number  // computed post-query, never written to DB
   }
   const candidates: Candidate[] = []
-  let radiusUsed = baseRadius
+  let radiusUsed = RADIUS_START_MI
+  // 2026-06-10 — Defense-in-depth haversine filter inside the ring loop.
+  // Zip-based query bleeds past the literal mile boundary at zip edges.
+  // When we have a geocoded business location, drop any candidate whose
+  // straight-line distance exceeds the current ring. Without geocode, we
+  // trust the zip filter (legacy behavior).
+  const hasGeocode =
+    typeof profile.business_lat === 'number' && typeof profile.business_lng === 'number'
 
   for (const r of radiusLadder) {
     radiusUsed = r
@@ -183,10 +195,14 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
 
     type CandidateRow = Candidate
     for (const c of (cs ?? []) as CandidateRow[]) {
-      if (!dedup.has(c.id)) {
-        dedup.add(c.id)
-        candidates.push(c)
+      if (dedup.has(c.id)) continue
+      if (hasGeocode && typeof c.lat === 'number' && typeof c.lng === 'number') {
+        const miles = haversineMiles(profile.business_lat!, profile.business_lng!, c.lat, c.lng)
+        if (miles > r) continue
+        c._distMi = miles
       }
+      dedup.add(c.id)
+      candidates.push(c)
     }
     if (candidates.length >= remaining * 2) break
   }
@@ -216,7 +232,10 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
             'Content-Type': 'application/json',
             'x-admin-secret': process.env.ADMIN_API_SECRET || '',
           },
-          body: JSON.stringify({ user_id: profile.user_id, max_candidates: 80, skip_trace_top_n: 10 }),
+          // Pass the radius that just ran dry so BatchData refills the same
+          // ring. Caps the spend ring + keeps replenished leads close to
+          // the business address.
+          body: JSON.stringify({ user_id: profile.user_id, max_candidates: 80, skip_trace_top_n: 10, radius_mi: radiusUsed }),
         })
         const json = await r.json().catch(() => ({}))
         console.log(`[lead-engine] auto-replenished user=${profile.user_id} assigned=${json.assigned ?? 0} spent_cents=${json.spent_cents ?? 0}`)

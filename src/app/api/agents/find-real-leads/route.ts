@@ -57,30 +57,21 @@ type ProfileRow = {
   first_lead_drop_at: string | null
 }
 
-// First N days after signup, force a tight radius around the contractor's
-// exact business location so they see leads near where they actually work.
-// After this window expires, the engine falls back to service_radius_mi.
-const ONBOARDING_TIGHT_RADIUS_DAYS = 14
-const ONBOARDING_TIGHT_RADIUS_MI = 3
+// 2026-06-10 — SUPPLY-DRIVEN. Caller (lib/leadEngine) walks a 1mi -> cap
+// ladder against the `leads` table itself and only fires this route when
+// even the cap ring runs dry; the caller passes the radius it exhausted
+// in `radius_mi` so BatchData refills the same ring. Default 1mi when
+// caller does not specify (admin-direct invocation). Hard cap 20mi.
+const RADIUS_TIGHT_MI = 1
+const RADIUS_HARD_CAP_MI = 20
 
-// 2026-06-10 — radius expansion ladder. First 4 weeks after first_lead_drop_at:
-// stay at TIGHT_MI (~2-3 mi). Each week after, +1 mi up to the tenant's
-// service_radius_mi cap (or RADIUS_HARD_CAP = 50). Replaces the prior
-// PERMANENT 3mi behavior. Tenants in dense urban zips would exhaust nearby
-// owner-occupied properties matching the trade recipe in ~6 months without
-// expansion. Slow widen = always-real but never claustrophobic.
-const RADIUS_TIGHT_MI = 3
-const RADIUS_TIGHT_WEEKS = 4
-const RADIUS_HARD_CAP_MI = 50
-const RADIUS_WEEKLY_STEP_MI = 1
-
-function dynamicRadiusFor(profile: ProfileRow): number {
-  const anchor = profile.first_lead_drop_at ? new Date(profile.first_lead_drop_at).getTime() : Date.now()
-  const weeksSince = Math.max(0, Math.floor((Date.now() - anchor) / (7 * 86400000)))
-  const userCap = Math.max(RADIUS_TIGHT_MI, Math.min(RADIUS_HARD_CAP_MI, profile.service_radius_mi ?? RADIUS_TIGHT_MI))
-  if (weeksSince < RADIUS_TIGHT_WEEKS) return RADIUS_TIGHT_MI
-  const widen = RADIUS_TIGHT_MI + (weeksSince - RADIUS_TIGHT_WEEKS + 1) * RADIUS_WEEKLY_STEP_MI
-  return Math.min(userCap, widen)
+function resolveRadius(profile: ProfileRow, requested?: number | null): number {
+  const userCap = Math.max(
+    RADIUS_TIGHT_MI,
+    Math.min(RADIUS_HARD_CAP_MI, profile.service_radius_mi ?? RADIUS_HARD_CAP_MI),
+  )
+  const r = typeof requested === 'number' && requested > 0 ? requested : RADIUS_TIGHT_MI
+  return Math.max(RADIUS_TIGHT_MI, Math.min(userCap, r))
 }
 
 type TradeConfig = {
@@ -269,7 +260,7 @@ async function expandRadius(homeZips: string[], radius: number): Promise<string[
 
 async function findLeadsForTenant(
   userId: string,
-  opts: { skipTraceTopN?: number; maxCandidates?: number } = {}
+  opts: { skipTraceTopN?: number; maxCandidates?: number; radiusMi?: number } = {}
 ): Promise<{ ok: boolean; assigned: number; reason?: string; spent_cents?: number; zips_searched?: number; skip_traced?: number }> {
   const skipTraceTopN = opts.skipTraceTopN ?? 20
   const maxCandidates = opts.maxCandidates ?? 80
@@ -315,7 +306,7 @@ async function findLeadsForTenant(
     typeof profile.business_lat === 'number' &&
     typeof profile.business_lng === 'number'
 
-  const radius = dynamicRadiusFor(profile)
+  const radius = resolveRadius(profile, opts.radiusMi)
   // tightRadiusActive controls the haversine post-filter. Always on when we
   // have a geocoded business location — defends against zip-edge bleed.
   const tightRadiusActive = hasGeocodedBusinessLoc
@@ -572,13 +563,14 @@ export async function POST(req: NextRequest) {
     const gate = await requireAdmin()
     if (!gate.ok) return gate.res
 
-    let body: { user_id?: string; skip_trace_top_n?: number; max_candidates?: number } = {}
+    let body: { user_id?: string; skip_trace_top_n?: number; max_candidates?: number; radius_mi?: number } = {}
     try { body = await req.json() } catch { /* */ }
     if (!body.user_id) return NextResponse.json({ error: 'user_id required' }, { status: 400 })
 
     const result = await findLeadsForTenant(body.user_id, {
       skipTraceTopN: body.skip_trace_top_n,
       maxCandidates: body.max_candidates,
+      radiusMi: body.radius_mi,
     })
     return NextResponse.json(result)
   } catch (e) {
