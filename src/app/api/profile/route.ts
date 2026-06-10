@@ -97,6 +97,12 @@ const SAFE_PROFILE_COLUMNS = new Set([
   'equipment_capabilities',   // text[] — EPA 608, NATE, ductwork install, IAQ certified, low-volt license
   'ideal_customer_desc',      // text — 1-line free-text 'who's your best customer?' — feeds lookalike-finder
   'exclusions',               // text[] — 'no commercial', 'no new construction', 'no rental properties'
+  // ── 2026-06-09 — geocode of business_address for tight-radius first-2-weeks behavior
+  //    (sql/2026-06-09-business-geocode.sql). Populated by /api/profile when
+  //    business_address is sent and we don't have a lat/lng yet.
+  'business_lat',             // numeric — geocoded latitude of business_address
+  'business_lng',             // numeric — geocoded longitude pair
+  'business_geocoded_at',     // timestamptz — when we last geocoded (NULL if never)
 ])
 
 export async function POST(req: NextRequest) {
@@ -132,6 +138,37 @@ export async function POST(req: NextRequest) {
     }
   } catch {
     // Cookie read failure is non-fatal — profile save continues without attribution.
+  }
+
+  // ── Geocode business_address (T3-mile-radius setup) ──
+  // First time we see a business_address on this profile, fire a single
+  // Google Geocode request (~$0.005) and stash lat/lng. The lead engine
+  // reads these to draw a 3-mile radius for the first 14 days post-signup.
+  // Skip if business_address is missing OR we already have coords on file.
+  try {
+    const incomingAddress = (filtered.business_address ?? raw.business_address ?? '') as string
+    if (incomingAddress && incomingAddress.trim().length >= 5) {
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('business_lat, business_lng, business_address')
+        .eq('user_id', userId)
+        .maybeSingle()
+      const ep = existingProfile as { business_lat?: number | null; business_lng?: number | null; business_address?: string | null } | null
+      const addressChanged = !ep || !ep.business_address || ep.business_address !== incomingAddress
+      const needsGeocode = addressChanged || ep.business_lat == null || ep.business_lng == null
+      if (needsGeocode) {
+        const { geocodeBusinessAddress } = await import('@/lib/geocodeBusinessAddress')
+        const geo = await geocodeBusinessAddress(incomingAddress)
+        if (geo) {
+          filtered.business_lat = geo.lat
+          filtered.business_lng = geo.lng
+          filtered.business_geocoded_at = new Date().toISOString()
+        }
+      }
+    }
+  } catch (e) {
+    // Geocode failure is non-fatal — profile save continues without lat/lng.
+    console.warn('[profile] geocode skip:', (e as Error).message)
   }
 
   const { error } = await supabase

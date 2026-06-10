@@ -49,7 +49,18 @@ type ProfileRow = {
   services_offered: string | null
   service_area: string | null
   sub_trade: string | null
+  // 2026-06-09 — tight-radius first-2-weeks fields. business_lat/lng populated by
+  // /api/profile geocode on signup. first_lead_drop_at stamped by lead engine.
+  business_lat: number | null
+  business_lng: number | null
+  first_lead_drop_at: string | null
 }
+
+// First N days after signup, force a tight radius around the contractor's
+// exact business location so they see leads near where they actually work.
+// After this window expires, the engine falls back to service_radius_mi.
+const ONBOARDING_TIGHT_RADIUS_DAYS = 14
+const ONBOARDING_TIGHT_RADIUS_MI = 3
 
 type TradeConfig = {
   yearBuiltMin?: number
@@ -174,7 +185,7 @@ async function findLeadsForTenant(
 
   const { data: profileRaw, error: profileErr } = await supabase
     .from('profiles')
-    .select('user_id, service_zips, service_radius_mi, business_type, services_offered, service_area, sub_trade')
+    .select('user_id, service_zips, service_radius_mi, business_type, services_offered, service_area, sub_trade, business_lat, business_lng, first_lead_drop_at')
     .eq('user_id', userId)
     .maybeSingle()
   if (profileErr || !profileRaw) {
@@ -192,7 +203,32 @@ async function findLeadsForTenant(
 
   const cfg = tradeFiltersFor(resolvedTrade)
   const tradeNormalized = normalizeTrade(resolvedTrade)
-  const radius = Math.min(50, profile.service_radius_mi ?? 20)
+
+  // 2026-06-09 — tight-radius first-2-weeks behavior. If we're within the
+  // onboarding window AND we have a geocoded business location, override
+  // the search radius down to ONBOARDING_TIGHT_RADIUS_MI so leads land
+  // close to where the contractor actually works. This works in two layers:
+  //   (1) shrinks expandRadius() output so BatchData queries fewer zips
+  //   (2) the post-filter below (haversine) trims any zip-edge candidates
+  //       outside the literal mile radius
+  const daysSinceFirstDrop = profile.first_lead_drop_at
+    ? (Date.now() - new Date(profile.first_lead_drop_at).getTime()) / 86400000
+    : 0  // 0 = treat as "no first drop yet" → still in onboarding
+  const inOnboardingWindow =
+    !profile.first_lead_drop_at ||
+    daysSinceFirstDrop < ONBOARDING_TIGHT_RADIUS_DAYS
+  const hasGeocodedBusinessLoc =
+    typeof profile.business_lat === 'number' &&
+    typeof profile.business_lng === 'number'
+  const tightRadiusActive = inOnboardingWindow && hasGeocodedBusinessLoc
+
+  const radius = tightRadiusActive
+    ? ONBOARDING_TIGHT_RADIUS_MI
+    : Math.min(50, profile.service_radius_mi ?? 20)
+
+  if (tightRadiusActive) {
+    console.log(`[find-real-leads] user_id=${userId} TIGHT-RADIUS ${ONBOARDING_TIGHT_RADIUS_MI}mi from lat=${profile.business_lat} lng=${profile.business_lng} (day ${Math.floor(daysSinceFirstDrop)} of ${ONBOARDING_TIGHT_RADIUS_DAYS})`)
+  }
 
   // Expand to radius zips so coverage matches what the lead engine actually
   // delivers to the dashboard. Previously only searched the 3 primary zips
@@ -245,6 +281,21 @@ async function findLeadsForTenant(
     for (const p of result.properties) {
       if (!p.street_address || !p.zip) continue
       if (candidatesInserted >= maxCandidates) break
+
+      // Tight-radius post-filter (defense in depth — zip-based query can
+      // bleed past the literal mile radius near zip edges). Drops any
+      // property whose lat/lng is > ONBOARDING_TIGHT_RADIUS_MI from the
+      // contractor's business location. Only runs when tight-radius is
+      // active AND BatchData returned a lat/lng on the property.
+      if (tightRadiusActive) {
+        const pLat = (p as unknown as { lat?: number | null }).lat
+        const pLng = (p as unknown as { lng?: number | null }).lng
+        if (typeof pLat === 'number' && typeof pLng === 'number') {
+          const { distanceMiles } = await import('@/lib/geocodeBusinessAddress')
+          const miles = distanceMiles(profile.business_lat!, profile.business_lng!, pLat, pLng)
+          if (miles > ONBOARDING_TIGHT_RADIUS_MI) continue
+        }
+      }
 
       const ageYears = p.year_built ? new Date().getFullYear() - p.year_built : 0
       const whyTags = cfg.whyTagBuilder(p.year_built, p.last_sale_date, ageYears)
