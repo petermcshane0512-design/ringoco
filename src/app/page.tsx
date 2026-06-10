@@ -287,9 +287,14 @@ function HomeContent() {
       <Nav isSignedIn={!!isSignedIn} />
 
       {/* HERO — aurora animated blobs behind content */}
+      {/* 2026-06-10 — vertical padding tightened ~35% per Peter so the H1
+          starts higher in the viewport.
+            top:    clamp(20px, 3vw, 36px) -> clamp(13px, 2vw, 23px)
+            bottom: clamp(28px, 4vw, 48px) -> clamp(18px, 2.6vw, 31px)
+          Horizontal padding unchanged. */}
       <section style={{
         position: 'relative',
-        padding: 'clamp(20px, 3vw, 36px) clamp(16px, 5vw, 48px) clamp(28px, 4vw, 48px)',
+        padding: 'clamp(13px, 2vw, 23px) clamp(16px, 5vw, 48px) clamp(18px, 2.6vw, 31px)',
         background: '#FFF8F0',
         overflow: 'hidden',
       }}>
@@ -606,15 +611,21 @@ function HomeContent() {
 function Nav({ isSignedIn }: { isSignedIn: boolean }) {
   return (
     <nav style={{
+      // 2026-06-10 — vertical padding reduced 8px -> 5px (~37%) per Peter:
+      // headline must start higher in the viewport. Horizontal padding +
+      // nav links / CTA unchanged.
       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: '8px clamp(16px, 4vw, 56px)',
+      padding: '5px clamp(16px, 4vw, 56px)',
       background: 'rgba(255,248,240,0.92)',
       backdropFilter: 'blur(12px)',
       borderBottom: '1px solid rgba(232,116,43,0.18)',
       position: 'sticky', top: 0, zIndex: 100,
     }}>
       <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
-        <Image src="/logo.png" alt="BellAveGo" width={380} height={118} style={{ objectFit: 'contain', maxWidth: 'min(52vw, 380px)', height: 'auto' }} priority />
+        {/* 2026-06-10 — logo dimensions reduced ~25% (380x118 -> 285x89, maxWidth
+            52vw -> 39vw). Aspect ratio preserved. Mobile (375px) safe — was
+            52% of 375 = 195px, now 39% = 146px, plenty of room for nav links. */}
+        <Image src="/logo.png" alt="BellAveGo" width={285} height={89} style={{ objectFit: 'contain', maxWidth: 'min(39vw, 285px)', height: 'auto' }} priority />
       </Link>
       <div style={{ display: 'flex', gap: 22, alignItems: 'center' }}>
         <Link href="/founder" style={navLinkBig}>Founder</Link>
