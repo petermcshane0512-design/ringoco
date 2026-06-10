@@ -270,13 +270,12 @@ function HomeContent() {
   const TEASER_LEADS = variant.teaserLeads
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#FFF8F0', color: '#0B1F3A', minHeight: '100vh', overflowX: 'hidden', paddingBottom: 70 }}>
-      {/* Trust strip killed 2026-06-09 per Peter — phone now lives in
-          nav CTA cluster + repeats in offer card + footer. */}
+      {/* 2026-06-09 — marquee is now the FIRST visible element above the
+          nav (Peter feedback: 'blue ribbon needs to be higher'). Phone
+          number in nav also removed — repeats in offer card + footer. */}
+      <LiveActivityMarquee />
 
       <Nav isSignedIn={!!isSignedIn} />
-
-      {/* LIVE ACTIVITY MARQUEE — scrolling proof bar */}
-      <LiveActivityMarquee />
 
       {/* HERO — aurora animated blobs behind content */}
       <section style={{
@@ -311,46 +310,56 @@ function HomeContent() {
         </div>
         <div style={{ position: 'relative', maxWidth: 1240, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.1fr)', gap: 'clamp(24px, 4vw, 44px)', alignItems: 'center' }} className="hero-grid">
           <div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 14, alignItems: 'center' }}>
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                padding: '6px 14px', borderRadius: 99,
-                background: '#FFE9D2',
-                border: '1.5px solid #FFC58A',
-                fontSize: 11.5, fontWeight: 800, color: '#A33C18',
-              }}>{variant.scarcityPill}</span>
-              <AnimatedRevenueCounter />
-            </div>
+            {/* 2026-06-09 — scarcityPill ('47 zip codes locked · 953 still
+                open') + AnimatedRevenueCounter ('$ booked today $52,896'
+                ticking) both deleted per Peter. Both fabricated, both
+                violated 'no invented customer counts'. The CTA now does
+                the scarcity work: "Claim my area" frames the button itself
+                as the land-grab. */}
 
-            {/* Hormozi $100M Offers: H1 = dream outcome + specificity.
-                Old "Your competitor is using AI" was fear-frame abstract;
-                new is concrete + measurable. Book = verb. 4-8 install jobs
-                = specific number range = credibility. */}
             <h1 style={{
               fontSize: 'clamp(30px, 4.2vw, 48px)',
               fontWeight: 900, letterSpacing: '-0.04em',
               lineHeight: 1.04, margin: '0 0 14px',
               color: '#0B1F3A',
             }}>
-              {variant.h1Verb}{' '}
+              Book your next install job from{' '}
               <span style={{
                 background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 60%, #C84B26 100%)',
                 WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-              }}>{variant.h1Highlight}</span>{' '}
-              {variant.h1Suffix}
+              }}>leads your competitors never see</span>.
             </h1>
-            <p style={{ fontSize: 'clamp(15px, 1.4vw, 17px)', color: '#3D5A66', lineHeight: 1.55, margin: '0 0 20px', maxWidth: 560 }}>
-              Real names, addresses, phones — pulled overnight from permits, aging HVAC, storm strikes, new move-ins. Each lead arrives w/ a <strong style={{ color: '#0B1F3A' }}>pre-written intro script</strong> — call, text, or email it your way. You stay in control. <strong style={{ color: '#0B1F3A' }}>One shop per zip. Locked all year.</strong>
+            <p style={{ fontSize: 'clamp(15px, 1.4vw, 17px)', color: '#3D5A66', lineHeight: 1.55, margin: '0 0 14px', maxWidth: 580 }}>
+              <strong style={{ color: '#0B1F3A' }}>10 fresh homeowner leads in your service area every week</strong> — real names, addresses, phone numbers. Pulled overnight from new permits, aging systems, storm damage, and move-ins. Every lead arrives with a ready-to-send intro — call, text, or email in 60 seconds.
+            </p>
+            <p style={{ fontSize: 'clamp(14px, 1.3vw, 16px)', color: '#0B1F3A', lineHeight: 1.5, margin: '0 0 18px', maxWidth: 580, fontWeight: 700 }}>
+              One shop per area. When yours is taken, it&rsquo;s taken.
             </p>
 
-            {/* Hormozi micro-commitment: zip lookup AS primary CTA.
-                Research: form-first hero w/ low-friction input lifts
-                conversion 30-50% vs button-first. Once user types zip,
-                psychological commitment makes them 3x more likely to
-                complete checkout (CXL + Cialdini consistency principle). */}
+            {/* Guarantee block — Hormozi 1-Job framing. Replaces the prior
+                scattered guarantee mentions. */}
+            <div style={{
+              padding: '14px 16px',
+              borderRadius: 12,
+              background: 'rgba(34,197,94,0.10)',
+              border: '1.5px solid rgba(34,197,94,0.40)',
+              margin: '0 0 18px',
+              maxWidth: 580,
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 900, color: '#16803F', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>
+                The 1-Job Guarantee
+              </div>
+              <p style={{ margin: 0, fontSize: 13.5, color: '#0B1F3A', lineHeight: 1.55 }}>
+                Book at least one job in 30 days, or you get a <strong>full refund</strong>, <strong>30 more days free</strong>, and you <strong>keep every lead</strong>. One average install covers more than a year of membership.
+              </p>
+            </div>
+
+            {/* HeroZipForm — primary commitment CTA. Captures service-area
+                ZIP (still the cheapest territory lookup). Button copy now
+                does the scarcity work per Peter: "Claim my area". */}
             <HeroZipForm />
-            <p style={{ fontSize: 13, color: '#4A6670', margin: '14px 0 18px', maxWidth: 540 }}>
-              <strong style={{ color: '#16803F', fontSize: 16 }}>$97</strong> first month w/ code <strong>FIRST400</strong>. Book 1 job in 30 days or full refund + <strong>another 30 days FREE</strong> + keep every lead. $497/mo only if it works · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
+            <p style={{ fontSize: 13, color: '#4A6670', margin: '14px 0 18px', maxWidth: 580 }}>
+              <strong style={{ color: '#16803F', fontSize: 16 }}>$97</strong> first month with code <strong>FIRST400</strong> · $497/mo after, only if it works · cancel anytime · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
             </p>
           </div>
 
@@ -588,18 +597,15 @@ function Nav({ isSignedIn }: { isSignedIn: boolean }) {
       <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
         <Image src="/logo.png" alt="BellAveGo" width={380} height={118} style={{ objectFit: 'contain', maxWidth: 'min(52vw, 380px)', height: 'auto' }} priority />
       </Link>
-      <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 22, alignItems: 'center' }}>
         <Link href="/founder" style={navLinkBig}>Founder</Link>
         <Link href="/pricing" style={navLinkBig}>Pricing</Link>
-        <a href={FOUNDER_PHONE_HREF} style={{ ...navLinkBig, color: '#C84B26', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          📞 {FOUNDER_PHONE}
-        </a>
         {isSignedIn ? (
           <Link href="/dashboard" style={ctaNavPrimaryBig}>Dashboard →</Link>
         ) : (
           <>
             <Link href="/sign-in" style={navLinkBig}>Sign in</Link>
-            <Link href="/start?promo=FIRST400" style={ctaNavPrimaryBig}>$97 first month →</Link>
+            <Link href="/start?promo=FIRST400" style={ctaNavPrimaryBig}>Claim my area · $97 →</Link>
           </>
         )}
       </div>
@@ -761,19 +767,19 @@ const ctaNavPrimary: React.CSSProperties = {
 
 const navLinkBig: React.CSSProperties = {
   color: '#0B1F3A', textDecoration: 'none',
-  fontWeight: 800, fontSize: 16,
-  padding: '8px 4px',
+  fontWeight: 800, fontSize: 18,
+  padding: '10px 6px',
   letterSpacing: '-0.01em',
 }
 
 const ctaNavPrimaryBig: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: 8,
-  padding: '14px 24px', borderRadius: 12,
+  padding: '17px 30px', borderRadius: 13,
   background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 50%, #C84B26 100%)',
   color: '#fff', textDecoration: 'none',
-  fontWeight: 900, fontSize: 16,
+  fontWeight: 900, fontSize: 18,
   letterSpacing: '-0.01em',
-  boxShadow: '0 10px 26px rgba(232,116,43,0.40)',
+  boxShadow: '0 12px 30px rgba(232,116,43,0.45)',
 }
 
 const ctaHeroPrimary: React.CSSProperties = {
@@ -833,17 +839,17 @@ function HeroZipForm() {
         name="zip"
         value={zip}
         onChange={(e) => { setZip(e.target.value.replace(/\D/g, '').slice(0, 5)); setTouched(true) }}
-        placeholder={touched ? '5-digit zip' : 'Your zip code — see if it’s open'}
+        placeholder={touched ? '5-digit zip' : 'Your service area zip code'}
         inputMode="numeric"
         maxLength={5}
         autoComplete="postal-code"
-        aria-label="Your zip code"
+        aria-label="Your service area zip code"
         style={{
-          padding: '16px 18px',
+          padding: '18px 20px',
           borderRadius: 12,
           border: 'none',
           background: 'transparent',
-          fontSize: 17, fontWeight: 700,
+          fontSize: 18, fontWeight: 700,
           color: '#0B1F3A',
           outline: 'none',
           minWidth: 0,
@@ -852,19 +858,19 @@ function HeroZipForm() {
       <button
         type="submit"
         style={{
-          padding: '16px 24px',
+          padding: '18px 28px',
           borderRadius: 12,
           background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 50%, #C84B26 100%)',
           border: 'none',
           color: '#fff',
-          fontWeight: 900, fontSize: 15,
+          fontWeight: 900, fontSize: 17,
           letterSpacing: '-0.01em',
           cursor: 'pointer',
-          boxShadow: '0 8px 20px rgba(232,116,43,0.36)',
+          boxShadow: '0 10px 24px rgba(232,116,43,0.42)',
           whiteSpace: 'nowrap',
         }}
       >
-        🔒 Lock $97 trial →
+        Claim my area — $97 →
       </button>
     </form>
   )
