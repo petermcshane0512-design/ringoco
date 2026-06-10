@@ -146,7 +146,7 @@ export default function SetupWizardLeads() {
   const [trades, setTrades] = useState<string[]>([]);
   const [subSpecialties, setSubSpecialties] = useState<string[]>([]);
   const [primaryZip, setPrimaryZip] = useState("");
-  const [radius, setRadius] = useState(25);
+  const [radius, setRadius] = useState(20);
   const [jobTypes, setJobTypes] = useState<string[]>([]);
   const [minJobValue, setMinJobValue] = useState(0);
   const [avgTicket, setAvgTicket] = useState(1500);
@@ -374,10 +374,18 @@ export default function SetupWizardLeads() {
                       <span>Service radius</span>
                       <span style={{ color: "#C84B26", fontWeight: 900 }}>{radius} miles</span>
                     </label>
-                    <input type="range" min={5} max={75} step={5} value={radius} onChange={(e) => setRadius(parseInt(e.target.value, 10))} style={rangeStyle} />
+                    {/* 2026-06-10 — max 20mi per supply-driven ladder cap.
+                        Engine starts at 3mi + steps up only when nearby
+                        supply runs out; this slider sets the ceiling on
+                        widening. Solo HVAC/plumb/roof shops don't drive
+                        past 20mi for a residential service call. */}
+                    <input type="range" min={3} max={20} step={1} value={radius} onChange={(e) => setRadius(parseInt(e.target.value, 10))} style={rangeStyle} />
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#7AAAB2", marginTop: 4 }}>
-                      <span>5mi</span><span>75mi</span>
+                      <span>3mi</span><span>20mi (max)</span>
                     </div>
+                    <p style={{ fontSize: 11, color: "#7AAAB2", marginTop: 6, lineHeight: 1.45 }}>
+                      We pull leads as close to your address as possible — start at 3 miles and only widen out to this cap when nearby supply runs low.
+                    </p>
                   </div>
                 </div>
               </Field>
