@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { classifyCronAuth, recordCronStart, recordCronFinish } from '@/lib/cronRuns'
 
 export const runtime = 'nodejs'
 // Chicago Socrata responses can be slow under load (especially the
@@ -110,10 +111,10 @@ function scorePermit(p: RawPermit, trades: string[]): number {
 }
 
 export async function GET(req: NextRequest) {
-  const isCron = req.headers.get('x-vercel-cron') === '1'
-  const adminSecret = req.headers.get('x-admin-secret')
-  const expected = process.env.ADMIN_API_SECRET
-  if (!isCron && (!expected || adminSecret !== expected)) {
+  const startedAtMs = Date.now()
+  const mode = classifyCronAuth(req, process.env.ADMIN_API_SECRET)
+  const cronRunId = await recordCronStart('scrape-permits-chicago', mode)
+  if (mode === 'unauthorized') {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
@@ -130,9 +131,13 @@ export async function GET(req: NextRequest) {
   let raw: RawPermit[] = []
   try {
     const r = await fetch(fetchUrl)
-    if (!r.ok) return NextResponse.json({ error: `Chicago HTTP ${r.status}` }, { status: 502 })
+    if (!r.ok) {
+      await recordCronFinish(cronRunId, false, { http: r.status }, startedAtMs)
+      return NextResponse.json({ error: `Chicago HTTP ${r.status}` }, { status: 502 })
+    }
     raw = await r.json()
   } catch (e) {
+    await recordCronFinish(cronRunId, false, { fetch_err: (e as Error).message }, startedAtMs)
     return NextResponse.json({ error: `Chicago fetch err: ${(e as Error).message}` }, { status: 502 })
   }
 
@@ -198,14 +203,18 @@ export async function GET(req: NextRequest) {
     if (!error) inserted += count
   }
 
-  return NextResponse.json({
-    ok: true,
-    source: 'chicago_permits',
+  const summary = {
     permits_fetched: raw.length,
     permits_classified: classified,
     skipped_no_trade: skippedNoTrade,
     skipped_no_geo: skippedNoGeo,
     leads_inserted_or_dedup: inserted,
+  }
+  await recordCronFinish(cronRunId, true, summary, startedAtMs)
+  return NextResponse.json({
+    ok: true,
+    source: 'chicago_permits',
+    ...summary,
     checked_at: new Date().toISOString(),
   })
 }

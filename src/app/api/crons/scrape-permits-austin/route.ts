@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { scrapeCityPermits } from '@/lib/permitScraper'
+import { classifyCronAuth, recordCronStart, recordCronFinish } from '@/lib/cronRuns'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -13,10 +14,10 @@ export const maxDuration = 60
  */
 
 export async function GET(req: NextRequest) {
-  const isCron = req.headers.get('x-vercel-cron') === '1'
-  const adminSecret = req.headers.get('x-admin-secret')
-  const expected = process.env.ADMIN_API_SECRET
-  if (!isCron && (!expected || adminSecret !== expected)) {
+  const startedAtMs = Date.now()
+  const mode = classifyCronAuth(req, process.env.ADMIN_API_SECRET)
+  const cronRunId = await recordCronStart('scrape-permits-austin', mode)
+  if (mode === 'unauthorized') {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
@@ -38,5 +39,6 @@ export async function GET(req: NextRequest) {
     limit: parseInt(url.searchParams.get('limit') ?? '500', 10),
   })
 
+  await recordCronFinish(cronRunId, result.ok !== false, result as unknown as Record<string, unknown>, startedAtMs)
   return NextResponse.json({ ...result, checked_at: new Date().toISOString() })
 }
