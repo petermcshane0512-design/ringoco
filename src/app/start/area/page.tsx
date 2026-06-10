@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useAuth } from '@clerk/nextjs'
 import Link from 'next/link'
 import { LEADS_PER_WEEK, INTRO_PRICE_USD, INTRO_PROMO_CODE, SUPPORTED_TRADES } from '@/lib/offer'
 
@@ -16,19 +17,38 @@ import { LEADS_PER_WEEK, INTRO_PRICE_USD, INTRO_PROMO_CODE, SUPPORTED_TRADES } f
  *   3. Pass the zip + trade into checkout so the webhook can claim the
  *      territory at the moment payment succeeds.
  *
- * Flow:
+ * Flow (2026-06-10 — /pricing intermediate REMOVED per Peter):
  *   /start?promo=FIRST400  → captures promo cookie, redirects → /start/area
  *   /start/area            → zip + trade form
- *     ├─ open      → /pricing?zip=X&trade=Y (passed into checkout)
+ *     ├─ open      → save area cookies, then:
+ *     │             · signed in    → POST /api/stripe/checkout → Stripe URL
+ *     │             · signed out   → /sign-up → bounce back here w/ ?autoco=1
+ *     │                              → auto-fires checkout w/ prefilled area
  *     └─ taken     → "this area is locked" + waitlist email capture
  */
+
+const AREA_ZIP_COOKIE = 'bavg_area_zip'
+const AREA_TRADE_COOKIE = 'bavg_area_trade'
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 14 // 14 days
+
+function readCookie(name: string): string {
+  if (typeof document === 'undefined') return ''
+  return document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]+)`))?.[1] || ''
+}
+
+function writeCookie(name: string, value: string) {
+  if (typeof document === 'undefined') return
+  document.cookie = `${name}=${encodeURIComponent(value)}; max-age=${COOKIE_MAX_AGE}; path=/; SameSite=Lax; Secure`
+}
 
 function StartAreaContent() {
   const router = useRouter()
   const sp = useSearchParams()
+  const { isSignedIn, isLoaded } = useAuth()
   const promo = (sp?.get('promo') || INTRO_PROMO_CODE).trim().toUpperCase()
   const ref = (sp?.get('ref') || '').trim()
   const bizId = (sp?.get('b') || '').trim()
+  const autoco = sp?.get('autoco') === '1'
 
   const [zip, setZip] = useState('')
   const [trade, setTrade] = useState<string>('')
@@ -38,6 +58,55 @@ function StartAreaContent() {
   const [waitlistBiz, setWaitlistBiz] = useState('')
   const [waitlistedOk, setWaitlistedOk] = useState(false)
   const [err, setErr] = useState('')
+
+  // Prefill from cookies (set on prior /start/area visit or by the homepage
+  // OpportunityChecker) OR from URL params (passed by the homepage widget).
+  useEffect(() => {
+    const urlZip = (sp?.get('zip') || '').replace(/\D/g, '').slice(0, 5)
+    const urlTrade = (sp?.get('trade') || '').toLowerCase().trim()
+    setZip((prev) => prev || urlZip || readCookie(AREA_ZIP_COOKIE))
+    setTrade((prev) => prev || urlTrade || decodeURIComponent(readCookie(AREA_TRADE_COOKIE)))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const fireCheckout = useCallback(async (z: string, t: string) => {
+    setChecking(true)
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tier: 'officemgr',
+          interval: 'monthly',
+          creatorCode: promo,
+          bizId: bizId || undefined,
+          zip: z,
+          trade: t,
+        }),
+      })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+        return
+      }
+      setErr(`Checkout failed: ${data?.error ?? 'unknown'}. Text 773-710-9565.`)
+    } catch {
+      setErr('Network error reaching checkout. Try again.')
+    } finally {
+      setChecking(false)
+    }
+  }, [promo, bizId])
+
+  // Auto-resume after Clerk sign-up bounce: /start/area?autoco=1 with saved
+  // area cookies → fire checkout once auth is known.
+  useEffect(() => {
+    if (!autoco || !isLoaded || !isSignedIn) return
+    const z = readCookie(AREA_ZIP_COOKIE)
+    const t = decodeURIComponent(readCookie(AREA_TRADE_COOKIE))
+    if (!/^\d{5}$/.test(z) || !t) return
+    fireCheckout(z, t)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoco, isLoaded, isSignedIn])
 
   async function onCheck(e: React.FormEvent) {
     e.preventDefault()
@@ -62,15 +131,17 @@ function StartAreaContent() {
       }
       setResult({ status: j.status })
       if (j.status === 'open') {
-        // Pass zip + trade through to checkout. The Stripe webhook reads
-        // these out of metadata and claims the territory on success.
-        const qs = new URLSearchParams()
-        qs.set('promo', promo)
-        qs.set('zip', zip)
-        qs.set('trade', trade)
-        if (ref) qs.set('ref', ref)
-        if (bizId) qs.set('b', bizId)
-        router.push(`/pricing?${qs.toString()}`)
+        // Save area so it survives the Clerk sign-up bounce, then either
+        // go straight to Stripe (already signed in) or sign-up → /start/area
+        // ?autoco=1 which fires checkout once auth lands.
+        writeCookie(AREA_ZIP_COOKIE, zip)
+        writeCookie(AREA_TRADE_COOKIE, trade)
+        if (isSignedIn) {
+          await fireCheckout(zip, trade)
+        } else {
+          const back = encodeURIComponent('/start/area?autoco=1')
+          router.push(`/sign-up?redirect_url=${back}`)
+        }
       }
     } catch {
       setErr('Network error. Try again.')

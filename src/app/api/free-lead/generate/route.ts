@@ -1,0 +1,272 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import { canSpendBatchData, logBatchDataSpend } from '@/lib/batchdataSpend'
+
+export const runtime = 'nodejs'
+export const maxDuration = 30
+
+/**
+ * POST /api/free-lead/generate
+ *
+ * Per Fable 5 review — never fire paid BatchData on raw email click.
+ *
+ * Hardening (in order):
+ *   1. Method gate — POST ONLY. GET shows the page; only an explicit
+ *      human button-press POSTs here. Bypasses Outlook SafeLinks /
+ *      Barracuda / Mimecast crawlers that auto-GET every URL in inbound mail.
+ *   2. Bot UA filter — basic deny-list. Not bulletproof but free.
+ *   3. Per-biz_id dedup — one generation per prospect. Repeat hits
+ *      return the cached lead.
+ *   4. Daily $10 BatchData spend cap — kill switch protects balance
+ *      from scanner floods that slip past 1+2.
+ *   5. NO skip-trace at generate. Returns redacted phone. Full unlock
+ *      at /api/stripe/webhook on payment_succeeded.
+ *
+ * Returns the same shape as /api/free-lead/claim — caller renders both
+ * with the same UI.
+ */
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+)
+
+const PROPERTY_SEARCH_COST_CENTS = 5  // $0.05
+const BAD_UA_PATTERNS = [
+  /bot/i,
+  /crawl/i,
+  /spider/i,
+  /scanner/i,
+  /barracuda/i,
+  /mimecast/i,
+  /proofpoint/i,
+  /safelinks/i,
+  /microsoft.*defender/i,
+  /preview/i,
+]
+
+function isBot(req: NextRequest): boolean {
+  const ua = req.headers.get('user-agent') || ''
+  if (!ua) return true
+  return BAD_UA_PATTERNS.some((p) => p.test(ua))
+}
+
+function redactPhone(full: string | null): string | null {
+  if (!full) return null
+  const digits = full.replace(/\D/g, '')
+  if (digits.length < 10) return null
+  const area = digits.slice(0, 3)
+  const last2 = digits.slice(-2)
+  return `(${area}) •••-••${last2}`
+}
+
+type BatchDataProperty = {
+  address?: { street?: string; city?: string; state?: string; zip?: string; latitude?: number; longitude?: number }
+  building?: { yearBuilt?: number }
+  owner?: { name?: { full?: string }; fullName?: string }
+  deedHistory?: { recordingDate?: string }[]
+  valuation?: { estimatedValue?: number }
+  phoneNumbers?: { number?: string; type?: string }[]
+}
+
+async function batchDataSearch(zip: string, trade: string): Promise<{ properties: BatchDataProperty[]; ok: boolean }> {
+  // Trade-specific filter logic mirrors src/app/api/agents/find-real-leads.
+  // Honest minimum filters — no fancy permit-keyword for now (those need
+  // separate scrape sources, not BatchData).
+  const t = (trade || '').toLowerCase()
+  const criteria: Record<string, unknown> = {
+    zip,
+    ownerOccupiedOnly: true,
+    quickList: 'recently-sold',
+  }
+  if (t.includes('elect')) {
+    criteria.yearBuiltMax = 1990
+  } else if (t.includes('roof')) {
+    criteria.yearBuiltMax = 2005
+  } else if (t.includes('handy')) {
+    criteria.recentSaleWithinDays = 120
+  } else {
+    // HVAC / plumbing default — system-age window
+    criteria.yearBuiltMin = 1985
+    criteria.yearBuiltMax = 2005
+  }
+
+  const res = await fetch('https://api.batchdata.com/api/v1/property/search', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.BATCHDATA_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ searchCriteria: criteria, options: { take: 10 } }),
+  })
+  if (!res.ok) {
+    console.warn(`[free-lead/generate] BatchData ${res.status} for zip=${zip} trade=${trade}`)
+    return { properties: [], ok: false }
+  }
+  const data = await res.json() as { results?: { properties?: BatchDataProperty[] } }
+  return { properties: data.results?.properties || [], ok: true }
+}
+
+export async function POST(req: NextRequest) {
+  const url = new URL(req.url)
+  const bizId = (url.searchParams.get('b') || '').slice(0, 64)
+  if (!bizId) return NextResponse.json({ ok: false, error: 'b required' }, { status: 400 })
+
+  // Hardening #2 — UA bot filter (before any DB / API hit)
+  if (isBot(req)) {
+    await supabase
+      .from('prospect_free_leads')
+      .update({ bot_clicks_blocked: 1 })  // increment via raw SQL would be nicer; this overwrites for safety
+      .eq('biz_id', bizId)
+    return NextResponse.json({ ok: false, error: 'bot_blocked' }, { status: 403 })
+  }
+
+  // Hardening #3 — per-biz_id dedup
+  const existing = await supabase
+    .from('prospect_free_leads')
+    .select('*')
+    .eq('biz_id', bizId)
+    .maybeSingle()
+  if (existing.error) {
+    return NextResponse.json({ ok: false, error: 'lookup failed' }, { status: 500 })
+  }
+  const row = existing.data as Record<string, unknown> | null
+  if (!row) {
+    return NextResponse.json({ ok: false, error: 'prospect not found' }, { status: 404 })
+  }
+  if (row.generation_completed_at && row.lead_owner_name) {
+    // Cached hit — return existing
+    return NextResponse.json({ ok: true, cached: true, lead: pluckLead(row) })
+  }
+
+  // Hardening #4 — daily spend cap
+  const gate = await canSpendBatchData(PROPERTY_SEARCH_COST_CENTS)
+  if (!gate.ok) {
+    await supabase
+      .from('prospect_free_leads')
+      .update({
+        generation_requested_at: new Date().toISOString(),
+        generation_failed_reason: `spend_cap:${gate.reason}`,
+      })
+      .eq('biz_id', bizId)
+    return NextResponse.json({
+      ok: false,
+      error: 'capacity reached — try later',
+      reason: gate.reason,
+      spent_today_cents: gate.spentTodayCents,
+      cap_cents: gate.capCents,
+    }, { status: 429 })
+  }
+
+  // Stamp request start
+  await supabase
+    .from('prospect_free_leads')
+    .update({ generation_requested_at: new Date().toISOString() })
+    .eq('biz_id', bizId)
+
+  const zip = (row.zip as string) || ''
+  const trade = (row.trade as string) || 'hvac'
+
+  if (!zip) {
+    // Empty-zip case — fall back to area-coming-soon (no BatchData spend)
+    await supabase
+      .from('prospect_free_leads')
+      .update({ generation_failed_reason: 'no_zip_in_prospect_record' })
+      .eq('biz_id', bizId)
+    return NextResponse.json({ ok: false, error: 'area_not_open', message: "We're opening your area now — be the first when we do." }, { status: 200 })
+  }
+
+  const { properties, ok } = await batchDataSearch(zip, trade)
+  await logBatchDataSpend({
+    costCents: PROPERTY_SEARCH_COST_CENTS,
+    caller: 'free-lead-generate',
+    context: { biz_id: bizId, zip, trade, result_count: properties.length },
+    resultOk: ok,
+  })
+
+  if (!ok || properties.length === 0) {
+    await supabase
+      .from('prospect_free_leads')
+      .update({ generation_failed_reason: ok ? 'no_results' : 'batchdata_error' })
+      .eq('biz_id', bizId)
+    return NextResponse.json({
+      ok: false,
+      error: 'area_not_open',
+      message: "We're opening your area now — be the first when we do.",
+    }, { status: 200 })
+  }
+
+  // Pick the freshest / highest-value property as the bait lead.
+  // Sort: recent sale first, then highest valuation, then year_built descending.
+  properties.sort((a, b) => {
+    const aSale = a.deedHistory?.[0]?.recordingDate || ''
+    const bSale = b.deedHistory?.[0]?.recordingDate || ''
+    if (aSale !== bSale) return aSale > bSale ? -1 : 1
+    return (b.valuation?.estimatedValue || 0) - (a.valuation?.estimatedValue || 0)
+  })
+  const pick = properties[0]
+  const owner = pick.owner?.name?.full || pick.owner?.fullName || 'Homeowner'
+  const street = pick.address?.street || ''
+  const city = pick.address?.city || ''
+  const state = pick.address?.state || ''
+  const yearBuilt = pick.building?.yearBuilt || null
+  const value = pick.valuation?.estimatedValue || null
+  const phoneFull = pick.phoneNumbers?.[0]?.number || null
+  const phoneRedacted = redactPhone(phoneFull)
+
+  // Trade-specific signal_detail
+  const signal = trade.includes('elect') ? 'aged' : trade.includes('roof') ? 'aged' : trade.includes('handy') ? 'move_in' : 'aged'
+  const signalDetail = signal === 'move_in'
+    ? `New homeowner — recent move-in (${yearBuilt ? `built ${yearBuilt}` : 'aging-home profile'})`
+    : `${yearBuilt ? `Built ${yearBuilt}` : 'Aging property'} — ${trade.includes('elect') ? 'pre-1990 panel risk window' : trade.includes('roof') ? 'asphalt past replacement window' : 'system age replacement window'}`
+
+  // Trade-specific job-value estimate from home value (honest multiplier ranges)
+  const valueMultiplier = trade.includes('roof') ? [0.020, 0.045] : trade.includes('hvac') ? [0.008, 0.018] : trade.includes('elect') ? [0.005, 0.015] : trade.includes('plumb') ? [0.004, 0.012] : [0.002, 0.008]
+  const estJobMin = value ? Math.round((value * valueMultiplier[0]) / 100) * 100 : null
+  const estJobMax = value ? Math.round((value * valueMultiplier[1]) / 100) * 100 : null
+
+  await supabase
+    .from('prospect_free_leads')
+    .update({
+      lead_owner_name: owner,
+      lead_street: street,
+      lead_year_built: yearBuilt,
+      lead_value: value,
+      lead_phone: phoneRedacted,  // REDACTED only — full unlocks at payment_succeeded
+      lead_signal: signal,
+      lead_signal_detail: signalDetail,
+      lead_est_job_min: estJobMin,
+      lead_est_job_max: estJobMax,
+      generation_completed_at: new Date().toISOString(),
+      generation_failed_reason: null,
+    })
+    .eq('biz_id', bizId)
+
+  const updated = await supabase
+    .from('prospect_free_leads')
+    .select('*')
+    .eq('biz_id', bizId)
+    .maybeSingle()
+
+  return NextResponse.json({ ok: true, cached: false, lead: pluckLead(updated.data as Record<string, unknown>) })
+}
+
+function pluckLead(row: Record<string, unknown>) {
+  return {
+    owner: row.lead_owner_name,
+    street: row.lead_street,
+    city: row.city,
+    state: row.state,
+    zip: row.zip,
+    phone: row.lead_phone,  // REDACTED — full at payment
+    email: row.lead_email,
+    year_built: row.lead_year_built,
+    value: row.lead_value,
+    signal: row.lead_signal,
+    signal_detail: row.lead_signal_detail,
+    est_job_min: row.lead_est_job_min,
+    est_job_max: row.lead_est_job_max,
+    trade: row.trade,
+    phone_redacted: true,  // signals UI to render unlock-on-checkout state
+  }
+}

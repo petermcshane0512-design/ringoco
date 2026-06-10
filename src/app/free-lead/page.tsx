@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -49,43 +49,51 @@ function FreeLeadInner() {
   const params = useSearchParams()
   const bizId = params.get('b') || ''
   const [lead, setLead] = useState<LeadDTO | null>(null)
-  const [phase, setPhase] = useState<'pulling' | 'revealed' | 'missing'>('pulling')
-  const [progress, setProgress] = useState(0)
-  const fetched = useRef(false)
+  // 2026-06-10 — Fable 5 architectural fix: no auto-fire on page load.
+  // Email scanners (SafeLinks/Barracuda/Mimecast) auto-GET every URL.
+  // Generation only fires when the human presses the button below.
+  const [phase, setPhase] = useState<'idle' | 'generating' | 'revealed' | 'area_not_open' | 'error'>('idle')
+  const [progressLabel, setProgressLabel] = useState('Searching permits…')
 
-  useEffect(() => {
-    if (!bizId || fetched.current) return
-    fetched.current = true
+  async function onGenerate() {
+    if (!bizId) {
+      setPhase('error')
+      return
+    }
+    setPhase('generating')
+    // Real progress narrative — message cycles as BatchData runs.
+    // Fable 5: "Show real progress narrative, reveal moment ready. Theater
+    // is fake scarcity in a new costume."
+    const messages = [
+      'Searching permits…',
+      'Checking property records…',
+      'Filtering by your trade…',
+      'Scoring intent signals…',
+      'Almost there…',
+    ]
+    let idx = 0
+    const ticker = setInterval(() => {
+      idx = Math.min(messages.length - 1, idx + 1)
+      setProgressLabel(messages[idx])
+    }, 2200)
 
-    // Start fetch + 8s theater progress in parallel.
-    const start = Date.now()
-    fetch(`/api/free-lead/claim?b=${encodeURIComponent(bizId)}`)
-      .then((r) => r.ok ? r.json() : Promise.reject(r))
-      .then((j) => {
-        const elapsed = Date.now() - start
-        const wait = Math.max(0, 8000 - elapsed)
-        setTimeout(() => {
-          if (j.ok && j.lead) {
-            setLead(j.lead as LeadDTO)
-            setPhase('revealed')
-          } else {
-            setPhase('missing')
-          }
-        }, wait)
-      })
-      .catch(() => {
-        setTimeout(() => setPhase('missing'), 8000 - (Date.now() - start))
-      })
-
-    // Tick progress 0 → 100 over 8 sec.
-    const tickStart = Date.now()
-    const id = setInterval(() => {
-      const p = Math.min(100, ((Date.now() - tickStart) / 8000) * 100)
-      setProgress(p)
-      if (p >= 100) clearInterval(id)
-    }, 80)
-    return () => clearInterval(id)
-  }, [bizId])
+    try {
+      const r = await fetch(`/api/free-lead/generate?b=${encodeURIComponent(bizId)}`, { method: 'POST' })
+      clearInterval(ticker)
+      const j = await r.json().catch(() => ({ ok: false }))
+      if (j.ok && j.lead) {
+        setLead(j.lead as LeadDTO)
+        setPhase('revealed')
+      } else if (!j.ok && j.error === 'area_not_open') {
+        setPhase('area_not_open')
+      } else {
+        setPhase('error')
+      }
+    } catch {
+      clearInterval(ticker)
+      setPhase('error')
+    }
+  }
 
   const checkoutUrl = bizId
     ? `/start?promo=FIRST400&b=${encodeURIComponent(bizId)}`
@@ -105,23 +113,55 @@ function FreeLeadInner() {
       <section style={{ padding: 'clamp(28px, 5vw, 56px) clamp(16px, 5vw, 40px)' }}>
         <div style={{ maxWidth: 700, margin: '0 auto' }}>
 
-          {/* PHASE 1 — PULLING */}
-          {phase === 'pulling' && (
+          {/* PHASE 1 — IDLE (human-gated button) */}
+          {phase === 'idle' && (
+            <div style={cardPulling}>
+              <div style={{ fontSize: 11, fontWeight: 900, color: '#16803F', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>
+                🎁 Your free homeowner lead is waiting
+              </div>
+              <h1 style={pullingH1}>One real homeowner in your service area. On me.</h1>
+              <p style={{ fontSize: 14.5, color: '#4A6670', margin: '0 0 24px', lineHeight: 1.55 }}>
+                Name, address, year built, est. job value, signal that surfaced them.
+                Phone number redacted on free lead — full unlock on the $97 trial.
+                Yours regardless. No catch.
+              </p>
+
+              <button
+                type="button"
+                onClick={onGenerate}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  width: '100%',
+                  padding: '20px 32px', borderRadius: 14,
+                  background: 'linear-gradient(135deg, #22C55E 0%, #16803F 100%)',
+                  color: '#fff', border: 'none', cursor: 'pointer',
+                  fontSize: 17, fontWeight: 900, letterSpacing: '-0.01em',
+                  boxShadow: '0 14px 36px rgba(34,197,94,0.40)',
+                  fontFamily: 'inherit',
+                }}
+              >Generate My Free Lead →</button>
+              <p style={{ fontSize: 11.5, color: '#7AAAB2', textAlign: 'center', margin: '12px 0 0' }}>
+                Takes ~20 seconds · One free lead per email
+              </p>
+            </div>
+          )}
+
+          {/* PHASE 1B — GENERATING (after button click) */}
+          {phase === 'generating' && (
             <div style={cardPulling}>
               <div style={{ fontSize: 11, fontWeight: 900, color: '#16803F', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>
                 🔍 Pulling your free homeowner lead…
               </div>
-              <h1 style={pullingH1}>Scraping permits + property records in your zip…</h1>
-              <p style={{ fontSize: 14, color: '#4A6670', margin: '0 0 26px' }}>
-                Cross-referencing BatchData + NOAA + MLS. Skip-tracing the phone.
+              <h1 style={pullingH1}>{progressLabel}</h1>
+              <p style={{ fontSize: 13.5, color: '#7AAAB2', margin: '4px 0 0', fontFamily: 'ui-monospace, monospace' }}>
+                Live BatchData + permit feed query
               </p>
-
-              <div style={progressBarShell}>
-                <div style={{ ...progressBarFill, width: `${progress}%` }} />
+              <div style={{ marginTop: 22, display: 'flex', gap: 8, justifyContent: 'center' }}>
+                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#E8742B', animation: 'fl-pulse 1.2s infinite 0s' }} />
+                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#E8742B', animation: 'fl-pulse 1.2s infinite 0.2s' }} />
+                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#E8742B', animation: 'fl-pulse 1.2s infinite 0.4s' }} />
               </div>
-              <div style={{ fontSize: 12, color: '#7AAAB2', marginTop: 8, textAlign: 'center', fontFamily: 'ui-monospace, monospace' }}>
-                {progress < 33 ? 'Querying public records' : progress < 66 ? 'Verifying phone via BatchData' : progress < 95 ? 'Scoring intent' : 'Almost done…'}
-              </div>
+              <style>{`@keyframes fl-pulse { 0%, 80%, 100% { opacity: 0.3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-4px); } }`}</style>
             </div>
           )}
 
@@ -154,7 +194,13 @@ function FreeLeadInner() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 18 }}>
                   {lead.phone && (
-                    <KV label="Verified phone" value={lead.phone} mono />
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 900, color: '#7AAAB2', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Verified phone</div>
+                      <div style={{ fontSize: 14.5, fontWeight: 800, color: '#0B1F3A', marginTop: 2, fontFamily: 'ui-monospace, monospace' }}>{lead.phone}</div>
+                      <div style={{ fontSize: 10.5, color: '#C84B26', fontWeight: 700, marginTop: 3, letterSpacing: '0.04em' }}>
+                        🔒 Full number unlocks w/ $97 trial
+                      </div>
+                    </div>
                   )}
                   {lead.signal && (
                     <KV label="Signal" value={`${signalEmoji(lead.signal)} ${lead.signal.replace('_', '-')}`} />
@@ -231,19 +277,37 @@ function FreeLeadInner() {
             </div>
           )}
 
-          {/* PHASE 3 — MISSING (fallback if no biz_id or no pre-pulled lead) */}
-          {phase === 'missing' && (
+          {/* PHASE 3A — AREA NOT OPEN (BatchData returned no leads OR no zip on prospect) */}
+          {phase === 'area_not_open' && (
             <div style={cardPulling}>
               <div style={{ fontSize: 11, fontWeight: 900, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>
-                Hmm — link expired or invalid
+                Your area is opening soon
               </div>
-              <h1 style={pullingH1}>Want a free homeowner lead in your zip?</h1>
-              <p style={{ fontSize: 14, color: '#4A6670', margin: '0 0 22px', lineHeight: 1.55 }}>
-                Reply to the email I sent you and I&rsquo;ll pull one fresh — 60 seconds.
-                Or skip ahead and lock your zip for $97 first month: {LEADS_PER_MONTH} fresh leads in your service area.
+              <h1 style={pullingH1}>We&rsquo;re still building inventory for your zip.</h1>
+              <p style={{ fontSize: 14.5, color: '#4A6670', margin: '0 0 22px', lineHeight: 1.55 }}>
+                Be the first shop in your zip code. <strong style={{ color: '#0B1F3A' }}>Lock your territory for $97</strong> and the moment leads land, you get them — exclusive, no sharing, every Monday morning.
               </p>
               <Link href={checkoutUrl} style={ctaPrimary}>
                 Lock my zip — $97 →
+              </Link>
+              <p style={{ fontSize: 11.5, color: '#7AAAB2', textAlign: 'center', margin: '12px 0 0' }}>
+                The 1-Job Guarantee: 1 paying job in 30 days or full refund + next month free.
+              </p>
+            </div>
+          )}
+
+          {/* PHASE 3B — ERROR (network failure / unexpected) */}
+          {phase === 'error' && (
+            <div style={cardPulling}>
+              <div style={{ fontSize: 11, fontWeight: 900, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>
+                Hmm — something glitched
+              </div>
+              <h1 style={pullingH1}>Reload + try again.</h1>
+              <p style={{ fontSize: 14, color: '#4A6670', margin: '0 0 22px', lineHeight: 1.55 }}>
+                Or text me directly: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a> and I&rsquo;ll pull one by hand.
+              </p>
+              <Link href={checkoutUrl} style={ctaPrimary}>
+                Or lock my zip — $97 →
               </Link>
             </div>
           )}
@@ -301,17 +365,9 @@ const pullingH1: React.CSSProperties = {
   margin: '0 0 8px',
 }
 
-const progressBarShell: React.CSSProperties = {
-  width: '100%', height: 8, borderRadius: 99,
-  background: 'rgba(11,31,58,0.08)', overflow: 'hidden',
-}
-
-const progressBarFill: React.CSSProperties = {
-  height: '100%',
-  background: 'linear-gradient(90deg, #FF9D5A, #E8742B, #C84B26)',
-  borderRadius: 99,
-  transition: 'width 80ms linear',
-}
+// progressBarShell + progressBarFill removed 2026-06-10 — replaced w/
+// the 3-dot bounce indicator + real narrative messages per Fable 5 review
+// ("theater is fake scarcity in a new costume").
 
 const revealH1: React.CSSProperties = {
   fontSize: 'clamp(26px, 3.6vw, 38px)',

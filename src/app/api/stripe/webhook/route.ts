@@ -52,7 +52,8 @@ export async function POST(req: NextRequest) {
 
     // 2026-06-09 — stamp signed_up_at on prospect_free_leads if this
     // checkout came from the /free-lead?b={biz_id} cold-email landing.
-    // Lets us measure click → conversion from the 450-prospect send.
+    // 2026-06-10 — Fable 5: also skip-trace the FULL phone now (was
+    // redacted on the free-lead landing — phone unlocks on payment).
     const bizId = (session.metadata?.biz_id || '').slice(0, 64)
     if (bizId) {
       try {
@@ -65,6 +66,52 @@ export async function POST(req: NextRequest) {
           .eq('biz_id', bizId)
           .is('signed_up_at', null)
         console.log(`[free-lead] attributed signup user=${userId} → biz_id=${bizId}`)
+
+        // Fire skip-trace AFTER payment so the customer gets the real
+        // phone number on first dashboard view. Cheap ($0.10) + only
+        // fires for paying customers, no PII exposure to anonymous
+        // clickers. Non-fatal — if it fails, customer still has redacted
+        // phone visible + can call us for manual lookup.
+        try {
+          const { data: pfl } = await supabase
+            .from('prospect_free_leads')
+            .select('lead_street, zip, city, state, lead_owner_name')
+            .eq('biz_id', bizId)
+            .maybeSingle()
+          if (pfl && (pfl as { lead_street?: string }).lead_street) {
+            const row = pfl as { lead_street: string; zip?: string; city?: string; state?: string; lead_owner_name?: string }
+            const skipRes = await fetch('https://api.batchdata.com/api/v1/property/skip-trace', {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${process.env.BATCHDATA_API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                requests: [{
+                  propertyAddress: {
+                    street: row.lead_street,
+                    city: row.city || '',
+                    state: row.state || '',
+                    zip: row.zip || '',
+                  },
+                }],
+              }),
+            })
+            if (skipRes.ok) {
+              const skipData = await skipRes.json() as { results?: { persons?: { phoneNumbers?: { number: string }[] }[] } }
+              const phone = skipData.results?.persons?.[0]?.phoneNumbers?.[0]?.number
+              if (phone) {
+                await supabase
+                  .from('prospect_free_leads')
+                  .update({ lead_phone: phone })  // FULL phone now
+                  .eq('biz_id', bizId)
+                console.log(`[free-lead] skip-trace unlocked phone for biz_id=${bizId}`)
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('[free-lead] skip-trace at signup failed:', (e as Error).message)
+        }
       } catch (e) {
         console.warn('[free-lead] attribution stamp failed:', (e as Error).message)
       }

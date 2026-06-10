@@ -34,6 +34,8 @@ type SP = Promise<{
   promo?: string
   ref?: string
   b?: string
+  zip?: string
+  trade?: string
   utm_source?: string
   utm_medium?: string
   utm_campaign?: string
@@ -124,5 +126,11 @@ export default async function StartPage({ searchParams }: { searchParams: SP }) 
   if (promo) qs.set('promo', promo)
   if (ref) qs.set('ref', ref)
   if (bizId) qs.set('b', bizId)
+  // Forward zip + trade from the homepage OpportunityChecker so /start/area
+  // prefills both fields — visitor never re-enters what they already typed.
+  const fwdZip = (sp.zip || '').replace(/\D/g, '').slice(0, 5)
+  const fwdTrade = (sp.trade || '').toLowerCase().trim().slice(0, 40)
+  if (fwdZip) qs.set('zip', fwdZip)
+  if (fwdTrade) qs.set('trade', fwdTrade)
   redirect(`/start/area${qs.toString() ? `?${qs.toString()}` : ''}`)
 }
