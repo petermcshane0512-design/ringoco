@@ -145,46 +145,30 @@ function StartAreaContent() {
       return
     }
     setChecking(true)
+    // 2026-06-10 — territory check removed (one-shop-per-zip gate killed
+    // per Peter; checkTerritory always returns open). Save cookies + go
+    // straight to geocode preview + Stripe.
+    writeCookie(AREA_ZIP_COOKIE, zip)
+    writeCookie(AREA_TRADE_COOKIE, trade)
+    writeCookie(AREA_ADDR_COOKIE, address.trim())
+    writeCookie(AREA_PHONE_COOKIE, phoneDigits)
     try {
-      const r = await fetch(`/api/territory/check?zip=${zip}&trade=${trade}`)
-      const j = await r.json()
-      if (!j.ok) {
-        setErr(j.error || 'Could not check this area. Try again.')
-        return
-      }
-      setResult({ status: j.status })
-      if (j.status === 'open') {
-        // Save area + address + phone so they survive the Clerk sign-up
-        // bounce.
-        writeCookie(AREA_ZIP_COOKIE, zip)
-        writeCookie(AREA_TRADE_COOKIE, trade)
-        writeCookie(AREA_ADDR_COOKIE, address.trim())
-        writeCookie(AREA_PHONE_COOKIE, phoneDigits)
-        // Fix #6 — geocode preview gate. Show the formatted address Google
-        // resolved + explicit confirm before fireCheckout. Cheap insurance:
-        // ~150ms latency + $0.005, prevents wrong-neighborhood delivery.
-        try {
-          const gr = await fetch('/api/geocode-preview', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ address: address.trim() }),
-          })
-          const gj = await gr.json()
-          if (gj.ok) {
-            setConfirm({ formatted: gj.formatted, lat: gj.lat, lng: gj.lng })
-            return
-          }
-          // Geocode failed: warn but still let them proceed — Google's
-          // geocoder rejects valid addresses occasionally, do not block sale.
-          setErr('We could not verify that address with Google Maps. Double-check spelling, or proceed if you are sure.')
-          setConfirm({ formatted: address.trim(), lat: 0, lng: 0 })
-        } catch {
-          // Network error on geocode: same fallback, do not block.
-          setConfirm({ formatted: address.trim(), lat: 0, lng: 0 })
-        }
+      const gr = await fetch('/api/geocode-preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: address.trim() }),
+      })
+      const gj = await gr.json().catch(() => ({}))
+      if (gj.ok) {
+        setConfirm({ formatted: gj.formatted, lat: gj.lat, lng: gj.lng })
+      } else {
+        // Geocode failed or unreachable: do not block sale, show literal
+        // input + warn. Webhook re-attempts geocoding post-payment too.
+        setErr('We could not verify that address with Google Maps. Double-check spelling, or proceed if you are sure.')
+        setConfirm({ formatted: address.trim(), lat: 0, lng: 0 })
       }
     } catch {
-      setErr('Network error. Try again.')
+      setConfirm({ formatted: address.trim(), lat: 0, lng: 0 })
     } finally {
       setChecking(false)
     }
