@@ -262,8 +262,11 @@ export async function POST(req: NextRequest) {
   const pick = properties[0]
   const owner = pick.owner?.name?.full || pick.owner?.fullName || 'Homeowner'
   const street = pick.address?.street || ''
-  const city = pick.address?.city || ''
-  const state = pick.address?.state || ''
+  // Pick's address city/state are looked up but currently not written
+  // back to prospect_free_leads — keep as void-marked locals so the
+  // shadow w/ the outer prospect city/state doesn't trip the compiler.
+  void (pick.address?.city || '')
+  void (pick.address?.state || '')
   const yearBuilt = pick.building?.yearBuilt || null
   const value = pick.valuation?.estimatedValue || null
   const phoneFull = pick.phoneNumbers?.[0]?.number || null
