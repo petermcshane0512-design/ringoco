@@ -5,18 +5,6 @@
       "schedule": "0 8 * * *"
     },
     {
-      "path": "/api/crons/review-requests",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/crons/office-manager-daily",
-      "schedule": "0 13 * * *"
-    },
-    {
-      "path": "/api/crons/consulting-reports",
-      "schedule": "0 */6 * * *"
-    },
-    {
       "path": "/api/crons/lifecycle",
       "schedule": "0 16 * * *"
     },
@@ -25,20 +13,12 @@
       "schedule": "0 6 * * 1"
     },
     {
-      "path": "/api/crons/provision-retry",
-      "schedule": "*/30 * * * *"
-    },
-    {
       "path": "/api/crons/support-escalate",
       "schedule": "0 * * * *"
     },
     {
       "path": "/api/crons/support-autorespond",
       "schedule": "*/10 * * * *"
-    },
-    {
-      "path": "/api/crons/onboarding-coach",
-      "schedule": "0 15 * * *"
     },
     {
       "path": "/api/crons/revenue-followup",
@@ -69,14 +49,6 @@
       "schedule": "0 2 * * *"
     },
     {
-      "path": "/api/crons/creator-payout-batch",
-      "schedule": "0 14 * * 5"
-    },
-    {
-      "path": "/api/crons/creator-nudge",
-      "schedule": "0 16 * * *"
-    },
-    {
       "path": "/api/crons/reactivation-sweep",
       "schedule": "0 17 * * 2"
     },
@@ -101,14 +73,6 @@
       "schedule": "10 5 * * *"
     },
     {
-      "path": "/api/crons/scrape-permits-phoenix",
-      "schedule": "20 5 * * *"
-    },
-    {
-      "path": "/api/crons/scrape-permits-dallas",
-      "schedule": "30 5 * * *"
-    },
-    {
       "path": "/api/crons/scrape-permits-orlando",
       "schedule": "40 5 * * *"
     },
@@ -121,20 +85,12 @@
       "schedule": "0 2 * * *"
     },
     {
-      "path": "/api/crons/scrape-census-aging",
-      "schedule": "0 4 * * 1"
-    },
-    {
       "path": "/api/crons/hot-prospects-digest",
       "schedule": "0 13 * * *"
     },
     {
       "path": "/api/crons/pregen-reports",
       "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/crons/prioritize-tomorrow-dials",
-      "schedule": "30 23 * * 1-5"
     },
     {
       "path": "/api/crons/refill-outreach-queue",
@@ -195,16 +151,10 @@
     "src/app/api/crons/daily-200-leads/route.ts": {
       "maxDuration": 300
     },
-    "src/app/api/crons/scrape-census-aging/route.ts": {
-      "maxDuration": 300
-    },
     "src/app/api/crons/pregen-reports/route.ts": {
       "maxDuration": 300
     },
     "src/app/api/crons/enrich-young-scores/route.ts": {
-      "maxDuration": 300
-    },
-    "src/app/api/crons/ig-creator-discovery/route.ts": {
       "maxDuration": 300
     },
     "src/app/api/crons/refill-outreach-queue/route.ts": {
