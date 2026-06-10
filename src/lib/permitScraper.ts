@@ -34,6 +34,11 @@ export type PermitConfig = {
     zip?: string
     latitude?: string
     longitude?: string
+    // Some Socrata datasets expose location as nested GeoJSON Point
+    // (`{ type: 'Point', coordinates: [lng, lat] }`) instead of flat
+    // latitude/longitude columns. When set, the helper reads coordinates
+    // from this field. Orlando ryhf-m453 is one such dataset.
+    geocodedColumn?: string
     contractorPhone?: string // captured into source_details when available
   }
   // SoQL $where date filter column name (defaults to fields.issueDate)
@@ -161,6 +166,18 @@ export async function scrapeCityPermits(cfg: PermitConfig, opts: { lookbackDays?
       const lng = Number(p[cfg.fields.longitude])
       if (isFinite(lat) && isFinite(lng)) {
         zip = await nearestZip(lat, lng)
+      }
+    }
+    if (!zip && cfg.fields.geocodedColumn) {
+      // Socrata GeoJSON Point: { type: 'Point', coordinates: [lng, lat] }
+      const geo = p[cfg.fields.geocodedColumn] as unknown as { type?: string; coordinates?: [number, number] } | null
+      const coords = geo?.coordinates
+      if (Array.isArray(coords) && coords.length === 2) {
+        const lng = Number(coords[0])
+        const lat = Number(coords[1])
+        if (isFinite(lat) && isFinite(lng)) {
+          zip = await nearestZip(lat, lng)
+        }
       }
     }
     if (!zip) { skippedNoGeo++; continue }

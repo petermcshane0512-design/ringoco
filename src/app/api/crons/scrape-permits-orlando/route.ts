@@ -37,11 +37,12 @@ export async function GET(req: NextRequest) {
       permitType: 'application_type',
       cost: 'estimated_cost',
       fullAddress: 'permit_address',
-      // Orlando location column is a Socrata Point — we extract via lat/lng
-      // virtual columns since the SoQL :@computed_region_* fields are
-      // unreliable. Pull lat/lng from `location` JSON.
-      latitude: 'location_latitude',
-      longitude: 'location_longitude',
+      // Orlando ryhf-m453 stores geo as nested GeoJSON Point in
+      // `geocoded_column.coordinates: [lng, lat]`. Flat
+      // `location_latitude/longitude` virtual columns DO NOT exist on this
+      // resource — prior config silently produced skippedNoGeo on every row.
+      // 2026-06-10 fix.
+      geocodedColumn: 'geocoded_column',
     },
   }, {
     lookbackDays: parseInt(url.searchParams.get('days') ?? '14', 10),
