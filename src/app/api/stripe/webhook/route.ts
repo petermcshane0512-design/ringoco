@@ -228,6 +228,10 @@ export async function POST(req: NextRequest) {
       } : {}),
       ...(metaBusinessAddress ? { business_address: metaBusinessAddress } : {}),
       ...(ownerPhoneE164 ? { owner_phone: ownerPhoneE164 } : {}),
+      // 2026-06-10 — kill wizard. 4-field /start/area is the whole flow.
+      // Anything the wizard captured (sub_trade, value_props, tone) is now
+      // optional polish via Settings.
+      setup_complete: true,
       ...(geocoded ? {
         business_lat: geocoded.lat,
         business_lng: geocoded.lng,

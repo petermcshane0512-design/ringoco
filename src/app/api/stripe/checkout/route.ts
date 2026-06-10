@@ -193,7 +193,11 @@ export async function POST(req: NextRequest) {
         message: '30-day money-back guarantee. If BellAveGo does not earn you back your subscription cost in 30 days, click cancel in your dashboard and we refund every penny â€” no questions, no calls, no hoops.',
       },
     },
-    success_url: `${APP_URL}/dashboard/setup?welcome=1`,
+    // 2026-06-10 — per Peter: kill the 7-step wizard. Sign up -> first 10
+    // leads. /dashboard/leads renders the lead drop immediately. Anything
+    // the wizard captured (sub_trade, value_props, outreach_tone) is now
+    // optional polish; tenants can fill it later via Settings.
+    success_url: `${APP_URL}/dashboard/leads?welcome=1`,
     cancel_url: `${APP_URL}`,
   }
 
