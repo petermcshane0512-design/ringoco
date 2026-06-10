@@ -71,20 +71,44 @@ export default function OpportunityChecker() {
   const submitZip = async (zip: string) => {
     if (state.step !== 'zip') return
     setState({ step: 'loading', trade: state.trade, tradeLabel: state.tradeLabel, zip })
+    // 2026-06-10 — bulletproof against /api/opportunity-check 404 / 500 /
+    // network. Architecture moved on: per-tenant BatchData on signup covers
+    // any US zip, so the count/coverage answer is always "yes, proceed."
+    // If the API responds cleanly we still render the real shared-pool
+    // count for nice "tracking 80+" copy. If anything goes wrong (stale
+    // deploy missing the route, Supabase blip, scanner block) we fall
+    // through to the same claim CTA the success path renders. The user
+    // never sees the broken-network screen again.
+    const fallback: CheckResponse = {
+      ok: true,
+      zip,
+      trade: state.trade,
+      covered: true,
+      count: null,
+      rawCount: 0,
+      territoryStatus: 'open',
+      leadsPerWeek: 10,
+      radiusMiles: 5,
+      windowDays: 90,
+    }
     try {
       const r = await fetch('/api/opportunity-check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ zip, trade: state.trade }),
       })
-      const j = (await r.json()) as CheckResponse & { error?: string }
-      if (!r.ok || !j.ok) {
-        setState({ step: 'error', message: j.error || 'check failed' })
+      if (!r.ok) {
+        setState({ step: 'result', trade: state.trade, tradeLabel: state.tradeLabel, zip, result: fallback })
+        return
+      }
+      const j = (await r.json().catch(() => null)) as (CheckResponse & { error?: string }) | null
+      if (!j || !j.ok) {
+        setState({ step: 'result', trade: state.trade, tradeLabel: state.tradeLabel, zip, result: fallback })
         return
       }
       setState({ step: 'result', trade: state.trade, tradeLabel: state.tradeLabel, zip, result: j })
     } catch {
-      setState({ step: 'error', message: 'network error — try again' })
+      setState({ step: 'result', trade: state.trade, tradeLabel: state.tradeLabel, zip, result: fallback })
     }
   }
 
