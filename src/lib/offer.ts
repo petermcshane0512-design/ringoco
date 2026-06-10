@@ -64,11 +64,18 @@ export const SUPPORTED_TRADES_SENTENCE = 'HVAC, plumbing, and electrical contrac
 
 /**
  * Guarantee — pull through to every marketing surface.
- * If you change the guarantee terms, change THIS line — not the copy on
- * each page.
+ *
+ * 2026-06-09 — CAPPED to fix the unbounded-free-period legal/financial
+ * bug. Old copy said "next 30 days free UNTIL you book a job" which
+ * created an open-ended liability. New language caps the comp at ONE
+ * additional month, full stop.
+ *
+ * If you change the guarantee terms, change THESE lines — not the copy
+ * on each page. Every customer surface imports from here.
  */
-export const GUARANTEE_SHORT = `If we don't book you 1 paying job in 30 days, full refund + the next 30 days free until you do + you keep every lead we sent.`
-export const GUARANTEE_HEADLINE = '1 paying job in 30 days or full refund + free month 2'
+export const GUARANTEE_LABEL = 'The 1-Job Guarantee'
+export const GUARANTEE_SHORT = 'The 1-Job Guarantee: book a paying job in 30 days, or full refund + your next month free + you keep every lead.'
+export const GUARANTEE_HEADLINE = 'Book a paying job in 30 days or full refund + your next month free'
 
 /**
  * Brand + contact.

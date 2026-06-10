@@ -17,6 +17,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import Link from 'next/link'
 import Image from 'next/image'
+import { GUARANTEE_SHORT } from '@/lib/offer'
 // LiveActivityMarquee import removed 2026-06-09 per brief rule "no invented customer counts / activity".
 
 type Interval = 'monthly' | 'annual'
@@ -193,7 +194,7 @@ export default function PricingPage() {
               {interval === 'annual' && ` Billed $${totalBilled.toLocaleString()}/yr · Save $${savings}.`}
             </div>
             <div style={{ fontSize: 11.5, color: '#7AAAB2', marginBottom: 18 }}>
-              Cancel anytime · No setup · 30-day money-back + free month 2 until you book a job
+              Cancel anytime · No setup · The 1-Job Guarantee covers your first 30 days
             </div>
 
             <ul style={{ listStyle: 'none', padding: 0, margin: '20px 0 22px', display: 'grid', gap: 9 }}>
@@ -203,7 +204,7 @@ export default function PricingPage() {
                 'Pre-written outreach script per lead — call, text, or email it your way',
                 'Phone notification the second a homeowner replies',
                 'Need more mid-week? Extra leads $25 each',
-                'Guarantee: 1 paying job in 30 days OR full refund + next 30 days FREE + you keep every lead',
+                GUARANTEE_SHORT,
                 '30-day money-back · Cancel anytime',
                 'No setup, no phone numbers, no integration',
               ].map((line) => (

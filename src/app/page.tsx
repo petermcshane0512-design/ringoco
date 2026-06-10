@@ -449,9 +449,9 @@ function HomeContent() {
               border: '1.5px solid rgba(20,184,166,0.40)',
               marginBottom: 20,
             }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: '#0B7B70', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>The guarantee, plain English</div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: '#0B7B70', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>The 1-Job Guarantee</div>
               <div style={{ fontSize: 14, color: '#0B1F3A', lineHeight: 1.6 }}>
-                Book at least <strong>1 paying job in 30 days</strong> or we refund every dollar &mdash; <strong>AND you get the next 30 days FREE</strong> until you book one. AND you keep every lead we sent. No clawback. No questions. No phone call required.
+                Book a paying job in <strong>30 days</strong> or full refund + <strong>your next month free</strong> + you keep every lead. No clawback. No questions.
               </div>
             </div>
             <Link href="/start?promo=FIRST400" style={{ ...ctaHeroPrimary, width: '100%', justifyContent: 'center', padding: '17px 28px', fontSize: 16 }}>
@@ -493,7 +493,7 @@ function HomeContent() {
           Your zip is still open.<br />Lock it before your competitor does.
         </h2>
         <p style={{ color: 'rgba(255,255,255,0.94)', fontSize: 16, maxWidth: 560, margin: '0 auto 28px', lineHeight: 1.6 }}>
-          <strong>$97</strong> first month w/ <strong>FIRST400</strong>. Book 1 paying job in 30 days OR full refund + <strong>another 30 days FREE</strong> + keep every lead. One shop per zip. $497/mo after only if it works.
+          <strong>$97</strong> first month w/ <strong>FIRST400</strong>. Book a paying job in 30 days OR full refund + <strong>your next month free</strong> + keep every lead. One shop per area. $497/mo starting month 2.
         </p>
         <Link href="/start?promo=FIRST400" style={ctaFinal}>
           Start $97 trial — lock your zip →
