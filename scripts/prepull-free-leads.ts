@@ -86,6 +86,8 @@ function parseCsv(content: string): ProspectRow[] {
 
 async function pickLeadForProspect(p: ProspectRow): Promise<Record<string, unknown> | null> {
   const trade = normalizeTrade(p.trade)
+  // Never pick aging_hvac rows: synthetic zip-aggregate placeholders, no real
+  // property to deliver as a free lead (Peter rule 2026-06-10).
   // 1st pass — exact zip + trade match w/ score >= 70.
   const exact = await supabase
     .from('leads')
@@ -93,6 +95,7 @@ async function pickLeadForProspect(p: ProspectRow): Promise<Record<string, unkno
     .eq('zip', p.zip)
     .contains('trade_match', [trade])
     .gte('lead_score', 70)
+    .neq('source', 'aging_hvac')
     .limit(5)
   const exactRows = exact.data ?? []
   if (exactRows.length > 0) return exactRows[Math.floor(Math.random() * exactRows.length)] as Record<string, unknown>
@@ -103,6 +106,7 @@ async function pickLeadForProspect(p: ProspectRow): Promise<Record<string, unkno
     .select('*')
     .eq('zip', p.zip)
     .gte('lead_score', 60)
+    .neq('source', 'aging_hvac')
     .limit(5)
   const zipRows = zipOnly.data ?? []
   if (zipRows.length > 0) return zipRows[Math.floor(Math.random() * zipRows.length)] as Record<string, unknown>
@@ -143,7 +147,9 @@ function buildSignalDetail(source: string | null, details: Record<string, unknow
   if (sd) return sd
   if (source === 'permit') return 'Recent permit filed in the last 7 days'
   if (source === 'storm') return 'NOAA-verified hail strike in the last 14 days'
-  if (source === 'aged' || source === 'aging_hvac') return 'System age 15+ years per county records'
+  // Note: aging_hvac is now refused at pickLeadForProspect() — kept for
+  // back-compat only ('aged' is real BatchData property-age signal).
+  if (source === 'aged') return 'System age 15+ years per county records'
   if (source === 'move_in') return 'New homeowner — closed in the last 60 days'
   return source
 }

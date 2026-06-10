@@ -78,11 +78,15 @@ async function fetchLeadsPreview(sb: any, state: string | null, trade: string | 
     : (trade || 'hvac').toLowerCase().includes('elect') ? 'electrical'
     : (trade || 'hvac').toLowerCase().includes('roof') ? 'roofing'
     : 'hvac'
+  // Exclude aging_hvac: synthetic zip-aggregate placeholders, not per-property
+  // events. Customer-facing surfaces (including cold-email body) never show
+  // invented data (Peter rule 2026-06-10).
   const { data: leadsInState } = await sb
     .from('leads')
     .select('street_address, zip, source, source_details, trade_match')
     .in('zip', zipList.slice(0, 200))
     .contains('trade_match', [tradeFilter])
+    .neq('source', 'aging_hvac')
     .order('lead_score', { ascending: false })
     .limit(5)
   if (!leadsInState || leadsInState.length === 0) return ''
@@ -92,9 +96,6 @@ async function fetchLeadsPreview(sb: any, state: string | null, trade: string | 
     if (l.source === 'permit') {
       const work = (d.work_description as string) || (d.permit_type as string) || 'permit filed'
       descriptor = `${work.slice(0, 60)}`
-    } else if (l.source === 'aging_hvac') {
-      const units = (d.annual_replace_estimate as number) ?? 0
-      descriptor = `aging HVAC zone · ~${units} units/yr need replacement`
     } else {
       descriptor = 'homeowner opportunity'
     }

@@ -72,7 +72,14 @@ export async function GET() {
     .order('drop_date', { ascending: false })
     .limit(50)
 
-  const drops = (dropsRaw || []).filter((d) => d.lead) // dedup nulls
+  // Exclude aging_hvac rows: synthetic zip-aggregate placeholders, never
+  // deliverable as per-property leads. Customer-facing surfaces never show
+  // invented data (Peter rule 2026-06-10).
+  const drops = (dropsRaw || []).filter((d) => {
+    if (!d.lead) return false
+    const lead = d.lead as unknown as { source?: string | null }
+    return lead.source !== 'aging_hvac'
+  })
 
   const usedThisPeriod = drops.filter((d) => new Date(d.drop_date) >= periodStart).length
 

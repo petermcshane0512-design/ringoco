@@ -114,6 +114,12 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     .maybeSingle()
   if (leadErr || !leadRaw) return NextResponse.json({ ok: false, error: 'lead not found' }, { status: 404 })
   const lead = leadRaw as Lead
+  // Refuse aging_hvac: synthetic zip-aggregate row, no underlying property.
+  // describeSignal() would emit a false per-property claim ("your HVAC system
+  // flagged as past typical lifespan"). Never deliver to a homeowner.
+  if (lead.source === 'aging_hvac') {
+    return NextResponse.json({ ok: false, error: 'lead source not deliverable (synthetic zip-aggregate)' }, { status: 422 })
+  }
 
   const { data: pRaw } = await supabase
     .from('profiles')

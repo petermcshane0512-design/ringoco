@@ -74,20 +74,6 @@ async function fireCityScraper(route: string, lookbackDays: number): Promise<Ste
   }
 }
 
-async function fireCensusAging(): Promise<Step> {
-  // Census aging is a global pull (one Census API call), not state-scoped.
-  // Already runs weekly Monday 4am UTC. Fire it on-demand only when the
-  // tenant's ZIPs have zero aging-HVAC leads — otherwise it's wasted work.
-  try {
-    const r = await fetch(`${APP_URL}/api/crons/scrape-census-aging`, {
-      headers: { 'x-admin-secret': process.env.ADMIN_API_SECRET || '' },
-    })
-    return { kind: 'scrape:census-aging', ok: r.ok, detail: `HTTP ${r.status}` }
-  } catch (e) {
-    return { kind: 'scrape:census-aging', ok: false, detail: (e as Error).message }
-  }
-}
-
 async function discoverForTenant(userId: string): Promise<{
   ok: boolean
   steps: Step[]
@@ -150,12 +136,16 @@ async function discoverForTenant(userId: string): Promise<{
     }
   }
 
-  // Count current pool inside the tenant's radius
+  // Count current pool inside the tenant's radius.
+  // Exclude aging_hvac source — those are synthetic zip-level aggregate rows,
+  // not deliverable per-property leads. Customer-facing surfaces never show
+  // invented data (Peter rule 2026-06-10).
   const { count: poolBefore } = await supabase
     .from('leads')
     .select('id', { count: 'exact', head: true })
     .contains('trade_match', [tradeFilter])
     .in('zip', [...eligibleZips])
+    .neq('source', 'aging_hvac')
 
   steps.push({ kind: 'count_pool_before', ok: true, detail: `${poolBefore ?? 0} candidates in ${eligibleZips.size} ZIPs` })
 
@@ -193,19 +183,17 @@ async function discoverForTenant(userId: string): Promise<{
     steps.push({ kind: 'scrape:city', ok: true, detail: `no city scraper for "${area}" — BatchData foundation covers it` })
   }
 
-  // STEP 2 — census-aging refresh ONLY if pool is still light after
-  // foundation + city scrape. Should almost never fire now.
+  // STEP 2 — census-aging fallback REMOVED 2026-06-10.
+  // census-aging produced synthetic zip-aggregate placeholders (street_address
+  // = "Aging HVAC opportunity · ZIP NNNNN"), not deliverable leads. Cannot
+  // surface to customers. Pool shortfall must be solved by real-property
+  // sources (BatchData, permits) only.
   const { count: poolAfterFoundation } = await supabase
     .from('leads')
     .select('id', { count: 'exact', head: true })
     .contains('trade_match', [tradeFilter])
     .in('zip', [...eligibleZips])
-
-  if ((poolAfterFoundation ?? 0) < 25) {
-    steps.push(await fireCensusAging())
-  } else {
-    steps.push({ kind: 'scrape:census-aging', ok: true, detail: `pool sufficient (${poolAfterFoundation}), skipped` })
-  }
+    .neq('source', 'aging_hvac')
 
   steps.push({ kind: 'skip_trace', ok: true, detail: 'top-20 verified during find-real-leads; remainder click-to-reveal' })
 
@@ -214,6 +202,7 @@ async function discoverForTenant(userId: string): Promise<{
     .select('id', { count: 'exact', head: true })
     .contains('trade_match', [tradeFilter])
     .in('zip', [...eligibleZips])
+    .neq('source', 'aging_hvac')
 
   return {
     ok: true,
