@@ -69,14 +69,10 @@ export default function LiveDashboardPreview() {
   const [view, setView] = useState<View>('week')
   const [autoIdx, setAutoIdx] = useState(0)
 
-  // Toggle between week/month every 6s so prospects see both
-  useEffect(() => {
-    const id = setInterval(() => {
-      setView((v) => (v === 'week' ? 'month' : 'week'))
-      setAutoIdx((i) => i + 1)
-    }, 6000)
-    return () => clearInterval(id)
-  }, [])
+  // 2026-06-09 — auto-toggle removed per Peter ("automatically changing
+  // and messing with the display"). Tabs now manual-only. autoIdx still
+  // increments on manual click so the AnimatePresence keys still flip
+  // for the entry animation.
 
   const rows = view === 'week' ? WEEK_ROWS : MONTH_ROWS
   const totalForView = view === 'week' ? 10 : 40
