@@ -243,8 +243,7 @@ function StartAreaContent() {
           Pick your service area.
         </h1>
         <p style={{ fontSize: 15, color: '#3D5A66', lineHeight: 1.55, margin: '0 0 24px' }}>
-          One shop per zip + trade. We&rsquo;ll check if your area is open in 2 seconds.
-          {' '}If it&rsquo;s taken we&rsquo;ll put you on the waitlist for that exact zip.
+          Drop your business address — we deliver {LEADS_PER_WEEK} fresh homeowner leads to your dashboard every Monday, starting at <strong>1 mile</strong> from this address and only widening when nearby supply runs low.
         </p>
 
         <form onSubmit={onCheck} style={{
@@ -267,7 +266,7 @@ function StartAreaContent() {
             autoFocus
           />
           <p style={{ fontSize: 11, color: '#7AAAB2', marginTop: 6, marginBottom: 0 }}>
-            We pull leads as close to this address as possible — starts at 3 miles, widens only when nearby supply runs low.
+            We pull leads as close to this address as possible — starts at 1 mile, widens only when nearby supply runs low.
           </p>
 
           <label style={{ ...labelStyle, marginTop: 14 }}>Service-area zip code</label>
@@ -379,7 +378,7 @@ function StartAreaContent() {
               Confirm your address
             </div>
             <p style={{ margin: '0 0 6px', fontSize: 13, color: '#3D5A66', lineHeight: 1.5 }}>
-              We&rsquo;ll deliver leads within 3 miles of this point for the first 4 weeks.
+              We&rsquo;ll pull leads as close to this point as possible — starting at 1 mile.
               {' '}<strong style={{ color: '#0B1F3A' }}>Is this the address you meant?</strong>
             </p>
             <div style={{
