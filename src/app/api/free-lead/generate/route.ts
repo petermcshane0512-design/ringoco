@@ -84,15 +84,46 @@ type BatchDataProperty = {
   phoneNumbers?: { number?: string; type?: string }[]
 }
 
-async function batchDataSearch(zip: string, trade: string): Promise<{ properties: BatchDataProperty[]; ok: boolean }> {
+// US state name → 2-letter postal code map (covers all 50 + DC + PR).
+// Outreach CSVs often carry full names ('Florida') rather than codes.
+const STATE_NAME_TO_CODE: Record<string, string> = {
+  alabama: 'AL', alaska: 'AK', arizona: 'AZ', arkansas: 'AR', california: 'CA',
+  colorado: 'CO', connecticut: 'CT', delaware: 'DE', florida: 'FL', georgia: 'GA',
+  hawaii: 'HI', idaho: 'ID', illinois: 'IL', indiana: 'IN', iowa: 'IA',
+  kansas: 'KS', kentucky: 'KY', louisiana: 'LA', maine: 'ME', maryland: 'MD',
+  massachusetts: 'MA', michigan: 'MI', minnesota: 'MN', mississippi: 'MS', missouri: 'MO',
+  montana: 'MT', nebraska: 'NE', nevada: 'NV', 'new hampshire': 'NH', 'new jersey': 'NJ',
+  'new mexico': 'NM', 'new york': 'NY', 'north carolina': 'NC', 'north dakota': 'ND',
+  ohio: 'OH', oklahoma: 'OK', oregon: 'OR', pennsylvania: 'PA', 'rhode island': 'RI',
+  'south carolina': 'SC', 'south dakota': 'SD', tennessee: 'TN', texas: 'TX', utah: 'UT',
+  vermont: 'VT', virginia: 'VA', washington: 'WA', 'west virginia': 'WV',
+  wisconsin: 'WI', wyoming: 'WY', 'district of columbia': 'DC', 'puerto rico': 'PR',
+}
+
+function normalizeState(raw: string): string {
+  const s = (raw || '').trim()
+  if (!s) return ''
+  if (s.length === 2) return s.toUpperCase()
+  const code = STATE_NAME_TO_CODE[s.toLowerCase()]
+  return code || s.slice(0, 2).toUpperCase()
+}
+
+async function batchDataSearch(loc: { zip?: string; city?: string; state?: string }, trade: string): Promise<{ properties: BatchDataProperty[]; ok: boolean }> {
   // Trade-specific filter logic mirrors src/app/api/agents/find-real-leads.
-  // Honest minimum filters — no fancy permit-keyword for now (those need
-  // separate scrape sources, not BatchData).
+  // 2026-06-10 — accept zip OR city+state. Outreach_leads CSV often has
+  // city/state but no zip; BatchData supports both query shapes.
   const t = (trade || '').toLowerCase()
   const criteria: Record<string, unknown> = {
-    zip,
     ownerOccupiedOnly: true,
     quickList: 'recently-sold',
+  }
+  if (loc.zip) {
+    criteria.zip = loc.zip
+  } else if (loc.city && loc.state) {
+    criteria.city = loc.city
+    criteria.state = normalizeState(loc.state)
+  } else {
+    return { properties: [], ok: false }
   }
   if (t.includes('elect')) {
     criteria.yearBuiltMax = 1990
@@ -115,7 +146,7 @@ async function batchDataSearch(zip: string, trade: string): Promise<{ properties
     body: JSON.stringify({ searchCriteria: criteria, options: { take: 10 } }),
   })
   if (!res.ok) {
-    console.warn(`[free-lead/generate] BatchData ${res.status} for zip=${zip} trade=${trade}`)
+    console.warn(`[free-lead/generate] BatchData ${res.status} for loc=${JSON.stringify(loc)} trade=${trade}`)
     return { properties: [], ok: false }
   }
   const data = await res.json() as { results?: { properties?: BatchDataProperty[] } }
@@ -186,22 +217,25 @@ export async function POST(req: NextRequest) {
     .eq('biz_id', bizId)
 
   const zip = (row.zip as string) || ''
+  const city = (row.city as string) || ''
+  const state = (row.state as string) || ''
   const trade = (row.trade as string) || 'hvac'
 
-  if (!zip) {
-    // Empty-zip case — fall back to area-coming-soon (no BatchData spend)
+  // 2026-06-10 — accept zip OR city+state. Only refuse spend if BOTH paths
+  // are unavailable (no zip AND no city+state pair).
+  if (!zip && (!city || !state)) {
     await supabase
       .from('prospect_free_leads')
-      .update({ generation_failed_reason: 'no_zip_in_prospect_record' })
+      .update({ generation_failed_reason: 'no_location_data' })
       .eq('biz_id', bizId)
     return NextResponse.json({ ok: false, error: 'area_not_open', message: "We're opening your area now — be the first when we do." }, { status: 200 })
   }
 
-  const { properties, ok } = await batchDataSearch(zip, trade)
+  const { properties, ok } = await batchDataSearch({ zip, city, state }, trade)
   await logBatchDataSpend({
     costCents: PROPERTY_SEARCH_COST_CENTS,
     caller: 'free-lead-generate',
-    context: { biz_id: bizId, zip, trade, result_count: properties.length },
+    context: { biz_id: bizId, zip, city, state, trade, result_count: properties.length },
     resultOk: ok,
   })
 
