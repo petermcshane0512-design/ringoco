@@ -66,7 +66,13 @@ export type ProfileRow = {
   is_active: boolean | null
   sub_trade?: string | null
   min_ticket?: number | null
+  // 2026-06-10 — cooldown gate on auto-replenish. Stamped by find-real-leads
+  // every time it completes a BatchData pull. Lead engine refuses to fire
+  // another replenish for this tenant if last stamp < 24h ago.
+  last_batchdata_replenish_at?: string | null
 }
+
+const REPLENISH_COOLDOWN_HOURS = 24
 
 export type AssignResult = { assigned: number; skipped_reason?: string }
 
@@ -163,11 +169,70 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
     if (candidates.length >= remaining * 2) break
   }
 
-  // NO national fallback. If pool is light inside 50mi, the on-signup
-  // discovery agent (api/agents/discover-for-tenant) is responsible for
-  // backfilling — by triggering local scrapers + census-aging pulls for
-  // the tenant's actual ZIPs. Cross-country leads are a worse experience
-  // than a smaller drop.
+  // 2026-06-10 — auto-replenish branch.
+  //
+  // Old behavior (deleted): empty pool → log warn → return 0. The on-signup
+  // discover-for-tenant agent was named as the backfill mechanism but only
+  // fires on Stripe webhook + onboarding save — never re-fires post-signup.
+  // Result: every tenant ran out of leads at ~week 9 with no recovery.
+  //
+  // New behavior: when pool is empty AND last_batchdata_replenish_at is
+  // older than REPLENISH_COOLDOWN_HOURS, fire find-real-leads inline.
+  // BatchData daily cap re-checked inside find-real-leads itself, so a
+  // signup-flood day still can't burn unbounded $.
+  if (candidates.length === 0) {
+    const lastReplenish = profile.last_batchdata_replenish_at
+    const cooldownMs = REPLENISH_COOLDOWN_HOURS * 60 * 60 * 1000
+    const cooldownOK = !lastReplenish || (Date.now() - new Date(lastReplenish).getTime()) > cooldownMs
+
+    if (cooldownOK) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.bellavego.com'
+      try {
+        const r = await fetch(`${appUrl}/api/agents/find-real-leads`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-secret': process.env.ADMIN_API_SECRET || '',
+          },
+          body: JSON.stringify({ user_id: profile.user_id, max_candidates: 80, skip_trace_top_n: 10 }),
+        })
+        const json = await r.json().catch(() => ({}))
+        console.log(`[lead-engine] auto-replenished user=${profile.user_id} assigned=${json.assigned ?? 0} spent_cents=${json.spent_cents ?? 0}`)
+
+        // Re-query candidates after replenish. Reuse the widest radius from
+        // the ladder above so we pick up anything find-real-leads inserted.
+        const widestExpanded = new Set<string>(homeZips)
+        for (const hz of homeZips) {
+          const { data: nearby } = await supabase.rpc('zips_within_miles', {
+            primary_zip: hz,
+            radius_mi: radiusLadder[radiusLadder.length - 1],
+          })
+          if (Array.isArray(nearby)) {
+            for (const z of nearby) {
+              if (z?.zip) widestExpanded.add(z.zip)
+            }
+          }
+        }
+        const { data: refilled } = await supabase
+          .from('leads')
+          .select('id, lead_score, source, trade_match, zip, street_address, source_details, city, state')
+          .contains('trade_match', [tradeFilter])
+          .in('zip', [...widestExpanded])
+          .order('lead_score', { ascending: false })
+          .limit(remaining * 5)
+        for (const c of (refilled ?? []) as Candidate[]) {
+          if (!dedup.has(c.id)) {
+            dedup.add(c.id)
+            candidates.push(c)
+          }
+        }
+      } catch (e) {
+        console.warn(`[lead-engine] auto-replenish failed for ${profile.user_id}: ${(e as Error).message}`)
+      }
+    } else {
+      console.warn(`[lead-engine] empty pool for ${profile.user_id} but cooldown active — last replenish ${lastReplenish}`)
+    }
+  }
 
   if (candidates.length === 0) {
     console.warn(`[lead-engine] no candidates for ${profile.user_id} (radius_used=${radiusUsed}mi, trade=${tradeFilter})`)
@@ -307,7 +372,7 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
 export async function fireLeadEngineForUser(userId: string): Promise<AssignResult & { user_id: string }> {
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('user_id, plan_tier, service_area, service_zips, service_radius_mi, business_type, services_offered, is_active, sub_trade, min_ticket')
+    .select('user_id, plan_tier, service_area, service_zips, service_radius_mi, business_type, services_offered, is_active, sub_trade, min_ticket, last_batchdata_replenish_at')
     .eq('user_id', userId)
     .maybeSingle()
 

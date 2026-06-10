@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
   const nowIso = new Date().toISOString()
   const { data: profiles, error } = await supabase
     .from('profiles')
-    .select('user_id, plan_tier, service_area, service_zips, service_radius_mi, business_type, services_offered, is_active, sub_trade, min_ticket, next_lead_drop_at')
+    .select('user_id, plan_tier, service_area, service_zips, service_radius_mi, business_type, services_offered, is_active, sub_trade, min_ticket, next_lead_drop_at, last_batchdata_replenish_at')
     .eq('is_active', true)
     .in('plan_tier', ['receptionist', 'officemgr', 'concierge'])
     .not('twilio_number', 'is', null)

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { batchdataPropertySearch, skipTraceAddress } from '@/lib/skipTrace'
+import { canSpendBatchData, logBatchDataSpend } from '@/lib/batchdataSpend'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -61,6 +62,26 @@ type ProfileRow = {
 // After this window expires, the engine falls back to service_radius_mi.
 const ONBOARDING_TIGHT_RADIUS_DAYS = 14
 const ONBOARDING_TIGHT_RADIUS_MI = 3
+
+// 2026-06-10 — radius expansion ladder. First 4 weeks after first_lead_drop_at:
+// stay at TIGHT_MI (~2-3 mi). Each week after, +1 mi up to the tenant's
+// service_radius_mi cap (or RADIUS_HARD_CAP = 50). Replaces the prior
+// PERMANENT 3mi behavior. Tenants in dense urban zips would exhaust nearby
+// owner-occupied properties matching the trade recipe in ~6 months without
+// expansion. Slow widen = always-real but never claustrophobic.
+const RADIUS_TIGHT_MI = 3
+const RADIUS_TIGHT_WEEKS = 4
+const RADIUS_HARD_CAP_MI = 50
+const RADIUS_WEEKLY_STEP_MI = 1
+
+function dynamicRadiusFor(profile: ProfileRow): number {
+  const anchor = profile.first_lead_drop_at ? new Date(profile.first_lead_drop_at).getTime() : Date.now()
+  const weeksSince = Math.max(0, Math.floor((Date.now() - anchor) / (7 * 86400000)))
+  const userCap = Math.max(RADIUS_TIGHT_MI, Math.min(RADIUS_HARD_CAP_MI, profile.service_radius_mi ?? RADIUS_TIGHT_MI))
+  if (weeksSince < RADIUS_TIGHT_WEEKS) return RADIUS_TIGHT_MI
+  const widen = RADIUS_TIGHT_MI + (weeksSince - RADIUS_TIGHT_WEEKS + 1) * RADIUS_WEEKLY_STEP_MI
+  return Math.min(userCap, widen)
+}
 
 type TradeConfig = {
   yearBuiltMin?: number
@@ -204,32 +225,40 @@ async function findLeadsForTenant(
   const cfg = tradeFiltersFor(resolvedTrade)
   const tradeNormalized = normalizeTrade(resolvedTrade)
 
-  // 2026-06-10 — PERMANENT address-radius search per Peter.
-  // If profile has business_lat/lng → always draw radius from THAT point
-  // using profile.service_radius_mi (default 3mi). Falls back to
-  // ZIP-only expansion when geocode missing.
-  //
-  //   (1) expandRadius() shrinks to fewer zips around home zips
-  //   (2) haversine post-filter trims zip-edge candidates outside
-  //       the literal mile radius from business_lat/lng
+  // 2026-06-10 — DYNAMIC radius via expansion ladder. Replaces prior PERMANENT
+  // 3mi behavior. Weeks 1-4 stay tight (3mi). Each subsequent week expands by
+  // RADIUS_WEEKLY_STEP_MI up to the tenant's service_radius_mi cap.
   const hasGeocodedBusinessLoc =
     typeof profile.business_lat === 'number' &&
     typeof profile.business_lng === 'number'
 
-  // Default 3mi if customer hasn't set service_radius_mi. Hard-cap 50mi
-  // to keep BatchData costs predictable.
-  const radius = Math.max(
-    1,
-    Math.min(50, profile.service_radius_mi ?? ONBOARDING_TIGHT_RADIUS_MI),
-  )
-  // tightRadiusActive controls the haversine post-filter. Active any time
-  // we have a geocoded business location — not just during onboarding.
+  const radius = dynamicRadiusFor(profile)
+  // tightRadiusActive controls the haversine post-filter. Always on when we
+  // have a geocoded business location — defends against zip-edge bleed.
   const tightRadiusActive = hasGeocodedBusinessLoc
 
   if (tightRadiusActive) {
-    console.log(`[find-real-leads] user_id=${userId} ADDRESS-RADIUS ${radius}mi from lat=${profile.business_lat} lng=${profile.business_lng}`)
+    console.log(`[find-real-leads] user_id=${userId} ADDRESS-RADIUS ${radius}mi (dynamic ladder) from lat=${profile.business_lat} lng=${profile.business_lng}`)
   } else {
-    console.log(`[find-real-leads] user_id=${userId} ZIP-RADIUS ${radius}mi (no business_lat/lng — geocode missing)`)
+    console.log(`[find-real-leads] user_id=${userId} ZIP-RADIUS ${radius}mi (dynamic ladder; no business_lat/lng — geocode missing)`)
+  }
+
+  // 2026-06-10 — Fable replenishment dedup. Build a set of street addresses
+  // we've already delivered to THIS tenant so refill pulls don't churn-letter
+  // them week-9 leads they already saw week-3. Lower-cased + trimmed +
+  // suffixed w/ zip so "123 main st" in 78704 != 78705.
+  const priorAddrKeys = new Set<string>()
+  {
+    const { data: priorDrops } = await supabase
+      .from('lead_drops')
+      .select('lead_id, leads(street_address, zip)')
+      .eq('user_id', userId)
+      .limit(5000)
+    for (const d of (priorDrops || []) as Array<{ leads: { street_address: string | null; zip: string | null } | null }>) {
+      const sa = d?.leads?.street_address
+      const z = d?.leads?.zip
+      if (sa && z) priorAddrKeys.add(`${sa.trim().toLowerCase()}|${z}`)
+    }
   }
 
   // Expand to radius zips so coverage matches what the lead engine actually
@@ -265,6 +294,16 @@ async function findLeadsForTenant(
     if (candidatesInserted >= maxCandidates) break
     zipsSearched++
 
+    // 2026-06-10 — Fable cap re-check. Estimate $0.05 per result × perZipLimit
+    // = 75 cents per zip search. canSpendBatchData returns false if today's
+    // total spend would exceed BATCHDATA_DAILY_CAP_USD (default $10).
+    const estCents = perZipLimit * 5
+    const canSpend = await canSpendBatchData(estCents)
+    if (!canSpend.ok) {
+      console.warn(`[find-real-leads] daily cap hit at zip ${zip} — spent=${canSpend.spentTodayCents} cap=${canSpend.capCents}. Aborting further searches.`)
+      break
+    }
+
     const result = await batchdataPropertySearch({
       zip,
       yearBuiltMin: cfg.yearBuiltMin,
@@ -274,6 +313,12 @@ async function findLeadsForTenant(
       resultsLimit: perZipLimit,
     })
     spentCents += result.cost_cents
+    await logBatchDataSpend({
+      costCents: result.cost_cents,
+      caller: 'find-real-leads',
+      context: { user_id: userId, zip, trade: tradeNormalized },
+      resultOk: result.ok,
+    })
 
     if (!result.ok) {
       console.warn(`[find-real-leads] zip ${zip} search failed: ${result.error}`)
@@ -284,18 +329,25 @@ async function findLeadsForTenant(
       if (!p.street_address || !p.zip) continue
       if (candidatesInserted >= maxCandidates) break
 
+      // 2026-06-10 — Fable dedup. Skip BatchData properties already
+      // delivered to this tenant in any prior drop. The leads-table unique
+      // constraint (street_address, source) handles cross-tenant dedup but
+      // not "we already showed Bob this address week-3."
+      const addrKey = `${p.street_address.trim().toLowerCase()}|${p.zip}`
+      if (priorAddrKeys.has(addrKey)) continue
+
       // Tight-radius post-filter (defense in depth — zip-based query can
       // bleed past the literal mile radius near zip edges). Drops any
-      // property whose lat/lng is > ONBOARDING_TIGHT_RADIUS_MI from the
-      // contractor's business location. Only runs when tight-radius is
-      // active AND BatchData returned a lat/lng on the property.
+      // property whose lat/lng is > radius (dynamic ladder) from the
+      // contractor's business location. Only runs when we have a geocoded
+      // business location AND BatchData returned a lat/lng on the property.
       if (tightRadiusActive) {
         const pLat = (p as unknown as { lat?: number | null }).lat
         const pLng = (p as unknown as { lng?: number | null }).lng
         if (typeof pLat === 'number' && typeof pLng === 'number') {
           const { distanceMiles } = await import('@/lib/geocodeBusinessAddress')
           const miles = distanceMiles(profile.business_lat!, profile.business_lng!, pLat, pLng)
-          if (miles > ONBOARDING_TIGHT_RADIUS_MI) continue
+          if (miles > radius) continue
         }
       }
 
@@ -407,6 +459,16 @@ async function findLeadsForTenant(
       }
     }
   }
+
+  // 2026-06-10 — stamp last_batchdata_replenish_at for the cooldown gate
+  // used by lib/leadEngine.ts auto-replenish branch. Always stamp on a
+  // completed pull, whether or not we inserted candidates — the spend
+  // already happened, and we don't want lead-engine retrying every hour
+  // against an empty zip cluster.
+  await supabase
+    .from('profiles')
+    .update({ last_batchdata_replenish_at: new Date().toISOString() })
+    .eq('user_id', userId)
 
   return {
     ok: true,
