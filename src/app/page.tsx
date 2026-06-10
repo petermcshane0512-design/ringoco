@@ -545,6 +545,21 @@ function HomeContent() {
       </div>
 
       <style jsx>{`
+        .leadscard-scroll::-webkit-scrollbar {
+          width: 6px;
+        }
+        .leadscard-scroll::-webkit-scrollbar-thumb {
+          background: rgba(232, 116, 43, 0.35);
+          border-radius: 6px;
+        }
+        .leadscard-scroll::-webkit-scrollbar-track {
+          background: rgba(232, 116, 43, 0.08);
+        }
+        .leadscard-row:hover {
+          transform: translateY(-1px);
+          background: rgba(255, 217, 168, 0.30) !important;
+          box-shadow: 0 8px 20px rgba(232, 116, 43, 0.18);
+        }
         @media (max-width: 880px) {
           .hero-grid { grid-template-columns: 1fr !important; }
           .hero-stage { order: -1; margin-bottom: 8px; }
@@ -593,7 +608,6 @@ function Nav({ isSignedIn }: { isSignedIn: boolean }) {
 }
 
 function LeadsCard({ variant }: { variant: TradeVariant }) {
-  const [zip, setZip] = useState('')
   const HERO_LEAD = variant.heroLead
   const TEASER_LEADS = variant.teaserLeads
   return (
@@ -606,149 +620,132 @@ function LeadsCard({ variant }: { variant: TradeVariant }) {
       maxWidth: 580,
       width: '100%',
     }}>
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>
-          See 1 real lead in your zip
-        </div>
-        <form
-          action="/sample-report"
-          method="get"
-          style={{ display: 'flex', gap: 8 }}
-          onSubmit={(e) => {
-            if (!zip || zip.length < 5) {
-              e.preventDefault()
-              window.location.href = '/sample-report?zip=75024'
-            }
-          }}
-        >
-          <input
-            name="zip"
-            value={zip}
-            onChange={(e) => setZip(e.target.value.replace(/\D/g, '').slice(0, 5))}
-            placeholder="enter your zip code"
-            inputMode="numeric"
-            maxLength={5}
-            style={{
-              flex: 1, padding: '12px 14px',
-              borderRadius: 10,
-              border: '1.5px solid rgba(11,31,58,0.18)',
-              fontSize: 14, fontWeight: 700,
-              color: '#0B1F3A',
-              outline: 'none',
-            }}
-          />
-          <button
-            type="submit"
-            style={{
-              padding: '12px 18px',
-              borderRadius: 10,
-              background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
-              border: 'none',
-              color: '#fff', fontWeight: 900, fontSize: 13, cursor: 'pointer',
-              boxShadow: '0 6px 16px rgba(232,116,43,0.30)',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Show me →
-          </button>
-        </form>
-      </div>
-
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <div>
           <div style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{variant.cardHeader}</div>
-          <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2, color: '#4A6670' }}>1 of 10 leads delivered this week</div>
+          <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2, color: '#4A6670' }}>Your dashboard · scroll to see all 10</div>
         </div>
         <div style={{
           padding: '5px 11px', borderRadius: 99,
           background: 'rgba(34,197,94,0.12)',
           border: '1px solid rgba(34,197,94,0.40)',
           fontSize: 10, fontWeight: 800, color: '#16803F', letterSpacing: '0.08em',
-        }}>LIVE DATA</div>
+        }}>LIVE PREVIEW</div>
       </div>
 
+      {/* Scrollable dashboard preview — internal scroll so prospect can
+          interact w/ a real-feeling lead feed in the hero. Each row links
+          to /sign-up so a click pulls them into the funnel. */}
       <div style={{
-        borderRadius: 13,
-        background: '#FFF8F0',
-        border: '1.5px solid rgba(232,116,43,0.40)',
-        padding: '14px 16px',
-        marginBottom: 12,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 15, fontWeight: 900, color: '#0B1F3A' }}>{HERO_LEAD.name}</div>
-          <span style={{
-            padding: '2px 7px', borderRadius: 6,
-            background: '#E8742B',
-            color: '#fff', fontSize: 9, fontWeight: 900, letterSpacing: '0.04em',
-          }}>{HERO_LEAD.signalType}</span>
-          <span style={{
-            padding: '2px 7px', borderRadius: 6,
-            background: '#FFD9A8', color: '#C84B26', fontSize: 9, fontWeight: 900,
-          }}>SCORE {HERO_LEAD.score}</span>
-        </div>
-        <div style={{ fontSize: 12.5, color: '#0B1F3A', fontWeight: 700, marginBottom: 4 }}>{HERO_LEAD.addr} · {HERO_LEAD.city}</div>
-        <div style={{ fontSize: 11.5, color: '#4A6670', lineHeight: 1.55 }}>
-          Built {HERO_LEAD.yearBuilt} · {HERO_LEAD.propertyValue} home{HERO_LEAD.hvacAge ? ` · HVAC ${HERO_LEAD.hvacAge}` : ''}
-        </div>
-        <div style={{ fontSize: 11.5, color: '#4A6670', lineHeight: 1.55, marginTop: 4 }}>
-          Phone:{' '}
-          <span style={{
-            background: 'rgba(11,31,58,0.08)',
-            padding: '2px 6px', borderRadius: 5,
-            fontFamily: 'monospace', fontWeight: 700, color: '#0B1F3A',
-            letterSpacing: '0.05em',
-          }}>{HERO_LEAD.phoneRedacted}</span>{' '}
-          <span style={{ fontSize: 10, color: '#C84B26', fontWeight: 800 }}>← unlock with trial</span>
-        </div>
-        <div style={{ fontSize: 11, color: '#C84B26', marginTop: 8, fontWeight: 700 }}>📍 {HERO_LEAD.signalDetail}</div>
-        <div style={{
-          marginTop: 10, padding: '8px 10px',
-          borderRadius: 8,
-          background: 'rgba(232,116,43,0.10)',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        }}>
-          <div style={{ fontSize: 11, color: '#0B1F3A', fontWeight: 700 }}>Est. job value</div>
-          <div style={{ fontSize: 13, fontWeight: 900, color: '#C84B26' }}>{HERO_LEAD.jobValue}</div>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gap: 6 }}>
-        {TEASER_LEADS.map((t, i) => (
-          <div key={i} style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-            padding: '9px 12px',
-            borderRadius: 10,
-            background: t.isMore ? 'rgba(232,116,43,0.06)' : '#FFFFFF',
-            border: '1px solid rgba(232,116,43,0.10)',
-            fontSize: 12,
-            color: t.isMore ? '#C84B26' : '#0B1F3A',
-            fontWeight: t.isMore ? 800 : 600,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
-              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.name}</span>
-              {t.signal && (
-                <span style={{
-                  padding: '1px 6px', borderRadius: 5,
-                  background: t.signal === 'PROPERTY SOLD' ? '#14B8A6' : '#0B1F3A',
-                  color: '#fff', fontSize: 8.5, fontWeight: 900, letterSpacing: '0.04em',
-                }}>{t.signal}</span>
-              )}
+        maxHeight: 460,
+        overflowY: 'auto',
+        paddingRight: 4,
+        marginRight: -4,
+        scrollbarWidth: 'thin',
+      }} className="leadscard-scroll">
+        {/* Featured (hero) lead */}
+        <Link href="/sign-up" style={{ textDecoration: 'none', display: 'block' }}>
+          <div style={{
+            borderRadius: 13,
+            background: '#FFF8F0',
+            border: '1.5px solid rgba(232,116,43,0.40)',
+            padding: '14px 16px',
+            marginBottom: 10,
+            cursor: 'pointer',
+            transition: 'transform 180ms ease, box-shadow 180ms ease',
+          }} className="leadscard-row">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+              <div style={{ fontSize: 15, fontWeight: 900, color: '#0B1F3A' }}>{HERO_LEAD.name}</div>
+              <span style={{
+                padding: '2px 7px', borderRadius: 6,
+                background: '#E8742B',
+                color: '#fff', fontSize: 9, fontWeight: 900, letterSpacing: '0.04em',
+              }}>{HERO_LEAD.signalType}</span>
+              <span style={{
+                padding: '2px 7px', borderRadius: 6,
+                background: '#FFD9A8', color: '#C84B26', fontSize: 9, fontWeight: 900,
+              }}>SCORE {HERO_LEAD.score}</span>
             </div>
-            {t.value ? (
-              <div style={{ fontSize: 11.5, fontWeight: 900, color: '#0B1F3A', whiteSpace: 'nowrap' }}>{t.value}</div>
-            ) : (
-              <span style={{ fontSize: 16, color: '#E8742B' }}>→</span>
-            )}
+            <div style={{ fontSize: 12.5, color: '#0B1F3A', fontWeight: 700, marginBottom: 4 }}>{HERO_LEAD.addr} · {HERO_LEAD.city}</div>
+            <div style={{ fontSize: 11.5, color: '#4A6670', lineHeight: 1.55 }}>
+              Built {HERO_LEAD.yearBuilt} · {HERO_LEAD.propertyValue} home{HERO_LEAD.hvacAge ? ` · HVAC ${HERO_LEAD.hvacAge}` : ''}
+            </div>
+            <div style={{ fontSize: 11.5, color: '#4A6670', lineHeight: 1.55, marginTop: 4 }}>
+              Phone:{' '}
+              <span style={{
+                background: 'rgba(11,31,58,0.08)',
+                padding: '2px 6px', borderRadius: 5,
+                fontFamily: 'monospace', fontWeight: 700, color: '#0B1F3A',
+                letterSpacing: '0.05em',
+              }}>{HERO_LEAD.phoneRedacted}</span>{' '}
+              <span style={{ fontSize: 10, color: '#C84B26', fontWeight: 800 }}>← unlock w/ trial</span>
+            </div>
+            <div style={{ fontSize: 11, color: '#C84B26', marginTop: 8, fontWeight: 700 }}>📍 {HERO_LEAD.signalDetail}</div>
+            <div style={{
+              marginTop: 10, padding: '8px 10px',
+              borderRadius: 8,
+              background: 'rgba(232,116,43,0.10)',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}>
+              <div style={{ fontSize: 11, color: '#0B1F3A', fontWeight: 700 }}>Est. job value</div>
+              <div style={{ fontSize: 13, fontWeight: 900, color: '#C84B26' }}>{HERO_LEAD.jobValue}</div>
+            </div>
           </div>
-        ))}
-      </div>
+        </Link>
 
-      <div style={{ marginTop: 14, padding: '11px 14px', borderRadius: 10, background: 'rgba(232,116,43,0.08)', border: '1px dashed rgba(232,116,43,0.40)' }}>
-        <div style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.08em', textTransform: 'uppercase' }}>AI outreach included</div>
-        <div style={{ fontSize: 12, color: '#0B1F3A', marginTop: 4, lineHeight: 1.5 }}>
-          Each lead arrives w/ a pre-written intro message in your voice. One tap → sent from your number. Reply rate ~9%.
+        {/* Teaser rows + extras */}
+        <div style={{ display: 'grid', gap: 6 }}>
+          {[
+            ...TEASER_LEADS.filter((t) => !t.isMore),
+            { name: 'Jamal W. · 30329', signal: 'HAIL DAMAGE',  value: '$9.2K – $14.8K' },
+            { name: 'Susan O. · 32801', signal: 'AGED SYSTEM',  value: '$3.9K – $6.4K'  },
+            { name: 'Tyler B. · 37203', signal: 'PERMIT FILED', value: '$2.8K – $4.8K'  },
+            { name: 'Nina P. · 78704',  signal: 'AGED SYSTEM',  value: '$4.6K – $7.8K'  },
+            { name: 'Greg F. · 76137',  signal: 'STORM ZONE',   value: '$7.8K – $11.4K' },
+            { name: 'David K. · 85254', signal: 'NEW OWNER',    value: '$0.6K – $1.8K'  },
+            { name: 'Rachel B. · 30301',signal: 'PERMIT FILED', value: '$3.4K – $5.6K'  },
+          ].map((t, i) => (
+            <Link
+              key={i}
+              href="/sign-up"
+              style={{ textDecoration: 'none', display: 'block' }}
+            >
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                padding: '9px 12px',
+                borderRadius: 10,
+                background: '#FFFFFF',
+                border: '1px solid rgba(232,116,43,0.10)',
+                fontSize: 12,
+                color: '#0B1F3A', fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'background 160ms ease, transform 160ms ease',
+              }} className="leadscard-row">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
+                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.name}</span>
+                  {t.signal && (
+                    <span style={{
+                      padding: '1px 6px', borderRadius: 5,
+                      background: t.signal === 'PROPERTY SOLD' || t.signal === 'NEW OWNER' ? '#14B8A6' : '#0B1F3A',
+                      color: '#fff', fontSize: 8.5, fontWeight: 900, letterSpacing: '0.04em',
+                    }}>{t.signal}</span>
+                  )}
+                </div>
+                <div style={{ fontSize: 11.5, fontWeight: 900, color: '#0B1F3A', whiteSpace: 'nowrap' }}>{t.value}</div>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
+
+      <Link href="/sign-up" style={{ textDecoration: 'none', display: 'block' }}>
+        <div style={{ marginTop: 14, padding: '11px 14px', borderRadius: 10, background: 'rgba(232,116,43,0.08)', border: '1px dashed rgba(232,116,43,0.40)', cursor: 'pointer' }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Pre-written script attached to every lead</div>
+          <div style={{ fontSize: 12, color: '#0B1F3A', marginTop: 4, lineHeight: 1.5 }}>
+            Each lead comes w/ a ready-to-send intro script (SMS + email + call opener). Copy-paste, tweak, or call. <strong>Tap any lead above to claim your zip →</strong>
+          </div>
+        </div>
+      </Link>
     </div>
   )
 }
