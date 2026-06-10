@@ -42,9 +42,76 @@ export async function POST(req: NextRequest) {
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
-    const userId = session.metadata?.userId
+    let userId = session.metadata?.userId
     const subscriptionId = session.subscription as string
     const customerId = session.customer as string
+    const isAnon = session.metadata?.anon === '1' || (userId?.startsWith('anon_') ?? false)
+
+    // 2026-06-10 — FRICTIONLESS-CHECKOUT account creation.
+    // Anonymous Stripe Checkout sessions arrive w/ a placeholder userId
+    // (`anon_<uuid>`). Mint a real Clerk user from Stripe-collected email,
+    // swap the placeholder for the real Clerk user_id everywhere
+    // downstream, and stash a sign-in token in subscription metadata so
+    // /checkout/return can auto-sign the prospect in on the success
+    // redirect. Net friction: 4 steps → 1.
+    if (isAnon) {
+      const email = session.customer_details?.email?.trim().toLowerCase()
+      if (!email) {
+        console.error('[webhook] anon checkout missing customer_details.email — cannot mint Clerk user')
+        return NextResponse.json({ received: true })
+      }
+      try {
+        const { clerkClient } = await import('@clerk/nextjs/server')
+        const cc = await clerkClient()
+        // Reuse if email already belongs to a Clerk user (returning visitor
+        // who used a different browser / cleared cookies). Otherwise create.
+        const existing = await cc.users.getUserList({ emailAddress: [email] }).catch(() => null)
+        const realUserId = existing?.data?.[0]?.id ?? (await cc.users.createUser({
+          emailAddress: [email],
+          skipPasswordRequirement: true,
+          skipPasswordChecks: true,
+        })).id
+        // Sign-in token: one-shot URL that completes Clerk session on first
+        // load. /checkout/return redeems it then redirects to dashboard.
+        let signInTokenUrl: string | null = null
+        try {
+          const token = await cc.signInTokens.createSignInToken({
+            userId: realUserId,
+            expiresInSeconds: 60 * 60, // 1 hour
+          })
+          signInTokenUrl = (token as { token?: string; url?: string }).url ?? null
+        } catch (e) {
+          console.warn('[webhook] signInTokens.createSignInToken failed:', (e as Error).message)
+        }
+        // Stash on subscription metadata so /checkout/return can read it.
+        // Stripe metadata limit 500ch — token URL is ~150ch.
+        if (subscriptionId && signInTokenUrl) {
+          try {
+            await stripe.subscriptions.update(subscriptionId, {
+              metadata: { signin_token_url: signInTokenUrl, real_user_id: realUserId },
+            })
+          } catch (e) {
+            console.warn('[webhook] sub metadata stash failed:', (e as Error).message)
+          }
+        }
+        // Mirror onto the Stripe Customer too — /checkout/return reads
+        // session.customer first, which is the cheaper lookup.
+        if (customerId) {
+          try {
+            await stripe.customers.update(customerId, {
+              metadata: { signin_token_url: signInTokenUrl ?? '', real_user_id: realUserId },
+            })
+          } catch (e) {
+            console.warn('[webhook] customer metadata stash failed:', (e as Error).message)
+          }
+        }
+        console.log(`[webhook] anon→clerk user=${realUserId} email=${email}`)
+        userId = realUserId
+      } catch (e) {
+        console.error('[webhook] anon Clerk-user creation failed:', (e as Error).message)
+        return NextResponse.json({ received: true })
+      }
+    }
 
     if (!userId) {
       console.error('No userId in checkout session metadata')
@@ -377,7 +444,7 @@ export async function POST(req: NextRequest) {
             : 'owner-occupied homes with aging HVAC systems'
         const nearLine = geocoded ? ` near ${metaBusinessAddress}` : ''
         const welcomeBody =
-          `BellAveGo: you're in. Your first ${LEADS_PER_WEEK} ${tradeForCopy}${nearLine} drop Monday morning.\n\n` +
+          `BellAveGo: you're in. Your first ${LEADS_PER_WEEK} ${tradeForCopy}${nearLine} are landing in your dashboard now (~30 min). Next batch in 7 days.\n\n` +
           `We'll text you the second any of them shows real interest. Reply HELP anytime.`
         await twilioClient.messages.create({
           body: welcomeBody,

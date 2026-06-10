@@ -297,7 +297,7 @@ function Result({
             </p>
           )}
           <p style={resultSub}>
-            You get the <strong>{data.leadsPerWeek} freshest each Monday</strong> — yours alone.
+            Your first <strong>{data.leadsPerWeek} land in ~30 min</strong>, then <strong>{data.leadsPerWeek} every 7 days</strong> — yours alone.
           </p>
           <TerritoryBlock status={data.territoryStatus} zip={zip} trade={trade} tradeLabel={tradeLabel} open={open} claimed={claimed} />
         </>

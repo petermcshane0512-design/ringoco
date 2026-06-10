@@ -2,6 +2,7 @@
 import Stripe from 'stripe'
 import { stripe } from '@/lib/stripeClient'
 import { auth } from '@clerk/nextjs/server'
+import crypto from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 import { type Tier, type Interval, priceFor, isValidTier } from '@/lib/pricing'
 import { readUtmFromCookieMap, utmToStripeMetadata } from '@/lib/utm'
@@ -85,8 +86,19 @@ async function lookupPromoCode(code: string): Promise<{ promotionCodeId: string 
 }
 
 export async function POST(req: NextRequest) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // 2026-06-10 — FRICTIONLESS CHECKOUT (per Peter). Clerk auth NO LONGER
+  // gates Stripe Checkout. Anonymous prospects can swipe card immediately;
+  // webhook creates Clerk user from Stripe-collected email post-payment +
+  // returns sign-in token via success_url so /checkout/return signs them
+  // in automatically. Net friction: 4 steps → 1 (card itself).
+  //
+  // Algorithm step 2 applied: deleted the auth() gate. Step 3: anon flow
+  // generates a one-shot `anon_<uuid>` placeholder userId stamped on
+  // Stripe metadata; webhook swaps it for the real Clerk user_id once
+  // checkout.session.completed fires + the Clerk user is created.
+  const { userId: clerkUserId } = await auth()
+  const isAnon = !clerkUserId
+  const userId = clerkUserId ?? `anon_${crypto.randomUUID()}`
 
   const body = await req.json().catch(() => ({})) as {
     tier?: string
@@ -97,6 +109,7 @@ export async function POST(req: NextRequest) {
     trade?: string
     address?: string
     phone?: string
+    email?: string
   }
   const tier: Tier = isValidTier(body.tier ?? '') ? (body.tier as Tier) : 'officemgr'
   const interval: Interval = body.interval === 'annual' ? 'annual' : 'monthly'
@@ -158,6 +171,7 @@ export async function POST(req: NextRequest) {
   const subscriptionData: Record<string, unknown> = {
     metadata: {
       userId,
+      anon: isAnon ? '1' : '',
       tier,
       interval,
       creator_code: promoLookup?.attributionCode || '',
@@ -177,6 +191,7 @@ export async function POST(req: NextRequest) {
     payment_method_collection: 'always' as const,
     metadata: {
       userId,
+      anon: isAnon ? '1' : '',
       tier,
       interval,
       creator_code: promoLookup?.attributionCode || '',
@@ -188,6 +203,10 @@ export async function POST(req: NextRequest) {
       ...utmMeta,
     },
     subscription_data: subscriptionData,
+    // 2026-06-10 — anon flow: pre-fill the email if /start/area collected
+    // it, otherwise let Stripe collect during checkout. Webhook reads
+    // session.customer_details.email regardless.
+    ...(isAnon && body.email ? { customer_email: body.email.trim().slice(0, 200) } : {}),
     custom_text: {
       submit: {
         message: '30-day money-back guarantee. If BellAveGo does not earn you back your subscription cost in 30 days, click cancel in your dashboard and we refund every penny â€” no questions, no calls, no hoops.',
@@ -197,7 +216,10 @@ export async function POST(req: NextRequest) {
     // leads. /dashboard/leads renders the lead drop immediately. Anything
     // the wizard captured (sub_trade, value_props, outreach_tone) is now
     // optional polish; tenants can fill it later via Settings.
-    success_url: `${APP_URL}/dashboard/leads?welcome=1`,
+    // 2026-06-10 — anon flow needs the session_id so /checkout/return
+    // can look up the Clerk sign-in token the webhook stashed in metadata.
+    // Authed flow tolerates the same param (just ignores it).
+    success_url: `${APP_URL}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${APP_URL}`,
   }
 

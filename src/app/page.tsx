@@ -457,7 +457,7 @@ function HomeContent() {
                 'Zip-code exclusivity — locked all 12 months',
                 'Storm + permit + new move-in alerts (real-time)',
                 'AI lead scoring 1-100 per lead',
-                'Dashboard, mobile app, Monday 6am delivery — all included',
+                `Dashboard, mobile app, first ${LEADS_PER_WEEK} in ~30 min then ${LEADS_PER_WEEK}/week — all included`,
               ].map((b, i) => (
                 <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 15, color: '#0B1F3A', lineHeight: 1.5 }}>
                   <span style={{ color: '#16803F', fontWeight: 900, flexShrink: 0, fontSize: 16 }}>✓</span>
