@@ -379,9 +379,9 @@ export default function SetupWizardLeads() {
                         supply runs out; this slider sets the ceiling on
                         widening. Solo HVAC/plumb/roof shops don't drive
                         past 20mi for a residential service call. */}
-                    <input type="range" min={3} max={20} step={1} value={radius} onChange={(e) => setRadius(parseInt(e.target.value, 10))} style={rangeStyle} />
+                    <input type="range" min={0} max={20} step={1} value={radius} onChange={(e) => setRadius(parseInt(e.target.value, 10))} style={rangeStyle} />
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#7AAAB2", marginTop: 4 }}>
-                      <span>3mi</span><span>20mi (max)</span>
+                      <span>0mi</span><span>20mi (max)</span>
                     </div>
                     <p style={{ fontSize: 11, color: "#7AAAB2", marginTop: 6, lineHeight: 1.45 }}>
                       We pull leads as close to your address as possible — start at 3 miles and only widen out to this cap when nearby supply runs low.
