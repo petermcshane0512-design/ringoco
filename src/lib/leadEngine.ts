@@ -106,19 +106,29 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
   const homeZips = (profile.service_zips || []).filter(Boolean)
   if (homeZips.length === 0) return { assigned: 0, skipped_reason: 'no_service_zips' }
 
-  // Radius ladder — start at tenant's setting, escalate twice if pool is
-  // light. HARD CAP 50mi (~1hr drive). These are 1-4 person teams, not
-  // regional contractors — surfacing a Maine HVAC guy leads in Boston is
-  // worse than surfacing nothing.
-  //   Per-trade base defaults set in onboarding:
-  //     handyman 10mi, plumbing 15mi, HVAC/electrical 20mi, roofing 30mi
-  const RADIUS_HARD_CAP = 50
-  const baseRadius = Math.max(1, Math.min(RADIUS_HARD_CAP, profile.service_radius_mi ?? 20))
-  const radiusLadder = [
-    baseRadius,
-    Math.min(RADIUS_HARD_CAP, Math.round(baseRadius * 1.5)),
-    RADIUS_HARD_CAP,
-  ]
+  // 2026-06-10 — SUPPLY-DRIVEN radius (replaces prior time-based / setting-
+  // based ladder). Algorithm step 2: deleted prior `[base, base*1.5, cap]`
+  // ladder which started at the tenant's setting (default 20mi+) — every
+  // drop pulled from the WIDEST possible pool first, wasting close-in
+  // signal. Step 3: simplest correct rule = start at 3mi, expand 1mi at a
+  // time until candidate pool >= drop target OR user's max-tolerable
+  // commute reached.
+  //
+  // Per Peter: leads must be as close to the business address as possible.
+  // Only widen when a closer ring is genuinely dry.
+  //
+  // Hard cap drops 50 -> 20. Solo HVAC/plumb/roof shops don't drive past
+  // 20mi for a residential service call; widening past that surfaces leads
+  // they won't take.
+  const RADIUS_START_MI = 3
+  const RADIUS_HARD_CAP = 20
+  const RADIUS_STEP_MI = 1
+  const userCap = Math.max(
+    RADIUS_START_MI,
+    Math.min(RADIUS_HARD_CAP, profile.service_radius_mi ?? RADIUS_HARD_CAP),
+  )
+  const radiusLadder: number[] = []
+  for (let r = RADIUS_START_MI; r <= userCap; r += RADIUS_STEP_MI) radiusLadder.push(r)
   const dedup = new Set<string>()
   type Candidate = {
     id: string
@@ -132,7 +142,7 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
     state: string | null
   }
   const candidates: Candidate[] = []
-  let radiusUsed = baseRadius
+  let radiusUsed = RADIUS_START_MI
 
   for (const r of radiusLadder) {
     radiusUsed = r
@@ -194,7 +204,11 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
             'Content-Type': 'application/json',
             'x-admin-secret': process.env.ADMIN_API_SECRET || '',
           },
-          body: JSON.stringify({ user_id: profile.user_id, max_candidates: 80, skip_trace_top_n: 10 }),
+          // 2026-06-10 — pass the widest rung from the supply-driven ladder
+          // so BatchData replenishes the SAME radius we already exhausted in
+          // the leads table. Never goes past userCap (= min(service_radius_mi,
+          // RADIUS_HARD_CAP=20)).
+          body: JSON.stringify({ user_id: profile.user_id, max_candidates: 80, skip_trace_top_n: 10, radius_mi: radiusUsed }),
         })
         const json = await r.json().catch(() => ({}))
         console.log(`[lead-engine] auto-replenished user=${profile.user_id} assigned=${json.assigned ?? 0} spent_cents=${json.spent_cents ?? 0}`)
