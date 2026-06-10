@@ -180,7 +180,7 @@ export default function OfficeManagerPage() {
     <div style={{ padding: 40, fontFamily: 'system-ui', color: '#DC2626' }}>
       <h2>Pro unavailable</h2>
       <p>{error}</p>
-      <p style={{ fontSize: 13, color: '#4A7A80' }}>This feature requires the Pro tier ($297/mo) or Elite ($597/mo).</p>
+      <p style={{ fontSize: 13, color: '#4A7A80' }}>This feature requires the Pro plan.</p>
       <Link href="/dashboard">← Back to dashboard</Link>
     </div>
   )

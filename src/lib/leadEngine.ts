@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { isValidTier, type Tier } from '@/lib/pricing'
+import { LEADS_PER_WEEK } from '@/lib/offer'
 
 /**
  * Lead-engine core. Used by:
@@ -17,12 +18,14 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
-// 2026-06-06 PIVOT — single public tier (officemgr) gets weekly Monday drop:
-//   officemgr → 6 leads/week (≈25/month). Drops on first cron run each week.
-//   Legacy tiers preserved for grandfathered customers (receptionist + concierge).
+// 2026-06-09 — perDrop now reads LEADS_PER_WEEK from src/lib/offer.ts.
+// The single source of truth covers both code and marketing copy. Bump
+// LEADS_PER_WEEK there (after measuring real supply per metro) — both
+// the cron and the homepage will pick it up automatically.
+// Legacy tiers preserved for grandfathered customers (receptionist + concierge).
 export const TIER_DROP_TARGET: Record<Tier, { period: 'quarterly' | 'monthly' | 'weekly'; perDrop: number }> = {
   receptionist: { period: 'quarterly', perDrop: 5 },
-  officemgr:    { period: 'weekly',    perDrop: 5 },   // 5/wk × 4.33wk = ~22/mo (5/wk marketed)
+  officemgr:    { period: 'weekly',    perDrop: LEADS_PER_WEEK },
   concierge:    { period: 'weekly',    perDrop: 25 },  // legacy Elite tier
 }
 

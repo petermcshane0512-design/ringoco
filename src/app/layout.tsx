@@ -3,6 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Suspense } from "react";
 import GoogleAdsTag from "@/components/GoogleAdsTag";
 import GoogleAdsConversion from "@/components/GoogleAdsConversion";
+import { META_TITLE, META_DESCRIPTION } from "@/lib/offer";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -23,21 +24,18 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   manifest: "/manifest.json",
   title: {
-    default: "BellAveGo — AI receptionist and growth platform for HVAC, plumbing, electrical, roofing, and handyman pros",
+    default: META_TITLE,
     template: "%s · BellAveGo",
   },
-  description:
-    "AI answers every call, books the job, delivers 5 fresh neighborhood leads every Monday. Built for HVAC, plumbing, electrical, roofing, and handyman pros. $297/mo. 30-day money-back guarantee. Cancel anytime.",
+  description: META_DESCRIPTION,
   applicationName: "BellAveGo",
   keywords: [
-    "AI receptionist",
-    "AI for HVAC, plumbing, electrical, roofing, and handyman",
-    "HVAC AI",
-    "plumber AI",
-    "electrician AI",
-    "AI answering service",
-    "missed call recovery",
-    "AI marketing for contractors",
+    "contractor leads",
+    "HVAC leads",
+    "plumbing leads",
+    "electrician leads",
+    "exclusive homeowner leads",
+    "permit-based leads",
     "BellAveGo",
   ],
   authors: [{ name: "BellAveGo" }],
@@ -49,9 +47,8 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "BellAveGo",
-    title: "BellAveGo — AI receptionist and growth platform for HVAC, plumbing, electrical, roofing, and handyman pros",
-    description:
-      "AI answers every call, books the job, follows up on quotes, recovers past-due invoices, and runs your marketing — all on autopilot. Built for HVAC, plumbing, electrical, roofing, and handyman teams of 1–15.",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     url: SITE_URL,
     locale: "en_US",
     images: [
@@ -59,15 +56,14 @@ export const metadata: Metadata = {
         url: OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: "BellAveGo — AI receptionist and growth platform for HVAC, plumbing, electrical, roofing, and handyman pros",
+        alt: META_TITLE,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "BellAveGo — AI receptionist and growth platform for HVAC, plumbing, electrical, roofing, and handyman pros",
-    description:
-      "AI answers every call, books the job, runs your marketing. Built for HVAC, plumbing, electrical, roofing, and handyman pros. From $147/mo.",
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: [OG_IMAGE],
   },
   robots: {

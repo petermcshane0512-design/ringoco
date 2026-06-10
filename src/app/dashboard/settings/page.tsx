@@ -51,22 +51,26 @@ function hour12Label(h: number): string {
   return `${h - 12}:00 PM`
 }
 
+// 2026-06-09 — single Pro plan ($497/mo) shown to active customers. The
+// receptionist/concierge labels remain for grandfathered legacy users so
+// their tier reads correctly without surfacing stale prices in nav.
+import { PRICE_MONTHLY_USD as PRO_PRICE, LEADS_PER_WEEK } from '@/lib/offer'
+
 const TIER_LABELS: Record<string, { label: string; calls: string; price: string }> = {
-  // v8 active (May 23 2026)
-  receptionist: { label: 'Starter', calls: '60 calls/mo', price: '$147/mo' },
-  officemgr:    { label: 'Pro',     calls: '300 calls/mo',    price: '$297/mo' },
-  concierge:    { label: 'Elite',   calls: 'Unlimited calls', price: '$597/mo' },
+  officemgr:    { label: 'Pro',     calls: `${LEADS_PER_WEEK} leads/week`, price: `$${PRO_PRICE}/mo` },
   cancelled:    { label: 'Cancelled', calls: '—', price: '—' },
-  // Legacy tier labels — kept for any grandfathered customers still on these
-  // plan_tier strings. The label reads "(legacy $X/mo)" so they know what
-  // they're on without confusing them about current marketing prices.
-  foundation:   { label: 'Foundation (legacy)',         calls: 'Unlimited',       price: '$79/mo or $129/mo' },
-  growth:       { label: 'Growth (legacy)',             calls: 'Unlimited',       price: '$179/mo or $279/mo' },
-  premium:      { label: 'Premium (legacy)',            calls: 'Unlimited',       price: '$499/mo' },
-  multiloc:     { label: 'Multi-location (legacy)',     calls: 'Custom',          price: 'Custom' },
-  solo:         { label: 'Solo (legacy)',       calls: '150 calls/mo',   price: '$147/mo' },
-  scale:        { label: 'Scale (legacy)',      calls: '1,500 calls/mo', price: '$597/mo' },
-  starter:      { label: 'Starter (legacy)',    calls: '200 calls/mo',   price: '$49/mo' },
+  // Legacy tier labels — kept for grandfathered subscribers on stale plans.
+  // (legacy) suffix shown so they know what they're on without confusing
+  // them about current marketing prices.
+  receptionist: { label: 'Starter (legacy)', calls: '60 calls/mo',     price: '(legacy plan)' },
+  concierge:    { label: 'Elite (legacy)',   calls: 'Unlimited calls', price: '(legacy plan)' },
+  foundation:   { label: 'Foundation (legacy)',     calls: 'Unlimited', price: '(legacy plan)' },
+  growth:       { label: 'Growth (legacy)',         calls: 'Unlimited', price: '(legacy plan)' },
+  premium:      { label: 'Premium (legacy)',        calls: 'Unlimited', price: '(legacy plan)' },
+  multiloc:     { label: 'Multi-location (legacy)', calls: 'Custom',    price: '(legacy plan)' },
+  solo:         { label: 'Solo (legacy)',           calls: '150 calls/mo',   price: '(legacy plan)' },
+  scale:        { label: 'Scale (legacy)',          calls: '1,500 calls/mo', price: '(legacy plan)' },
+  starter:      { label: 'Starter (legacy)',        calls: '200 calls/mo',   price: '(legacy plan)' },
 }
 
 export default function SettingsPage() {
