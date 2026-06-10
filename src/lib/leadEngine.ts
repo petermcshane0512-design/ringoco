@@ -141,14 +141,18 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
     RADIUS_START_MI,
     Math.min(RADIUS_HARD_CAP, profile.service_radius_mi ?? RADIUS_HARD_CAP),
   )
-  // 2026-06-10 — first-8-weeks tight cap (2 months). Per Peter: "they
-  // should all be within 2 mi for big-city tenants in the first couple
-  // months." Engine must NOT widen past 2mi during this window even if
-  // the close-in pool is short — auto-replenish below fires BatchData
-  // to fill the gap from a 2mi address-radius pull. After 8 weeks the
-  // ladder walks out to userCap as usual.
+  // 2026-06-10 — first-8-weeks tight cap. Per Peter: "All 10 leads
+  // within 1 mile. If not 1mi then 2mi. If not 2mi then 3mi. Strive
+  // for all 10 within 1 mile especially for the first batch."
+  // Ladder = [1, 2, 3] during tight window. After 8 weeks the ladder
+  // walks to userCap.
   const TIGHT_FIRST_WEEKS = 8
-  const TIGHT_CAP_MI = 2
+  const TIGHT_CAP_MI = 3
+  // Shared city-scraper rows are ONLY acceptable within this cap regardless
+  // of which ring the engine is on. BatchData per-tenant rows accept the
+  // current ring up to TIGHT_CAP_MI. Prevents 60643/zip-match permit rows
+  // from filling at ring=3 when they sit 2.5mi from the business address.
+  const SHARED_POOL_MAX_MI = 1
   const weeksSinceFirstDrop = (profile as { first_lead_drop_at?: string | null }).first_lead_drop_at
     ? Math.floor((Date.now() - new Date((profile as { first_lead_drop_at: string }).first_lead_drop_at).getTime()) / (7 * 86400000))
     : 0
@@ -210,10 +214,27 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
     type CandidateRow = Candidate
     for (const c of (cs ?? []) as CandidateRow[]) {
       if (dedup.has(c.id)) continue
+      // Source classification — per Peter 2026-06-10: shared city-scraper
+      // rows (Chicago/Austin/Orlando permits + storm + move_in + the now-
+      // deleted aging_hvac) are tenant-agnostic and may pile up close-zip
+      // but far-address. They count ONLY if literally within 1mi of the
+      // business location. BatchData per-tenant rows (source_details.
+      // provider='batchdata') are intentionally anchored on the business
+      // lat/lng — they accept the current ring up to TIGHT_CAP_MI.
+      const provider = (c.source_details as { provider?: string } | null)?.provider
+      const isBatchData = provider === 'batchdata'
       if (hasGeocode && typeof c.lat === 'number' && typeof c.lng === 'number') {
         const miles = haversineMiles(profile.business_lat!, profile.business_lng!, c.lat, c.lng)
-        if (miles > r) continue
+        if (isBatchData) {
+          if (miles > r) continue
+        } else {
+          if (miles > SHARED_POOL_MAX_MI) continue
+        }
         c._distMi = miles
+      } else if (!isBatchData) {
+        // No geocode + shared-pool row = cannot prove proximity. Skip to
+        // avoid the Beverly-tenant-getting-Loop-permit failure mode.
+        continue
       }
       dedup.add(c.id)
       candidates.push(c)
@@ -283,13 +304,20 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
           .limit(remaining * 5)
         for (const c of (refilled ?? []) as Candidate[]) {
           if (dedup.has(c.id)) continue
-          // Same hard haversine cap as the ladder loop above. Without this
-          // a refilled BatchData lead from a zip-edge would slip in above
-          // effectiveCap (2mi during tight weeks, userCap after).
+          // Same source-aware filter as the ring loop above. Shared-pool
+          // rows must be within 1mi; BatchData rows accept effectiveCap.
+          const provider = (c.source_details as { provider?: string } | null)?.provider
+          const isBatchData = provider === 'batchdata'
           if (hasGeocode && typeof c.lat === 'number' && typeof c.lng === 'number') {
             const miles = haversineMiles(profile.business_lat!, profile.business_lng!, c.lat, c.lng)
-            if (miles > effectiveCap) continue
+            if (isBatchData) {
+              if (miles > effectiveCap) continue
+            } else {
+              if (miles > SHARED_POOL_MAX_MI) continue
+            }
             c._distMi = miles
+          } else if (!isBatchData) {
+            continue
           }
           dedup.add(c.id)
           candidates.push(c)
