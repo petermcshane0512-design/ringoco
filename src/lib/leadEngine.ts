@@ -141,8 +141,22 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
     RADIUS_START_MI,
     Math.min(RADIUS_HARD_CAP, profile.service_radius_mi ?? RADIUS_HARD_CAP),
   )
+  // 2026-06-10 — first-8-weeks tight cap (2 months). Per Peter: "they
+  // should all be within 2 mi for big-city tenants in the first couple
+  // months." Engine must NOT widen past 2mi during this window even if
+  // the close-in pool is short — auto-replenish below fires BatchData
+  // to fill the gap from a 2mi address-radius pull. After 8 weeks the
+  // ladder walks out to userCap as usual.
+  const TIGHT_FIRST_WEEKS = 8
+  const TIGHT_CAP_MI = 2
+  const weeksSinceFirstDrop = (profile as { first_lead_drop_at?: string | null }).first_lead_drop_at
+    ? Math.floor((Date.now() - new Date((profile as { first_lead_drop_at: string }).first_lead_drop_at).getTime()) / (7 * 86400000))
+    : 0
+  const effectiveCap = weeksSinceFirstDrop < TIGHT_FIRST_WEEKS
+    ? Math.min(TIGHT_CAP_MI, userCap)
+    : userCap
   const radiusLadder: number[] = []
-  for (let r = RADIUS_START_MI; r <= userCap; r += RADIUS_STEP_MI) radiusLadder.push(r)
+  for (let r = RADIUS_START_MI; r <= effectiveCap; r += RADIUS_STEP_MI) radiusLadder.push(r)
   const dedup = new Set<string>()
   type Candidate = {
     id: string
@@ -218,7 +232,12 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
   // older than REPLENISH_COOLDOWN_HOURS, fire find-real-leads inline.
   // BatchData daily cap re-checked inside find-real-leads itself, so a
   // signup-flood day still can't burn unbounded $.
-  if (candidates.length === 0) {
+  // 2026-06-10 — replenish trigger lowered: fire if pool is SHORT of the
+  // drop target (not only when empty). Combined w/ tight 3mi outer cap
+  // above, this means: tight-radius ring runs short -> auto-pull BatchData
+  // around the business address -> next iteration finds enough close-in
+  // candidates. Outer auto-widen pre-2026-06-10 is no longer needed.
+  if (candidates.length < remaining) {
     const lastReplenish = profile.last_batchdata_replenish_at
     const cooldownMs = REPLENISH_COOLDOWN_HOURS * 60 * 60 * 1000
     const cooldownOK = !lastReplenish || (Date.now() - new Date(lastReplenish).getTime()) > cooldownMs
@@ -257,16 +276,23 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
         }
         const { data: refilled } = await supabase
           .from('leads')
-          .select('id, lead_score, source, trade_match, zip, street_address, source_details, city, state')
+          .select('id, lead_score, source, trade_match, zip, street_address, source_details, city, state, lat, lng')
           .contains('trade_match', [tradeFilter])
           .in('zip', [...widestExpanded])
           .order('lead_score', { ascending: false })
           .limit(remaining * 5)
         for (const c of (refilled ?? []) as Candidate[]) {
-          if (!dedup.has(c.id)) {
-            dedup.add(c.id)
-            candidates.push(c)
+          if (dedup.has(c.id)) continue
+          // Same hard haversine cap as the ladder loop above. Without this
+          // a refilled BatchData lead from a zip-edge would slip in above
+          // effectiveCap (2mi during tight weeks, userCap after).
+          if (hasGeocode && typeof c.lat === 'number' && typeof c.lng === 'number') {
+            const miles = haversineMiles(profile.business_lat!, profile.business_lng!, c.lat, c.lng)
+            if (miles > effectiveCap) continue
+            c._distMi = miles
           }
+          dedup.add(c.id)
+          candidates.push(c)
         }
       } catch (e) {
         console.warn(`[lead-engine] auto-replenish failed for ${profile.user_id}: ${(e as Error).message}`)
