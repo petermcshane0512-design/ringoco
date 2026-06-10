@@ -116,12 +116,22 @@ export async function POST(req: NextRequest) {
       .maybeSingle()
 
     if (!centroid) {
-      // No centroid = no scraper coverage possible. Honest fallback.
+      // No centroid = zip outside US/Puerto Rico/territories. We literally
+      // cannot deliver. Honest fallback.
       countReal = 0
       covered = false
     } else {
-      // Pull neighbor zips within RADIUS_MILES (excludes the input zip itself
-      // by design of zips_within_miles, so we add it back).
+      // 2026-06-10 — coverage shifted from shared-pool model to per-tenant
+      // BatchData on signup. Every US zip has a centroid; every signup
+      // gets find-real-leads pulling 80 owner-occupied properties for THAT
+      // tenant's address-radius. So coverage = centroid exists.
+      //
+      // Shared-pool count below is now INFORMATIONAL — used for the
+      // "tracking N opportunities" microcopy only, not the covered gate.
+      // Display of the count itself stays gated on count >= COUNT_FLOOR in
+      // the widget (UncoveredFallback no longer shows; widget renders the
+      // claim CTA whenever covered=true even if count display is null).
+      covered = true
       const { data: nearbyRows, error: rpcErr } = await supabase.rpc('zips_within_miles', {
         primary_zip: zip,
         radius_mi: RADIUS_MILES,
@@ -150,10 +160,8 @@ export async function POST(req: NextRequest) {
       if (countErr) {
         console.warn('[opportunity-check] count err', countErr)
         countReal = 0
-        covered = false
       } else {
         countReal = count ?? 0
-        covered = countReal >= COUNT_FLOOR
       }
     }
 

@@ -246,32 +246,41 @@ function Result({
   const claimed = data.territoryStatus === 'claimed'
   const open = data.territoryStatus === 'open' || data.territoryStatus === 'grace'
   const showCount = data.covered && data.count !== null
+  // 2026-06-10 — `covered` now means "we can deliver to this US zip via
+  // per-tenant BatchData", not "shared-pool count >= 10". UncoveredFallback
+  // only renders when the zip has no centroid (non-US). Count display is
+  // optional polish on top of the claim CTA.
 
   return (
     <div style={{ padding: 18 }}>
       <button onClick={onReset} style={backLink}>← Check another zip</button>
 
-      {showCount ? (
+      {data.covered ? (
         <>
           <div style={{ fontSize: 13, color: '#4A6670', marginBottom: 4 }}>
             {tradeLabel} · {zip}
           </div>
-          <div style={countBig}>
-            {data.count!.toLocaleString()}+
-          </div>
-          <p style={resultLead}>
-            We&rsquo;re tracking <strong>{data.count!.toLocaleString()}+ homeowner opportunities</strong> within ~5 miles of {zip} right now — new permits, aging systems, storm damage, and recent move-ins.
-          </p>
+          {showCount ? (
+            <>
+              <div style={countBig}>
+                {data.count!.toLocaleString()}+
+              </div>
+              <p style={resultLead}>
+                We&rsquo;re tracking <strong>{data.count!.toLocaleString()}+ homeowner opportunities</strong> within ~5 miles of {zip} right now — new permits, aging systems, storm damage, and recent move-ins.
+              </p>
+            </>
+          ) : (
+            <p style={resultLead}>
+              We pull leads on demand for <strong>{zip}</strong> — owner-occupied homes within 3 miles of your business address, matched to your trade.
+            </p>
+          )}
           <p style={resultSub}>
             You get the <strong>{data.leadsPerWeek} freshest each Monday</strong> — yours alone.
           </p>
+          <TerritoryBlock status={data.territoryStatus} zip={zip} trade={trade} tradeLabel={tradeLabel} open={open} claimed={claimed} />
         </>
       ) : (
         <UncoveredFallback zip={zip} trade={trade} tradeLabel={tradeLabel} />
-      )}
-
-      {showCount && (
-        <TerritoryBlock status={data.territoryStatus} zip={zip} trade={trade} tradeLabel={tradeLabel} open={open} claimed={claimed} />
       )}
     </div>
   )
