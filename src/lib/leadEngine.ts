@@ -70,6 +70,25 @@ export type ProfileRow = {
   // every time it completes a BatchData pull. Lead engine refuses to fire
   // another replenish for this tenant if last stamp < 24h ago.
   last_batchdata_replenish_at?: string | null
+  // 2026-06-10 — distance-asc ranking. Geocoded from the business address
+  // entered at /start/area. Engine sorts candidates by haversine distance
+  // from this point so the closest leads always go out first.
+  business_lat?: number | null
+  business_lng?: number | null
+}
+
+// Haversine distance in miles. Inlined here to avoid a runtime import
+// dependency from src/app. Same math as src/lib/geocodeBusinessAddress.ts
+// distanceMiles().
+function haversineMiles(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 3958.8 // earth radius in miles
+  const toRad = (d: number) => (d * Math.PI) / 180
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)))
 }
 
 const REPLENISH_COOLDOWN_HOURS = 24
@@ -140,6 +159,9 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
     source_details: Record<string, unknown> | null
     city: string | null
     state: string | null
+    lat: number | null
+    lng: number | null
+    _distMi?: number  // computed post-query, never written to DB
   }
   const candidates: Candidate[] = []
   let radiusUsed = RADIUS_START_MI
@@ -163,7 +185,7 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
 
     const { data: cs } = await supabase
       .from('leads')
-      .select('id, lead_score, source, trade_match, zip, street_address, source_details, city, state')
+      .select('id, lead_score, source, trade_match, zip, street_address, source_details, city, state, lat, lng')
       .contains('trade_match', [tradeFilter])
       .in('zip', eligibleZips)
       .order('lead_score', { ascending: false })
@@ -251,6 +273,29 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
   if (candidates.length === 0) {
     console.warn(`[lead-engine] no candidates for ${profile.user_id} (radius_used=${radiusUsed}mi, trade=${tradeFilter})`)
     return { assigned: 0, skipped_reason: 'no_candidates' }
+  }
+
+  // 2026-06-10 — DISTANCE-ASC PRIMARY SORT. Per Peter: "prioritizing all
+  // the leads closer to 0 miles as possible." Compute haversine distance
+  // from the geocoded business address, then sort ascending so the closest
+  // candidates land at the top before any score/sub_trade re-ranking
+  // applies. Leads with no lat/lng (legacy rows) get a sentinel max so they
+  // fall to the bottom but aren't dropped.
+  if (typeof profile.business_lat === 'number' && typeof profile.business_lng === 'number') {
+    const bLat = profile.business_lat
+    const bLng = profile.business_lng
+    for (const c of candidates) {
+      c._distMi =
+        typeof c.lat === 'number' && typeof c.lng === 'number'
+          ? haversineMiles(bLat, bLng, c.lat, c.lng)
+          : Number.POSITIVE_INFINITY
+    }
+    candidates.sort((a, b) => {
+      const da = a._distMi ?? Number.POSITIVE_INFINITY
+      const db = b._distMi ?? Number.POSITIVE_INFINITY
+      if (da !== db) return da - db
+      return (b.lead_score ?? 0) - (a.lead_score ?? 0)
+    })
   }
 
   // Apply sub_trade BOOST first — promote leads matching the contractor's
@@ -386,7 +431,7 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
 export async function fireLeadEngineForUser(userId: string): Promise<AssignResult & { user_id: string }> {
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('user_id, plan_tier, service_area, service_zips, service_radius_mi, business_type, services_offered, is_active, sub_trade, min_ticket, last_batchdata_replenish_at')
+    .select('user_id, plan_tier, service_area, service_zips, service_radius_mi, business_type, services_offered, is_active, sub_trade, min_ticket, last_batchdata_replenish_at, business_lat, business_lng')
     .eq('user_id', userId)
     .maybeSingle()
 
