@@ -190,7 +190,7 @@ export default function PricingPage() {
               <span style={{ fontSize: 16, fontWeight: 700, color: '#4A6670' }}>first month</span>
             </div>
             <div style={{ fontSize: 13.5, color: '#0B1F3A', marginBottom: 6, fontWeight: 600 }}>
-              &mdash; then <strong>${monthlyPrice}/mo</strong> if it books you a job.
+              &mdash; <strong>${monthlyPrice}/mo</strong> starting month 2. Didn&rsquo;t book a job in your first 30 days? Full refund and month 2 free.
               {interval === 'annual' && ` Billed $${totalBilled.toLocaleString()}/yr · Save $${savings}.`}
             </div>
             <div style={{ fontSize: 11.5, color: '#7AAAB2', marginBottom: 18 }}>

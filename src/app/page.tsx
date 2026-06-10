@@ -359,7 +359,7 @@ function HomeContent() {
                 does the scarcity work per Peter: "Claim my area". */}
             <HeroZipForm />
             <p style={{ fontSize: 13, color: '#4A6670', margin: '14px 0 18px', maxWidth: 580 }}>
-              <strong style={{ color: '#16803F', fontSize: 16 }}>$97</strong> first month with code <strong>FIRST400</strong> · $497/mo after, only if it works · cancel anytime · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
+              <strong style={{ color: '#16803F', fontSize: 16 }}>$97</strong> first month with code <strong>FIRST400</strong> · $497/mo starting month 2 · Didn&rsquo;t book a job in your first 30 days? Full refund and month 2 free. · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
             </p>
           </div>
 
@@ -416,7 +416,7 @@ function HomeContent() {
                   WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
                 }}>$97</div>
                 <div style={{ fontSize: 11.5, color: '#4A6670', marginTop: 4 }}>
-                  &mdash; then $497/mo if it books you a job
+                  &mdash; $497/mo starting month 2
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
