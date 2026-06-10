@@ -12,6 +12,7 @@ import AnimatedRevenueCounter from '@/components/AnimatedRevenueCounter'
 import { LEADS_PER_WEEK, LEADS_PER_MONTH } from '@/lib/offer'
 import HeroStatic from './HeroStatic'
 import OpportunityChecker from '@/components/OpportunityChecker'
+import ScoutTeam from '@/components/ScoutTeam'
 
 /**
  * Homepage — 2026-06-09 Hormozi/Elon CLOSE STACK for $10M ARR by May 12 2027.
@@ -389,6 +390,13 @@ function HomeContent() {
           view. Shows prospects how leads stack + book over time. Auto
           toggles week ↔ month every 6s. */}
       <LiveDashboardPreview />
+
+      {/* SCOUT TEAM — 24 named specialist systems working the contractor's
+          zip 24/7. Reframes the "AI agents" angle as a research team
+          doing concrete jobs (permits, NOAA, skip-trace). Specificity =
+          Hormozi credibility multiplier; concrete actions beat AI hype
+          for blue-collar trade owners who distrust black-box claims. */}
+      <ScoutTeam />
 
       {/* MATH stat bar + Carlos case-study quote deleted 2026-06-09 per
           Peter. Offer card already states $497/mo + book-1-job guarantee.
