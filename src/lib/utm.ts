@@ -64,7 +64,7 @@ export function extractUtmFromSearchParams(
   if (utm.utm_term)     cookies.push({ name: 'bavg_utm_term',     value: utm.utm_term })
   if (utm.utm_content)  cookies.push({ name: 'bavg_utm_content',  value: utm.utm_content })
   if (utm.first_touch_url) cookies.push({ name: 'bavg_first_touch_url', value: utm.first_touch_url })
-  cookies.push({ name: 'bavg_first_touch_at', value: utm.first_touch_at })
+  if (utm.first_touch_at) cookies.push({ name: 'bavg_first_touch_at', value: utm.first_touch_at })
   return { cookies, utm }
 }
 

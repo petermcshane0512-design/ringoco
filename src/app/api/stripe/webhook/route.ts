@@ -189,7 +189,7 @@ export async function POST(req: NextRequest) {
         if (!claim.ok) {
           console.error(
             `[territory] CONFLICT — user ${userId} paid for ${territoryZip}/${territoryTrade} ` +
-            `but it is held by ${claim.conflict?.customer_id ?? 'unknown'}. Peter needs to refund.`,
+            `but it is held by ${claim.conflict?.claimed_by_user_id ?? 'unknown'}. Peter needs to refund.`,
           )
         } else {
           console.log(`[territory] claimed ${territoryZip}/${territoryTrade} for ${userId}`)

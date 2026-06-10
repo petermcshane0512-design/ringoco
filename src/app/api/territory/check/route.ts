@@ -11,7 +11,7 @@ export const runtime = 'nodejs'
  * the prospect into checkout or into the waitlist.
  *
  * Response shape:
- *   { ok: true, status: 'open' | 'claimed' | 'grace', released_at?: string }
+ *   { ok: true, status: 'open' | 'claimed' | 'grace', grace_expires_at?: string }
  *
  * Fail-open: if Supabase errors, returns 'open' (better to risk a rare
  * collision the webhook can refund than to block a real customer at
@@ -28,6 +28,6 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     status,
-    released_at: row?.released_at ?? null,
+    grace_expires_at: row?.grace_expires_at ?? null,
   })
 }
