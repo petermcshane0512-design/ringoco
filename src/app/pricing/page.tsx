@@ -76,10 +76,22 @@ export default function PricingPage() {
       const urlBiz = new URLSearchParams(window.location.search).get('b') || ''
       const cookieBiz = document.cookie.match(/bavg_biz_id=([^;]+)/)?.[1] || ''
       const bizId = (urlBiz || cookieBiz).trim().slice(0, 64)
+      // 2026-06-10 — T3 territory: forward zip + trade picked at
+      // /start/area so the webhook can call claimTerritory() on
+      // checkout.session.completed.
+      const urlZip = new URLSearchParams(window.location.search).get('zip') || ''
+      const urlTrade = new URLSearchParams(window.location.search).get('trade') || ''
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier: 'officemgr', interval: intv, creatorCode: promoCode, bizId: bizId || undefined }),
+        body: JSON.stringify({
+          tier: 'officemgr',
+          interval: intv,
+          creatorCode: promoCode,
+          bizId: bizId || undefined,
+          zip: urlZip || undefined,
+          trade: urlTrade || undefined,
+        }),
       })
       const data = await res.json()
       if (data.url) window.location.href = data.url

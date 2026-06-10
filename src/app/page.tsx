@@ -11,6 +11,7 @@ import LiveActivityMarquee from '@/components/LiveActivityMarquee'
 import AnimatedRevenueCounter from '@/components/AnimatedRevenueCounter'
 import { LEADS_PER_WEEK, LEADS_PER_MONTH } from '@/lib/offer'
 import HeroStatic from './HeroStatic'
+import OpportunityChecker from '@/components/OpportunityChecker'
 
 /**
  * Homepage — 2026-06-09 Hormozi/Elon CLOSE STACK for $10M ARR by May 12 2027.
@@ -358,10 +359,13 @@ function HomeContent() {
               </p>
             </div>
 
-            {/* HeroZipForm — primary commitment CTA. Captures service-area
-                ZIP (still the cheapest territory lookup). Button copy now
-                does the scarcity work per Peter: "Claim my area". */}
-            <HeroZipForm />
+            {/* OpportunityChecker — replaces HeroZipForm 2026-06-10.
+                Two-step (trade → zip) widget that returns a REAL count from
+                the leads table for the visitor's zip (5-mile radius, 90-day
+                window). Honest fallback when uncovered or count < 10.
+                Wires territory status from the territories table. Every
+                check logged to opportunity_checks (warm-lead funnel). */}
+            <OpportunityChecker />
             <p style={{ fontSize: 13, color: '#4A6670', margin: '14px 0 18px', maxWidth: 580 }}>
               <strong style={{ color: '#16803F', fontSize: 16 }}>$97</strong> first month with code <strong>FIRST400</strong> · $497/mo starting month 2 · Didn&rsquo;t book a job in your first 30 days? Full refund and month 2 free. · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
             </p>
@@ -803,81 +807,6 @@ const ctaFinal: React.CSSProperties = {
   color: '#C84B26', textDecoration: 'none',
   fontWeight: 900, fontSize: 16,
   boxShadow: '0 14px 36px rgba(11,31,58,0.18)',
-}
-
-/**
- * HeroZipForm — primary above-fold CTA.
- *
- * Replaces the static "Start trial" button with a zip-code microcommitment
- * form. Conversion-research basis:
- *   - CXL: form-first hero outperforms button-first by 30-50% on cold
- *     traffic (visitor invests typing → consistency bias takes over)
- *   - Cialdini: the act of typing the zip = small public commitment to
- *     the buying frame; abandoning feels inconsistent w/ that action
- *   - SMB-specific: HVAC owners want to feel "checked" before committing;
- *     the zip-availability check is the closest analog to a "free quote"
- *
- * Submit routes through /start so promo + zip both prefill checkout.
- */
-function HeroZipForm() {
-  const [zip, setZip] = useState('')
-  const [touched, setTouched] = useState(false)
-  return (
-    <form
-      action="/start"
-      method="get"
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr auto',
-        gap: 10,
-        padding: 8,
-        borderRadius: 16,
-        background: '#FFFFFF',
-        border: '2px solid #E8742B',
-        boxShadow: '0 16px 44px rgba(232,116,43,0.24)',
-        maxWidth: 560,
-      }}
-    >
-      <input type="hidden" name="promo" value="FIRST400" />
-      <input
-        name="zip"
-        value={zip}
-        onChange={(e) => { setZip(e.target.value.replace(/\D/g, '').slice(0, 5)); setTouched(true) }}
-        placeholder={touched ? '5-digit zip' : 'Your service area zip code'}
-        inputMode="numeric"
-        maxLength={5}
-        autoComplete="postal-code"
-        aria-label="Your service area zip code"
-        style={{
-          padding: '18px 20px',
-          borderRadius: 12,
-          border: 'none',
-          background: 'transparent',
-          fontSize: 18, fontWeight: 700,
-          color: '#0B1F3A',
-          outline: 'none',
-          minWidth: 0,
-        }}
-      />
-      <button
-        type="submit"
-        style={{
-          padding: '18px 28px',
-          borderRadius: 12,
-          background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 50%, #C84B26 100%)',
-          border: 'none',
-          color: '#fff',
-          fontWeight: 900, fontSize: 17,
-          letterSpacing: '-0.01em',
-          cursor: 'pointer',
-          boxShadow: '0 10px 24px rgba(232,116,43,0.42)',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        Claim my area — $97 →
-      </button>
-    </form>
-  )
 }
 
 /**
