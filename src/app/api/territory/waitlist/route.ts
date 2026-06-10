@@ -16,7 +16,7 @@ export const runtime = 'nodejs'
  * opens (post-T3 TODO — the cron currently just flips the row).
  */
 export async function POST(req: NextRequest) {
-  let body: { zip?: string; trade?: string; email?: string }
+  let body: { zip?: string; trade?: string; email?: string; reason?: string }
   try {
     body = await req.json()
   } catch {
@@ -25,12 +25,13 @@ export async function POST(req: NextRequest) {
   const zip = (body.zip || '').trim().slice(0, 5)
   const trade = (body.trade || '').trim().toLowerCase()
   const email = (body.email || '').trim().toLowerCase()
+  const reason = body.reason === 'uncovered' ? 'uncovered' : 'claimed'
   if (!zip || !trade || !email) {
     return NextResponse.json({ ok: false, error: 'zip, trade, email required' }, { status: 400 })
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ ok: false, error: 'invalid email' }, { status: 400 })
   }
-  const result = await addToWaitlist({ zip, trade, email })
+  const result = await addToWaitlist({ zip, trade, email, reason })
   return NextResponse.json(result)
 }

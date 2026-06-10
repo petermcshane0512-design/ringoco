@@ -33,7 +33,7 @@ function StartAreaContent() {
   const [zip, setZip] = useState('')
   const [trade, setTrade] = useState<string>('')
   const [checking, setChecking] = useState(false)
-  const [result, setResult] = useState<null | { status: 'open' | 'claimed' | 'grace' }>(null)
+  const [result, setResult] = useState<null | { status: 'open' | 'claimed' | 'grace' | 'unserved' }>(null)
   const [waitlistEmail, setWaitlistEmail] = useState('')
   const [waitlistBiz, setWaitlistBiz] = useState('')
   const [waitlistedOk, setWaitlistedOk] = useState(false)
@@ -90,7 +90,12 @@ function StartAreaContent() {
       const r = await fetch('/api/territory/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ zip, trade, email: waitlistEmail }),
+        body: JSON.stringify({
+          zip,
+          trade,
+          email: waitlistEmail,
+          reason: result?.status === 'unserved' ? 'uncovered' : 'claimed',
+        }),
       })
       const j = await r.json()
       if (j.ok) {
@@ -104,6 +109,7 @@ function StartAreaContent() {
   }
 
   const taken = result && (result.status === 'claimed' || result.status === 'grace')
+  const unserved = result && result.status === 'unserved'
 
   return (
     <main style={{
@@ -144,7 +150,10 @@ function StartAreaContent() {
 
           <label style={{ ...labelStyle, marginTop: 14 }}>Your trade</label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 8 }}>
-            {(['hvac', 'plumbing', 'electrical', 'roofing', 'handyman'] as const).map((t) => (
+            {/* 2026-06-10 — electrical + handyman dropped from new signups per
+                supply doc (effectively zero leads across all metros). Re-add
+                here when scraper coverage clears the per-week minimum. */}
+            {(['hvac', 'plumbing', 'roofing'] as const).map((t) => (
               <button
                 key={t}
                 type="button"
@@ -186,17 +195,23 @@ function StartAreaContent() {
           </p>
         </form>
 
-        {taken && !waitlistedOk && (
+        {(taken || unserved) && !waitlistedOk && (
           <div style={{
             marginTop: 24, padding: 22, borderRadius: 16,
-            background: 'rgba(94,234,212,0.10)',
-            border: '1.5px solid rgba(20,184,166,0.30)',
+            background: unserved ? 'rgba(232,116,43,0.10)' : 'rgba(94,234,212,0.10)',
+            border: unserved ? '1.5px solid rgba(232,116,43,0.30)' : '1.5px solid rgba(20,184,166,0.30)',
           }}>
-            <div style={{ fontSize: 11, fontWeight: 900, color: '#0B7B70', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>
-              {result.status === 'claimed' ? 'This area is locked' : 'This area is in a 14-day cool-down'}
+            <div style={{ fontSize: 11, fontWeight: 900, color: unserved ? '#C84B26' : '#0B7B70', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>
+              {unserved
+                ? 'We\'re not in your zip yet'
+                : result?.status === 'claimed'
+                  ? 'This area is locked'
+                  : 'This area is in a 14-day cool-down'}
             </div>
             <p style={{ margin: '0 0 14px', fontSize: 14, color: '#0B1F3A', lineHeight: 1.55 }}>
-              Another shop already owns {zip} for {trade}. Drop your email and we&rsquo;ll notify you the moment it opens.
+              {unserved
+                ? `Our lead scrapers don't cover ${zip} yet. Drop your email and we'll tell you the moment ${zip} goes live.`
+                : `Another shop already owns ${zip} for ${trade}. Drop your email and we'll notify you the moment it opens.`}
             </p>
             <form onSubmit={onWaitlist}>
               <input

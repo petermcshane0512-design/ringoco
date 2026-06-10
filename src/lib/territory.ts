@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { isZipServed } from '@/lib/offer'
 
 /**
  * Territory enforcement helpers — T3 of offer-rebuild plan (2026-06-10).
@@ -27,10 +28,14 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
-export const SUPPORTED_TRADE_SLUGS = ['hvac', 'plumbing', 'electrical', 'roofing', 'handyman'] as const
+/**
+ * 2026-06-10 — handyman + electrical dropped from new signups per
+ * supply doc. See src/lib/offer.ts SUPPORTED_TRADES for rationale.
+ */
+export const SUPPORTED_TRADE_SLUGS = ['hvac', 'plumbing', 'roofing'] as const
 export type TerritoryTrade = (typeof SUPPORTED_TRADE_SLUGS)[number]
 
-export type TerritoryStatus = 'open' | 'claimed' | 'grace'
+export type TerritoryStatus = 'open' | 'claimed' | 'grace' | 'unserved'
 
 export const GRACE_DAYS = 14
 
@@ -73,7 +78,11 @@ export async function checkTerritory(
 ): Promise<{ status: TerritoryStatus; row: TerritoryRow | null }> {
   const zip = normalizeZip(zipRaw)
   const trade = normalizeTrade(tradeRaw)
-  if (!zip || !trade) return { status: 'open', row: null }
+  if (!zip || !trade) return { status: 'unserved', row: null }
+  // 2026-06-10 — served-zips honesty gate. If we have no scraper
+  // coverage for this zip, do not let the user claim a territory we
+  // can't deliver into. Route them to waitlist instead.
+  if (!isZipServed(zip)) return { status: 'unserved', row: null }
   const { data, error } = await supabase
     .from('territories')
     .select('zip, trade, status, claimed_by_user_id, stripe_customer_id, stripe_subscription_id, business_name, metro, claimed_at, grace_expires_at')
@@ -233,6 +242,7 @@ export async function addToWaitlist(opts: {
   zip: string
   trade: string
   email: string
+  reason?: 'claimed' | 'uncovered'
 }): Promise<{ ok: boolean }> {
   const zip = normalizeZip(opts.zip)
   const trade = normalizeTrade(opts.trade)
@@ -244,7 +254,7 @@ export async function addToWaitlist(opts: {
       zip,
       trade,
       email,
-      reason: 'claimed',
+      reason: opts.reason ?? 'claimed',
     }, { onConflict: 'email,zip,trade' })
   if (error) {
     console.error('[territory.waitlist]', error)

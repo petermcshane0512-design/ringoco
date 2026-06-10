@@ -74,12 +74,52 @@ export const STRIPE_PRICE_ID_ANNUAL = 'price_1TgUanGrkP7VQmUjujaifNI0'
 
 /**
  * Trades the product is honestly built for.
- * Data 2026-06-09: handyman + electrical inventory is near zero. Leaving
- * them in the supported trade list is dishonest unless the scrape pipeline
- * is unlocked. Update when supply changes.
+ *
+ * 2026-06-10 — handyman + electrical DROPPED from new signups per the
+ * supply doc (73 electrical + 77 handyman leads across 6 weeks across
+ * ALL metros — effectively zero). Listing them = overselling = refunds.
+ * Roofing kept because supply doc shows 838 across 6 weeks. Re-add a
+ * trade once scrape coverage clears the per-week minimum.
  */
-export const SUPPORTED_TRADES = ['HVAC', 'plumbing', 'electrical'] as const
-export const SUPPORTED_TRADES_SENTENCE = 'HVAC, plumbing, and electrical contractors'
+export const SUPPORTED_TRADES = ['HVAC', 'plumbing', 'roofing'] as const
+export const SUPPORTED_TRADES_SENTENCE = 'HVAC, plumbing, and roofing contractors'
+
+/**
+ * Served zip prefixes — T3 honesty gate.
+ *
+ * Only zips whose 3-character prefix is in this set can claim a
+ * territory. Everything else routes to the "we're not in your area yet,
+ * join waitlist" flow.
+ *
+ * Source: docs/lead-supply-measurement-2026-06-09.md.
+ * Currently:
+ *   - Chicago: 606xx, 605xx
+ *   - Northeast cluster: 010xx-034xx (Boston, Hartford, Providence, etc.)
+ *
+ * NOT served until scrapers fixed:
+ *   - 850-853 (Phoenix) — 0 qualified leads in 42 days
+ *   - Dallas, Austin, Atlanta, Orlando, Miami, Nashville, Houston metros
+ *   - All Sun Belt cities besides Chicago
+ *
+ * Expand once the per-metro supply doc proves >= LEADS_PER_WEEK * 5
+ * sustained over 4 weeks.
+ */
+export const SERVED_ZIP_PREFIXES = new Set<string>([
+  '606', '605',  // Chicago metro
+  '010', '011', '012', '013', '014', '015', '016', '017', '018', '019',  // MA west
+  '020', '021', '022', '023', '024', '025', '026', '027',  // MA east + RI
+  '028', '029',  // RI + MA south
+  '030', '031', '032', '033', '034',  // NH + ME
+])
+
+/**
+ * Helper — is this 5-digit zip in a metro we can actually deliver to?
+ */
+export function isZipServed(zip5: string): boolean {
+  const z = (zip5 || '').slice(0, 5)
+  if (!/^\d{5}$/.test(z)) return false
+  return SERVED_ZIP_PREFIXES.has(z.slice(0, 3))
+}
 
 /**
  * Guarantee — pull through to every marketing surface.
