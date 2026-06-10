@@ -11,20 +11,21 @@
 /**
  * LEADS_PER_WEEK
  *
- * PETER: CONFIRM BEFORE DEPLOY
+ * Bumped 5 → 10 on 2026-06-10 per Peter. The marketing offer is now
+ * "10 fresh leads / week (40 / month)" — also makes the existing
+ * $12.43/lead anchor (497 / 40) arithmetically consistent.
  *
- * Data measured 2026-06-09 (see docs/lead-supply-measurement-2026-06-09.md)
- * shows current scraper output reliably sustains 5 leads/week per customer
- * at single-customer-per-zip density. Phoenix scraper is at 0/wk (broken).
- * To raise this to 10/wk you need:
- *   (a) Phoenix scraper diagnostic + fix
- *   (b) 2-3x permit scraper expansion across Sun Belt
- *   (c) handyman + electrical scrape sources unlocked
+ * Supply note: prior measurement (docs/lead-supply-measurement-2026-06-09.md)
+ * showed scrapers sustaining only ~5/wk single-customer-per-zip. The 1-Job
+ * Guarantee absorbs the supply gap for early customers; Phoenix scraper
+ * fix + Sun Belt permit expansion + handyman/electrical sources still
+ * outstanding to make 10/wk mechanically real long-term.
  *
  * The lead engine (lib/leadEngine.ts) reads this value. The marketing site
- * reads this value. Bump it ONLY when the supply measurement supports it.
+ * reads this value. Per-lead price math + every customer surface derives
+ * from here — never hardcode a count elsewhere.
  */
-export const LEADS_PER_WEEK = 5
+export const LEADS_PER_WEEK = 10
 export const LEADS_PER_MONTH = LEADS_PER_WEEK * 4 // marketing convenience
 
 /**
