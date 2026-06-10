@@ -100,6 +100,24 @@ function classifyClimate(state: string | null | undefined): 'hot' | 'cold' | 'mi
 
 function tradeFiltersFor(trade: string, state?: string | null): TradeConfig {
   const t = (trade || '').toLowerCase()
+  // 2026-06-10 — "other:landscaping" / "other:painting" / etc. fall through
+  // to the handyman recent-buyer recipe. Recent owner-occupied + aging-home
+  // profile applies to almost any home-services trade.
+  if (t.startsWith('other')) {
+    return {
+      recentSaleWithinDays: 120,
+      yearBuiltMin: 1970,
+      yearBuiltMax: 2005,
+      ownerOccupiedOnly: true,
+      pitchTemplate: (o, y, c) => `${o} just bought a ${y || 'older'} home in ${c || 'the area'} — high-intent window for any home-services pitch.`,
+      whyTagBuilder: (y, sale, age) => [
+        sale ? `New owner — bought ${daysAgo(sale)}d ago` : 'Owner-occupied verified',
+        y ? `Home built ${y} (${age}yr)` : 'Aging-home profile',
+        'Recent-buyer deferred-maintenance window',
+      ],
+      sourceTag: 'property:recent-buyer-other',
+    }
+  }
   if (t.includes('handy') || t.includes('general')) {
     return {
       recentSaleWithinDays: 120,

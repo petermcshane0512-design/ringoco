@@ -96,8 +96,11 @@ export const STRIPE_PRICE_ID_ANNUAL = 'price_1TgUanGrkP7VQmUjujaifNI0'
  * Roofing kept because supply doc shows 838 across 6 weeks. Re-add a
  * trade once scrape coverage clears the per-week minimum.
  */
-export const SUPPORTED_TRADES = ['HVAC', 'plumbing', 'roofing'] as const
-export const SUPPORTED_TRADES_SENTENCE = 'HVAC, plumbing, and roofing contractors'
+// 2026-06-10 — re-opened electrical + handyman + Other per Peter. Recipe Lab
+// validated electrical pre-1980 + handyman recent-buyer; "Other" routes to
+// the handyman recent-buyer recipe inside find-real-leads.tradeFiltersFor.
+export const SUPPORTED_TRADES = ['HVAC', 'plumbing', 'electrical', 'roofing', 'handyman'] as const
+export const SUPPORTED_TRADES_SENTENCE = 'HVAC, plumbing, electrical, roofing, and handyman contractors'
 
 /**
  * Served zip prefixes — RETIRED 2026-06-10.

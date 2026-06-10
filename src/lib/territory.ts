@@ -29,10 +29,11 @@ const supabase = createClient(
 )
 
 /**
- * 2026-06-10 — handyman + electrical dropped from new signups per
- * supply doc. See src/lib/offer.ts SUPPORTED_TRADES for rationale.
+ * 2026-06-10 — re-opened electrical + handyman + Other per Peter.
+ * find-real-leads.tradeFiltersFor handles routing per trade; "other"
+ * + free-text trades fall through to the handyman recent-buyer recipe.
  */
-export const SUPPORTED_TRADE_SLUGS = ['hvac', 'plumbing', 'roofing'] as const
+export const SUPPORTED_TRADE_SLUGS = ['hvac', 'plumbing', 'electrical', 'roofing', 'handyman'] as const
 export type TerritoryTrade = (typeof SUPPORTED_TRADE_SLUGS)[number]
 
 export type TerritoryStatus = 'open' | 'claimed' | 'grace' | 'unserved'

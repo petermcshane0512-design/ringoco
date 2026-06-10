@@ -54,6 +54,7 @@ function StartAreaContent() {
 
   const [zip, setZip] = useState('')
   const [trade, setTrade] = useState<string>('')
+  const [otherTradeText, setOtherTradeText] = useState('')
   const [address, setAddress] = useState('')
   const [phone, setPhone] = useState('')
   const [checking, setChecking] = useState(false)
@@ -137,6 +138,10 @@ function StartAreaContent() {
     }
     if (!trade) {
       setErr('Pick your trade.')
+      return
+    }
+    if (trade === 'other' || (trade.startsWith('other:') && trade.slice(6).trim().length === 0)) {
+      setErr('Type your trade after picking Other.')
       return
     }
     const phoneDigits = phone.replace(/\D/g, '')
@@ -277,14 +282,16 @@ function StartAreaContent() {
 
           <label style={{ ...labelStyle, marginTop: 14 }}>Your trade</label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 8 }}>
-            {/* 2026-06-10 — electrical + handyman dropped from new signups per
-                supply doc (effectively zero leads across all metros). Re-add
-                here when scraper coverage clears the per-week minimum. */}
-            {(['hvac', 'plumbing', 'roofing'] as const).map((t) => (
+            {/* 2026-06-10 — all 5 trades + Other per Peter. find-real-leads
+                falls through to the handyman recent-buyer recipe for any
+                trade slug that does not match hvac/plumb/elect/roof/handyman
+                explicitly, so an "other:landscaping" signup still gets a
+                real address-radius BatchData pull on day 1. */}
+            {(['hvac', 'plumbing', 'electrical', 'roofing', 'handyman'] as const).map((t) => (
               <button
                 key={t}
                 type="button"
-                onClick={() => setTrade(t)}
+                onClick={() => { setTrade(t); setOtherTradeText('') }}
                 style={{
                   padding: '10px 12px', borderRadius: 10,
                   border: trade === t ? '2px solid #E8742B' : '1.5px solid rgba(11,31,58,0.18)',
@@ -296,7 +303,33 @@ function StartAreaContent() {
                 {t}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => setTrade('other')}
+              style={{
+                padding: '10px 12px', borderRadius: 10,
+                border: trade.startsWith('other') ? '2px solid #E8742B' : '1.5px solid rgba(11,31,58,0.18)',
+                background: trade.startsWith('other') ? '#FFF1E4' : '#FFFFFF',
+                fontWeight: 800, fontSize: 13, cursor: 'pointer',
+                color: '#0B1F3A',
+              }}
+            >
+              Other
+            </button>
           </div>
+          {trade.startsWith('other') && (
+            <input
+              value={otherTradeText}
+              onChange={(e) => {
+                const v = e.target.value.slice(0, 40)
+                setOtherTradeText(v)
+                setTrade(v.trim() ? `other:${v.trim().toLowerCase()}` : 'other')
+              }}
+              placeholder="e.g. landscaping, painting, locksmith"
+              style={{ ...inputStyle, marginTop: 10 }}
+              autoFocus
+            />
+          )}
 
           <label style={{ ...labelStyle, marginTop: 14 }}>Your cell phone</label>
           <input
