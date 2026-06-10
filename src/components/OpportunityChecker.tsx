@@ -88,8 +88,6 @@ export default function OpportunityChecker() {
       rawCount: 0,
       territoryStatus: 'open',
       leadsPerWeek: 10,
-      radiusMiles: 5,
-      windowDays: 90,
     }
     try {
       const r = await fetch('/api/opportunity-check', {
