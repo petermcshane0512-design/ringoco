@@ -95,9 +95,18 @@ export async function POST(req: NextRequest) {
     interval?: Interval
     creatorCode?: string
     bizId?: string
+    zip?: string
+    trade?: string
   }
   const tier: Tier = isValidTier(body.tier ?? '') ? (body.tier as Tier) : 'officemgr'
   const interval: Interval = body.interval === 'annual' ? 'annual' : 'monthly'
+
+  // 2026-06-10 — T3 territory enforcement. zip + trade reach checkout
+  // via /start/area's URL params (passed through /pricing). The webhook
+  // reads them out of metadata and calls claimTerritory() so the
+  // exclusivity promise becomes mechanically real.
+  const zip = (body.zip || '').replace(/\D/g, '').slice(0, 5)
+  const trade = (body.trade || '').trim().toLowerCase()
 
   // Read creator code from body OR cookie (set by /ref/[code] visit).
   const codeFromBody = normalizeCreatorCode(body.creatorCode)
@@ -138,6 +147,8 @@ export async function POST(req: NextRequest) {
       interval,
       creator_code: promoLookup?.attributionCode || '',
       biz_id: effectiveBizId || '',
+      territory_zip: zip,
+      territory_trade: trade,
     },
   }
 
@@ -152,6 +163,8 @@ export async function POST(req: NextRequest) {
       interval,
       creator_code: promoLookup?.attributionCode || '',
       biz_id: effectiveBizId || '',
+      territory_zip: zip,
+      territory_trade: trade,
     },
     subscription_data: subscriptionData,
     custom_text: {

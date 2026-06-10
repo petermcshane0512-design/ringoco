@@ -87,10 +87,14 @@ export default async function StartPage({ searchParams }: { searchParams: SP }) 
     })
   }
 
-  // Send to pricing w/ promo in URL so banner shows + checkout sees it.
+  // 2026-06-10 — T3 territory gate. Redirect to /start/area instead of
+  // /pricing so the prospect picks (zip, trade) BEFORE Stripe checkout.
+  // /start/area checks territory availability + routes:
+  //   open    → /pricing?zip=X&trade=Y (passed into Stripe metadata)
+  //   taken   → waitlist email capture
   const qs = new URLSearchParams()
   if (promo) qs.set('promo', promo)
   if (ref) qs.set('ref', ref)
   if (bizId) qs.set('b', bizId)
-  redirect(`/pricing${qs.toString() ? `?${qs.toString()}` : ''}`)
+  redirect(`/start/area${qs.toString() ? `?${qs.toString()}` : ''}`)
 }

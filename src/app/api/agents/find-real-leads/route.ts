@@ -204,30 +204,32 @@ async function findLeadsForTenant(
   const cfg = tradeFiltersFor(resolvedTrade)
   const tradeNormalized = normalizeTrade(resolvedTrade)
 
-  // 2026-06-09 — tight-radius first-2-weeks behavior. If we're within the
-  // onboarding window AND we have a geocoded business location, override
-  // the search radius down to ONBOARDING_TIGHT_RADIUS_MI so leads land
-  // close to where the contractor actually works. This works in two layers:
-  //   (1) shrinks expandRadius() output so BatchData queries fewer zips
-  //   (2) the post-filter below (haversine) trims any zip-edge candidates
-  //       outside the literal mile radius
-  const daysSinceFirstDrop = profile.first_lead_drop_at
-    ? (Date.now() - new Date(profile.first_lead_drop_at).getTime()) / 86400000
-    : 0  // 0 = treat as "no first drop yet" → still in onboarding
-  const inOnboardingWindow =
-    !profile.first_lead_drop_at ||
-    daysSinceFirstDrop < ONBOARDING_TIGHT_RADIUS_DAYS
+  // 2026-06-10 — PERMANENT address-radius search per Peter.
+  // If profile has business_lat/lng → always draw radius from THAT point
+  // using profile.service_radius_mi (default 3mi). Falls back to
+  // ZIP-only expansion when geocode missing.
+  //
+  //   (1) expandRadius() shrinks to fewer zips around home zips
+  //   (2) haversine post-filter trims zip-edge candidates outside
+  //       the literal mile radius from business_lat/lng
   const hasGeocodedBusinessLoc =
     typeof profile.business_lat === 'number' &&
     typeof profile.business_lng === 'number'
-  const tightRadiusActive = inOnboardingWindow && hasGeocodedBusinessLoc
 
-  const radius = tightRadiusActive
-    ? ONBOARDING_TIGHT_RADIUS_MI
-    : Math.min(50, profile.service_radius_mi ?? 20)
+  // Default 3mi if customer hasn't set service_radius_mi. Hard-cap 50mi
+  // to keep BatchData costs predictable.
+  const radius = Math.max(
+    1,
+    Math.min(50, profile.service_radius_mi ?? ONBOARDING_TIGHT_RADIUS_MI),
+  )
+  // tightRadiusActive controls the haversine post-filter. Active any time
+  // we have a geocoded business location — not just during onboarding.
+  const tightRadiusActive = hasGeocodedBusinessLoc
 
   if (tightRadiusActive) {
-    console.log(`[find-real-leads] user_id=${userId} TIGHT-RADIUS ${ONBOARDING_TIGHT_RADIUS_MI}mi from lat=${profile.business_lat} lng=${profile.business_lng} (day ${Math.floor(daysSinceFirstDrop)} of ${ONBOARDING_TIGHT_RADIUS_DAYS})`)
+    console.log(`[find-real-leads] user_id=${userId} ADDRESS-RADIUS ${radius}mi from lat=${profile.business_lat} lng=${profile.business_lng}`)
+  } else {
+    console.log(`[find-real-leads] user_id=${userId} ZIP-RADIUS ${radius}mi (no business_lat/lng — geocode missing)`)
   }
 
   // Expand to radius zips so coverage matches what the lead engine actually

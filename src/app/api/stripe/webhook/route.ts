@@ -10,6 +10,7 @@ import { sendEmail } from '@/lib/email'
 import { lookupOwnerEmail } from '@/lib/notify'
 import { fireLeadEngineForUser } from '@/lib/leadEngine'
 import { LEADS_PER_WEEK } from '@/lib/offer'
+import { claimTerritory, releaseCustomerTerritories } from '@/lib/territory'
 
 function escapeHtmlMin(s: string): string {
   return s
@@ -146,6 +147,42 @@ export async function POST(req: NextRequest) {
     }).eq('user_id', userId)
 
     console.log(`Subscription activated for user ${userId}: ${planTier}`)
+
+    // 2026-06-10 — T3 territory enforcement. Claim the (zip, trade)
+    // territory now that payment cleared. zip + trade were captured at
+    // /start/area and forwarded through checkout metadata.
+    // Fail-soft: if the territory was concurrently claimed by another
+    // shop (UNIQUE collision), log it for Peter to handle manually —
+    // do NOT throw, the customer already paid and Stripe owns the truth.
+    const territoryZip = session.metadata?.territory_zip || ''
+    const territoryTrade = session.metadata?.territory_trade || ''
+    if (territoryZip && territoryTrade) {
+      try {
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('business_name')
+          .eq('user_id', userId)
+          .maybeSingle()
+        const claim = await claimTerritory({
+          zip: territoryZip,
+          trade: territoryTrade,
+          customerId: userId,
+          stripeCustomerId: customerId,
+          stripeSubscriptionId: subscriptionId || null,
+          businessName: prof?.business_name ?? null,
+        })
+        if (!claim.ok) {
+          console.error(
+            `[territory] CONFLICT — user ${userId} paid for ${territoryZip}/${territoryTrade} ` +
+            `but it is held by ${claim.conflict?.customer_id ?? 'unknown'}. Peter needs to refund.`,
+          )
+        } else {
+          console.log(`[territory] claimed ${territoryZip}/${territoryTrade} for ${userId}`)
+        }
+      } catch (e) {
+        console.error('[territory] claim threw:', e)
+      }
+    }
 
     // ── Day-1 lead drop ──────────────────────────────────────────────
     // Fire lead-engine for this tenant NOW, not next 4am cron. Service
@@ -421,6 +458,17 @@ export async function POST(req: NextRequest) {
       }).eq('user_id', profile.user_id)
 
       console.log(`Subscription cancelled for user ${profile.user_id}`)
+
+      // 2026-06-10 — T3 territory enforcement. Move owned territories into
+      // a 14-day grace window so we don't double-sell during dunning/retry.
+      // territory-release-grace cron flips them back to 'open' after the
+      // window expires.
+      try {
+        const released = await releaseCustomerTerritories(profile.user_id)
+        console.log(`[territory] released ${released} territories to 14-day grace for ${profile.user_id}`)
+      } catch (e) {
+        console.error('[territory] release threw:', e)
+      }
 
       // Auto-deprovision: release Twilio number + delete Vapi assistant +
       // phone-number binding immediately. Stops the $1.15/mo Twilio rental
