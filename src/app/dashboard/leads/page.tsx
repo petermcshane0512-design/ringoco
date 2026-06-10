@@ -244,6 +244,12 @@ type GeneratedMessage = { email_subject: string; email_body: string; sms: string
 function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id: string, s: LeadDrop['status']) => void; onReveal: (leadId: string) => void }) {
   const l = drop.lead
   const fullAddr = [l.street_address, l.city, l.state, l.zip].filter(Boolean).join(', ')
+  // 2026-06-10 — Compact-then-expand pattern per Peter (mirrors the
+  // homepage sample-leads-card UX). Rows render condensed by default
+  // so the dashboard reads "10 leads to scroll through" not "10 full
+  // pages of stuff." Click any row to expand the full pitch + phone
+  // reveal + AI message + status controls.
+  const [expanded, setExpanded] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiMsg, setAiMsg] = useState<GeneratedMessage | null>(null)
@@ -308,10 +314,64 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
 
   return (
     <div style={{
-      background: '#fff', borderRadius: 14, padding: '18px 20px',
+      background: '#fff', borderRadius: 14,
       border: '1px solid rgba(10,168,159,0.16)',
-      boxShadow: '0 4px 16px rgba(7,27,58,0.05)',
+      boxShadow: expanded ? '0 8px 24px rgba(7,27,58,0.10)' : '0 4px 16px rgba(7,27,58,0.05)',
+      transition: 'box-shadow 180ms ease',
+      overflow: 'hidden',
     }}>
+      {/* Compact summary row — always visible. Click to toggle. */}
+      <button
+        type="button"
+        onClick={() => setExpanded((x) => !x)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+          padding: '14px 18px', background: 'transparent', border: 'none',
+          cursor: 'pointer', textAlign: 'left',
+        }}
+      >
+        <div style={{
+          padding: '4px 8px', borderRadius: 6,
+          background: '#FFD9A8', color: '#C84B26',
+          fontSize: 10, fontWeight: 900, letterSpacing: '0.04em',
+          flexShrink: 0,
+        }}>
+          {l.lead_score ?? 0}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 14, fontWeight: 900, color: '#0B1F3A' }}>
+              {l.owner_name ?? 'Owner unlisted'}
+            </span>
+            <span style={{
+              padding: '2px 7px', borderRadius: 5,
+              background: '#0B1F3A', color: '#fff',
+              fontSize: 9, fontWeight: 900, letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+            }}>
+              {sourceLabel.replace(/^[^\s]+\s/, '')}
+            </span>
+            <span style={{
+              padding: '2px 7px', borderRadius: 5,
+              background: drop.status === 'won' ? '#16803F' : drop.status === 'lost' ? '#A33C18' : '#7AAAB2',
+              color: '#fff', fontSize: 9, fontWeight: 900, letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+            }}>
+              {drop.status}
+            </span>
+          </div>
+          <div style={{ fontSize: 12, color: '#4A6670', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            📍 {fullAddr || l.zip} {l.year_built ? `· built ${l.year_built}` : ''}{l.home_value_est ? ` · $${Math.round(l.home_value_est / 1000)}K` : ''}
+          </div>
+        </div>
+        <div style={{ fontSize: 14, color: '#7AAAB2', flexShrink: 0, transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 180ms ease' }}>
+          ▾
+        </div>
+      </button>
+
+      {/* Expanded body — only when row is opened. */}
+      {expanded && (
+      <div style={{ padding: '0 20px 18px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 240 }}>
           <div style={{ fontSize: 11, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 }}>
@@ -492,6 +552,8 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
           </button>
         ))}
       </div>
+      </div>
+      )}
     </div>
   )
 }
