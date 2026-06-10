@@ -297,10 +297,15 @@ function TerritoryBlock({
   claimed: boolean
 }) {
   if (open) {
-    const claimHref = `/start?promo=FIRST400&zip=${encodeURIComponent(zip)}&trade=${encodeURIComponent(trade)}`
+    // 2026-06-10 — skip /start server component. Go DIRECT to /start/area
+    // form. The /start route's only job was to set cookies + redirect, and
+    // it was 500-ing on production for reasons we could not diagnose
+    // without Vercel runtime logs. /start/area sets the same cookies
+    // client-side from URL params, so no functionality is lost.
+    const claimHref = `/start/area?promo=FIRST400&zip=${encodeURIComponent(zip)}&trade=${encodeURIComponent(trade)}`
     return (
       <div style={{ marginTop: 14 }}>
-        <div style={openBadge}>This area is OPEN — one shop per area</div>
+        <div style={openBadge}>Locked in — one shop per area</div>
         <Link href={claimHref} style={ctaPrimary}>
           Claim my area — $97 →
         </Link>
