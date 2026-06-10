@@ -291,8 +291,9 @@ function HomeContent() {
           starts higher in the viewport.
             top:    clamp(20px, 3vw, 36px) -> clamp(13px, 2vw, 23px)
             bottom: clamp(28px, 4vw, 48px) -> clamp(18px, 2.6vw, 31px)
-          Horizontal padding unchanged. */}
-      <section style={{
+          Horizontal padding unchanged. className 'hero-section' allows the
+          480px media query to tighten side padding further. */}
+      <section className="hero-section" style={{
         position: 'relative',
         padding: 'clamp(13px, 2vw, 23px) clamp(16px, 5vw, 48px) clamp(18px, 2.6vw, 31px)',
         background: '#FFF8F0',
@@ -603,6 +604,27 @@ function HomeContent() {
           .founder-bar > div:first-child { margin: 0 auto; }
           .sticky-cta { display: flex !important; }
         }
+        /* 2026-06-10 — mobile (<=480px) fit pass per Peter. Sticky CTA bar
+           at the bottom of the viewport already covers primary action, so
+           nav links + the verbose nav CTA are duplicates that crowd the
+           logo. Hide them. Tighten hero typography + side padding so
+           nothing overflows at 375px (iPhone SE width). */
+        @media (max-width: 480px) {
+          .nav-secondary { display: none !important; }
+          .nav-cta { display: none !important; }
+          .hero-grid { gap: 16px !important; }
+          /* Hero h1 + paragraph copy: smaller floor so nothing overflows
+             and the H1 fits in 2 lines instead of 4-5 at 375px. */
+          .hero-grid h1 { font-size: clamp(22px, 6vw, 30px) !important; line-height: 1.08 !important; }
+          .hero-grid p { font-size: 13.5px !important; line-height: 1.5 !important; }
+          /* Pull the hero section's side padding tighter on mobile so the
+             OpportunityChecker widget + LeadsCard get full width. */
+          .hero-section { padding-left: 12px !important; padding-right: 12px !important; }
+          /* Make sure the sticky CTA bar at bottom doesn't sit on top of
+             real content — give the page bottom padding equal to its
+             approx height (60px). */
+          main { padding-bottom: 84px !important; }
+        }
       `}</style>
     </main>
   )
@@ -627,15 +649,15 @@ function Nav({ isSignedIn }: { isSignedIn: boolean }) {
             52% of 375 = 195px, now 39% = 146px, plenty of room for nav links. */}
         <Image src="/logo.png" alt="BellAveGo" width={285} height={89} style={{ objectFit: 'contain', maxWidth: 'min(39vw, 285px)', height: 'auto' }} priority />
       </Link>
-      <div style={{ display: 'flex', gap: 22, alignItems: 'center' }}>
-        <Link href="/founder" style={navLinkBig}>Founder</Link>
-        <Link href="/pricing" style={navLinkBig}>Pricing</Link>
+      <div style={{ display: 'flex', gap: 22, alignItems: 'center' }} className="nav-links">
+        <Link href="/founder" style={navLinkBig} className="nav-secondary">Founder</Link>
+        <Link href="/pricing" style={navLinkBig} className="nav-secondary">Pricing</Link>
         {isSignedIn ? (
-          <Link href="/dashboard" style={ctaNavPrimaryBig}>Dashboard →</Link>
+          <Link href="/dashboard" style={ctaNavPrimaryBig} className="nav-cta">Dashboard →</Link>
         ) : (
           <>
-            <Link href="/sign-in" style={navLinkBig}>Sign in</Link>
-            <Link href="/start?promo=FIRST400" style={ctaNavPrimaryBig}>Claim my area · $97 →</Link>
+            <Link href="/sign-in" style={navLinkBig} className="nav-secondary">Sign in</Link>
+            <Link href="/start?promo=FIRST400" style={ctaNavPrimaryBig} className="nav-cta">Claim my area · $97 →</Link>
           </>
         )}
       </div>
