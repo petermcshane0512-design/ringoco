@@ -229,6 +229,74 @@ function FreeLeadInner() {
                 )}
               </div>
 
+              {/* 2026-06-10 — "Your math" widget. Per Peter's strategy line
+                  ("they come to website to see were gonna make them money").
+                  Turns the abstract job-value range into a concrete monthly
+                  gross projection using the actual offer constants. Renders
+                  ONLY when we have a real job-value range — no fake math. */}
+              {(() => {
+                const min = Number(lead.est_job_min) || 0
+                const max = Number(lead.est_job_max) || 0
+                if (!min && !max) return null
+                const avgJob = Math.round((min + max) / 2)
+                const monthlyLeads = LEADS_PER_MONTH
+                const CONSERVATIVE_CLOSE_RATE = 0.05
+                const STANDARD_CLOSE_RATE = 0.10
+                const conservativeJobs = Math.max(1, Math.round(monthlyLeads * CONSERVATIVE_CLOSE_RATE))
+                const standardJobs = Math.max(1, Math.round(monthlyLeads * STANDARD_CLOSE_RATE))
+                const conservativeGross = conservativeJobs * avgJob
+                const standardGross = standardJobs * avgJob
+                const cost = 497
+                const conservativeNet = conservativeGross - cost
+                const standardNet = standardGross - cost
+                return (
+                  <div style={{
+                    marginTop: 14,
+                    padding: '18px 20px',
+                    borderRadius: 14,
+                    background: 'linear-gradient(135deg, #0B1F3A 0%, #163356 60%, #0D8F87 100%)',
+                    color: '#fff',
+                    boxShadow: '0 14px 36px rgba(11,31,58,0.20)',
+                  }}>
+                    <div style={{ fontSize: 11, fontWeight: 900, color: '#5EEAD4', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8 }}>
+                      Your math on leads like this
+                    </div>
+                    <div style={{ fontSize: 14, lineHeight: 1.6, marginBottom: 12 }}>
+                      <strong style={{ color: '#FFD9A8', fontSize: 16 }}>${avgJob.toLocaleString()}</strong> = average install at this address.
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 10 }}>
+                      <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                        <div style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 4 }}>
+                          Conservative ({Math.round(CONSERVATIVE_CLOSE_RATE * 100)}% close)
+                        </div>
+                        <div style={{ fontSize: 14, color: '#fff', lineHeight: 1.5 }}>
+                          {monthlyLeads} leads × {conservativeJobs} closes
+                          <br />
+                          <strong style={{ fontSize: 18, color: '#5EEAD4' }}>${conservativeGross.toLocaleString()}/mo gross</strong>
+                          <br />
+                          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>Net after $497: <strong style={{ color: '#5EEAD4' }}>${conservativeNet.toLocaleString()}</strong></span>
+                        </div>
+                      </div>
+                      <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(94,234,212,0.16)', border: '1.5px solid rgba(94,234,212,0.40)' }}>
+                        <div style={{ fontSize: 10, fontWeight: 800, color: '#5EEAD4', letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 4 }}>
+                          Standard ({Math.round(STANDARD_CLOSE_RATE * 100)}% close)
+                        </div>
+                        <div style={{ fontSize: 14, color: '#fff', lineHeight: 1.5 }}>
+                          {monthlyLeads} leads × {standardJobs} closes
+                          <br />
+                          <strong style={{ fontSize: 18, color: '#5EEAD4' }}>${standardGross.toLocaleString()}/mo gross</strong>
+                          <br />
+                          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>Net after $497: <strong style={{ color: '#5EEAD4' }}>${standardNet.toLocaleString()}</strong></span>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.70)', lineHeight: 1.55 }}>
+                      Even at {Math.round(CONSERVATIVE_CLOSE_RATE * 100)}% close rate the lead pays for the whole month in 1 job. The 1-Job Guarantee covers you if it doesn&rsquo;t.
+                    </div>
+                  </div>
+                )
+              })()}
+
               {/* OFFER STACK */}
               <div style={offerCard}>
                 <div style={{ fontSize: 11, fontWeight: 900, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>
