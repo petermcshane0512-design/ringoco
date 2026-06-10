@@ -22,16 +22,15 @@ const supabase = createClient(
 )
 
 type TerritoryRow = {
-  id: string
   zip: string
   trade: string
   metro: string | null
   status: 'open' | 'claimed' | 'grace'
-  customer_id: string | null
+  claimed_by_user_id: string | null
   stripe_customer_id: string | null
   business_name: string | null
   claimed_at: string | null
-  released_at: string | null
+  grace_expires_at: string | null
 }
 
 type WaitlistRow = {
@@ -39,7 +38,7 @@ type WaitlistRow = {
   zip: string
   trade: string
   email: string
-  business_name: string | null
+  reason: string
   created_at: string
 }
 
@@ -47,12 +46,12 @@ async function loadData(): Promise<{ territories: TerritoryRow[]; waitlist: Wait
   const [terrRes, waitRes] = await Promise.all([
     supabase
       .from('territories')
-      .select('id, zip, trade, metro, status, customer_id, stripe_customer_id, business_name, claimed_at, released_at')
+      .select('zip, trade, metro, status, claimed_by_user_id, stripe_customer_id, business_name, claimed_at, grace_expires_at')
       .order('claimed_at', { ascending: false, nullsFirst: false })
       .limit(500),
     supabase
-      .from('territory_waitlist')
-      .select('id, zip, trade, email, business_name, created_at')
+      .from('opportunity_waitlist')
+      .select('id, zip, trade, email, reason, created_at')
       .order('created_at', { ascending: false })
       .limit(200),
   ])
@@ -89,23 +88,23 @@ export default async function AdminTerritoriesPage() {
             <th style={th}>Trade</th>
             <th style={th}>Status</th>
             <th style={th}>Business</th>
-            <th style={th}>Customer ID</th>
+            <th style={th}>User ID</th>
             <th style={th}>Claimed</th>
             <th style={th}>Grace expires</th>
           </tr>
         </thead>
         <tbody>
           {territories.map((t) => (
-            <tr key={t.id} style={tr}>
+            <tr key={`${t.zip}-${t.trade}`} style={tr}>
               <td style={td}>{t.zip}</td>
               <td style={td}>{t.trade}</td>
               <td style={{ ...td, color: t.status === 'claimed' ? '#16803F' : t.status === 'grace' ? '#C84B26' : '#7AAAB2', fontWeight: 800 }}>
                 {t.status}
               </td>
               <td style={td}>{t.business_name || '—'}</td>
-              <td style={{ ...td, fontFamily: 'monospace', fontSize: 11 }}>{t.customer_id ?? '—'}</td>
+              <td style={{ ...td, fontFamily: 'monospace', fontSize: 11 }}>{t.claimed_by_user_id ?? '—'}</td>
               <td style={td}>{t.claimed_at ? new Date(t.claimed_at).toLocaleString() : '—'}</td>
-              <td style={td}>{t.released_at ? new Date(t.released_at).toLocaleString() : '—'}</td>
+              <td style={td}>{t.grace_expires_at ? new Date(t.grace_expires_at).toLocaleString() : '—'}</td>
             </tr>
           ))}
           {territories.length === 0 && (
@@ -124,7 +123,7 @@ export default async function AdminTerritoriesPage() {
             <th style={th}>Zip</th>
             <th style={th}>Trade</th>
             <th style={th}>Email</th>
-            <th style={th}>Business</th>
+            <th style={th}>Reason</th>
             <th style={th}>Submitted</th>
           </tr>
         </thead>
@@ -134,7 +133,7 @@ export default async function AdminTerritoriesPage() {
               <td style={td}>{w.zip}</td>
               <td style={td}>{w.trade}</td>
               <td style={td}>{w.email}</td>
-              <td style={td}>{w.business_name || '—'}</td>
+              <td style={td}>{w.reason}</td>
               <td style={td}>{new Date(w.created_at).toLocaleString()}</td>
             </tr>
           ))}

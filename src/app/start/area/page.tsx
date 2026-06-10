@@ -90,7 +90,7 @@ function StartAreaContent() {
       const r = await fetch('/api/territory/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ zip, trade, email: waitlistEmail, business_name: waitlistBiz || null }),
+        body: JSON.stringify({ zip, trade, email: waitlistEmail }),
       })
       const j = await r.json()
       if (j.ok) {

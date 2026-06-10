@@ -5,14 +5,18 @@ export const runtime = 'nodejs'
 
 /**
  * POST /api/territory/waitlist
- * Body: { zip: '12345', trade: 'hvac', email: 'shop@x.com', business_name?: string }
+ * Body: { zip: '12345', trade: 'hvac', email: 'shop@x.com' }
  *
  * Public. Captures a contractor's email + desired (zip, trade) when
- * their requested territory is already claimed. The release-grace cron
- * notifies them when the territory opens.
+ * their requested territory is already claimed. Writes to the shared
+ * opportunity_waitlist table with reason='claimed' so the same inbox
+ * also holds the homepage widget's 'uncovered' captures.
+ *
+ * The release-grace cron notifies these contractors when the territory
+ * opens (post-T3 TODO — the cron currently just flips the row).
  */
 export async function POST(req: NextRequest) {
-  let body: { zip?: string; trade?: string; email?: string; business_name?: string }
+  let body: { zip?: string; trade?: string; email?: string }
   try {
     body = await req.json()
   } catch {
@@ -27,12 +31,6 @@ export async function POST(req: NextRequest) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ ok: false, error: 'invalid email' }, { status: 400 })
   }
-  const result = await addToWaitlist({
-    zip,
-    trade,
-    email,
-    businessName: body.business_name || null,
-    source: 'start_area',
-  })
+  const result = await addToWaitlist({ zip, trade, email })
   return NextResponse.json(result)
 }

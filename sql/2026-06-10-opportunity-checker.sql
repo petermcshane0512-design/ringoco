@@ -44,24 +44,39 @@ create table if not exists opportunity_zip_cache (
 create index if not exists opportunity_zip_cache_age_idx on opportunity_zip_cache (computed_at);
 
 -- ── territories ─────────────────────────────────────────────────────────
--- Minimal exclusivity registry referenced by the widget.
+-- Exclusivity registry. Read by the homepage OpportunityChecker widget
+-- AND the dedicated /start/area gate. Written by the Stripe webhook on
+-- checkout.session.completed (claim) and customer.subscription.deleted
+-- (move to grace for 14 days, then release-grace cron flips → open).
+--
 --   status:
 --     'open'    — no contractor in this zip+trade slot
---     'grace'   — claimed but in 7-day grace period (still shows "OPEN")
---     'claimed' — locked; widget shows waitlist CTA
+--     'grace'   — claimed but in 14-day grace period (post-cancellation)
+--     'claimed' — locked; widget + /start/area show waitlist CTA
+--
+-- claimed_by_user_id is TEXT not UUID — Clerk user IDs are strings
+-- (`user_xxxx`) not UUIDs. The Stripe + business columns are populated
+-- by the webhook so /admin/territories can render them without joining
+-- profiles.
 create table if not exists territories (
-  zip                text not null,
-  trade              text not null,
-  status             text not null default 'open'
-                       check (status in ('open','grace','claimed')),
-  claimed_by_user_id uuid,
-  claimed_at         timestamptz,
-  grace_expires_at   timestamptz,
-  notes              text,
-  updated_at         timestamptz not null default now(),
+  zip                     text not null,
+  trade                   text not null,
+  status                  text not null default 'open'
+                            check (status in ('open','grace','claimed')),
+  claimed_by_user_id      text,
+  stripe_customer_id      text,
+  stripe_subscription_id  text,
+  business_name           text,
+  metro                   text,
+  claimed_at              timestamptz,
+  grace_expires_at        timestamptz,
+  notes                   text,
+  updated_at              timestamptz not null default now(),
   primary key (zip, trade)
 );
 create index if not exists territories_status_idx on territories (status);
+create index if not exists territories_owner_idx on territories (claimed_by_user_id) where claimed_by_user_id is not null;
+create index if not exists territories_grace_idx on territories (grace_expires_at) where status = 'grace';
 
 -- ── opportunity_waitlist ────────────────────────────────────────────────
 -- Email capture for two cases:
