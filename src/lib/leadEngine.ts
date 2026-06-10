@@ -153,8 +153,9 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
   // current ring up to TIGHT_CAP_MI. Prevents 60643/zip-match permit rows
   // from filling at ring=3 when they sit 2.5mi from the business address.
   const SHARED_POOL_MAX_MI = 1
-  const weeksSinceFirstDrop = (profile as { first_lead_drop_at?: string | null }).first_lead_drop_at
-    ? Math.floor((Date.now() - new Date((profile as { first_lead_drop_at: string }).first_lead_drop_at).getTime()) / (7 * 86400000))
+  const firstLeadDropAt = (profile as unknown as { first_lead_drop_at?: string | null }).first_lead_drop_at ?? null
+  const weeksSinceFirstDrop = firstLeadDropAt
+    ? Math.floor((Date.now() - new Date(firstLeadDropAt).getTime()) / (7 * 86400000))
     : 0
   const effectiveCap = weeksSinceFirstDrop < TIGHT_FIRST_WEEKS
     ? Math.min(TIGHT_CAP_MI, userCap)
