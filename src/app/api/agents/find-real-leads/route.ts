@@ -337,9 +337,14 @@ async function findLeadsForTenant(
       .select('lead_id, leads(street_address, zip)')
       .eq('user_id', userId)
       .limit(5000)
-    for (const d of (priorDrops || []) as Array<{ leads: { street_address: string | null; zip: string | null } | null }>) {
-      const sa = d?.leads?.street_address
-      const z = d?.leads?.zip
+    // PostgREST returns nested selects as arrays even when the FK is
+    // many-to-one. Handle both shapes (object | array | null) defensively
+    // via unknown bridge — the TS narrowing rules reject the direct cast.
+    type DropRow = { leads?: { street_address: string | null; zip: string | null } | Array<{ street_address: string | null; zip: string | null }> | null }
+    for (const raw of (priorDrops || []) as unknown as DropRow[]) {
+      const lead = Array.isArray(raw?.leads) ? raw.leads[0] : raw?.leads
+      const sa = lead?.street_address
+      const z = lead?.zip
       if (sa && z) priorAddrKeys.add(`${sa.trim().toLowerCase()}|${z}`)
     }
   }
