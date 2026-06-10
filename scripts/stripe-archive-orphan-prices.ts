@@ -28,7 +28,8 @@ if (!STRIPE_KEY) {
   process.exit(1)
 }
 
-const stripe = new Stripe(STRIPE_KEY, { apiVersion: '2025-09-30.clover' as Stripe.LatestApiVersion })
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const stripe = new Stripe(STRIPE_KEY, { apiVersion: '2025-09-30.clover' as any })
 
 // V2 orphan price IDs (from src/lib/pricing.ts PRICE_IDS_V2).
 // Receptionist $147 + Concierge $597 are unreachable from new checkouts
@@ -68,7 +69,8 @@ async function verifyPromo() {
     console.error(`  ✗ no active promotion_code "${PROMO_CODE}" found. checkout will silently fall back to allow_promotion_codes.`)
     return
   }
-  const promoObj = promo.data[0]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const promoObj = promo.data[0] as any
   console.log(`  ✓ promotion_code "${PROMO_CODE}" id=${promoObj.id} active=${promoObj.active}`)
   console.log(`    coupon.id=${promoObj.coupon.id} amount_off=$${(promoObj.coupon.amount_off || 0) / 100} duration=${promoObj.coupon.duration}`)
 
@@ -78,7 +80,7 @@ async function verifyPromo() {
 
   // Simulate the math: amount_off should equal $400 (or 80% off to land at $97).
   const monthly = (price.unit_amount || 0) / 100
-  const off = (promoObj.coupon.amount_off || 0) / 100
+  const off = (promoObj.coupon.amount_off || 0) / 100 as number
   const result = monthly - off
   console.log(`    Customer first month = $${monthly} - $${off} = $${result}`)
   if (Math.abs(result - 97) > 0.01) {

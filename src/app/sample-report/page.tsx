@@ -72,7 +72,7 @@ type SampleLead = {
 // Sample data follows the REAL schema from src/lib/leadEngine.ts. ZIPs +
 // signals match what the scrapers actually produce. Street numbers fully
 // redacted ("Oak Ridge Dr area") — no PII fabricated.
-const SAMPLE_LEADS: SampleLead[] = [
+const SAMPLE_LEADS: readonly SampleLead[] = ([
   { score: 92, source: 'permit',  trade: 'HVAC',     zip: '75024', city: 'Plano',     state: 'TX', street_area: 'Oak Ridge Dr area',  year_built: 1998, why: 'AC condenser permit filed 3 days ago' },
   { score: 88, source: 'storm',   trade: 'Roofing',  zip: '75093', city: 'Plano',     state: 'TX', street_area: 'Birch Ln area',       year_built: 2002, why: 'NOAA 1.7" hail strike on this block Sunday night' },
   { score: 86, source: 'permit',  trade: 'HVAC',     zip: '30301', city: 'Atlanta',   state: 'GA', street_area: 'Peachtree St area',   year_built: 2008, why: 'HVAC install permit pulled this week' },
@@ -83,7 +83,7 @@ const SAMPLE_LEADS: SampleLead[] = [
   { score: 76, source: 'move_in', trade: 'Plumbing', zip: '75070', city: 'McKinney',  state: 'TX', street_area: 'Cedar Park area',     year_built: 2015, why: 'New owner — moved in ~6 weeks ago' },
   { score: 72, source: 'move_in', trade: 'Handyman', zip: '85254', city: 'Scottsdale',state: 'AZ', street_area: 'Indian Bend area',    year_built: 2011, why: 'New owner — closed last month' },
   { score: 90, source: 'permit',  trade: 'HVAC',     zip: '85710', city: 'Tucson',    state: 'AZ', street_area: 'Catalina Ave area',   year_built: 2001, why: 'Furnace permit filed last week' },
-].slice(0, LEADS_PER_WEEK)
+] as const satisfies readonly SampleLead[]).slice(0, LEADS_PER_WEEK)
 
 const SOURCE_PILL: Record<SampleLead['source'], { bg: string; fg: string; label: string; emoji: string }> = {
   permit:  { bg: '#E0F2FE', fg: '#0369A1', label: 'Permit',   emoji: '🏛' },
