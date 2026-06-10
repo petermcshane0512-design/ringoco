@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import { LEADS_PER_WEEK, LEADS_PER_MONTH } from '@/lib/offer'
 
 /**
  * /dashboard — 2026-06-09 KILLER MONDAY-AM BRIEF.
@@ -455,13 +456,14 @@ export default function KillerDashboard() {
   // Use real leads when available, fall back to SAMPLE_WEEK so empty dashboards
   // still demo the killer state.
   const hasRealLeads = (summary?.this_week_count ?? 0) > 0
-  // Cap displayed leads per the leads-only pricing pivot: 10/week, 40/month.
-  // If the lead engine over-delivers, only show the contracted quantity.
+  // Cap displayed leads per the leads-only pricing pivot. Numbers from
+  // src/lib/offer.ts — single source of truth so dashboard cannot drift
+  // from marketing.
   const weekLeads = hasRealLeads
-    ? enrichLeadsForDashboard(summary?.this_week_leads || []).slice(0, 10)
+    ? enrichLeadsForDashboard(summary?.this_week_leads || []).slice(0, LEADS_PER_WEEK)
     : SAMPLE_WEEK
   const monthLeads = hasRealLeads
-    ? enrichLeadsForDashboard(summary?.this_month_leads || []).slice(0, 40)
+    ? enrichLeadsForDashboard(summary?.this_month_leads || []).slice(0, LEADS_PER_MONTH)
     : SAMPLE_WEEK
   const allLeads = hasRealLeads
     ? enrichLeadsForDashboard(summary?.all_leads || [])

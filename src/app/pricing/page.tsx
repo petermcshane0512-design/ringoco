@@ -17,7 +17,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import Link from 'next/link'
 import Image from 'next/image'
-import { GUARANTEE_SHORT } from '@/lib/offer'
+import { GUARANTEE_SHORT, LEADS_PER_WEEK, LEADS_PER_MONTH, PRICE_PER_LEAD_USD, PRICE_PER_LEAD_INTRO_USD } from '@/lib/offer'
 // LiveActivityMarquee import removed 2026-06-09 per brief rule "no invented customer counts / activity".
 
 // 2026-06-09 — Annual toggle removed per P3 of pricing-fix brief. One
@@ -148,13 +148,13 @@ export default function PricingPage() {
           <span style={{
             background: 'linear-gradient(135deg, #22C55E 0%, #16803F 100%)',
             WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-          }}>40 fresh leads</span> for <span style={{
+          }}>{LEADS_PER_MONTH} fresh exclusive leads</span> for <span style={{
             background: 'linear-gradient(135deg, #22C55E 0%, #16803F 100%)',
             WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
           }}>$97</span> first month.
         </h1>
         <p style={{ fontSize: 14, color: '#4A6670', margin: '0 auto', maxWidth: 540, lineHeight: 1.5 }}>
-          $2.42 per lead. HomeAdvisor charges $40-300 shared with 4 other shops. We don&rsquo;t.
+          ${PRICE_PER_LEAD_INTRO_USD.toFixed(2)} per lead first month. HomeAdvisor charges $40-300 shared with 4 other shops. We don&rsquo;t.
         </p>
       </section>
 
@@ -197,7 +197,7 @@ export default function PricingPage() {
 
             <ul style={{ listStyle: 'none', padding: 0, margin: '20px 0 22px', display: 'grid', gap: 9 }}>
               {[
-                '10 exclusive homeowner leads every week — 40/month, your area only',
+                `${LEADS_PER_WEEK} exclusive homeowner leads every week — ${LEADS_PER_MONTH}/month, your area only`,
                 'Verified phone number on every lead (skip-traced, not guessed)',
                 'Ready-to-send outreach script per lead — call, text, or email',
                 'Need more? Extra leads $25 each',
@@ -286,7 +286,7 @@ export default function PricingPage() {
                 </tr>
                 <tr style={{ background: 'linear-gradient(90deg, rgba(255,217,168,0.40) 0%, rgba(255,157,90,0.20) 100%)', borderTop: '2px solid rgba(232,116,43,0.40)' }}>
                   <td style={{ ...td, fontWeight: 900, color: '#C84B26' }}>BellAveGo</td>
-                  <td style={{ ...td, fontWeight: 900, color: '#C84B26' }}>$12.43</td>
+                  <td style={{ ...td, fontWeight: 900, color: '#C84B26' }}>${PRICE_PER_LEAD_USD.toFixed(2)}</td>
                   <td style={{ ...td, fontWeight: 800, color: '#0B1F3A' }}>✓ EXCLUSIVE per zip</td>
                   <td style={{ ...td, fontWeight: 800, color: '#0B1F3A' }}>✓ AI texts + emails as you</td>
                 </tr>
@@ -294,7 +294,7 @@ export default function PricingPage() {
             </table>
           </div>
           <p style={{ textAlign: 'center', marginTop: 18, fontSize: 13, color: '#4A6670' }}>
-            $12.43/lead at 40 leads/mo (10/wk) for $497. Extra leads $25 each when you want more.
+            ${PRICE_PER_LEAD_USD.toFixed(2)}/lead at {LEADS_PER_MONTH} leads/mo ({LEADS_PER_WEEK}/wk) for $497. Extra leads $25 each when you want more.
           </p>
         </div>
       </section>
@@ -309,10 +309,10 @@ export default function PricingPage() {
             {[
               { q: 'What if my zip code is already locked?', a: 'Enter your zip at signup — we tell you instantly if it&rsquo;s open. If it&rsquo;s gone, we hold your spot for the next 7 days as backup. No charge to check.' },
               { q: 'Where do the names + phones come from? Is this legal?', a: 'Public records. Building permits (filed at city hall), county property records, MLS sold data, NOAA storm data, USPS move-in data. All public. A paid skip-trace pulls verified phone. All compliant — same data Angi + HomeAdvisor use, except we don&rsquo;t share it.' },
-              { q: 'Do I have to cold-call all 40 leads?', a: 'No. AI sends a friendly intro text + email to each one from your number, signed by you, mentioning your shop. You only call back the people who reply YES.' },
+              { q: `Do I have to cold-call all ${LEADS_PER_MONTH} leads?`, a: 'No. AI sends a friendly intro text + email to each one from your number, signed by you, mentioning your shop. You only call back the people who reply YES.' },
               { q: 'What does the performance guarantee mean exactly?', a: 'If you don&rsquo;t book at least 1 paying job from leads we delivered in the first 30 days, we refund every dollar charged. Just open a refund request from the dashboard. No call required.' },
               { q: 'What if I cancel — do I lose the leads?', a: 'Keep every lead we ever sent you. No clawback. Cancel in dashboard in 2 clicks.' },
-              { q: 'How is this different from HomeAdvisor / Angi?', a: 'HomeAdvisor: $40-300/lead, sold to 4-5 shops, you cold-call. Us: $12.43/lead, exclusive to you, AI sends the intro for you. Opposite product, opposite model.' },
+              { q: 'How is this different from HomeAdvisor / Angi?', a: `HomeAdvisor: $40-300/lead, sold to 4-5 shops, you cold-call. Us: $${PRICE_PER_LEAD_USD.toFixed(2)}/lead, exclusive to you, AI sends the intro for you. Opposite product, opposite model.` },
             ].map((f) => (
               <details key={f.q} style={{
                 padding: '18px 22px',

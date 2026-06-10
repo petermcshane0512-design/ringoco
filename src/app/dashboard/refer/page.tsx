@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { LEADS_PER_WEEK } from '@/lib/offer'
 
 /**
  * /dashboard/refer
@@ -54,7 +55,7 @@ export default function ReferPage() {
 
   function shareSMS() {
     if (!data) return
-    const text = `Yo — using BellAveGo: 10 fresh homeowner leads in my zip every Monday, AI texts each one as me, I only call the YES's. $97 first month w/ my link: ${data.referral_link}`
+    const text = `Yo — using BellAveGo: ${LEADS_PER_WEEK} fresh homeowner leads in my zip every Monday, AI texts each one as me, I only call the YES's. $97 first month w/ my link: ${data.referral_link}`
     window.location.href = `sms:?body=${encodeURIComponent(text)}`
   }
 

@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/check-lead-count-hardcoding.mjs && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check-lead-counts": "node scripts/check-lead-count-hardcoding.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.90.0",

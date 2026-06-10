@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import { LEADS_PER_WEEK, LEADS_PER_MONTH, PRICE_PER_LEAD_INTRO_USD } from '@/lib/offer'
 
 /**
  * /free-lead?b={biz_id} — cold-email landing page.
@@ -134,7 +135,7 @@ function FreeLeadInner() {
                 Here&rsquo;s 1 real homeowner in <span style={{ background: 'linear-gradient(135deg, #FF9D5A, #C84B26)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>{lead.zip}</span>.
               </h1>
               <p style={{ fontSize: 15, color: '#4A6670', margin: '0 0 24px', lineHeight: 1.55 }}>
-                Yours to call today. No catch. <strong style={{ color: '#0B1F3A' }}>Want 40 more like this for $97?</strong> Read on.
+                Yours to call today. No catch. <strong style={{ color: '#0B1F3A' }}>Want {LEADS_PER_MONTH} more like this for $97?</strong> Read on.
               </p>
 
               {/* Lead card */}
@@ -188,15 +189,15 @@ function FreeLeadInner() {
                   Your offer
                 </div>
                 <h2 style={offerH1}>
-                  <span style={{ background: 'linear-gradient(135deg, #22C55E, #16803F)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>40 leads</span> like this for <span style={{ background: 'linear-gradient(135deg, #22C55E, #16803F)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>$97</span>.
+                  <span style={{ background: 'linear-gradient(135deg, #22C55E, #16803F)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>{LEADS_PER_MONTH} leads</span> like this for <span style={{ background: 'linear-gradient(135deg, #22C55E, #16803F)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>$97</span>.
                 </h2>
                 <p style={{ fontSize: 15, color: '#4A6670', lineHeight: 1.55, margin: '0 0 18px' }}>
-                  10 fresh homeowner leads in {lead.zip || 'your zip'} every week for 4 weeks. Verified phones. Pre-written outreach script per lead. <strong style={{ color: '#0B1F3A' }}>$2.42 per lead</strong> — vs HomeAdvisor at $40-300 shared with 4 other shops.
+                  {LEADS_PER_WEEK} fresh homeowner leads in {lead.zip || 'your zip'} every week for 4 weeks. Verified phones. Pre-written outreach script per lead. <strong style={{ color: '#0B1F3A' }}>${PRICE_PER_LEAD_INTRO_USD.toFixed(2)} per lead first month</strong> — vs HomeAdvisor at $40-300 shared with 4 other shops.
                 </p>
 
                 <ul style={offerBullets}>
                   {[
-                    '10 exclusive homeowner leads every week — 40 total month 1',
+                    `${LEADS_PER_WEEK} exclusive homeowner leads every week — ${LEADS_PER_MONTH} total month 1`,
                     'Verified phone on every lead (skip-traced)',
                     'Ready-to-send outreach script per lead',
                     'AI-scored 0-100 by intent + ticket size',
@@ -239,7 +240,7 @@ function FreeLeadInner() {
               <h1 style={pullingH1}>Want a free homeowner lead in your zip?</h1>
               <p style={{ fontSize: 14, color: '#4A6670', margin: '0 0 22px', lineHeight: 1.55 }}>
                 Reply to the email I sent you and I&rsquo;ll pull one fresh — 60 seconds.
-                Or skip ahead and lock your zip for $97 first month: 40 fresh leads in your service area.
+                Or skip ahead and lock your zip for $97 first month: {LEADS_PER_MONTH} fresh leads in your service area.
               </p>
               <Link href={checkoutUrl} style={ctaPrimary}>
                 Lock my zip — $97 →

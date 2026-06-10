@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { LEADS_PER_WEEK, LEADS_PER_MONTH } from '@/lib/offer'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -29,7 +30,7 @@ const CAMPAIGN_ID = process.env.INSTANTLY_CAMPAIGN_HVAC_Q3 || '8ac14ff5-8cd4-4ac
 const SYSTEM = `You write cold email copy for BellAveGo, a pure homeowner LEAD-GEN platform for solo + 1-3 person home-service crews (HVAC, plumbing, electrical, roofing, handyman). NEVER mention AI receptionist, phone-answering AI, voice AI, Emma, or anything voice-related — that product was DROPPED 2026-06-09.
 
 OFFER:
-- 80 fresh exclusive homeowner leads per month delivered Monday morning (~20/wk), in the contractor's zip+trade. Real names + addresses + phone. Sourced from public-record events (permits, aged HVAC units, property turnover, code-violation listings).
+- ${LEADS_PER_MONTH} fresh exclusive homeowner leads per month delivered Monday morning (${LEADS_PER_WEEK}/wk), in the contractor's zip+trade. Real names + addresses + phone. Sourced from public-record events (permits, aged HVAC units, property turnover, code-violation listings).
 - AUTO-OUTREACH: one-click button — AI sends personalized email + SMS to each delivered lead as if from the contractor. Contractor gets phone notification when homeowner replies. Saves them 1-2 hrs/day of cold-reachout.
 - EXCLUSIVE territory — leads never shared like HomeAdvisor/Angie/Networx.
 - **First month $97 w/ code FIRST400** (saves $400). Then $497/mo flat.

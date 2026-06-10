@@ -282,7 +282,7 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
         const authToken = process.env.TWILIO_AUTH_TOKEN
         const fromNumber = process.env.TWILIO_PHONE_NUMBER
         if (!accountSid || !authToken || !fromNumber || !row.owner_phone) return
-        const body = `🎯 BellAveGo: Your first 5 neighborhood leads just landed for ${row.business_name ?? 'your business'}. View them: https://www.bellavego.com/dashboard/leads`
+        const body = `🎯 BellAveGo: Your first ${LEADS_PER_WEEK} neighborhood leads just landed for ${row.business_name ?? 'your business'}. View them: https://www.bellavego.com/dashboard/leads`
         const params = new URLSearchParams({ From: fromNumber, To: row.owner_phone, Body: body })
         await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
           method: 'POST',

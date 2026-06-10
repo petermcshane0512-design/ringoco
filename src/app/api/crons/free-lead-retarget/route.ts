@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
+import { LEADS_PER_MONTH } from '@/lib/offer'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -104,10 +105,10 @@ export async function GET(req: NextRequest) {
         ? `last call — ${r.lead_owner_name || 'this lead'} unlocks at midnight`
         : `closing your ${r.zip || 'area'} slot tonight`
     const body = previous === 0
-      ? `Saw you opened the lead I pulled for you in ${r.zip || 'your area'} ${hoursSinceClaim(r.claimed_at)}h ago.\n\nIt's still attached to your email — yours regardless. But to LOCK ${r.zip || 'your area'} as the one shop we send leads to every Monday, takes 90 seconds:\n\nbellavego.com/start?promo=FIRST400&b=${r.biz_id}\n\n40 leads in your area for $97 — ${r.trade || 'in your trade'}. Cancel anytime.\n\n— Peter`
+      ? `Saw you opened the lead I pulled for you in ${r.zip || 'your area'} ${hoursSinceClaim(r.claimed_at)}h ago.\n\nIt's still attached to your email — yours regardless. But to LOCK ${r.zip || 'your area'} as the one shop we send leads to every Monday, takes 90 seconds:\n\nbellavego.com/start?promo=FIRST400&b=${r.biz_id}\n\n${LEADS_PER_MONTH} leads in your area for $97 — ${r.trade || 'in your trade'}. Cancel anytime.\n\n— Peter`
       : previous === 1
         ? `${r.lead_owner_name || 'The homeowner'} in ${r.zip} is still cold. 24h until I release ${r.zip} to the next shop on the waitlist.\n\nLock yours for $97: bellavego.com/start?promo=FIRST400&b=${r.biz_id}\n\n— Peter`
-        : `Last touch. ${r.zip} territory closes tonight if you don't claim it. $97 first month, 40 leads, refund + free month 2 if I don't book you a job: bellavego.com/start?promo=FIRST400&b=${r.biz_id}\n\n— Peter`
+        : `Last touch. ${r.zip} territory closes tonight if you don't claim it. $97 first month, ${LEADS_PER_MONTH} leads, refund + free month 2 if I don't book you a job: bellavego.com/start?promo=FIRST400&b=${r.biz_id}\n\n— Peter`
 
     return {
       biz_id: r.biz_id,

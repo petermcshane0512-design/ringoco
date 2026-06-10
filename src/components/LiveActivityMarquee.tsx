@@ -29,7 +29,10 @@ const SEED_EVENTS: Event[] = [
   { icon: '💬', text: 'Linda H. (Electrical · Allen TX) replied: "send a quote"', ago: '11 min ago' },
   { icon: '🔒', text: 'ZIP 30329 just locked by an Atlanta roofer',             ago: '14 min ago' },
   { icon: '💰', text: 'James P. (Plumbing · McKinney) booked $2,800 walkthrough', ago: '16 min ago' },
-  { icon: '✉', text: '10 fresh leads delivered to 47 dashboards · this morning', ago: '17 min ago' },
+  // 2026-06-10 — fabricated counts ("47 dashboards") flagged for removal per
+  // 'no invented counts' rule. Entire component slated for delete in T7.
+  // Number-of-leads phrase pulled from offer.ts to stop drift in the meantime.
+  { icon: '✉', text: 'fresh leads delivered this morning', ago: '17 min ago' },
   { icon: '🎯', text: 'Greg F. (Roofing · Fort Worth) booked $11,400 reroof',   ago: '19 min ago' },
   { icon: '🚀', text: 'New shop signed up · Miami FL',                          ago: '22 min ago' },
   { icon: '💬', text: 'Maria L. (HVAC · Phoenix) replied: "Sat 10am works"',    ago: '24 min ago' },

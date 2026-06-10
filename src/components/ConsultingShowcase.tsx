@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { LEADS, TOP_LEADS, TOP_PIPELINE, CALLS, TAG_STYLES, usd } from '@/lib/sampleLeads'
+import { LEADS_PER_WEEK } from '@/lib/offer'
 
 const TOTAL_LEAD_COUNT = LEADS.length
 
@@ -352,10 +353,10 @@ export default function ConsultingShowcase() {
         <header className="cs-head">
           <span className="cs-eyebrow">Weekly Report · Included on every plan</span>
           <h2 className="cs-h2">
-            5 fresh leads in your neighborhood. <span className="money">Real homes. Real reasons. Real phone numbers. Every week.</span>
+            {LEADS_PER_WEEK} fresh leads in your neighborhood. <span className="money">Real homes. Real reasons. Real phone numbers. Every week.</span>
           </h2>
           <p className="cs-sub">
-            Every Monday BellAveGo drops 5 high-intent homeowners straight to your dashboard. We mine new permits, deed transfers, aging-HVAC homes, new neighbors moving in, storm-damage zones, rebate-window claims, pre-listing tune-ups, rental-owner emergencies, energy-bill spikes, estate &amp; probate transitions, solar-stack add-ons, and competitor-switch targets — pre-qualified, ranked by addressable revenue, and ready to call. Below is a real sample week for a Phoenix HVAC shop.
+            Every Monday BellAveGo drops {LEADS_PER_WEEK} high-intent homeowners straight to your dashboard. We mine new permits, deed transfers, aging-HVAC homes, new neighbors moving in, storm-damage zones, rebate-window claims, pre-listing tune-ups, rental-owner emergencies, energy-bill spikes, estate &amp; probate transitions, solar-stack add-ons, and competitor-switch targets — pre-qualified, ranked by addressable revenue, and ready to call. Below is a real sample week for a Phoenix HVAC shop.
           </p>
         </header>
 

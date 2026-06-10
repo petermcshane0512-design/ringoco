@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
+import { LEADS_PER_WEEK, PRICE_MONTHLY_USD, INTRO_PRICE_USD, INTRO_PROMO_CODE } from '@/lib/offer'
 
 const anthropic = new Anthropic()
 const supabase = createClient(
@@ -50,17 +51,18 @@ export async function draftReplyForHotLead(opts: {
   replySubject?: string
 }): Promise<string> {
   const { lead, replyBody, replySubject } = opts
-  const system = `You write replies to interested cold-email leads for BellAveGo, an AI receptionist for home-service contractors (HVAC, plumbing, electrical). The user just received a reply from a lead and you draft what should go back.
+  const system = `You write replies to interested cold-email leads for BellAveGo, a pure homeowner LEAD-GEN platform for solo + 1-3 person home-service crews (HVAC, plumbing, electrical, roofing, handyman). The user just received a reply from a lead and you draft what should go back.
 
 Rules:
 - Under 60 words.
 - Written by Peter, the founder. First-person ("I", "we"). Casual but direct.
 - One specific ask at the end. Either: "want the signup link?", "what's your trade?", "free for a 5-min call?", or a Calendly link request.
 - NEVER use: leverage, synergy, robust, solution, transform, em-dashes longer than one. No emojis. No markdown.
-- If they ask price: $297/mo flat. Unlimited calls answered, 5 fresh neighborhood leads delivered every Monday. 30-day money-back guarantee.
-- If they ask demo: tell them to call (651) 467-7829 to talk to the AI directly.
+- NEVER mention: AI receptionist, phone-answering AI, voice AI, Emma, demo line phone number — that product was DROPPED 2026-06-09.
+- If they ask price: $${INTRO_PRICE_USD} first month with code ${INTRO_PROMO_CODE}, $${PRICE_MONTHLY_USD}/mo flat after. ${LEADS_PER_WEEK} fresh exclusive neighborhood leads delivered every Monday, AI auto-outreach as the contractor. 30-day money-back guarantee.
+- If they ask demo: send them the sample report at bellavego.com/sample-report.
 - If they sound skeptical: address the specific objection in one line, then ask.
-- If they ask "who is this": say BellAveGo, AI that answers missed calls for contractors, built by Peter (solo founder).
+- If they ask "who is this": say BellAveGo, exclusive homeowner lead-gen for home-service shops, built by Peter (solo founder).
 
 Output ONLY the reply body. No subject line. No "Hi {Name}", no "Best, Peter" sign-off — those get added by Instantly.`
 
@@ -101,12 +103,12 @@ Draft the reply now.`
 function fallbackDraft(lead: LeadContext, replyBody: string): string {
   const name = lead.ownerFirstName ? `${lead.ownerFirstName}, ` : ''
   if (/price|cost|how much/i.test(replyBody)) {
-    return `${name}$297/mo flat. Unlimited calls answered + 5 fresh neighborhood leads delivered every Monday. 30-day money-back guarantee, cancel anytime. Want the signup link?`
+    return `${name}$${INTRO_PRICE_USD} first month with code ${INTRO_PROMO_CODE}, then $${PRICE_MONTHLY_USD}/mo flat. ${LEADS_PER_WEEK} fresh exclusive neighborhood leads delivered every Monday + AI auto-outreach as your shop. 30-day money-back, cancel anytime. Want the signup link?`
   }
   if (/demo|show|see/i.test(replyBody)) {
-    return `${name}call (651) 467-7829 and talk to it like you're a customer. 90 seconds, no rep on the other end. After that I'll send you the signup link if you want.`
+    return `${name}see a sample Monday lead drop here: bellavego.com/sample-report. Real format, redacted names. Want the signup link after?`
   }
-  return `${name}thanks for replying. Quick answer to your question first — then if it's worth a 5-min call I can show you the rest. What's your biggest blocker right now: missed calls, no-shows, or after-hours?`
+  return `${name}thanks for replying. Quick answer to your question first — then if it's worth a 5-min call I can show you the rest. What's your biggest blocker right now: not enough leads, paying too much for shared leads, or no time to chase the ones you do get?`
 }
 
 export function newShortCode(): string {
