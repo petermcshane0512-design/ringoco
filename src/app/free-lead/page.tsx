@@ -353,7 +353,7 @@ function FreeLeadInner() {
               </div>
               <h1 style={pullingH1}>We&rsquo;re still building inventory for your zip.</h1>
               <p style={{ fontSize: 14.5, color: '#4A6670', margin: '0 0 22px', lineHeight: 1.55 }}>
-                Be the first shop in your zip code. <strong style={{ color: '#0B1F3A' }}>Lock your territory for $97</strong> and the moment leads land, you get them — exclusive, no sharing, every Monday morning.
+                Be the first shop in your zip code. <strong style={{ color: '#0B1F3A' }}>Lock your territory for $97</strong> and the moment leads land, you get them — exclusive, no sharing, fresh batch every 7 days.
               </p>
               <Link href={checkoutUrl} style={ctaPrimary}>
                 Lock my zip — $97 →

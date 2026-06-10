@@ -131,7 +131,7 @@ export default function SampleReportPage() {
             fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.05,
             margin: '0 0 14px',
           }}>
-            This is what lands in your inbox every Monday.
+            This is what lands in your dashboard within ~30 min of signup.
           </h1>
           <p style={{ fontSize: 'clamp(15px, 1.4vw, 18px)', color: '#3D5A66', lineHeight: 1.55, maxWidth: 680, margin: '0 0 28px' }}>
             {LEADS_PER_WEEK} prospect homeowners in your service area, scored 0-100 by AI on intent + ticket value.

@@ -182,12 +182,11 @@ function StartAreaContent() {
   async function onConfirmAddress() {
     if (!confirm) return
     const phoneDigits = phone.replace(/\D/g, '')
-    if (isSignedIn) {
-      await fireCheckout(zip, trade, address.trim(), phoneDigits)
-    } else {
-      const back = encodeURIComponent('/start/area?autoco=1')
-      router.push(`/sign-up?redirect_url=${back}`)
-    }
+    // 2026-06-10 — FRICTIONLESS CHECKOUT. Clerk sign-up gate REMOVED.
+    // Anonymous prospects swipe card immediately. Webhook creates Clerk
+    // user from Stripe-collected email post-payment + /checkout/return
+    // auto-signs them in via Clerk sign-in token. 4 friction points → 1.
+    await fireCheckout(zip, trade, address.trim(), phoneDigits)
   }
 
   function onEditAddress() {
@@ -243,7 +242,7 @@ function StartAreaContent() {
           Pick your service area.
         </h1>
         <p style={{ fontSize: 15, color: '#3D5A66', lineHeight: 1.55, margin: '0 0 24px' }}>
-          Drop your business address — we deliver {LEADS_PER_WEEK} fresh homeowner leads to your dashboard every Monday, starting at <strong>1 mile</strong> from this address and only widening when nearby supply runs low.
+          Drop your business address — your first {LEADS_PER_WEEK} fresh homeowner leads land in your dashboard within <strong>~30 minutes of signup</strong>, starting at <strong>1 mile</strong> from this address and only widening when nearby supply runs low. {LEADS_PER_WEEK} more every 7 days after.
         </p>
 
         <form onSubmit={onCheck} style={{
@@ -363,7 +362,7 @@ function StartAreaContent() {
           </button>
 
           <p style={{ fontSize: 11.5, color: '#7AAAB2', textAlign: 'center', margin: '12px 0 0' }}>
-            ${INTRO_PRICE_USD} first month with code {promo} · {LEADS_PER_WEEK} fresh leads every Monday · Cancel anytime
+            ${INTRO_PRICE_USD} first month with code {promo} · First {LEADS_PER_WEEK} leads in ~30 min, {LEADS_PER_WEEK} every 7 days after · Cancel anytime
           </p>
         </form>
 
