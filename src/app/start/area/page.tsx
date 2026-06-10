@@ -62,6 +62,10 @@ function StartAreaContent() {
   const [waitlistBiz, setWaitlistBiz] = useState('')
   const [waitlistedOk, setWaitlistedOk] = useState(false)
   const [err, setErr] = useState('')
+  // 2026-06-10 — Fix #6 pin confirm. Pre-Stripe geocode + "is this the
+  // address you meant?" gate. Catches typos that would otherwise burn $6
+  // BatchData and deliver leads in the wrong neighborhood.
+  const [confirm, setConfirm] = useState<null | { formatted: string; lat: number; lng: number }>(null)
 
   // Prefill from cookies (set on prior /start/area visit or by the homepage
   // OpportunityChecker) OR from URL params (passed by the homepage widget).
@@ -151,17 +155,32 @@ function StartAreaContent() {
       setResult({ status: j.status })
       if (j.status === 'open') {
         // Save area + address + phone so they survive the Clerk sign-up
-        // bounce, then either go straight to Stripe (already signed in) or
-        // sign-up → /start/area?autoco=1 which fires checkout once auth lands.
+        // bounce.
         writeCookie(AREA_ZIP_COOKIE, zip)
         writeCookie(AREA_TRADE_COOKIE, trade)
         writeCookie(AREA_ADDR_COOKIE, address.trim())
         writeCookie(AREA_PHONE_COOKIE, phoneDigits)
-        if (isSignedIn) {
-          await fireCheckout(zip, trade, address.trim(), phoneDigits)
-        } else {
-          const back = encodeURIComponent('/start/area?autoco=1')
-          router.push(`/sign-up?redirect_url=${back}`)
+        // Fix #6 — geocode preview gate. Show the formatted address Google
+        // resolved + explicit confirm before fireCheckout. Cheap insurance:
+        // ~150ms latency + $0.005, prevents wrong-neighborhood delivery.
+        try {
+          const gr = await fetch('/api/geocode-preview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ address: address.trim() }),
+          })
+          const gj = await gr.json()
+          if (gj.ok) {
+            setConfirm({ formatted: gj.formatted, lat: gj.lat, lng: gj.lng })
+            return
+          }
+          // Geocode failed: warn but still let them proceed — Google's
+          // geocoder rejects valid addresses occasionally, do not block sale.
+          setErr('We could not verify that address with Google Maps. Double-check spelling, or proceed if you are sure.')
+          setConfirm({ formatted: address.trim(), lat: 0, lng: 0 })
+        } catch {
+          // Network error on geocode: same fallback, do not block.
+          setConfirm({ formatted: address.trim(), lat: 0, lng: 0 })
         }
       }
     } catch {
@@ -169,6 +188,22 @@ function StartAreaContent() {
     } finally {
       setChecking(false)
     }
+  }
+
+  async function onConfirmAddress() {
+    if (!confirm) return
+    const phoneDigits = phone.replace(/\D/g, '')
+    if (isSignedIn) {
+      await fireCheckout(zip, trade, address.trim(), phoneDigits)
+    } else {
+      const back = encodeURIComponent('/start/area?autoco=1')
+      router.push(`/sign-up?redirect_url=${back}`)
+    }
+  }
+
+  function onEditAddress() {
+    setConfirm(null)
+    setErr('')
   }
 
   async function onWaitlist(e: React.FormEvent) {
@@ -311,6 +346,72 @@ function StartAreaContent() {
             ${INTRO_PRICE_USD} first month with code {promo} · {LEADS_PER_WEEK} fresh leads every Monday · Cancel anytime
           </p>
         </form>
+
+        {confirm && (
+          <div style={{
+            marginTop: 24, padding: 22, borderRadius: 16,
+            background: '#FFFFFF',
+            border: '2px solid #E8742B',
+            boxShadow: '0 14px 40px rgba(232,116,43,0.18)',
+          }}>
+            <div style={{ fontSize: 11, fontWeight: 900, color: '#E8742B', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>
+              Confirm your address
+            </div>
+            <p style={{ margin: '0 0 6px', fontSize: 13, color: '#3D5A66', lineHeight: 1.5 }}>
+              We&rsquo;ll deliver leads within 3 miles of this point for the first 4 weeks.
+              {' '}<strong style={{ color: '#0B1F3A' }}>Is this the address you meant?</strong>
+            </p>
+            <div style={{
+              margin: '12px 0 16px',
+              padding: '14px 16px',
+              background: '#FFF8F0',
+              borderRadius: 10,
+              border: '1px solid rgba(232,116,43,0.30)',
+              fontSize: 15,
+              fontWeight: 700,
+              color: '#0B1F3A',
+            }}>
+              📍 {confirm.formatted}
+            </div>
+            {confirm.lat !== 0 && confirm.lng !== 0 && (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${confirm.lat},${confirm.lng}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: 12, color: '#7AAAB2', textDecoration: 'underline', display: 'inline-block', marginBottom: 14 }}
+              >
+                Open this pin in Google Maps to verify ↗
+              </a>
+            )}
+            <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+              <button
+                type="button"
+                onClick={onConfirmAddress}
+                disabled={checking}
+                style={{
+                  flex: 1, padding: '14px 18px', borderRadius: 12,
+                  background: checking ? 'rgba(11,31,58,0.3)' : 'linear-gradient(135deg, #FF9D5A, #E8742B 60%, #C84B26 100%)',
+                  color: '#fff', fontWeight: 900, fontSize: 15, border: 'none', cursor: checking ? 'wait' : 'pointer',
+                  boxShadow: '0 10px 26px rgba(232,116,43,0.40)',
+                }}
+              >
+                {checking ? 'Loading checkout…' : 'Yes — continue to checkout →'}
+              </button>
+              <button
+                type="button"
+                onClick={onEditAddress}
+                style={{
+                  padding: '14px 18px', borderRadius: 12,
+                  background: '#FFFFFF',
+                  color: '#0B1F3A', fontWeight: 800, fontSize: 14,
+                  border: '1.5px solid rgba(11,31,58,0.22)', cursor: 'pointer',
+                }}
+              >
+                Edit
+              </button>
+            </div>
+          </div>
+        )}
 
         {(taken || unserved) && !waitlistedOk && (
           <div style={{
