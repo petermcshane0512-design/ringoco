@@ -140,6 +140,10 @@ export default function LeadsPage() {
     if (j.drops) setDrops(j.drops)
     if (j.quota) setQuota(j.quota)
     if (j.next_lead_drop_at !== undefined) setNextDropAt(j.next_lead_drop_at)
+    // Contact-backfill diagnostics → same amber banner as engine notes.
+    if (Array.isArray(j.contact_backfill_notes) && j.contact_backfill_notes.length > 0) {
+      setEngineNote(j.contact_backfill_notes.join(' · '))
+    }
     return Array.isArray(j.drops) ? j.drops.length : 0
   }
 

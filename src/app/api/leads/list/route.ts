@@ -119,6 +119,8 @@ export async function GET() {
     skip_trace_attempted_at?: string | null; skip_trace_hit?: boolean | null
   }
   const RETRACE_AFTER_MS = 10 * 60 * 1000
+  // Surfaced to the dashboard banner — trace failures must name themselves.
+  const contactBackfillNotes: string[] = []
   const eligibleContact = drops
     .map((d) => d.lead as unknown as ContactPatch)
     .filter((l) => l && l.street_address && !l.owner_phone)
@@ -164,6 +166,8 @@ export async function GET() {
         state: l.state ?? undefined,
         zip: l.zip ?? undefined,
       })
+      if (!t.ok) contactBackfillNotes.push(`trace failed: ${t.error || 'unknown'}`)
+      else if (!t.hit) contactBackfillNotes.push(`no owner data found for ${l.street_address}`)
       const update: Record<string, unknown> = {
         skip_trace_attempted_at: new Date().toISOString(),
         skip_trace_hit: t.ok && t.hit,
@@ -176,7 +180,9 @@ export async function GET() {
       }
       l.skip_trace_attempted_at = update.skip_trace_attempted_at as string
       await supabase.from('leads').update(update).eq('id', l.id)
-    } catch { /* contact backfill is enhancement — never fail the list */ }
+    } catch (e) {
+      contactBackfillNotes.push(`trace threw: ${(e as Error).message}`)
+    }
   }
 
   const usedThisPeriod = drops.filter((d) => new Date(d.drop_date) >= periodStart).length
@@ -192,5 +198,6 @@ export async function GET() {
       used_this_period: usedThisPeriod,
     },
     next_lead_drop_at: profile.next_lead_drop_at,
+    ...(contactBackfillNotes.length > 0 ? { contact_backfill_notes: contactBackfillNotes.slice(0, 3) } : {}),
   })
 }
