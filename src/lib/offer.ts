@@ -160,8 +160,8 @@ export const SITE_URL = 'https://www.bellavego.com'
  * Unified meta description — used by metadata, OG, and Twitter.
  * KEEP IDENTICAL across all three per the brief.
  */
-export const META_TITLE = `${BRAND_NAME} — ${LEADS_PER_WEEK} Fresh Contractor Leads Every Week | HVAC, Plumbing, Roofing`
-export const META_DESCRIPTION = `${LEADS_PER_WEEK} fresh leads in your service area, delivered every week. $${PRICE_MONTHLY_USD}/mo — first month $${INTRO_PRICE_USD}. Built for HVAC, plumbing, and roofing contractors. Cancel anytime.`
+export const META_TITLE = `${BRAND_NAME} — ${LEADS_PER_WEEK} Fresh Contractor Leads Every Week | HVAC, Plumbing, Electrical, Roofing, Handyman`
+export const META_DESCRIPTION = `${LEADS_PER_WEEK} fresh leads in your service area, delivered every week. $${PRICE_MONTHLY_USD}/mo — first month $${INTRO_PRICE_USD}. Built for ${SUPPORTED_TRADES_SENTENCE}. Cancel anytime.`
 
 /**
  * Honest data-source description — for the homepage "what you get Monday"

@@ -12,6 +12,7 @@ import { LEADS_PER_WEEK, LEADS_PER_MONTH } from '@/lib/offer'
 import HeroStatic from './HeroStatic'
 import OpportunityChecker from '@/components/OpportunityChecker'
 import ScoutTeam from '@/components/ScoutTeam'
+import LiveLeadFeed from '@/components/LiveLeadFeed'
 
 /**
  * Homepage — 2026-06-09 Hormozi/Elon CLOSE STACK for $10M ARR by May 12 2027.
@@ -275,16 +276,15 @@ function HomeContent() {
   const TEASER_LEADS = variant.teaserLeads
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#FFF8F0', color: '#0B1F3A', minHeight: '100vh', overflowX: 'hidden', paddingBottom: 70 }}>
-      {/* 2026-06-10 — Live activity ticker REMOVED entirely. The events were
-          synthetic seed data ('Mike C. booked $4,200 install', 'ZIP 75024 just
-          locked' etc.) hardcoded in LiveActivityMarquee's SEED_EVENTS array.
-          Per Peter's 'no fabricated counts or events on customer-facing
-          surfaces' rule (2026-06-10), the component + its fake events were
-          deleted, not display:none'd. A future ticker may be reintroduced
-          ONLY if it renders from a real events table (and stays hidden while
-          that table is empty). */}
+      {/* 2026-06-10 — fake LiveActivityMarquee deleted same day (synthetic
+          seed events violated the no-fabricated-events rule). LiveLeadFeed
+          below satisfies the reintroduction condition: it renders ONLY real
+          rows from the leads table via /api/live-feed (ZIP-level, no PII)
+          and returns null while fewer than 6 real events exist. */}
 
       <Nav isSignedIn={!!isSignedIn} />
+
+      <LiveLeadFeed />
 
       {/* HERO — aurora animated blobs behind content */}
       {/* 2026-06-10 — vertical padding tightened ~35% per Peter so the H1
@@ -479,7 +479,7 @@ function HomeContent() {
                 Book a paying job in <strong>30 days</strong> or full refund + <strong>your next month free</strong> + you keep every lead. No clawback. No questions.
               </div>
             </div>
-            <Link href="/start?promo=FIRST400" style={{ ...ctaHeroPrimary, width: '100%', justifyContent: 'center', padding: '17px 28px', fontSize: 16 }}>
+            <Link href="/start?promo=FIRST400" className="bavg-cta-sheen" style={{ ...ctaHeroPrimary, width: '100%', justifyContent: 'center', padding: '17px 28px', fontSize: 16, position: 'relative', overflow: 'hidden' }}>
               Start $97 trial — lock your zip →
             </Link>
             <p style={{ fontSize: 12, color: '#4A6670', textAlign: 'center', margin: '14px 0 0' }}>
@@ -520,7 +520,7 @@ function HomeContent() {
         <p style={{ color: 'rgba(255,255,255,0.94)', fontSize: 16, maxWidth: 560, margin: '0 auto 28px', lineHeight: 1.6 }}>
           <strong>$97</strong> first month w/ <strong>FIRST400</strong>. Book a paying job in 30 days OR full refund + <strong>your next month free</strong> + keep every lead. One shop per area. $497/mo starting month 2.
         </p>
-        <Link href="/start?promo=FIRST400" style={ctaFinal}>
+        <Link href="/start?promo=FIRST400" className="bavg-cta-sheen" style={{ ...ctaFinal, position: 'relative', overflow: 'hidden' }}>
           Start $97 trial — lock your zip →
         </Link>
         <p style={{ marginTop: 18, fontSize: 13, color: 'rgba(255,255,255,0.92)' }}>
@@ -578,6 +578,22 @@ function HomeContent() {
         </Link>
       </div>
 
+      <style jsx global>{`
+        @keyframes bavgSheen {
+          0%, 60% { transform: translateX(-130%) skewX(-18deg); }
+          100%    { transform: translateX(230%) skewX(-18deg); }
+        }
+        .bavg-cta-sheen::after {
+          content: '';
+          position: absolute; top: 0; bottom: 0; left: 0; width: 40%;
+          background: linear-gradient(105deg, transparent, rgba(255,255,255,0.35), transparent);
+          animation: bavgSheen 3.2s ease-in-out infinite;
+          pointer-events: none;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .bavg-cta-sheen::after { animation: none; }
+        }
+      `}</style>
       <style jsx>{`
         .leadscard-scroll::-webkit-scrollbar {
           width: 6px;
@@ -1130,7 +1146,7 @@ function ExitIntentPopup() {
           Wait — your zip is still open.
         </h3>
         <p style={{ fontSize: 14.5, color: '#4A6670', margin: '0 0 22px', lineHeight: 1.55 }}>
-          47 zips locked this week. 953 still open. Your competitor 1 metro over hasn&rsquo;t found us yet. Lock yours for <strong style={{ color: '#0B1F3A' }}>$97 (FIRST400)</strong> before they do.
+          One shop per area — when yours is taken, it&rsquo;s taken. Lock yours for <strong style={{ color: '#0B1F3A' }}>$97 (FIRST400)</strong> before your competitor finds us first.
         </p>
         <Link href="/start?promo=FIRST400" onClick={close} style={{
           display: 'block', textAlign: 'center',

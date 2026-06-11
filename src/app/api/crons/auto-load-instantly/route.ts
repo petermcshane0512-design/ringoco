@@ -140,11 +140,16 @@ async function pushLead(lead: Lead, leadsPreview: string): Promise<{ ok: boolean
       // Template merges both. Falls back to empty if either not yet written.
       personalized_opener: lead.personalized_opener || '',
       sample_lead_snippet: lead.sample_lead_snippet || '',
+      // 2026-06-10 — email-only + hot-call pivot. The free-lead landing is
+      // the conversion surface AND the hot-lead trigger (2 visits → SMS to
+      // Peter). Template should link {{free_lead_url}}, not report_url.
+      free_lead_url: `https://www.bellavego.com/free-lead?b=${lead.id}`,
       // Bold CTA line + promo code (Hormozi $100M Money Models — sub-$100
       // trip-wire entry point). Pre-rendered per lead so the template
       // stays consistent across variants.
-      promo_code: 'FIRST200',
-      promo_url: 'bellavego.com/start?promo=FIRST200',
+      // 2026-06-10 — FIRST200 superseded by FIRST400 ($497 → $97 month 1).
+      promo_code: 'FIRST400',
+      promo_url: 'bellavego.com/start?promo=FIRST400',
     },
     skip_if_in_workspace: true,
     skip_if_in_campaign: true,

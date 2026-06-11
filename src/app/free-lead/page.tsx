@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { LEADS_PER_WEEK, LEADS_PER_MONTH, PRICE_PER_LEAD_INTRO_USD } from '@/lib/offer'
+import LiveLeadFeed from '@/components/LiveLeadFeed'
 
 /**
  * /free-lead?b={biz_id} — cold-email landing page.
@@ -110,6 +111,10 @@ function FreeLeadInner() {
         </a>
       </div>
 
+      {/* Real lead-discovery events (no links — does not compete with the
+          single CTA). Proof the machine is live while the prospect decides. */}
+      <LiveLeadFeed />
+
       <section style={{ padding: 'clamp(28px, 5vw, 56px) clamp(16px, 5vw, 40px)' }}>
         <div style={{ maxWidth: 700, margin: '0 auto' }}>
 
@@ -129,6 +134,7 @@ function FreeLeadInner() {
               <button
                 type="button"
                 onClick={onGenerate}
+                className="bavg-cta-sheen"
                 style={{
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   width: '100%',
@@ -138,6 +144,7 @@ function FreeLeadInner() {
                   fontSize: 17, fontWeight: 900, letterSpacing: '-0.01em',
                   boxShadow: '0 14px 36px rgba(34,197,94,0.40)',
                   fontFamily: 'inherit',
+                  position: 'relative', overflow: 'hidden',
                 }}
               >Generate My Free Lead →</button>
               <p style={{ fontSize: 11.5, color: '#7AAAB2', textAlign: 'center', margin: '12px 0 0' }}>
@@ -329,7 +336,7 @@ function FreeLeadInner() {
                 </ul>
 
                 {/* CTA */}
-                <Link href={checkoutUrl} style={ctaPrimary}>
+                <Link href={checkoutUrl} className="bavg-cta-sheen" style={{ ...ctaPrimary, position: 'relative', overflow: 'hidden' }}>
                   Lock my zip — $97 →
                 </Link>
                 <p style={{ fontSize: 12, color: '#7AAAB2', textAlign: 'center', margin: '12px 0 0' }}>
@@ -381,6 +388,23 @@ function FreeLeadInner() {
           )}
         </div>
       </section>
+
+      <style>{`
+        @keyframes bavgSheen {
+          0%, 60% { transform: translateX(-130%) skewX(-18deg); }
+          100%    { transform: translateX(230%) skewX(-18deg); }
+        }
+        .bavg-cta-sheen::after {
+          content: '';
+          position: absolute; top: 0; bottom: 0; left: 0; width: 40%;
+          background: linear-gradient(105deg, transparent, rgba(255,255,255,0.35), transparent);
+          animation: bavgSheen 3.2s ease-in-out infinite;
+          pointer-events: none;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .bavg-cta-sheen::after { animation: none; }
+        }
+      `}</style>
     </main>
   )
 }

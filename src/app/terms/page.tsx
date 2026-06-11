@@ -8,11 +8,12 @@ import { useAuth } from '@clerk/nextjs'
  * and general legal hygiene. Standard SaaS boilerplate tailored to BellAveGo:
  * subscription terms (30-day money-back guarantee on first paid charge), acceptable use, liability limits.
  *
- * NOT a substitute for a lawyer-reviewed agreement once revenue scales — but
- * solid enough for OAuth review and the first hundred customers. Update
- * lastUpdated when the substance changes.
+ * Rewritten 2026-06-10 for the leads-only pivot — old text described the
+ * mothballed AI-receptionist product. PETER: HAVE A LAWYER REVIEW before
+ * revenue scales; solid enough for OAuth review and the first hundred
+ * customers. Update lastUpdated when the substance changes.
  */
-const LAST_UPDATED = 'June 6, 2026'
+const LAST_UPDATED = 'June 10, 2026'
 
 export default function TermsPage() {
   const { isSignedIn } = useAuth()
@@ -46,46 +47,48 @@ export default function TermsPage() {
         </Section>
 
         <Section title="2. What we provide">
-          <p>BellAveGo is an AI-powered platform for home-service contractors. The Service includes:</p>
+          <p>BellAveGo is a homeowner lead-generation service for home-service contractors. The Service includes:</p>
           <ul style={listStyle}>
-            <li>An AI receptionist that answers inbound calls in your business name and captures lead information</li>
-            <li>SMS-based message summaries and one-tap action links delivered to your phone</li>
-            <li>Optional calendar integration for live appointment booking</li>
-            <li>AI-generated consulting reports on a cadence based on your tier</li>
-            <li>Operator-tier features: AI Quote Hunter, AI Collections, AI Review Manager, AI Reputation</li>
-            <li>Dashboard with call history, transcripts, and analytics</li>
+            <li>A recurring weekly delivery of homeowner leads in your service area, sourced from public records (building permits, property transfers, verified storm events, new-homeowner records) and licensed property-data providers</li>
+            <li>Lead details such as homeowner name, street address, skip-traced phone number, property attributes, and the signal that surfaced the lead</li>
+            <li>An AI-written outreach script (SMS, email, and call opener) for each delivered lead</li>
+            <li>Optional AI-assisted outreach that contacts your delivered leads on your behalf, in your business name, with your authorization</li>
+            <li>A dashboard showing your delivered leads, outreach status, and account settings</li>
           </ul>
-          <p>Features available on your account depend on the subscription tier you select.</p>
+          <p>Some grandfathered accounts retain legacy call-answering and reporting features; those features are governed by these same Terms.</p>
         </Section>
 
         <Section title="3. Subscription, billing, and guarantee">
           <p><strong>Tiers + pricing:</strong> current pricing is published at <Link href="/pricing" style={{ color: '#0AA89F', fontWeight: 700 }}>bellavego.com/pricing</Link>. We may change pricing for new subscriptions at any time; existing subscriptions are grandfathered until renewal.</p>
           <p><strong>Billing cycle:</strong> month-to-month or annual, billed in advance via Stripe. Annual plans receive the discount shown on the pricing page.</p>
           <p><strong>30-day money-back guarantee:</strong> if you cancel within 30 days of your first paid charge — for any reason — we refund every penny of that first charge to your original payment method. Request the refund by clicking cancel in your dashboard or by contacting us. Refunds typically post back to your card in 5-10 business days.</p>
+          <p><strong>The 1-Job Guarantee:</strong> if you do not book a paying job within 30 days of your first paid charge, we refund that charge in full, your next month of service is free, and you keep every lead we delivered. The free-month comp is capped at one additional month.</p>
           <p><strong>Cancellation after 30 days:</strong> you may cancel anytime from your dashboard or by contacting us. Service continues through the end of the paid period; no further charges apply. <strong>No refunds are issued for any already-billed period after the 30-day window</strong> — including partial months. Cancel before the next renewal to avoid the next charge.</p>
-          <p><strong>Failed payments:</strong> if a payment fails, we will retry for 7 days and notify you. After 7 days the service will be suspended (calls will be answered with a polite &quot;service paused&quot; message). After 30 days of non-payment, the account may be cancelled and data subject to the deletion schedule in our <Link href="/privacy" style={{ color: '#0AA89F', fontWeight: 700 }}>Privacy Policy</Link>.</p>
+          <p><strong>Failed payments:</strong> if a payment fails, we will retry for 7 days and notify you. After 7 days the service will be suspended (lead delivery and outreach pause). After 30 days of non-payment, the account may be cancelled and data subject to the deletion schedule in our <Link href="/privacy" style={{ color: '#0AA89F', fontWeight: 700 }}>Privacy Policy</Link>.</p>
         </Section>
 
         <Section title="4. Your responsibilities">
           <p>You agree to:</p>
           <ul style={listStyle}>
             <li>Provide accurate account, business, and billing information</li>
-            <li>Forward your business line to the BellAveGo number we provision for you (if you want inbound calls answered)</li>
-            <li>Comply with all applicable laws, including call-recording disclosure laws in your state — the AI&apos;s greeting can be customized to add a disclosure if your jurisdiction requires it</li>
-            <li>Ensure that any SMS communications sent through the Service comply with the TCPA and applicable carrier rules (BellAveGo handles A2P 10DLC compliance at the platform level; you are responsible for your own consent practices when initiating bulk outreach)</li>
-            <li>Not use the Service to harass, defraud, or impersonate any person</li>
+            <li>Hold any licenses or registrations your trade and jurisdiction require to perform the work you market to leads</li>
+            <li>Comply with all applicable laws when contacting leads — including the TCPA, state telemarketing laws, Do-Not-Call rules, and carrier messaging rules — whether you contact them yourself or authorize the Service to send outreach on your behalf (BellAveGo handles A2P 10DLC registration at the platform level; you are responsible for your own contact and consent practices)</li>
+            <li>Honor opt-out requests from any homeowner promptly and permanently</li>
+            <li>Not use the Service or lead data to harass, defraud, or impersonate any person</li>
+            <li>Not resell, redistribute, or share lead data outside your business</li>
             <li>Not attempt to reverse-engineer, scrape, or resell the Service without our written permission</li>
           </ul>
         </Section>
 
-        <Section title="5. AI behavior — important">
-          <p>The AI receptionist is designed to <strong>take messages, not commit you to appointments you can&apos;t make</strong>. By default, the AI never confirms an appointment — it captures the caller&apos;s request and texts you a summary so you control the schedule.</p>
-          <p>The Service includes a native BellAveGo calendar that stores all appointments booked by the AI receptionist or manually entered by you. If you optionally connect a Google Calendar or Microsoft Outlook account, the Service mirrors BellAveGo appointments outward to those calendars so they appear in the calendar app on your phone, and reads free/busy windows back so the AI does not double-book conflicts. A configurable travel buffer (default 30 minutes) is applied so back-to-back bookings are prevented. You can disconnect external calendars at any time.</p>
-          <p>AI-generated outputs (consulting reports, ad creative, quote follow-up text, review replies) are recommendations, not guaranteed results. Review them before acting.</p>
+        <Section title="5. Lead data + AI outreach — important">
+          <p>Leads are compiled from public records and licensed third-party property-data providers. We make commercially reasonable efforts to verify lead details (including skip-traced phone numbers), but <strong>we do not guarantee that every lead is accurate, current, reachable, or interested in hiring you</strong>. A lead is an introduction to a homeowner showing a relevant signal — not a confirmed job.</p>
+          <p>Leads delivered to your account are generated for your business; we do not resell the same delivered lead to another BellAveGo customer.</p>
+          <p>If you enable AI-assisted outreach, messages are sent in your business name only with your authorization, and you remain responsible for the content and legality of that outreach as described in Section 4. You can review scripts and disable outreach at any time from your dashboard.</p>
+          <p>AI-generated outputs (outreach scripts, follow-up text, recommendations) are suggestions, not guaranteed results. Review them before acting.</p>
         </Section>
 
         <Section title="6. Service availability">
-          <p>We target 99.5% uptime but do not guarantee continuous, uninterrupted access. Scheduled maintenance is announced in advance when feasible. We rely on third-party infrastructure (Twilio, Vapi, Anthropic, Stripe, Supabase, Vercel, Google Calendar API, Microsoft Graph) and are not liable for outages caused by those providers, though we will make commercially reasonable efforts to restore service.</p>
+          <p>We target 99.5% uptime but do not guarantee continuous, uninterrupted access. Scheduled maintenance is announced in advance when feasible. We rely on third-party infrastructure (Twilio, Anthropic, Stripe, Supabase, Vercel, and licensed property-data providers) and are not liable for outages caused by those providers, though we will make commercially reasonable efforts to restore service. Public-record sources (municipal permit systems, government data feeds) can lag or go offline; weekly lead delivery may shift by a short period in those cases.</p>
         </Section>
 
         <Section title="7. Intellectual property">
@@ -94,7 +97,7 @@ export default function TermsPage() {
 
         <Section title="8. Disclaimers">
           <p>THE SERVICE IS PROVIDED &quot;AS IS&quot; AND &quot;AS AVAILABLE,&quot; WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR ACCURACY OF AI OUTPUT.</p>
-          <p>We do not guarantee that the AI will capture every call perfectly, that every message will be delivered, or that the Service will increase your revenue by any specific amount. The Idiot Index and ROI claims on our marketing pages are estimates based on typical home-service businesses, not promises specific to your shop.</p>
+          <p>Except as expressly provided by the guarantees in Section 3, we do not guarantee that any lead will respond, convert into a booked job, or generate any specific amount of revenue. ROI projections on our marketing pages are estimates based on typical home-service businesses, not promises specific to your shop.</p>
         </Section>
 
         <Section title="9. Limitation of liability">

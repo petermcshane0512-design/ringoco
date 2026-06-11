@@ -90,8 +90,7 @@ const organizationJsonLd = {
   alternateName: "BellAveGo AI",
   url: SITE_URL,
   logo: OG_IMAGE,
-  description:
-    "AI receptionist and growth platform for HVAC, plumbing, electrical, roofing, and handyman pros. Answers calls, books jobs, recovers revenue, runs marketing.",
+  description: META_DESCRIPTION,
   founder: {
     "@type": "Organization",
     name: "BellAveGo Team",
@@ -121,12 +120,9 @@ const softwareJsonLd = {
   name: "BellAveGo",
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
-  description:
-    "AI receptionist and growth platform for HVAC, plumbing, electrical, roofing, and handyman pros. 24/7 call answering, automated booking, AI-powered marketing operations.",
+  description: META_DESCRIPTION,
   offers: [
-    { "@type": "Offer", name: "Starter", price: "147", priceCurrency: "USD" },
-    { "@type": "Offer", name: "Pro",     price: "297", priceCurrency: "USD" },
-    { "@type": "Offer", name: "Elite",   price: "597", priceCurrency: "USD" },
+    { "@type": "Offer", name: "BellAveGo Leads", price: "497", priceCurrency: "USD" },
   ],
   aggregateRating: undefined,  // add once we have published reviews
 };
