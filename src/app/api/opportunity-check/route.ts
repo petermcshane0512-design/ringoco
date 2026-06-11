@@ -179,26 +179,13 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── 3. Territory status (defaults to 'open' when no row exists)
-  let territoryStatus: 'open' | 'grace' | 'claimed' = 'open'
-  try {
-    const { data: terrRow } = await supabase
-      .from('territories')
-      .select('status, grace_expires_at')
-      .eq('zip', zip)
-      .eq('trade', trade.canonical ?? trade.slug)
-      .maybeSingle<{ status: string; grace_expires_at: string | null }>()
-    if (terrRow) {
-      if (terrRow.status === 'claimed') territoryStatus = 'claimed'
-      else if (terrRow.status === 'grace') {
-        // Grace lapsed -> still bookable as open.
-        const expired = terrRow.grace_expires_at && new Date(terrRow.grace_expires_at).getTime() < Date.now()
-        territoryStatus = expired ? 'open' : 'grace'
-      }
-    }
-  } catch (e) {
-    console.warn('[opportunity-check] territory err', e)
-  }
+  // ── 3. Territory status — 2026-06-10 RETIRED per Peter ("get rid of the
+  // feature where only one person can claim a zip code"). Every zip+trade
+  // is now always 'open' regardless of what the territories table says.
+  // Hardcoded here to keep the response shape stable for the widget;
+  // territories table is still written by Stripe webhook for
+  // /admin/territories reporting, but never read on the public path.
+  const territoryStatus: 'open' = 'open'
 
   // ── 4. Capture log (warm lead). Non-fatal.
   try {

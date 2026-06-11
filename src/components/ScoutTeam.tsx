@@ -33,7 +33,7 @@ const SCOUTS: Scout[] = [
   { name: 'Intent Scorer',           verb: 'scores every lead 0-100 so you know who to call first' },
   { name: 'Pitch Writer',            verb: 'drafts an SMS + email + call opener tailored to each lead' },
   { name: 'Reply Watcher',           verb: 'reads every reply, alerts your phone when someone says yes' },
-  { name: 'Territory Guard',         verb: "enforces 'one shop per area' — your zip stays exclusive" },
+  { name: 'Delivery Sentinel',       verb: 'guarantees your weekly drop fires on time, every cycle' },
   { name: 'Deliverability Sentinel', verb: 'protects your shop from inboxes that block strangers' },
   { name: 'Copy Lab',                verb: 'A/B tests outreach variants daily and keeps what wins' },
   { name: 'Outreach Loader',         verb: 'keeps your weekly drop queue full so Monday 6am never misses' },

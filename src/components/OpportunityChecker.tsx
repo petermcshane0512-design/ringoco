@@ -324,25 +324,22 @@ function TerritoryBlock({
     // it was 500-ing on production for reasons we could not diagnose
     // without Vercel runtime logs. /start/area sets the same cookies
     // client-side from URL params, so no functionality is lost.
+    // 2026-06-10 — territory exclusivity REMOVED per Peter. One-shop-per-zip
+    // gate was actively turning away same-zip prospects in the widget when
+    // their zip looked "taken" (often false positives from old test rows in
+    // territories table). Now: every prospect always gets the claim CTA.
+    // /start/area also has its own territory check disabled (commit 757d7a8).
     const claimHref = `/start/area?promo=FIRST400&zip=${encodeURIComponent(zip)}&trade=${encodeURIComponent(trade)}`
+    void claimed
+    void status
     return (
       <div style={{ marginTop: 14 }}>
-        <div style={openBadge}>Locked in — one shop per area</div>
         <Link href={claimHref} style={ctaPrimary}>
           Claim my area — $97 →
         </Link>
       </div>
     )
   }
-  if (claimed) {
-    return (
-      <div style={{ marginTop: 14 }}>
-        <div style={takenBadge}>This area is taken</div>
-        <WaitlistForm zip={zip} trade={trade} tradeLabel={tradeLabel} reason="claimed" />
-      </div>
-    )
-  }
-  // grace fallthrough handled in open branch via the open boolean; no-op
   return null
 }
 
