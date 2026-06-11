@@ -127,15 +127,21 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     .eq('user_id', userId)
     .maybeSingle()
   const profile = (pRaw as Profile | null) || {} as Profile
-  // 2026-06-10 — relaxed gate for frictionless onboarding. The 4-field
-  // /start/area flow does NOT collect business_name / owner_first_name
-  // (the Clerk webhook seeds business_name = "My Business" as a
-  // placeholder). Only block when there is genuinely no real business
-  // name to sign as; owner_first_name is optional and falls back to the
-  // business name below. Actionable error → the new dark Settings page.
+  // 2026-06-11 HYBRID ONBOARDING GATE (per Peter, replacing both the
+  // killed 7-step wall and the too-loose name-only check): leads are
+  // always visible the moment they land — but SENDING AI outreach
+  // requires the profile fields that make the message good. The gate
+  // returns a STRUCTURED missing-list so the dashboard renders a 45-
+  // second inline setup at the exact moment of intent (first send),
+  // not a wall before value.
   const realBusinessName = (profile.business_name || '').trim()
-  if (!realBusinessName || realBusinessName.toLowerCase() === 'my business') {
-    return NextResponse.json({ ok: false, error: 'Add your business name in Settings first, then generate the message.' }, { status: 400 })
+  const missing: string[] = []
+  if (!realBusinessName || realBusinessName.toLowerCase() === 'my business') missing.push('business_name')
+  if (!(profile.owner_first_name || '').trim()) missing.push('owner_first_name')
+  if (!(profile.outreach_tone || '').trim()) missing.push('outreach_tone')
+  if (!profile.value_props || profile.value_props.length === 0) missing.push('value_props')
+  if (missing.length > 0) {
+    return NextResponse.json({ ok: false, error: 'profile_incomplete', missing }, { status: 428 })
   }
   // Signer: real first name if set, else the business name itself.
   const signer = (profile.owner_first_name || '').trim() || realBusinessName

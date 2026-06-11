@@ -913,11 +913,20 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index }: {
   const [smsSent, setSmsSent] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
 
+  // Hybrid onboarding: server returns 428 profile_incomplete with the
+  // missing-field list → render the inline 45-second setup right here.
+  const [setupOpen, setSetupOpen] = useState(false)
+
   async function generateMessage() {
     setAiLoading(true); setAiError(null)
     try {
       const r = await fetch(`/api/leads/${l.id}/generate-message`, { method: 'POST' })
       const j = await r.json()
+      if (r.status === 428 && j.error === 'profile_incomplete') {
+        setSetupOpen(true)
+        setAiLoading(false)
+        return
+      }
       if (!r.ok || !j.ok) { setAiError(j.error || 'failed'); return }
       setAiMsg({ email_subject: j.email_subject, email_body: j.email_body, sms: j.sms })
       setAiOpen(true)
@@ -1152,8 +1161,17 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index }: {
         </div>
       </div>
 
+      {/* Inline outreach setup — appears the first time they try to send
+          and the profile is missing signing/personalization fields. */}
+      {setupOpen && (
+        <OutreachSetup
+          onDone={() => { setSetupOpen(false); generateMessage() }}
+          onCancel={() => setSetupOpen(false)}
+        />
+      )}
+
       {/* AI Outreach Message — unchanged behavior */}
-      {(l.owner_phone || l.owner_email) && (
+      {(l.owner_phone || l.owner_email) && !setupOpen && (
         <div style={{ marginTop: 14 }}>
           {!aiOpen ? (
             <button
@@ -1245,6 +1263,120 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index }: {
       )}
     </div>
   )
+}
+
+/**
+ * OutreachSetup — the HYBRID onboarding capture (2026-06-11 per Peter).
+ * Renders inline inside the lead card the FIRST time the customer tries
+ * to generate AI outreach with an incomplete profile. ~45 seconds: who
+ * signs, how it sounds, why homeowners should pick them. Saves once,
+ * never shows again, immediately retries the message.
+ */
+function OutreachSetup({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
+  const [bizName, setBizName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [tone, setTone] = useState('')
+  const [props, setProps] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState('')
+
+  // Prefill whatever the profile already has.
+  useEffect(() => {
+    fetch('/api/profile').then((r) => r.json()).then((p: { business_name?: string | null; owner_first_name?: string | null; outreach_tone?: string | null; value_props?: string[] | null }) => {
+      const bn = (p.business_name ?? '').trim()
+      if (bn && bn.toLowerCase() !== 'my business') setBizName(bn)
+      if (p.owner_first_name) setFirstName(p.owner_first_name)
+      if (p.outreach_tone) setTone(p.outreach_tone)
+      if (p.value_props?.length) setProps(p.value_props.join(', '))
+    }).catch(() => {})
+  }, [])
+
+  async function save() {
+    setErr('')
+    if (bizName.trim().length < 2) { setErr('Business name required — every message signs with it.'); return }
+    if (!firstName.trim()) { setErr('Your first name — homeowners reply to people, not companies.'); return }
+    if (!tone) { setErr('Pick how your messages should sound.'); return }
+    const vp = props.split(/[,;]/).map((s) => s.trim()).filter(Boolean)
+    if (vp.length === 0) { setErr('Add at least one reason homeowners pick you (e.g. "family owned, 24hr service").'); return }
+    setSaving(true)
+    try {
+      const r = await fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          business_name: bizName.trim(),
+          owner_first_name: firstName.trim(),
+          outreach_tone: tone,
+          value_props: vp,
+        }),
+      })
+      if (!r.ok) { setErr('Save failed — try again.'); return }
+      onDone()
+    } catch { setErr('Network error — try again.') } finally { setSaving(false) }
+  }
+
+  return (
+    <div style={{
+      marginTop: 14, padding: '16px 16px', borderRadius: 12,
+      background: 'rgba(232,116,43,0.10)', border: '1.5px solid rgba(255,157,90,0.45)',
+    }}>
+      <div style={{ fontSize: 10, fontWeight: 900, color: '#FF9D5A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 }}>
+        45-second setup — then your message writes itself
+      </div>
+      <p style={{ fontSize: 12, color: 'rgba(255,248,240,0.6)', margin: '0 0 12px', lineHeight: 1.5 }}>
+        The AI signs and personalizes every message as your shop. Set once.
+      </p>
+      <label style={setupLabel}>Business name</label>
+      <input value={bizName} onChange={(e) => setBizName(e.target.value)} placeholder="Mike's HVAC & Plumbing" style={setupInput} />
+      <label style={{ ...setupLabel, marginTop: 10 }}>Your first name</label>
+      <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Mike" style={setupInput} autoComplete="given-name" />
+      <label style={{ ...setupLabel, marginTop: 10 }}>Message style</label>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {['casual', 'professional', 'direct'].map((t) => (
+          <button key={t} type="button" onClick={() => setTone(t)} style={{
+            padding: '8px 14px', borderRadius: 9, fontFamily: 'inherit', cursor: 'pointer',
+            border: tone === t ? '1.5px solid #FF9D5A' : '1px solid rgba(255,157,90,0.25)',
+            background: tone === t ? 'rgba(232,116,43,0.18)' : 'rgba(255,255,255,0.03)',
+            color: tone === t ? '#FFC58A' : 'rgba(255,248,240,0.6)',
+            fontSize: 12, fontWeight: 800, textTransform: 'capitalize',
+          }}>{t}</button>
+        ))}
+      </div>
+      <label style={{ ...setupLabel, marginTop: 10 }}>Why homeowners pick you <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 600, color: 'rgba(255,248,240,0.35)' }}>(comma-separated)</span></label>
+      <input value={props} onChange={(e) => setProps(e.target.value)} placeholder="family owned, same-day service, free estimates" style={setupInput} />
+      {err && <p style={{ fontSize: 12, color: '#FCA5A5', margin: '10px 0 0', fontWeight: 700 }}>⚠ {err}</p>}
+      <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+        <button onClick={save} disabled={saving} style={{
+          flex: 1, padding: '11px 16px', borderRadius: 10, border: 'none', cursor: saving ? 'wait' : 'pointer',
+          background: saving ? 'rgba(255,255,255,0.08)' : 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+          color: '#fff', fontSize: 13, fontWeight: 900, fontFamily: 'inherit',
+        }}>
+          {saving ? 'Saving…' : 'Save + write my message →'}
+        </button>
+        <button onClick={onCancel} style={{
+          padding: '11px 14px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
+          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,157,90,0.2)',
+          color: 'rgba(255,248,240,0.5)', fontSize: 12, fontWeight: 700,
+        }}>
+          Later
+        </button>
+      </div>
+    </div>
+  )
+}
+
+const setupLabel: React.CSSProperties = {
+  display: 'block', fontSize: 10, fontWeight: 900,
+  color: 'rgba(255,248,240,0.6)', letterSpacing: '0.1em',
+  textTransform: 'uppercase', marginBottom: 5,
+}
+const setupInput: React.CSSProperties = {
+  width: '100%', padding: '10px 12px', borderRadius: 9,
+  border: '1px solid rgba(255,157,90,0.25)',
+  background: 'rgba(4,12,24,0.6)',
+  fontSize: 13.5, fontWeight: 600,
+  fontFamily: 'inherit', color: '#FFF8F0',
+  boxSizing: 'border-box', outline: 'none',
 }
 
 function pill(bg: string, color: string): React.CSSProperties {
