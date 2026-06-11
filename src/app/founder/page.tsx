@@ -50,6 +50,30 @@ export default function FounderPage() {
           margin: 0 auto;
           padding: 56px 32px 72px;
           position: relative;
+          animation: fv4Enter 800ms cubic-bezier(0.16,1,0.3,1) both;
+        }
+        @keyframes fv4Enter {
+          from { opacity: 0; transform: translateY(22px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fv4Sheen {
+          0%, 60% { transform: translateX(-130%) skewX(-18deg); }
+          100%    { transform: translateX(230%) skewX(-18deg); }
+        }
+        .fv4-end a.try {
+          position: relative;
+          overflow: hidden;
+        }
+        .fv4-end a.try::after {
+          content: '';
+          position: absolute; top: 0; bottom: 0; left: 0; width: 40%;
+          background: linear-gradient(105deg, transparent, rgba(255,255,255,0.35), transparent);
+          animation: fv4Sheen 3.2s ease-in-out infinite;
+          pointer-events: none;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .fv4-article { animation: none; }
+          .fv4-end a.try::after { animation: none; }
         }
         .fv4-eyebrow {
           display: inline-flex; align-items: center; gap: 10px;
@@ -209,7 +233,7 @@ export default function FounderPage() {
             I started BellAveGo because my buddy &mdash; a solo handyman &mdash; was getting <strong>one job a day</strong>. Twenty hours a week scrolling Nextdoor, posting in Facebook groups, paying $80 for shared HomeAdvisor leads. Great at the work. Broke finding it.
           </p>
           <p>
-            Homeowners who need work done aren&rsquo;t hard to find &mdash; permits, sold houses, aging units, storm damage. All public data. The franchise shops surface it with five-figure marketing budgets. Solo operators don&rsquo;t. So we built BellAveGo: <strong>first {LEADS_PER_WEEK} leads in your dashboard within ~30 min of signup, then {LEADS_PER_WEEK} every 7 days</strong> ({LEADS_PER_MONTH}/month), exclusive to you, never shared. Each lead comes w/ a verified phone + pre-written outreach script our AI sends as you. You only call back the ones who say yes.
+            Homeowners who need work done aren&rsquo;t hard to find &mdash; permits, sold houses, aging units, storm damage. All public data, sitting in the open. So we built an AI that <strong>scans everything in your neighborhood, every single night</strong> &mdash; every permit filed at city hall, every NOAA-verified storm strike, every home sale, every aging system &mdash; and turns it into <strong>{LEADS_PER_WEEK} ready-to-call homeowners in your dashboard every week</strong> ({LEADS_PER_MONTH}/month), exclusive to you, never shared. Each lead comes w/ a verified phone + pre-written outreach our AI sends as you. You only call back the ones who say yes. The franchise shops pay five-figure marketing budgets for this. You pay $497.
           </p>
           <p>
             Behind the scenes &mdash; <strong>four software engineers</strong>. Small on purpose. My buddy went from one job a day to fully booked inside a month. That&rsquo;s the whole reason this exists.

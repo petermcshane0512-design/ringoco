@@ -77,15 +77,16 @@ export default function HeroStatic() {
             lineHeight: 1.04, margin: '0 0 14px',
             color: '#0B1F3A',
           }}>
-            Book your next install job from{' '}
+            Our AI scans{' '}
             <span style={{
               background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 60%, #C84B26 100%)',
               WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-            }}>leads your competitors never see</span>.
+            }}>everything in your neighborhood</span>
+            {' '}to find your next customer.
           </h1>
 
           <p style={{ fontSize: 'clamp(15px, 1.4vw, 17px)', color: '#3D5A66', lineHeight: 1.55, margin: '0 0 14px', maxWidth: 580 }}>
-            <strong style={{ color: '#0B1F3A' }}>{LEADS_PER_WEEK} fresh homeowner leads in your service area every week</strong> — real names, addresses, phone numbers. Pulled overnight from new permits, aging systems, storm damage, and move-ins. Every lead arrives with a ready-to-send intro — call, text, or email in 60 seconds.
+            Every permit filed at city hall. Every storm strike. Every home sale. Every aging system. Our AI reads it all, every night, across your entire service area — then hands you <strong style={{ color: '#0B1F3A' }}>{LEADS_PER_WEEK} homeowners a week who need your work</strong> — names, addresses, verified phones, and a ready-to-send intro. Call, text, or email in 60 seconds.
           </p>
 
           <p style={{ fontSize: 'clamp(14px, 1.3vw, 16px)', color: '#0B1F3A', lineHeight: 1.5, margin: '0 0 18px', maxWidth: 580, fontWeight: 700 }}>
