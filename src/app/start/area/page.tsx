@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { LEADS_PER_WEEK, INTRO_PRICE_USD, INTRO_PROMO_CODE } from '@/lib/offer'
+import AddressAutocomplete from '@/components/AddressAutocomplete'
 
 /**
  * /start/area — THE onboarding. 2026-06-10 dark AI-console rewrite per
@@ -249,15 +250,14 @@ function StartAreaContent() {
         }}>
           {/* 01 TARGET — business address (the lead-targeting anchor) */}
           <FieldLabel n="01" label="Target address" done={stepDone.address} />
-          <input
+          <AddressAutocomplete
             value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="123 Main St, Chicago, IL 60615"
-            style={darkInput}
-            autoComplete="street-address"
+            onChange={setAddress}
+            placeholder="Start typing — pick your address from the list"
+            inputStyle={darkInput}
             autoFocus
           />
-          <Hint>Leads pull as close to this point as possible — 1-mile rings, widening on supply only.</Hint>
+          <Hint>Pick from the dropdown so we lock your exact spot. Leads pull as close as possible — 1-mile rings, widening on supply only.</Hint>
 
           {/* 02 SECTOR — zip */}
           <FieldLabel n="02" label="Sector zip" done={stepDone.zip} mt />

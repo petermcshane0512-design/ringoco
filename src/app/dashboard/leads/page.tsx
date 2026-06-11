@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { LEADS_PER_WEEK } from '@/lib/offer'
 import LeadScanConsole from '@/components/LeadScanConsole'
+import AddressAutocomplete from '@/components/AddressAutocomplete'
 
 /**
  * /dashboard/leads — THE dashboard. 2026-06-10 full command-center
@@ -516,15 +517,14 @@ function ProfileGate({ onDone }: { onDone: () => void }) {
         />
 
         <label style={{ ...gateLabel, marginTop: 14 }}>Business address</label>
-        <input
+        <AddressAutocomplete
           value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          placeholder="9232 S Bell Ave, Chicago, IL 60643"
-          style={gateInput}
-          autoComplete="street-address"
+          onChange={setAddress}
+          placeholder="Start typing — pick your address from the list"
+          inputStyle={gateInput}
         />
         <p style={{ fontSize: 10.5, color: 'rgba(230,255,250,0.35)', margin: '6px 0 0', lineHeight: 1.5 }}>
-          Your leads start 1 mile from this exact spot and widen only when nearby supply runs low. We verify it on the map before pulling.
+          Pick from the dropdown so we lock the exact spot. Your leads start 1 mile from here and widen only when nearby supply runs low.
         </p>
 
         {err && <p style={{ fontSize: 12.5, color: '#FCA5A5', margin: '12px 0 0', fontWeight: 700 }}>⚠ {err}</p>}
