@@ -127,9 +127,18 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     .eq('user_id', userId)
     .maybeSingle()
   const profile = (pRaw as Profile | null) || {} as Profile
-  if (!profile.business_name || !profile.owner_first_name) {
-    return NextResponse.json({ ok: false, error: 'Finish onboarding first — your business info is required to write the message' }, { status: 400 })
+  // 2026-06-10 — relaxed gate for frictionless onboarding. The 4-field
+  // /start/area flow does NOT collect business_name / owner_first_name
+  // (the Clerk webhook seeds business_name = "My Business" as a
+  // placeholder). Only block when there is genuinely no real business
+  // name to sign as; owner_first_name is optional and falls back to the
+  // business name below. Actionable error → the new dark Settings page.
+  const realBusinessName = (profile.business_name || '').trim()
+  if (!realBusinessName || realBusinessName.toLowerCase() === 'my business') {
+    return NextResponse.json({ ok: false, error: 'Add your business name in Settings first, then generate the message.' }, { status: 400 })
   }
+  // Signer: real first name if set, else the business name itself.
+  const signer = (profile.owner_first_name || '').trim() || realBusinessName
 
   const leadFirstName = homeownerFirstName(owner_name)
   const leadAddress = lead.street_address || `your home in ${lead.zip || ''}`
@@ -174,13 +183,13 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
       system: `Write an outreach email + SMS to a homeowner on behalf of a home-service contractor. Tone: ${tone}. Sounds 1-to-1, signed by the contractor. Reference the signal that surfaced the lead. NEVER mention BellAveGo, AI, automation, or mass outreach. Output JSON: {"email_subject","email_body","sms"}`,
       messages: [{
         role: 'user',
-        content: `Contractor: ${profile.business_name}, run by ${profile.owner_first_name} ${profile.owner_last_name || ''} (${years}). Value props: ${valueProps}. Trade: ${trade}.
+        content: `Contractor: ${realBusinessName}${profile.owner_first_name ? `, run by ${profile.owner_first_name} ${profile.owner_last_name || ''}` : ''}${years ? ` (${years})` : ''}. Value props: ${valueProps}. Trade: ${trade}.
 
 Homeowner: ${leadFirstName} at ${leadAddress}.
 
 Signal that surfaced this lead: ${leadSignal}.
 
-Write the email (subject + body, ≤180 words) and SMS (≤300 chars). Sign with "${profile.owner_first_name}". Match tone "${tone}".`,
+Write the email (subject + body, ≤180 words) and SMS (≤300 chars). Sign with "${signer}". Match tone "${tone}".`,
       }],
     })
     const text = msg.content.find((c) => c.type === 'text')?.text || '{}'

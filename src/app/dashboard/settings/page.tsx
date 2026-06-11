@@ -28,6 +28,7 @@ import { LEADS_PER_WEEK, PRICE_MONTHLY_USD } from '@/lib/offer'
 
 type Profile = {
   business_name?: string | null
+  owner_first_name?: string | null
   business_address?: string | null
   service_zips?: string[] | null
   service_radius_mi?: number | null
@@ -46,6 +47,8 @@ export default function SettingsPage() {
   const [err, setErr] = useState('')
   const [portalLoading, setPortalLoading] = useState(false)
 
+  const [bizName, setBizName] = useState('')
+  const [firstName, setFirstName] = useState('')
   const [address, setAddress] = useState('')
   const [zip, setZip] = useState('')
   const [trade, setTrade] = useState('')
@@ -58,6 +61,9 @@ export default function SettingsPage() {
     fetch('/api/profile')
       .then((r) => r.json())
       .then((p: Profile) => {
+        const bn = (p.business_name ?? '').trim()
+        setBizName(bn.toLowerCase() === 'my business' ? '' : bn)
+        setFirstName(p.owner_first_name ?? '')
         setAddress(p.business_address ?? '')
         setZip((p.service_zips?.[0] ?? '').toString())
         const bt = (p.business_type ?? '').toLowerCase()
@@ -74,6 +80,7 @@ export default function SettingsPage() {
   async function save() {
     setErr('')
     const phoneDigits = phone.replace(/\D/g, '')
+    if (bizName.trim().length < 2) return setErr('Enter your business name — the AI signs every outreach message with it.')
     if (address.trim().length < 8) return setErr('Enter your full business address.')
     if (!/^\d{5}$/.test(zip)) return setErr('Enter a 5-digit zip.')
     const resolvedTrade = trade === 'other' ? otherTrade.trim().toLowerCase() : trade
@@ -86,6 +93,8 @@ export default function SettingsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          business_name: bizName.trim(),
+          owner_first_name: firstName.trim() || undefined,
           business_address: address.trim(),
           service_zips: [zip],
           service_radius_mi: radius,
@@ -155,7 +164,17 @@ export default function SettingsPage() {
           </div>
         ) : (
           <div style={panel}>
-            <Field label="Business address">
+            <Field label="Business name">
+              <input value={bizName} onChange={(e) => setBizName(e.target.value)} placeholder="Mike's HVAC & Plumbing" style={darkInput} />
+              <Hint>The AI signs every outreach message as this — homeowners see your shop, never &ldquo;BellAveGo.&rdquo;</Hint>
+            </Field>
+
+            <Field label="Your first name (optional)" mt>
+              <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Mike" style={darkInput} autoComplete="given-name" />
+              <Hint>If set, messages sign with your name; otherwise they sign with the business name.</Hint>
+            </Field>
+
+            <Field label="Business address" mt>
               <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123 Main St, Chicago, IL 60643" style={darkInput} autoComplete="street-address" />
               <Hint>Leads pull from rings around this exact point — re-geocoded on save.</Hint>
             </Field>
