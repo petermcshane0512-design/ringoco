@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { TIER_FEATURES, isValidTier, type Tier } from '@/lib/pricing'
+import { geocodeBusinessAddress } from '@/lib/geocodeBusinessAddress'
 
 export const runtime = 'nodejs'
 
@@ -80,6 +81,30 @@ export async function GET() {
     const lead = d.lead as unknown as { source?: string | null }
     return lead.source !== 'aging_hvac'
   })
+
+  // 2026-06-11 — self-healing pin backfill. Permit-scraper leads carry an
+  // address but no lat/lng (city feeds are text-only), so they render in
+  // the list but never pin on the dashboard map. Geocode up to 5 such
+  // leads per page load ($0.005 each, one-time per lead — the write-back
+  // makes the next load free) and patch the response in place so the pin
+  // shows THIS render, not next week's.
+  type LeadPatch = { id: string; street_address?: string | null; city?: string | null; state?: string | null; zip?: string | null; lat?: number | null; lng?: number | null }
+  const needsGeo = drops
+    .map((d) => d.lead as unknown as LeadPatch)
+    .filter((l) => l && l.street_address && (typeof l.lat !== 'number' || typeof l.lng !== 'number'))
+    .slice(0, 5)
+  for (const l of needsGeo) {
+    const addr = [l.street_address, l.city, l.state, l.zip].filter(Boolean).join(', ')
+    if (addr.length < 8) continue
+    try {
+      const g = await geocodeBusinessAddress(addr)
+      if (g) {
+        l.lat = g.lat
+        l.lng = g.lng
+        await supabase.from('leads').update({ lat: g.lat, lng: g.lng }).eq('id', l.id)
+      }
+    } catch { /* pin is enhancement — never fail the list */ }
+  }
 
   const usedThisPeriod = drops.filter((d) => new Date(d.drop_date) >= periodStart).length
 
