@@ -94,6 +94,13 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     zip: lead.zip ?? undefined,
   })
 
+  if (!r.ok) {
+    // Infra failure (key/network) — do NOT stamp the lead as attempted;
+    // that would start a retry lockout for an attempt that never reached
+    // BatchData. UI shows retry; lead stays eligible for self-heal.
+    return NextResponse.json({ ok: false, hit: false, error: 'lookup_unavailable' })
+  }
+
   const update: Record<string, unknown> = {
     skip_trace_attempted_at: new Date().toISOString(),
     skip_trace_hit: r.hit,
@@ -107,11 +114,6 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     update.skip_trace_raw = r.raw_response
   }
   await supabase.from('leads').update(update).eq('id', lead.id)
-
-  if (!r.ok) {
-    // BatchData errored — let the UI know but don't expose internals.
-    return NextResponse.json({ ok: false, hit: false, error: 'lookup_unavailable' })
-  }
 
   return NextResponse.json({
     ok: true,

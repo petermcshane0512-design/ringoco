@@ -118,7 +118,7 @@ export async function GET() {
     owner_name?: string | null; owner_phone?: string | null; owner_email?: string | null
     skip_trace_attempted_at?: string | null; skip_trace_hit?: boolean | null
   }
-  const RETRACE_AFTER_MS = 10 * 60 * 1000
+  const RETRACE_AFTER_MS = 3 * 60 * 1000
   // Surfaced to the dashboard banner — trace failures must name themselves.
   const contactBackfillNotes: string[] = []
   const eligibleContact = drops
@@ -143,10 +143,11 @@ export async function GET() {
             state: l.state ?? undefined,
             zip: l.zip ?? undefined,
           })
+          if (!t.ok) continue  // infra failure ≠ attempt — stay eligible
           await supabase.from('leads').update({
             skip_trace_attempted_at: new Date().toISOString(),
-            skip_trace_hit: t.ok && t.hit,
-            ...(t.ok && t.hit ? {
+            skip_trace_hit: t.hit,
+            ...(t.hit ? {
               ...(t.owner_phones?.[0] ? { owner_phone: t.owner_phones[0] } : {}),
               ...(t.owner_emails?.[0] ? { owner_email: t.owner_emails[0] } : {}),
               ...(t.owner_name ? { owner_name: t.owner_name } : {}),
@@ -166,13 +167,21 @@ export async function GET() {
         state: l.state ?? undefined,
         zip: l.zip ?? undefined,
       })
-      if (!t.ok) contactBackfillNotes.push(`trace failed: ${t.error || 'unknown'}`)
-      else if (!t.hit) contactBackfillNotes.push(`no owner data found for ${l.street_address}`)
+      if (!t.ok) {
+        // INFRA failure (key/network) — do NOT stamp attempted_at. A stamp
+        // here started a 10-min retry lockout that rolled forward on every
+        // refresh during an outage, freezing leads at "Owner unlisted"
+        // indefinitely (Peter hit this during the BOM-key incident). Only a
+        // REAL BatchData "no data" miss counts as an attempt.
+        contactBackfillNotes.push(`trace failed: ${t.error || 'unknown'}`)
+        continue
+      }
+      if (!t.hit) contactBackfillNotes.push(`no owner data found for ${l.street_address}`)
       const update: Record<string, unknown> = {
         skip_trace_attempted_at: new Date().toISOString(),
-        skip_trace_hit: t.ok && t.hit,
+        skip_trace_hit: t.hit,
       }
-      if (t.ok && t.hit) {
+      if (t.hit) {
         if (t.owner_phones?.[0]) { update.owner_phone = t.owner_phones[0]; l.owner_phone = t.owner_phones[0] }
         if (t.owner_emails?.[0]) { update.owner_email = t.owner_emails[0]; l.owner_email = t.owner_emails[0] }
         if (t.owner_name) { update.owner_name = t.owner_name; l.owner_name = t.owner_name }

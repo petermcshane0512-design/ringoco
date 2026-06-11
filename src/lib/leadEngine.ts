@@ -468,12 +468,13 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
         state: (l as { state?: string | null }).state ?? undefined,
         zip: l.zip ?? undefined,
       })
+      if (!trace.ok) continue  // infra failure ≠ attempt — self-heal retries
       await supabase
         .from('leads')
         .update({
           skip_trace_attempted_at: new Date().toISOString(),
-          skip_trace_hit: trace.ok && trace.hit,
-          ...(trace.ok && trace.hit ? {
+          skip_trace_hit: trace.hit,
+          ...(trace.hit ? {
             owner_phone: trace.owner_phones?.[0] ?? null,
             owner_email: trace.owner_emails?.[0] ?? null,
             ...(trace.owner_name ? { owner_name: trace.owner_name } : {}),
