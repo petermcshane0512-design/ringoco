@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { LEADS_PER_WEEK, LEADS_PER_MONTH } from '@/lib/offer'
 
 type LeadDrop = {
   id: string
@@ -159,20 +160,21 @@ export default function LeadsPage() {
         boxShadow: '0 14px 40px rgba(7,27,58,0.22)',
       }}>
         <div style={{ fontSize: 11, fontWeight: 800, color: '#5EEAD4', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 10 }}>
-          Neighborhood Leads · {quota?.tier_display ?? 'Active'}
+          Your leads · {LEADS_PER_WEEK} every Monday
         </div>
         <h1 style={{ fontSize: 'clamp(26px, 3.4vw, 38px)', fontWeight: 900, letterSpacing: '-0.04em', margin: '0 0 8px', color: '#fff' }}>
           Ready-to-quote homeowners near you.
         </h1>
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.78)', lineHeight: 1.55, maxWidth: 620, margin: 0 }}>
-          New movers, fresh permits, storm-damage triggers, and aging-HVAC homes — delivered to your dashboard at your tier&apos;s cadence. Tap to call or text directly.
+          Owner-occupied homes within your tight service radius — pulled from BatchData property records,
+          city permit feeds, and NOAA storm overlays. Tap any lead to call, text, or generate an intro message.
         </p>
 
         {quota && (
           <div style={{ marginTop: 18, padding: '14px 18px', background: 'rgba(255,255,255,0.08)', borderRadius: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <div style={{ fontSize: 13, fontWeight: 700 }}>
-                {quota.used_this_period} of {quota.per_drop} {quota.cadence_label} leads delivered
+                {quota.used_this_period} of {LEADS_PER_WEEK} this week delivered ({LEADS_PER_MONTH}/month)
               </div>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>{pctUsed}% used</div>
             </div>
@@ -198,34 +200,72 @@ export default function LeadsPage() {
         }}>
           <div style={{ fontSize: 44, marginBottom: 8 }}>🛰️</div>
           <div style={{ fontSize: 19, fontWeight: 800, color: '#0B1F3A', marginBottom: 8 }}>
-            Scanning your service area now
+            Pulling your first {LEADS_PER_WEEK} leads now
           </div>
-          <p style={{ fontSize: 14, color: '#4A6670', maxWidth: 520, margin: '0 auto 18px', lineHeight: 1.55 }}>
-            We pull from 5 free public data sources in real time: city permits, US Census aging-home data,
-            NOAA storm alerts, new-mover signals, and competitor footprints. Your first {quota?.per_drop ?? 5}{' '}
-            {quota?.cadence_label ?? 'weekly'} leads land within 24 hours of signup.
+          <p style={{ fontSize: 14, color: '#4A6670', maxWidth: 580, margin: '0 auto 18px', lineHeight: 1.6 }}>
+            Your first batch typically lands within <strong>60 seconds</strong> of signup. Refresh if you don&rsquo;t see them in 2 minutes.
+            Going forward, <strong>{LEADS_PER_WEEK} fresh leads arrive every Monday morning</strong> — the {LEADS_PER_MONTH} highest-intent
+            homeowners we pulled from your service area over the prior week.
           </p>
+
+          {/* Detailed pipeline — how leads are sourced. Each step is real. */}
           <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-            gap: 10, maxWidth: 540, margin: '18px auto 0', textAlign: 'left',
+            maxWidth: 580, margin: '24px auto 0',
+            textAlign: 'left',
           }}>
+            <div style={{
+              fontSize: 11, fontWeight: 800, color: '#0AA89F',
+              letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12, textAlign: 'center',
+            }}>
+              How we built your list
+            </div>
             {[
-              { icon: '🏗️', label: 'Live permit feeds' },
-              { icon: '🌡️', label: 'Aging HVAC data' },
-              { icon: '⛈️', label: 'Storm triggers' },
-              { icon: '🏠', label: 'Move-in signals' },
-            ].map((s) => (
-              <div key={s.label} style={{
-                padding: '10px 12px', borderRadius: 10,
-                background: '#F5FDFB', border: '1px solid rgba(10,168,159,0.16)',
-                fontSize: 12, color: '#0B1F3A', fontWeight: 700,
+              {
+                icon: '🏠',
+                title: '1. Address-anchored property pull (BatchData)',
+                body: 'The moment you signed up, our agents geocoded your business address and queried BatchData’s property API for every owner-occupied home within a tight radius of you. For HVAC tenants in hot states we filter to homes built 2008-2015 (first AC replacement cycle). For plumbing: pre-1995 (galvanized + polybutylene era). For roofing: built 2001-2011 (3-tab asphalt window). Recipe is trade-aware and climate-aware.',
+              },
+              {
+                icon: '📞',
+                title: '2. Skip-trace top 20 highest-intent matches',
+                body: 'The highest-scoring matches go through BatchData’s skip-trace pipeline so the owner’s phone + email arrive verified on your dashboard day 1. The rest unlock the moment you click “Reveal phone” — a $0.10 per-lead unlock that we eat for paying tenants.',
+              },
+              {
+                icon: '🏗️',
+                title: '3. Live permit overlay (city open-data feeds)',
+                body: 'We layer City of Chicago, Austin, Orlando, and Houston permit feeds on top. Any homeowner who pulled a building permit in your zip in the last 14 days bubbles to the top of your queue with the work description visible.',
+              },
+              {
+                icon: '⛈️',
+                title: '4. NOAA storm-damage triggers',
+                body: 'For roofing tenants we cross-reference NOAA hail + wind reports against the homes in your radius. A 1.75-inch hail strike on the property in the last 30 days flips the lead to “STORM” with the verified date for insurance-claim conversations.',
+              },
+              {
+                icon: '🔁',
+                title: '5. Weekly refresh + auto-replenish',
+                body: 'Every Monday 4am the lead-engine cron pulls the next {LEADS_PER_WEEK} highest-scoring matches from your pool and drops them here. When your pool drains we auto-fire another BatchData pull around your address with a 24-hour cooldown.',
+              },
+            ].map((step) => (
+              <div key={step.title} style={{
+                padding: '14px 16px', borderRadius: 12, marginBottom: 10,
+                background: '#F5FDFB',
+                border: '1px solid rgba(10,168,159,0.18)',
               }}>
-                {s.icon} {s.label}
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: 20, flexShrink: 0 }}>{step.icon}</span>
+                  <div>
+                    <div style={{ fontSize: 13.5, fontWeight: 900, color: '#0B1F3A', marginBottom: 4 }}>{step.title}</div>
+                    <p style={{ fontSize: 12.5, color: '#3D5A66', lineHeight: 1.55, margin: 0 }}>
+                      {step.body.replace('{LEADS_PER_WEEK}', String(LEADS_PER_WEEK))}
+                    </p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
+
           <p style={{ fontSize: 11, color: '#7AAAB2', marginTop: 16 }}>
-            Want to expand your service radius? <Link href="/dashboard/settings" style={{ color: '#0AA89F', fontWeight: 700, textDecoration: 'none' }}>Settings →</Link>
+            Need to update your business address or radius? <Link href="/dashboard/settings" style={{ color: '#0AA89F', fontWeight: 700, textDecoration: 'none' }}>Settings →</Link>
           </p>
         </div>
       ) : (
