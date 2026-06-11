@@ -596,9 +596,9 @@ function HomeContent() {
         }
         @media (max-width: 880px) {
           .hero-grid { grid-template-columns: 1fr !important; }
-          /* 2026-06-10 — was `order: -1` so LeadsCard appeared ABOVE the
-             H1 copy on mobile. Per Peter: 'the dashboard is on the landing
-             mobile page not the words.' Flipped so the headline + sub-copy
+          /* 2026-06-10 — was order:-1 so LeadsCard appeared ABOVE the
+             H1 copy on mobile. Per Peter the dashboard is on the landing
+             mobile page not the words. Flipped so headline + sub-copy
              render first, LeadsCard slides under. */
           .hero-stage { order: 1; margin-top: 16px; }
           .vs-grid { grid-template-columns: 1fr !important; }
