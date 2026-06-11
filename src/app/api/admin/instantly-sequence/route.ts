@@ -40,7 +40,11 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
-const REQUIRED_VARS = ['free_lead_url', 'sample_lead_snippet'] as const
+// 2026-06-11 — sample_lead_snippet dropped from the copy (it sourced from
+// outreach_leads.sample_lead_snippet which is empty for this list, leaving
+// a blank gap in step 1). free_lead_url is the only hard dependency now;
+// the real lead renders on the /free-lead page itself.
+const REQUIRED_VARS = ['free_lead_url'] as const
 
 type NewStep = { subject: string; body: string }
 
@@ -57,13 +61,9 @@ const NEW_STEPS: NewStep[] = [
     body: toHtml(
 `Hey {{firstName}},
 
-My software watches building permits, storm reports, and home sales around {{city}} and flags homeowners about to need work.
+My software watches building permits, storm reports, and home sales around {{city}} every night and flags homeowners about to need work.
 
-It caught one near you this week:
-
-{{sample_lead_snippet}}
-
-Full details — name, address, year built, estimated job value — yours free. No card, nothing to cancel:
+It caught one near you this week — a real {{city}} property, owner name, address, year built, and the signal that flagged them. Pulled it for you, free. No card, nothing to cancel:
 
 {{free_lead_url}}
 
