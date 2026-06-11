@@ -13,6 +13,8 @@ import HeroStatic from './HeroStatic'
 import OpportunityChecker from '@/components/OpportunityChecker'
 import ScoutTeam from '@/components/ScoutTeam'
 import LiveLeadFeed from '@/components/LiveLeadFeed'
+import LiveStatBar from '@/components/LiveStatBar'
+import Reveal from '@/components/Reveal'
 
 /**
  * Homepage — 2026-06-09 Hormozi/Elon CLOSE STACK for $10M ARR by May 12 2027.
@@ -339,8 +341,9 @@ function HomeContent() {
               color: '#0B1F3A',
             }}>
               Book your next install job from{' '}
-              <span style={{
-                background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 60%, #C84B26 100%)',
+              <span className="bavg-h1-shimmer" style={{
+                background: 'linear-gradient(110deg, #FF9D5A 0%, #E8742B 30%, #C84B26 50%, #E8742B 70%, #FF9D5A 100%)',
+                backgroundSize: '220% 100%',
                 WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
               }}>leads your competitors never see</span>.
             </h1>
@@ -393,19 +396,21 @@ function HomeContent() {
           verifies phone, (4) AI WRITES the outreach SMS character-by-
           character to the homeowner, (5) delivered to shop. Right side
           is a phone mockup typing the actual SMS in real time. */}
-      <LiveAIPipeline />
+      <LiveStatBar />
+
+      <Reveal><LiveAIPipeline /></Reveal>
 
       {/* LIVE DASHBOARD PREVIEW — animated mockup of Week/Month dashboard
           view. Shows prospects how leads stack + book over time. Auto
           toggles week ↔ month every 6s. */}
-      <LiveDashboardPreview />
+      <Reveal><LiveDashboardPreview /></Reveal>
 
       {/* SCOUT TEAM — 24 named specialist systems working the contractor's
           zip 24/7. Reframes the "AI agents" angle as a research team
           doing concrete jobs (permits, NOAA, skip-trace). Specificity =
           Hormozi credibility multiplier; concrete actions beat AI hype
           for blue-collar trade owners who distrust black-box claims. */}
-      <ScoutTeam />
+      <Reveal><ScoutTeam /></Reveal>
 
       {/* MATH stat bar + Carlos case-study quote deleted 2026-06-09 per
           Peter. Offer card already states $497/mo + book-1-job guarantee.
@@ -416,6 +421,7 @@ function HomeContent() {
           leads + no clawback). */}
       <section style={{ padding: '72px clamp(16px, 5vw, 48px)', background: '#FFF8F0' }}>
         <div style={{ maxWidth: 720, margin: '0 auto' }}>
+          <Reveal>
           <h2 style={{ fontSize: 'clamp(26px, 3vw, 38px)', fontWeight: 900, letterSpacing: '-0.03em', margin: '0 0 14px', textAlign: 'center', color: '#0B1F3A' }}>
             The whole offer on one page.
           </h2>
@@ -486,6 +492,7 @@ function HomeContent() {
               90-second checkout · No setup fees · Cancel any time · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
             </p>
           </div>
+          </Reveal>
         </div>
       </section>
 
@@ -500,6 +507,7 @@ function HomeContent() {
 
       {/* COMPETITOR — single inline strip replacing full section. */}
       <section style={{ padding: '32px clamp(16px, 5vw, 48px)', background: '#FFFFFF', textAlign: 'center' }}>
+        <Reveal>
         <p style={{
           maxWidth: 760, margin: '0 auto',
           fontSize: 16, color: '#0B1F3A', fontWeight: 700, lineHeight: 1.6,
@@ -507,6 +515,7 @@ function HomeContent() {
           HomeAdvisor: <strong style={{ color: '#A33C18' }}>$40–300/lead</strong>, shared w/ 4 other shops.<br />
           BellAveGo: <strong style={{ color: '#C84B26' }}>$12.43/lead</strong>, exclusive to YOU, AI-written intro script attached.
         </p>
+        </Reveal>
       </section>
 
       {/* FAQ deleted 2026-06-09 per Peter — too wordy at bottom. Top
@@ -579,6 +588,20 @@ function HomeContent() {
       </div>
 
       <style jsx global>{`
+        @keyframes bavgH1Shimmer {
+          0%   { background-position: 0% 50%; }
+          100% { background-position: -220% 50%; }
+        }
+        .bavg-h1-shimmer {
+          animation: bavgH1Shimmer 6s linear infinite;
+        }
+        @keyframes bavgRadarSpin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .bavg-h1-shimmer { animation: none; }
+        }
         @keyframes bavgSheen {
           0%, 60% { transform: translateX(-130%) skewX(-18deg); }
           100%    { transform: translateX(230%) skewX(-18deg); }
@@ -708,11 +731,21 @@ function LeadsCard({ variant }: { variant: TradeVariant }) {
           <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2, color: '#4A6670' }}>Your dashboard · scroll to see all 10</div>
         </div>
         <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 7,
           padding: '5px 11px', borderRadius: 99,
           background: 'rgba(34,197,94,0.12)',
           border: '1px solid rgba(34,197,94,0.40)',
           fontSize: 10, fontWeight: 800, color: '#16803F', letterSpacing: '0.08em',
-        }}>SAMPLE</div>
+        }}>
+          <span aria-hidden style={{ position: 'relative', width: 14, height: 14, borderRadius: '50%', border: '1px solid rgba(22,128,63,0.45)', overflow: 'hidden', flexShrink: 0 }}>
+            <span style={{
+              position: 'absolute', inset: 0,
+              background: 'conic-gradient(from 0deg, rgba(34,197,94,0.85), transparent 70deg, transparent 360deg)',
+              animation: 'bavgRadarSpin 2.4s linear infinite',
+            }} />
+          </span>
+          SAMPLE
+        </div>
       </div>
 
       {/* Scrollable dashboard preview — internal scroll so prospect can

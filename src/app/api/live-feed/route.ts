@@ -51,27 +51,45 @@ function labelFor(row: FeedRow): string {
 }
 
 export async function GET() {
-  const { data, error } = await supabase
-    .from('leads')
-    .select('zip, source, trade_match, source_details, created_at')
-    .neq('source', 'aging_hvac')
-    .order('created_at', { ascending: false })
-    .limit(24)
+  const since24h = new Date(Date.now() - 24 * 3600 * 1000).toISOString()
+  const [feed, pool, fresh] = await Promise.all([
+    supabase
+      .from('leads')
+      .select('zip, source, trade_match, source_details, created_at')
+      .neq('source', 'aging_hvac')
+      .order('created_at', { ascending: false })
+      .limit(24),
+    supabase
+      .from('leads')
+      .select('id', { count: 'exact', head: true })
+      .neq('source', 'aging_hvac'),
+    supabase
+      .from('leads')
+      .select('id', { count: 'exact', head: true })
+      .neq('source', 'aging_hvac')
+      .gte('created_at', since24h),
+  ])
 
-  if (error || !data) {
-    return NextResponse.json({ ok: false, events: [] }, {
+  if (feed.error || !feed.data) {
+    return NextResponse.json({ ok: false, events: [], stats: null }, {
       headers: { 'Cache-Control': 's-maxage=300, stale-while-revalidate=600' },
     })
   }
 
-  const events = (data as FeedRow[]).map((row) => ({
+  const events = (feed.data as FeedRow[]).map((row) => ({
     zip: row.zip,
     label: labelFor(row),
     trade: (row.trade_match && row.trade_match[0]) || null,
     at: row.created_at,
   }))
 
-  return NextResponse.json({ ok: true, events }, {
+  // Real counts only — UI hides any stat that comes back null/0.
+  const stats = {
+    pool: pool.count ?? null,
+    last_24h: fresh.count ?? null,
+  }
+
+  return NextResponse.json({ ok: true, events, stats }, {
     headers: { 'Cache-Control': 's-maxage=300, stale-while-revalidate=600' },
   })
 }
