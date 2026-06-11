@@ -274,7 +274,25 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
   if (candidates.length < remaining) {
     const lastReplenish = profile.last_batchdata_replenish_at
     const cooldownMs = REPLENISH_COOLDOWN_HOURS * 60 * 60 * 1000
-    const cooldownOK = !lastReplenish || (Date.now() - new Date(lastReplenish).getTime()) > cooldownMs
+    let cooldownOK = !lastReplenish || (Date.now() - new Date(lastReplenish).getTime()) > cooldownMs
+
+    // 2026-06-11 — self-heal stale stamps from no-spend runs (the $0-balance
+    // failure stamped the cooldown before today's fix). The cooldown's only
+    // job is throttling SPEND: if the spend log shows zero successful spend
+    // in the window, there is nothing to cool down from — allow the pull.
+    if (!cooldownOK) {
+      const windowStart = new Date(Date.now() - cooldownMs).toISOString()
+      const { count } = await supabase
+        .from('batchdata_spend_log')
+        .select('*', { count: 'exact', head: true })
+        .eq('result_ok', true)
+        .neq('caller', 'diagnostic')   // test rows don't count as real spend
+        .gte('spent_at', windowStart)
+      if ((count ?? 0) === 0) {
+        console.log(`[lead-engine] cooldown stamp present but no successful spend in window — allowing replenish for ${profile.user_id}`)
+        cooldownOK = true
+      }
+    }
 
     if (cooldownOK) {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.bellavego.com'

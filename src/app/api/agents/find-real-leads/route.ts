@@ -557,14 +557,21 @@ async function findLeadsForTenant(
   }
 
   // 2026-06-10 — stamp last_batchdata_replenish_at for the cooldown gate
-  // used by lib/leadEngine.ts auto-replenish branch. Always stamp on a
-  // completed pull, whether or not we inserted candidates — the spend
-  // already happened, and we don't want lead-engine retrying every hour
-  // against an empty zip cluster.
-  await supabase
-    .from('profiles')
-    .update({ last_batchdata_replenish_at: new Date().toISOString() })
-    .eq('user_id', userId)
+  // used by lib/leadEngine.ts auto-replenish branch.
+  //
+  // 2026-06-11 FIX: only stamp when the run ACTUALLY SPENT money. A failed
+  // run (BatchData unfunded → 402/403 on every zip, spentCents=0) used to
+  // stamp anyway, which locked the tenant out of auto-replenish for 24h —
+  // so funding the balance did nothing until the stamp aged out. Peter hit
+  // exactly this: $0 balance at signup → failed pull stamped → he funded
+  // $50 → engine still refused to pull. The cooldown exists to throttle
+  // SPEND; a run that spent nothing must not start the clock.
+  if (spentCents > 0) {
+    await supabase
+      .from('profiles')
+      .update({ last_batchdata_replenish_at: new Date().toISOString() })
+      .eq('user_id', userId)
+  }
 
   return {
     ok: true,

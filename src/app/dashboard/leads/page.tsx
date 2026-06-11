@@ -412,7 +412,10 @@ export default function LeadsPage() {
                   title: [d.lead.street_address, d.lead.city].filter(Boolean).join(', ') || d.lead.zip,
                   hasPhone: !!d.lead.owner_phone,
                 }))
-              return mapLeads.length > 0 ? (
+              // 2026-06-11 — render the map whenever there ARE leads this
+              // week, even if none carry lat/lng yet (the shop pin alone
+              // still orients the customer). Pins only for geocoded leads.
+              return visibleWeek.length > 0 ? (
                 <LeadMap
                   businessLat={bizLoc.lat}
                   businessLng={bizLoc.lng}
