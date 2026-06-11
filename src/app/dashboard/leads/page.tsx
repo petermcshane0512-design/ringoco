@@ -67,6 +67,27 @@ export default function LeadsPage() {
     return () => clearInterval(id)
   }, [])
 
+  // 2026-06-10 — empty-state pipeline animation. Cycles through the 5 steps
+  // so the dashboard feels alive while the first batch is being pulled.
+  const [pipelineStep, setPipelineStep] = useState(0)
+  useEffect(() => {
+    if (drops.length > 0) return // real leads landed, kill animation
+    const id = setInterval(() => {
+      setPipelineStep((s) => (s + 1) % 6) // 0-4 = scanning each step, 5 = pause then loop
+    }, 2200)
+    return () => clearInterval(id)
+  }, [drops.length])
+
+  // Fake counters that tick up to give the feel of an active scan.
+  const [scanCount, setScanCount] = useState(0)
+  useEffect(() => {
+    if (drops.length > 0) return
+    const id = setInterval(() => {
+      setScanCount((c) => (c + Math.floor(Math.random() * 7) + 3) % 2400)
+    }, 240)
+    return () => clearInterval(id)
+  }, [drops.length])
+
   // When the timer hits zero, POST /api/leads/check-and-drop to force-fire
   // the assignment now (instead of waiting for the hourly cron), then refresh
   // the leads list. Guard against double-fire with `firing`.
@@ -199,9 +220,33 @@ export default function LeadsPage() {
           background: '#fff', borderRadius: 16, padding: '40px 30px', textAlign: 'center',
           border: '1.5px dashed rgba(10,168,159,0.22)',
         }}>
-          <div style={{ fontSize: 44, marginBottom: 8 }}>🛰️</div>
-          <div style={{ fontSize: 19, fontWeight: 800, color: '#0B1F3A', marginBottom: 8 }}>
+          {/* Pulsing satellite — radar rings around it indicate live scan. */}
+          <div style={{ position: 'relative', display: 'inline-block', marginBottom: 8 }}>
+            <span style={{
+              position: 'absolute', inset: -14,
+              borderRadius: '50%',
+              border: '2px solid rgba(10,168,159,0.45)',
+              animation: 'radarPulse 1.8s ease-out infinite',
+            }} />
+            <span style={{
+              position: 'absolute', inset: -14,
+              borderRadius: '50%',
+              border: '2px solid rgba(10,168,159,0.45)',
+              animation: 'radarPulse 1.8s ease-out infinite',
+              animationDelay: '0.6s',
+            }} />
+            <div style={{ fontSize: 44, position: 'relative' }}>🛰️</div>
+          </div>
+          <div style={{ fontSize: 19, fontWeight: 800, color: '#0B1F3A', marginBottom: 6 }}>
             Pulling your first {LEADS_PER_WEEK} leads now
+          </div>
+          <div style={{
+            fontSize: 12, color: '#0AA89F', fontWeight: 800,
+            letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums',
+            marginBottom: 14,
+          }}>
+            <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#22C55E', marginRight: 8, animation: 'livePulse 1s ease-in-out infinite' }} />
+            LIVE · {scanCount.toLocaleString()} properties scanned in your radius
           </div>
           <p style={{ fontSize: 14, color: '#4A6670', maxWidth: 580, margin: '0 auto 18px', lineHeight: 1.6 }}>
             Your first batch typically lands within <strong>60 seconds</strong> of signup. Refresh if you don&rsquo;t see them in 2 minutes.
@@ -246,23 +291,53 @@ export default function LeadsPage() {
                 title: '5. Weekly refresh + auto-replenish',
                 body: 'Every Monday morning our engine pulls the next {LEADS_PER_WEEK} highest-scoring matches from your pool and drops them here. When your pool drains we automatically refill it around your business address with a 24-hour cooldown so you’re never empty for more than a day.',
               },
-            ].map((step) => (
-              <div key={step.title} style={{
-                padding: '14px 16px', borderRadius: 12, marginBottom: 10,
-                background: '#F5FDFB',
-                border: '1px solid rgba(10,168,159,0.18)',
-              }}>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                  <span style={{ fontSize: 20, flexShrink: 0 }}>{step.icon}</span>
-                  <div>
-                    <div style={{ fontSize: 13.5, fontWeight: 900, color: '#0B1F3A', marginBottom: 4 }}>{step.title}</div>
-                    <p style={{ fontSize: 12.5, color: '#3D5A66', lineHeight: 1.55, margin: 0 }}>
-                      {step.body.replace('{LEADS_PER_WEEK}', String(LEADS_PER_WEEK))}
-                    </p>
+            ].map((step, idx) => {
+              const isActive = pipelineStep === idx
+              const isDone = pipelineStep > idx
+              const statusColor = isDone ? '#16803F' : isActive ? '#E8742B' : '#7AAAB2'
+              const statusLabel = isDone ? '✓ done' : isActive ? 'scanning…' : 'queued'
+              return (
+                <div key={step.title} style={{
+                  padding: '14px 16px', borderRadius: 12, marginBottom: 10,
+                  background: isActive ? '#FFF8F0' : '#F5FDFB',
+                  border: isActive ? '1.5px solid #E8742B' : '1px solid rgba(10,168,159,0.18)',
+                  transition: 'background 240ms ease, border-color 240ms ease',
+                  boxShadow: isActive ? '0 10px 24px rgba(232,116,43,0.20)' : 'none',
+                }}>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    <span style={{
+                      fontSize: 20, flexShrink: 0,
+                      animation: isActive ? 'stepIconBounce 1.2s ease-in-out infinite' : 'none',
+                      display: 'inline-block',
+                    }}>{step.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                        <div style={{ fontSize: 13.5, fontWeight: 900, color: '#0B1F3A' }}>{step.title}</div>
+                        <div style={{
+                          fontSize: 10, fontWeight: 900, color: statusColor,
+                          letterSpacing: '0.08em', textTransform: 'uppercase',
+                          fontVariantNumeric: 'tabular-nums',
+                        }}>
+                          {statusLabel}
+                        </div>
+                      </div>
+                      <p style={{ fontSize: 12.5, color: '#3D5A66', lineHeight: 1.55, margin: '4px 0 0' }}>
+                        {step.body.replace('{LEADS_PER_WEEK}', String(LEADS_PER_WEEK))}
+                      </p>
+                      {isActive && (
+                        <div style={{ marginTop: 8, height: 3, background: 'rgba(232,116,43,0.18)', borderRadius: 3, overflow: 'hidden' }}>
+                          <div style={{
+                            height: '100%', width: '40%',
+                            background: 'linear-gradient(90deg, transparent, #E8742B, transparent)',
+                            animation: 'stepProgress 1.8s linear infinite',
+                          }} />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
 
           <p style={{ fontSize: 11, color: '#7AAAB2', marginTop: 16 }}>
