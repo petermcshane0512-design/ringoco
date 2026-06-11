@@ -143,7 +143,11 @@ export default async function CheckoutReturnPage({ searchParams }: { searchParam
         business_lng: geocoded.lng,
         business_geocoded_at: new Date().toISOString(),
       } : {}),
-      paid_at: new Date().toISOString(),
+      // paid_at REMOVED 2026-06-11 — the column does not exist on profiles
+      // (T5 UTM migration never applied). Including it made Postgres reject
+      // the ENTIRE upsert: activation "succeeded" (token minted, redirect
+      // fired) while the profile silently stayed unseeded — the root of the
+      // pay -> homepage -> redo-onboarding -> pay-again loop.
     }, { onConflict: 'user_id' })
     if (upsertErr) {
       console.error(`[checkout/return] profile upsert failed for ${userId}: ${upsertErr.message}`)
