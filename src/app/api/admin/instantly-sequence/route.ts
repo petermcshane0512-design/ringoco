@@ -327,6 +327,10 @@ async function backfillLeadVars(): Promise<{
       outreachByEmail.set(o.email.toLowerCase(), o)
     }
 
+    // 2026-06-11 — parallelize PATCHes in batches of 10. Sequential
+    // one-at-a-time (369 × ~250ms) ran ~2 min and timed out the browser
+    // tab. Batched ≈ 37 round-trips ≈ 15s, comfortably inside maxDuration.
+    const toPatch: Array<{ id: string; email: string; body: string }> = []
     for (const it of items) {
       scanned++
       const email = (it.email || '').toLowerCase()
@@ -339,20 +343,19 @@ async function backfillLeadVars(): Promise<{
       const outreachRow = outreachByEmail.get(email)
       const wantUrl = `${SITE}/free-lead?b=${prospect.biz_id}`
       const wantSnippet = outreachRow?.sample_lead_snippet || (payload.sample_lead_snippet as string) || ''
-      // Prefer prospect_free_leads location; outreach_leads as fallback.
       const wantCity = prospect.city || outreachRow?.city || (payload.city as string) || 'your area'
       const wantState = prospect.state || outreachRow?.state || (payload.state as string) || ''
       const wantTrade = prospect.trade || outreachRow?.trade || (payload.trade as string) || 'home-service'
       if (
         payload.free_lead_url === wantUrl &&
-        payload.sample_lead_snippet === wantSnippet &&
         payload.city === wantCity &&
         payload.trade === wantTrade &&
         payload.promo_code === 'FIRST400'
       ) { alreadyOk++; continue }
 
-      const pr = await instantlyFetch(`/leads/${it.id}`, {
-        method: 'PATCH',
+      toPatch.push({
+        id: it.id,
+        email,
         body: JSON.stringify({
           payload: {
             ...payload,
@@ -368,9 +371,19 @@ async function backfillLeadVars(): Promise<{
           },
         }),
       })
-      if (pr.ok) patched++
-      else if (errors.length < 10) errors.push(`${email}: PATCH HTTP ${pr.status}`)
-      await new Promise((res) => setTimeout(res, 120))
+    }
+
+    for (let i = 0; i < toPatch.length; i += 10) {
+      const batch = toPatch.slice(i, i + 10)
+      const results = await Promise.all(batch.map((p) =>
+        instantlyFetch(`/leads/${p.id}`, { method: 'PATCH', body: p.body })
+          .then((pr) => ({ ok: pr.ok, status: pr.status, email: p.email }))
+          .catch((e) => ({ ok: false, status: 0, email: p.email, err: (e as Error).message }))
+      ))
+      for (const res of results) {
+        if (res.ok) patched++
+        else if (errors.length < 10) errors.push(`${res.email}: PATCH HTTP ${res.status}`)
+      }
     }
 
     startingAfter = j.next_starting_after
