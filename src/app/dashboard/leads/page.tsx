@@ -416,15 +416,27 @@ function ProfileGate({ onDone }: { onDone: () => void }) {
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
 
-  // Prefill whatever the checkout flow already captured so the gate only
-  // asks for what's genuinely missing.
+  // 2026-06-11 per Peter — the address/zip/trade/phone they typed at
+  // /start/area BEFORE paying must already be here, never retyped. Two
+  // sources, profile wins: (1) the profile (seeded by /checkout/return
+  // from Stripe metadata), (2) the bavg_area_* cookies /start/area set
+  // client-side — the reliable fallback if the account was created via a
+  // path that skipped metadata seeding.
+  function cookie(name: string): string {
+    if (typeof document === 'undefined') return ''
+    const m = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]+)`))
+    return m ? decodeURIComponent(m[1]) : ''
+  }
   useEffect(() => {
     fetch('/api/profile').then((r) => r.json()).then((p: { business_name?: string | null; owner_first_name?: string | null; business_address?: string | null }) => {
       const bn = (p.business_name ?? '').trim()
       if (bn && bn.toLowerCase() !== 'my business') setBizName(bn)
       if (p.owner_first_name) setFirstName(p.owner_first_name)
-      if (p.business_address) setAddress(p.business_address)
-    }).catch(() => {}).finally(() => setLoaded(true))
+      // Address: profile first, then the pre-checkout cookie.
+      setAddress((p.business_address || cookie('bavg_area_addr') || '').trim())
+    }).catch(() => {
+      setAddress(cookie('bavg_area_addr'))
+    }).finally(() => setLoaded(true))
   }, [])
 
   async function save(e: React.FormEvent) {
@@ -440,6 +452,12 @@ function ProfileGate({ onDone }: { onDone: () => void }) {
     }
     setSaving(true)
     try {
+      // Carry through the zip / trade / phone they already entered pre-
+      // checkout so a manually-created account still ends up with a
+      // complete, engine-ready profile — no retype, no missing fields.
+      const cz = cookie('bavg_area_zip').replace(/\D/g, '').slice(0, 5)
+      const ct = cookie('bavg_area_trade').toLowerCase().trim()
+      const cp = cookie('bavg_area_phone').replace(/\D/g, '')
       const r = await fetch('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -447,6 +465,9 @@ function ProfileGate({ onDone }: { onDone: () => void }) {
           business_name: bizName.trim(),
           business_address: address.trim(),
           ...(firstName.trim() ? { owner_first_name: firstName.trim() } : {}),
+          ...(cz ? { service_zips: [cz] } : {}),
+          ...(ct ? { business_type: ct, services_offered: ct } : {}),
+          ...(cp.length >= 10 ? { owner_phone: cp.length === 10 ? `+1${cp}` : `+${cp}` } : {}),
         }),
       })
       if (!r.ok) {

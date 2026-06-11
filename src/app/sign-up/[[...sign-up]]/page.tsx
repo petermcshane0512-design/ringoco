@@ -61,8 +61,12 @@ function SignUpInner() {
   // landing after verification. The autocheckout flow on /pricing gates on
   // onboarding_complete so users without a profile still get routed through
   // /onboarding when they pick a plan.
+  // 2026-06-11 per Peter — account creation goes STRAIGHT to the dashboard
+  // (onboarding), never the homepage or /pricing. A fresh signup with no
+  // explicit redirect lands on /dashboard/leads, where the ProfileGate
+  // finishes setup. No one gets dumped on a marketing page mid-funnel.
   const searchParams = useSearchParams()
-  const redirectUrl = searchParams.get('redirect_url') || '/pricing'
+  const redirectUrl = searchParams.get('redirect_url') || '/dashboard/leads'
 
   return (
     <div className="auth-page" style={{
