@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
-import { LEADS_PER_MONTH } from '@/lib/offer'
+import { LEADS_PER_MONTH, LEADS_PER_WEEK } from '@/lib/offer'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -99,16 +99,26 @@ export async function GET(req: NextRequest) {
 
   const rows = eligible.map((r) => {
     const previous = r.retarget_count ?? 0
+    // 2026-06-11 — copy rewritten. Old touches claimed one-shop-per-zip
+    // exclusivity ("the ONE shop", "release your zip to the next shop",
+    // "territory closes tonight") — that feature was retired 2026-06-10,
+    // so those lines became fabricated scarcity. Also said "every Monday"
+    // (cadence is now first-batch-~30-min + every 7 days). New frames,
+    // all true:
+    //   touch 0 — speed: the engine already scanned their area last night
+    //   touch 1 — loss: N more homeowners surfaced since they looked
+    //   touch 2 — breakup: honest last-email; breakups pull the highest
+    //             reply rates in every cold sequence
     const subject = previous === 0
-      ? `${r.lead_owner_name || 'Your lead'} in ${r.zip || 'your area'} — still on the table`
+      ? `${r.lead_owner_name || 'your lead'} in ${r.zip || 'your area'} — still yours`
       : previous === 1
-        ? `last call — ${r.lead_owner_name || 'this lead'} unlocks at midnight`
-        : `closing your ${r.zip || 'area'} slot tonight`
+        ? `the engine found more in ${r.zip || 'your area'} last night`
+        : `closing your file, ${r.trade || 'one'} question first`
     const body = previous === 0
-      ? `Saw you opened the lead I pulled for you in ${r.zip || 'your area'} ${hoursSinceClaim(r.claimed_at)}h ago.\n\nIt's still attached to your email — yours regardless. But to LOCK ${r.zip || 'your area'} as the one shop we send leads to every Monday, takes 90 seconds:\n\nbellavego.com/start?promo=FIRST400&b=${r.biz_id}\n\n${LEADS_PER_MONTH} leads in your area for $97 — ${r.trade || 'in your trade'}. Cancel anytime.\n\n— Peter`
+      ? `Saw you opened the lead I pulled in ${r.zip || 'your area'} ${hoursSinceClaim(r.claimed_at)}h ago. Still yours — no signup needed.\n\nWorth knowing: my AI re-scanned ${r.zip || 'your area'} again last night. Permits, home sales, aging systems. If you'd signed up yesterday, your first ${LEADS_PER_WEEK} leads would already be in your dashboard — they land about 30 minutes after checkout.\n\nbellavego.com/start?promo=FIRST400&b=${r.biz_id}\n$97 first month · ${LEADS_PER_MONTH} leads/mo · book a job in 30 days or full refund + month 2 free.\n\n— Peter`
       : previous === 1
-        ? `${r.lead_owner_name || 'The homeowner'} in ${r.zip} is still cold. 24h until I release ${r.zip} to the next shop on the waitlist.\n\nLock yours for $97: bellavego.com/start?promo=FIRST400&b=${r.biz_id}\n\n— Peter`
-        : `Last touch. ${r.zip} territory closes tonight if you don't claim it. $97 first month, ${LEADS_PER_MONTH} leads, refund + free month 2 if I don't book you a job: bellavego.com/start?promo=FIRST400&b=${r.biz_id}\n\n— Peter`
+        ? `${r.lead_owner_name || 'That homeowner'} in ${r.zip || 'your area'} is still uncalled — and the engine has flagged more like them since you looked. Every week you wait, those calls go to nobody.\n\nFirst ${LEADS_PER_WEEK} land ~30 min after signup: bellavego.com/start?promo=FIRST400&b=${r.biz_id}\n\n— Peter`
+        : `Last email from me, promise. Quick question first: was it the price, or do you just not need more ${r.trade || ''} jobs right now?\n\nEither answer helps me. And if it was neither — $97 gets your first ${LEADS_PER_WEEK} leads in ~30 minutes, refund + free month if you don't book a job in 30 days: bellavego.com/start?promo=FIRST400&b=${r.biz_id}\n\n— Peter\n(773) 710-9565`
 
     return {
       biz_id: r.biz_id,

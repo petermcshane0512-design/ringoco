@@ -41,7 +41,7 @@ const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_
 
 const SYSTEM = `Write a 1-to-1 follow-up email from Peter (founder of BellAveGo) to a home-service contractor (HVAC, plumbing, electrical, roofing, or handyman) who opened Peter's cold email multiple times but hasn't replied.
 
-CONTEXT: Peter sent them a cold email earlier this week pitching BellAveGo (${LEADS_PER_WEEK} fresh exclusive homeowner leads/week delivered Monday, AI auto-outreach as the contractor + $97 first month w/ code FIRST400 + 30-day money-back). They opened it {{open_count}} times. That's a hand-raise signal.
+CONTEXT: Peter sent them a cold email earlier this week pitching BellAveGo (AI scans every permit, home sale, and property record in their area every night; ${LEADS_PER_WEEK} fresh homeowner leads/week pulled from a 1-mile ring around their shop, first batch ~30 min after signup; AI writes + sends the intro outreach as the contractor; $97 first month w/ code FIRST400 + 30-day money-back). They opened it {{open_count}} times. That's a hand-raise signal.
 
 GOAL: Write a short personal follow-up acknowledging the opens (without being creepy), restating the offer, and asking for a 10-min call OR a hit-the-URL.
 

@@ -53,19 +53,21 @@ function toHtml(text: string): string {
 
 const NEW_STEPS: NewStep[] = [
   {
-    subject: 'homeowner in {{city}} for {{companyName}}',
+    subject: '{{firstName}} — found a {{city}} homeowner who needs work',
     body: toHtml(
-`{{firstName}} — my software watches building permits, storm reports, and home sales around {{city}} and flags homeowners about to need a {{trade}} contractor.
+`Hey {{firstName}},
 
-Here's one it caught this week:
+My software watches building permits, storm reports, and home sales around {{city}} and flags homeowners about to need work.
+
+It caught one near you this week:
 
 {{sample_lead_snippet}}
 
-Full details — name, address, year built, estimated job value — are yours free. No card, nothing to cancel:
+Full details — name, address, year built, estimated job value — yours free. No card, nothing to cancel:
 
 {{free_lead_url}}
 
-I make money selling these by the month. The first one's free so you can judge the data yourself.
+I make money selling these by the month. First one's free so you can judge the data yourself.
 
 Peter
 BellAveGo — (773) 710-9565`),
@@ -79,7 +81,7 @@ BellAveGo — (773) 710-9565`),
 
 Why I give the first one away: shops that like it usually want the feed — ${LEADS_PER_WEEK} leads a week in your area, verified phone on every one, and my system sends the intro text + email AS you, so you only talk to homeowners who reply. Your leads are yours alone — never shared with 4 other shops like HomeAdvisor.
 
-The math: average {{trade}} ticket runs $2,000+. Close 2 of your ${LEADS_PER_MONTH} monthly leads and the $${PRICE_MONTHLY_USD} pays for itself eight times. First month is $${INTRO_PRICE_USD} with code ${INTRO_PROMO_CODE}.
+The math: average ticket runs $2,000+. Close 2 of your ${LEADS_PER_MONTH} monthly leads and the $${PRICE_MONTHLY_USD} pays for itself eight times. First month is $${INTRO_PRICE_USD} with code ${INTRO_PROMO_CODE}.
 
 Worst case you spend 30 seconds and keep a free lead.
 
@@ -186,36 +188,41 @@ async function backfillLeadVars(): Promise<{
     const emails = items.map((it) => (it.email || '').toLowerCase()).filter(Boolean)
 
     const [prospects, outreach] = await Promise.all([
-      supabase.from('prospect_free_leads').select('biz_id, email').in('email', emails),
-      supabase.from('outreach_leads').select('email, sample_lead_snippet, personalized_opener').in('email', emails),
+      supabase.from('prospect_free_leads').select('biz_id, email, city, state, trade').in('email', emails),
+      supabase.from('outreach_leads').select('email, sample_lead_snippet, personalized_opener, city, state, trade, business_name').in('email', emails),
     ])
-    const bizByEmail = new Map<string, string>()
-    for (const p of (prospects.data || []) as Array<{ biz_id: string; email: string }>) {
-      bizByEmail.set(p.email.toLowerCase(), p.biz_id)
+    type ProspectRow = { biz_id: string; email: string; city: string | null; state: string | null; trade: string | null }
+    const prospectByEmail = new Map<string, ProspectRow>()
+    for (const p of (prospects.data || []) as ProspectRow[]) {
+      prospectByEmail.set(p.email.toLowerCase(), p)
     }
-    const snippetByEmail = new Map<string, { snippet: string; opener: string }>()
-    for (const o of (outreach.data || []) as Array<{ email: string; sample_lead_snippet: string | null; personalized_opener: string | null }>) {
-      snippetByEmail.set(o.email.toLowerCase(), {
-        snippet: o.sample_lead_snippet || '',
-        opener: o.personalized_opener || '',
-      })
+    type OutreachRow = { email: string; sample_lead_snippet: string | null; personalized_opener: string | null; city: string | null; state: string | null; trade: string | null; business_name: string | null }
+    const outreachByEmail = new Map<string, OutreachRow>()
+    for (const o of (outreach.data || []) as OutreachRow[]) {
+      outreachByEmail.set(o.email.toLowerCase(), o)
     }
 
     for (const it of items) {
       scanned++
       const email = (it.email || '').toLowerCase()
       const payload = it.payload || {}
-      const bizId = bizByEmail.get(email)
-      if (!bizId) {
+      const prospect = prospectByEmail.get(email)
+      if (!prospect?.biz_id) {
         if (noProspect.length < 25) noProspect.push(email)
         continue
       }
-      const wantUrl = `${SITE}/free-lead?b=${bizId}`
-      const extra = snippetByEmail.get(email)
-      const wantSnippet = extra?.snippet || (payload.sample_lead_snippet as string) || ''
+      const outreachRow = outreachByEmail.get(email)
+      const wantUrl = `${SITE}/free-lead?b=${prospect.biz_id}`
+      const wantSnippet = outreachRow?.sample_lead_snippet || (payload.sample_lead_snippet as string) || ''
+      // Prefer prospect_free_leads location; outreach_leads as fallback.
+      const wantCity = prospect.city || outreachRow?.city || (payload.city as string) || 'your area'
+      const wantState = prospect.state || outreachRow?.state || (payload.state as string) || ''
+      const wantTrade = prospect.trade || outreachRow?.trade || (payload.trade as string) || 'home-service'
       if (
         payload.free_lead_url === wantUrl &&
         payload.sample_lead_snippet === wantSnippet &&
+        payload.city === wantCity &&
+        payload.trade === wantTrade &&
         payload.promo_code === 'FIRST400'
       ) { alreadyOk++; continue }
 
@@ -226,7 +233,11 @@ async function backfillLeadVars(): Promise<{
             ...payload,
             free_lead_url: wantUrl,
             sample_lead_snippet: wantSnippet,
-            personalized_opener: extra?.opener || (payload.personalized_opener as string) || '',
+            personalized_opener: outreachRow?.personalized_opener || (payload.personalized_opener as string) || '',
+            city: wantCity,
+            state: wantState,
+            trade: wantTrade,
+            biz_id: prospect.biz_id,
             promo_code: 'FIRST400',
             promo_url: 'bellavego.com/start?promo=FIRST400',
           },
