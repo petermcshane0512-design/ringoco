@@ -83,14 +83,24 @@ export default function LeadsPage() {
   const [nextDropAt, setNextDropAt] = useState<string | null>(null)
   const [nowTick, setNowTick] = useState<number>(() => Date.now())
   const [firing, setFiring] = useState(false)
-  // 2026-06-11 — ONE-TIME PROFILE GATE per Peter. The frictionless
-  // /start/area flow doesn't collect business name (the AI signs every
-  // outreach message with it). First dashboard visit: if the profile
-  // still has the Clerk-webhook placeholder, show a single capture card
-  // before the leads render. Lead DELIVERY is not blocked — the kick +
-  // poll effects below keep running; this gates the UI only. Once a
-  // real name is saved the gate never renders again.
-  const [gate, setGate] = useState<'loading' | 'needed' | 'done'>('loading')
+  // 2026-06-11 HORMOZI REWORK per Peter ("follow Hormozi's step-by-step,
+  // onboard as simply as possible, never loop"). The old gate HARD-blocked
+  // every lead behind a business-name + address form — value held hostage
+  // by a form, the exact anti-pattern that made onboarding feel like an
+  // endless loop. New model: VALUE FIRST.
+  //
+  //   gate === 'loading'      → still reading the profile
+  //   gate === 'need_address' → no geocoded lat/lng (rare; leads would
+  //                             scatter without it). This is the ONLY hard
+  //                             block, and it exists purely to prevent the
+  //                             wrong-neighborhood failure mode.
+  //   gate === 'ok'           → render leads NOW. If the business name is
+  //                             still missing we show a soft, dismissible
+  //                             top banner (needsName) — never a wall. The
+  //                             name is captured just-in-time the first
+  //                             time they generate an AI intro anyway.
+  const [gate, setGate] = useState<'loading' | 'need_address' | 'ok'>('loading')
+  const [needsName, setNeedsName] = useState(false)
   // 2026-06-11 — UNPAID-ACCOUNT GUARD per Peter (he created a bare Clerk
   // account, skipped checkout, and landed on the eternal scan screen —
   // a lying UI promising leads to someone with no subscription). If the
@@ -127,17 +137,21 @@ export default function LeadsPage() {
         setSubActive(p.is_active === true)
         const bn = (p.business_name ?? '').trim()
         const nameOk = !!bn && bn.toLowerCase() !== 'my business'
-        // 2026-06-11 — HARD gate per Peter. Leads are useless if the
-        // business address isn't geocoded — the whole 1-mile ring engine
-        // silently falls back to scattered zip-radius without a lat/lng
-        // (exactly the failure Peter hit on his manual-SQL test). Require
-        // BOTH a real business name AND a geocoded address before any
-        // lead renders. No fail-open here: a missing geocode is the one
-        // thing we must never let through.
+        // Geocoded address is the ONE hard requirement — without a lat/lng
+        // the ring engine scatters leads across the wrong neighborhood.
         const geoOk = typeof p.business_lat === 'number'
-        setGate(nameOk && geoOk ? 'done' : 'needed')
+        setGate(geoOk ? 'ok' : 'need_address')
+        // Missing business name is SOFT — leads still render; we just nudge
+        // with a banner so AI outreach can sign as their shop.
+        setNeedsName(!nameOk)
       })
-      .catch(() => setGate('needed')) // can't confirm → make them complete it
+      .catch(() => {
+        // Can't read profile → don't hard-block on a transient error; show
+        // leads if any, surface the name nudge. The address gate only trips
+        // on a confirmed-missing geocode, never on a fetch failure.
+        setGate('ok')
+        setNeedsName(true)
+      })
   }, [])
 
   // While the sub reads inactive, re-poll — a just-paid user's webhook
@@ -338,12 +352,19 @@ export default function LeadsPage() {
           </div>
         ) : subActive === false ? (
           <ActivateCard />
-        ) : gate === 'needed' ? (
-          <ProfileGate onDone={() => setGate('done')} />
-        ) : drops.length === 0 ? (
-          <LeadScanConsole scanCount={scanCount} pipelineStep={pipelineStep} />
+        ) : gate === 'need_address' ? (
+          // Hard block ONLY when there's no geocoded address — leads would
+          // otherwise scatter across the wrong neighborhood.
+          <ProfileGate onDone={() => { setGate('ok'); setNeedsName(false) }} />
         ) : (
           <>
+            {/* Soft business-name nudge — never blocks leads (Hormozi:
+                value first). Dismisses itself once a name is saved. */}
+            {needsName && <NameNudge onSaved={() => setNeedsName(false)} />}
+            {drops.length === 0 ? (
+              <LeadScanConsole scanCount={scanCount} pipelineStep={pipelineStep} />
+            ) : (
+              <>
             {/* ── COUNTDOWN BANNER — next drop, front and center ─────── */}
             <div style={{
               borderRadius: 16, padding: '18px 22px', marginBottom: 16,
@@ -399,6 +420,8 @@ export default function LeadsPage() {
             {past.length > 0 && (
               <PastLeads drops={past} onStatus={updateStatus} onReveal={revealPhone} />
             )}
+              </>
+            )}
           </>
         )}
       </div>
@@ -423,6 +446,83 @@ const emptyNote: React.CSSProperties = {
   padding: '20px', borderRadius: 12, textAlign: 'center',
   background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,157,90,0.25)',
   color: 'rgba(255,248,240,0.45)', fontSize: 12.5,
+}
+
+/**
+ * NameNudge — soft, dismissible banner that captures the business name
+ * WITHOUT blocking leads (Hormozi: never hold value hostage to a form).
+ * Sits above the lead list. Saves inline, then vanishes. The name is what
+ * the AI signs outreach as; until it's set, the per-lead "Generate AI
+ * intro" button captures it just-in-time instead.
+ */
+function NameNudge({ onSaved }: { onSaved: () => void }) {
+  const [name, setName] = useState('')
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [dismissed, setDismissed] = useState(false)
+  if (dismissed) return null
+
+  async function save() {
+    if (name.trim().length < 2) { setOpen(true); return }
+    setSaving(true)
+    try {
+      const r = await fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ business_name: name.trim() }),
+      })
+      if (r.ok) onSaved()
+    } catch {/* */}
+    setSaving(false)
+  }
+
+  return (
+    <div style={{
+      borderRadius: 12, padding: '12px 16px', marginBottom: 14,
+      background: 'rgba(232,116,43,0.10)',
+      border: '1px solid rgba(255,157,90,0.35)',
+      display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+    }}>
+      <span style={{ fontSize: 12.5, fontWeight: 700, color: '#FFC58A', flex: 1, minWidth: 200 }}>
+        {open
+          ? 'What name should the AI sign your outreach as?'
+          : 'Add your business name so AI outreach signs as your shop (not required to view leads).'}
+      </span>
+      {open ? (
+        <>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Mike's HVAC"
+            autoFocus
+            onKeyDown={(e) => { if (e.key === 'Enter') save() }}
+            style={{
+              padding: '8px 12px', borderRadius: 8, minWidth: 160,
+              border: '1px solid rgba(255,157,90,0.4)', background: 'rgba(4,12,24,0.6)',
+              color: '#FFF8F0', fontSize: 13, fontWeight: 600, fontFamily: 'inherit', outline: 'none',
+            }}
+          />
+          <button onClick={save} disabled={saving} style={nudgeBtn(true)}>
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </>
+      ) : (
+        <>
+          <button onClick={() => setOpen(true)} style={nudgeBtn(true)}>Add name</button>
+          <button onClick={() => setDismissed(true)} style={nudgeBtn(false)}>Later</button>
+        </>
+      )}
+    </div>
+  )
+}
+
+function nudgeBtn(primary: boolean): React.CSSProperties {
+  return {
+    padding: '8px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
+    fontFamily: 'inherit', fontSize: 12, fontWeight: 800, flexShrink: 0,
+    background: primary ? 'linear-gradient(135deg, #FF9D5A, #E8742B)' : 'rgba(255,255,255,0.06)',
+    color: primary ? '#fff' : 'rgba(255,248,240,0.6)',
+  }
 }
 
 /**
