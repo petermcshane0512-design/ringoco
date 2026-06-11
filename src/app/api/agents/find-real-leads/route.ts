@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { batchdataPropertySearch, skipTraceAddress } from '@/lib/skipTrace'
@@ -393,6 +393,32 @@ async function findLeadsForTenant(
   // assigned:0 with no why. Collect them and return.
   const zipErrors: string[] = []
 
+  // 2026-06-11 — RECIPE RELAXATION LADDER. Peter's handyman/60643 signup
+  // proved the failure mode: the strict recipe (recent-buyer-120d + built
+  // 1970-2005) matched ZERO homes across every searched zip → customer got
+  // nothing, engine said "no_candidates", money never even spent. A thin
+  // recipe must degrade gracefully, not starve the customer:
+  //   pass 1 — full trade recipe (highest signal)
+  //   pass 2 — drop the recent-sale window (aging-home profile)
+  //   pass 3 — owner-occupied only (proximity IS the signal at 1-3mi)
+  // Stops at the first pass that inserts anything. Identical consecutive
+  // passes (recipes without a sale window) are skipped.
+  const relaxationPasses: TradeConfig[] = [cfg]
+  if (cfg.recentSaleWithinDays) {
+    relaxationPasses.push({ ...cfg, recentSaleWithinDays: undefined, sourceTag: `${cfg.sourceTag}-relaxed` })
+  }
+  if (cfg.yearBuiltMin || cfg.yearBuiltMax) {
+    relaxationPasses.push({
+      ...cfg,
+      recentSaleWithinDays: undefined,
+      yearBuiltMin: undefined,
+      yearBuiltMax: undefined,
+      sourceTag: `${cfg.sourceTag}-broad`,
+    })
+  }
+
+  passes:
+  for (const activeCfg of relaxationPasses) {
   for (const zip of orderedZips.slice(0, zipsToSearch)) {
     if (candidatesInserted >= maxCandidates) break
     zipsSearched++
@@ -410,10 +436,10 @@ async function findLeadsForTenant(
 
     const result = await batchdataPropertySearch({
       zip,
-      yearBuiltMin: cfg.yearBuiltMin,
-      yearBuiltMax: cfg.yearBuiltMax,
-      recentSaleWithinDays: cfg.recentSaleWithinDays,
-      ownerOccupiedOnly: cfg.ownerOccupiedOnly,
+      yearBuiltMin: activeCfg.yearBuiltMin,
+      yearBuiltMax: activeCfg.yearBuiltMax,
+      recentSaleWithinDays: activeCfg.recentSaleWithinDays,
+      ownerOccupiedOnly: activeCfg.ownerOccupiedOnly,
       resultsLimit: perZipLimit,
     })
     // 2026-06-11 — spend logging moved INTO batchdataPropertySearch /
@@ -455,8 +481,8 @@ async function findLeadsForTenant(
       }
 
       const ageYears = p.year_built ? new Date().getFullYear() - p.year_built : 0
-      const whyTags = cfg.whyTagBuilder(p.year_built, p.last_sale_date, ageYears)
-      const pitch = cfg.pitchTemplate(p.owner_name || 'Homeowner', p.year_built, p.city)
+      const whyTags = activeCfg.whyTagBuilder(p.year_built, p.last_sale_date, ageYears)
+      const pitch = activeCfg.pitchTemplate(p.owner_name || 'Homeowner', p.year_built, p.city)
 
       const leadScore = (() => {
         let s = 65
@@ -489,7 +515,7 @@ async function findLeadsForTenant(
             provider: 'batchdata',
             last_sale_date: p.last_sale_date,
             last_sale_price: p.last_sale_price,
-            tag: cfg.sourceTag,
+            tag: activeCfg.sourceTag,
             // 2026-06-09 — richer WHY tags for dashboard card explanation.
             // Each tag is a 1-sentence reason this lead surfaced, ranked
             // by importance. Dashboard card renders these as a bulleted
@@ -522,6 +548,12 @@ async function findLeadsForTenant(
         console.warn(`[find-real-leads] insert err for ${p.street_address}: ${insertErr.message}`)
       }
     }
+  }
+
+  // Relaxation ladder control: first pass that inserts anything wins.
+  if (candidatesInserted > 0) break passes
+  console.log(`[find-real-leads] pass "${activeCfg.sourceTag}" found 0 across ${zipsSearched} zips — relaxing filters`)
+  zipErrors.push(`recipe "${activeCfg.sourceTag}" matched 0 homes — relaxed filters`)
   }
 
   // Auto skip-trace top-N high-score candidates so the Monday drop has
