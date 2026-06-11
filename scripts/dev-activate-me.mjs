@@ -20,9 +20,10 @@ import dotenv from 'dotenv'
 import fs from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
 
-// Prefer the freshly-pulled prod env; fall back to the committed (empty) one.
-if (fs.existsSync('.env.local.prod')) dotenv.config({ path: '.env.local.prod', quiet: true })
-else dotenv.config({ path: '.env.local', quiet: true })
+// Load BOTH files — prod pull first (wins), then the committed one for any
+// gaps. override:false means the first-loaded value sticks.
+if (fs.existsSync('.env.local.prod')) dotenv.config({ path: '.env.local.prod', override: false })
+dotenv.config({ path: '.env.local', override: false })
 
 const userId = process.argv[2]
 if (!userId || !userId.startsWith('user_')) {
@@ -30,11 +31,16 @@ if (!userId || !userId.startsWith('user_')) {
   process.exit(1)
 }
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+// Accept the common name variants Vercel/Supabase use.
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SECRET_KEY
 if (!url || !key) {
-  console.error('Missing SUPABASE env. Run:')
-  console.error('  npx vercel env pull .env.local.prod --environment production --yes')
+  console.error('Missing SUPABASE env (url=' + (url ? 'ok' : 'MISSING') + ', key=' + (key ? 'ok' : 'MISSING') + ').')
+  // Print the SUPABASE_* var NAMES present (names only, never values) so we
+  // can see what the prod pull actually called them.
+  const names = Object.keys(process.env).filter((k) => /SUPABASE/i.test(k))
+  console.error('SUPABASE_* names found in env: ' + (names.length ? names.join(', ') : '(none)'))
+  console.error('If (none): the pull went to .env.local.prod but this script\'s cwd differs, or pull failed.')
   process.exit(1)
 }
 const s = createClient(url, key)

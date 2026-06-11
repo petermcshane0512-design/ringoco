@@ -233,9 +233,20 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
         }
         c._distMi = miles
       } else if (!isBatchData) {
-        // No geocode + shared-pool row = cannot prove proximity. Skip to
-        // avoid the Beverly-tenant-getting-Loop-permit failure mode.
-        continue
+        // Shared-pool row with no lat/lng on the lead. We can't measure the
+        // distance — BUT if it sits in one of the contractor's OWN home
+        // zips (exact match, not a radius-expanded neighbor), the zip itself
+        // is proximity enough for a local trade. Keep those; skip only the
+        // radius-expanded neighbors we genuinely can't place.
+        //
+        // 2026-06-11 — this was a silent regression: a GEOCODED account
+        // (hasGeocode=true) fell through to this branch for every latlng-less
+        // shared lead and skipped ALL of them, so geocoded tenants received
+        // zero shared-pool leads even in their home zip. A null-geocode
+        // account hit the legacy zip path and got them. That's why Peter's
+        // freshly-geocoded handyman/60643 account drew an empty pool while
+        // his older null-geocode account had drops.
+        if (!homeZips.includes(c.zip)) continue
       }
       dedup.add(c.id)
       candidates.push(c)
@@ -318,7 +329,9 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
             }
             c._distMi = miles
           } else if (!isBatchData) {
-            continue
+            // Same home-zip allowance as the ring loop — keep latlng-less
+            // shared leads that sit in the contractor's own home zips.
+            if (!homeZips.includes(c.zip)) continue
           }
           dedup.add(c.id)
           candidates.push(c)

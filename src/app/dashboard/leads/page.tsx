@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { LEADS_PER_WEEK } from '@/lib/offer'
-import LeadScanConsole from '@/components/LeadScanConsole'
+import LeadsWaiting from '@/components/LeadsWaiting'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
 
 /**
@@ -113,6 +113,8 @@ export default function LeadsPage() {
   // lead at a time; false = returning user → render instantly.
   const [progressive, setProgressive] = useState<boolean | null>(null)
   const [revealed, setRevealed] = useState(0)
+  // Greet by first name on the waiting card when we have it.
+  const [ownerFirstName, setOwnerFirstName] = useState<string | null>(null)
 
   async function loadLeads(): Promise<number> {
     const r = await fetch('/api/leads/list')
@@ -133,8 +135,9 @@ export default function LeadsPage() {
   useEffect(() => {
     fetch('/api/profile')
       .then((r) => r.json())
-      .then((p: { business_name?: string | null; business_lat?: number | null; business_address?: string | null; is_active?: boolean | null }) => {
+      .then((p: { business_name?: string | null; business_lat?: number | null; business_address?: string | null; is_active?: boolean | null; owner_first_name?: string | null }) => {
         setSubActive(p.is_active === true)
+        if (p.owner_first_name) setOwnerFirstName(p.owner_first_name)
         const bn = (p.business_name ?? '').trim()
         const nameOk = !!bn && bn.toLowerCase() !== 'my business'
         // Geocoded address is the ONE hard requirement — without a lat/lng
@@ -175,24 +178,9 @@ export default function LeadsPage() {
     return () => clearInterval(id)
   }, [])
 
-  // Empty-state pipeline animation (LeadScanConsole renders it).
-  const [pipelineStep, setPipelineStep] = useState(0)
-  useEffect(() => {
-    if (drops.length > 0) return
-    const id = setInterval(() => {
-      setPipelineStep((s) => (s + 1) % 6)
-    }, 2200)
-    return () => clearInterval(id)
-  }, [drops.length])
-
-  const [scanCount, setScanCount] = useState(0)
-  useEffect(() => {
-    if (drops.length > 0) return
-    const id = setInterval(() => {
-      setScanCount((c) => (c + Math.floor(Math.random() * 7) + 3) % 2400)
-    }, 240)
-    return () => clearInterval(id)
-  }, [drops.length])
+  // 2026-06-11 — the old radar/agent-log empty state (scanCount +
+  // pipelineStep animation driving LeadScanConsole) was deleted per Peter
+  // ("too AI"). LeadsWaiting is a static calm card; no timers needed.
 
   // SELF-DRIVING FIRST DELIVERY — kick check-and-drop on first empty
   // load, then poll every 5s while empty so the drop appears the second
@@ -366,7 +354,7 @@ export default function LeadsPage() {
                 value first). Dismisses itself once a name is saved. */}
             {needsName && <NameNudge onSaved={() => setNeedsName(false)} />}
             {drops.length === 0 ? (
-              <LeadScanConsole scanCount={scanCount} pipelineStep={pipelineStep} />
+              <LeadsWaiting firstName={ownerFirstName} />
             ) : (
               <>
             {/* ── COUNTDOWN BANNER — next drop, front and center ─────── */}
