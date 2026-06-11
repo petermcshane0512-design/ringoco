@@ -77,6 +77,14 @@ export default function LeadsPage() {
   const [nextDropAt, setNextDropAt] = useState<string | null>(null)
   const [nowTick, setNowTick] = useState<number>(() => Date.now())
   const [firing, setFiring] = useState(false)
+  // 2026-06-11 — ONE-TIME PROFILE GATE per Peter. The frictionless
+  // /start/area flow doesn't collect business name (the AI signs every
+  // outreach message with it). First dashboard visit: if the profile
+  // still has the Clerk-webhook placeholder, show a single capture card
+  // before the leads render. Lead DELIVERY is not blocked — the kick +
+  // poll effects below keep running; this gates the UI only. Once a
+  // real name is saved the gate never renders again.
+  const [gate, setGate] = useState<'loading' | 'needed' | 'done'>('loading')
 
   async function loadLeads() {
     const r = await fetch('/api/leads/list')
@@ -88,6 +96,16 @@ export default function LeadsPage() {
 
   useEffect(() => {
     loadLeads().finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/profile')
+      .then((r) => r.json())
+      .then((p: { business_name?: string | null }) => {
+        const bn = (p.business_name ?? '').trim()
+        setGate(!bn || bn.toLowerCase() === 'my business' ? 'needed' : 'done')
+      })
+      .catch(() => setGate('done')) // fail-open: never block leads on a profile fetch blip
   }, [])
 
   // 1s tick drives the next-sweep countdown.
@@ -263,10 +281,12 @@ export default function LeadsPage() {
         </div>
 
         {/* ── LEADS ────────────────────────────────────────────────── */}
-        {loading ? (
+        {loading || gate === 'loading' ? (
           <div style={{ padding: 60, textAlign: 'center', color: 'rgba(94,234,212,0.6)', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>
             ▸ initializing command center…
           </div>
+        ) : gate === 'needed' ? (
+          <ProfileGate onDone={() => setGate('done')} />
         ) : drops.length === 0 ? (
           <LeadScanConsole scanCount={scanCount} pipelineStep={pipelineStep} />
         ) : (
@@ -305,6 +325,122 @@ const navBtn: React.CSSProperties = {
   border: '1px solid rgba(94,234,212,0.18)',
   color: '#A7F3D0', textDecoration: 'none',
   fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap',
+}
+
+/**
+ * ProfileGate — one-time business-name capture shown on the first
+ * dashboard visit (2026-06-11 per Peter: "make sure customers fill out
+ * these settings right before the first leads start to load — one-time
+ * thing"). The AI signs every outreach message with the business name;
+ * without it the generate-message route refuses. Two fields, one save,
+ * gone forever. Lead delivery runs in the background while this shows.
+ */
+function ProfileGate({ onDone }: { onDone: () => void }) {
+  const [bizName, setBizName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState('')
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault()
+    setErr('')
+    if (bizName.trim().length < 2) {
+      setErr('Enter your business name — the AI signs every message with it.')
+      return
+    }
+    setSaving(true)
+    try {
+      const r = await fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          business_name: bizName.trim(),
+          ...(firstName.trim() ? { owner_first_name: firstName.trim() } : {}),
+        }),
+      })
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}))
+        setErr(j.error || 'Save failed — try again.')
+        return
+      }
+      onDone()
+    } catch {
+      setErr('Network error — try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div style={{
+      borderRadius: 16, padding: 'clamp(20px, 4vw, 30px)',
+      background: 'rgba(255,255,255,0.035)',
+      border: '1px solid rgba(52,211,153,0.40)',
+      boxShadow: '0 24px 60px rgba(4,12,24,0.5), 0 0 40px rgba(52,211,153,0.08)',
+      maxWidth: 560, margin: '0 auto',
+    }}>
+      <div style={{
+        fontSize: 10, fontWeight: 900, color: '#34D399', letterSpacing: '0.16em',
+        textTransform: 'uppercase', marginBottom: 10, fontFamily: 'ui-monospace, monospace',
+        display: 'flex', alignItems: 'center', gap: 8,
+      }}>
+        <i style={{ width: 7, height: 7, borderRadius: '50%', background: '#34D399', display: 'inline-block', animation: 'cmdLive 1s ease-in-out infinite' }} />
+        ONE LAST STEP — YOUR SCOUTS ARE ALREADY PULLING LEADS
+      </div>
+      <h2 style={{ fontSize: 'clamp(19px, 2.6vw, 24px)', fontWeight: 900, letterSpacing: '-0.02em', margin: '0 0 8px', color: '#F0FDFA' }}>
+        Who do we sign your outreach as?
+      </h2>
+      <p style={{ fontSize: 13, color: 'rgba(230,255,250,0.55)', lineHeight: 1.6, margin: '0 0 18px' }}>
+        The AI writes a personalized intro to every homeowner and signs it as <strong style={{ color: '#5EEAD4' }}>your shop</strong> — never BellAveGo, never &ldquo;AI.&rdquo; Set it once; change anytime in Settings.
+      </p>
+
+      <form onSubmit={save}>
+        <label style={gateLabel}>Business name</label>
+        <input
+          value={bizName}
+          onChange={(e) => setBizName(e.target.value)}
+          placeholder="Mike's HVAC & Plumbing"
+          style={gateInput}
+          autoFocus
+        />
+        <label style={{ ...gateLabel, marginTop: 14 }}>Your first name <span style={{ color: 'rgba(230,255,250,0.35)', fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}>(optional — messages sign with it)</span></label>
+        <input
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          placeholder="Mike"
+          style={gateInput}
+          autoComplete="given-name"
+        />
+
+        {err && <p style={{ fontSize: 12.5, color: '#FCA5A5', margin: '12px 0 0', fontWeight: 700 }}>⚠ {err}</p>}
+
+        <button type="submit" disabled={saving} style={{
+          marginTop: 18, width: '100%', padding: '14px 18px', borderRadius: 12,
+          background: saving ? 'rgba(255,255,255,0.08)' : 'linear-gradient(135deg, #34D399, #0D9488)',
+          color: saving ? 'rgba(230,255,250,0.5)' : '#06241C',
+          fontWeight: 900, fontSize: 14, border: 'none',
+          cursor: saving ? 'wait' : 'pointer', fontFamily: 'inherit',
+          boxShadow: saving ? 'none' : '0 10px 26px rgba(52,211,153,0.30)',
+        }}>
+          {saving ? '▸ saving…' : 'Save — show me my leads →'}
+        </button>
+      </form>
+    </div>
+  )
+}
+
+const gateLabel: React.CSSProperties = {
+  display: 'block', fontSize: 11, fontWeight: 900,
+  color: 'rgba(230,255,250,0.6)', letterSpacing: '0.1em',
+  textTransform: 'uppercase', marginBottom: 7,
+}
+const gateInput: React.CSSProperties = {
+  width: '100%', padding: '13px 15px', borderRadius: 10,
+  border: '1px solid rgba(94,234,212,0.2)',
+  background: 'rgba(2,8,16,0.6)',
+  fontSize: 15, fontWeight: 600,
+  fontFamily: 'inherit', color: '#F0FDFA',
+  boxSizing: 'border-box', outline: 'none',
 }
 
 function StatCell({ label, value, sub, accent, win }: { label: string; value: string; sub: string; accent?: boolean; win?: boolean }) {
