@@ -130,6 +130,131 @@ async function instantlyFetch(path: string, init?: RequestInit): Promise<Respons
   })
 }
 
+/**
+ * Pull every email currently loaded in the Instantly campaign and ensure
+ * each has a row in prospect_free_leads so /free-lead?b={biz_id} resolves.
+ *
+ * Why this exists: the campaign was loaded weeks ago from a different
+ * source list than the CSV seeded into prospect_free_leads. As a result,
+ * 369 / 369 Instantly leads have no biz_id and the backfill route can't
+ * stamp a free_lead_url. Sending the new free-lead-first copy would
+ * deliver "bellavego.com/free-lead?b=" with a blank biz_id to every
+ * prospect — landing 404s, hot-lead pipe dies before it starts.
+ *
+ * Strategy:
+ *   1. Page through every Instantly lead in this campaign
+ *   2. Look up each email in outreach_leads (the 27K+ source where city,
+ *      state, trade, business_name live for the original cold outreach)
+ *   3. Generate a deterministic biz_id (8-char base32 of email hash) so
+ *      re-running is idempotent
+ *   4. Upsert into prospect_free_leads with source_batch='instantly_seed'
+ *   5. Report counts so we know how many emails couldn't be matched at
+ *      all (means they're not even in outreach_leads either)
+ *
+ * The /free-lead generate route already creates rows on demand for any
+ * biz_id it doesn't know, so even unmatched emails could still work IF
+ * we had biz_ids for them. This route's job is making sure every loaded
+ * Instantly contact has SOME biz_id pointing at SOME prospect_free_leads
+ * row — even a stub row is better than a broken link.
+ */
+async function seedProspectsFromInstantly(): Promise<{
+  scanned: number
+  matched_outreach: number
+  upserted: number
+  no_outreach_row: string[]
+  errors: string[]
+}> {
+  const { createHash } = await import('crypto')
+
+  let scanned = 0
+  let matchedOutreach = 0
+  let upserted = 0
+  const noOutreach: string[] = []
+  const errors: string[] = []
+  let startingAfter: string | undefined
+
+  for (let page = 0; page < 12; page++) {
+    const r = await instantlyFetch('/leads/list', {
+      method: 'POST',
+      body: JSON.stringify({
+        campaign: CAMPAIGN_ID,
+        limit: 100,
+        ...(startingAfter ? { starting_after: startingAfter } : {}),
+      }),
+    })
+    if (!r.ok) { errors.push(`leads/list HTTP ${r.status}`); break }
+    const j = await r.json() as {
+      items?: Array<{ id: string; email?: string; payload?: Record<string, unknown> }>
+      next_starting_after?: string
+    }
+    const items = j.items || []
+    if (items.length === 0) break
+
+    const emails = items.map((it) => (it.email || '').toLowerCase()).filter(Boolean)
+
+    const { data: outreachRows } = await supabase
+      .from('outreach_leads')
+      .select('email, city, state, trade, business_name, owner_first_name')
+      .in('email', emails)
+
+    type OutreachRow = { email: string; city: string | null; state: string | null; trade: string | null; business_name: string | null; owner_first_name: string | null }
+    const outreachByEmail = new Map<string, OutreachRow>()
+    for (const o of (outreachRows || []) as OutreachRow[]) {
+      outreachByEmail.set(o.email.toLowerCase(), o)
+    }
+
+    const upserts: Array<{
+      biz_id: string
+      email: string
+      trade: string
+      zip: string
+      city: string
+      state: string
+      source_batch: string
+    }> = []
+
+    for (const it of items) {
+      scanned++
+      const email = (it.email || '').toLowerCase()
+      if (!email) continue
+      const ext = outreachByEmail.get(email)
+      if (ext) matchedOutreach++
+      else if (noOutreach.length < 25) noOutreach.push(email)
+
+      // Deterministic short biz_id from email — stable across re-runs.
+      const hash = createHash('sha256').update(email).digest('hex').slice(0, 10)
+      const bizId = `inst_${hash}`
+
+      const trade = (ext?.trade || (it.payload?.trade as string) || 'hvac').toLowerCase()
+      const city = ext?.city || (it.payload?.city as string) || ''
+      const state = ext?.state || (it.payload?.state as string) || ''
+
+      upserts.push({
+        biz_id: bizId,
+        email,
+        trade: ['hvac','plumbing','electrical','roofing','handyman','other'].includes(trade) ? trade : 'other',
+        zip: '',
+        city: city.slice(0, 64),
+        state: state.slice(0, 32),
+        source_batch: 'instantly_seed',
+      })
+    }
+
+    if (upserts.length > 0) {
+      const { error } = await supabase
+        .from('prospect_free_leads')
+        .upsert(upserts, { onConflict: 'biz_id' })
+      if (error) errors.push(`upsert: ${error.message}`)
+      else upserted += upserts.length
+    }
+
+    startingAfter = j.next_starting_after
+    if (!startingAfter) break
+  }
+
+  return { scanned, matched_outreach: matchedOutreach, upserted, no_outreach_row: noOutreach, errors }
+}
+
 async function sampleLeadVarKeys(): Promise<{ keys: string[]; missing: string[]; checked: number }> {
   const r = await instantlyFetch('/leads/list', {
     method: 'POST',
@@ -264,6 +389,11 @@ export async function GET(req: NextRequest) {
 
   const sp = new URL(req.url).searchParams
   const apply = sp.get('apply') === '1'
+
+  if (sp.get('seed') === '1') {
+    const result = await seedProspectsFromInstantly()
+    return NextResponse.json({ ok: true, mode: 'seed', ...result })
+  }
 
   if (sp.get('backfill') === '1') {
     const result = await backfillLeadVars()
