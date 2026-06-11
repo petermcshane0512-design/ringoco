@@ -41,21 +41,20 @@ html { overflow-x: hidden; }
      - Force every image to scale down to its container.
      - Stack any 2-column grid that wasn't explicitly handled. */
 @media (max-width: 480px) {
-  /* Type scale: tight floors so 28-30px inline clamps stop dominating. */
-  h1 { font-size: 24px !important; line-height: 1.12 !important; letter-spacing: -0.02em !important; }
-  h2 { font-size: 20px !important; line-height: 1.18 !important; }
-  h3 { font-size: 16px !important; line-height: 1.25 !important; }
-  p  { font-size: 14px !important; line-height: 1.5 !important; }
+  /* Type scale: another step down per Peter ('want it to be more zoomed
+     out'). Page now feels phone-native, not desktop-shrunk. */
+  h1 { font-size: 20px !important; line-height: 1.15 !important; letter-spacing: -0.02em !important; }
+  h2 { font-size: 17px !important; line-height: 1.2 !important; }
+  h3 { font-size: 14px !important; line-height: 1.3 !important; }
+  p  { font-size: 12.5px !important; line-height: 1.5 !important; }
 
-  /* Every <section> on the page: tight side padding + halved vertical
-     padding so the whole page condenses to mobile scale. Without this
-     each section took ~60-80px of vertical air and the page felt like
-     scrolling through a desktop spec on a phone. */
+  /* Every <section>: tighter still. 20px vertical breathing instead of
+     28, 12px side instead of 14. Cards stretch nearly edge-to-edge. */
   section {
-    padding-left: 14px !important;
-    padding-right: 14px !important;
-    padding-top: 28px !important;
-    padding-bottom: 28px !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    padding-top: 20px !important;
+    padding-bottom: 20px !important;
   }
 
   /* Images never overflow their container. */
