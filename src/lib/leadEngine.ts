@@ -92,7 +92,8 @@ function haversineMiles(lat1: number, lng1: number, lat2: number, lng2: number):
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)))
 }
 
-const REPLENISH_COOLDOWN_HOURS = 24
+// REPLENISH_COOLDOWN_HOURS deleted 2026-06-11 — gate removed entirely
+// (spend already bounded by canSpendBatchData $-cap + weekly quota).
 
 export type AssignResult = {
   assigned: number
@@ -279,29 +280,16 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
   // candidates. Outer auto-widen pre-2026-06-10 is no longer needed.
   let replenishInfo: AssignResult['replenish'] = undefined
   if (candidates.length < remaining) {
-    const lastReplenish = profile.last_batchdata_replenish_at
-    const cooldownMs = REPLENISH_COOLDOWN_HOURS * 60 * 60 * 1000
-    let cooldownOK = !lastReplenish || (Date.now() - new Date(lastReplenish).getTime()) > cooldownMs
-
-    // 2026-06-11 — self-heal stale stamps from no-spend runs (the $0-balance
-    // failure stamped the cooldown before today's fix). The cooldown's only
-    // job is throttling SPEND: if the spend log shows zero successful spend
-    // in the window, there is nothing to cool down from — allow the pull.
-    if (!cooldownOK) {
-      const windowStart = new Date(Date.now() - cooldownMs).toISOString()
-      const { count } = await supabase
-        .from('batchdata_spend_log')
-        .select('*', { count: 'exact', head: true })
-        .eq('result_ok', true)
-        .neq('caller', 'diagnostic')   // test rows don't count as real spend
-        .gte('spent_at', windowStart)
-      if ((count ?? 0) === 0) {
-        console.log(`[lead-engine] cooldown stamp present but no successful spend in window — allowing replenish for ${profile.user_id}`)
-        cooldownOK = true
-      }
-    }
-
-    if (cooldownOK) {
+    // 2026-06-11 — COOLDOWN GATE DELETED (Algorithm step 2). Its job —
+    // throttling BatchData spend — is already done twice over: the $-cap
+    // in canSpendBatchData (checked inside every paid call) and the weekly
+    // quota gate above (this branch can't even run once the week is
+    // filled). Meanwhile the cooldown caused two real lockouts in 24h
+    // (failed $0 pull stamped it; then a global self-heal check could be
+    // pinned by unrelated tenants' spend). Best process is no process.
+    // last_batchdata_replenish_at is still stamped by find-real-leads for
+    // observability — nothing reads it as a gate anymore.
+    {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.bellavego.com'
       try {
         const r = await fetch(`${appUrl}/api/agents/find-real-leads`, {
@@ -372,9 +360,6 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
         console.warn(`[lead-engine] auto-replenish failed for ${profile.user_id}: ${(e as Error).message}`)
         replenishInfo = { fired: true, errors: [(e as Error).message] }
       }
-    } else {
-      console.warn(`[lead-engine] empty pool for ${profile.user_id} but cooldown active — last replenish ${lastReplenish}`)
-      replenishInfo = { fired: false, blocked_reason: `cooldown active until ${new Date(new Date(lastReplenish as string).getTime() + cooldownMs).toISOString()}` }
     }
   }
 
