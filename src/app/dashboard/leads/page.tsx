@@ -181,7 +181,7 @@ export default function LeadsPage() {
         boxShadow: '0 14px 40px rgba(7,27,58,0.22)',
       }}>
         <div style={{ fontSize: 11, fontWeight: 800, color: '#5EEAD4', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 10 }}>
-          Your leads · {LEADS_PER_WEEK} every Monday
+          Your leads · {LEADS_PER_WEEK} every 7 days
         </div>
         <h1 style={{ fontSize: 'clamp(26px, 3.4vw, 38px)', fontWeight: 900, letterSpacing: '-0.04em', margin: '0 0 8px', color: '#fff' }}>
           Ready-to-quote homeowners near you.
