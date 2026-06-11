@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { LEADS_PER_WEEK, LEADS_PER_MONTH } from '@/lib/offer'
+import { LEADS_PER_WEEK } from '@/lib/offer'
 import LeadScanConsole from '@/components/LeadScanConsole'
 
 /**
@@ -217,6 +217,16 @@ export default function LeadsPage() {
     won: drops.filter((d) => d.status === 'won').length,
   }
 
+  // 2026-06-11 — dashboard split per Peter: this-week's drop vs past leads
+  // vs monthly total. "This week" = the most recent 7-day drop window;
+  // everything older is "past." Monthly = trailing 30 days.
+  const now = nowTick
+  const DAY = 86_400_000
+  const ts = (d: LeadDrop) => new Date(d.drop_date).getTime()
+  const thisWeek = drops.filter((d) => now - ts(d) <= 7 * DAY).sort((a, b) => ts(b) - ts(a))
+  const past = drops.filter((d) => now - ts(d) > 7 * DAY).sort((a, b) => ts(b) - ts(a))
+  const monthCount = drops.filter((d) => now - ts(d) <= 30 * DAY).length
+
   const countdownLabel = (() => {
     if (!nextDropAt) return firing ? 'dropping now' : '—'
     const ms = new Date(nextDropAt).getTime() - nowTick
@@ -274,22 +284,6 @@ export default function LeadsPage() {
       </div>
 
       <div style={{ maxWidth: 1060, margin: '0 auto', padding: '20px clamp(14px, 3vw, 28px) 0' }}>
-        {/* ── AI STATUS STRIP — real numbers only ─────────────────── */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-          gap: 10,
-          marginBottom: 18,
-        }}>
-          <StatCell label="This drop" value={`${quota ? quota.used_this_period : drops.length} / ${quota?.per_drop ?? LEADS_PER_WEEK}`} sub={`${LEADS_PER_MONTH}/month plan`} />
-          <StatCell label="Next sweep" value={countdownLabel} sub="auto-fires on schedule" accent />
-          <StatCell label="Fresh" value={String(counts.fresh)} sub="not yet contacted" />
-          <StatCell label="Contacted" value={String(counts.contacted)} sub="awaiting reply" />
-          <StatCell label="Quoted" value={String(counts.quoted)} sub="quote in their hands" />
-          <StatCell label="Won" value={String(counts.won)} sub="booked jobs" win />
-        </div>
-
-        {/* ── LEADS ────────────────────────────────────────────────── */}
         {loading || gate === 'loading' ? (
           <div style={{ padding: 60, textAlign: 'center', color: 'rgba(94,234,212,0.6)', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>
             ▸ initializing command center…
@@ -300,22 +294,41 @@ export default function LeadsPage() {
           <LeadScanConsole scanCount={scanCount} pipelineStep={pipelineStep} />
         ) : (
           <>
+            {/* ── COUNTDOWN BANNER — next drop, front and center ─────── */}
             <div style={{
-              display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
-              margin: '4px 2px 12px', flexWrap: 'wrap', gap: 8,
+              borderRadius: 16, padding: '18px 22px', marginBottom: 16,
+              background: 'linear-gradient(135deg, rgba(52,211,153,0.12), rgba(13,148,136,0.06))',
+              border: '1px solid rgba(52,211,153,0.35)',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              gap: 14, flexWrap: 'wrap',
             }}>
-              <h1 style={{ fontSize: 'clamp(20px, 2.6vw, 28px)', fontWeight: 900, letterSpacing: '-0.03em', margin: 0, color: '#F0FDFA' }}>
-                Your homeowner leads
-              </h1>
-              <span style={{ fontSize: 11, color: 'rgba(94,234,212,0.55)', fontFamily: 'ui-monospace, monospace' }}>
-                sorted closest-first · tap any row for full intel + AI outreach
-              </span>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 900, color: '#34D399', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: 'ui-monospace, monospace', marginBottom: 4 }}>
+                  Next {LEADS_PER_WEEK} leads drop in
+                </div>
+                <div style={{ fontSize: 'clamp(26px, 5vw, 38px)', fontWeight: 900, color: '#F0FDFA', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em', lineHeight: 1 }}>
+                  {countdownLabel}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap' }}>
+                <BannerStat n={thisWeek.length} label="this week" />
+                <BannerStat n={monthCount} label="this month" />
+                <BannerStat n={counts.won} label="won" win />
+              </div>
             </div>
+
+            {/* ── THIS WEEK'S DROP ───────────────────────────────────── */}
+            <SectionHead title={`This week's leads`} sub={`${thisWeek.length} delivered · closest to you first · tap for intel + AI outreach`} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {drops.map((d) => (
-                <LeadCard key={d.id} drop={d} onStatus={updateStatus} onReveal={revealPhone} />
-              ))}
+              {thisWeek.length > 0
+                ? thisWeek.map((d) => <LeadCard key={d.id} drop={d} onStatus={updateStatus} onReveal={revealPhone} />)
+                : <div style={emptyNote}>Fresh batch lands when the countdown hits zero.</div>}
             </div>
+
+            {/* ── PAST LEADS ─────────────────────────────────────────── */}
+            {past.length > 0 && (
+              <PastLeads drops={past} onStatus={updateStatus} onReveal={revealPhone} />
+            )}
           </>
         )}
       </div>
@@ -334,6 +347,56 @@ const navBtn: React.CSSProperties = {
   border: '1px solid rgba(94,234,212,0.18)',
   color: '#A7F3D0', textDecoration: 'none',
   fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap',
+}
+
+const emptyNote: React.CSSProperties = {
+  padding: '20px', borderRadius: 12, textAlign: 'center',
+  background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(94,234,212,0.18)',
+  color: 'rgba(230,255,250,0.4)', fontSize: 12.5,
+}
+
+function BannerStat({ n, label, win }: { n: number; label: string; win?: boolean }) {
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ fontSize: 22, fontWeight: 900, color: win ? '#34D399' : '#F0FDFA', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{n}</div>
+      <div style={{ fontSize: 9, fontWeight: 800, color: 'rgba(94,234,212,0.55)', letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 4 }}>{label}</div>
+    </div>
+  )
+}
+
+function SectionHead({ title, sub }: { title: string; sub: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', margin: '4px 2px 12px', flexWrap: 'wrap', gap: 8 }}>
+      <h2 style={{ fontSize: 'clamp(18px, 2.4vw, 24px)', fontWeight: 900, letterSpacing: '-0.03em', margin: 0, color: '#F0FDFA' }}>{title}</h2>
+      <span style={{ fontSize: 11, color: 'rgba(94,234,212,0.55)', fontFamily: 'ui-monospace, monospace' }}>{sub}</span>
+    </div>
+  )
+}
+
+/** Past leads — collapsed by default so the dashboard leads with this week. */
+function PastLeads({ drops, onStatus, onReveal }: { drops: LeadDrop[]; onStatus: (id: string, s: LeadDrop['status']) => void; onReveal: (leadId: string) => void }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div style={{ marginTop: 28 }}>
+      <button
+        onClick={() => setOpen((x) => !x)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 16px', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit',
+          background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(94,234,212,0.12)',
+          color: '#A7F3D0', fontSize: 13, fontWeight: 800,
+        }}
+      >
+        <span>📁 Past leads ({drops.length})</span>
+        <span style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 180ms ease', color: 'rgba(94,234,212,0.55)' }}>▾</span>
+      </button>
+      {open && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
+          {drops.map((d) => <LeadCard key={d.id} drop={d} onStatus={onStatus} onReveal={onReveal} />)}
+        </div>
+      )}
+    </div>
+  )
 }
 
 /**
@@ -493,29 +556,6 @@ const gateInput: React.CSSProperties = {
   fontSize: 15, fontWeight: 600,
   fontFamily: 'inherit', color: '#F0FDFA',
   boxSizing: 'border-box', outline: 'none',
-}
-
-function StatCell({ label, value, sub, accent, win }: { label: string; value: string; sub: string; accent?: boolean; win?: boolean }) {
-  return (
-    <div style={{
-      padding: '12px 14px', borderRadius: 12,
-      background: win ? 'rgba(52,211,153,0.08)' : 'rgba(255,255,255,0.03)',
-      border: win ? '1px solid rgba(52,211,153,0.35)' : '1px solid rgba(94,234,212,0.12)',
-    }}>
-      <div style={{
-        fontSize: 9, fontWeight: 900, letterSpacing: '0.14em', textTransform: 'uppercase',
-        color: win ? '#34D399' : 'rgba(94,234,212,0.55)', marginBottom: 4,
-      }}>{label}</div>
-      <div style={{
-        fontSize: accent ? 15 : 19, fontWeight: 900,
-        color: win ? '#34D399' : accent ? '#FBBF24' : '#F0FDFA',
-        fontVariantNumeric: 'tabular-nums',
-        fontFamily: accent ? 'ui-monospace, monospace' : undefined,
-        lineHeight: 1.2,
-      }}>{value}</div>
-      <div style={{ fontSize: 9.5, color: 'rgba(230,255,250,0.35)', marginTop: 2 }}>{sub}</div>
-    </div>
-  )
 }
 
 type GeneratedMessage = { email_subject: string; email_body: string; sms: string }
