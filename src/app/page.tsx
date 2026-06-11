@@ -6,8 +6,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@clerk/nextjs'
 import LiveAIPipeline from '@/components/LiveAIPipeline'
-import LiveDashboardPreview from '@/components/LiveDashboardPreview'
-import AnimatedRevenueCounter from '@/components/AnimatedRevenueCounter'
 import { LEADS_PER_WEEK, LEADS_PER_MONTH } from '@/lib/offer'
 import HeroStatic from './HeroStatic'
 import OpportunityChecker from '@/components/OpportunityChecker'
@@ -401,10 +399,11 @@ function HomeContent() {
 
       <Reveal><LiveAIPipeline /></Reveal>
 
-      {/* LIVE DASHBOARD PREVIEW — animated mockup of Week/Month dashboard
-          view. Shows prospects how leads stack + book over time. Auto
-          toggles week ↔ month every 6s. */}
-      <Reveal><LiveDashboardPreview /></Reveal>
+      {/* LiveDashboardPreview DELETED 2026-06-10 per Peter. It was a second,
+          light-themed dashboard render that clashed with the dark command-
+          center LeadsCard in the hero — two different "dashboards" on one
+          page reads as two different products. The hero card (which matches
+          the real post-redesign dashboard aesthetic) is the single preview. */}
 
       {/* SCOUT TEAM — 24 named specialist systems working the contractor's
           zip 24/7. Reframes the "AI agents" angle as a research team
