@@ -596,7 +596,11 @@ function HomeContent() {
         }
         @media (max-width: 880px) {
           .hero-grid { grid-template-columns: 1fr !important; }
-          .hero-stage { order: -1; margin-bottom: 8px; }
+          /* 2026-06-10 — was `order: -1` so LeadsCard appeared ABOVE the
+             H1 copy on mobile. Per Peter: 'the dashboard is on the landing
+             mobile page not the words.' Flipped so the headline + sub-copy
+             render first, LeadsCard slides under. */
+          .hero-stage { order: 1; margin-top: 16px; }
           .vs-grid { grid-template-columns: 1fr !important; }
           .case-study { grid-template-columns: 1fr !important; text-align: center; }
           .case-study > div:first-child { margin: 0 auto; }
@@ -649,9 +653,13 @@ function Nav({ isSignedIn }: { isSignedIn: boolean }) {
             52% of 375 = 195px, now 39% = 146px, plenty of room for nav links. */}
         <Image src="/logo.png" alt="BellAveGo" width={285} height={89} style={{ objectFit: 'contain', maxWidth: 'min(39vw, 285px)', height: 'auto' }} priority />
       </Link>
-      <div style={{ display: 'flex', gap: 22, alignItems: 'center' }} className="nav-links">
+      {/* 2026-06-10 — mobile nav now keeps Pricing visible (Peter: 'the top
+          only shows bellavego and founder not pricing'). Founder + Sign in
+          hidden on mobile; the verbose nav CTA stays hidden because the
+          sticky bottom CTA bar handles it. */}
+      <div style={{ display: 'flex', gap: 14, alignItems: 'center' }} className="nav-links">
         <Link href="/founder" style={navLinkBig} className="nav-secondary">Founder</Link>
-        <Link href="/pricing" style={navLinkBig} className="nav-secondary">Pricing</Link>
+        <Link href="/pricing" style={navLinkBig}>Pricing</Link>
         {isSignedIn ? (
           <Link href="/dashboard" style={ctaNavPrimaryBig} className="nav-cta">Dashboard →</Link>
         ) : (
