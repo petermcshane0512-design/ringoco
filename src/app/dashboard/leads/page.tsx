@@ -101,11 +101,20 @@ export default function LeadsPage() {
   useEffect(() => {
     fetch('/api/profile')
       .then((r) => r.json())
-      .then((p: { business_name?: string | null }) => {
+      .then((p: { business_name?: string | null; business_lat?: number | null; business_address?: string | null }) => {
         const bn = (p.business_name ?? '').trim()
-        setGate(!bn || bn.toLowerCase() === 'my business' ? 'needed' : 'done')
+        const nameOk = !!bn && bn.toLowerCase() !== 'my business'
+        // 2026-06-11 — HARD gate per Peter. Leads are useless if the
+        // business address isn't geocoded — the whole 1-mile ring engine
+        // silently falls back to scattered zip-radius without a lat/lng
+        // (exactly the failure Peter hit on his manual-SQL test). Require
+        // BOTH a real business name AND a geocoded address before any
+        // lead renders. No fail-open here: a missing geocode is the one
+        // thing we must never let through.
+        const geoOk = typeof p.business_lat === 'number'
+        setGate(nameOk && geoOk ? 'done' : 'needed')
       })
-      .catch(() => setGate('done')) // fail-open: never block leads on a profile fetch blip
+      .catch(() => setGate('needed')) // can't confirm → make them complete it
   }, [])
 
   // 1s tick drives the next-sweep countdown.
@@ -338,14 +347,31 @@ const navBtn: React.CSSProperties = {
 function ProfileGate({ onDone }: { onDone: () => void }) {
   const [bizName, setBizName] = useState('')
   const [firstName, setFirstName] = useState('')
+  const [address, setAddress] = useState('')
+  const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
+
+  // Prefill whatever the checkout flow already captured so the gate only
+  // asks for what's genuinely missing.
+  useEffect(() => {
+    fetch('/api/profile').then((r) => r.json()).then((p: { business_name?: string | null; owner_first_name?: string | null; business_address?: string | null }) => {
+      const bn = (p.business_name ?? '').trim()
+      if (bn && bn.toLowerCase() !== 'my business') setBizName(bn)
+      if (p.owner_first_name) setFirstName(p.owner_first_name)
+      if (p.business_address) setAddress(p.business_address)
+    }).catch(() => {}).finally(() => setLoaded(true))
+  }, [])
 
   async function save(e: React.FormEvent) {
     e.preventDefault()
     setErr('')
     if (bizName.trim().length < 2) {
       setErr('Enter your business name — the AI signs every message with it.')
+      return
+    }
+    if (address.trim().length < 8) {
+      setErr('Enter your business address — leads are pulled from a 1-mile ring around it.')
       return
     }
     setSaving(true)
@@ -355,6 +381,7 @@ function ProfileGate({ onDone }: { onDone: () => void }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           business_name: bizName.trim(),
+          business_address: address.trim(),
           ...(firstName.trim() ? { owner_first_name: firstName.trim() } : {}),
         }),
       })
@@ -363,12 +390,25 @@ function ProfileGate({ onDone }: { onDone: () => void }) {
         setErr(j.error || 'Save failed — try again.')
         return
       }
+      // VERIFY the address actually geocoded — /api/profile geocodes on
+      // save. If business_lat is still null, the engine can't pull tight,
+      // so we refuse to let the gate close (this is the exact failure mode
+      // Peter hit). Make them fix the address instead of shipping scatter.
+      const check = await fetch('/api/profile').then((x) => x.json()).catch(() => ({}))
+      if (typeof check.business_lat !== 'number') {
+        setErr('We could not locate that address on the map. Double-check the street, city, and zip so leads land near you.')
+        return
+      }
       onDone()
     } catch {
       setErr('Network error — try again.')
     } finally {
       setSaving(false)
     }
+  }
+
+  if (!loaded) {
+    return <div style={{ padding: 50, textAlign: 'center', color: 'rgba(94,234,212,0.5)', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>▸ loading…</div>
   }
 
   return (
@@ -411,6 +451,18 @@ function ProfileGate({ onDone }: { onDone: () => void }) {
           style={gateInput}
           autoComplete="given-name"
         />
+
+        <label style={{ ...gateLabel, marginTop: 14 }}>Business address</label>
+        <input
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          placeholder="9232 S Bell Ave, Chicago, IL 60643"
+          style={gateInput}
+          autoComplete="street-address"
+        />
+        <p style={{ fontSize: 10.5, color: 'rgba(230,255,250,0.35)', margin: '6px 0 0', lineHeight: 1.5 }}>
+          Your leads start 1 mile from this exact spot and widen only when nearby supply runs low. We verify it on the map before pulling.
+        </p>
 
         {err && <p style={{ fontSize: 12.5, color: '#FCA5A5', margin: '12px 0 0', fontWeight: 700 }}>⚠ {err}</p>}
 
