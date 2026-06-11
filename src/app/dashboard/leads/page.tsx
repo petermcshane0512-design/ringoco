@@ -127,6 +127,10 @@ export default function LeadsPage() {
   const [ownerFirstName, setOwnerFirstName] = useState<string | null>(null)
   // Business location — centers the lead map.
   const [bizLoc, setBizLoc] = useState<{ lat: number; lng: number } | null>(null)
+  // 2026-06-11 — engine diagnostics surfaced to the UI. When a kick comes
+  // back with 0 assigned, the reason renders in a small banner instead of
+  // dying in server logs ("0 leads, no idea why" can never happen again).
+  const [engineNote, setEngineNote] = useState<string | null>(null)
   // Single-open accordion: which lead card is expanded. Map pins drive this.
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
@@ -210,7 +214,20 @@ export default function LeadsPage() {
     if (loading || !weekShort || kicked) return
     setKicked(true)
     fetch('/api/leads/check-and-drop', { method: 'POST' })
-      .then((r) => r.json()).then(async (j) => { if (j.ok) await loadLeads() })
+      .then((r) => r.json()).then(async (j) => {
+        if (j.ok) await loadLeads()
+        // Surface WHY when the engine came back light.
+        if (j.ok && (j.assigned ?? 0) === 0) {
+          const bits: string[] = []
+          if (j.skipped_reason) bits.push(j.skipped_reason)
+          if (j.replenish?.blocked_reason) bits.push(`replenish blocked: ${j.replenish.blocked_reason}`)
+          if (j.replenish?.errors?.length) bits.push(`replenish: ${j.replenish.errors.slice(0, 2).join(' · ')}`)
+          if (j.replenish?.fired && !j.replenish?.errors?.length) bits.push(`replenish pulled ${j.replenish.assigned ?? 0} (spent ${j.replenish.spent_cents ?? 0}c)`)
+          if (bits.length) setEngineNote(bits.join(' — '))
+        } else if (j.reason && j.reason !== 'not_yet_due') {
+          setEngineNote(String(j.reason))
+        }
+      })
       .catch(() => {})
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, weekShort, kicked])
@@ -373,6 +390,16 @@ export default function LeadsPage() {
             {/* Soft business-name nudge — never blocks leads (Hormozi:
                 value first). Dismisses itself once a name is saved. */}
             {needsName && <NameNudge onSaved={() => setNeedsName(false)} />}
+            {/* Engine diagnostics — renders only when a kick returned 0 */}
+            {engineNote && (
+              <div style={{
+                borderRadius: 10, padding: '9px 13px', marginBottom: 12,
+                background: 'rgba(251,191,36,0.10)', border: '1px solid rgba(251,191,36,0.35)',
+                fontSize: 11.5, color: '#FBBF24', fontWeight: 700, lineHeight: 1.5,
+              }}>
+                ⚠ Lead engine: {engineNote}
+              </div>
+            )}
             {drops.length === 0 ? (
               <LeadsWaiting firstName={ownerFirstName} />
             ) : (

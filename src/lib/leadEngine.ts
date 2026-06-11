@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+﻿import { createClient } from '@supabase/supabase-js'
 import { isValidTier, type Tier } from '@/lib/pricing'
 import { LEADS_PER_WEEK } from '@/lib/offer'
 import { skipTraceAddress } from '@/lib/skipTrace'
@@ -94,7 +94,13 @@ function haversineMiles(lat1: number, lng1: number, lat2: number, lng2: number):
 
 const REPLENISH_COOLDOWN_HOURS = 24
 
-export type AssignResult = { assigned: number; skipped_reason?: string }
+export type AssignResult = {
+  assigned: number
+  skipped_reason?: string
+  // 2026-06-11 — replenish diagnostics, surfaced all the way to the
+  // dashboard so "0 leads, no idea why" can never happen again.
+  replenish?: { fired: boolean; assigned?: number; spent_cents?: number; errors?: string[]; blocked_reason?: string }
+}
 
 export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignResult> {
   if (!profile.is_active) return { assigned: 0, skipped_reason: 'inactive' }
@@ -271,6 +277,7 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
   // above, this means: tight-radius ring runs short -> auto-pull BatchData
   // around the business address -> next iteration finds enough close-in
   // candidates. Outer auto-widen pre-2026-06-10 is no longer needed.
+  let replenishInfo: AssignResult['replenish'] = undefined
   if (candidates.length < remaining) {
     const lastReplenish = profile.last_batchdata_replenish_at
     const cooldownMs = REPLENISH_COOLDOWN_HOURS * 60 * 60 * 1000
@@ -310,7 +317,13 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
           body: JSON.stringify({ user_id: profile.user_id, max_candidates: 80, skip_trace_top_n: 10, radius_mi: radiusUsed }),
         })
         const json = await r.json().catch(() => ({}))
-        console.log(`[lead-engine] auto-replenished user=${profile.user_id} assigned=${json.assigned ?? 0} spent_cents=${json.spent_cents ?? 0}`)
+        console.log(`[lead-engine] auto-replenished user=${profile.user_id} assigned=${json.assigned ?? 0} spent_cents=${json.spent_cents ?? 0} errors=${JSON.stringify(json.errors ?? [])}`)
+        replenishInfo = {
+          fired: true,
+          assigned: json.assigned ?? 0,
+          spent_cents: json.spent_cents ?? 0,
+          errors: Array.isArray(json.errors) ? json.errors : (json.error ? [String(json.error)] : []),
+        }
 
         // Re-query candidates after replenish. Reuse the widest radius from
         // the ladder above so we pick up anything find-real-leads inserted.
@@ -357,15 +370,17 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
         }
       } catch (e) {
         console.warn(`[lead-engine] auto-replenish failed for ${profile.user_id}: ${(e as Error).message}`)
+        replenishInfo = { fired: true, errors: [(e as Error).message] }
       }
     } else {
       console.warn(`[lead-engine] empty pool for ${profile.user_id} but cooldown active — last replenish ${lastReplenish}`)
+      replenishInfo = { fired: false, blocked_reason: `cooldown active until ${new Date(new Date(lastReplenish as string).getTime() + cooldownMs).toISOString()}` }
     }
   }
 
   if (candidates.length === 0) {
     console.warn(`[lead-engine] no candidates for ${profile.user_id} (radius_used=${radiusUsed}mi, trade=${tradeFilter})`)
-    return { assigned: 0, skipped_reason: 'no_candidates' }
+    return { assigned: 0, skipped_reason: 'no_candidates', replenish: replenishInfo }
   }
 
   // 2026-06-10 — DISTANCE-ASC PRIMARY SORT. Per Peter: "prioritizing all
@@ -441,7 +456,7 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
   const alreadySet = new Set((already || []).map((r) => r.lead_id))
   const fresh = pool.filter((c) => !alreadySet.has(c.id)).slice(0, remaining)
 
-  if (fresh.length === 0) return { assigned: 0, skipped_reason: 'all_already_received' }
+  if (fresh.length === 0) return { assigned: 0, skipped_reason: 'all_already_received', replenish: replenishInfo }
 
   // 2026-06-11 per Peter: "all ten leads should have a phone number, even
   // if the name's not listed." Skip-trace every phoneless lead AT DROP
@@ -489,7 +504,7 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
   const { error: insertErr } = await supabase.from('lead_drops').insert(dropRows)
   if (insertErr) {
     console.warn(`[lead-engine] insert err for ${profile.user_id}: ${insertErr.message}`)
-    return { assigned: 0, skipped_reason: 'insert_failed' }
+    return { assigned: 0, skipped_reason: 'insert_failed', replenish: replenishInfo }
   }
 
   // 2026-06-08 — rolling 7-day cadence. Dashboard countdown reads this
@@ -560,7 +575,7 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
       }
     })
 
-  return { assigned: fresh.length }
+  return { assigned: fresh.length, replenish: replenishInfo }
 }
 
 /**

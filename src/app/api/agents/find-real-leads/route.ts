@@ -279,7 +279,7 @@ async function expandRadius(homeZips: string[], radius: number): Promise<string[
 async function findLeadsForTenant(
   userId: string,
   opts: { skipTraceTopN?: number; maxCandidates?: number; radiusMi?: number } = {}
-): Promise<{ ok: boolean; assigned: number; reason?: string; spent_cents?: number; zips_searched?: number; skip_traced?: number }> {
+): Promise<{ ok: boolean; assigned: number; reason?: string; spent_cents?: number; zips_searched?: number; skip_traced?: number; errors?: string[] }> {
   const skipTraceTopN = opts.skipTraceTopN ?? 20
   const maxCandidates = opts.maxCandidates ?? 80
 
@@ -388,6 +388,11 @@ async function findLeadsForTenant(
   const candidatesForSkipTrace: InsertedCandidate[] = []
   let zipsSearched = 0
 
+  // 2026-06-11 — error visibility. Per-zip failures used to die in
+  // console.warn; the caller (lead-engine replenish → dashboard) saw only
+  // assigned:0 with no why. Collect them and return.
+  const zipErrors: string[] = []
+
   for (const zip of orderedZips.slice(0, zipsToSearch)) {
     if (candidatesInserted >= maxCandidates) break
     zipsSearched++
@@ -399,6 +404,7 @@ async function findLeadsForTenant(
     const canSpend = await canSpendBatchData(estCents)
     if (!canSpend.ok) {
       console.warn(`[find-real-leads] daily cap hit at zip ${zip} — spent=${canSpend.spentTodayCents} cap=${canSpend.capCents}. Aborting further searches.`)
+      zipErrors.push(`daily spend cap hit (${canSpend.spentTodayCents}/${canSpend.capCents}c)`)
       break
     }
 
@@ -418,6 +424,7 @@ async function findLeadsForTenant(
 
     if (!result.ok) {
       console.warn(`[find-real-leads] zip ${zip} search failed: ${result.error}`)
+      zipErrors.push(`zip ${zip}: ${result.error || 'search failed'}`)
       continue
     }
 
@@ -579,6 +586,7 @@ async function findLeadsForTenant(
     spent_cents: spentCents,
     zips_searched: zipsSearched,
     skip_traced: skipTracedCount,
+    errors: zipErrors.slice(0, 5),
   }
 }
 
