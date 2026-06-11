@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { isValidTier, type Tier } from '@/lib/pricing'
 import { LEADS_PER_WEEK } from '@/lib/offer'
+import { skipTraceAddress } from '@/lib/skipTrace'
 
 /**
  * Lead-engine core. Used by:
@@ -424,6 +425,42 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
 
   if (fresh.length === 0) return { assigned: 0, skipped_reason: 'all_already_received' }
 
+  // 2026-06-11 per Peter: "all ten leads should have a phone number, even
+  // if the name's not listed." Skip-trace every phoneless lead AT DROP
+  // TIME (was: only find-real-leads' top-N got traced; shared permit rows
+  // never did → "No phone on file" boof leads). skipTraceAddress is
+  // centrally spend-capped + logged, so a flood can't drain the balance.
+  // A miss still delivers the lead (some addresses are untraceable; the
+  // address + permit signal beats nothing) but stamps the attempt so the
+  // UI says "no phone on file" honestly instead of showing a reveal button.
+  {
+    const needPhone = (await supabase
+      .from('leads')
+      .select('id, owner_phone, street_address, city, state, zip')
+      .in('id', fresh.map((c) => c.id))
+    ).data?.filter((l) => !l.owner_phone && l.street_address) ?? []
+    for (const l of needPhone) {
+      const trace = await skipTraceAddress({
+        street: l.street_address as string,
+        city: (l as { city?: string | null }).city ?? undefined,
+        state: (l as { state?: string | null }).state ?? undefined,
+        zip: l.zip ?? undefined,
+      })
+      await supabase
+        .from('leads')
+        .update({
+          skip_trace_attempted_at: new Date().toISOString(),
+          skip_trace_hit: trace.ok && trace.hit,
+          ...(trace.ok && trace.hit ? {
+            owner_phone: trace.owner_phones?.[0] ?? null,
+            owner_email: trace.owner_emails?.[0] ?? null,
+            ...(trace.owner_name ? { owner_name: trace.owner_name } : {}),
+          } : {}),
+        })
+        .eq('id', l.id)
+    }
+  }
+
   const dropRows = fresh.map((c) => ({
     user_id: profile.user_id,
     profile_id: profile.user_id,
@@ -437,14 +474,24 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
     return { assigned: 0, skipped_reason: 'insert_failed' }
   }
 
-  // 2026-06-08 — rolling 7-day cadence. Stamp next_lead_drop_at = now + 7d
-  // on every successful drop. Dashboard countdown reads this column. Cron
-  // filter only fires drops for tenants whose next_lead_drop_at has passed.
-  const nextDropAt = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString()
-  await supabase
-    .from('profiles')
-    .update({ next_lead_drop_at: nextDropAt })
-    .eq('user_id', profile.user_id)
+  // 2026-06-08 — rolling 7-day cadence. Dashboard countdown reads this
+  // column; cron only fires drops for tenants whose next_lead_drop_at has
+  // passed.
+  //
+  // 2026-06-11 FIX per Peter's 1-of-10 partial drop: stamping +7d on EVERY
+  // successful drop locked the week away after a partial fill (1 lead
+  // delivered → 9 owed → timer says "come back in 7 days"). Now the +7d
+  // stamp only lands when this drop FILLS the period quota. A partial drop
+  // leaves next_lead_drop_at untouched so the dashboard kick + cron keep
+  // retrying to top up the remaining slots (e.g. the moment BatchData is
+  // funded).
+  if (fresh.length >= remaining) {
+    const nextDropAt = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString()
+    await supabase
+      .from('profiles')
+      .update({ next_lead_drop_at: nextDropAt })
+      .eq('user_id', profile.user_id)
+  }
 
   // 2026-06-06 PIVOT — no auto-enrich on drop. Click-to-reveal pattern:
   // skip-trace only fires when the contractor taps "Reveal phone" on a

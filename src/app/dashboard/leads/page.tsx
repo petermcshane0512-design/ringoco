@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { LEADS_PER_WEEK } from '@/lib/offer'
 import LeadsWaiting from '@/components/LeadsWaiting'
+import LeadMap from '@/components/LeadMap'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
 
 /**
@@ -64,6 +65,15 @@ type LeadDrop = {
     pitch_script: string | null
     skip_trace_attempted_at?: string | null
     skip_trace_hit?: boolean | null
+    lat?: number | null
+    lng?: number | null
+    source_details?: {
+      why_tags?: string[]
+      description?: string
+      permit_type?: string
+      work_class?: string
+      tag?: string
+    } | null
   }
 }
 
@@ -115,6 +125,10 @@ export default function LeadsPage() {
   const [revealed, setRevealed] = useState(0)
   // Greet by first name on the waiting card when we have it.
   const [ownerFirstName, setOwnerFirstName] = useState<string | null>(null)
+  // Business location — centers the lead map.
+  const [bizLoc, setBizLoc] = useState<{ lat: number; lng: number } | null>(null)
+  // Single-open accordion: which lead card is expanded. Map pins drive this.
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   async function loadLeads(): Promise<number> {
     const r = await fetch('/api/leads/list')
@@ -135,9 +149,12 @@ export default function LeadsPage() {
   useEffect(() => {
     fetch('/api/profile')
       .then((r) => r.json())
-      .then((p: { business_name?: string | null; business_lat?: number | null; business_address?: string | null; is_active?: boolean | null; owner_first_name?: string | null }) => {
+      .then((p: { business_name?: string | null; business_lat?: number | null; business_lng?: number | null; business_address?: string | null; is_active?: boolean | null; owner_first_name?: string | null }) => {
         setSubActive(p.is_active === true)
         if (p.owner_first_name) setOwnerFirstName(p.owner_first_name)
+        if (typeof p.business_lat === 'number' && typeof p.business_lng === 'number') {
+          setBizLoc({ lat: p.business_lat, lng: p.business_lng })
+        }
         const bn = (p.business_name ?? '').trim()
         const nameOk = !!bn && bn.toLowerCase() !== 'my business'
         // Geocoded address is the ONE hard requirement — without a lat/lng
@@ -182,18 +199,21 @@ export default function LeadsPage() {
   // pipelineStep animation driving LeadScanConsole) was deleted per Peter
   // ("too AI"). LeadsWaiting is a static calm card; no timers needed.
 
-  // SELF-DRIVING FIRST DELIVERY — kick check-and-drop on first empty
-  // load, then poll every 5s while empty so the drop appears the second
-  // it lands (no manual refresh).
+  // SELF-DRIVING DELIVERY — kick check-and-drop while this week's batch is
+  // SHORT (not just empty — 2026-06-11 fix: a 1-of-10 partial drop stopped
+  // the kick because drops.length > 0, leaving the customer owed 9 with no
+  // retry until the cron). Server's check-and-drop owns the quota math; the
+  // client just pings while short. Poll every 5s in the same condition.
+  const weekShort = drops.filter((d) => Date.now() - new Date(d.drop_date).getTime() <= 7 * 86_400_000).length < LEADS_PER_WEEK
   const [kicked, setKicked] = useState(false)
   useEffect(() => {
-    if (loading || drops.length > 0 || kicked) return
+    if (loading || !weekShort || kicked) return
     setKicked(true)
     fetch('/api/leads/check-and-drop', { method: 'POST' })
       .then((r) => r.json()).then(async (j) => { if (j.ok) await loadLeads() })
       .catch(() => {})
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, drops.length, kicked])
+  }, [loading, weekShort, kicked])
   useEffect(() => {
     if (loading || drops.length > 0) return
     const id = setInterval(() => { loadLeads() }, 5000)
@@ -380,13 +400,51 @@ export default function LeadsPage() {
               </div>
             </div>
 
+            {/* ── LEAD MAP — your shop + numbered pins, tap to open ──── */}
+            {bizLoc && (() => {
+              const mapLeads = visibleWeek
+                .filter((d) => typeof d.lead.lat === 'number' && typeof d.lead.lng === 'number')
+                .map((d, i) => ({
+                  id: d.lead.id,
+                  lat: d.lead.lat as number,
+                  lng: d.lead.lng as number,
+                  label: String(i + 1),
+                  title: [d.lead.street_address, d.lead.city].filter(Boolean).join(', ') || d.lead.zip,
+                  hasPhone: !!d.lead.owner_phone,
+                }))
+              return mapLeads.length > 0 ? (
+                <LeadMap
+                  businessLat={bizLoc.lat}
+                  businessLng={bizLoc.lng}
+                  leads={mapLeads}
+                  onPinClick={(leadId) => {
+                    setExpandedId(leadId)
+                    // Defer scroll until the expanded card renders.
+                    setTimeout(() => {
+                      document.getElementById(`lead-${leadId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                    }, 60)
+                  }}
+                />
+              ) : null
+            })()}
+
             {/* ── THIS WEEK'S DROP ───────────────────────────────────── */}
             <SectionHead title={`This week's leads`} sub={`${thisWeek.length} delivered · closest to you first · tap for details + AI outreach`} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {visibleWeek.length > 0 || stillRevealing
                 ? (
                   <>
-                    {visibleWeek.map((d) => <LeadCard key={d.id} drop={d} onStatus={updateStatus} onReveal={revealPhone} />)}
+                    {visibleWeek.map((d, i) => (
+                      <LeadCard
+                        key={d.id}
+                        drop={d}
+                        index={i + 1}
+                        onStatus={updateStatus}
+                        onReveal={revealPhone}
+                        expanded={expandedId === d.lead.id}
+                        onToggle={() => setExpandedId((x) => (x === d.lead.id ? null : d.lead.id))}
+                      />
+                    ))}
                     {stillRevealing && (
                       <div style={{
                         display: 'flex', alignItems: 'center', gap: 10,
@@ -410,7 +468,7 @@ export default function LeadsPage() {
 
             {/* ── PAST LEADS ─────────────────────────────────────────── */}
             {past.length > 0 && (
-              <PastLeads drops={past} onStatus={updateStatus} onReveal={revealPhone} />
+              <PastLeads drops={past} onStatus={updateStatus} onReveal={revealPhone} expandedId={expandedId} onToggle={setExpandedId} />
             )}
               </>
             )}
@@ -575,7 +633,7 @@ function SectionHead({ title, sub }: { title: string; sub: string }) {
 }
 
 /** Past leads — collapsed by default so the dashboard leads with this week. */
-function PastLeads({ drops, onStatus, onReveal }: { drops: LeadDrop[]; onStatus: (id: string, s: LeadDrop['status']) => void; onReveal: (leadId: string) => void }) {
+function PastLeads({ drops, onStatus, onReveal, expandedId, onToggle }: { drops: LeadDrop[]; onStatus: (id: string, s: LeadDrop['status']) => void; onReveal: (leadId: string) => void; expandedId: string | null; onToggle: (updater: (x: string | null) => string | null) => void }) {
   const [open, setOpen] = useState(false)
   return (
     <div style={{ marginTop: 28 }}>
@@ -593,7 +651,16 @@ function PastLeads({ drops, onStatus, onReveal }: { drops: LeadDrop[]; onStatus:
       </button>
       {open && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
-          {drops.map((d) => <LeadCard key={d.id} drop={d} onStatus={onStatus} onReveal={onReveal} />)}
+          {drops.map((d) => (
+            <LeadCard
+              key={d.id}
+              drop={d}
+              onStatus={onStatus}
+              onReveal={onReveal}
+              expanded={expandedId === d.lead.id}
+              onToggle={() => onToggle((x) => (x === d.lead.id ? null : d.lead.id))}
+            />
+          ))}
         </div>
       )}
     </div>
@@ -781,11 +848,20 @@ const gateInput: React.CSSProperties = {
 
 type GeneratedMessage = { email_subject: string; email_body: string; sms: string }
 
-function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id: string, s: LeadDrop['status']) => void; onReveal: (leadId: string) => void }) {
+function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index }: {
+  drop: LeadDrop
+  onStatus: (id: string, s: LeadDrop['status']) => void
+  onReveal: (leadId: string) => void
+  // 2026-06-11 — expansion is parent-controlled (single-open accordion) so
+  // map-pin clicks can open the matching card + scroll to it.
+  expanded: boolean
+  onToggle: () => void
+  // 1-based position in this week's list — matches the numbered map pin.
+  index?: number
+}) {
   const l = drop.lead
   const fullAddr = [l.street_address, l.city, l.state, l.zip].filter(Boolean).join(', ')
   const mapsHref = fullAddr ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddr)}` : null
-  const [expanded, setExpanded] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiMsg, setAiMsg] = useState<GeneratedMessage | null>(null)
@@ -857,7 +933,7 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
     : 'rgba(255,248,240,0.5)'
 
   return (
-    <div style={{
+    <div id={`lead-${l.id}`} style={{
       borderRadius: 13,
       background: expanded ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.04)',
       border: expanded ? '1.5px solid rgba(232,116,43,0.55)' : '1px solid rgba(255,157,90,0.16)',
@@ -867,7 +943,7 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
       {/* Compact summary row — same shape as the homepage LeadsCard rows */}
       <button
         type="button"
-        onClick={() => setExpanded((x) => !x)}
+        onClick={onToggle}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 12,
           padding: '13px 16px', background: 'transparent', border: 'none',
@@ -875,6 +951,17 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
           fontFamily: 'inherit',
         }}
       >
+        {typeof index === 'number' && (
+          <span aria-hidden style={{
+            width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: l.owner_phone ? 'linear-gradient(135deg, #FF9D5A, #E8742B)' : 'linear-gradient(135deg, #64748B, #475569)',
+            border: '1.5px solid rgba(255,255,255,0.6)',
+            color: '#fff', fontSize: 10.5, fontWeight: 900,
+          }}>
+            {index}
+          </span>
+        )}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{ fontSize: 14.5, fontWeight: 900, color: '#FFF8F0' }}>
@@ -922,6 +1009,31 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
               {l.sqft ? ` · ${l.sqft.toLocaleString()} sqft` : null}
             </div>
           )}
+          {/* AI DEBRIEF — why this lead surfaced. why_tags come from the
+              lead engine (sale recency, system age, permit/storm signal);
+              permit rows fall back to the raw permit description. */}
+          {(() => {
+            const sd = l.source_details
+            const tags = (sd?.why_tags ?? []).filter(Boolean)
+            const permitLine = [sd?.permit_type, sd?.work_class, sd?.description].filter(Boolean).join(' · ')
+            if (tags.length === 0 && !permitLine) return null
+            return (
+              <div style={{
+                background: 'rgba(255,255,255,0.04)', padding: '11px 13px', borderRadius: 10,
+                border: '1px solid rgba(255,157,90,0.18)',
+                fontSize: 12, color: 'rgba(255,248,240,0.85)', lineHeight: 1.6, marginBottom: 10,
+              }}>
+                <span style={{ color: '#FFC58A', fontWeight: 800, fontSize: 10, letterSpacing: '0.08em', display: 'block', marginBottom: 5 }}>WHY THIS LEAD</span>
+                {tags.length > 0 ? (
+                  <ul style={{ margin: 0, paddingLeft: 16 }}>
+                    {tags.map((t, i) => <li key={i} style={{ marginBottom: 2 }}>{t}</li>)}
+                  </ul>
+                ) : (
+                  <span>Permit on file: {permitLine}</span>
+                )}
+              </div>
+            )
+          })()}
           {pitch && (
             <div style={{
               background: 'rgba(232,116,43,0.12)', padding: '11px 13px', borderRadius: 10,
