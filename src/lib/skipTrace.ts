@@ -32,6 +32,20 @@ const BATCHDATA_SEARCH_API = 'https://api.batchdata.com/api/v1/property/search'
 const REQUEST_TIMEOUT_MS = 10_000
 
 /**
+ * 2026-06-11 — env keys can arrive with an invisible BOM (U+FEFF) when set
+ * via a PowerShell pipe (`"key" | vercel env add` writes one). fetch()
+ * throws "Cannot convert argument to a ByteString... 65279" on the header
+ * and EVERY BatchData call dies. Strip BOM + zero-width junk + whitespace
+ * at the single point of read so no env-entry mistake can break prod again.
+ */
+export function batchdataKey(): string | undefined {
+  const raw = process.env.BATCHDATA_API_KEY
+  if (!raw) return undefined
+  const cleaned = raw.replace(/[﻿​‌‍]/g, '').trim()
+  return cleaned || undefined
+}
+
+/**
  * BatchData Property Search — finds REAL homeowners at REAL addresses in
  * a given ZIP, filtered by trade-relevant criteria. Returns owner name +
  * full address + year built + last sale date. NO phone — that requires a
@@ -93,7 +107,7 @@ type BatchDataSearchResponse = {
 }
 
 export async function batchdataPropertySearch(input: PropertySearchInput): Promise<PropertySearchResult> {
-  const key = process.env.BATCHDATA_API_KEY
+  const key = batchdataKey()
   if (!key) {
     return { ok: false, cost_cents: 0, properties: [], error: 'BATCHDATA_API_KEY not configured' }
   }
@@ -232,7 +246,7 @@ function normalizePhone(raw: string): string {
 }
 
 export async function skipTraceAddress(input: SkipTraceInput): Promise<SkipTraceResult> {
-  const key = process.env.BATCHDATA_API_KEY
+  const key = batchdataKey()
   if (!key) {
     return { ok: false, hit: false, cost_cents: 0, error: 'BATCHDATA_API_KEY not configured' }
   }

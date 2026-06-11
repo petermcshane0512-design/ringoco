@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
 import { canSpendBatchData, logBatchDataSpend } from '@/lib/batchdataSpend'
+import { batchdataKey } from '@/lib/skipTrace'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -140,7 +141,7 @@ async function batchDataSearch(loc: { zip?: string; city?: string; state?: strin
   const res = await fetch('https://api.batchdata.com/api/v1/property/search', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${process.env.BATCHDATA_API_KEY}`,
+      Authorization: `Bearer ${batchdataKey()}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ searchCriteria: criteria, options: { take: 10 } }),
