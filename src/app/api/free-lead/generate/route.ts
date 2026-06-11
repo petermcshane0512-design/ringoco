@@ -187,8 +187,9 @@ export async function POST(req: NextRequest) {
   await bumpVisitAndMaybeAlertHot(bizId, row)
 
   if (row.generation_completed_at && row.lead_owner_name) {
-    // Cached hit — return existing
-    return NextResponse.json({ ok: true, cached: true, lead: pluckLead(row) })
+    // Cached hit — return existing (+ geocoded pin for the demo map)
+    const cachedLoc = await leadLatLngFromAddress(row)
+    return NextResponse.json({ ok: true, cached: true, lead: { ...pluckLead(row), lat: cachedLoc?.lat ?? null, lng: cachedLoc?.lng ?? null } })
   }
 
   // Hardening #4 — daily spend cap
@@ -306,7 +307,14 @@ export async function POST(req: NextRequest) {
     .eq('biz_id', bizId)
     .maybeSingle()
 
-  return NextResponse.json({ ok: true, cached: false, lead: pluckLead(updated.data as Record<string, unknown>) })
+  // Coordinates: straight off the BatchData row when present, else geocode.
+  const pickLat = typeof pick.address?.latitude === 'number' ? pick.address.latitude : null
+  const pickLng = typeof pick.address?.longitude === 'number' ? pick.address.longitude : null
+  const freshLoc = pickLat !== null && pickLng !== null
+    ? { lat: pickLat, lng: pickLng }
+    : await leadLatLngFromAddress(updated.data as Record<string, unknown>)
+
+  return NextResponse.json({ ok: true, cached: false, lead: { ...pluckLead(updated.data as Record<string, unknown>), lat: freshLoc?.lat ?? null, lng: freshLoc?.lng ?? null } })
 }
 
 /**
@@ -401,4 +409,22 @@ function pluckLead(row: Record<string, unknown>) {
     trade: row.trade,
     phone_redacted: true,  // signals UI to render unlock-on-checkout state
   }
+}
+
+/**
+ * 2026-06-11 — lat/lng for the demo-dashboard map pin on /free-lead.
+ * prospect_free_leads has no coordinate columns (avoiding a migration):
+ * fresh generations pass coords straight from the BatchData row; cached
+ * hits geocode the stored address on the fly ($0.005, edge of free tier).
+ */
+async function leadLatLngFromAddress(row: Record<string, unknown>): Promise<{ lat: number; lng: number } | null> {
+  const parts = [row.lead_street, row.city, row.state, row.zip].filter(Boolean).join(', ')
+  if ((row.lead_street as string | null | undefined)?.trim() && parts.length >= 8) {
+    try {
+      const { geocodeBusinessAddress } = await import('@/lib/geocodeBusinessAddress')
+      const g = await geocodeBusinessAddress(parts)
+      if (g) return { lat: g.lat, lng: g.lng }
+    } catch { /* map pin is progressive enhancement — never block the lead */ }
+  }
+  return null
 }

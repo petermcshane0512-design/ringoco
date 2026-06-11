@@ -377,49 +377,26 @@ export default function LeadsPage() {
               <LeadsWaiting firstName={ownerFirstName} />
             ) : (
               <>
-            {/* ── COUNTDOWN BANNER — next drop, front and center ─────── */}
-            <div style={{
-              borderRadius: 16, padding: '18px 22px', marginBottom: 16,
-              background: 'linear-gradient(135deg, rgba(232,116,43,0.16), rgba(232,116,43,0.05))',
-              border: '1px solid rgba(255,157,90,0.38)',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              gap: 14, flexWrap: 'wrap',
-            }}>
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 900, color: '#FF9D5A', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>
-                  Next {LEADS_PER_WEEK} leads drop in
-                </div>
-                <div style={{ fontSize: 'clamp(26px, 5vw, 38px)', fontWeight: 900, color: '#FFF8F0', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em', lineHeight: 1 }}>
-                  {countdownLabel}
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap' }}>
-                <BannerStat n={thisWeek.length} label="this week" />
-                <BannerStat n={monthCount} label="this month" />
-                <BannerStat n={counts.won} label="won" win />
-              </div>
-            </div>
-
-            {/* ── LEAD MAP — your shop + numbered pins, tap to open ──── */}
-            {bizLoc && (() => {
-              const mapLeads = visibleWeek
-                .filter((d) => typeof d.lead.lat === 'number' && typeof d.lead.lng === 'number')
-                .map((d, i) => ({
-                  id: d.lead.id,
-                  lat: d.lead.lat as number,
-                  lng: d.lead.lng as number,
-                  label: String(i + 1),
-                  title: [d.lead.street_address, d.lead.city].filter(Boolean).join(', ') || d.lead.zip,
-                  hasPhone: !!d.lead.owner_phone,
-                }))
-              // 2026-06-11 — render the map whenever there ARE leads this
-              // week, even if none carry lat/lng yet (the shop pin alone
-              // still orients the customer). Pins only for geocoded leads.
-              return visibleWeek.length > 0 ? (
+            {/* ── TOP ROW: compact map (left) + countdown banner (right).
+                   2026-06-11 per Peter: "map way too big — small, on the
+                   left next to 'next leads drop in', zoomed out enough to
+                   pin all weekly leads." LeadMap already auto-fits zoom to
+                   the full weekly pin set. Stacks on mobile. ─────────── */}
+            <div className={bizLoc && visibleWeek.length > 0 ? 'bavg-top-grid' : undefined} style={{ marginBottom: 16 }}>
+              {bizLoc && visibleWeek.length > 0 && (
                 <LeadMap
                   businessLat={bizLoc.lat}
                   businessLng={bizLoc.lng}
-                  leads={mapLeads}
+                  leads={visibleWeek
+                    .filter((d) => typeof d.lead.lat === 'number' && typeof d.lead.lng === 'number')
+                    .map((d, i) => ({
+                      id: d.lead.id,
+                      lat: d.lead.lat as number,
+                      lng: d.lead.lng as number,
+                      label: String(i + 1),
+                      title: [d.lead.street_address, d.lead.city].filter(Boolean).join(', ') || d.lead.zip,
+                      hasPhone: !!d.lead.owner_phone,
+                    }))}
                   onPinClick={(leadId) => {
                     setExpandedId(leadId)
                     // Defer scroll until the expanded card renders.
@@ -428,8 +405,30 @@ export default function LeadsPage() {
                     }, 60)
                   }}
                 />
-              ) : null
-            })()}
+              )}
+              {/* Countdown banner */}
+              <div style={{
+                borderRadius: 16, padding: '18px 22px',
+                background: 'linear-gradient(135deg, rgba(232,116,43,0.16), rgba(232,116,43,0.05))',
+                border: '1px solid rgba(255,157,90,0.38)',
+                display: 'flex', flexDirection: 'column', justifyContent: 'center',
+                gap: 14,
+              }}>
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 900, color: '#FF9D5A', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>
+                    Next {LEADS_PER_WEEK} leads drop in
+                  </div>
+                  <div style={{ fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 900, color: '#FFF8F0', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em', lineHeight: 1 }}>
+                    {countdownLabel}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap' }}>
+                  <BannerStat n={thisWeek.length} label="this week" />
+                  <BannerStat n={monthCount} label="this month" />
+                  <BannerStat n={counts.won} label="won" win />
+                </div>
+              </div>
+            </div>
 
             {/* ── THIS WEEK'S DROP ───────────────────────────────────── */}
             <SectionHead title={`This week's leads`} sub={`${thisWeek.length} delivered · closest to you first · tap for details + AI outreach`} />
@@ -482,6 +481,15 @@ export default function LeadsPage() {
       <style>{`
         @keyframes cmdLive { 0%, 100% { opacity: 1 } 50% { opacity: 0.25 } }
         @keyframes bavgSpin { to { transform: rotate(360deg) } }
+        .bavg-top-grid {
+          display: grid;
+          grid-template-columns: minmax(260px, 380px) 1fr;
+          gap: 14px;
+          align-items: stretch;
+        }
+        @media (max-width: 760px) {
+          .bavg-top-grid { grid-template-columns: 1fr; }
+        }
       `}</style>
     </main>
   )

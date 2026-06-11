@@ -50,11 +50,15 @@ export default function LeadMap({
   businessLng,
   leads,
   onPinClick,
+  hideShopPin,
 }: {
   businessLat: number
   businessLng: number
   leads: MapLead[]
   onPinClick: (leadId: string) => void
+  // Demo/free-lead mode — center coords come from the lead itself, so the
+  // "YOUR SHOP" pin would be a lie. Hide it.
+  hideShopPin?: boolean
 }) {
   const [hovered, setHovered] = useState<string | null>(null)
 
@@ -99,7 +103,6 @@ export default function LeadMap({
       overflow: 'hidden',
       border: '1.5px solid rgba(255,157,90,0.28)',
       boxShadow: '0 18px 50px rgba(11,31,58,0.35)',
-      marginBottom: 16,
       aspectRatio: `${MAP_W} / ${MAP_H}`,
       background: '#0B1F3A',
     }}>
@@ -111,6 +114,7 @@ export default function LeadMap({
       />
 
       {/* Business pin — your shop */}
+      {!hideShopPin && (
       <div
         title="Your shop"
         style={{
@@ -133,6 +137,7 @@ export default function LeadMap({
         </div>
         <div style={{ fontSize: 26, lineHeight: 1, filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.5))' }}>📍</div>
       </div>
+      )}
 
       {/* Lead pins — numbered, clickable */}
       {leads.map((l) => {

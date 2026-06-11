@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { LEADS_PER_WEEK, LEADS_PER_MONTH, PRICE_PER_LEAD_INTRO_USD } from '@/lib/offer'
 import LiveLeadFeed from '@/components/LiveLeadFeed'
+import LeadMap from '@/components/LeadMap'
 
 /**
  * /free-lead?b={biz_id} — cold-email landing page.
@@ -44,6 +45,8 @@ type LeadDTO = {
   est_job_min: number | null
   est_job_max: number | null
   trade: string | null
+  lat?: number | null
+  lng?: number | null
 }
 
 function FreeLeadInner() {
@@ -172,21 +175,132 @@ function FreeLeadInner() {
             </div>
           )}
 
-          {/* PHASE 2 — REVEALED */}
+          {/* PHASE 2 — REVEALED: the DEMO DASHBOARD (2026-06-11 per Peter:
+              free lead opens a demo dashboard; clicking anything sells the
+              weekly/monthly lead package). Dark shell identical to the real
+              /dashboard/leads, their free lead pinned on the map as lead #1,
+              the rest of the weekly batch shown as locked rows behind the
+              trial. Every locked element routes to checkout. */}
           {phase === 'revealed' && lead && (
             <div>
               <div style={{ display: 'inline-block', padding: '5px 14px', borderRadius: 99, background: 'rgba(34,197,94,0.16)', color: '#16803F', fontSize: 11, fontWeight: 900, letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 16 }}>
                 ✓ Your free lead is ready
               </div>
               <h1 style={revealH1}>
-                Here&rsquo;s 1 real homeowner in <span style={{ background: 'linear-gradient(135deg, #FF9D5A, #C84B26)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>{lead.zip}</span>.
+                This is your dashboard. Lead #1 is <span style={{ background: 'linear-gradient(135deg, #FF9D5A, #C84B26)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>real</span>.
               </h1>
               <p style={{ fontSize: 15, color: '#4A6670', margin: '0 0 24px', lineHeight: 1.55 }}>
-                Yours to call today. No catch. <strong style={{ color: '#0B1F3A' }}>Want {LEADS_PER_MONTH} more like this for $97?</strong> Read on.
+                One real homeowner in {lead.zip || 'your area'} — yours to call today, no catch.
+                Leads #2–{LEADS_PER_WEEK} unlock the second you start.
               </p>
 
-              {/* Lead card */}
-              <div style={leadCard}>
+              {/* ── DEMO DASHBOARD SHELL ── */}
+              <div style={{
+                borderRadius: 20, overflow: 'hidden', marginBottom: 24,
+                background: 'linear-gradient(165deg, #081427 0%, #0B1F3A 55%, #0A1830 100%)',
+                border: '1.5px solid rgba(255,157,90,0.28)',
+                boxShadow: '0 30px 80px rgba(11,31,58,0.45)',
+                color: '#FFF8F0',
+              }}>
+                {/* Demo top bar */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '12px 16px', borderBottom: '1px solid rgba(255,157,90,0.16)',
+                  background: 'rgba(8,20,39,0.92)',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 14, fontWeight: 900, letterSpacing: '-0.02em' }}>BellAveGo</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 9, fontWeight: 800, color: '#22C55E', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                      <i style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', display: 'inline-block' }} />
+                      Live
+                    </span>
+                  </div>
+                  <Link href={checkoutUrl} style={{
+                    padding: '6px 11px', borderRadius: 8, textDecoration: 'none',
+                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,157,90,0.22)',
+                    color: '#FFC58A', fontSize: 10.5, fontWeight: 800,
+                  }}>⚡ Buy more leads</Link>
+                </div>
+
+                <div style={{ padding: '14px 14px 16px' }}>
+                  {/* Demo banner — the offer, styled as the countdown */}
+                  <Link href={checkoutUrl} style={{ textDecoration: 'none', display: 'block' }}>
+                    <div style={{
+                      borderRadius: 13, padding: '13px 16px', marginBottom: 12,
+                      background: 'linear-gradient(135deg, rgba(232,116,43,0.16), rgba(232,116,43,0.05))',
+                      border: '1px solid rgba(255,157,90,0.38)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap',
+                    }}>
+                      <div>
+                        <div style={{ fontSize: 9.5, fontWeight: 900, color: '#FF9D5A', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 3 }}>
+                          Your first {LEADS_PER_WEEK} leads drop
+                        </div>
+                        <div style={{ fontSize: 'clamp(18px, 3vw, 24px)', fontWeight: 900, color: '#FFF8F0', lineHeight: 1 }}>
+                          ~30 min after you start
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 11.5, fontWeight: 800, color: '#FFC58A' }}>
+                        {LEADS_PER_WEEK}/week · {LEADS_PER_MONTH}/month · $97 →
+                      </div>
+                    </div>
+                  </Link>
+
+                  {/* Map — their free lead pinned. Real coordinates only. */}
+                  {typeof lead.lat === 'number' && typeof lead.lng === 'number' && (
+                    <div style={{ marginBottom: 12 }}>
+                      <LeadMap
+                        businessLat={lead.lat}
+                        businessLng={lead.lng}
+                        hideShopPin
+                        leads={[{
+                          id: 'free-lead',
+                          lat: lead.lat,
+                          lng: lead.lng,
+                          label: '1',
+                          title: [lead.street, lead.city].filter(Boolean).join(', ') || lead.zip || 'Your free lead',
+                          hasPhone: true,
+                        }]}
+                        onPinClick={() => {
+                          document.getElementById('free-lead-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        }}
+                      />
+                      <p style={{ fontSize: 10.5, color: '#7AAAB2', margin: '6px 2px 0', fontWeight: 600 }}>
+                        📍 Pin 1 = your free lead. Your other {LEADS_PER_WEEK - 1} this week pin here the moment you start.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Locked rows #2-N — every click goes to checkout */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                    {Array.from({ length: LEADS_PER_WEEK - 1 }, (_, i) => i + 2).map((n) => (
+                      <Link key={n} href={checkoutUrl} style={{ textDecoration: 'none', display: 'block' }}>
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          padding: '10px 13px', borderRadius: 11,
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px dashed rgba(255,157,90,0.25)',
+                        }}>
+                          <span style={{
+                            width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,157,90,0.3)',
+                            color: '#7AAAB2', fontSize: 9.5, fontWeight: 900,
+                          }}>{n}</span>
+                          <span style={{ flex: 1, fontSize: 12, fontWeight: 700, color: 'rgba(255,248,240,0.45)' }}>
+                            🔒 Lead #{n} — verified homeowner near {lead.zip || 'you'}
+                          </span>
+                          <span style={{ fontSize: 10.5, fontWeight: 900, color: '#FFC58A', whiteSpace: 'nowrap' }}>
+                            Unlock — $97 →
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Lead card — the REAL free lead detail */}
+              <div id="free-lead-card" style={leadCard}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
                   <div>
                     <div style={{ fontSize: 22, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.02em' }}>{lead.owner || 'Homeowner'}</div>
