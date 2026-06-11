@@ -68,6 +68,18 @@ const isPublicRoute = createRouteMatcher([
   // Without this, Clerk middleware redirects unauthenticated curl to a
   // sign-in HTML page before requireAdmin can verify the header.
   "/api/admin(.*)",
+  // Public marketing surfaces — anonymous landing-page visitors must be
+  // able to hit these. /api/live-feed feeds the LiveLeadFeed ticker and
+  // LiveStatBar count-up on the homepage + /free-lead. /api/opportunity-check
+  // powers the homepage zip widget. /api/territory/check powers /start/area.
+  // /api/free-lead/* serves the cold-email landing.
+  "/api/live-feed(.*)",
+  "/api/opportunity-check(.*)",
+  "/api/territory(.*)",
+  "/free-lead(.*)",
+  "/api/free-lead(.*)",
+  "/start(.*)",
+  "/api/stripe/checkout(.*)",
 ]);
 
 /**
