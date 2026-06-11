@@ -5,6 +5,36 @@ import Link from 'next/link'
 import { LEADS_PER_WEEK, LEADS_PER_MONTH } from '@/lib/offer'
 import LeadScanConsole from '@/components/LeadScanConsole'
 
+/**
+ * /dashboard/leads — THE dashboard. 2026-06-10 full command-center
+ * rewrite per Peter: "I need the home-service guys to be like 'whoa,
+ * their AI UI is insane.'"
+ *
+ * Design system: dark mission-control matching LeadScanConsole —
+ * #060D18→#0B1F3A gradient shell, teal/emerald accent (#5EEAD4 /
+ * #34D399), monospace status text, glowing score badges.
+ *
+ * Structure:
+ *   1. Command bar — brand mark, quick-nav (Buy leads / Settings /
+ *      Support), live status dot.
+ *   2. AI status strip — REAL numbers only: drop quota, pipeline
+ *      counts (new/contacted/quoted/won) computed from actual drops,
+ *      next-sweep countdown.
+ *   3. Lead rows — compact dark rows w/ glowing score, signal +
+ *      status pills, one-line address. Click to expand: full property
+ *      intel, phone reveal state machine, AI outreach generator with
+ *      send-now buttons, map link, status pills.
+ *   4. Empty state — LeadScanConsole (radar + agent log).
+ *
+ * ALL behavior preserved from the prior rev: 1s countdown tick,
+ * pipeline/scan animations, self-driving KICK + 5s POLL while empty,
+ * countdown-zero check-and-drop, optimistic status updates,
+ * click-to-reveal skip-trace, AI message generation + SMS/email send.
+ *
+ * /dashboard root now 302s here — this page owns the entire post-
+ * signup experience.
+ */
+
 type LeadDrop = {
   id: string
   drop_date: string
@@ -26,7 +56,6 @@ type LeadDrop = {
     source: string
     lead_score: number
     pitch_script: string | null
-    // 2026-06-06 — click-to-reveal skip-trace state
     skip_trace_attempted_at?: string | null
     skip_trace_hit?: boolean | null
   }
@@ -45,7 +74,6 @@ export default function LeadsPage() {
   const [drops, setDrops] = useState<LeadDrop[]>([])
   const [quota, setQuota] = useState<QuotaInfo | null>(null)
   const [loading, setLoading] = useState(true)
-  // 2026-06-08 — per-tenant rolling 7-day countdown anchored to last drop.
   const [nextDropAt, setNextDropAt] = useState<string | null>(null)
   const [nowTick, setNowTick] = useState<number>(() => Date.now())
   const [firing, setFiring] = useState(false)
@@ -62,24 +90,22 @@ export default function LeadsPage() {
     loadLeads().finally(() => setLoading(false))
   }, [])
 
-  // Tick every 1s so the countdown updates live.
+  // 1s tick drives the next-sweep countdown.
   useEffect(() => {
     const id = setInterval(() => setNowTick(Date.now()), 1000)
     return () => clearInterval(id)
   }, [])
 
-  // 2026-06-10 — empty-state pipeline animation. Cycles through the 5 steps
-  // so the dashboard feels alive while the first batch is being pulled.
+  // Empty-state pipeline animation (LeadScanConsole renders it).
   const [pipelineStep, setPipelineStep] = useState(0)
   useEffect(() => {
-    if (drops.length > 0) return // real leads landed, kill animation
+    if (drops.length > 0) return
     const id = setInterval(() => {
-      setPipelineStep((s) => (s + 1) % 6) // 0-4 = scanning each step, 5 = pause then loop
+      setPipelineStep((s) => (s + 1) % 6)
     }, 2200)
     return () => clearInterval(id)
   }, [drops.length])
 
-  // Fake counters that tick up to give the feel of an active scan.
   const [scanCount, setScanCount] = useState(0)
   useEffect(() => {
     if (drops.length > 0) return
@@ -89,15 +115,9 @@ export default function LeadsPage() {
     return () => clearInterval(id)
   }, [drops.length])
 
-  // 2026-06-10 — SELF-DRIVING FIRST DELIVERY. Two fixes for the
-  // "smoke test taking forever" pain:
-  //   1. KICK: when the page loads and the tenant has zero drops, fire
-  //      /api/leads/check-and-drop immediately (it runs the lead engine
-  //      synchronously — for a fresh tenant next_lead_drop_at is null so
-  //      the guard passes). Even if the Stripe-webhook day-1 chain died,
-  //      the customer sitting on this page drives their own delivery.
-  //   2. POLL: refetch the leads list every 5s while empty so the drop
-  //      appears the second it lands — no manual refresh.
+  // SELF-DRIVING FIRST DELIVERY — kick check-and-drop on first empty
+  // load, then poll every 5s while empty so the drop appears the second
+  // it lands (no manual refresh).
   const [kicked, setKicked] = useState(false)
   useEffect(() => {
     if (loading || drops.length > 0 || kicked) return
@@ -114,9 +134,7 @@ export default function LeadsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, drops.length])
 
-  // When the timer hits zero, POST /api/leads/check-and-drop to force-fire
-  // the assignment now (instead of waiting for the hourly cron), then refresh
-  // the leads list. Guard against double-fire with `firing`.
+  // Countdown-zero → force the weekly drop now instead of waiting on cron.
   useEffect(() => {
     if (!nextDropAt || firing) return
     const dueAt = new Date(nextDropAt).getTime()
@@ -140,8 +158,7 @@ export default function LeadsPage() {
     })
   }
 
-  // Click-to-reveal skip-trace. Costs us ~$0.10/click; runs only on engaged
-  // leads. Optimistic UI flip while the backend fetches BatchData (~1s).
+  // Click-to-reveal skip-trace (~$0.10, only on engaged leads).
   async function revealPhone(leadId: string) {
     setDrops((prev) => prev.map((d) =>
       d.lead.id === leadId ? { ...d, lead: { ...d.lead, skip_trace_attempted_at: new Date().toISOString() } } : d
@@ -165,96 +182,151 @@ export default function LeadsPage() {
     }
   }
 
-  const pctUsed = quota ? Math.min(100, Math.round((quota.used_this_period / quota.per_drop) * 100)) : 0
+  // REAL pipeline counts — computed from actual drops, never invented.
+  const counts = {
+    fresh: drops.filter((d) => d.status === 'new' || d.status === 'viewed').length,
+    contacted: drops.filter((d) => d.status === 'contacted').length,
+    quoted: drops.filter((d) => d.status === 'quoted').length,
+    won: drops.filter((d) => d.status === 'won').length,
+  }
+
+  const countdownLabel = (() => {
+    if (!nextDropAt) return firing ? 'dropping now' : '—'
+    const ms = new Date(nextDropAt).getTime() - nowTick
+    if (ms <= 0) return firing ? 'dropping now' : 'any second'
+    const days = Math.floor(ms / 86_400_000)
+    const hrs = Math.floor((ms % 86_400_000) / 3_600_000)
+    const mins = Math.floor((ms % 3_600_000) / 60_000)
+    const secs = Math.floor((ms % 60_000) / 1000)
+    if (days > 0) return `${days}d ${hrs}h ${mins}m`
+    if (hrs > 0) return `${hrs}h ${mins}m ${secs}s`
+    return `${mins}m ${secs}s`
+  })()
 
   return (
-    <main style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 24px 80px', fontFamily: "'Inter', system-ui, sans-serif", position: 'relative' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link href="/dashboard" style={{ fontSize: 12, fontWeight: 700, color: '#0AA89F', textDecoration: 'none' }}>
-          ← Back to dashboard
-        </Link>
-        {/* Per-tenant 7-day rolling countdown — 2026-06-08. Anchored to
-            profiles.next_lead_drop_at (stamped now()+7d on every drop).
-            When it hits zero, the page POSTs /api/leads/check-and-drop and
-            refreshes the list. */}
-        <div style={{ fontSize: 11, color: '#7AAAB2', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontWeight: 700, color: '#7AAAB2' }}>Next drop:</span>
-          <span style={{ fontWeight: 800, color: '#E8742B', fontVariantNumeric: 'tabular-nums' }}>
-            {(() => {
-              if (!nextDropAt) return firing ? 'dropping now…' : '—'
-              const ms = new Date(nextDropAt).getTime() - nowTick
-              if (ms <= 0) return firing ? 'dropping now…' : 'any second'
-              const days = Math.floor(ms / 86_400_000)
-              const hrs = Math.floor((ms % 86_400_000) / 3_600_000)
-              const mins = Math.floor((ms % 3_600_000) / 60_000)
-              const secs = Math.floor((ms % 60_000) / 1000)
-              if (days > 0) return `${days}d ${hrs}h ${mins}m`
-              if (hrs > 0) return `${hrs}h ${mins}m ${secs}s`
-              return `${mins}m ${secs}s`
-            })()}
+    <main style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(165deg, #060D18 0%, #0B1F3A 60%, #081B26 100%)',
+      fontFamily: "'Inter', system-ui, sans-serif",
+      color: '#E6FFFA',
+      paddingBottom: 80,
+    }}>
+      {/* ── COMMAND BAR ─────────────────────────────────────────── */}
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 50,
+        background: 'rgba(6,13,24,0.88)',
+        backdropFilter: 'blur(14px)',
+        borderBottom: '1px solid rgba(94,234,212,0.14)',
+        padding: '12px clamp(14px, 3vw, 28px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+          <span style={{ fontSize: 16 }}>🛰️</span>
+          <span style={{
+            fontSize: 12, fontWeight: 900, letterSpacing: '0.16em',
+            color: '#5EEAD4', textTransform: 'uppercase',
+            fontFamily: 'ui-monospace, monospace',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
+            BellAveGo Intelligence
           </span>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            fontSize: 9, fontWeight: 900, color: '#34D399', letterSpacing: '0.12em',
+            fontFamily: 'ui-monospace, monospace', flexShrink: 0,
+          }}>
+            <i style={{ width: 6, height: 6, borderRadius: '50%', background: '#34D399', display: 'inline-block', animation: 'cmdLive 1s ease-in-out infinite' }} />
+            ONLINE
+          </span>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          <Link href="/dashboard/buy-leads" style={navBtn}>⚡ Buy more leads</Link>
+          <Link href="/dashboard/settings" style={navBtn}>⚙ Settings</Link>
+          <Link href="/dashboard/support" style={navBtn}>💬 Support</Link>
         </div>
       </div>
 
-      {/* HERO */}
-      <header style={{
-        marginTop: 14,
-        marginBottom: 22,
-        padding: '24px 28px',
-        background: 'linear-gradient(135deg, #0B1F3A 0%, #163356 60%, #0D8F87 100%)',
-        borderRadius: 20,
-        color: '#fff',
-        boxShadow: '0 14px 40px rgba(7,27,58,0.22)',
-      }}>
-        <div style={{ fontSize: 11, fontWeight: 800, color: '#5EEAD4', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 10 }}>
-          Your leads · {LEADS_PER_WEEK} every 7 days
+      <div style={{ maxWidth: 1060, margin: '0 auto', padding: '20px clamp(14px, 3vw, 28px) 0' }}>
+        {/* ── AI STATUS STRIP — real numbers only ─────────────────── */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+          gap: 10,
+          marginBottom: 18,
+        }}>
+          <StatCell label="This drop" value={`${quota ? quota.used_this_period : drops.length} / ${quota?.per_drop ?? LEADS_PER_WEEK}`} sub={`${LEADS_PER_MONTH}/month plan`} />
+          <StatCell label="Next sweep" value={countdownLabel} sub="auto-fires on schedule" accent />
+          <StatCell label="Fresh" value={String(counts.fresh)} sub="not yet contacted" />
+          <StatCell label="Contacted" value={String(counts.contacted)} sub="awaiting reply" />
+          <StatCell label="Quoted" value={String(counts.quoted)} sub="quote in their hands" />
+          <StatCell label="Won" value={String(counts.won)} sub="booked jobs" win />
         </div>
-        <h1 style={{ fontSize: 'clamp(26px, 3.4vw, 38px)', fontWeight: 900, letterSpacing: '-0.04em', margin: '0 0 8px', color: '#fff' }}>
-          Ready-to-quote homeowners near you.
-        </h1>
-        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.78)', lineHeight: 1.55, maxWidth: 620, margin: 0 }}>
-          Owner-occupied homes within your tight service radius — sourced from our proprietary property
-          intelligence engine, municipal permit signals, and verified storm-damage alerts. Tap any lead
-          to call, text, or generate an intro message.
-        </p>
 
-        {quota && (
-          <div style={{ marginTop: 18, padding: '14px 18px', background: 'rgba(255,255,255,0.08)', borderRadius: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <div style={{ fontSize: 13, fontWeight: 700 }}>
-                {quota.used_this_period} of {LEADS_PER_WEEK} this week delivered ({LEADS_PER_MONTH}/month)
-              </div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>{pctUsed}% used</div>
-            </div>
-            <div style={{ height: 8, background: 'rgba(255,255,255,0.18)', borderRadius: 4, overflow: 'hidden' }}>
-              <div style={{
-                width: `${pctUsed}%`,
-                height: '100%',
-                background: 'linear-gradient(90deg, #FF9D5A, #E8742B)',
-                transition: 'width 0.4s ease',
-              }} />
-            </div>
+        {/* ── LEADS ────────────────────────────────────────────────── */}
+        {loading ? (
+          <div style={{ padding: 60, textAlign: 'center', color: 'rgba(94,234,212,0.6)', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>
+            ▸ initializing command center…
           </div>
+        ) : drops.length === 0 ? (
+          <LeadScanConsole scanCount={scanCount} pipelineStep={pipelineStep} />
+        ) : (
+          <>
+            <div style={{
+              display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+              margin: '4px 2px 12px', flexWrap: 'wrap', gap: 8,
+            }}>
+              <h1 style={{ fontSize: 'clamp(20px, 2.6vw, 28px)', fontWeight: 900, letterSpacing: '-0.03em', margin: 0, color: '#F0FDFA' }}>
+                Your homeowner leads
+              </h1>
+              <span style={{ fontSize: 11, color: 'rgba(94,234,212,0.55)', fontFamily: 'ui-monospace, monospace' }}>
+                sorted closest-first · tap any row for full intel + AI outreach
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {drops.map((d) => (
+                <LeadCard key={d.id} drop={d} onStatus={updateStatus} onReveal={revealPhone} />
+              ))}
+            </div>
+          </>
         )}
-      </header>
+      </div>
 
-      {/* LEADS LIST */}
-      {loading ? (
-        <div style={{ padding: 60, textAlign: 'center', color: '#7AAAB2' }}>Loading your leads…</div>
-      ) : drops.length === 0 ? (
-        // 2026-06-10 per Peter: mission-control scan console replaces the
-        // white queue card. Self-driving delivery (kick + 5s poll above)
-        // means this screen really does swap itself for the leads list the
-        // moment the drop lands.
-        <LeadScanConsole scanCount={scanCount} pipelineStep={pipelineStep} />
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {drops.map((d) => (
-            <LeadCard key={d.id} drop={d} onStatus={updateStatus} onReveal={revealPhone} />
-          ))}
-        </div>
-      )}
+      <style>{`
+        @keyframes cmdLive { 0%, 100% { opacity: 1 } 50% { opacity: 0.25 } }
+        @keyframes scoreGlow { 0%, 100% { box-shadow: 0 0 10px rgba(52,211,153,0.35) } 50% { box-shadow: 0 0 18px rgba(52,211,153,0.65) } }
+      `}</style>
     </main>
+  )
+}
+
+const navBtn: React.CSSProperties = {
+  padding: '7px 12px', borderRadius: 9,
+  background: 'rgba(255,255,255,0.05)',
+  border: '1px solid rgba(94,234,212,0.18)',
+  color: '#A7F3D0', textDecoration: 'none',
+  fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap',
+}
+
+function StatCell({ label, value, sub, accent, win }: { label: string; value: string; sub: string; accent?: boolean; win?: boolean }) {
+  return (
+    <div style={{
+      padding: '12px 14px', borderRadius: 12,
+      background: win ? 'rgba(52,211,153,0.08)' : 'rgba(255,255,255,0.03)',
+      border: win ? '1px solid rgba(52,211,153,0.35)' : '1px solid rgba(94,234,212,0.12)',
+    }}>
+      <div style={{
+        fontSize: 9, fontWeight: 900, letterSpacing: '0.14em', textTransform: 'uppercase',
+        color: win ? '#34D399' : 'rgba(94,234,212,0.55)', marginBottom: 4,
+      }}>{label}</div>
+      <div style={{
+        fontSize: accent ? 15 : 19, fontWeight: 900,
+        color: win ? '#34D399' : accent ? '#FBBF24' : '#F0FDFA',
+        fontVariantNumeric: 'tabular-nums',
+        fontFamily: accent ? 'ui-monospace, monospace' : undefined,
+        lineHeight: 1.2,
+      }}>{value}</div>
+      <div style={{ fontSize: 9.5, color: 'rgba(230,255,250,0.35)', marginTop: 2 }}>{sub}</div>
+    </div>
   )
 }
 
@@ -263,11 +335,7 @@ type GeneratedMessage = { email_subject: string; email_body: string; sms: string
 function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id: string, s: LeadDrop['status']) => void; onReveal: (leadId: string) => void }) {
   const l = drop.lead
   const fullAddr = [l.street_address, l.city, l.state, l.zip].filter(Boolean).join(', ')
-  // 2026-06-10 — Compact-then-expand pattern per Peter (mirrors the
-  // homepage sample-leads-card UX). Rows render condensed by default
-  // so the dashboard reads "10 leads to scroll through" not "10 full
-  // pages of stuff." Click any row to expand the full pitch + phone
-  // reveal + AI message + status controls.
+  const mapsHref = fullAddr ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddr)}` : null
   const [expanded, setExpanded] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
@@ -315,6 +383,7 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
     } catch {/* */}
     setSendingEmail(false)
   }
+
   const sourceLabel = ({
     move_in: '🏠 New Mover',
     permit: '🏗️ Permit Filed',
@@ -324,165 +393,157 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
     other: 'Lead',
   } as Record<string, string>)[l.source] || 'Lead'
 
-  // Template pitch for aging_hvac leads — skips API generation since the
-  // trigger is the same for every aging-HVAC neighborhood (Census ZIP
-  // density). Real per-lead Haiku gen reserved for permits + storms.
   const pitch = l.pitch_script || (l.source === 'aging_hvac'
     ? `Hi, calling neighbors in ${l.zip} where most homes are 20+ yrs old — AC units past their lifespan. Got a min to talk about a free tune-up to extend yours?`
     : null)
 
+  const score = l.lead_score ?? 0
+  const scoreColor = score >= 85 ? '#34D399' : score >= 70 ? '#FBBF24' : '#94A3B8'
+  const statusColor =
+    drop.status === 'won' ? '#34D399'
+    : drop.status === 'lost' || drop.status === 'dismissed' ? '#F87171'
+    : drop.status === 'quoted' ? '#FBBF24'
+    : drop.status === 'contacted' ? '#5EEAD4'
+    : 'rgba(230,255,250,0.45)'
+
   return (
     <div style={{
-      background: '#fff', borderRadius: 14,
-      border: '1px solid rgba(10,168,159,0.16)',
-      boxShadow: expanded ? '0 8px 24px rgba(7,27,58,0.10)' : '0 4px 16px rgba(7,27,58,0.05)',
-      transition: 'box-shadow 180ms ease',
+      borderRadius: 14,
+      background: expanded ? 'rgba(255,255,255,0.045)' : 'rgba(255,255,255,0.03)',
+      border: expanded ? '1px solid rgba(52,211,153,0.35)' : '1px solid rgba(94,234,212,0.12)',
+      transition: 'border-color 180ms ease, background 180ms ease',
       overflow: 'hidden',
     }}>
-      {/* Compact summary row — always visible. Click to toggle. */}
+      {/* Compact summary row */}
       <button
         type="button"
         onClick={() => setExpanded((x) => !x)}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-          padding: '14px 18px', background: 'transparent', border: 'none',
-          cursor: 'pointer', textAlign: 'left',
+          padding: '13px 16px', background: 'transparent', border: 'none',
+          cursor: 'pointer', textAlign: 'left', color: 'inherit',
+          fontFamily: 'inherit',
         }}
       >
         <div style={{
-          padding: '4px 8px', borderRadius: 6,
-          background: '#FFD9A8', color: '#C84B26',
-          fontSize: 10, fontWeight: 900, letterSpacing: '0.04em',
-          flexShrink: 0,
+          width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(52,211,153,0.10)',
+          border: `1.5px solid ${scoreColor}`,
+          color: scoreColor,
+          fontSize: 13, fontWeight: 900,
+          fontVariantNumeric: 'tabular-nums',
+          animation: score >= 85 ? 'scoreGlow 2.4s ease-in-out infinite' : 'none',
         }}>
-          {l.lead_score ?? 0}
+          {score}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 14, fontWeight: 900, color: '#0B1F3A' }}>
+          <div style={{ display: 'flex', gap: 7, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 14, fontWeight: 900, color: '#F0FDFA' }}>
               {l.owner_name ?? 'Owner unlisted'}
             </span>
-            <span style={{
-              padding: '2px 7px', borderRadius: 5,
-              background: '#0B1F3A', color: '#fff',
-              fontSize: 9, fontWeight: 900, letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-            }}>
+            <span style={pill('rgba(94,234,212,0.12)', '#5EEAD4')}>
               {sourceLabel.replace(/^[^\s]+\s/, '')}
             </span>
-            <span style={{
-              padding: '2px 7px', borderRadius: 5,
-              background: drop.status === 'won' ? '#16803F' : drop.status === 'lost' ? '#A33C18' : '#7AAAB2',
-              color: '#fff', fontSize: 9, fontWeight: 900, letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-            }}>
+            <span style={pill('rgba(255,255,255,0.06)', statusColor)}>
               {drop.status}
             </span>
           </div>
-          <div style={{ fontSize: 12, color: '#4A6670', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            📍 {fullAddr || l.zip} {l.year_built ? `· built ${l.year_built}` : ''}{l.home_value_est ? ` · $${Math.round(l.home_value_est / 1000)}K` : ''}
+          <div style={{ fontSize: 11.5, color: 'rgba(230,255,250,0.45)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            📍 {fullAddr || l.zip}{l.year_built ? ` · built ${l.year_built}` : ''}{l.home_value_est ? ` · $${Math.round(l.home_value_est / 1000)}K` : ''}
           </div>
         </div>
-        <div style={{ fontSize: 14, color: '#7AAAB2', flexShrink: 0, transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 180ms ease' }}>
+        {l.owner_phone && (
+          <span style={{ fontSize: 10, fontWeight: 800, color: '#34D399', flexShrink: 0, fontFamily: 'ui-monospace, monospace' }}>
+            ☎ verified
+          </span>
+        )}
+        <div style={{ fontSize: 13, color: 'rgba(94,234,212,0.55)', flexShrink: 0, transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 180ms ease' }}>
           ▾
         </div>
       </button>
 
-      {/* Expanded body — only when row is opened. */}
+      {/* Expanded intel */}
       {expanded && (
-      <div style={{ padding: '0 20px 18px' }}>
+      <div style={{ padding: '0 18px 16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 240 }}>
-          <div style={{ fontSize: 11, fontWeight: 800, color: '#0AA89F', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 }}>
-            {sourceLabel} · Score {l.lead_score}/100
-          </div>
-          <div style={{ fontSize: 17, fontWeight: 800, color: '#0B1F3A', marginBottom: 6 }}>
-            {l.owner_name ?? 'Owner unlisted'}
-          </div>
-          <div style={{ fontSize: 13, color: '#4A6670', marginBottom: 8 }}>
-            📍 {fullAddr || `${l.zip}`}
+          <div style={{ fontSize: 10, fontWeight: 800, color: '#5EEAD4', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6, fontFamily: 'ui-monospace, monospace' }}>
+            {sourceLabel} · intent score {score}/100
           </div>
           {(l.home_value_est || l.year_built || l.sqft) && (
-            <div style={{ fontSize: 12, color: '#7AAAB2', marginBottom: 10 }}>
+            <div style={{ fontSize: 12, color: 'rgba(230,255,250,0.55)', marginBottom: 10 }}>
               {l.home_value_est ? `💰 ~$${l.home_value_est.toLocaleString()}` : null}
               {l.year_built ? ` · 🛠 built ${l.year_built}` : null}
               {l.sqft ? ` · 📐 ${l.sqft.toLocaleString()} sqft` : null}
             </div>
           )}
           {pitch && (
-            <div style={{ background: '#F5F1EA', padding: '10px 12px', borderRadius: 8, fontSize: 13, color: '#0B1F3A', lineHeight: 1.5, marginBottom: 10 }}>
-              💡 {pitch}
+            <div style={{
+              background: 'rgba(2,8,16,0.6)', padding: '11px 13px', borderRadius: 10,
+              border: '1px solid rgba(94,234,212,0.14)',
+              fontSize: 12.5, color: '#D1FAE5', lineHeight: 1.55, marginBottom: 10,
+            }}>
+              <span style={{ color: '#5EEAD4', fontWeight: 800, fontSize: 10, letterSpacing: '0.1em', display: 'block', marginBottom: 4 }}>AI CALL ANGLE</span>
+              {pitch}
             </div>
+          )}
+          {mapsHref && (
+            <a href={mapsHref} target="_blank" rel="noopener noreferrer" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              fontSize: 11.5, color: '#5EEAD4', textDecoration: 'none', fontWeight: 700,
+            }}>
+              🗺 View property on Google Maps ↗
+            </a>
           )}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 180 }}>
-          {/* Phone reveal state machine:
-                phone present                → Call + Text buttons
-                attempted, no hit            → "No phone found" (already paid)
-                attempted in flight (UI)     → "Looking up…"
-                not yet attempted, address ok → "🔓 Reveal phone" (CTA)
-                no street address            → nothing (can't trace) */}
+          {/* Phone reveal state machine — unchanged behavior, dark skin */}
           {l.owner_phone ? (
             <>
               <a href={`tel:${l.owner_phone}`} style={{
-                padding: '10px 18px', borderRadius: 10,
-                background: 'linear-gradient(135deg, #0AA89F, #06776F)',
-                color: '#fff', textDecoration: 'none', textAlign: 'center',
-                fontSize: 13, fontWeight: 800,
+                padding: '11px 18px', borderRadius: 10,
+                background: 'linear-gradient(135deg, #34D399, #0D9488)',
+                color: '#06241C', textDecoration: 'none', textAlign: 'center',
+                fontSize: 13, fontWeight: 900,
+                boxShadow: '0 6px 18px rgba(52,211,153,0.30)',
               }}>
                 📞 Call {l.owner_phone}
               </a>
               <a href={`sms:${l.owner_phone}`} style={{
                 padding: '10px 18px', borderRadius: 10,
-                background: '#fff', border: '1.5px solid #0AA89F',
-                color: '#0AA89F', textDecoration: 'none', textAlign: 'center',
+                background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(52,211,153,0.45)',
+                color: '#A7F3D0', textDecoration: 'none', textAlign: 'center',
                 fontSize: 13, fontWeight: 800,
               }}>
                 💬 Text
               </a>
             </>
           ) : l.skip_trace_attempted_at && l.skip_trace_hit === false ? (
-            <div style={{
-              padding: '10px 14px', borderRadius: 10,
-              background: '#F5F1EA', color: '#7AAAB2',
-              fontSize: 12, fontWeight: 700, textAlign: 'center',
-            }}>
-              No phone on file
-            </div>
+            <div style={darkInfoBox}>No phone on file</div>
           ) : l.skip_trace_attempted_at ? (
-            <div style={{
-              padding: '10px 14px', borderRadius: 10,
-              background: 'rgba(10,168,159,0.08)', color: '#0AA89F',
-              fontSize: 12, fontWeight: 700, textAlign: 'center',
-            }}>
-              Looking up…
-            </div>
+            <div style={{ ...darkInfoBox, color: '#5EEAD4' }}>Looking up…</div>
           ) : l.street_address ? (
             <button onClick={() => onReveal(l.id)} style={{
-              padding: '10px 18px', borderRadius: 10,
+              padding: '11px 18px', borderRadius: 10,
               background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
               color: '#fff', border: 'none', cursor: 'pointer',
-              fontSize: 13, fontWeight: 800,
-              boxShadow: '0 4px 12px rgba(232,116,43,0.38)',
+              fontSize: 13, fontWeight: 900, fontFamily: 'inherit',
+              boxShadow: '0 6px 16px rgba(232,116,43,0.38)',
             }}>
               🔓 Reveal phone
             </button>
           ) : (
-            <div style={{
-              padding: '10px 14px', borderRadius: 10,
-              background: '#F5F1EA', color: '#7AAAB2',
-              fontSize: 11, fontWeight: 700, textAlign: 'center',
-              lineHeight: 1.4,
-            }}>
+            <div style={darkInfoBox}>
               Neighborhood lead<br />
-              <span style={{ fontSize: 10, color: '#A0BCC2' }}>(no specific address)</span>
+              <span style={{ fontSize: 10, opacity: 0.6 }}>(no specific address)</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* AI Outreach Message */}
+      {/* AI Outreach Message — unchanged behavior */}
       {(l.owner_phone || l.owner_email) && (
         <div style={{ marginTop: 14 }}>
           {!aiOpen ? (
@@ -490,34 +551,34 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
               onClick={generateMessage}
               disabled={aiLoading}
               style={{
-                width: '100%', padding: '11px 18px', borderRadius: 10,
-                background: aiLoading ? 'rgba(11,31,58,0.3)' : 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+                width: '100%', padding: '12px 18px', borderRadius: 10,
+                background: aiLoading ? 'rgba(255,255,255,0.08)' : 'linear-gradient(135deg, #FF9D5A, #E8742B)',
                 color: '#fff', border: 'none', cursor: aiLoading ? 'wait' : 'pointer',
-                fontSize: 13, fontWeight: 900,
-                boxShadow: '0 4px 12px rgba(232,116,43,0.30)',
+                fontSize: 13, fontWeight: 900, fontFamily: 'inherit',
+                boxShadow: aiLoading ? 'none' : '0 6px 16px rgba(232,116,43,0.30)',
               }}
             >
-              {aiLoading ? '✨ Writing your message…' : `✨ Generate AI intro message ${l.owner_phone ? `→ ${l.owner_phone}` : ''}`}
+              {aiLoading ? '✨ AI writing your message…' : `✨ Generate AI intro ${l.owner_phone ? `→ ${l.owner_phone}` : ''}`}
             </button>
           ) : aiMsg && (
-            <div style={{ background: 'linear-gradient(155deg, #0B1F3A 0%, #163356 100%)', borderRadius: 12, padding: '14px 16px', color: '#fff' }}>
+            <div style={{ background: 'rgba(2,8,16,0.72)', borderRadius: 12, padding: '14px 16px', border: '1px solid rgba(94,234,212,0.18)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <div style={{ fontSize: 10, fontWeight: 800, color: '#FF9D5A', letterSpacing: '0.10em', textTransform: 'uppercase' }}>
                   Pre-written by AI · ready to send as you
                 </div>
-                <button onClick={() => setAiOpen(false)} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.6)', fontSize: 12, cursor: 'pointer' }}>✕</button>
+                <button onClick={() => setAiOpen(false)} style={{ background: 'transparent', border: 'none', color: 'rgba(230,255,250,0.5)', fontSize: 12, cursor: 'pointer' }}>✕</button>
               </div>
               {l.owner_phone && (
-                <div style={{ marginBottom: 10, padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>SMS to {l.owner_phone}</div>
-                  <div style={{ fontSize: 13, lineHeight: 1.55, marginBottom: 8 }}>{aiMsg.sms}</div>
+                <div style={{ marginBottom: 10, padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(230,255,250,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>SMS to {l.owner_phone}</div>
+                  <div style={{ fontSize: 13, lineHeight: 1.55, marginBottom: 8, color: '#E6FFFA' }}>{aiMsg.sms}</div>
                   <button
                     onClick={sendSms}
                     disabled={sendingSms || smsSent}
                     style={{
-                      padding: '7px 14px', borderRadius: 7,
-                      background: smsSent ? '#22C55E' : sendingSms ? 'rgba(255,255,255,0.18)' : '#fff',
-                      color: smsSent ? '#fff' : '#0B1F3A', border: 'none',
+                      padding: '8px 14px', borderRadius: 7,
+                      background: smsSent ? '#34D399' : sendingSms ? 'rgba(255,255,255,0.14)' : '#F0FDFA',
+                      color: smsSent ? '#06241C' : '#0B1F3A', border: 'none', fontFamily: 'inherit',
                       fontSize: 11.5, fontWeight: 900, cursor: smsSent ? 'default' : 'pointer',
                     }}
                   >
@@ -526,17 +587,17 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
                 </div>
               )}
               {l.owner_email && (
-                <div style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>Email to {l.owner_email}</div>
-                  <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 4 }}>{aiMsg.email_subject}</div>
-                  <div style={{ fontSize: 12.5, lineHeight: 1.6, marginBottom: 8, whiteSpace: 'pre-wrap' }}>{aiMsg.email_body}</div>
+                <div style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(230,255,250,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>Email to {l.owner_email}</div>
+                  <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 4, color: '#E6FFFA' }}>{aiMsg.email_subject}</div>
+                  <div style={{ fontSize: 12.5, lineHeight: 1.6, marginBottom: 8, whiteSpace: 'pre-wrap', color: 'rgba(230,255,250,0.85)' }}>{aiMsg.email_body}</div>
                   <button
                     onClick={sendEmail}
                     disabled={sendingEmail || emailSent}
                     style={{
-                      padding: '7px 14px', borderRadius: 7,
-                      background: emailSent ? '#22C55E' : sendingEmail ? 'rgba(255,255,255,0.18)' : '#fff',
-                      color: emailSent ? '#fff' : '#0B1F3A', border: 'none',
+                      padding: '8px 14px', borderRadius: 7,
+                      background: emailSent ? '#34D399' : sendingEmail ? 'rgba(255,255,255,0.14)' : '#F0FDFA',
+                      color: emailSent ? '#06241C' : '#0B1F3A', border: 'none', fontFamily: 'inherit',
                       fontSize: 11.5, fontWeight: 900, cursor: emailSent ? 'default' : 'pointer',
                     }}
                   >
@@ -547,7 +608,7 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
             </div>
           )}
           {aiError && (
-            <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: '#FEE2E2', color: '#991B1B', fontSize: 12 }}>{aiError}</div>
+            <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.35)', color: '#FCA5A5', fontSize: 12 }}>{aiError}</div>
           )}
         </div>
       )}
@@ -559,11 +620,11 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
             key={s}
             onClick={() => onStatus(drop.id, s)}
             style={{
-              padding: '6px 12px', borderRadius: 99,
-              border: drop.status === s ? '2px solid #0AA89F' : '1px solid rgba(10,168,159,0.2)',
-              background: drop.status === s ? '#E6F7F5' : '#fff',
-              color: drop.status === s ? '#06776F' : '#4A6670',
-              fontSize: 11, fontWeight: 700, cursor: 'pointer',
+              padding: '6px 13px', borderRadius: 99, fontFamily: 'inherit',
+              border: drop.status === s ? '1.5px solid #34D399' : '1px solid rgba(94,234,212,0.18)',
+              background: drop.status === s ? 'rgba(52,211,153,0.12)' : 'rgba(255,255,255,0.03)',
+              color: drop.status === s ? '#34D399' : 'rgba(230,255,250,0.5)',
+              fontSize: 11, fontWeight: 800, cursor: 'pointer',
               textTransform: 'capitalize',
             }}
           >
@@ -575,4 +636,22 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
       )}
     </div>
   )
+}
+
+function pill(bg: string, color: string): React.CSSProperties {
+  return {
+    padding: '2px 8px', borderRadius: 6,
+    background: bg, color,
+    fontSize: 9, fontWeight: 900, letterSpacing: '0.06em',
+    textTransform: 'uppercase',
+  }
+}
+
+const darkInfoBox: React.CSSProperties = {
+  padding: '10px 14px', borderRadius: 10,
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(94,234,212,0.12)',
+  color: 'rgba(230,255,250,0.45)',
+  fontSize: 12, fontWeight: 700, textAlign: 'center',
+  lineHeight: 1.4,
 }

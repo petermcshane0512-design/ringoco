@@ -1,30 +1,31 @@
 'use client'
 
 import { useEffect, useState, useCallback, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useAuth } from '@clerk/nextjs'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { LEADS_PER_WEEK, INTRO_PRICE_USD, INTRO_PROMO_CODE, SUPPORTED_TRADES } from '@/lib/offer'
+import { LEADS_PER_WEEK, INTRO_PRICE_USD, INTRO_PROMO_CODE } from '@/lib/offer'
 
 /**
- * /start/area — service area gate.
+ * /start/area — THE onboarding. 2026-06-10 dark AI-console rewrite per
+ * Peter: customers should think "whoa, their AI UI is insane" from the
+ * first screen, not just after payment.
  *
- * T3 of offer-rebuild plan (2026-06-10). Customer picks (zip, trade)
- * BEFORE Stripe checkout so we can:
- *   1. Block sign-up if the (zip, trade) is already claimed by another
- *      shop (the exclusivity promise becomes mechanically real).
- *   2. Capture the waitlist email if the area is taken.
- *   3. Pass the zip + trade into checkout so the webhook can claim the
- *      territory at the moment payment succeeds.
+ * Design system matches LeadScanConsole + the /dashboard/leads command
+ * center: #060D18→#0B1F3A shell, teal/emerald accents, monospace status
+ * text, glowing active states. The form reads as "arming the scan":
+ * numbered TARGET / SECTOR / TRADE / HOTLINE steps, live agents-ready
+ * strip, geocode confirm rendered as a target-lock card.
  *
- * Flow (2026-06-10 — /pricing intermediate REMOVED per Peter):
- *   /start?promo=FIRST400  → captures promo cookie, redirects → /start/area
- *   /start/area            → zip + trade form
- *     ├─ open      → save area cookies, then:
- *     │             · signed in    → POST /api/stripe/checkout → Stripe URL
- *     │             · signed out   → /sign-up → bounce back here w/ ?autoco=1
- *     │                              → auto-fires checkout w/ prefilled area
- *     └─ taken     → "this area is locked" + waitlist email capture
+ * Flow (frictionless — no account before payment):
+ *   submit → geocode preview → confirm pin → POST /api/stripe/checkout
+ *   (anonymous OK) → Stripe → webhook mints Clerk user + pulls first
+ *   leads → /checkout/return auto-signs in → /dashboard/leads.
+ *
+ * Logic preserved exactly from prior rev: cookie persistence + prefill,
+ * URL-param prefill from the homepage widget, ?autoco=1 auto-resume,
+ * all field validations, geocode-preview fail-soft. Dead territory/
+ * waitlist code DELETED (one-shop-per-zip gate retired earlier today —
+ * the branch was unreachable).
  */
 
 const AREA_ZIP_COOKIE = 'bavg_area_zip'
@@ -43,12 +44,11 @@ function writeCookie(name: string, value: string) {
   document.cookie = `${name}=${encodeURIComponent(value)}; max-age=${COOKIE_MAX_AGE}; path=/; SameSite=Lax; Secure`
 }
 
+const TRADES = ['hvac', 'plumbing', 'electrical', 'roofing', 'handyman'] as const
+
 function StartAreaContent() {
-  const router = useRouter()
   const sp = useSearchParams()
-  const { isSignedIn, isLoaded } = useAuth()
   const promo = (sp?.get('promo') || INTRO_PROMO_CODE).trim().toUpperCase()
-  const ref = (sp?.get('ref') || '').trim()
   const bizId = (sp?.get('b') || '').trim()
   const autoco = sp?.get('autoco') === '1'
 
@@ -58,18 +58,12 @@ function StartAreaContent() {
   const [address, setAddress] = useState('')
   const [phone, setPhone] = useState('')
   const [checking, setChecking] = useState(false)
-  const [result, setResult] = useState<null | { status: 'open' | 'claimed' | 'grace' | 'unserved' }>(null)
-  const [waitlistEmail, setWaitlistEmail] = useState('')
-  const [waitlistBiz, setWaitlistBiz] = useState('')
-  const [waitlistedOk, setWaitlistedOk] = useState(false)
   const [err, setErr] = useState('')
-  // 2026-06-10 — Fix #6 pin confirm. Pre-Stripe geocode + "is this the
-  // address you meant?" gate. Catches typos that would otherwise burn $6
-  // BatchData and deliver leads in the wrong neighborhood.
+  // Geocode pin-confirm gate — catches typos that would otherwise burn
+  // BatchData spend and deliver leads in the wrong neighborhood.
   const [confirm, setConfirm] = useState<null | { formatted: string; lat: number; lng: number }>(null)
 
-  // Prefill from cookies (set on prior /start/area visit or by the homepage
-  // OpportunityChecker) OR from URL params (passed by the homepage widget).
+  // Prefill from cookies (prior visit / homepage widget) or URL params.
   useEffect(() => {
     const urlZip = (sp?.get('zip') || '').replace(/\D/g, '').slice(0, 5)
     const urlTrade = (sp?.get('trade') || '').toLowerCase().trim()
@@ -110,10 +104,9 @@ function StartAreaContent() {
     }
   }, [promo, bizId])
 
-  // Auto-resume after Clerk sign-up bounce: /start/area?autoco=1 with saved
-  // area cookies → fire checkout once auth is known.
+  // Legacy ?autoco=1 resume (old sign-up bounce links still in the wild).
   useEffect(() => {
-    if (!autoco || !isLoaded || !isSignedIn) return
+    if (!autoco) return
     const z = readCookie(AREA_ZIP_COOKIE)
     const t = decodeURIComponent(readCookie(AREA_TRADE_COOKIE))
     const a = decodeURIComponent(readCookie(AREA_ADDR_COOKIE))
@@ -121,13 +114,11 @@ function StartAreaContent() {
     if (!/^\d{5}$/.test(z) || !t) return
     fireCheckout(z, t, a, p)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoco, isLoaded, isSignedIn])
+  }, [autoco])
 
   async function onCheck(e: React.FormEvent) {
     e.preventDefault()
     setErr('')
-    setResult(null)
-    setWaitlistedOk(false)
     if (address.trim().length < 8) {
       setErr('Enter your business address so we can pull leads within walking distance of it.')
       return
@@ -150,9 +141,6 @@ function StartAreaContent() {
       return
     }
     setChecking(true)
-    // 2026-06-10 — territory check removed (one-shop-per-zip gate killed
-    // per Peter; checkTerritory always returns open). Save cookies + go
-    // straight to geocode preview + Stripe.
     writeCookie(AREA_ZIP_COOKIE, zip)
     writeCookie(AREA_TRADE_COOKIE, trade)
     writeCookie(AREA_ADDR_COOKIE, address.trim())
@@ -167,8 +155,8 @@ function StartAreaContent() {
       if (gj.ok) {
         setConfirm({ formatted: gj.formatted, lat: gj.lat, lng: gj.lng })
       } else {
-        // Geocode failed or unreachable: do not block sale, show literal
-        // input + warn. Webhook re-attempts geocoding post-payment too.
+        // Fail-soft: never block the sale on a geocode hiccup. Webhook
+        // re-attempts geocoding post-payment.
         setErr('We could not verify that address with Google Maps. Double-check spelling, or proceed if you are sure.')
         setConfirm({ formatted: address.trim(), lat: 0, lng: 0 })
       }
@@ -182,10 +170,6 @@ function StartAreaContent() {
   async function onConfirmAddress() {
     if (!confirm) return
     const phoneDigits = phone.replace(/\D/g, '')
-    // 2026-06-10 — FRICTIONLESS CHECKOUT. Clerk sign-up gate REMOVED.
-    // Anonymous prospects swipe card immediately. Webhook creates Clerk
-    // user from Stripe-collected email post-payment + /checkout/return
-    // auto-signs them in via Clerk sign-in token. 4 friction points → 1.
     await fireCheckout(zip, trade, address.trim(), phoneDigits)
   }
 
@@ -194,109 +178,107 @@ function StartAreaContent() {
     setErr('')
   }
 
-  async function onWaitlist(e: React.FormEvent) {
-    e.preventDefault()
-    setErr('')
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(waitlistEmail)) {
-      setErr('Enter a valid email.')
-      return
-    }
-    try {
-      const r = await fetch('/api/territory/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          zip,
-          trade,
-          email: waitlistEmail,
-          reason: result?.status === 'unserved' ? 'uncovered' : 'claimed',
-        }),
-      })
-      const j = await r.json()
-      if (j.ok) {
-        setWaitlistedOk(true)
-      } else {
-        setErr(j.error || 'Could not add you to the waitlist.')
-      }
-    } catch {
-      setErr('Network error. Try again.')
-    }
+  const stepDone = {
+    address: address.trim().length >= 8,
+    zip: /^\d{5}$/.test(zip),
+    trade: !!trade && trade !== 'other' && !(trade.startsWith('other:') && trade.slice(6).trim().length === 0),
+    phone: phone.replace(/\D/g, '').length >= 10,
   }
-
-  const taken = result && (result.status === 'claimed' || result.status === 'grace')
-  const unserved = result && result.status === 'unserved'
+  const armedCount = Object.values(stepDone).filter(Boolean).length
 
   return (
     <main style={{
-      fontFamily: "'Inter', system-ui, sans-serif",
-      background: '#FFF8F0',
-      color: '#0B1F3A',
       minHeight: '100vh',
-      padding: '40px clamp(16px, 5vw, 48px)',
+      background: 'linear-gradient(165deg, #060D18 0%, #0B1F3A 60%, #081B26 100%)',
+      fontFamily: "'Inter', system-ui, sans-serif",
+      color: '#E6FFFA',
+      padding: '0 0 60px',
     }}>
-      <div style={{ maxWidth: 560, margin: '0 auto' }}>
-        <Link href="/" style={{ fontSize: 13, color: '#7AAAB2', textDecoration: 'none', fontWeight: 700 }}>
-          ← Back
+      {/* Console title bar */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '12px clamp(14px, 4vw, 28px)',
+        background: 'rgba(6,13,24,0.88)',
+        borderBottom: '1px solid rgba(94,234,212,0.14)',
+      }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+          <span style={{ fontSize: 15 }}>🛰️</span>
+          <span style={{ fontSize: 11.5, fontWeight: 900, letterSpacing: '0.16em', color: '#5EEAD4', textTransform: 'uppercase', fontFamily: 'ui-monospace, monospace' }}>
+            BellAveGo Intelligence
+          </span>
         </Link>
-        <h1 style={{ fontSize: 'clamp(26px, 3.4vw, 36px)', fontWeight: 900, letterSpacing: '-0.03em', margin: '14px 0 8px' }}>
-          Pick your service area.
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 9, fontWeight: 900, color: '#34D399', letterSpacing: '0.12em', fontFamily: 'ui-monospace, monospace' }}>
+          <i style={{ width: 6, height: 6, borderRadius: '50%', background: '#34D399', display: 'inline-block', animation: 'obLive 1s ease-in-out infinite' }} />
+          24 SCOUTS STANDING BY
+        </span>
+      </div>
+
+      <div style={{ maxWidth: 600, margin: '0 auto', padding: '28px clamp(14px, 4vw, 28px) 0' }}>
+        <h1 style={{ fontSize: 'clamp(24px, 3.4vw, 34px)', fontWeight: 900, letterSpacing: '-0.03em', margin: '0 0 8px', color: '#F0FDFA' }}>
+          Aim the scan at your shop.
         </h1>
-        <p style={{ fontSize: 15, color: '#3D5A66', lineHeight: 1.55, margin: '0 0 24px' }}>
-          Drop your business address — your first {LEADS_PER_WEEK} fresh homeowner leads land in your dashboard within <strong>~30 minutes of signup</strong>, starting at <strong>1 mile</strong> from this address and only widening when nearby supply runs low. {LEADS_PER_WEEK} more every 7 days after.
+        <p style={{ fontSize: 14, color: 'rgba(230,255,250,0.55)', lineHeight: 1.6, margin: '0 0 20px' }}>
+          The moment you check out, our scouts geocode this address and pull your first{' '}
+          <strong style={{ color: '#5EEAD4' }}>{LEADS_PER_WEEK} homeowner leads</strong> starting{' '}
+          <strong style={{ color: '#5EEAD4' }}>1 mile</strong> from your front door — widening only when
+          nearby supply runs low. {LEADS_PER_WEEK} more every 7 days.
         </p>
 
-        <form onSubmit={onCheck} style={{
-          padding: 22, borderRadius: 16,
-          background: '#FFFFFF',
-          border: '1.5px solid rgba(232,116,43,0.22)',
-          boxShadow: '0 14px 40px rgba(11,31,58,0.06)',
+        {/* Arm-progress strip */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16,
+          fontFamily: 'ui-monospace, monospace', fontSize: 10.5, color: 'rgba(94,234,212,0.6)',
         }}>
-          {/* 2026-06-10 — ADDRESS FIRST. Address is the actual lead-targeting
-              anchor (business_lat/lng = where leads get scraped from). Zip is
-              just the territory-exclusivity key. Asking for address first
-              matches what the engine actually uses. */}
-          <label style={labelStyle}>Your business address</label>
+          <div style={{ flex: 1, height: 4, borderRadius: 4, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+            <div style={{
+              width: `${(armedCount / 4) * 100}%`, height: '100%',
+              background: 'linear-gradient(90deg, #34D399, #5EEAD4)',
+              transition: 'width 300ms ease',
+              boxShadow: '0 0 12px rgba(52,211,153,0.6)',
+            }} />
+          </div>
+          <span style={{ flexShrink: 0, fontWeight: 800 }}>{armedCount}/4 ARMED</span>
+        </div>
+
+        {!confirm ? (
+        <form onSubmit={onCheck} style={{
+          padding: 'clamp(16px, 3vw, 24px)', borderRadius: 16,
+          background: 'rgba(255,255,255,0.035)',
+          border: '1px solid rgba(94,234,212,0.16)',
+          boxShadow: '0 24px 60px rgba(4,12,24,0.5)',
+        }}>
+          {/* 01 TARGET — business address (the lead-targeting anchor) */}
+          <FieldLabel n="01" label="Target address" done={stepDone.address} />
           <input
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             placeholder="123 Main St, Chicago, IL 60615"
-            style={inputStyle}
+            style={darkInput}
             autoComplete="street-address"
             autoFocus
           />
-          <p style={{ fontSize: 11, color: '#7AAAB2', marginTop: 6, marginBottom: 0 }}>
-            We pull leads as close to this address as possible — starts at 1 mile, widens only when nearby supply runs low.
-          </p>
+          <Hint>Leads pull as close to this point as possible — 1-mile rings, widening on supply only.</Hint>
 
-          <label style={{ ...labelStyle, marginTop: 14 }}>Service-area zip code</label>
+          {/* 02 SECTOR — zip */}
+          <FieldLabel n="02" label="Sector zip" done={stepDone.zip} mt />
           <input
             value={zip}
             onChange={(e) => setZip(e.target.value.replace(/\D/g, '').slice(0, 5))}
-            placeholder="75024"
+            placeholder="60643"
             inputMode="numeric"
             maxLength={5}
-            style={inputStyle}
+            style={darkInput}
           />
 
-          <label style={{ ...labelStyle, marginTop: 14 }}>Your trade</label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 8 }}>
-            {/* 2026-06-10 — all 5 trades + Other per Peter. find-real-leads
-                falls through to the handyman recent-buyer recipe for any
-                trade slug that does not match hvac/plumb/elect/roof/handyman
-                explicitly, so an "other:landscaping" signup still gets a
-                real address-radius BatchData pull on day 1. */}
-            {(['hvac', 'plumbing', 'electrical', 'roofing', 'handyman'] as const).map((t) => (
+          {/* 03 TRADE — recipe selector */}
+          <FieldLabel n="03" label="Trade recipe" done={stepDone.trade} mt />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(104px, 1fr))', gap: 8 }}>
+            {TRADES.map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => { setTrade(t); setOtherTradeText('') }}
-                style={{
-                  padding: '10px 12px', borderRadius: 10,
-                  border: trade === t ? '2px solid #E8742B' : '1.5px solid rgba(11,31,58,0.18)',
-                  background: trade === t ? '#FFF1E4' : '#FFFFFF',
-                  fontWeight: 800, fontSize: 13, cursor: 'pointer',
-                  color: '#0B1F3A', textTransform: 'capitalize',
-                }}
+                style={tradeBtn(trade === t)}
               >
                 {t}
               </button>
@@ -304,13 +286,7 @@ function StartAreaContent() {
             <button
               type="button"
               onClick={() => setTrade('other')}
-              style={{
-                padding: '10px 12px', borderRadius: 10,
-                border: trade.startsWith('other') ? '2px solid #E8742B' : '1.5px solid rgba(11,31,58,0.18)',
-                background: trade.startsWith('other') ? '#FFF1E4' : '#FFFFFF',
-                fontWeight: 800, fontSize: 13, cursor: 'pointer',
-                color: '#0B1F3A',
-              }}
+              style={tradeBtn(trade.startsWith('other'))}
             >
               Other
             </button>
@@ -324,27 +300,27 @@ function StartAreaContent() {
                 setTrade(v.trim() ? `other:${v.trim().toLowerCase()}` : 'other')
               }}
               placeholder="e.g. landscaping, painting, locksmith"
-              style={{ ...inputStyle, marginTop: 10 }}
+              style={{ ...darkInput, marginTop: 10 }}
               autoFocus
             />
           )}
+          <Hint>Each trade gets its own AI recipe — system age, pipe era, roof window — tuned to your climate.</Hint>
 
-          <label style={{ ...labelStyle, marginTop: 14 }}>Your cell phone</label>
+          {/* 04 HOTLINE — cell */}
+          <FieldLabel n="04" label="Alert hotline" done={stepDone.phone} mt />
           <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="(773) 555-0100"
             inputMode="tel"
-            style={inputStyle}
+            style={darkInput}
             autoComplete="tel"
           />
-          <p style={{ fontSize: 11, color: '#7AAAB2', marginTop: 6, marginBottom: 0 }}>
-            We text you the second a homeowner shows real interest. No other use.
-          </p>
+          <Hint>We text this number the second a homeowner shows real interest. No other use.</Hint>
 
           {err && (
-            <p style={{ fontSize: 13, color: '#C84B26', margin: '12px 0 0', fontWeight: 700 }}>
-              {err}
+            <p style={{ fontSize: 13, color: '#FCA5A5', margin: '14px 0 0', fontWeight: 700 }}>
+              ⚠ {err}
             </p>
           )}
 
@@ -352,166 +328,186 @@ function StartAreaContent() {
             type="submit"
             disabled={checking}
             style={{
-              marginTop: 18, width: '100%', padding: '14px 18px', borderRadius: 12,
-              background: checking ? 'rgba(11,31,58,0.3)' : 'linear-gradient(135deg, #FF9D5A, #E8742B 60%, #C84B26 100%)',
-              color: '#fff', fontWeight: 900, fontSize: 15, border: 'none', cursor: checking ? 'wait' : 'pointer',
-              boxShadow: '0 10px 26px rgba(232,116,43,0.40)',
+              marginTop: 20, width: '100%', padding: '15px 18px', borderRadius: 12,
+              background: checking ? 'rgba(255,255,255,0.08)' : 'linear-gradient(135deg, #FF9D5A, #E8742B 60%, #C84B26 100%)',
+              color: '#fff', fontWeight: 900, fontSize: 15, border: 'none',
+              cursor: checking ? 'wait' : 'pointer', fontFamily: 'inherit',
+              boxShadow: checking ? 'none' : '0 12px 30px rgba(232,116,43,0.40)',
+              letterSpacing: '-0.01em',
             }}
           >
-            {checking ? 'Checking…' : 'Check my area →'}
+            {checking ? '▸ locking target…' : `Lock my area — $${INTRO_PRICE_USD} →`}
           </button>
 
-          <p style={{ fontSize: 11.5, color: '#7AAAB2', textAlign: 'center', margin: '12px 0 0' }}>
-            ${INTRO_PRICE_USD} first month with code {promo} · First {LEADS_PER_WEEK} leads in ~30 min, {LEADS_PER_WEEK} every 7 days after · Cancel anytime
+          <p style={{ fontSize: 11, color: 'rgba(230,255,250,0.4)', textAlign: 'center', margin: '12px 0 0', lineHeight: 1.5 }}>
+            ${INTRO_PRICE_USD} first month with code {promo} · First {LEADS_PER_WEEK} leads land ~30 min after checkout · Cancel anytime
           </p>
         </form>
-
-        {confirm && (
+        ) : (
+        /* TARGET-LOCK confirm card */
+        <div style={{
+          padding: 'clamp(18px, 3vw, 26px)', borderRadius: 16,
+          background: 'rgba(255,255,255,0.035)',
+          border: '1px solid rgba(52,211,153,0.45)',
+          boxShadow: '0 24px 60px rgba(4,12,24,0.5), 0 0 40px rgba(52,211,153,0.10)',
+        }}>
           <div style={{
-            marginTop: 24, padding: 22, borderRadius: 16,
-            background: '#FFFFFF',
-            border: '2px solid #E8742B',
-            boxShadow: '0 14px 40px rgba(232,116,43,0.18)',
+            fontSize: 10, fontWeight: 900, color: '#34D399', letterSpacing: '0.16em',
+            textTransform: 'uppercase', marginBottom: 12, fontFamily: 'ui-monospace, monospace',
+            display: 'flex', alignItems: 'center', gap: 8,
           }}>
-            <div style={{ fontSize: 11, fontWeight: 900, color: '#E8742B', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>
-              Confirm your address
-            </div>
-            <p style={{ margin: '0 0 6px', fontSize: 13, color: '#3D5A66', lineHeight: 1.5 }}>
-              We&rsquo;ll pull leads as close to this point as possible — starting at 1 mile.
-              {' '}<strong style={{ color: '#0B1F3A' }}>Is this the address you meant?</strong>
-            </p>
-            <div style={{
-              margin: '12px 0 16px',
-              padding: '14px 16px',
-              background: '#FFF8F0',
-              borderRadius: 10,
-              border: '1px solid rgba(232,116,43,0.30)',
-              fontSize: 15,
-              fontWeight: 700,
-              color: '#0B1F3A',
-            }}>
+            <i style={{ width: 7, height: 7, borderRadius: '50%', background: '#34D399', display: 'inline-block', animation: 'obLive 1s ease-in-out infinite' }} />
+            TARGET LOCKED — CONFIRM COORDINATES
+          </div>
+          <div style={{
+            padding: '16px 18px', borderRadius: 12,
+            background: 'rgba(2,8,16,0.7)',
+            border: '1px solid rgba(94,234,212,0.18)',
+            marginBottom: 12,
+          }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: '#F0FDFA', marginBottom: 4 }}>
               📍 {confirm.formatted}
             </div>
             {confirm.lat !== 0 && confirm.lng !== 0 && (
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${confirm.lat},${confirm.lng}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ fontSize: 12, color: '#7AAAB2', textDecoration: 'underline', display: 'inline-block', marginBottom: 14 }}
-              >
-                Open this pin in Google Maps to verify ↗
-              </a>
+              <div style={{ fontSize: 10.5, color: 'rgba(94,234,212,0.55)', fontFamily: 'ui-monospace, monospace' }}>
+                {confirm.lat.toFixed(5)}, {confirm.lng.toFixed(5)} · scan rings start 1 mi out
+              </div>
             )}
-            <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-              <button
-                type="button"
-                onClick={onConfirmAddress}
-                disabled={checking}
-                style={{
-                  flex: 1, padding: '14px 18px', borderRadius: 12,
-                  background: checking ? 'rgba(11,31,58,0.3)' : 'linear-gradient(135deg, #FF9D5A, #E8742B 60%, #C84B26 100%)',
-                  color: '#fff', fontWeight: 900, fontSize: 15, border: 'none', cursor: checking ? 'wait' : 'pointer',
-                  boxShadow: '0 10px 26px rgba(232,116,43,0.40)',
-                }}
-              >
-                {checking ? 'Loading checkout…' : 'Yes — continue to checkout →'}
-              </button>
-              <button
-                type="button"
-                onClick={onEditAddress}
-                style={{
-                  padding: '14px 18px', borderRadius: 12,
-                  background: '#FFFFFF',
-                  color: '#0B1F3A', fontWeight: 800, fontSize: 14,
-                  border: '1.5px solid rgba(11,31,58,0.22)', cursor: 'pointer',
-                }}
-              >
-                Edit
-              </button>
-            </div>
           </div>
+          {confirm.lat !== 0 && confirm.lng !== 0 && (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${confirm.lat},${confirm.lng}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: 12, color: '#5EEAD4', textDecoration: 'none', fontWeight: 700, display: 'inline-block', marginBottom: 16 }}
+            >
+              🗺 Verify pin on Google Maps ↗
+            </a>
+          )}
+          <p style={{ margin: '0 0 16px', fontSize: 13, color: 'rgba(230,255,250,0.55)', lineHeight: 1.55 }}>
+            Your first {LEADS_PER_WEEK} homeowner leads pull from the rings around this exact point.
+            <strong style={{ color: '#F0FDFA' }}> Is this the address you meant?</strong>
+          </p>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              type="button"
+              onClick={onConfirmAddress}
+              disabled={checking}
+              style={{
+                flex: 1, padding: '15px 18px', borderRadius: 12,
+                background: checking ? 'rgba(255,255,255,0.08)' : 'linear-gradient(135deg, #34D399, #0D9488)',
+                color: checking ? 'rgba(230,255,250,0.5)' : '#06241C',
+                fontWeight: 900, fontSize: 15, border: 'none',
+                cursor: checking ? 'wait' : 'pointer', fontFamily: 'inherit',
+                boxShadow: checking ? 'none' : '0 12px 30px rgba(52,211,153,0.35)',
+              }}
+            >
+              {checking ? '▸ opening checkout…' : 'Confirmed — start the scan →'}
+            </button>
+            <button
+              type="button"
+              onClick={onEditAddress}
+              style={{
+                padding: '15px 18px', borderRadius: 12,
+                background: 'rgba(255,255,255,0.04)',
+                color: '#A7F3D0', fontWeight: 800, fontSize: 13,
+                border: '1px solid rgba(94,234,212,0.25)', cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              Edit
+            </button>
+          </div>
+          {err && (
+            <p style={{ fontSize: 12.5, color: '#FCA5A5', margin: '12px 0 0', fontWeight: 700 }}>
+              ⚠ {err}
+            </p>
+          )}
+        </div>
         )}
 
-        {(taken || unserved) && !waitlistedOk && (
-          <div style={{
-            marginTop: 24, padding: 22, borderRadius: 16,
-            background: unserved ? 'rgba(232,116,43,0.10)' : 'rgba(94,234,212,0.10)',
-            border: unserved ? '1.5px solid rgba(232,116,43,0.30)' : '1.5px solid rgba(20,184,166,0.30)',
-          }}>
-            <div style={{ fontSize: 11, fontWeight: 900, color: unserved ? '#C84B26' : '#0B7B70', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>
-              {unserved
-                ? 'We\'re not in your zip yet'
-                : result?.status === 'claimed'
-                  ? 'This area is locked'
-                  : 'This area is in a 14-day cool-down'}
+        {/* What fires on checkout — honesty strip */}
+        <div style={{
+          marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8,
+        }}>
+          {[
+            { icon: '🧭', t: 'Geocode + ring scan', s: 'owner-occupied parcels, 1 mi out' },
+            { icon: '🧬', t: 'Trade-aware AI recipe', s: 'climate-tuned system-age windows' },
+            { icon: '📞', t: 'Phones verified', s: 'skip-traced before they reach you' },
+            { icon: '⚡', t: `First ${LEADS_PER_WEEK} in ~30 min`, s: `then ${LEADS_PER_WEEK} every 7 days` },
+          ].map((x) => (
+            <div key={x.t} style={{
+              padding: '10px 12px', borderRadius: 10,
+              background: 'rgba(255,255,255,0.025)',
+              border: '1px solid rgba(94,234,212,0.10)',
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 900, color: '#A7F3D0', marginBottom: 2 }}>{x.icon} {x.t}</div>
+              <div style={{ fontSize: 9.5, color: 'rgba(230,255,250,0.35)' }}>{x.s}</div>
             </div>
-            <p style={{ margin: '0 0 14px', fontSize: 14, color: '#0B1F3A', lineHeight: 1.55 }}>
-              {unserved
-                ? `Our lead scrapers don't cover ${zip} yet. Drop your email and we'll tell you the moment ${zip} goes live.`
-                : `Another shop already owns ${zip} for ${trade}. Drop your email and we'll notify you the moment it opens.`}
-            </p>
-            <form onSubmit={onWaitlist}>
-              <input
-                value={waitlistEmail}
-                onChange={(e) => setWaitlistEmail(e.target.value)}
-                placeholder="you@yourshop.com"
-                type="email"
-                style={inputStyle}
-              />
-              <input
-                value={waitlistBiz}
-                onChange={(e) => setWaitlistBiz(e.target.value)}
-                placeholder="Shop name (optional)"
-                style={{ ...inputStyle, marginTop: 8 }}
-              />
-              <button
-                type="submit"
-                style={{
-                  marginTop: 12, width: '100%', padding: '12px 18px', borderRadius: 10,
-                  background: 'linear-gradient(135deg, #0AA89F, #0D8F87)',
-                  color: '#fff', fontWeight: 900, fontSize: 14, border: 'none', cursor: 'pointer',
-                }}
-              >
-                Add me to the waitlist
-              </button>
-            </form>
-          </div>
-        )}
-
-        {waitlistedOk && (
-          <div style={{
-            marginTop: 24, padding: 22, borderRadius: 16,
-            background: 'rgba(34,197,94,0.10)',
-            border: '1.5px solid rgba(34,197,94,0.30)',
-          }}>
-            <div style={{ fontSize: 11, fontWeight: 900, color: '#16803F', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>
-              ✓ Added to waitlist
-            </div>
-            <p style={{ margin: 0, fontSize: 14, color: '#0B1F3A', lineHeight: 1.55 }}>
-              You&rsquo;ll get an email the second {zip} ({trade}) opens up.
-            </p>
-          </div>
-        )}
+          ))}
+        </div>
       </div>
+
+      <style>{`
+        @keyframes obLive { 0%, 100% { opacity: 1 } 50% { opacity: 0.25 } }
+        input::placeholder { color: rgba(230,255,250,0.25); }
+      `}</style>
     </main>
   )
 }
 
 export default function StartAreaPage() {
   return (
-    <Suspense fallback={<main style={{ minHeight: '100vh', background: '#FFF8F0' }} />}>
+    <Suspense fallback={<main style={{ minHeight: '100vh', background: '#060D18' }} />}>
       <StartAreaContent />
     </Suspense>
   )
 }
 
-const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: 11, fontWeight: 900, color: '#0B1F3A',
-  letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 6,
+function FieldLabel({ n, label, done, mt }: { n: string; label: string; done: boolean; mt?: boolean }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 8,
+      marginBottom: 7, marginTop: mt ? 16 : 0,
+    }}>
+      <span style={{
+        fontSize: 9.5, fontWeight: 900, color: done ? '#34D399' : 'rgba(94,234,212,0.45)',
+        fontFamily: 'ui-monospace, monospace', letterSpacing: '0.08em',
+      }}>{n}</span>
+      <span style={{
+        fontSize: 11, fontWeight: 900, color: done ? '#A7F3D0' : 'rgba(230,255,250,0.6)',
+        letterSpacing: '0.12em', textTransform: 'uppercase',
+      }}>{label}</span>
+      {done && <span style={{ fontSize: 10, color: '#34D399', fontWeight: 900 }}>✓</span>}
+    </div>
+  )
 }
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '12px 14px', borderRadius: 10,
-  border: '1.5px solid rgba(11,31,58,0.18)', fontSize: 15,
-  fontFamily: 'inherit', color: '#0B1F3A', background: '#FFFFFF',
-  boxSizing: 'border-box',
+
+function Hint({ children }: { children: React.ReactNode }) {
+  return (
+    <p style={{ fontSize: 10.5, color: 'rgba(230,255,250,0.35)', margin: '6px 0 0', lineHeight: 1.5 }}>
+      {children}
+    </p>
+  )
+}
+
+const darkInput: React.CSSProperties = {
+  width: '100%', padding: '13px 15px', borderRadius: 10,
+  border: '1px solid rgba(94,234,212,0.2)',
+  background: 'rgba(2,8,16,0.6)',
+  fontSize: 15, fontWeight: 600,
+  fontFamily: 'inherit', color: '#F0FDFA',
+  boxSizing: 'border-box', outline: 'none',
+}
+
+function tradeBtn(active: boolean): React.CSSProperties {
+  return {
+    padding: '11px 12px', borderRadius: 10,
+    border: active ? '1.5px solid #34D399' : '1px solid rgba(94,234,212,0.18)',
+    background: active ? 'rgba(52,211,153,0.12)' : 'rgba(255,255,255,0.03)',
+    fontWeight: 800, fontSize: 13, cursor: 'pointer',
+    color: active ? '#34D399' : 'rgba(230,255,250,0.65)',
+    textTransform: 'capitalize', fontFamily: 'inherit',
+    boxShadow: active ? '0 0 16px rgba(52,211,153,0.20)' : 'none',
+    transition: 'all 160ms ease',
+  }
 }
