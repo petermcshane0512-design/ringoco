@@ -301,7 +301,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    await supabase.from('profiles').update({
+    // 2026-06-10 — UPSERT not UPDATE. In the anon-checkout flow the Clerk
+    // user is minted by THIS handler seconds earlier; its profile row may
+    // not exist yet (Clerk's user.created webhook is async). The old
+    // .update().eq() matched 0 rows and silently dropped the entire paid
+    // seeding — tier, zips, trade, geocode — leaving the lead engine
+    // triple-blocked (inactive + starter + no zips) and the dashboard
+    // spinning forever. Upsert creates-or-updates atomically.
+    await supabase.from('profiles').upsert({
+      user_id: userId,
       stripe_subscription_id: subscriptionId,
       stripe_customer_id: customerId,
       stripe_metered_item_id: meteredItemId,
@@ -329,7 +337,7 @@ export async function POST(req: NextRequest) {
       // in find-real-leads + lead-engine works on day 1.
       ...(session.metadata?.territory_trade ? { business_type: session.metadata.territory_trade } : {}),
       ...utmStamp,
-    }).eq('user_id', userId)
+    }, { onConflict: 'user_id' })
 
     console.log(`Subscription activated for user ${userId}: ${planTier}` + (geocoded ? ` (geocoded ${geocoded.lat.toFixed(4)}, ${geocoded.lng.toFixed(4)})` : ''))
 
