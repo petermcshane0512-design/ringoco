@@ -31,6 +31,49 @@ body {
 
 html { overflow-x: hidden; }
 
+/* 2026-06-10 — comprehensive mobile fit pass per Peter ('zoom out more,
+   make sure everything is included on mobile display'). The homepage uses
+   inline styles with clamp() that already mostly cooperate, but several
+   sections still felt cramped at 375px. These global rules layer on top
+   of the inline styles and catch the common overflow patterns:
+     - Cap every section header so 30+px text never overflows.
+     - Shrink every section's side padding so cards reach the edge.
+     - Force every image to scale down to its container.
+     - Stack any 2-column grid that wasn't explicitly handled. */
+@media (max-width: 480px) {
+  /* Headings: cap aggressively. Inline clamp() floors that were too high
+     (h1 30px floor, h2 26px, h3 22px) all overrode here. */
+  h1 { font-size: clamp(22px, 6vw, 30px) !important; line-height: 1.1 !important; letter-spacing: -0.02em !important; }
+  h2 { font-size: clamp(20px, 5.6vw, 26px) !important; line-height: 1.15 !important; }
+  h3 { font-size: clamp(17px, 5vw, 22px) !important; line-height: 1.2 !important; }
+  p  { font-size: clamp(13px, 3.8vw, 15.5px) !important; line-height: 1.5 !important; }
+
+  /* Every <section> on the page: tight side padding so cards/grids reach
+     the edge of the viewport, vertical padding kept proportional. */
+  section {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  /* Images never overflow their container. */
+  img { max-width: 100% !important; height: auto !important; }
+
+  /* Any inline 2-3 column grid that didn't get an explicit @media-880px
+     stack: force single column at 480px so nothing squeezes. */
+  [style*="grid-template-columns"][style*="1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  [style*="grid-template-columns"][style*="repeat(2"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Cards / cells inside a previously-multi-column grid: cap any inline
+     maxWidth so they don't outgrow the now-stacked column. */
+  [style*="maxWidth: 580"], [style*="max-width: 580"] {
+    max-width: 100% !important;
+  }
+}
+
 /* ── Top-right nav buttons (homepage / pricing / founder)
      .nav-cta     — Dashboard / Sign in / Create Account  (main CTA, teal-cyan glow)
      .why-pulse   — Why BellAveGo?                        (deep navy + blue glow)
