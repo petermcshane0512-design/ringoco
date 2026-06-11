@@ -340,15 +340,16 @@ function HomeContent() {
               lineHeight: 1.04, margin: '0 0 14px',
               color: '#0B1F3A',
             }}>
-              Book your next install job from{' '}
+              Our AI scans{' '}
               <span className="bavg-h1-shimmer" style={{
                 background: 'linear-gradient(110deg, #FF9D5A 0%, #E8742B 30%, #C84B26 50%, #E8742B 70%, #FF9D5A 100%)',
                 backgroundSize: '220% 100%',
                 WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-              }}>leads your competitors never see</span>.
+              }}>everything in your neighborhood</span>
+              {' '}to find your next customer.
             </h1>
             <p style={{ fontSize: 'clamp(15px, 1.4vw, 17px)', color: '#3D5A66', lineHeight: 1.55, margin: '0 0 14px', maxWidth: 580 }}>
-              <strong style={{ color: '#0B1F3A' }}>{LEADS_PER_WEEK} fresh homeowner leads in your service area every week</strong> — real names, addresses, phone numbers. Pulled overnight from new permits, aging systems, storm damage, and move-ins. Every lead arrives with a ready-to-send intro — call, text, or email in 60 seconds.
+              Every permit filed at city hall. Every storm strike. Every home sale. Every aging system. Our AI reads it all, every night, across your entire service area — then hands you <strong style={{ color: '#0B1F3A' }}>{LEADS_PER_WEEK} homeowners a week who need your work</strong> — names, addresses, verified phones, and a ready-to-send intro. Call, text, or email in 60 seconds.
             </p>
             <p style={{ fontSize: 'clamp(14px, 1.3vw, 16px)', color: '#0B1F3A', lineHeight: 1.5, margin: '0 0 18px', maxWidth: 580, fontWeight: 700 }}>
               One shop per area. When yours is taken, it&rsquo;s taken.
@@ -599,6 +600,12 @@ function HomeContent() {
           from { transform: rotate(0deg); }
           to   { transform: rotate(360deg); }
         }
+        @keyframes bavgScanY {
+          0%   { transform: translateY(-90px); opacity: 0; }
+          12%  { opacity: 1; }
+          88%  { opacity: 1; }
+          100% { transform: translateY(560px); opacity: 0; }
+        }
         @media (prefers-reduced-motion: reduce) {
           .bavg-h1-shimmer { animation: none; }
         }
@@ -630,8 +637,8 @@ function HomeContent() {
         }
         .leadscard-row:hover {
           transform: translateY(-1px);
-          background: rgba(255, 217, 168, 0.30) !important;
-          box-shadow: 0 8px 20px rgba(232, 116, 43, 0.18);
+          background: rgba(94, 234, 212, 0.10) !important;
+          box-shadow: 0 8px 24px rgba(94, 234, 212, 0.18), 0 0 0 1px rgba(94, 234, 212, 0.25);
         }
         @media (max-width: 880px) {
           .hero-grid { grid-template-columns: 1fr !important; }
@@ -717,18 +724,32 @@ function LeadsCard({ variant }: { variant: TradeVariant }) {
   const TEASER_LEADS = variant.teaserLeads
   return (
     <div style={{
+      position: 'relative',
+      overflow: 'hidden',
       borderRadius: 20,
-      background: '#FFFFFF',
-      border: '1.5px solid rgba(232,116,43,0.22)',
+      background: 'linear-gradient(165deg, #0B1F3A 0%, #0E2746 55%, #0B1F3A 100%)',
+      border: '1.5px solid rgba(94,234,212,0.28)',
       padding: 22,
-      boxShadow: '0 30px 80px rgba(11,31,58,0.10), 0 4px 14px rgba(232,116,43,0.08)',
+      boxShadow: '0 30px 80px rgba(11,31,58,0.45), 0 0 60px -20px rgba(94,234,212,0.35), inset 0 1px 0 rgba(255,255,255,0.06)',
       maxWidth: 580,
       width: '100%',
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+      {/* Command-center grid + scanline */}
+      <div aria-hidden style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
+        backgroundImage: 'linear-gradient(rgba(94,234,212,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(94,234,212,0.05) 1px, transparent 1px)',
+        backgroundSize: '28px 28px',
+      }} />
+      <div aria-hidden style={{
+        position: 'absolute', left: 0, right: 0, top: 0, height: 90,
+        pointerEvents: 'none', zIndex: 0,
+        background: 'linear-gradient(180deg, transparent, rgba(94,234,212,0.10), transparent)',
+        animation: 'bavgScanY 7s ease-in-out infinite',
+      }} />
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{variant.cardHeader}</div>
-          <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2, color: '#4A6670' }}>Your dashboard · scroll to see all 10</div>
+          <div style={{ fontSize: 11, fontWeight: 800, color: '#FF9D5A', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{variant.cardHeader}</div>
+          <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2, color: '#7AAAB2' }}>Your dashboard · scroll to see all 10</div>
         </div>
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: 7,
@@ -752,6 +773,8 @@ function LeadsCard({ variant }: { variant: TradeVariant }) {
           interact w/ a real-feeling lead feed in the hero. Each row links
           to /sign-up so a click pulls them into the funnel. */}
       <div style={{
+        position: 'relative',
+        zIndex: 1,
         maxHeight: 460,
         overflowY: 'auto',
         paddingRight: 4,
@@ -762,15 +785,16 @@ function LeadsCard({ variant }: { variant: TradeVariant }) {
         <Link href="/start?promo=FIRST400" style={{ textDecoration: 'none', display: 'block' }}>
           <div style={{
             borderRadius: 13,
-            background: '#FFF8F0',
-            border: '1.5px solid rgba(232,116,43,0.40)',
+            background: 'rgba(255,255,255,0.06)',
+            border: '1.5px solid rgba(232,116,43,0.55)',
             padding: '14px 16px',
             marginBottom: 10,
             cursor: 'pointer',
             transition: 'transform 180ms ease, box-shadow 180ms ease',
+            backdropFilter: 'blur(6px)',
           }} className="leadscard-row">
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-              <div style={{ fontSize: 15, fontWeight: 900, color: '#0B1F3A' }}>{HERO_LEAD.name}</div>
+              <div style={{ fontSize: 15, fontWeight: 900, color: '#FFF8F0' }}>{HERO_LEAD.name}</div>
               <span style={{
                 padding: '2px 7px', borderRadius: 6,
                 background: '#E8742B',
@@ -781,29 +805,31 @@ function LeadsCard({ variant }: { variant: TradeVariant }) {
                 background: '#FFD9A8', color: '#C84B26', fontSize: 9, fontWeight: 900,
               }}>SCORE {HERO_LEAD.score}</span>
             </div>
-            <div style={{ fontSize: 12.5, color: '#0B1F3A', fontWeight: 700, marginBottom: 4 }}>{HERO_LEAD.addr} · {HERO_LEAD.city}</div>
-            <div style={{ fontSize: 11.5, color: '#4A6670', lineHeight: 1.55 }}>
+            <div style={{ fontSize: 12.5, color: 'rgba(255,248,240,0.92)', fontWeight: 700, marginBottom: 4 }}>{HERO_LEAD.addr} · {HERO_LEAD.city}</div>
+            <div style={{ fontSize: 11.5, color: '#7AAAB2', lineHeight: 1.55 }}>
               Built {HERO_LEAD.yearBuilt} · {HERO_LEAD.propertyValue} home{HERO_LEAD.hvacAge ? ` · HVAC ${HERO_LEAD.hvacAge}` : ''}
             </div>
-            <div style={{ fontSize: 11.5, color: '#4A6670', lineHeight: 1.55, marginTop: 4 }}>
+            <div style={{ fontSize: 11.5, color: '#7AAAB2', lineHeight: 1.55, marginTop: 4 }}>
               Phone:{' '}
               <span style={{
-                background: 'rgba(11,31,58,0.08)',
+                background: 'rgba(94,234,212,0.10)',
+                border: '1px solid rgba(94,234,212,0.25)',
                 padding: '2px 6px', borderRadius: 5,
-                fontFamily: 'monospace', fontWeight: 700, color: '#0B1F3A',
+                fontFamily: 'monospace', fontWeight: 700, color: '#5EEAD4',
                 letterSpacing: '0.05em',
               }}>{HERO_LEAD.phoneRedacted}</span>{' '}
-              <span style={{ fontSize: 10, color: '#C84B26', fontWeight: 800 }}>← unlock w/ trial</span>
+              <span style={{ fontSize: 10, color: '#FF9D5A', fontWeight: 800 }}>← unlock w/ trial</span>
             </div>
-            <div style={{ fontSize: 11, color: '#C84B26', marginTop: 8, fontWeight: 700 }}>📍 {HERO_LEAD.signalDetail}</div>
+            <div style={{ fontSize: 11, color: '#FF9D5A', marginTop: 8, fontWeight: 700 }}>📍 {HERO_LEAD.signalDetail}</div>
             <div style={{
               marginTop: 10, padding: '8px 10px',
               borderRadius: 8,
-              background: 'rgba(232,116,43,0.10)',
+              background: 'rgba(232,116,43,0.18)',
+              border: '1px solid rgba(232,116,43,0.30)',
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
-              <div style={{ fontSize: 11, color: '#0B1F3A', fontWeight: 700 }}>Est. job value</div>
-              <div style={{ fontSize: 13, fontWeight: 900, color: '#C84B26' }}>{HERO_LEAD.jobValue}</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,248,240,0.88)', fontWeight: 700 }}>Est. job value</div>
+              <div style={{ fontSize: 13, fontWeight: 900, color: '#FFC58A' }}>{HERO_LEAD.jobValue}</div>
             </div>
           </div>
         </Link>
@@ -829,10 +855,10 @@ function LeadsCard({ variant }: { variant: TradeVariant }) {
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
                 padding: '9px 12px',
                 borderRadius: 10,
-                background: '#FFFFFF',
-                border: '1px solid rgba(232,116,43,0.10)',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(94,234,212,0.12)',
                 fontSize: 12,
-                color: '#0B1F3A', fontWeight: 600,
+                color: 'rgba(255,248,240,0.92)', fontWeight: 600,
                 cursor: 'pointer',
                 transition: 'background 160ms ease, transform 160ms ease',
               }} className="leadscard-row">
@@ -841,23 +867,23 @@ function LeadsCard({ variant }: { variant: TradeVariant }) {
                   {t.signal && (
                     <span style={{
                       padding: '1px 6px', borderRadius: 5,
-                      background: t.signal === 'PROPERTY SOLD' || t.signal === 'NEW OWNER' ? '#14B8A6' : '#0B1F3A',
+                      background: t.signal === 'PROPERTY SOLD' || t.signal === 'NEW OWNER' ? 'rgba(20,184,166,0.85)' : 'rgba(232,116,43,0.85)',
                       color: '#fff', fontSize: 8.5, fontWeight: 900, letterSpacing: '0.04em',
                     }}>{t.signal}</span>
                   )}
                 </div>
-                <div style={{ fontSize: 11.5, fontWeight: 900, color: '#0B1F3A', whiteSpace: 'nowrap' }}>{t.value}</div>
+                <div style={{ fontSize: 11.5, fontWeight: 900, color: '#FFC58A', whiteSpace: 'nowrap' }}>{t.value}</div>
               </div>
             </Link>
           ))}
         </div>
       </div>
 
-      <Link href="/start?promo=FIRST400" style={{ textDecoration: 'none', display: 'block' }}>
-        <div style={{ marginTop: 14, padding: '11px 14px', borderRadius: 10, background: 'rgba(232,116,43,0.08)', border: '1px dashed rgba(232,116,43,0.40)', cursor: 'pointer' }}>
-          <div style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Pre-written script attached to every lead</div>
-          <div style={{ fontSize: 12, color: '#0B1F3A', marginTop: 4, lineHeight: 1.5 }}>
-            Each lead comes w/ a ready-to-send intro script (SMS + email + call opener). Copy-paste, tweak, or call. <strong>Tap any lead above to claim your zip →</strong>
+      <Link href="/start?promo=FIRST400" style={{ textDecoration: 'none', display: 'block', position: 'relative', zIndex: 1 }}>
+        <div style={{ marginTop: 14, padding: '11px 14px', borderRadius: 10, background: 'rgba(232,116,43,0.14)', border: '1px dashed rgba(255,157,90,0.50)', cursor: 'pointer' }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: '#FFC58A', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Pre-written script attached to every lead</div>
+          <div style={{ fontSize: 12, color: 'rgba(255,248,240,0.90)', marginTop: 4, lineHeight: 1.5 }}>
+            Each lead comes w/ a ready-to-send intro script (SMS + email + call opener). Copy-paste, tweak, or call. <strong style={{ color: '#FFF8F0' }}>Tap any lead above to claim your zip →</strong>
           </div>
         </div>
       </Link>

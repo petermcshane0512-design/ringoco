@@ -132,7 +132,7 @@ export default function LiveLeadFeed() {
           to   { transform: translateX(-50%); }
         }
         .bavg-feed-track {
-          animation: bavgFeedScroll 55s linear infinite;
+          animation: bavgFeedScroll 110s linear infinite;
         }
         .bavg-feed-mask:hover .bavg-feed-track {
           animation-play-state: paused;

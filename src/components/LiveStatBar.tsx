@@ -56,17 +56,18 @@ export default function LiveStatBar() {
     return () => obs.disconnect()
   }, [stats])
 
-  const pool = useCountUp(visible ? stats?.pool ?? null : null)
   const fresh = useCountUp(visible ? stats?.last_24h ?? null : null)
 
   if (!stats || !stats.pool) return null
 
-  const items: Array<{ n: number; label: string }> = [
-    { n: pool, label: 'live homeowner signals in pool' },
-  ]
+  // Velocity over inventory: the pool total reads small out of context, so
+  // it only gates rendering (proves the pipeline is real). Surface the
+  // numbers that move: fresh signals + nightly coverage.
+  const items: Array<{ n: number | null; label: string; text?: string }> = []
   if (stats.last_24h && stats.last_24h > 0) {
-    items.push({ n: fresh, label: 'new signals found in last 24h' })
+    items.push({ n: fresh, label: 'new homeowner signals · last 24h' })
   }
+  items.push({ n: null, text: '24', label: 'metros scanned every night' })
 
   return (
     <div ref={ref} style={{
@@ -82,7 +83,7 @@ export default function LiveStatBar() {
             fontVariantNumeric: 'tabular-nums',
             background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 60%, #C84B26 100%)',
             WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-          }}>{it.n.toLocaleString()}</div>
+          }}>{it.n != null ? it.n.toLocaleString() : it.text}</div>
           <div style={{ fontSize: 11.5, fontWeight: 800, color: '#4A6670', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 2 }}>
             {it.label}
           </div>
