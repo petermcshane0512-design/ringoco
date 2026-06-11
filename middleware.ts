@@ -87,6 +87,14 @@ const isPublicRoute = createRouteMatcher([
   "/api/free-lead(.*)",
   "/start(.*)",
   "/api/stripe/checkout(.*)",
+  // 2026-06-11 — /checkout/return is where Stripe sends the customer
+  // AFTER payment, and in the frictionless flow they are STILL ANONYMOUS
+  // at that moment (the Clerk user is minted ON this page). It was not
+  // public, so Clerk middleware bounced paid customers to the homepage
+  // before activation ran — profile never seeded, sign-in never issued,
+  // dashboard made them redo onboarding. The page self-authorizes via the
+  // Stripe session_id (verified server-side against payment_status).
+  "/checkout/return(.*)",
 ]);
 
 /**
