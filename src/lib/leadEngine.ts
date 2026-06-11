@@ -304,13 +304,17 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
           // address. Never goes past userCap (= min(service_radius_mi, 20)).
           body: JSON.stringify({ user_id: profile.user_id, max_candidates: 80, skip_trace_top_n: 10, radius_mi: radiusUsed }),
         })
-        const json = await r.json().catch(() => ({}))
-        console.log(`[lead-engine] auto-replenished user=${profile.user_id} assigned=${json.assigned ?? 0} spent_cents=${json.spent_cents ?? 0} errors=${JSON.stringify(json.errors ?? [])}`)
+        const json = await r.json().catch(() => ({ error: `non-JSON response (HTTP ${r.status}) — route blocked before handler?` }))
+        console.log(`[lead-engine] auto-replenished user=${profile.user_id} status=${r.status} assigned=${json.assigned ?? 0} spent_cents=${json.spent_cents ?? 0} errors=${JSON.stringify(json.errors ?? [])} reason=${json.reason ?? ''}`)
+        const errBits: string[] = Array.isArray(json.errors) ? [...json.errors] : []
+        if (json.error) errBits.push(String(json.error))
+        if (json.reason) errBits.push(String(json.reason))
+        if (!r.ok && errBits.length === 0) errBits.push(`HTTP ${r.status}`)
         replenishInfo = {
           fired: true,
           assigned: json.assigned ?? 0,
           spent_cents: json.spent_cents ?? 0,
-          errors: Array.isArray(json.errors) ? json.errors : (json.error ? [String(json.error)] : []),
+          errors: errBits,
         }
 
         // Re-query candidates after replenish. Reuse the widest radius from

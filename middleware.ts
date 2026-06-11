@@ -68,6 +68,13 @@ const isPublicRoute = createRouteMatcher([
   // Without this, Clerk middleware redirects unauthenticated curl to a
   // sign-in HTML page before requireAdmin can verify the header.
   "/api/admin(.*)",
+  // Agent endpoints — same requireAdmin() contract as /api/admin. 2026-06-11:
+  // lib/leadEngine's auto-replenish calls /api/agents/find-real-leads
+  // server-to-server with x-admin-secret (no Clerk session). Without this
+  // entry Clerk intercepted the call with a sign-in redirect, the engine
+  // parsed {} and reported "replenish pulled 0 (spent 0c)" with no error —
+  // the exact silent-starvation Peter hit on his first paid account.
+  "/api/agents(.*)",
   // Public marketing surfaces — anonymous landing-page visitors must be
   // able to hit these. /api/live-feed feeds the LiveLeadFeed ticker and
   // LiveStatBar count-up on the homepage + /free-lead. /api/opportunity-check
