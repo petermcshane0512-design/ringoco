@@ -124,7 +124,7 @@ export default function SampleReportPage() {
             fontSize: 11, fontWeight: 800, color: '#C84B26',
             letterSpacing: '0.12em', textTransform: 'uppercase',
             marginBottom: 14,
-          }}>Sample · Monday inbox preview</div>
+          }}>Sample · weekly lead preview</div>
 
           <h1 style={{
             fontSize: 'clamp(28px, 4.4vw, 50px)',
@@ -240,7 +240,7 @@ export default function SampleReportPage() {
             textAlign: 'center',
           }}>
             <h2 style={{ fontSize: 'clamp(22px, 2.8vw, 32px)', fontWeight: 900, margin: '0 0 8px', letterSpacing: '-0.03em' }}>
-              See what {LEADS_PER_WEEK} of these look like for YOUR zip this Monday.
+              See what {LEADS_PER_WEEK} of these look like for YOUR zip this week.
             </h2>
             <p style={{ fontSize: 14.5, opacity: 0.94, margin: '0 0 22px', lineHeight: 1.55 }}>
               ${INTRO_PRICE_USD} first month with code <strong>{INTRO_PROMO_CODE}</strong>. Then ${PRICE_MONTHLY_USD}/mo. Cancel any time.

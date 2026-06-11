@@ -36,7 +36,7 @@ const SCOUTS: Scout[] = [
   { name: 'Delivery Sentinel',       verb: 'guarantees your weekly drop fires on time, every cycle' },
   { name: 'Deliverability Sentinel', verb: 'protects your shop from inboxes that block strangers' },
   { name: 'Copy Lab',                verb: 'A/B tests outreach variants daily and keeps what wins' },
-  { name: 'Outreach Loader',         verb: 'keeps your weekly drop queue full so Monday 6am never misses' },
+  { name: 'Outreach Loader',         verb: 'keeps your weekly drop queue full so your drop never misses' },
   { name: 'Email Verifier',          verb: 'pings every contact before send to kill bounce risk' },
   { name: 'Sender Bot',              verb: 'pushes the right campaign at the right hour, per timezone' },
   { name: 'Lead Sourcer',            verb: 'mines Google + Apollo for new prospects every morning' },
@@ -73,7 +73,7 @@ export default function ScoutTeam() {
             }}>One shop gets all 24.</span>
           </h2>
           <p style={{ fontSize: 16, color: '#3D5A66', maxWidth: 700, margin: '0 auto', lineHeight: 1.55 }}>
-            Every scout below runs every day in your zip code. Permits at 5am. Storms in real time. Phone numbers verified before you call. {LEADS_PER_WEEK} fresh leads land in your dashboard every Monday — yours alone.
+            Every scout below runs every day in your zip code. Permits at 5am. Storms in real time. Phone numbers verified before you call. {LEADS_PER_WEEK} fresh leads land in your dashboard every week — yours alone.
           </p>
         </div>
 
