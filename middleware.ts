@@ -76,6 +76,13 @@ const isPublicRoute = createRouteMatcher([
   "/api/live-feed(.*)",
   "/api/opportunity-check(.*)",
   "/api/territory(.*)",
+  // 2026-06-11 — /start/area (anonymous, pre-signup) calls both of these.
+  // They were NOT public, so Clerk middleware returned an HTML sign-in
+  // bounce instead of JSON — which surfaced as "could not verify that
+  // address" (geocode-preview blocked) AND a missing address dropdown
+  // (places-autocomplete blocked). The Google key was fine all along.
+  "/api/geocode-preview(.*)",
+  "/api/places-autocomplete(.*)",
   "/free-lead(.*)",
   "/api/free-lead(.*)",
   "/start(.*)",
