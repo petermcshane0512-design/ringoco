@@ -355,7 +355,11 @@ export default function LeadsPage() {
         ) : gate === 'need_address' ? (
           // Hard block ONLY when there's no geocoded address — leads would
           // otherwise scatter across the wrong neighborhood.
-          <ProfileGate onDone={() => { setGate('ok'); setNeedsName(false) }} />
+          // setKicked(false) re-arms the delivery kick: the mount-time kick
+          // fired while the gate was still open (profile incomplete) and
+          // latched — without the reset, the first drop sat undelivered
+          // until a manual page refresh.
+          <ProfileGate onDone={() => { setGate('ok'); setNeedsName(false); setKicked(false) }} />
         ) : (
           <>
             {/* Soft business-name nudge — never blocks leads (Hormozi:
