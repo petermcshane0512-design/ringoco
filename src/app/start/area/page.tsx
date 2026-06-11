@@ -7,26 +7,38 @@ import { LEADS_PER_WEEK, INTRO_PRICE_USD, INTRO_PROMO_CODE } from '@/lib/offer'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
 
 /**
- * /start/area — THE onboarding. 2026-06-10 dark AI-console rewrite per
- * Peter: customers should think "whoa, their AI UI is insane" from the
- * first screen, not just after payment.
+ * /start/area — THE onboarding.
  *
- * Design system matches LeadScanConsole + the /dashboard/leads command
- * center: #060D18→#0B1F3A shell, teal/emerald accents, monospace status
- * text, glowing active states. The form reads as "arming the scan":
- * numbered TARGET / SECTOR / TRADE / HOTLINE steps, live agents-ready
- * strip, geocode confirm rendered as a target-lock card.
+ * 2026-06-11 Algorithm + Hormozi pass per Peter ("fix the onboarding —
+ * Elon's five-step algorithm and Hormozi"):
+ *
+ *   DELETED (step 2): the separate ZIP field. The address already
+ *   contains the zip — we parse it from the Google geocode result
+ *   (fallback: parse from the typed address; last-resort: a zip input
+ *   appears ONLY if both fail). 4 fields → 3. The best form field is no
+ *   form field.
+ *
+ *   SIMPLIFIED (step 3): plain-language labels. "Sector zip" / "Trade
+ *   recipe" / "Alert hotline" console jargon confused the 50-year-old
+ *   shop owner this sells to. Hormozi: a confused buyer doesn't buy.
+ *
+ *   HORMOZI at the CTA: the homepage guarantee (book a job in 30 days
+ *   or full refund + next month free + keep every lead) now sits
+ *   directly under the pay button — risk reversal at the exact moment
+ *   of commitment, not three scrolls earlier on a different page.
+ *
+ *   RESTYLED to the homepage LeadsCard design system (warm navy +
+ *   orange + cream) — same pass as /dashboard/leads. One visual brand
+ *   from ad click to dashboard.
  *
  * Flow (frictionless — no account before payment):
  *   submit → geocode preview → confirm pin → POST /api/stripe/checkout
  *   (anonymous OK) → Stripe → webhook mints Clerk user + pulls first
  *   leads → /checkout/return auto-signs in → /dashboard/leads.
  *
- * Logic preserved exactly from prior rev: cookie persistence + prefill,
- * URL-param prefill from the homepage widget, ?autoco=1 auto-resume,
- * all field validations, geocode-preview fail-soft. Dead territory/
- * waitlist code DELETED (one-shop-per-zip gate retired earlier today —
- * the branch was unreachable).
+ * Logic preserved exactly: cookie persistence + prefill, URL-param
+ * prefill from the homepage widget, ?autoco=1 auto-resume, field
+ * validations, geocode-preview fail-soft.
  */
 
 const AREA_ZIP_COOKIE = 'bavg_area_zip'
@@ -45,6 +57,15 @@ function writeCookie(name: string, value: string) {
   document.cookie = `${name}=${encodeURIComponent(value)}; max-age=${COOKIE_MAX_AGE}; path=/; SameSite=Lax; Secure`
 }
 
+/** Last 5-digit group in the address text = the zip (client-side copy of
+ *  lib/geocodeBusinessAddress.parseZipFromAddress — this file is 'use
+ *  client', the lib pulls server env). */
+function parseZip(s: string): string {
+  const matches = s.match(/\b\d{5}(?:-\d{4})?\b/g)
+  if (!matches || matches.length === 0) return ''
+  return matches[matches.length - 1].slice(0, 5)
+}
+
 const TRADES = ['hvac', 'plumbing', 'electrical', 'roofing', 'handyman'] as const
 
 function StartAreaContent() {
@@ -54,6 +75,9 @@ function StartAreaContent() {
   const autoco = sp?.get('autoco') === '1'
 
   const [zip, setZip] = useState('')
+  // Shown ONLY when neither the geocode nor the typed address yields a
+  // zip — the escape hatch, not a default field.
+  const [needZip, setNeedZip] = useState(false)
   const [trade, setTrade] = useState<string>('')
   const [otherTradeText, setOtherTradeText] = useState('')
   const [address, setAddress] = useState('')
@@ -124,10 +148,6 @@ function StartAreaContent() {
       setErr('Enter your business address so we can pull leads within walking distance of it.')
       return
     }
-    if (!/^\d{5}$/.test(zip)) {
-      setErr('Enter a 5-digit zip code.')
-      return
-    }
     if (!trade) {
       setErr('Pick your trade.')
       return
@@ -141,11 +161,10 @@ function StartAreaContent() {
       setErr('Enter a 10-digit phone number so we can text you when a hot lead opens.')
       return
     }
+    // Zip resolution order: manual fallback field (if it appeared) →
+    // parsed from typed address → geocode result below.
+    let z = needZip && /^\d{5}$/.test(zip) ? zip : parseZip(address)
     setChecking(true)
-    writeCookie(AREA_ZIP_COOKIE, zip)
-    writeCookie(AREA_TRADE_COOKIE, trade)
-    writeCookie(AREA_ADDR_COOKIE, address.trim())
-    writeCookie(AREA_PHONE_COOKIE, phoneDigits)
     try {
       const gr = await fetch('/api/geocode-preview', {
         method: 'POST',
@@ -154,14 +173,42 @@ function StartAreaContent() {
       })
       const gj = await gr.json().catch(() => ({}))
       if (gj.ok) {
+        if (gj.zip && /^\d{5}$/.test(gj.zip)) z = gj.zip
+        if (!z) {
+          // Geocoded but somehow no zip anywhere — show the escape hatch.
+          setNeedZip(true)
+          setErr('We could not read a zip from that address — add it below.')
+          return
+        }
+        setZip(z)
+        writeCookie(AREA_ZIP_COOKIE, z)
+        writeCookie(AREA_TRADE_COOKIE, trade)
+        writeCookie(AREA_ADDR_COOKIE, address.trim())
+        writeCookie(AREA_PHONE_COOKIE, phoneDigits)
         setConfirm({ formatted: gj.formatted, lat: gj.lat, lng: gj.lng })
       } else {
         // Fail-soft: never block the sale on a geocode hiccup. Webhook
-        // re-attempts geocoding post-payment.
+        // re-attempts geocoding post-payment. But we DO need a zip.
+        if (!z) {
+          setNeedZip(true)
+          setErr('We could not verify that address — add your zip below and double-check the spelling.')
+          return
+        }
+        setZip(z)
+        writeCookie(AREA_ZIP_COOKIE, z)
+        writeCookie(AREA_TRADE_COOKIE, trade)
+        writeCookie(AREA_ADDR_COOKIE, address.trim())
+        writeCookie(AREA_PHONE_COOKIE, phoneDigits)
         setErr('We could not verify that address with Google Maps. Double-check spelling, or proceed if you are sure.')
         setConfirm({ formatted: address.trim(), lat: 0, lng: 0 })
       }
     } catch {
+      if (!z) {
+        setNeedZip(true)
+        setErr('We could not verify that address — add your zip below.')
+        return
+      }
+      setZip(z)
       setConfirm({ formatted: address.trim(), lat: 0, lng: 0 })
     } finally {
       setChecking(false)
@@ -181,75 +228,74 @@ function StartAreaContent() {
 
   const stepDone = {
     address: address.trim().length >= 8,
-    zip: /^\d{5}$/.test(zip),
     trade: !!trade && trade !== 'other' && !(trade.startsWith('other:') && trade.slice(6).trim().length === 0),
     phone: phone.replace(/\D/g, '').length >= 10,
   }
-  const armedCount = Object.values(stepDone).filter(Boolean).length
+  const stepsTotal = needZip ? 4 : 3
+  const armedCount = Object.values(stepDone).filter(Boolean).length + (needZip && /^\d{5}$/.test(zip) ? 1 : 0)
 
   return (
     <main style={{
       minHeight: '100vh',
-      background: 'linear-gradient(165deg, #060D18 0%, #0B1F3A 60%, #081B26 100%)',
+      background: 'linear-gradient(165deg, #081427 0%, #0B1F3A 55%, #0A1830 100%)',
       fontFamily: "'Inter', system-ui, sans-serif",
-      color: '#E6FFFA',
+      color: '#FFF8F0',
       padding: '0 0 60px',
     }}>
-      {/* Console title bar */}
+      {/* Top bar */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '12px clamp(14px, 4vw, 28px)',
-        background: 'rgba(6,13,24,0.88)',
-        borderBottom: '1px solid rgba(94,234,212,0.14)',
+        background: 'rgba(8,20,39,0.92)',
+        borderBottom: '1px solid rgba(255,157,90,0.16)',
       }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <span style={{ fontSize: 15 }}>🛰️</span>
-          <span style={{ fontSize: 11.5, fontWeight: 900, letterSpacing: '0.16em', color: '#5EEAD4', textTransform: 'uppercase', fontFamily: 'ui-monospace, monospace' }}>
-            BellAveGo Intelligence
+        <Link href="/" style={{ textDecoration: 'none' }}>
+          <span style={{ fontSize: 15, fontWeight: 900, letterSpacing: '-0.02em', color: '#FFF8F0' }}>
+            BellAveGo
           </span>
         </Link>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 9, fontWeight: 900, color: '#34D399', letterSpacing: '0.12em', fontFamily: 'ui-monospace, monospace' }}>
-          <i style={{ width: 6, height: 6, borderRadius: '50%', background: '#34D399', display: 'inline-block', animation: 'obLive 1s ease-in-out infinite' }} />
-          24 SCOUTS STANDING BY
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 9.5, fontWeight: 800, color: '#22C55E', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          <i style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', display: 'inline-block', animation: 'obLive 1.6s ease-in-out infinite' }} />
+          Live
         </span>
       </div>
 
       <div style={{ maxWidth: 600, margin: '0 auto', padding: '28px clamp(14px, 4vw, 28px) 0' }}>
-        <h1 style={{ fontSize: 'clamp(24px, 3.4vw, 34px)', fontWeight: 900, letterSpacing: '-0.03em', margin: '0 0 8px', color: '#F0FDFA' }}>
-          Aim the scan at your shop.
+        <h1 style={{ fontSize: 'clamp(24px, 3.4vw, 34px)', fontWeight: 900, letterSpacing: '-0.03em', margin: '0 0 8px', color: '#FFF8F0' }}>
+          Where should your leads come from?
         </h1>
-        <p style={{ fontSize: 14, color: 'rgba(230,255,250,0.55)', lineHeight: 1.6, margin: '0 0 20px' }}>
-          The moment you check out, our scouts geocode this address and pull your first{' '}
-          <strong style={{ color: '#5EEAD4' }}>{LEADS_PER_WEEK} homeowner leads</strong> starting{' '}
-          <strong style={{ color: '#5EEAD4' }}>1 mile</strong> from your front door — widening only when
+        <p style={{ fontSize: 14, color: 'rgba(255,248,240,0.6)', lineHeight: 1.6, margin: '0 0 20px' }}>
+          The moment you check out, we pull your first{' '}
+          <strong style={{ color: '#FFC58A' }}>{LEADS_PER_WEEK} homeowner leads</strong> starting{' '}
+          <strong style={{ color: '#FFC58A' }}>1 mile</strong> from your front door — widening only when
           nearby supply runs low. {LEADS_PER_WEEK} more every 7 days.
         </p>
 
-        {/* Arm-progress strip */}
+        {/* Progress strip */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16,
-          fontFamily: 'ui-monospace, monospace', fontSize: 10.5, color: 'rgba(94,234,212,0.6)',
+          fontSize: 10.5, color: '#7AAAB2', fontWeight: 800,
         }}>
           <div style={{ flex: 1, height: 4, borderRadius: 4, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
             <div style={{
-              width: `${(armedCount / 4) * 100}%`, height: '100%',
-              background: 'linear-gradient(90deg, #34D399, #5EEAD4)',
+              width: `${(armedCount / stepsTotal) * 100}%`, height: '100%',
+              background: 'linear-gradient(90deg, #FF9D5A, #E8742B)',
               transition: 'width 300ms ease',
-              boxShadow: '0 0 12px rgba(52,211,153,0.6)',
+              boxShadow: '0 0 12px rgba(232,116,43,0.55)',
             }} />
           </div>
-          <span style={{ flexShrink: 0, fontWeight: 800 }}>{armedCount}/4 ARMED</span>
+          <span style={{ flexShrink: 0 }}>{armedCount}/{stepsTotal} done</span>
         </div>
 
         {!confirm ? (
         <form onSubmit={onCheck} style={{
           padding: 'clamp(16px, 3vw, 24px)', borderRadius: 16,
           background: 'rgba(255,255,255,0.035)',
-          border: '1px solid rgba(94,234,212,0.16)',
+          border: '1px solid rgba(255,157,90,0.2)',
           boxShadow: '0 24px 60px rgba(4,12,24,0.5)',
         }}>
-          {/* 01 TARGET — business address (the lead-targeting anchor) */}
-          <FieldLabel n="01" label="Target address" done={stepDone.address} />
+          {/* 01 — business address (the lead-targeting anchor) */}
+          <FieldLabel n="01" label="Business address" done={stepDone.address} />
           <AddressAutocomplete
             value={address}
             onChange={setAddress}
@@ -259,19 +305,23 @@ function StartAreaContent() {
           />
           <Hint>Pick from the dropdown so we lock your exact spot. Leads pull as close as possible — 1-mile rings, widening on supply only.</Hint>
 
-          {/* 02 SECTOR — zip */}
-          <FieldLabel n="02" label="Sector zip" done={stepDone.zip} mt />
-          <input
-            value={zip}
-            onChange={(e) => setZip(e.target.value.replace(/\D/g, '').slice(0, 5))}
-            placeholder="60643"
-            inputMode="numeric"
-            maxLength={5}
-            style={darkInput}
-          />
+          {/* Zip escape hatch — appears ONLY when we can't derive it */}
+          {needZip && (
+            <>
+              <FieldLabel n="✚" label="Zip code" done={/^\d{5}$/.test(zip)} mt />
+              <input
+                value={zip}
+                onChange={(e) => setZip(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                placeholder="60643"
+                inputMode="numeric"
+                maxLength={5}
+                style={darkInput}
+              />
+            </>
+          )}
 
-          {/* 03 TRADE — recipe selector */}
-          <FieldLabel n="03" label="Trade recipe" done={stepDone.trade} mt />
+          {/* 02 — trade */}
+          <FieldLabel n="02" label="Your trade" done={stepDone.trade} mt />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(104px, 1fr))', gap: 8 }}>
             {TRADES.map((t) => (
               <button
@@ -304,10 +354,10 @@ function StartAreaContent() {
               autoFocus
             />
           )}
-          <Hint>Each trade gets its own AI recipe — system age, pipe era, roof window — tuned to your climate.</Hint>
+          <Hint>Each trade gets its own targeting — system age, pipe era, roof window — tuned to your climate.</Hint>
 
-          {/* 04 HOTLINE — cell */}
-          <FieldLabel n="04" label="Alert hotline" done={stepDone.phone} mt />
+          {/* 03 — cell */}
+          <FieldLabel n="03" label="Your cell" done={stepDone.phone} mt />
           <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
@@ -336,41 +386,46 @@ function StartAreaContent() {
               letterSpacing: '-0.01em',
             }}
           >
-            {checking ? '▸ locking target…' : `Lock my area — $${INTRO_PRICE_USD} →`}
+            {checking ? 'Checking your address…' : `Lock my area — $${INTRO_PRICE_USD} →`}
           </button>
 
-          <p style={{ fontSize: 11, color: 'rgba(230,255,250,0.4)', textAlign: 'center', margin: '12px 0 0', lineHeight: 1.5 }}>
+          {/* Hormozi risk reversal AT the commitment point — same
+              guarantee as the homepage, word for word. */}
+          <p style={{ fontSize: 12, color: 'rgba(255,248,240,0.7)', textAlign: 'center', margin: '12px 0 0', lineHeight: 1.55, fontWeight: 600 }}>
+            Book a paying job in <strong style={{ color: '#FFC58A' }}>30 days</strong> or full refund + <strong style={{ color: '#FFC58A' }}>your next month free</strong> + you keep every lead.
+          </p>
+          <p style={{ fontSize: 11, color: 'rgba(255,248,240,0.4)', textAlign: 'center', margin: '8px 0 0', lineHeight: 1.5 }}>
             ${INTRO_PRICE_USD} first month with code {promo} · First {LEADS_PER_WEEK} leads land ~30 min after checkout · Cancel anytime
           </p>
         </form>
         ) : (
-        /* TARGET-LOCK confirm card */
+        /* Address confirm card */
         <div style={{
           padding: 'clamp(18px, 3vw, 26px)', borderRadius: 16,
           background: 'rgba(255,255,255,0.035)',
-          border: '1px solid rgba(52,211,153,0.45)',
-          boxShadow: '0 24px 60px rgba(4,12,24,0.5), 0 0 40px rgba(52,211,153,0.10)',
+          border: '1.5px solid rgba(232,116,43,0.55)',
+          boxShadow: '0 24px 60px rgba(4,12,24,0.5), 0 0 40px rgba(232,116,43,0.10)',
         }}>
           <div style={{
-            fontSize: 10, fontWeight: 900, color: '#34D399', letterSpacing: '0.16em',
-            textTransform: 'uppercase', marginBottom: 12, fontFamily: 'ui-monospace, monospace',
+            fontSize: 10, fontWeight: 900, color: '#FF9D5A', letterSpacing: '0.14em',
+            textTransform: 'uppercase', marginBottom: 12,
             display: 'flex', alignItems: 'center', gap: 8,
           }}>
-            <i style={{ width: 7, height: 7, borderRadius: '50%', background: '#34D399', display: 'inline-block', animation: 'obLive 1s ease-in-out infinite' }} />
-            TARGET LOCKED — CONFIRM COORDINATES
+            <i style={{ width: 7, height: 7, borderRadius: '50%', background: '#22C55E', display: 'inline-block', animation: 'obLive 1.6s ease-in-out infinite' }} />
+            Found it — confirm your address
           </div>
           <div style={{
             padding: '16px 18px', borderRadius: 12,
-            background: 'rgba(2,8,16,0.7)',
-            border: '1px solid rgba(94,234,212,0.18)',
+            background: 'rgba(4,12,24,0.7)',
+            border: '1px solid rgba(255,157,90,0.22)',
             marginBottom: 12,
           }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: '#F0FDFA', marginBottom: 4 }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: '#FFF8F0', marginBottom: 4 }}>
               📍 {confirm.formatted}
             </div>
             {confirm.lat !== 0 && confirm.lng !== 0 && (
-              <div style={{ fontSize: 10.5, color: 'rgba(94,234,212,0.55)', fontFamily: 'ui-monospace, monospace' }}>
-                {confirm.lat.toFixed(5)}, {confirm.lng.toFixed(5)} · scan rings start 1 mi out
+              <div style={{ fontSize: 10.5, color: '#7AAAB2', fontWeight: 600 }}>
+                Your leads start 1 mile from this exact spot
               </div>
             )}
           </div>
@@ -379,14 +434,14 @@ function StartAreaContent() {
               href={`https://www.google.com/maps/search/?api=1&query=${confirm.lat},${confirm.lng}`}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ fontSize: 12, color: '#5EEAD4', textDecoration: 'none', fontWeight: 700, display: 'inline-block', marginBottom: 16 }}
+              style={{ fontSize: 12, color: '#FFC58A', textDecoration: 'none', fontWeight: 700, display: 'inline-block', marginBottom: 16 }}
             >
-              🗺 Verify pin on Google Maps ↗
+              Check the pin on Google Maps ↗
             </a>
           )}
-          <p style={{ margin: '0 0 16px', fontSize: 13, color: 'rgba(230,255,250,0.55)', lineHeight: 1.55 }}>
-            Your first {LEADS_PER_WEEK} homeowner leads pull from the rings around this exact point.
-            <strong style={{ color: '#F0FDFA' }}> Is this the address you meant?</strong>
+          <p style={{ margin: '0 0 16px', fontSize: 13, color: 'rgba(255,248,240,0.6)', lineHeight: 1.55 }}>
+            Your first {LEADS_PER_WEEK} homeowner leads pull from the streets around this exact point.
+            <strong style={{ color: '#FFF8F0' }}> Is this the address you meant?</strong>
           </p>
           <div style={{ display: 'flex', gap: 10 }}>
             <button
@@ -395,14 +450,14 @@ function StartAreaContent() {
               disabled={checking}
               style={{
                 flex: 1, padding: '15px 18px', borderRadius: 12,
-                background: checking ? 'rgba(255,255,255,0.08)' : 'linear-gradient(135deg, #34D399, #0D9488)',
-                color: checking ? 'rgba(230,255,250,0.5)' : '#06241C',
+                background: checking ? 'rgba(255,255,255,0.08)' : 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 100%)',
+                color: '#fff',
                 fontWeight: 900, fontSize: 15, border: 'none',
                 cursor: checking ? 'wait' : 'pointer', fontFamily: 'inherit',
-                boxShadow: checking ? 'none' : '0 12px 30px rgba(52,211,153,0.35)',
+                boxShadow: checking ? 'none' : '0 12px 30px rgba(232,116,43,0.40)',
               }}
             >
-              {checking ? '▸ opening checkout…' : 'Confirmed — start the scan →'}
+              {checking ? 'Opening checkout…' : "That's it — get my leads →"}
             </button>
             <button
               type="button"
@@ -410,8 +465,8 @@ function StartAreaContent() {
               style={{
                 padding: '15px 18px', borderRadius: 12,
                 background: 'rgba(255,255,255,0.04)',
-                color: '#A7F3D0', fontWeight: 800, fontSize: 13,
-                border: '1px solid rgba(94,234,212,0.25)', cursor: 'pointer', fontFamily: 'inherit',
+                color: '#FFC58A', fontWeight: 800, fontSize: 13,
+                border: '1px solid rgba(255,157,90,0.3)', cursor: 'pointer', fontFamily: 'inherit',
               }}
             >
               Edit
@@ -430,18 +485,18 @@ function StartAreaContent() {
           marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8,
         }}>
           {[
-            { icon: '🧭', t: 'Geocode + ring scan', s: 'owner-occupied parcels, 1 mi out' },
-            { icon: '🧬', t: 'Trade-aware AI recipe', s: 'climate-tuned system-age windows' },
-            { icon: '📞', t: 'Phones verified', s: 'skip-traced before they reach you' },
+            { icon: '🧭', t: 'Closest homes first', s: 'owner-occupied, 1 mile out' },
+            { icon: '🎯', t: 'Matched to your trade', s: 'system age + climate targeting' },
+            { icon: '📞', t: 'Phones verified', s: 'real numbers, not guesses' },
             { icon: '⚡', t: `First ${LEADS_PER_WEEK} in ~30 min`, s: `then ${LEADS_PER_WEEK} every 7 days` },
           ].map((x) => (
             <div key={x.t} style={{
               padding: '10px 12px', borderRadius: 10,
               background: 'rgba(255,255,255,0.025)',
-              border: '1px solid rgba(94,234,212,0.10)',
+              border: '1px solid rgba(255,157,90,0.14)',
             }}>
-              <div style={{ fontSize: 11, fontWeight: 900, color: '#A7F3D0', marginBottom: 2 }}>{x.icon} {x.t}</div>
-              <div style={{ fontSize: 9.5, color: 'rgba(230,255,250,0.35)' }}>{x.s}</div>
+              <div style={{ fontSize: 11, fontWeight: 900, color: '#FFC58A', marginBottom: 2 }}>{x.icon} {x.t}</div>
+              <div style={{ fontSize: 9.5, color: 'rgba(255,248,240,0.4)' }}>{x.s}</div>
             </div>
           ))}
         </div>
@@ -449,7 +504,7 @@ function StartAreaContent() {
 
       <style>{`
         @keyframes obLive { 0%, 100% { opacity: 1 } 50% { opacity: 0.25 } }
-        input::placeholder { color: rgba(230,255,250,0.25); }
+        input::placeholder { color: rgba(255,248,240,0.25); }
       `}</style>
     </main>
   )
@@ -457,7 +512,7 @@ function StartAreaContent() {
 
 export default function StartAreaPage() {
   return (
-    <Suspense fallback={<main style={{ minHeight: '100vh', background: '#060D18' }} />}>
+    <Suspense fallback={<main style={{ minHeight: '100vh', background: '#081427' }} />}>
       <StartAreaContent />
     </Suspense>
   )
@@ -470,21 +525,21 @@ function FieldLabel({ n, label, done, mt }: { n: string; label: string; done: bo
       marginBottom: 7, marginTop: mt ? 16 : 0,
     }}>
       <span style={{
-        fontSize: 9.5, fontWeight: 900, color: done ? '#34D399' : 'rgba(94,234,212,0.45)',
-        fontFamily: 'ui-monospace, monospace', letterSpacing: '0.08em',
+        fontSize: 9.5, fontWeight: 900, color: done ? '#FF9D5A' : '#7AAAB2',
+        letterSpacing: '0.08em',
       }}>{n}</span>
       <span style={{
-        fontSize: 11, fontWeight: 900, color: done ? '#A7F3D0' : 'rgba(230,255,250,0.6)',
+        fontSize: 11, fontWeight: 900, color: done ? '#FFC58A' : 'rgba(255,248,240,0.6)',
         letterSpacing: '0.12em', textTransform: 'uppercase',
       }}>{label}</span>
-      {done && <span style={{ fontSize: 10, color: '#34D399', fontWeight: 900 }}>✓</span>}
+      {done && <span style={{ fontSize: 10, color: '#22C55E', fontWeight: 900 }}>✓</span>}
     </div>
   )
 }
 
 function Hint({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ fontSize: 10.5, color: 'rgba(230,255,250,0.35)', margin: '6px 0 0', lineHeight: 1.5 }}>
+    <p style={{ fontSize: 10.5, color: 'rgba(255,248,240,0.4)', margin: '6px 0 0', lineHeight: 1.5 }}>
       {children}
     </p>
   )
@@ -492,22 +547,22 @@ function Hint({ children }: { children: React.ReactNode }) {
 
 const darkInput: React.CSSProperties = {
   width: '100%', padding: '13px 15px', borderRadius: 10,
-  border: '1px solid rgba(94,234,212,0.2)',
-  background: 'rgba(2,8,16,0.6)',
+  border: '1px solid rgba(255,157,90,0.25)',
+  background: 'rgba(4,12,24,0.6)',
   fontSize: 15, fontWeight: 600,
-  fontFamily: 'inherit', color: '#F0FDFA',
+  fontFamily: 'inherit', color: '#FFF8F0',
   boxSizing: 'border-box', outline: 'none',
 }
 
 function tradeBtn(active: boolean): React.CSSProperties {
   return {
     padding: '11px 12px', borderRadius: 10,
-    border: active ? '1.5px solid #34D399' : '1px solid rgba(94,234,212,0.18)',
-    background: active ? 'rgba(52,211,153,0.12)' : 'rgba(255,255,255,0.03)',
+    border: active ? '1.5px solid #FF9D5A' : '1px solid rgba(255,157,90,0.2)',
+    background: active ? 'rgba(232,116,43,0.16)' : 'rgba(255,255,255,0.03)',
     fontWeight: 800, fontSize: 13, cursor: 'pointer',
-    color: active ? '#34D399' : 'rgba(230,255,250,0.65)',
+    color: active ? '#FFC58A' : 'rgba(255,248,240,0.65)',
     textTransform: 'capitalize', fontFamily: 'inherit',
-    boxShadow: active ? '0 0 16px rgba(52,211,153,0.20)' : 'none',
+    boxShadow: active ? '0 0 16px rgba(232,116,43,0.22)' : 'none',
     transition: 'all 160ms ease',
   }
 }

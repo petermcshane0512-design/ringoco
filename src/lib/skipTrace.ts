@@ -25,6 +25,8 @@
  * No retries — we'll catch missed enrichments on the next nightly sweep.
  */
 
+import { canSpendBatchData, logBatchDataSpend } from '@/lib/batchdataSpend'
+
 const BATCHDATA_API = 'https://api.batchdata.com/api/v1/property/skip-trace'
 const BATCHDATA_SEARCH_API = 'https://api.batchdata.com/api/v1/property/search'
 const REQUEST_TIMEOUT_MS = 10_000
@@ -96,6 +98,16 @@ export async function batchdataPropertySearch(input: PropertySearchInput): Promi
     return { ok: false, cost_cents: 0, properties: [], error: 'BATCHDATA_API_KEY not configured' }
   }
 
+  // 2026-06-11 — spend cap armed AT THE SPEND POINT. Every caller of this
+  // function (find-real-leads, crons, admin tools, future code) is gated +
+  // logged without remembering to wire it themselves. Do NOT add a second
+  // logBatchDataSpend in callers — that double-counts and halves the cap.
+  const estCents = Math.min(50, input.resultsLimit ?? 25) * 5
+  const gate = await canSpendBatchData(estCents)
+  if (!gate.ok) {
+    return { ok: false, cost_cents: 0, properties: [], error: `daily spend cap hit (${gate.spentTodayCents}/${gate.capCents}c)` }
+  }
+
   const requestPayload: Record<string, unknown> = {
     searchCriteria: {
       query: input.zip,                          // BatchData accepts ZIP as primary query
@@ -161,9 +173,16 @@ export async function batchdataPropertySearch(input: PropertySearchInput): Promi
       sqft: r.building?.totalBuildingAreaSquareFeet ?? null,
     })).filter((p) => p.street_address)  // drop rows with no address
 
+    const costCents = props.length * 5  // $0.05 per returned property
+    await logBatchDataSpend({
+      costCents,
+      caller: 'batchdataPropertySearch',
+      context: { zip: input.zip, returned: props.length },
+      resultOk: true,
+    })
     return {
       ok: true,
-      cost_cents: props.length * 5,  // $0.05 per returned property
+      cost_cents: costCents,
       properties: props,
     }
   } catch (e) {
@@ -218,6 +237,12 @@ export async function skipTraceAddress(input: SkipTraceInput): Promise<SkipTrace
     return { ok: false, hit: false, cost_cents: 0, error: 'BATCHDATA_API_KEY not configured' }
   }
 
+  // 2026-06-11 — spend cap armed at the spend point (see batchdataPropertySearch).
+  const gate = await canSpendBatchData(10)
+  if (!gate.ok) {
+    return { ok: false, hit: false, cost_cents: 0, error: `daily spend cap hit (${gate.spentTodayCents}/${gate.capCents}c)` }
+  }
+
   const body = {
     requests: [{
       propertyAddress: {
@@ -269,6 +294,12 @@ export async function skipTraceAddress(input: SkipTraceInput): Promise<SkipTrace
     }
 
     const hit = phones.size > 0 || emails.size > 0
+    await logBatchDataSpend({
+      costCents: 10,
+      caller: 'skipTraceAddress',
+      context: { street: input.street, zip: input.zip ?? null, hit },
+      resultOk: true,
+    })
     return {
       ok: true,
       hit,

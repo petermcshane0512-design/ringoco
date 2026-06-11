@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { batchdataPropertySearch, skipTraceAddress } from '@/lib/skipTrace'
-import { canSpendBatchData, logBatchDataSpend } from '@/lib/batchdataSpend'
+import { canSpendBatchData } from '@/lib/batchdataSpend'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -410,13 +410,11 @@ async function findLeadsForTenant(
       ownerOccupiedOnly: cfg.ownerOccupiedOnly,
       resultsLimit: perZipLimit,
     })
+    // 2026-06-11 — spend logging moved INTO batchdataPropertySearch /
+    // skipTraceAddress (src/lib/skipTrace.ts). Logging here too would
+    // double-count and halve the effective cap. Route keeps the early
+    // canSpendBatchData break below for loop efficiency only.
     spentCents += result.cost_cents
-    await logBatchDataSpend({
-      costCents: result.cost_cents,
-      caller: 'find-real-leads',
-      context: { user_id: userId, zip, trade: tradeNormalized },
-      resultOk: result.ok,
-    })
 
     if (!result.ok) {
       console.warn(`[find-real-leads] zip ${zip} search failed: ${result.error}`)

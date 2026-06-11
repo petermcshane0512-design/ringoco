@@ -13,6 +13,7 @@ import { fireLeadEngineForUser } from '@/lib/leadEngine'
 import { LEADS_PER_WEEK } from '@/lib/offer'
 import { claimTerritory, releaseCustomerTerritories } from '@/lib/territory'
 import { geocodeBusinessAddress } from '@/lib/geocodeBusinessAddress'
+import { skipTraceAddress } from '@/lib/skipTrace'
 
 function escapeHtmlMin(s: string): string {
   return s
@@ -166,33 +167,22 @@ export async function POST(req: NextRequest) {
             .maybeSingle()
           if (pfl && (pfl as { lead_street?: string }).lead_street) {
             const row = pfl as { lead_street: string; zip?: string; city?: string; state?: string; lead_owner_name?: string }
-            const skipRes = await fetch('https://api.batchdata.com/api/v1/property/skip-trace', {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${process.env.BATCHDATA_API_KEY}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                requests: [{
-                  propertyAddress: {
-                    street: row.lead_street,
-                    city: row.city || '',
-                    state: row.state || '',
-                    zip: row.zip || '',
-                  },
-                }],
-              }),
+            // 2026-06-11 — was a raw BatchData fetch (no spend gate, no
+            // spend log). Now goes through skipTraceAddress, which arms the
+            // daily cap + logs to batchdata_spend_log centrally.
+            const trace = await skipTraceAddress({
+              street: row.lead_street,
+              city: row.city || undefined,
+              state: row.state || undefined,
+              zip: row.zip || undefined,
             })
-            if (skipRes.ok) {
-              const skipData = await skipRes.json() as { results?: { persons?: { phoneNumbers?: { number: string }[] }[] } }
-              const phone = skipData.results?.persons?.[0]?.phoneNumbers?.[0]?.number
-              if (phone) {
-                await supabase
-                  .from('prospect_free_leads')
-                  .update({ lead_phone: phone })  // FULL phone now
-                  .eq('biz_id', bizId)
-                console.log(`[free-lead] skip-trace unlocked phone for biz_id=${bizId}`)
-              }
+            const phone = trace.owner_phones?.[0]
+            if (trace.ok && phone) {
+              await supabase
+                .from('prospect_free_leads')
+                .update({ lead_phone: phone })  // FULL phone now
+                .eq('biz_id', bizId)
+              console.log(`[free-lead] skip-trace unlocked phone for biz_id=${bizId}`)
             }
           }
         } catch (e) {

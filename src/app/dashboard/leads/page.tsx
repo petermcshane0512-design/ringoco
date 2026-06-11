@@ -7,33 +7,38 @@ import LeadScanConsole from '@/components/LeadScanConsole'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
 
 /**
- * /dashboard/leads — THE dashboard. 2026-06-10 full command-center
- * rewrite per Peter: "I need the home-service guys to be like 'whoa,
- * their AI UI is insane.'"
+ * /dashboard/leads — THE dashboard.
  *
- * Design system: dark mission-control matching LeadScanConsole —
- * #060D18→#0B1F3A gradient shell, teal/emerald accent (#5EEAD4 /
- * #34D399), monospace status text, glowing score badges.
+ * 2026-06-11 restyle per Peter: "dashboard is too futuristic and too
+ * UI-y — I like how the dashboard looks on the landing page." This now
+ * matches the homepage LeadsCard design system exactly: warm navy
+ * (#0B1F3A → #0E2746), orange accents (#E8742B / #FF9D5A / #FFC58A),
+ * cream text (#FFF8F0), muted slate-teal secondary (#7AAAB2). No
+ * monospace status text, no satellite/command-center jargon.
  *
  * Structure:
- *   1. Command bar — brand mark, quick-nav (Buy leads / Settings /
- *      Support), live status dot.
- *   2. AI status strip — REAL numbers only: drop quota, pipeline
- *      counts (new/contacted/quoted/won) computed from actual drops,
- *      next-sweep countdown.
- *   3. Lead rows — compact dark rows w/ glowing score, signal +
- *      status pills, one-line address. Click to expand: full property
- *      intel, phone reveal state machine, AI outreach generator with
- *      send-now buttons, map link, status pills.
+ *   1. Top bar — wordmark, quick-nav (Buy leads / Settings / Support).
+ *   2. Countdown banner — next drop, this week / month / won stats.
+ *   3. Lead rows — LeadsCard-style rows: score chip, signal pill,
+ *      address. Click to expand: property intel, phone reveal state
+ *      machine, AI outreach generator with send-now buttons, map link,
+ *      status pills.
  *   4. Empty state — LeadScanConsole (radar + agent log).
  *
- * ALL behavior preserved from the prior rev: 1s countdown tick,
- * pipeline/scan animations, self-driving KICK + 5s POLL while empty,
- * countdown-zero check-and-drop, optimistic status updates,
- * click-to-reveal skip-trace, AI message generation + SMS/email send.
+ * PROGRESSIVE FIRST DROP (2026-06-11 per Peter): when a fresh signup's
+ * first batch lands, leads render ONE AT A TIME (~1.1s apart) with a
+ * "locking next lead" shimmer row under the list — looks like the AI is
+ * finding them live. Returning visits (drops already present on first
+ * load) render instantly; the stagger only arms when the page loaded
+ * empty and the batch arrived via the poll.
  *
- * /dashboard root now 302s here — this page owns the entire post-
- * signup experience.
+ * ALL behavior preserved: 1s countdown tick, pipeline/scan animations,
+ * self-driving KICK + 5s POLL while empty, countdown-zero
+ * check-and-drop, optimistic status updates, click-to-reveal
+ * skip-trace, AI message generation + SMS/email send, ProfileGate.
+ *
+ * /dashboard root 302s here — this page owns the entire post-signup
+ * experience.
  */
 
 type LeadDrop = {
@@ -86,17 +91,26 @@ export default function LeadsPage() {
   // poll effects below keep running; this gates the UI only. Once a
   // real name is saved the gate never renders again.
   const [gate, setGate] = useState<'loading' | 'needed' | 'done'>('loading')
+  // Progressive first-drop reveal. null = first load not finished yet;
+  // true = page loaded empty (fresh signup) → stagger the batch in one
+  // lead at a time; false = returning user → render instantly.
+  const [progressive, setProgressive] = useState<boolean | null>(null)
+  const [revealed, setRevealed] = useState(0)
 
-  async function loadLeads() {
+  async function loadLeads(): Promise<number> {
     const r = await fetch('/api/leads/list')
     const j = await r.json().catch(() => ({}))
     if (j.drops) setDrops(j.drops)
     if (j.quota) setQuota(j.quota)
     if (j.next_lead_drop_at !== undefined) setNextDropAt(j.next_lead_drop_at)
+    return Array.isArray(j.drops) ? j.drops.length : 0
   }
 
   useEffect(() => {
-    loadLeads().finally(() => setLoading(false))
+    loadLeads()
+      .then((n) => setProgressive(n === 0))
+      .catch(() => setProgressive(false))
+      .finally(() => setLoading(false))
   }, [])
 
   useEffect(() => {
@@ -228,6 +242,18 @@ export default function LeadsPage() {
   const past = drops.filter((d) => now - ts(d) > 7 * DAY).sort((a, b) => ts(b) - ts(a))
   const monthCount = drops.filter((d) => now - ts(d) <= 30 * DAY).length
 
+  // Progressive reveal driver — only when the batch arrived AFTER an
+  // empty first load (fresh signup watching the scan). First card pops
+  // fast, the rest land ~1.1s apart.
+  useEffect(() => {
+    if (progressive !== true) return
+    if (revealed >= thisWeek.length) return
+    const id = setTimeout(() => setRevealed((r) => r + 1), revealed === 0 ? 300 : 1100)
+    return () => clearTimeout(id)
+  }, [progressive, revealed, thisWeek.length])
+  const visibleWeek = progressive === true ? thisWeek.slice(0, revealed) : thisWeek
+  const stillRevealing = progressive === true && revealed < thisWeek.length
+
   const countdownLabel = (() => {
     if (!nextDropAt) return firing ? 'dropping now' : '—'
     const ms = new Date(nextDropAt).getTime() - nowTick
@@ -244,37 +270,35 @@ export default function LeadsPage() {
   return (
     <main style={{
       minHeight: '100vh',
-      background: 'linear-gradient(165deg, #060D18 0%, #0B1F3A 60%, #081B26 100%)',
+      background: 'linear-gradient(165deg, #081427 0%, #0B1F3A 55%, #0A1830 100%)',
       fontFamily: "'Inter', system-ui, sans-serif",
-      color: '#E6FFFA',
+      color: '#FFF8F0',
       paddingBottom: 80,
     }}>
-      {/* ── COMMAND BAR ─────────────────────────────────────────── */}
+      {/* ── TOP BAR ─────────────────────────────────────────────── */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 50,
-        background: 'rgba(6,13,24,0.88)',
+        background: 'rgba(8,20,39,0.92)',
         backdropFilter: 'blur(14px)',
-        borderBottom: '1px solid rgba(94,234,212,0.14)',
+        borderBottom: '1px solid rgba(255,157,90,0.16)',
         padding: '12px clamp(14px, 3vw, 28px)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-          <span style={{ fontSize: 16 }}>🛰️</span>
           <span style={{
-            fontSize: 12, fontWeight: 900, letterSpacing: '0.16em',
-            color: '#5EEAD4', textTransform: 'uppercase',
-            fontFamily: 'ui-monospace, monospace',
+            fontSize: 15, fontWeight: 900, letterSpacing: '-0.02em',
+            color: '#FFF8F0',
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
-            BellAveGo Intelligence
+            BellAveGo
           </span>
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 5,
-            fontSize: 9, fontWeight: 900, color: '#34D399', letterSpacing: '0.12em',
-            fontFamily: 'ui-monospace, monospace', flexShrink: 0,
+            fontSize: 9.5, fontWeight: 800, color: '#22C55E', letterSpacing: '0.08em',
+            textTransform: 'uppercase', flexShrink: 0,
           }}>
-            <i style={{ width: 6, height: 6, borderRadius: '50%', background: '#34D399', display: 'inline-block', animation: 'cmdLive 1s ease-in-out infinite' }} />
-            ONLINE
+            <i style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', display: 'inline-block', animation: 'cmdLive 1.6s ease-in-out infinite' }} />
+            Live
           </span>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -286,8 +310,8 @@ export default function LeadsPage() {
 
       <div style={{ maxWidth: 1060, margin: '0 auto', padding: '20px clamp(14px, 3vw, 28px) 0' }}>
         {loading || gate === 'loading' ? (
-          <div style={{ padding: 60, textAlign: 'center', color: 'rgba(94,234,212,0.6)', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>
-            ▸ initializing command center…
+          <div style={{ padding: 60, textAlign: 'center', color: '#7AAAB2', fontSize: 13, fontWeight: 600 }}>
+            Loading your leads…
           </div>
         ) : gate === 'needed' ? (
           <ProfileGate onDone={() => setGate('done')} />
@@ -298,16 +322,16 @@ export default function LeadsPage() {
             {/* ── COUNTDOWN BANNER — next drop, front and center ─────── */}
             <div style={{
               borderRadius: 16, padding: '18px 22px', marginBottom: 16,
-              background: 'linear-gradient(135deg, rgba(52,211,153,0.12), rgba(13,148,136,0.06))',
-              border: '1px solid rgba(52,211,153,0.35)',
+              background: 'linear-gradient(135deg, rgba(232,116,43,0.16), rgba(232,116,43,0.05))',
+              border: '1px solid rgba(255,157,90,0.38)',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               gap: 14, flexWrap: 'wrap',
             }}>
               <div>
-                <div style={{ fontSize: 10, fontWeight: 900, color: '#34D399', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: 'ui-monospace, monospace', marginBottom: 4 }}>
+                <div style={{ fontSize: 10, fontWeight: 900, color: '#FF9D5A', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>
                   Next {LEADS_PER_WEEK} leads drop in
                 </div>
-                <div style={{ fontSize: 'clamp(26px, 5vw, 38px)', fontWeight: 900, color: '#F0FDFA', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em', lineHeight: 1 }}>
+                <div style={{ fontSize: 'clamp(26px, 5vw, 38px)', fontWeight: 900, color: '#FFF8F0', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em', lineHeight: 1 }}>
                   {countdownLabel}
                 </div>
               </div>
@@ -319,10 +343,30 @@ export default function LeadsPage() {
             </div>
 
             {/* ── THIS WEEK'S DROP ───────────────────────────────────── */}
-            <SectionHead title={`This week's leads`} sub={`${thisWeek.length} delivered · closest to you first · tap for intel + AI outreach`} />
+            <SectionHead title={`This week's leads`} sub={`${thisWeek.length} delivered · closest to you first · tap for details + AI outreach`} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {thisWeek.length > 0
-                ? thisWeek.map((d) => <LeadCard key={d.id} drop={d} onStatus={updateStatus} onReveal={revealPhone} />)
+              {visibleWeek.length > 0 || stillRevealing
+                ? (
+                  <>
+                    {visibleWeek.map((d) => <LeadCard key={d.id} drop={d} onStatus={updateStatus} onReveal={revealPhone} />)}
+                    {stillRevealing && (
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '13px 16px', borderRadius: 14,
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px dashed rgba(255,157,90,0.35)',
+                        color: '#FFC58A', fontSize: 12.5, fontWeight: 700,
+                      }}>
+                        <span aria-hidden style={{
+                          width: 14, height: 14, borderRadius: '50%', flexShrink: 0,
+                          border: '2px solid rgba(255,157,90,0.25)', borderTopColor: '#FF9D5A',
+                          animation: 'bavgSpin 0.9s linear infinite',
+                        }} />
+                        Locking lead {Math.min(revealed + 1, thisWeek.length)} of {thisWeek.length}…
+                      </div>
+                    )}
+                  </>
+                )
                 : <div style={emptyNote}>Fresh batch lands when the countdown hits zero.</div>}
             </div>
 
@@ -336,7 +380,7 @@ export default function LeadsPage() {
 
       <style>{`
         @keyframes cmdLive { 0%, 100% { opacity: 1 } 50% { opacity: 0.25 } }
-        @keyframes scoreGlow { 0%, 100% { box-shadow: 0 0 10px rgba(52,211,153,0.35) } 50% { box-shadow: 0 0 18px rgba(52,211,153,0.65) } }
+        @keyframes bavgSpin { to { transform: rotate(360deg) } }
       `}</style>
     </main>
   )
@@ -345,22 +389,22 @@ export default function LeadsPage() {
 const navBtn: React.CSSProperties = {
   padding: '7px 12px', borderRadius: 9,
   background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(94,234,212,0.18)',
-  color: '#A7F3D0', textDecoration: 'none',
+  border: '1px solid rgba(255,157,90,0.22)',
+  color: '#FFC58A', textDecoration: 'none',
   fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap',
 }
 
 const emptyNote: React.CSSProperties = {
   padding: '20px', borderRadius: 12, textAlign: 'center',
-  background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(94,234,212,0.18)',
-  color: 'rgba(230,255,250,0.4)', fontSize: 12.5,
+  background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,157,90,0.25)',
+  color: 'rgba(255,248,240,0.45)', fontSize: 12.5,
 }
 
 function BannerStat({ n, label, win }: { n: number; label: string; win?: boolean }) {
   return (
     <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: 22, fontWeight: 900, color: win ? '#34D399' : '#F0FDFA', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{n}</div>
-      <div style={{ fontSize: 9, fontWeight: 800, color: 'rgba(94,234,212,0.55)', letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 4 }}>{label}</div>
+      <div style={{ fontSize: 22, fontWeight: 900, color: win ? '#22C55E' : '#FFF8F0', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{n}</div>
+      <div style={{ fontSize: 9, fontWeight: 800, color: '#7AAAB2', letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 4 }}>{label}</div>
     </div>
   )
 }
@@ -368,8 +412,8 @@ function BannerStat({ n, label, win }: { n: number; label: string; win?: boolean
 function SectionHead({ title, sub }: { title: string; sub: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', margin: '4px 2px 12px', flexWrap: 'wrap', gap: 8 }}>
-      <h2 style={{ fontSize: 'clamp(18px, 2.4vw, 24px)', fontWeight: 900, letterSpacing: '-0.03em', margin: 0, color: '#F0FDFA' }}>{title}</h2>
-      <span style={{ fontSize: 11, color: 'rgba(94,234,212,0.55)', fontFamily: 'ui-monospace, monospace' }}>{sub}</span>
+      <h2 style={{ fontSize: 'clamp(18px, 2.4vw, 24px)', fontWeight: 900, letterSpacing: '-0.03em', margin: 0, color: '#FFF8F0' }}>{title}</h2>
+      <span style={{ fontSize: 11, color: '#7AAAB2', fontWeight: 600 }}>{sub}</span>
     </div>
   )
 }
@@ -384,12 +428,12 @@ function PastLeads({ drops, onStatus, onReveal }: { drops: LeadDrop[]; onStatus:
         style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '12px 16px', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit',
-          background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(94,234,212,0.12)',
-          color: '#A7F3D0', fontSize: 13, fontWeight: 800,
+          background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,157,90,0.16)',
+          color: '#FFC58A', fontSize: 13, fontWeight: 800,
         }}
       >
         <span>📁 Past leads ({drops.length})</span>
-        <span style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 180ms ease', color: 'rgba(94,234,212,0.55)' }}>▾</span>
+        <span style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 180ms ease', color: '#7AAAB2' }}>▾</span>
       </button>
       {open && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
@@ -493,30 +537,30 @@ function ProfileGate({ onDone }: { onDone: () => void }) {
   }
 
   if (!loaded) {
-    return <div style={{ padding: 50, textAlign: 'center', color: 'rgba(94,234,212,0.5)', fontFamily: 'ui-monospace, monospace', fontSize: 13 }}>▸ loading…</div>
+    return <div style={{ padding: 50, textAlign: 'center', color: '#7AAAB2', fontSize: 13, fontWeight: 600 }}>Loading…</div>
   }
 
   return (
     <div style={{
       borderRadius: 16, padding: 'clamp(20px, 4vw, 30px)',
       background: 'rgba(255,255,255,0.035)',
-      border: '1px solid rgba(52,211,153,0.40)',
-      boxShadow: '0 24px 60px rgba(4,12,24,0.5), 0 0 40px rgba(52,211,153,0.08)',
+      border: '1px solid rgba(255,157,90,0.40)',
+      boxShadow: '0 24px 60px rgba(4,12,24,0.5), 0 0 40px rgba(232,116,43,0.08)',
       maxWidth: 560, margin: '0 auto',
     }}>
       <div style={{
-        fontSize: 10, fontWeight: 900, color: '#34D399', letterSpacing: '0.16em',
-        textTransform: 'uppercase', marginBottom: 10, fontFamily: 'ui-monospace, monospace',
+        fontSize: 10, fontWeight: 900, color: '#FF9D5A', letterSpacing: '0.14em',
+        textTransform: 'uppercase', marginBottom: 10,
         display: 'flex', alignItems: 'center', gap: 8,
       }}>
-        <i style={{ width: 7, height: 7, borderRadius: '50%', background: '#34D399', display: 'inline-block', animation: 'cmdLive 1s ease-in-out infinite' }} />
-        ONE LAST STEP — YOUR SCOUTS ARE ALREADY PULLING LEADS
+        <i style={{ width: 7, height: 7, borderRadius: '50%', background: '#22C55E', display: 'inline-block', animation: 'cmdLive 1.6s ease-in-out infinite' }} />
+        One last step — your leads are already being pulled
       </div>
-      <h2 style={{ fontSize: 'clamp(19px, 2.6vw, 24px)', fontWeight: 900, letterSpacing: '-0.02em', margin: '0 0 8px', color: '#F0FDFA' }}>
+      <h2 style={{ fontSize: 'clamp(19px, 2.6vw, 24px)', fontWeight: 900, letterSpacing: '-0.02em', margin: '0 0 8px', color: '#FFF8F0' }}>
         Who do we sign your outreach as?
       </h2>
-      <p style={{ fontSize: 13, color: 'rgba(230,255,250,0.55)', lineHeight: 1.6, margin: '0 0 18px' }}>
-        The AI writes a personalized intro to every homeowner and signs it as <strong style={{ color: '#5EEAD4' }}>your shop</strong> — never BellAveGo, never &ldquo;AI.&rdquo; Set it once; change anytime in Settings.
+      <p style={{ fontSize: 13, color: 'rgba(255,248,240,0.6)', lineHeight: 1.6, margin: '0 0 18px' }}>
+        The AI writes a personalized intro to every homeowner and signs it as <strong style={{ color: '#FFC58A' }}>your shop</strong> — never BellAveGo, never &ldquo;AI.&rdquo; Set it once; change anytime in Settings.
       </p>
 
       <form onSubmit={save}>
@@ -528,7 +572,7 @@ function ProfileGate({ onDone }: { onDone: () => void }) {
           style={gateInput}
           autoFocus
         />
-        <label style={{ ...gateLabel, marginTop: 14 }}>Your first name <span style={{ color: 'rgba(230,255,250,0.35)', fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}>(optional — messages sign with it)</span></label>
+        <label style={{ ...gateLabel, marginTop: 14 }}>Your first name <span style={{ color: 'rgba(255,248,240,0.35)', fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}>(optional — messages sign with it)</span></label>
         <input
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
@@ -544,7 +588,7 @@ function ProfileGate({ onDone }: { onDone: () => void }) {
           placeholder="Start typing — pick your address from the list"
           inputStyle={gateInput}
         />
-        <p style={{ fontSize: 10.5, color: 'rgba(230,255,250,0.35)', margin: '6px 0 0', lineHeight: 1.5 }}>
+        <p style={{ fontSize: 10.5, color: 'rgba(255,248,240,0.4)', margin: '6px 0 0', lineHeight: 1.5 }}>
           Pick from the dropdown so we lock the exact spot. Your leads start 1 mile from here and widen only when nearby supply runs low.
         </p>
 
@@ -552,13 +596,13 @@ function ProfileGate({ onDone }: { onDone: () => void }) {
 
         <button type="submit" disabled={saving} style={{
           marginTop: 18, width: '100%', padding: '14px 18px', borderRadius: 12,
-          background: saving ? 'rgba(255,255,255,0.08)' : 'linear-gradient(135deg, #34D399, #0D9488)',
-          color: saving ? 'rgba(230,255,250,0.5)' : '#06241C',
+          background: saving ? 'rgba(255,255,255,0.08)' : 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 100%)',
+          color: saving ? 'rgba(255,248,240,0.5)' : '#fff',
           fontWeight: 900, fontSize: 14, border: 'none',
           cursor: saving ? 'wait' : 'pointer', fontFamily: 'inherit',
-          boxShadow: saving ? 'none' : '0 10px 26px rgba(52,211,153,0.30)',
+          boxShadow: saving ? 'none' : '0 10px 26px rgba(232,116,43,0.32)',
         }}>
-          {saving ? '▸ saving…' : 'Save — show me my leads →'}
+          {saving ? 'Saving…' : 'Save — show me my leads →'}
         </button>
       </form>
     </div>
@@ -567,15 +611,15 @@ function ProfileGate({ onDone }: { onDone: () => void }) {
 
 const gateLabel: React.CSSProperties = {
   display: 'block', fontSize: 11, fontWeight: 900,
-  color: 'rgba(230,255,250,0.6)', letterSpacing: '0.1em',
+  color: 'rgba(255,248,240,0.6)', letterSpacing: '0.1em',
   textTransform: 'uppercase', marginBottom: 7,
 }
 const gateInput: React.CSSProperties = {
   width: '100%', padding: '13px 15px', borderRadius: 10,
-  border: '1px solid rgba(94,234,212,0.2)',
-  background: 'rgba(2,8,16,0.6)',
+  border: '1px solid rgba(255,157,90,0.25)',
+  background: 'rgba(4,12,24,0.6)',
   fontSize: 15, fontWeight: 600,
-  fontFamily: 'inherit', color: '#F0FDFA',
+  fontFamily: 'inherit', color: '#FFF8F0',
   boxSizing: 'border-box', outline: 'none',
 }
 
@@ -633,37 +677,38 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
     setSendingEmail(false)
   }
 
-  const sourceLabel = ({
-    move_in: '🏠 New Mover',
-    permit: '🏗️ Permit Filed',
-    storm: '⛈️ Storm Trigger',
-    aging_hvac: '🌡️ Aging HVAC',
-    expired_listing: '🏷️ Recent Sale',
-    other: 'Lead',
-  } as Record<string, string>)[l.source] || 'Lead'
+  // Same signal language as the homepage LeadsCard — orange badge, plain
+  // words a contractor uses, no emoji soup.
+  const signalLabel = ({
+    move_in: 'NEW OWNER',
+    permit: 'PERMIT FILED',
+    storm: 'STORM ZONE',
+    aging_hvac: 'AGED SYSTEM',
+    expired_listing: 'RECENT SALE',
+    other: 'LEAD',
+  } as Record<string, string>)[l.source] || 'LEAD'
 
   const pitch = l.pitch_script || (l.source === 'aging_hvac'
     ? `Hi, calling neighbors in ${l.zip} where most homes are 20+ yrs old — AC units past their lifespan. Got a min to talk about a free tune-up to extend yours?`
     : null)
 
   const score = l.lead_score ?? 0
-  const scoreColor = score >= 85 ? '#34D399' : score >= 70 ? '#FBBF24' : '#94A3B8'
   const statusColor =
-    drop.status === 'won' ? '#34D399'
+    drop.status === 'won' ? '#22C55E'
     : drop.status === 'lost' || drop.status === 'dismissed' ? '#F87171'
     : drop.status === 'quoted' ? '#FBBF24'
-    : drop.status === 'contacted' ? '#5EEAD4'
-    : 'rgba(230,255,250,0.45)'
+    : drop.status === 'contacted' ? '#FFC58A'
+    : 'rgba(255,248,240,0.5)'
 
   return (
     <div style={{
-      borderRadius: 14,
-      background: expanded ? 'rgba(255,255,255,0.045)' : 'rgba(255,255,255,0.03)',
-      border: expanded ? '1px solid rgba(52,211,153,0.35)' : '1px solid rgba(94,234,212,0.12)',
+      borderRadius: 13,
+      background: expanded ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.04)',
+      border: expanded ? '1.5px solid rgba(232,116,43,0.55)' : '1px solid rgba(255,157,90,0.16)',
       transition: 'border-color 180ms ease, background 180ms ease',
       overflow: 'hidden',
     }}>
-      {/* Compact summary row */}
+      {/* Compact summary row — same shape as the homepage LeadsCard rows */}
       <button
         type="button"
         onClick={() => setExpanded((x) => !x)}
@@ -674,96 +719,90 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
           fontFamily: 'inherit',
         }}
       >
-        <div style={{
-          width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(52,211,153,0.10)',
-          border: `1.5px solid ${scoreColor}`,
-          color: scoreColor,
-          fontSize: 13, fontWeight: 900,
-          fontVariantNumeric: 'tabular-nums',
-          animation: score >= 85 ? 'scoreGlow 2.4s ease-in-out infinite' : 'none',
-        }}>
-          {score}
-        </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', gap: 7, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 14, fontWeight: 900, color: '#F0FDFA' }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 14.5, fontWeight: 900, color: '#FFF8F0' }}>
               {l.owner_name ?? 'Owner unlisted'}
             </span>
-            <span style={pill('rgba(94,234,212,0.12)', '#5EEAD4')}>
-              {sourceLabel.replace(/^[^\s]+\s/, '')}
-            </span>
+            <span style={{
+              padding: '2px 7px', borderRadius: 6,
+              background: l.source === 'move_in' || l.source === 'expired_listing' ? 'rgba(20,184,166,0.85)' : '#E8742B',
+              color: '#fff', fontSize: 9, fontWeight: 900, letterSpacing: '0.04em',
+            }}>{signalLabel}</span>
+            <span style={{
+              padding: '2px 7px', borderRadius: 6,
+              background: '#FFD9A8', color: '#C84B26', fontSize: 9, fontWeight: 900,
+            }}>SCORE {score}</span>
             <span style={pill('rgba(255,255,255,0.06)', statusColor)}>
               {drop.status}
             </span>
           </div>
-          <div style={{ fontSize: 11.5, color: 'rgba(230,255,250,0.45)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            📍 {fullAddr || l.zip}{l.year_built ? ` · built ${l.year_built}` : ''}{l.home_value_est ? ` · $${Math.round(l.home_value_est / 1000)}K` : ''}
+          <div style={{ fontSize: 12, color: '#7AAAB2', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600 }}>
+            {fullAddr || l.zip}{l.year_built ? ` · built ${l.year_built}` : ''}{l.home_value_est ? ` · $${Math.round(l.home_value_est / 1000)}K home` : ''}
           </div>
         </div>
         {l.owner_phone && (
-          <span style={{ fontSize: 10, fontWeight: 800, color: '#34D399', flexShrink: 0, fontFamily: 'ui-monospace, monospace' }}>
+          <span style={{ fontSize: 10, fontWeight: 800, color: '#22C55E', flexShrink: 0 }}>
             ☎ verified
           </span>
         )}
-        <div style={{ fontSize: 13, color: 'rgba(94,234,212,0.55)', flexShrink: 0, transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 180ms ease' }}>
+        <div style={{ fontSize: 13, color: '#7AAAB2', flexShrink: 0, transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 180ms ease' }}>
           ▾
         </div>
       </button>
 
-      {/* Expanded intel */}
+      {/* Expanded detail */}
       {expanded && (
       <div style={{ padding: '0 18px 16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 240 }}>
-          <div style={{ fontSize: 10, fontWeight: 800, color: '#5EEAD4', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6, fontFamily: 'ui-monospace, monospace' }}>
-            {sourceLabel} · intent score {score}/100
+          <div style={{ fontSize: 10, fontWeight: 800, color: '#FF9D5A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+            {signalLabel} · score {score}/100
           </div>
           {(l.home_value_est || l.year_built || l.sqft) && (
-            <div style={{ fontSize: 12, color: 'rgba(230,255,250,0.55)', marginBottom: 10 }}>
-              {l.home_value_est ? `💰 ~$${l.home_value_est.toLocaleString()}` : null}
-              {l.year_built ? ` · 🛠 built ${l.year_built}` : null}
-              {l.sqft ? ` · 📐 ${l.sqft.toLocaleString()} sqft` : null}
+            <div style={{ fontSize: 12, color: 'rgba(255,248,240,0.6)', marginBottom: 10 }}>
+              {l.home_value_est ? `~$${l.home_value_est.toLocaleString()} home` : null}
+              {l.year_built ? ` · built ${l.year_built}` : null}
+              {l.sqft ? ` · ${l.sqft.toLocaleString()} sqft` : null}
             </div>
           )}
           {pitch && (
             <div style={{
-              background: 'rgba(2,8,16,0.6)', padding: '11px 13px', borderRadius: 10,
-              border: '1px solid rgba(94,234,212,0.14)',
-              fontSize: 12.5, color: '#D1FAE5', lineHeight: 1.55, marginBottom: 10,
+              background: 'rgba(232,116,43,0.12)', padding: '11px 13px', borderRadius: 10,
+              border: '1px solid rgba(232,116,43,0.28)',
+              fontSize: 12.5, color: 'rgba(255,248,240,0.92)', lineHeight: 1.55, marginBottom: 10,
             }}>
-              <span style={{ color: '#5EEAD4', fontWeight: 800, fontSize: 10, letterSpacing: '0.1em', display: 'block', marginBottom: 4 }}>AI CALL ANGLE</span>
+              <span style={{ color: '#FFC58A', fontWeight: 800, fontSize: 10, letterSpacing: '0.08em', display: 'block', marginBottom: 4 }}>YOUR CALL ANGLE</span>
               {pitch}
             </div>
           )}
           {mapsHref && (
             <a href={mapsHref} target="_blank" rel="noopener noreferrer" style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
-              fontSize: 11.5, color: '#5EEAD4', textDecoration: 'none', fontWeight: 700,
+              fontSize: 11.5, color: '#FFC58A', textDecoration: 'none', fontWeight: 700,
             }}>
-              🗺 View property on Google Maps ↗
+              View property on Google Maps ↗
             </a>
           )}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 180 }}>
-          {/* Phone reveal state machine — unchanged behavior, dark skin */}
+          {/* Phone reveal state machine — unchanged behavior */}
           {l.owner_phone ? (
             <>
               <a href={`tel:${l.owner_phone}`} style={{
                 padding: '11px 18px', borderRadius: 10,
-                background: 'linear-gradient(135deg, #34D399, #0D9488)',
-                color: '#06241C', textDecoration: 'none', textAlign: 'center',
+                background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 100%)',
+                color: '#fff', textDecoration: 'none', textAlign: 'center',
                 fontSize: 13, fontWeight: 900,
-                boxShadow: '0 6px 18px rgba(52,211,153,0.30)',
+                boxShadow: '0 6px 18px rgba(232,116,43,0.32)',
               }}>
                 📞 Call {l.owner_phone}
               </a>
               <a href={`sms:${l.owner_phone}`} style={{
                 padding: '10px 18px', borderRadius: 10,
-                background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(52,211,153,0.45)',
-                color: '#A7F3D0', textDecoration: 'none', textAlign: 'center',
+                background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,157,90,0.45)',
+                color: '#FFC58A', textDecoration: 'none', textAlign: 'center',
                 fontSize: 13, fontWeight: 800,
               }}>
                 💬 Text
@@ -772,7 +811,7 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
           ) : l.skip_trace_attempted_at && l.skip_trace_hit === false ? (
             <div style={darkInfoBox}>No phone on file</div>
           ) : l.skip_trace_attempted_at ? (
-            <div style={{ ...darkInfoBox, color: '#5EEAD4' }}>Looking up…</div>
+            <div style={{ ...darkInfoBox, color: '#FFC58A' }}>Looking up…</div>
           ) : l.street_address ? (
             <button onClick={() => onReveal(l.id)} style={{
               padding: '11px 18px', borderRadius: 10,
@@ -801,33 +840,33 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
               disabled={aiLoading}
               style={{
                 width: '100%', padding: '12px 18px', borderRadius: 10,
-                background: aiLoading ? 'rgba(255,255,255,0.08)' : 'linear-gradient(135deg, #FF9D5A, #E8742B)',
-                color: '#fff', border: 'none', cursor: aiLoading ? 'wait' : 'pointer',
+                background: aiLoading ? 'rgba(255,255,255,0.08)' : 'rgba(232,116,43,0.16)',
+                color: aiLoading ? 'rgba(255,248,240,0.5)' : '#FFC58A',
+                border: '1.5px dashed rgba(255,157,90,0.5)', cursor: aiLoading ? 'wait' : 'pointer',
                 fontSize: 13, fontWeight: 900, fontFamily: 'inherit',
-                boxShadow: aiLoading ? 'none' : '0 6px 16px rgba(232,116,43,0.30)',
               }}
             >
-              {aiLoading ? '✨ AI writing your message…' : `✨ Generate AI intro ${l.owner_phone ? `→ ${l.owner_phone}` : ''}`}
+              {aiLoading ? '✨ Writing your message…' : `✨ Write my intro message${l.owner_phone ? ` → ${l.owner_phone}` : ''}`}
             </button>
           ) : aiMsg && (
-            <div style={{ background: 'rgba(2,8,16,0.72)', borderRadius: 12, padding: '14px 16px', border: '1px solid rgba(94,234,212,0.18)' }}>
+            <div style={{ background: 'rgba(4,12,24,0.6)', borderRadius: 12, padding: '14px 16px', border: '1px solid rgba(255,157,90,0.2)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <div style={{ fontSize: 10, fontWeight: 800, color: '#FF9D5A', letterSpacing: '0.10em', textTransform: 'uppercase' }}>
-                  Pre-written by AI · ready to send as you
+                  Pre-written for you · ready to send as your shop
                 </div>
-                <button onClick={() => setAiOpen(false)} style={{ background: 'transparent', border: 'none', color: 'rgba(230,255,250,0.5)', fontSize: 12, cursor: 'pointer' }}>✕</button>
+                <button onClick={() => setAiOpen(false)} style={{ background: 'transparent', border: 'none', color: 'rgba(255,248,240,0.5)', fontSize: 12, cursor: 'pointer' }}>✕</button>
               </div>
               {l.owner_phone && (
                 <div style={{ marginBottom: 10, padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(230,255,250,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>SMS to {l.owner_phone}</div>
-                  <div style={{ fontSize: 13, lineHeight: 1.55, marginBottom: 8, color: '#E6FFFA' }}>{aiMsg.sms}</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,248,240,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>SMS to {l.owner_phone}</div>
+                  <div style={{ fontSize: 13, lineHeight: 1.55, marginBottom: 8, color: '#FFF8F0' }}>{aiMsg.sms}</div>
                   <button
                     onClick={sendSms}
                     disabled={sendingSms || smsSent}
                     style={{
                       padding: '8px 14px', borderRadius: 7,
-                      background: smsSent ? '#34D399' : sendingSms ? 'rgba(255,255,255,0.14)' : '#F0FDFA',
-                      color: smsSent ? '#06241C' : '#0B1F3A', border: 'none', fontFamily: 'inherit',
+                      background: smsSent ? '#22C55E' : sendingSms ? 'rgba(255,255,255,0.14)' : 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+                      color: '#fff', border: 'none', fontFamily: 'inherit',
                       fontSize: 11.5, fontWeight: 900, cursor: smsSent ? 'default' : 'pointer',
                     }}
                   >
@@ -837,16 +876,16 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
               )}
               {l.owner_email && (
                 <div style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(230,255,250,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>Email to {l.owner_email}</div>
-                  <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 4, color: '#E6FFFA' }}>{aiMsg.email_subject}</div>
-                  <div style={{ fontSize: 12.5, lineHeight: 1.6, marginBottom: 8, whiteSpace: 'pre-wrap', color: 'rgba(230,255,250,0.85)' }}>{aiMsg.email_body}</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,248,240,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>Email to {l.owner_email}</div>
+                  <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 4, color: '#FFF8F0' }}>{aiMsg.email_subject}</div>
+                  <div style={{ fontSize: 12.5, lineHeight: 1.6, marginBottom: 8, whiteSpace: 'pre-wrap', color: 'rgba(255,248,240,0.85)' }}>{aiMsg.email_body}</div>
                   <button
                     onClick={sendEmail}
                     disabled={sendingEmail || emailSent}
                     style={{
                       padding: '8px 14px', borderRadius: 7,
-                      background: emailSent ? '#34D399' : sendingEmail ? 'rgba(255,255,255,0.14)' : '#F0FDFA',
-                      color: emailSent ? '#06241C' : '#0B1F3A', border: 'none', fontFamily: 'inherit',
+                      background: emailSent ? '#22C55E' : sendingEmail ? 'rgba(255,255,255,0.14)' : 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+                      color: '#fff', border: 'none', fontFamily: 'inherit',
                       fontSize: 11.5, fontWeight: 900, cursor: emailSent ? 'default' : 'pointer',
                     }}
                   >
@@ -870,9 +909,9 @@ function LeadCard({ drop, onStatus, onReveal }: { drop: LeadDrop; onStatus: (id:
             onClick={() => onStatus(drop.id, s)}
             style={{
               padding: '6px 13px', borderRadius: 99, fontFamily: 'inherit',
-              border: drop.status === s ? '1.5px solid #34D399' : '1px solid rgba(94,234,212,0.18)',
-              background: drop.status === s ? 'rgba(52,211,153,0.12)' : 'rgba(255,255,255,0.03)',
-              color: drop.status === s ? '#34D399' : 'rgba(230,255,250,0.5)',
+              border: drop.status === s ? '1.5px solid #FF9D5A' : '1px solid rgba(255,157,90,0.2)',
+              background: drop.status === s ? 'rgba(232,116,43,0.16)' : 'rgba(255,255,255,0.03)',
+              color: drop.status === s ? '#FFC58A' : 'rgba(255,248,240,0.5)',
               fontSize: 11, fontWeight: 800, cursor: 'pointer',
               textTransform: 'capitalize',
             }}
@@ -899,8 +938,8 @@ function pill(bg: string, color: string): React.CSSProperties {
 const darkInfoBox: React.CSSProperties = {
   padding: '10px 14px', borderRadius: 10,
   background: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(94,234,212,0.12)',
-  color: 'rgba(230,255,250,0.45)',
+  border: '1px solid rgba(255,157,90,0.16)',
+  color: 'rgba(255,248,240,0.5)',
   fontSize: 12, fontWeight: 700, textAlign: 'center',
   lineHeight: 1.4,
 }

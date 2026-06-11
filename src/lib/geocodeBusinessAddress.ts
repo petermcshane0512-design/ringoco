@@ -20,6 +20,18 @@ export type GeocodeResult = {
   lat: number
   lng: number
   formatted: string
+  // 2026-06-11 — parsed from Google's formatted_address ("..., IL 60643,
+  // USA"). Lets /start/area auto-derive the zip from the address instead
+  // of asking for it as a separate field (Algorithm step 2: the best
+  // form field is no form field). Empty string when not parseable.
+  zip: string
+}
+
+/** Last 5-digit group in a US formatted address = the zip. */
+export function parseZipFromAddress(s: string): string {
+  const matches = s.match(/\b\d{5}(?:-\d{4})?\b/g)
+  if (!matches || matches.length === 0) return ''
+  return matches[matches.length - 1].slice(0, 5)
 }
 
 export async function geocodeBusinessAddress(address: string): Promise<GeocodeResult | null> {
@@ -53,6 +65,7 @@ export async function geocodeBusinessAddress(address: string): Promise<GeocodeRe
       lat: top.geometry.location.lat,
       lng: top.geometry.location.lng,
       formatted: top.formatted_address,
+      zip: parseZipFromAddress(top.formatted_address),
     }
   } catch (e) {
     clearTimeout(timeout)

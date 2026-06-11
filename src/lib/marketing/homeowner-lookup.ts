@@ -18,6 +18,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { canSpendBatchData, logBatchDataSpend } from '@/lib/batchdataSpend'
 
 export type HomeownerLead = {
   ownerName: string | null
@@ -75,6 +76,11 @@ async function fetchFromBatchData(args: {
   const sinceDate = new Date(Date.now() - args.sinceDays * 24 * 3600_000).toISOString().split('T')[0]
   // BatchData Property Search API. Adjust fieldset to whatever your subscription unlocks.
   // Ref: https://docs.batchdata.com/reference/property-search
+  // 2026-06-11 — spend cap armed (was an ungated raw fetch).
+  const gate = await canSpendBatchData(args.limit * 5)
+  if (!gate.ok) {
+    return { provider: 'batchdata', leads: [], reason: `daily spend cap hit (${gate.spentTodayCents}/${gate.capCents}c)` }
+  }
   try {
     const res = await fetch('https://api.batchdata.com/api/v1/property/search', {
       method: 'POST',
@@ -99,6 +105,12 @@ async function fetchFromBatchData(args: {
       }
     }
     const properties = data.results?.properties ?? []
+    await logBatchDataSpend({
+      costCents: properties.length * 5,
+      caller: 'fetchRecentHomeowners',
+      context: { zips: args.zips, returned: properties.length },
+      resultOk: true,
+    })
     return {
       provider: 'batchdata',
       leads: properties.map(p => normalizeBatchDataProperty(p)),

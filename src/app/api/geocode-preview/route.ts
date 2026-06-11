@@ -66,5 +66,8 @@ export async function POST(req: NextRequest) {
     formatted: result.formatted,
     lat: result.lat,
     lng: result.lng,
+    // 2026-06-11 — zip parsed from the formatted address so /start/area
+    // derives it automatically instead of asking a separate zip field.
+    zip: result.zip,
   })
 }
