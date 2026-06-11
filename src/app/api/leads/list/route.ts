@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { TIER_FEATURES, isValidTier, type Tier } from '@/lib/pricing'
@@ -119,11 +119,43 @@ export async function GET() {
     skip_trace_attempted_at?: string | null; skip_trace_hit?: boolean | null
   }
   const RETRACE_AFTER_MS = 10 * 60 * 1000
-  const needContact = drops
+  const eligibleContact = drops
     .map((d) => d.lead as unknown as ContactPatch)
     .filter((l) => l && l.street_address && !l.owner_phone)
     .filter((l) => !l.skip_trace_attempted_at || (Date.now() - new Date(l.skip_trace_attempted_at).getTime()) > RETRACE_AFTER_MS)
-    .slice(0, 3)
+  const needContact = eligibleContact.slice(0, 3)
+
+  // 2026-06-11 per Peter ("update ALL the active leads already sent") —
+  // everything beyond the synchronous 3 is traced in the background after
+  // the response flushes (Next after()). One page load → whole batch
+  // filled; the next refresh renders the rest. Cap 12/load; spend stays
+  // centrally capped inside skipTraceAddress.
+  const deferredContact = eligibleContact.slice(3, 15)
+  if (deferredContact.length > 0) {
+    after(async () => {
+      for (const l of deferredContact) {
+        try {
+          const t = await skipTraceAddress({
+            street: l.street_address as string,
+            city: l.city ?? undefined,
+            state: l.state ?? undefined,
+            zip: l.zip ?? undefined,
+          })
+          await supabase.from('leads').update({
+            skip_trace_attempted_at: new Date().toISOString(),
+            skip_trace_hit: t.ok && t.hit,
+            ...(t.ok && t.hit ? {
+              ...(t.owner_phones?.[0] ? { owner_phone: t.owner_phones[0] } : {}),
+              ...(t.owner_emails?.[0] ? { owner_email: t.owner_emails[0] } : {}),
+              ...(t.owner_name ? { owner_name: t.owner_name } : {}),
+            } : {}),
+          }).eq('id', l.id)
+        } catch { /* background enhancement */ }
+      }
+      console.log(`[leads/list] background contact backfill done: ${deferredContact.length} leads for ${userId}`)
+    })
+  }
+
   for (const l of needContact) {
     try {
       const t = await skipTraceAddress({
