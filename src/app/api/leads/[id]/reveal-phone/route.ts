@@ -66,12 +66,16 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     return NextResponse.json({ error: 'lead not found' }, { status: 404 })
   }
 
-  // Cache hit — return without re-tracing.
-  if (lead.skip_trace_attempted_at) {
+  // Cache HITS only — a successful trace never re-bills. 2026-06-11 FIX:
+  // misses used to cache forever too, so one flaky trace permanently
+  // bricked the lead at "No phone on file" with no way to retry (Peter's
+  // entire first drop hit this). A re-tap on a missed lead now re-traces
+  // (~$0.10, centrally spend-capped).
+  if (lead.skip_trace_attempted_at && lead.skip_trace_hit) {
     return NextResponse.json({
       ok: true,
       cached: true,
-      hit: !!lead.skip_trace_hit,
+      hit: true,
       owner_name: lead.owner_name,
       owner_phone: lead.owner_phone,
       owner_email: lead.owner_email,

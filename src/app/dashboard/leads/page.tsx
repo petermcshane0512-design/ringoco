@@ -1040,11 +1040,12 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index }: {
           <div style={{ fontSize: 10, fontWeight: 800, color: '#FF9D5A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
             {signalLabel} · score {score}/100
           </div>
-          {(l.home_value_est || l.year_built || l.sqft) && (
+          {(l.home_value_est || l.year_built || l.sqft || l.owner_email) && (
             <div style={{ fontSize: 12, color: 'rgba(255,248,240,0.6)', marginBottom: 10 }}>
               {l.home_value_est ? `~$${l.home_value_est.toLocaleString()} home` : null}
               {l.year_built ? ` · built ${l.year_built}` : null}
               {l.sqft ? ` · ${l.sqft.toLocaleString()} sqft` : null}
+              {l.owner_email ? <span> · ✉ <a href={`mailto:${l.owner_email}`} style={{ color: '#FFC58A', textDecoration: 'none', fontWeight: 700 }}>{l.owner_email}</a></span> : null}
             </div>
           )}
           {/* AI DEBRIEF — why this lead surfaced. why_tags come from the
@@ -1115,7 +1116,17 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index }: {
               </a>
             </>
           ) : l.skip_trace_attempted_at && l.skip_trace_hit === false ? (
-            <div style={darkInfoBox}>No phone on file</div>
+            // 2026-06-11 — a missed trace is retryable now (server allows
+            // re-trace on miss). Dead-end box → action.
+            <button onClick={() => onReveal(l.id)} style={{
+              padding: '11px 18px', borderRadius: 10,
+              background: 'rgba(255,255,255,0.04)', border: '1.5px dashed rgba(255,157,90,0.45)',
+              color: '#FFC58A', cursor: 'pointer',
+              fontSize: 12.5, fontWeight: 800, fontFamily: 'inherit', lineHeight: 1.4,
+            }}>
+              No phone found yet<br />
+              <span style={{ fontSize: 11, fontWeight: 700 }}>↻ Search again</span>
+            </button>
           ) : l.skip_trace_attempted_at ? (
             <div style={{ ...darkInfoBox, color: '#FFC58A' }}>Looking up…</div>
           ) : l.street_address ? (

@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { TIER_FEATURES, isValidTier, type Tier } from '@/lib/pricing'
 import { geocodeBusinessAddress } from '@/lib/geocodeBusinessAddress'
+import { skipTraceAddress } from '@/lib/skipTrace'
 
 export const runtime = 'nodejs'
 
@@ -104,6 +105,46 @@ export async function GET() {
         await supabase.from('leads').update({ lat: g.lat, lng: g.lng }).eq('id', l.id)
       }
     } catch { /* pin is enhancement — never fail the list */ }
+  }
+
+  // 2026-06-11 — self-healing CONTACT backfill. Skip-trace gives owner
+  // name + phone + email in one $0.10 call (verified live: full contact
+  // data exists for these exact streets). Re-trace up to 3 phoneless
+  // delivered leads per page load; misses older than 10 minutes are fair
+  // game again (one flaky pass must not brick a lead forever). The write-
+  // back makes hits permanent; spend is centrally capped in skipTrace.ts.
+  type ContactPatch = {
+    id: string; street_address?: string | null; city?: string | null; state?: string | null; zip?: string | null
+    owner_name?: string | null; owner_phone?: string | null; owner_email?: string | null
+    skip_trace_attempted_at?: string | null; skip_trace_hit?: boolean | null
+  }
+  const RETRACE_AFTER_MS = 10 * 60 * 1000
+  const needContact = drops
+    .map((d) => d.lead as unknown as ContactPatch)
+    .filter((l) => l && l.street_address && !l.owner_phone)
+    .filter((l) => !l.skip_trace_attempted_at || (Date.now() - new Date(l.skip_trace_attempted_at).getTime()) > RETRACE_AFTER_MS)
+    .slice(0, 3)
+  for (const l of needContact) {
+    try {
+      const t = await skipTraceAddress({
+        street: l.street_address as string,
+        city: l.city ?? undefined,
+        state: l.state ?? undefined,
+        zip: l.zip ?? undefined,
+      })
+      const update: Record<string, unknown> = {
+        skip_trace_attempted_at: new Date().toISOString(),
+        skip_trace_hit: t.ok && t.hit,
+      }
+      if (t.ok && t.hit) {
+        if (t.owner_phones?.[0]) { update.owner_phone = t.owner_phones[0]; l.owner_phone = t.owner_phones[0] }
+        if (t.owner_emails?.[0]) { update.owner_email = t.owner_emails[0]; l.owner_email = t.owner_emails[0] }
+        if (t.owner_name) { update.owner_name = t.owner_name; l.owner_name = t.owner_name }
+        l.skip_trace_hit = true
+      }
+      l.skip_trace_attempted_at = update.skip_trace_attempted_at as string
+      await supabase.from('leads').update(update).eq('id', l.id)
+    } catch { /* contact backfill is enhancement — never fail the list */ }
   }
 
   const usedThisPeriod = drops.filter((d) => new Date(d.drop_date) >= periodStart).length
