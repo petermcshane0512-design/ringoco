@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { LEADS_PER_WEEK, LEADS_PER_MONTH } from '@/lib/offer'
+import LeadScanConsole from '@/components/LeadScanConsole'
 
 type LeadDrop = {
   id: string
@@ -87,6 +88,31 @@ export default function LeadsPage() {
     }, 240)
     return () => clearInterval(id)
   }, [drops.length])
+
+  // 2026-06-10 — SELF-DRIVING FIRST DELIVERY. Two fixes for the
+  // "smoke test taking forever" pain:
+  //   1. KICK: when the page loads and the tenant has zero drops, fire
+  //      /api/leads/check-and-drop immediately (it runs the lead engine
+  //      synchronously — for a fresh tenant next_lead_drop_at is null so
+  //      the guard passes). Even if the Stripe-webhook day-1 chain died,
+  //      the customer sitting on this page drives their own delivery.
+  //   2. POLL: refetch the leads list every 5s while empty so the drop
+  //      appears the second it lands — no manual refresh.
+  const [kicked, setKicked] = useState(false)
+  useEffect(() => {
+    if (loading || drops.length > 0 || kicked) return
+    setKicked(true)
+    fetch('/api/leads/check-and-drop', { method: 'POST' })
+      .then((r) => r.json()).then(async (j) => { if (j.ok) await loadLeads() })
+      .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, drops.length, kicked])
+  useEffect(() => {
+    if (loading || drops.length > 0) return
+    const id = setInterval(() => { loadLeads() }, 5000)
+    return () => clearInterval(id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, drops.length])
 
   // When the timer hits zero, POST /api/leads/check-and-drop to force-fire
   // the assignment now (instead of waiting for the hourly cron), then refresh
@@ -216,134 +242,11 @@ export default function LeadsPage() {
       {loading ? (
         <div style={{ padding: 60, textAlign: 'center', color: '#7AAAB2' }}>Loading your leads…</div>
       ) : drops.length === 0 ? (
-        <div style={{
-          background: '#fff', borderRadius: 16, padding: '40px 30px', textAlign: 'center',
-          border: '1.5px dashed rgba(10,168,159,0.22)',
-        }}>
-          {/* Pulsing satellite — radar rings around it indicate live scan. */}
-          <div style={{ position: 'relative', display: 'inline-block', marginBottom: 8 }}>
-            <span style={{
-              position: 'absolute', inset: -14,
-              borderRadius: '50%',
-              border: '2px solid rgba(10,168,159,0.45)',
-              animation: 'radarPulse 1.8s ease-out infinite',
-            }} />
-            <span style={{
-              position: 'absolute', inset: -14,
-              borderRadius: '50%',
-              border: '2px solid rgba(10,168,159,0.45)',
-              animation: 'radarPulse 1.8s ease-out infinite',
-              animationDelay: '0.6s',
-            }} />
-            <div style={{ fontSize: 44, position: 'relative' }}>🛰️</div>
-          </div>
-          <div style={{ fontSize: 19, fontWeight: 800, color: '#0B1F3A', marginBottom: 6 }}>
-            Pulling your first {LEADS_PER_WEEK} leads now
-          </div>
-          <div style={{
-            fontSize: 12, color: '#0AA89F', fontWeight: 800,
-            letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums',
-            marginBottom: 14,
-          }}>
-            <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#22C55E', marginRight: 8, animation: 'livePulse 1s ease-in-out infinite' }} />
-            LIVE · {scanCount.toLocaleString()} properties scanned in your radius
-          </div>
-          <p style={{ fontSize: 14, color: '#4A6670', maxWidth: 580, margin: '0 auto 18px', lineHeight: 1.6 }}>
-            Your first batch typically lands within <strong>60 seconds</strong> of signup. Refresh if you don&rsquo;t see them in 2 minutes.
-            Going forward, <strong>{LEADS_PER_WEEK} fresh leads arrive every Monday morning</strong> — the {LEADS_PER_MONTH} highest-intent
-            homeowners we pulled from your service area over the prior week.
-          </p>
-
-          {/* Detailed pipeline — how leads are sourced. Each step is real. */}
-          <div style={{
-            maxWidth: 580, margin: '24px auto 0',
-            textAlign: 'left',
-          }}>
-            <div style={{
-              fontSize: 11, fontWeight: 800, color: '#0AA89F',
-              letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12, textAlign: 'center',
-            }}>
-              How we built your list
-            </div>
-            {[
-              {
-                icon: '🏠',
-                title: '1. Address-anchored property pull',
-                body: 'The moment you signed up, our agents geocoded your business address and queried our property intelligence engine for every owner-occupied home within a tight radius of you. For HVAC tenants in hot states we filter to homes built 2008-2015 (first AC replacement cycle). For plumbing: pre-1995 (galvanized + polybutylene era). For roofing: built 2001-2011 (3-tab asphalt window). Every recipe is trade-aware and climate-aware.',
-              },
-              {
-                icon: '📞',
-                title: '2. Skip-trace top 20 highest-intent matches',
-                body: 'The highest-scoring matches go through our verification pipeline so the owner’s phone + email arrive verified on your dashboard day 1. The rest unlock the moment you click “Reveal phone” — a per-lead unlock we eat the cost of for paying tenants.',
-              },
-              {
-                icon: '🏗️',
-                title: '3. Live permit overlay',
-                body: 'We layer municipal permit data on top. Any homeowner who pulled a building permit in your zip in the last 14 days bubbles to the top of your queue with the work description visible — they’re actively planning a project.',
-              },
-              {
-                icon: '⛈️',
-                title: '4. Verified storm-damage triggers',
-                body: 'For roofing + exterior tenants we cross-reference verified hail + wind events against every home in your radius. A 1.75-inch hail strike on the property in the last 30 days flips the lead to “STORM” with the date confirmed for insurance-claim conversations.',
-              },
-              {
-                icon: '🔁',
-                title: '5. Weekly refresh + auto-replenish',
-                body: 'Every Monday morning our engine pulls the next {LEADS_PER_WEEK} highest-scoring matches from your pool and drops them here. When your pool drains we automatically refill it around your business address with a 24-hour cooldown so you’re never empty for more than a day.',
-              },
-            ].map((step, idx) => {
-              const isActive = pipelineStep === idx
-              const isDone = pipelineStep > idx
-              const statusColor = isDone ? '#16803F' : isActive ? '#E8742B' : '#7AAAB2'
-              const statusLabel = isDone ? '✓ done' : isActive ? 'scanning…' : 'queued'
-              return (
-                <div key={step.title} style={{
-                  padding: '14px 16px', borderRadius: 12, marginBottom: 10,
-                  background: isActive ? '#FFF8F0' : '#F5FDFB',
-                  border: isActive ? '1.5px solid #E8742B' : '1px solid rgba(10,168,159,0.18)',
-                  transition: 'background 240ms ease, border-color 240ms ease',
-                  boxShadow: isActive ? '0 10px 24px rgba(232,116,43,0.20)' : 'none',
-                }}>
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                    <span style={{
-                      fontSize: 20, flexShrink: 0,
-                      animation: isActive ? 'stepIconBounce 1.2s ease-in-out infinite' : 'none',
-                      display: 'inline-block',
-                    }}>{step.icon}</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                        <div style={{ fontSize: 13.5, fontWeight: 900, color: '#0B1F3A' }}>{step.title}</div>
-                        <div style={{
-                          fontSize: 10, fontWeight: 900, color: statusColor,
-                          letterSpacing: '0.08em', textTransform: 'uppercase',
-                          fontVariantNumeric: 'tabular-nums',
-                        }}>
-                          {statusLabel}
-                        </div>
-                      </div>
-                      <p style={{ fontSize: 12.5, color: '#3D5A66', lineHeight: 1.55, margin: '4px 0 0' }}>
-                        {step.body.replace('{LEADS_PER_WEEK}', String(LEADS_PER_WEEK))}
-                      </p>
-                      {isActive && (
-                        <div style={{ marginTop: 8, height: 3, background: 'rgba(232,116,43,0.18)', borderRadius: 3, overflow: 'hidden' }}>
-                          <div style={{
-                            height: '100%', width: '40%',
-                            background: 'linear-gradient(90deg, transparent, #E8742B, transparent)',
-                            animation: 'stepProgress 1.8s linear infinite',
-                          }} />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-
-          <p style={{ fontSize: 11, color: '#7AAAB2', marginTop: 16 }}>
-            Need to update your business address or radius? <Link href="/dashboard/settings" style={{ color: '#0AA89F', fontWeight: 700, textDecoration: 'none' }}>Settings →</Link>
-          </p>
-        </div>
+        // 2026-06-10 per Peter: mission-control scan console replaces the
+        // white queue card. Self-driving delivery (kick + 5s poll above)
+        // means this screen really does swap itself for the leads list the
+        // moment the drop lands.
+        <LeadScanConsole scanCount={scanCount} pipelineStep={pipelineStep} />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {drops.map((d) => (

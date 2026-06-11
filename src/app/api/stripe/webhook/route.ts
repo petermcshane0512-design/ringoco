@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse, after } from 'next/server'
 import Stripe from 'stripe'
 import { stripe } from '@/lib/stripeClient'
 import { createClient } from '@supabase/supabase-js'
@@ -382,33 +382,41 @@ export async function POST(req: NextRequest) {
     // 5 leads to their dashboard. Without A â†’ B order, brand-new tenants
     // in metros we don't pre-scrape get 0 leads on day 1.
     //
-    // Both run fire-and-forget so they don't block the 200 to Stripe.
+    // 2026-06-10 - LATENCY FIX. The prior bare fire-and-forget
+    // fetch(...).then(fireLeadEngineForUser) chain DIED the moment this
+    // handler returned 200 to Stripe - Vercel freezes the lambda after the
+    // response, so the .then() continuation almost never ran. New tenants
+    // silently waited for the HOURLY lead-engine cron. That was the entire
+    // smoke-test "leads taking forever" pain.
+    //
+    // after() (Next 15+) keeps the function instance alive until the
+    // callback settles WITHOUT delaying the 200 to Stripe.
     const appUrl = process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost')
       ? process.env.NEXT_PUBLIC_APP_URL
       : 'https://www.bellavego.com'
-    fetch(`${appUrl}/api/agents/discover-for-tenant`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-admin-secret': process.env.ADMIN_API_SECRET || '',
-      },
-      body: JSON.stringify({ user_id: userId }),
-    })
-      .then((r) => r.ok ? r.json() : Promise.resolve({ ok: false, status: r.status }))
-      .then((d) => {
-        console.log(`[discover-agent] tenant ${userId}: leads_in_radius=${d.leads_in_radius ?? '?'} steps=${(d.steps ?? []).length}`)
-        // Now drop the 5 leads â€” discovery has primed the pool.
-        return fireLeadEngineForUser(userId)
-      })
-      .then((r) => {
-        if (!r) return
-        if (r.assigned > 0) {
-          console.log(`[day-1 leads] dropped ${r.assigned} leads to new tenant ${userId}`)
+    const dayOneUserId = userId
+    after(async () => {
+      try {
+        const r = await fetch(`${appUrl}/api/agents/discover-for-tenant`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-secret': process.env.ADMIN_API_SECRET || '',
+          },
+          body: JSON.stringify({ user_id: dayOneUserId }),
+        })
+        const d = r.ok ? await r.json() : { ok: false, status: r.status }
+        console.log(`[discover-agent] tenant ${dayOneUserId}: leads_in_radius=${d.leads_in_radius ?? '?'} steps=${(d.steps ?? []).length}`)
+        const drop = await fireLeadEngineForUser(dayOneUserId)
+        if (drop.assigned > 0) {
+          console.log(`[day-1 leads] dropped ${drop.assigned} leads to new tenant ${dayOneUserId}`)
         } else {
-          console.log(`[day-1 leads] no drop for ${userId}: ${r.skipped_reason}`)
+          console.log(`[day-1 leads] no drop for ${dayOneUserId}: ${drop.skipped_reason}`)
         }
-      })
-      .catch((e) => console.error(`[day-1 leads] discoverâ†’drop chain threw for ${userId}:`, e))
+      } catch (e) {
+        console.error(`[day-1 leads] discover->drop chain threw for ${dayOneUserId}:`, e)
+      }
+    })
 
     // â”€â”€ ðŸŽ‰ Peter's ALERT: SMS the founder on every new subscription â”€â”€
     // Per Peter 5/28: he wants real-time notifications when a small dog
