@@ -91,6 +91,13 @@ export default function LeadsPage() {
   // poll effects below keep running; this gates the UI only. Once a
   // real name is saved the gate never renders again.
   const [gate, setGate] = useState<'loading' | 'needed' | 'done'>('loading')
+  // 2026-06-11 — UNPAID-ACCOUNT GUARD per Peter (he created a bare Clerk
+  // account, skipped checkout, and landed on the eternal scan screen —
+  // a lying UI promising leads to someone with no subscription). If the
+  // profile has no active sub, show an activate card instead of the
+  // scan console. Re-polls every 5s so a just-paid user whose webhook
+  // lags flips to the real dashboard automatically.
+  const [subActive, setSubActive] = useState<boolean | null>(null)
   // Progressive first-drop reveal. null = first load not finished yet;
   // true = page loaded empty (fresh signup) → stagger the batch in one
   // lead at a time; false = returning user → render instantly.
@@ -116,7 +123,8 @@ export default function LeadsPage() {
   useEffect(() => {
     fetch('/api/profile')
       .then((r) => r.json())
-      .then((p: { business_name?: string | null; business_lat?: number | null; business_address?: string | null }) => {
+      .then((p: { business_name?: string | null; business_lat?: number | null; business_address?: string | null; is_active?: boolean | null }) => {
+        setSubActive(p.is_active === true)
         const bn = (p.business_name ?? '').trim()
         const nameOk = !!bn && bn.toLowerCase() !== 'my business'
         // 2026-06-11 — HARD gate per Peter. Leads are useless if the
@@ -131,6 +139,21 @@ export default function LeadsPage() {
       })
       .catch(() => setGate('needed')) // can't confirm → make them complete it
   }, [])
+
+  // While the sub reads inactive, re-poll — a just-paid user's webhook
+  // may lag a few seconds behind the redirect.
+  useEffect(() => {
+    if (subActive !== false) return
+    const id = setInterval(() => {
+      fetch('/api/profile')
+        .then((r) => r.json())
+        .then((p: { is_active?: boolean | null }) => {
+          if (p.is_active === true) setSubActive(true)
+        })
+        .catch(() => {})
+    }, 5000)
+    return () => clearInterval(id)
+  }, [subActive])
 
   // 1s tick drives the next-sweep countdown.
   useEffect(() => {
@@ -309,10 +332,12 @@ export default function LeadsPage() {
       </div>
 
       <div style={{ maxWidth: 1060, margin: '0 auto', padding: '20px clamp(14px, 3vw, 28px) 0' }}>
-        {loading || gate === 'loading' ? (
+        {loading || gate === 'loading' || subActive === null ? (
           <div style={{ padding: 60, textAlign: 'center', color: '#7AAAB2', fontSize: 13, fontWeight: 600 }}>
             Loading your leads…
           </div>
+        ) : subActive === false ? (
+          <ActivateCard />
         ) : gate === 'needed' ? (
           <ProfileGate onDone={() => setGate('done')} />
         ) : drops.length === 0 ? (
@@ -398,6 +423,45 @@ const emptyNote: React.CSSProperties = {
   padding: '20px', borderRadius: 12, textAlign: 'center',
   background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,157,90,0.25)',
   color: 'rgba(255,248,240,0.45)', fontSize: 12.5,
+}
+
+/**
+ * ActivateCard — shown when the signed-in account has NO active
+ * subscription (bare Clerk account that never went through checkout).
+ * Honest UI: no fake scan, one path forward — pick your area and pay.
+ */
+function ActivateCard() {
+  return (
+    <div style={{
+      borderRadius: 16, padding: 'clamp(22px, 4vw, 32px)',
+      background: 'rgba(255,255,255,0.035)',
+      border: '1.5px solid rgba(232,116,43,0.55)',
+      boxShadow: '0 24px 60px rgba(4,12,24,0.5), 0 0 40px rgba(232,116,43,0.10)',
+      maxWidth: 560, margin: '40px auto 0', textAlign: 'center',
+    }}>
+      <div style={{ fontSize: 10, fontWeight: 900, color: '#FF9D5A', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>
+        Account created — area not activated yet
+      </div>
+      <h2 style={{ fontSize: 'clamp(20px, 2.8vw, 26px)', fontWeight: 900, letterSpacing: '-0.02em', margin: '0 0 10px', color: '#FFF8F0' }}>
+        Your leads start the moment you lock your area.
+      </h2>
+      <p style={{ fontSize: 13.5, color: 'rgba(255,248,240,0.6)', lineHeight: 1.6, margin: '0 0 20px' }}>
+        Pick your business address and trade — your first {LEADS_PER_WEEK} homeowner
+        leads pull from a 1-mile ring around your shop, usually within 30 minutes.
+      </p>
+      <Link href="/start/area" style={{
+        display: 'inline-block', padding: '15px 28px', borderRadius: 12,
+        background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 100%)',
+        color: '#fff', textDecoration: 'none', fontWeight: 900, fontSize: 15,
+        boxShadow: '0 12px 30px rgba(232,116,43,0.40)',
+      }}>
+        Lock my area →
+      </Link>
+      <p style={{ fontSize: 11, color: 'rgba(255,248,240,0.4)', margin: '14px 0 0', lineHeight: 1.5 }}>
+        Book a paying job in 30 days or full refund + your next month free + you keep every lead.
+      </p>
+    </div>
+  )
 }
 
 function BannerStat({ n, label, win }: { n: number; label: string; win?: boolean }) {
