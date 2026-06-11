@@ -166,8 +166,9 @@ export default function LeadsPage() {
           Ready-to-quote homeowners near you.
         </h1>
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.78)', lineHeight: 1.55, maxWidth: 620, margin: 0 }}>
-          Owner-occupied homes within your tight service radius — pulled from BatchData property records,
-          city permit feeds, and NOAA storm overlays. Tap any lead to call, text, or generate an intro message.
+          Owner-occupied homes within your tight service radius — sourced from our proprietary property
+          intelligence engine, municipal permit signals, and verified storm-damage alerts. Tap any lead
+          to call, text, or generate an intro message.
         </p>
 
         {quota && (
@@ -222,28 +223,28 @@ export default function LeadsPage() {
             {[
               {
                 icon: '🏠',
-                title: '1. Address-anchored property pull (BatchData)',
-                body: 'The moment you signed up, our agents geocoded your business address and queried BatchData’s property API for every owner-occupied home within a tight radius of you. For HVAC tenants in hot states we filter to homes built 2008-2015 (first AC replacement cycle). For plumbing: pre-1995 (galvanized + polybutylene era). For roofing: built 2001-2011 (3-tab asphalt window). Recipe is trade-aware and climate-aware.',
+                title: '1. Address-anchored property pull',
+                body: 'The moment you signed up, our agents geocoded your business address and queried our property intelligence engine for every owner-occupied home within a tight radius of you. For HVAC tenants in hot states we filter to homes built 2008-2015 (first AC replacement cycle). For plumbing: pre-1995 (galvanized + polybutylene era). For roofing: built 2001-2011 (3-tab asphalt window). Every recipe is trade-aware and climate-aware.',
               },
               {
                 icon: '📞',
                 title: '2. Skip-trace top 20 highest-intent matches',
-                body: 'The highest-scoring matches go through BatchData’s skip-trace pipeline so the owner’s phone + email arrive verified on your dashboard day 1. The rest unlock the moment you click “Reveal phone” — a $0.10 per-lead unlock that we eat for paying tenants.',
+                body: 'The highest-scoring matches go through our verification pipeline so the owner’s phone + email arrive verified on your dashboard day 1. The rest unlock the moment you click “Reveal phone” — a per-lead unlock we eat the cost of for paying tenants.',
               },
               {
                 icon: '🏗️',
-                title: '3. Live permit overlay (city open-data feeds)',
-                body: 'We layer City of Chicago, Austin, Orlando, and Houston permit feeds on top. Any homeowner who pulled a building permit in your zip in the last 14 days bubbles to the top of your queue with the work description visible.',
+                title: '3. Live permit overlay',
+                body: 'We layer municipal permit data on top. Any homeowner who pulled a building permit in your zip in the last 14 days bubbles to the top of your queue with the work description visible — they’re actively planning a project.',
               },
               {
                 icon: '⛈️',
-                title: '4. NOAA storm-damage triggers',
-                body: 'For roofing tenants we cross-reference NOAA hail + wind reports against the homes in your radius. A 1.75-inch hail strike on the property in the last 30 days flips the lead to “STORM” with the verified date for insurance-claim conversations.',
+                title: '4. Verified storm-damage triggers',
+                body: 'For roofing + exterior tenants we cross-reference verified hail + wind events against every home in your radius. A 1.75-inch hail strike on the property in the last 30 days flips the lead to “STORM” with the date confirmed for insurance-claim conversations.',
               },
               {
                 icon: '🔁',
                 title: '5. Weekly refresh + auto-replenish',
-                body: 'Every Monday 4am the lead-engine cron pulls the next {LEADS_PER_WEEK} highest-scoring matches from your pool and drops them here. When your pool drains we auto-fire another BatchData pull around your address with a 24-hour cooldown.',
+                body: 'Every Monday morning our engine pulls the next {LEADS_PER_WEEK} highest-scoring matches from your pool and drops them here. When your pool drains we automatically refill it around your business address with a 24-hour cooldown so you’re never empty for more than a day.',
               },
             ].map((step) => (
               <div key={step.title} style={{
