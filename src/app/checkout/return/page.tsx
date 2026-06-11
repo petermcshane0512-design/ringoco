@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
-import Stripe from 'stripe'
+import type Stripe from 'stripe'
+import { stripe } from '@/lib/stripeClient'
 
 /**
  * /checkout/return?session_id={CHECKOUT_SESSION_ID}
@@ -24,8 +25,6 @@ import Stripe from 'stripe'
  * Server component — no client-side Stripe SDK, no token exposed in
  * client JS. Token lives only in 302 Location header.
  */
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 type SP = Promise<{ session_id?: string }>
 

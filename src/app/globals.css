@@ -41,18 +41,21 @@ html { overflow-x: hidden; }
      - Force every image to scale down to its container.
      - Stack any 2-column grid that wasn't explicitly handled. */
 @media (max-width: 480px) {
-  /* Headings: cap aggressively. Inline clamp() floors that were too high
-     (h1 30px floor, h2 26px, h3 22px) all overrode here. */
-  h1 { font-size: clamp(22px, 6vw, 30px) !important; line-height: 1.1 !important; letter-spacing: -0.02em !important; }
-  h2 { font-size: clamp(20px, 5.6vw, 26px) !important; line-height: 1.15 !important; }
-  h3 { font-size: clamp(17px, 5vw, 22px) !important; line-height: 1.2 !important; }
-  p  { font-size: clamp(13px, 3.8vw, 15.5px) !important; line-height: 1.5 !important; }
+  /* Type scale: tight floors so 28-30px inline clamps stop dominating. */
+  h1 { font-size: 24px !important; line-height: 1.12 !important; letter-spacing: -0.02em !important; }
+  h2 { font-size: 20px !important; line-height: 1.18 !important; }
+  h3 { font-size: 16px !important; line-height: 1.25 !important; }
+  p  { font-size: 14px !important; line-height: 1.5 !important; }
 
-  /* Every <section> on the page: tight side padding so cards/grids reach
-     the edge of the viewport, vertical padding kept proportional. */
+  /* Every <section> on the page: tight side padding + halved vertical
+     padding so the whole page condenses to mobile scale. Without this
+     each section took ~60-80px of vertical air and the page felt like
+     scrolling through a desktop spec on a phone. */
   section {
-    padding-left: 12px !important;
-    padding-right: 12px !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+    padding-top: 28px !important;
+    padding-bottom: 28px !important;
   }
 
   /* Images never overflow their container. */
@@ -60,17 +63,35 @@ html { overflow-x: hidden; }
 
   /* Any inline 2-3 column grid that didn't get an explicit @media-880px
      stack: force single column at 480px so nothing squeezes. */
-  [style*="grid-template-columns"][style*="1fr 1fr"] {
-    grid-template-columns: 1fr !important;
-  }
-  [style*="grid-template-columns"][style*="repeat(2"] {
+  [style*="grid-template-columns"][style*="1fr 1fr"],
+  [style*="grid-template-columns"][style*="repeat(2"],
+  [style*="grid-template-columns"][style*="repeat(3"],
+  [style*="gridTemplateColumns"] {
     grid-template-columns: 1fr !important;
   }
 
   /* Cards / cells inside a previously-multi-column grid: cap any inline
      maxWidth so they don't outgrow the now-stacked column. */
-  [style*="maxWidth: 580"], [style*="max-width: 580"] {
+  [style*="maxWidth: 580"], [style*="max-width: 580"],
+  [style*="maxWidth: 480"], [style*="max-width: 480"],
+  [style*="maxWidth: 640"], [style*="max-width: 640"] {
     max-width: 100% !important;
+  }
+
+  /* CTA buttons in the hero / pricing / FAQ flows go full-width on mobile
+     so the visitor never has to thumb-target a centered 220px pill. */
+  a[style*="background: linear-gradient"]:not(.nav-cta) {
+    display: block !important;
+    text-align: center !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Tighten button + input padding so nothing protrudes past 343px content
+     width (375 viewport - 14px×2 section side padding - 4px card border). */
+  button, input {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 }
 
