@@ -702,7 +702,7 @@ function LeadsCard({ variant }: { variant: TradeVariant }) {
         scrollbarWidth: 'thin',
       }} className="leadscard-scroll">
         {/* Featured (hero) lead */}
-        <Link href="/sign-up" style={{ textDecoration: 'none', display: 'block' }}>
+        <Link href="/start?promo=FIRST400" style={{ textDecoration: 'none', display: 'block' }}>
           <div style={{
             borderRadius: 13,
             background: '#FFF8F0',
@@ -765,7 +765,7 @@ function LeadsCard({ variant }: { variant: TradeVariant }) {
           ].map((t, i) => (
             <Link
               key={i}
-              href="/sign-up"
+              href="/start?promo=FIRST400"
               style={{ textDecoration: 'none', display: 'block' }}
             >
               <div style={{
@@ -796,7 +796,7 @@ function LeadsCard({ variant }: { variant: TradeVariant }) {
         </div>
       </div>
 
-      <Link href="/sign-up" style={{ textDecoration: 'none', display: 'block' }}>
+      <Link href="/start?promo=FIRST400" style={{ textDecoration: 'none', display: 'block' }}>
         <div style={{ marginTop: 14, padding: '11px 14px', borderRadius: 10, background: 'rgba(232,116,43,0.08)', border: '1px dashed rgba(232,116,43,0.40)', cursor: 'pointer' }}>
           <div style={{ fontSize: 11, fontWeight: 800, color: '#C84B26', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Pre-written script attached to every lead</div>
           <div style={{ fontSize: 12, color: '#0B1F3A', marginTop: 4, lineHeight: 1.5 }}>

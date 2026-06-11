@@ -60,14 +60,32 @@ export async function POST(req: NextRequest) {
         console.error('[webhook] anon checkout missing customer_details.email — cannot mint Clerk user')
         return NextResponse.json({ received: true })
       }
+      // 2026-06-10 — pull phone from /start/area metadata and pass to Clerk
+      // so the customer can also sign in via SMS OTP later (not just email
+      // magic link). Phone has to be E.164 (+1XXXXXXXXXX); /start/area
+      // collected 10 raw digits in metadata.owner_phone. Clerk dashboard
+      // must have SMS auth enabled for the OTP path to work; this code is
+      // a no-op for the email-only mode.
+      const phoneDigits = (session.metadata?.owner_phone || '').replace(/\D/g, '')
+      const phoneE164 = phoneDigits.length === 10
+        ? `+1${phoneDigits}`
+        : phoneDigits.length === 11 && phoneDigits.startsWith('1')
+        ? `+${phoneDigits}`
+        : null
       try {
         const { clerkClient } = await import('@clerk/nextjs/server')
         const cc = await clerkClient()
-        // Reuse if email already belongs to a Clerk user (returning visitor
-        // who used a different browser / cleared cookies). Otherwise create.
-        const existing = await cc.users.getUserList({ emailAddress: [email] }).catch(() => null)
-        const realUserId = existing?.data?.[0]?.id ?? (await cc.users.createUser({
+        // Reuse if email OR phone already belongs to a Clerk user (returning
+        // visitor who used a different browser / cleared cookies / signed up
+        // via the other channel).
+        const byEmail = await cc.users.getUserList({ emailAddress: [email] }).catch(() => null)
+        const byPhone = phoneE164
+          ? await cc.users.getUserList({ phoneNumber: [phoneE164] }).catch(() => null)
+          : null
+        const existing = byEmail?.data?.[0] ?? byPhone?.data?.[0] ?? null
+        const realUserId = existing?.id ?? (await cc.users.createUser({
           emailAddress: [email],
+          ...(phoneE164 ? { phoneNumber: [phoneE164] } : {}),
           skipPasswordRequirement: true,
           skipPasswordChecks: true,
         })).id
