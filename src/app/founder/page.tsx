@@ -233,7 +233,10 @@ export default function FounderPage() {
             I started BellAveGo because my buddy &mdash; a solo handyman &mdash; was getting <strong>one job a day</strong>. Twenty hours a week scrolling Nextdoor, posting in Facebook groups, paying $80 for shared HomeAdvisor leads. Great at the work. Broke finding it.
           </p>
           <p>
-            Homeowners who need work done aren&rsquo;t hard to find &mdash; permits, sold houses, aging units, storm damage. All public data, sitting in the open. So we built an AI that <strong>scans everything in your neighborhood, every single night</strong> &mdash; every permit filed at city hall, every NOAA-verified storm strike, every home sale, every aging system &mdash; and turns it into <strong>{LEADS_PER_WEEK} ready-to-call homeowners in your dashboard every week</strong> ({LEADS_PER_MONTH}/month), exclusive to you, never shared. Each lead comes w/ a verified phone + pre-written outreach our AI sends as you. You only call back the ones who say yes. The franchise shops pay five-figure marketing budgets for this. You pay $497.
+            Then I found the unfair advantage. The city writes down <strong>exactly which homeowners are in trouble</strong> &mdash; building violations, code orders, administrative-hearings dockets with fines on the record. All public. A homeowner the city has <strong>ordered to fix their roof</strong> &mdash; or get fined &mdash; isn&rsquo;t a &ldquo;maybe.&rdquo; They <em>have</em> to hire someone. Most of them haven&rsquo;t yet.
+          </p>
+          <p>
+            So we built an AI that reads those records every night across your area and hands you <strong>{LEADS_PER_WEEK} of those homeowners a week</strong> ({LEADS_PER_MONTH}/month), exclusive to you, never shared. We don&rsquo;t just &ldquo;find leads&rdquo; &mdash; we find the ones who are <strong>legally required to get the work done</strong> and we put them first. Each comes with a verified phone, the exact violation, and what the city ordered. You call; they already have to say yes. The franchise shops pay five-figure budgets for worse. You pay $497.
           </p>
           <p>
             Behind the scenes &mdash; <strong>four software engineers</strong>. Small on purpose. My buddy went from one job a day to fully booked inside a month. That&rsquo;s the whole reason this exists.
