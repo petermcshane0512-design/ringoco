@@ -92,18 +92,25 @@ const TRADE_QUERY = {
   masonry:    'masonry tuckpointing contractor',
 }[TRADE]
 
-const SEARCH = `${TRADE_QUERY} ${CITY} ${STATE}`
-console.log(`\n→ mass-source: ${SEARCH} | limit=${LIMIT} | dry=${DRY_RUN}\n`)
+// 2026-06-12 — MULTI-LOCATION. A single "trade Chicago" query caps at
+// ~20-250 Google results. Passing --cities "Chicago,Naperville,Cicero,..."
+// fans the search across the metro + collar suburbs IN ONE Apify run
+// (billed per result, not per query → same $/shop, 5-10x the volume).
+// Falls back to the single --city when --cities isn't given.
+const CITIES = (arg('cities', '') || '').split(',').map((s) => s.trim()).filter(Boolean)
+const LOCATIONS = CITIES.length > 0 ? CITIES : [CITY]
+const SEARCHES = LOCATIONS.map((loc) => `${TRADE_QUERY} ${loc} ${STATE}`)
+console.log(`\n→ mass-source: ${TRADE_QUERY} across ${LOCATIONS.length} location(s) | limit=${LIMIT}/loc | dry=${DRY_RUN}\n`)
 
 // ── Apify run ──────────────────────────────────────────────────────────
-async function runApify(query) {
+async function runApify(queries) {
   const r = await fetch(
     `https://api.apify.com/v2/acts/compass~crawler-google-places/runs?token=${APIFY_TOKEN}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        searchStringsArray: [query],
+        searchStringsArray: Array.isArray(queries) ? queries : [queries],
         maxCrawledPlacesPerSearch: LIMIT,
         language: 'en',
         searchMatching: 'all',
@@ -118,9 +125,11 @@ async function runApify(query) {
   const runId = startJson?.data?.id
   if (!runId) throw new Error(`Apify start failed: ${JSON.stringify(startJson).slice(0, 200)}`)
 
-  // Poll until done (max 5 min)
-  for (let i = 0; i < 60; i++) {
-    await new Promise((res) => setTimeout(res, 5000))
+  // Poll until done. Contact-scraping crawls each website for emails →
+  // slow; a 350-place run can take 12-18 min. Poll 10s × 150 = 25 min so
+  // we never abandon a run we already paid for.
+  for (let i = 0; i < 150; i++) {
+    await new Promise((res) => setTimeout(res, 10000))
     const s = await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_TOKEN}`)
     const sj = await s.json()
     const status = sj?.data?.status
@@ -139,8 +148,8 @@ async function runApify(query) {
 }
 
 // ── Main ──────────────────────────────────────────────────────────────
-const raw = await runApify(SEARCH)
-console.log(`\n✓ Apify returned ${raw.length} places\n`)
+const raw = await runApify(SEARCHES)
+console.log(`\n✓ Apify returned ${raw.length} places across ${LOCATIONS.length} location(s)\n`)
 
 // Audit dump
 const auditDir = path.resolve('leads')

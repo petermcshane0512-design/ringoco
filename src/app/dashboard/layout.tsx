@@ -44,7 +44,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: "Inter, system-ui, -apple-system, sans-serif", background: '#f5f6f8' }}>
       <ImpersonationBanner />
 
-      <header style={{
+      <header className="bavg-dash-header" style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         padding: '10px clamp(14px, 4vw, 28px)',
         background: '#ffffff',
@@ -53,20 +53,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         gap: 10,
       }}>
         <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', minWidth: 0 }}>
-          <Image src="/logo.png" alt="BellAveGo" width={170} height={52} style={{ objectFit: 'contain', maxWidth: 'min(40vw, 170px)', height: 'auto' }} priority />
+          <Image src="/logo.png" alt="BellAveGo" width={170} height={52} style={{ objectFit: 'contain', maxWidth: 'min(38vw, 170px)', height: 'auto' }} priority />
         </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <Link href="/dashboard/buy-leads" style={{
+        <div className="bavg-dash-actions" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <Link href="/dashboard/buy-leads" className="bavg-dash-primary" style={{
             fontSize: 13, fontWeight: 700, color: '#ffffff',
             textDecoration: 'none',
             padding: '10px 14px', borderRadius: 8, minHeight: 44, display: 'inline-flex', alignItems: 'center',
-            background: '#E8742B',
+            background: '#E8742B', whiteSpace: 'nowrap',
           }}>Buy more leads</Link>
-          <Link href="/dashboard/settings" style={navLink}>Settings</Link>
-          <Link href="/dashboard/support" style={navLink}>Support</Link>
+          <Link href="/dashboard/settings" className="bavg-dash-nav" style={navLink}>Settings</Link>
+          <Link href="/dashboard/support" className="bavg-dash-nav" style={navLink}>Support</Link>
           <UserButton />
         </div>
       </header>
+      {/* Mobile: logo + primary CTA + account stay; secondary nav (Settings/
+          Support) collapses to keep the row from overflowing at 390px.
+          They're still reachable from in-page links. */}
+      <style>{`
+        @media (max-width: 560px) {
+          .bavg-dash-header { padding: 8px 12px !important; gap: 8px !important; }
+          .bavg-dash-actions { gap: 6px !important; }
+          .bavg-dash-nav { display: none !important; }
+          .bavg-dash-primary { padding: 9px 12px !important; font-size: 12.5px !important; }
+        }
+      `}</style>
 
       <main style={{ flex: 1, overflowY: 'auto' }}>{children}</main>
 
