@@ -51,14 +51,14 @@ type SampleLead = {
 
 const SAMPLE_LEADS: SampleLead[] = [
   { id: 's1',  name: 'T. Alvarez',    addr: '76●● 4th Ave',      area: 'Bay Ridge',      lat: 40.6334, lng: -74.0241, tag: 'Aging roof · 1961 build',        tone: 'slate',  value: '$9.4K – $15.8K',  phone: null },
-  { id: 's2',  name: 'P. Rosario',    addr: '56●● 6th Ave',      area: 'Sunset Park',    lat: 40.6402, lng: -74.0117, tag: 'Code violation · roof',          tone: 'red',    value: '$12.6K – $19.4K', phone: '(718) ●●●-●208' },
+  { id: 's2',  name: 'P. Rosario',    addr: '56●● 6th Ave',      area: 'Sunset Park',    lat: 40.6402, lng: -74.0117, tag: 'City cited — roof repair ordered', tone: 'red',    value: '$12.6K – $19.4K', phone: '(718) ●●●-●208' },
   { id: 's3',  name: 'R. Castellano', addr: '84●● 13th Ave',     area: 'Dyker Heights',  lat: 40.6195, lng: -74.0117, tag: 'Roof permit filed',              tone: 'orange', value: '$11.2K – $17.6K', phone: '(718) ●●●-●142' },
-  { id: 's4',  name: 'A. Petrov',     addr: '53●● 11th Ave',     area: 'Borough Park',   lat: 40.6354, lng: -73.9961, tag: 'Hearing docket · facade/roof',   tone: 'red',    value: '$14.2K – $21.8K', phone: null },
+  { id: 's4',  name: 'A. Petrov',     addr: '53●● 11th Ave',     area: 'Borough Park',   lat: 40.6354, lng: -73.9961, tag: 'Hearings + fine — roof repair due', tone: 'red',   value: '$14.2K – $21.8K', phone: null },
   { id: 's5',  name: 'S. Lindgren',   addr: '22●● 65th St',      area: 'Bensonhurst',    lat: 40.6122, lng: -73.9905, tag: 'Roof permit filed',              tone: 'orange', value: '$10.8K – $16.2K', phone: '(929) ●●●-●377' },
-  { id: 's6',  name: 'L. Nguyen',     addr: '18●● W 9th St',     area: 'Gravesend',      lat: 40.5946, lng: -73.9819, tag: 'Roof permit filed',              tone: 'orange', value: '$9.8K – $14.6K',  phone: '(347) ●●●-●521' },
+  { id: 's6',  name: 'L. Nguyen',     addr: '18●● W 9th St',     area: 'Gravesend',      lat: 40.5946, lng: -73.9819, tag: 'Failed inspection — roof, must re-pass', tone: 'red', value: '$9.8K – $14.6K',  phone: '(347) ●●●-●521' },
   { id: 's7',  name: 'D. Mancini',    addr: '14●● Avenue R',     area: 'Midwood',        lat: 40.6092, lng: -73.9532, tag: 'Storm damage zone',              tone: 'orange', value: '$13.4K – $20.2K', phone: '(718) ●●●-●664' },
   { id: 's8',  name: 'C. Brennan',    addr: '45●● Bedford Ave',  area: 'Sheepshead Bay', lat: 40.5895, lng: -73.9486, tag: 'Aging roof · 1958 build',        tone: 'slate',  value: '$8.6K – $13.4K',  phone: null },
-  { id: 's9',  name: 'M. Okafor',     addr: '11●● E 38th St',    area: 'Flatbush',       lat: 40.6312, lng: -73.9396, tag: 'Code violation · roof',          tone: 'red',    value: '$12.2K – $18.4K', phone: '(347) ●●●-●093' },
+  { id: 's9',  name: 'M. Okafor',     addr: '11●● E 38th St',    area: 'Flatbush',       lat: 40.6312, lng: -73.9396, tag: 'City cited — fix or get fined',  tone: 'red',    value: '$12.2K – $18.4K', phone: '(347) ●●●-●093' },
   { id: 's10', name: 'J. Whitfield',  addr: '29●● Gerritsen Ave', area: 'Marine Park',   lat: 40.5984, lng: -73.9322, tag: 'New owner · 5 wks',              tone: 'teal',   value: '$7.8K – $12.2K',  phone: '(917) ●●●-●485' },
 ]
 
@@ -213,6 +213,19 @@ export default function SampleDashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
         <div style={{ fontSize: 13.5, fontWeight: 800, color: '#1f2937' }}>This week&rsquo;s leads</div>
         <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280' }}>{leads.length} delivered · closest to you first · tap a pin</div>
+      </div>
+
+      {/* Call-angle framing — the RED leads are the money: the city has
+          ordered the repair, so the homeowner has to act. */}
+      <div style={{
+        display: 'flex', alignItems: 'flex-start', gap: 8,
+        padding: '9px 12px', borderRadius: 9, marginBottom: 8,
+        background: '#fef2f2', border: '1px solid #fecaca',
+      }}>
+        <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#dc2626', flexShrink: 0, marginTop: 4 }} />
+        <span style={{ fontSize: 11.5, color: '#991b1b', fontWeight: 600, lineHeight: 1.45 }}>
+          <strong>Red = the city ordered this repair.</strong> These homeowners have to fix it or face fines — mention it on the call and they almost always say yes.
+        </span>
       </div>
 
       <div ref={scrollRef} className="bavg-sample-scroll" style={{ maxHeight: 280, overflowY: 'auto', paddingRight: 4, marginRight: -4, scrollbarWidth: 'thin' }}>
