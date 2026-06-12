@@ -169,7 +169,9 @@ async function pushLead(lead: Lead, leadsPreview: string): Promise<{ ok: boolean
     },
     body: JSON.stringify(body),
   })
-  if (r.status === 200 || r.status === 201) return { ok: true }
+  // r.ok (not just 200/201): with verify_leads_on_import the API may
+  // accept the batch as an async verification job (202).
+  if (r.ok) return { ok: true }
   const txt = await r.text().catch(() => '')
   return { ok: false, error: `HTTP ${r.status}: ${txt.slice(0, 200)}` }
 }
