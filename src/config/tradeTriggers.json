@@ -35,13 +35,19 @@
       "key": "plumbing",
       "engineTrade": "plumbing",
       "label": "Plumbing",
-      "patterns": ["plumb", "water heater", "sewer", "drain", "leak", "pipe", "water service", "catch basin", "sump", "backflow"]
+      "patterns": ["plumb", "water heater", "hot water", "no water", "sewer", "drain", "leak", "pipe", "water service", "catch basin", "sump", "backflow"]
     },
     {
       "key": "hvac",
       "engineTrade": "hvac",
       "label": "HVAC",
-      "patterns": ["hvac", "heating plant", "furnace", "boiler", "mechanical heating", "air condition", "a/c", "heat pump", "ventilat", "no heat", "chimney flue"]
+      "patterns": ["hvac", "heating plant", "furnace", "boiler", "mechanical heating", "air condition", "a/c", "heat pump", "ventilat", "no heat", "provide heat", "adequate heat", "radiator", "chimney flue"]
+    },
+    {
+      "key": "painting",
+      "engineTrade": "handyman",
+      "label": "Painting / lead remediation",
+      "patterns": ["paint", "lead-based", "lead based", "lead paint", "lead-paint", "lead hazard", "peeling", "plaster"]
     }
   ],
   "sr311_building_types": [
