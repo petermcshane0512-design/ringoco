@@ -154,7 +154,12 @@ async function pushLead(lead: Lead, leadsPreview: string): Promise<{ ok: boolean
     skip_if_in_workspace: true,
     skip_if_in_campaign: true,
     verify_leads_for_lead_finder: false,
-    verify_leads_on_import: false,
+    // 2026-06-12 — verify ON IMPORT. The false setting shipped unverified
+    // scraped emails straight into the campaign and bought a 7.1% bounce
+    // rate + an auto-paused campaign (no HUNTER_API_KEY in prod, so the
+    // nightly Hunter wash never ran either). Instantly verifies each
+    // import for ~1 credit — cheap vs burning a cold domain.
+    verify_leads_on_import: true,
   }
   const r = await fetch('https://api.instantly.ai/api/v2/leads', {
     method: 'POST',
