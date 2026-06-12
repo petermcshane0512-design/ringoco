@@ -45,14 +45,16 @@ type SourcedLead = {
 function firstNameFrom(business: string | null): string {
   const b = (business || '').trim()
   if (!b) return 'there'
-  // "Mike's Roofing" / "Tony's Masonry" -> first name
-  const poss = b.match(/^([A-Z][a-z]+)['’]s\b/)
-  if (poss) return poss[1]
-  // "Mike Smith Roofing" — first token if it's a plausible first name (not a
-  // company word like "ABC", "Chicago", "Premier")
-  const first = b.split(/\s+/)[0]
-  const companyWord = /^(the|a|abc|all|pro|elite|premier|best|top|first|chicago|midwest|us|usa|north|south|east|west|royal|crown|king|star|sun|sky|metro|city|home|quality|expert|master|advanced|reliable|trusted)$/i
-  if (/^[A-Z][a-z]{2,}$/.test(first) && !companyWord.test(first)) return first
+  // ONLY trust a possessive ("Mike's Roofing" -> "Mike"). The first-token
+  // heuristic was too loose — it produced "Hey Tuckpointing,", "Hey
+  // Riteway,", "Hey Alsip," which read like spam and tank conversion. A
+  // generic "Hey there," is far safer than a wrong name. (2026-06-12)
+  const poss = b.match(/^([A-Z][a-z]{2,})['’]s\b/)
+  if (poss) {
+    const name = poss[1]
+    const tradeWord = /^(tuckpoint|mason|roof|brick|chimney|gutter|restore|restoration|builder|contractor)/i
+    if (!tradeWord.test(name)) return name
+  }
   return 'there'
 }
 
