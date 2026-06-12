@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { TIER_FEATURES, isValidTier, type Tier } from '@/lib/pricing'
 import { geocodeBusinessAddress } from '@/lib/geocodeBusinessAddress'
 import { skipTraceAddress, batchdataPropertyDetail } from '@/lib/skipTrace'
+import { buildFromTemplate, buildOutreachMessage, missingProfileFields, type OutreachProfile } from '@/lib/outreachMessage'
 
 export const runtime = 'nodejs'
 
@@ -67,7 +68,7 @@ export async function GET() {
       lead:leads (
         id, street_address, city, state, zip, owner_name, owner_phone, owner_email,
         home_value_est, year_built, sqft, source, lead_score, pitch_script,
-        skip_trace_attempted_at, skip_trace_hit, lat, lng, source_details
+        skip_trace_attempted_at, skip_trace_hit, lat, lng, source_details, trade_match
       )
     `)
     .eq('user_id', userId)
@@ -167,10 +168,19 @@ export async function GET() {
     year_built?: number | null; home_value_est?: number | null; sqft?: number | null
     source_details?: Record<string, unknown> | null
   }
+  // Eligibility (2026-06-12): any address-bearing lead that was never
+  // enriched, OR was enriched under the old 7-field dossier (dossier_v < 2)
+  // — those re-run ONCE to pick up sale price / lot / stories / pool /
+  // garage / occupancy. The version stamp prevents an infinite respend on
+  // parcels BatchData simply has no data for.
   const needDossier = drops
     .map((d) => d.lead as unknown as DossierPatch)
-    .filter((l) => l && l.street_address && (!l.year_built || !l.home_value_est))
-    .filter((l) => !(l.source_details as { dossier_attempted?: boolean } | null)?.dossier_attempted)
+    .filter((l) => l && l.street_address)
+    .filter((l) => {
+      const sd = l.source_details as { dossier_attempted?: boolean; dossier_v?: number } | null
+      if (sd?.dossier_attempted) return (sd.dossier_v ?? 1) < 2
+      return true
+    })
   const enrichDossier = async (l: DossierPatch, patchInPlace: boolean) => {
     try {
       const r = await batchdataPropertyDetail({
@@ -178,17 +188,33 @@ export async function GET() {
       })
       if (!r.ok || !r.detail) return  // infra failure / no match — retry next load
       const d = r.detail
-      const sd = { ...(l.source_details || {}), dossier_attempted: true, property: { beds: d.beds, baths: d.baths, equity: d.equity, last_sale_date: d.last_sale_date } }
+      // 2026-06-12 — widened dossier (per Peter: "really highly descriptive").
+      // Same BatchData call now also carries sale price, lot, stories, pool,
+      // garage, owner-occupancy; all stored so the card can render them.
+      const sd = {
+        ...(l.source_details || {}),
+        dossier_attempted: true,
+        dossier_v: 2,
+        property: {
+          beds: d.beds, baths: d.baths, equity: d.equity, last_sale_date: d.last_sale_date,
+          last_sale_price: d.last_sale_price, lot_sqft: d.lot_sqft, stories: d.stories,
+          pool: d.pool, garage_spaces: d.garage_spaces, owner_occupied: d.owner_occupied,
+        },
+      }
       await supabase.from('leads').update({
         ...(d.year_built ? { year_built: d.year_built } : {}),
         ...(d.value ? { home_value_est: d.value } : {}),
         ...(d.sqft ? { sqft: d.sqft } : {}),
+        // Public-record titleholder fills the name gap until skip-trace runs
+        // ("Owner unlisted" cards had the name sitting in the same response).
+        ...(d.owner_name && !l.owner_name ? { owner_name: d.owner_name } : {}),
         source_details: sd,
       }).eq('id', l.id)
       if (patchInPlace) {
         if (d.year_built) l.year_built = d.year_built
         if (d.value) l.home_value_est = d.value
         if (d.sqft) l.sqft = d.sqft
+        if (d.owner_name && !l.owner_name) l.owner_name = d.owner_name
         l.source_details = sd
       }
     } catch { /* enhancement only */ }
@@ -236,6 +262,101 @@ export async function GET() {
       contactBackfillNotes.push(`trace threw: ${(e as Error).message}`)
     }
   }
+
+  // 2026-06-12 — PRE-LOADED AI OUTREACH (per Peter: "scripts already
+  // loaded up"). Messages are per-tenant, persisted on lead_drops.ai_* and
+  // returned at drop level so the card renders them with zero clicks.
+  //
+  // Cost discipline: the cached-template merge is a string replace (free)
+  // — run it synchronously for every eligible drop. The Sonnet fallback
+  // costs ~1¢ + seconds — deferred to after(), capped 4/load, so a
+  // template-less profile fills in across a couple of refreshes instead of
+  // blocking this response.
+  //
+  // Pre-migration resilience: ai_* columns ship in
+  // sql/2026-06-12-lead-drops-ai-messages.sql. Until it's applied the
+  // separate ai-column read + writes fail quietly and the dashboard keeps
+  // its click-to-generate path. NEVER fold ai_* into the main drops select
+  // — an unapplied migration would 500 the whole list.
+  type AiCols = { id: string; ai_sms: string | null; ai_email_subject: string | null; ai_email_body: string | null }
+  type DropWithAi = (typeof drops)[number] & { ai_sms?: string | null; ai_email_subject?: string | null; ai_email_body?: string | null }
+  try {
+    const { data: aiRows } = await supabase
+      .from('lead_drops')
+      .select('id, ai_sms, ai_email_subject, ai_email_body')
+      .in('id', drops.map((d) => d.id))
+    const aiById = new Map((aiRows as AiCols[] | null ?? []).map((r) => [r.id, r]))
+
+    const { data: opRaw } = await supabase
+      .from('profiles')
+      .select('business_name, owner_first_name, owner_last_name, years_in_business, value_props, outreach_tone, outreach_prompt_template')
+      .eq('user_id', userId)
+      .maybeSingle()
+    const outreachProfile = (opRaw as OutreachProfile | null) || ({} as OutreachProfile)
+    const profileReady = missingProfileFields(outreachProfile).length === 0
+
+    type MsgLead = {
+      id: string; street_address: string | null; zip: string | null; source: string | null
+      source_details: Record<string, unknown> | null; owner_name?: string | null
+      owner_phone?: string | null; owner_email?: string | null; trade_match?: string[] | null
+    }
+    const needsMsg: Array<{ dropId: string; lead: MsgLead }> = []
+    for (const d of drops) {
+      const ai = aiById.get(d.id)
+      const lead = d.lead as unknown as MsgLead
+      const dd = d as DropWithAi
+      if (ai?.ai_sms || ai?.ai_email_subject) {
+        dd.ai_sms = ai.ai_sms
+        dd.ai_email_subject = ai.ai_email_subject
+        dd.ai_email_body = ai.ai_email_body
+      } else if (profileReady && lead && (lead.owner_phone || lead.owner_email) && lead.source !== 'aging_hvac') {
+        needsMsg.push({ dropId: d.id, lead })
+      }
+    }
+
+    const persistMsg = (dropId: string, m: { sms: string; email_subject: string; email_body: string }) =>
+      supabase.from('lead_drops').update({
+        ai_sms: m.sms,
+        ai_email_subject: m.email_subject,
+        ai_email_body: m.email_body,
+        ai_generated_at: new Date().toISOString(),
+      }).eq('id', dropId)
+
+    const sonnetQueue: typeof needsMsg = []
+    for (const { dropId, lead } of needsMsg) {
+      const merged = buildFromTemplate(
+        { street_address: lead.street_address, zip: lead.zip, source: lead.source, source_details: lead.source_details, trade_match: lead.trade_match ?? null },
+        lead.owner_name ?? null,
+        outreachProfile,
+      )
+      if (merged) {
+        await persistMsg(dropId, merged)
+        const dd = drops.find((d) => d.id === dropId) as DropWithAi | undefined
+        if (dd) {
+          dd.ai_sms = merged.sms
+          dd.ai_email_subject = merged.email_subject
+          dd.ai_email_body = merged.email_body
+        }
+      } else {
+        sonnetQueue.push({ dropId, lead })
+      }
+    }
+    if (sonnetQueue.length > 0) {
+      after(async () => {
+        for (const { dropId, lead } of sonnetQueue.slice(0, 4)) {
+          try {
+            const r = await buildOutreachMessage(
+              { street_address: lead.street_address, zip: lead.zip, source: lead.source, source_details: lead.source_details, trade_match: lead.trade_match ?? null },
+              lead.owner_name ?? null,
+              outreachProfile,
+            )
+            if (r.ok) await persistMsg(dropId, r)
+          } catch { /* enhancement only */ }
+        }
+        console.log(`[leads/list] background message pre-gen done: ${Math.min(4, sonnetQueue.length)} drops for ${userId}`)
+      })
+    }
+  } catch { /* pre-migration or transient — dashboard falls back to click-to-generate */ }
 
   const usedThisPeriod = drops.filter((d) => new Date(d.drop_date) >= periodStart).length
 

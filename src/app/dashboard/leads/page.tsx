@@ -51,6 +51,11 @@ type LeadDrop = {
   drop_period: string
   status: 'new' | 'viewed' | 'contacted' | 'quoted' | 'won' | 'lost' | 'dismissed'
   notes: string | null
+  // 2026-06-12 — pre-loaded AI outreach, generated server-side at list
+  // load and persisted on lead_drops (per Peter: no click-and-wait).
+  ai_sms?: string | null
+  ai_email_subject?: string | null
+  ai_email_body?: string | null
   lead: {
     id: string
     street_address: string | null
@@ -87,6 +92,13 @@ type LeadDrop = {
         baths?: number | null
         equity?: number | null
         last_sale_date?: string | null
+        // 2026-06-12 widened dossier — see lib/skipTrace.ts PropertyDetail
+        last_sale_price?: number | null
+        lot_sqft?: number | null
+        stories?: number | null
+        pool?: boolean | null
+        garage_spaces?: number | null
+        owner_occupied?: boolean | null
       }
     } | null
   }
@@ -998,9 +1010,16 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
   const l = drop.lead
   const fullAddr = [l.street_address, l.city, l.state, l.zip].filter(Boolean).join(', ')
   const mapsHref = fullAddr ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddr)}` : null
-  const [aiOpen, setAiOpen] = useState(false)
+  // 2026-06-12 — pre-loaded outreach: when the server already generated +
+  // persisted the message (drop.ai_*), the card opens with it ready to
+  // send. The generate button remains only for drops the server couldn't
+  // pre-fill (incomplete profile / Sonnet queue still draining).
+  const preloaded: GeneratedMessage | null = drop.ai_sms || drop.ai_email_subject
+    ? { sms: drop.ai_sms ?? '', email_subject: drop.ai_email_subject ?? '', email_body: drop.ai_email_body ?? '' }
+    : null
+  const [aiOpen, setAiOpen] = useState(!!preloaded)
   const [aiLoading, setAiLoading] = useState(false)
-  const [aiMsg, setAiMsg] = useState<GeneratedMessage | null>(null)
+  const [aiMsg, setAiMsg] = useState<GeneratedMessage | null>(preloaded)
   const [aiError, setAiError] = useState<string | null>(null)
   const [sendingSms, setSendingSms] = useState(false)
   const [sendingEmail, setSendingEmail] = useState(false)
@@ -1156,9 +1175,15 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
             if (l.year_built) chips.push(`🏠 built ${l.year_built}${age ? ` (${age} yrs old)` : ''}`)
             if (l.sqft) chips.push(`📐 ${l.sqft.toLocaleString()} sqft`)
             if (prop?.beds || prop?.baths) chips.push(`🛏 ${prop?.beds ?? '?'}bd/${prop?.baths ?? '?'}ba`)
+            if (prop?.stories) chips.push(`🪜 ${prop.stories} ${prop.stories === 1 ? 'story' : 'stories'}`)
+            if (prop?.lot_sqft) chips.push(`🌳 ${prop.lot_sqft >= 21780 ? `${(prop.lot_sqft / 43560).toFixed(1)} acre lot` : `${prop.lot_sqft.toLocaleString()} sqft lot`}`)
+            if (prop?.garage_spaces) chips.push(`🚗 ${prop.garage_spaces}-car garage`)
+            if (prop?.pool) chips.push(`🏊 pool`)
             if (l.home_value_est) chips.push(`💰 ~$${Math.round(l.home_value_est / 1000)}K value`)
+            if (prop?.last_sale_price) chips.push(`🧾 bought for $${Math.round(prop.last_sale_price / 1000)}K`)
             if (prop?.equity) chips.push(`🏦 ~$${Math.round(prop.equity / 1000)}K equity`)
             if (yearsOwned !== null && yearsOwned > 0) chips.push(`🗓 owned ${yearsOwned} yrs`)
+            if (prop?.owner_occupied === true) chips.push(`🔑 owner lives here`)
             if (chips.length === 0 && !l.owner_email && !jobs) return null
             return (
               <div style={{
@@ -1184,6 +1209,16 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
                 {yearsOwned !== null && yearsOwned >= 10 && (
                   <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 500, marginTop: 4 }}>
                     {yearsOwned}+ years in the home — systems and surfaces aging on their watch, not a flipper.
+                  </div>
+                )}
+                {prop?.last_sale_price && l.home_value_est && l.home_value_est > prop.last_sale_price * 1.15 ? (
+                  <div style={{ fontSize: 12, color: '#15803d', fontWeight: 600, marginTop: 4 }}>
+                    Home up ~${Math.round((l.home_value_est - prop.last_sale_price) / 1000)}K since they bought — room in the budget for this job.
+                  </div>
+                ) : null}
+                {prop?.owner_occupied === false && (
+                  <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 500, marginTop: 4 }}>
+                    Owner doesn&rsquo;t live at the property — likely a landlord. Pitch fast scheduling and tenant-proof work.
                   </div>
                 )}
                 {jobs && (
@@ -1336,7 +1371,7 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
         <div style={{ marginTop: 14 }}>
           {!aiOpen ? (
             <button
-              onClick={generateMessage}
+              onClick={() => (aiMsg ? setAiOpen(true) : generateMessage())}
               disabled={aiLoading}
               style={{
                 width: '100%', padding: '13px 18px', borderRadius: 8, minHeight: 48,
@@ -1346,7 +1381,7 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
                 fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
               }}
             >
-              {aiLoading ? 'Writing your message…' : 'Get a text to send them'}
+              {aiLoading ? 'Writing your message…' : aiMsg ? 'Show ready-to-send message' : 'Get a text to send them'}
             </button>
           ) : aiMsg && (
             <div style={{ background: '#F9F5EC', borderRadius: 8, padding: '14px 16px', border: '1px solid #E3D8C2' }}>
@@ -1356,7 +1391,7 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
                 </div>
                 <button onClick={() => setAiOpen(false)} style={{ background: 'transparent', border: 'none', color: '#9ca3af', fontSize: 14, cursor: 'pointer', minWidth: 44, minHeight: 44 }}>✕</button>
               </div>
-              {l.owner_phone && (
+              {l.owner_phone && aiMsg.sms && (
                 <div style={{ marginBottom: 10, padding: '11px 13px', borderRadius: 8, background: '#ffffff', border: '1px solid #E3D8C2' }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 5 }}>Text to {l.owner_phone}</div>
                   <div style={{ fontSize: 13.5, lineHeight: 1.55, marginBottom: 8, color: '#1f2937' }}>{aiMsg.sms}</div>
@@ -1374,7 +1409,7 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
                   </button>
                 </div>
               )}
-              {l.owner_email && (
+              {l.owner_email && aiMsg.email_subject && (
                 <div style={{ padding: '11px 13px', borderRadius: 8, background: '#ffffff', border: '1px solid #E3D8C2' }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 5 }}>Email to {l.owner_email}</div>
                   <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, color: '#1f2937' }}>{aiMsg.email_subject}</div>

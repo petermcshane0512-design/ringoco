@@ -223,6 +223,15 @@ export type PropertyDetail = {
   value: number | null
   equity: number | null
   last_sale_date: string | null
+  // 2026-06-12 — dossier widened (per Peter: "really highly descriptive").
+  // Same API call, same 5¢ — we were throwing these fields away.
+  last_sale_price: number | null
+  lot_sqft: number | null
+  stories: number | null
+  pool: boolean | null
+  garage_spaces: number | null
+  owner_occupied: boolean | null
+  owner_name: string | null      // fills leads.owner_name when skip-trace hasn't run yet
 }
 
 export async function batchdataPropertyDetail(addr: { street: string; city?: string | null; state?: string | null; zip?: string | null }): Promise<{ ok: boolean; detail?: PropertyDetail; error?: string }> {
@@ -244,9 +253,15 @@ export async function batchdataPropertyDetail(addr: { street: string; city?: str
     clearTimeout(timer)
     if (!res.ok) return { ok: false, error: `batchdata detail HTTP ${res.status}` }
     type DetailRow = {
-      building?: { yearBuilt?: number; totalBuildingAreaSquareFeet?: number; bedroomCount?: number; bathroomCount?: number }
+      building?: {
+        yearBuilt?: number; totalBuildingAreaSquareFeet?: number; bedroomCount?: number; bathroomCount?: number
+        storiesCount?: number; stories?: number; pool?: boolean; garageParkingSpaceCount?: number
+      }
+      lot?: { lotSizeSquareFeet?: number }
       valuation?: { estimatedValue?: number; equityCurrentEstimatedBalance?: number }
-      sale?: { lastSale?: { saleDate?: string } }
+      sale?: { lastSale?: { saleDate?: string; saleAmount?: number } }
+      owner?: { name?: { full?: string }; fullName?: string; occupied?: boolean; ownerOccupied?: boolean }
+      quickLists?: { ownerOccupied?: boolean }
       deedHistory?: { recordingDate?: string }[]
     }
     const json = await res.json() as { results?: { properties?: DetailRow[] } }
@@ -263,6 +278,13 @@ export async function batchdataPropertyDetail(addr: { street: string; city?: str
         value: p.valuation?.estimatedValue ?? null,
         equity: p.valuation?.equityCurrentEstimatedBalance ?? null,
         last_sale_date: p.sale?.lastSale?.saleDate ?? p.deedHistory?.[0]?.recordingDate ?? null,
+        last_sale_price: p.sale?.lastSale?.saleAmount ?? null,
+        lot_sqft: p.lot?.lotSizeSquareFeet ?? null,
+        stories: p.building?.storiesCount ?? p.building?.stories ?? null,
+        pool: p.building?.pool ?? null,
+        garage_spaces: p.building?.garageParkingSpaceCount ?? null,
+        owner_occupied: p.owner?.occupied ?? p.owner?.ownerOccupied ?? p.quickLists?.ownerOccupied ?? null,
+        owner_name: p.owner?.name?.full ?? p.owner?.fullName ?? null,
       },
     }
   } catch (e) {

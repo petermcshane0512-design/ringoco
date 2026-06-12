@@ -56,7 +56,7 @@ const SAMPLES: LeadSample[] = [
     trade: 'Roofing', signal: 'STORM', score: 88,
     phoneMasked: '(469) ●●●-●032', phoneFull: '(469) 555-7032',
     shopName: 'Lone Star Roofing', shopOwnerFirst: 'Marcus',
-    smsBody: `Hey Sarah — Marcus w/ Lone Star Roofing. NOAA flagged 1.7" hail on your block Sun night. Free inspection takes 15 min — most insurance is willing to pay the full claim if you file in 30 days. Want me to swing by?`,
+    smsBody: `Hey Sarah — Marcus w/ Lone Star Roofing. Storm data flagged 1.7" hail on your block Sun night. Free inspection takes 15 min — most insurance is willing to pay the full claim if you file in 30 days. Want me to swing by?`,
   },
   {
     owner: 'Carlos Reyes', firstName: 'Carlos',
@@ -64,7 +64,7 @@ const SAMPLES: LeadSample[] = [
     trade: 'HVAC', signal: 'AGED', score: 81,
     phoneMasked: '(972) ●●●-●441', phoneFull: '(972) 555-3441',
     shopName: 'Frisco Climate Co', shopOwnerFirst: 'Daniel',
-    smsBody: `Hey Carlos — Daniel here w/ Frisco Climate. Your system's tagged as ~16yrs in county records. We're running tune-ups at $89 this month + free coil cleaning. Worth it before summer hits 105.`,
+    smsBody: `Hey Carlos — Daniel here w/ Frisco Climate. Your system's tagged at ~16yrs old. We're running tune-ups at $89 this month + free coil cleaning. Worth it before summer hits 105.`,
   },
   {
     owner: 'James Patel', firstName: 'James',
@@ -96,7 +96,7 @@ const SAMPLES: LeadSample[] = [
     trade: 'HVAC', signal: 'AGED', score: 79,
     phoneMasked: '(602) ●●●-●128', phoneFull: '(602) 555-8128',
     shopName: 'Sun Valley Air', shopOwnerFirst: 'Eric',
-    smsBody: `Hey Maria — Eric w/ Sun Valley Air. Your unit's a 2009 per county records — those usually start needing $400+ repairs around year 15. Quick free check this week, no charge if we don't find anything?`,
+    smsBody: `Hey Maria — Eric w/ Sun Valley Air. Your unit's a 2009 build — those usually start needing $400+ repairs around year 15. Quick free check this week, no charge if we don't find anything?`,
   },
   {
     owner: 'Rachel Brooks', firstName: 'Rachel',
@@ -380,11 +380,11 @@ export default function LiveAIPipeline() {
               borderTop: '1px solid rgba(255,197,138,0.18)',
               fontSize: 11, fontWeight: 700, color: 'rgba(255,248,240,0.55)', letterSpacing: '0.06em', textTransform: 'uppercase',
             }}>
-              <span>📍 24 metros</span>
-              <span>🏛 nightly permits</span>
-              <span>⛈ NOAA storms</span>
-              <span>🤖 sonnet AI</span>
-              <span>✉ Monday 6am drop</span>
+              <span>📍 nationwide coverage</span>
+              <span>🛰 nightly signal scan</span>
+              <span>🎯 verified intent</span>
+              <span>🤖 large-language-model AI</span>
+              <span>✉ weekly drop</span>
             </div>
           </div>
 

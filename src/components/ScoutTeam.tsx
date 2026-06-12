@@ -7,60 +7,63 @@ import { LEADS_PER_WEEK } from '@/lib/offer'
  * AgentTeam (exported as ScoutTeam for import stability) — homepage section
  * itemizing the automated AI agents working every contractor's zip 24/7.
  *
- * 2026-06-12 per Peter: renamed scouts -> AGENTS, every "Peter" reference
- * removed, bios rewritten dense + technical so the system reads like it
- * genuinely out-hunts every other lead source. Enforcement agents lead.
- *
- * Each agent maps to a real cron / pipeline currently shipping. If one is
- * killed or renamed, update this list so the homepage stays honest.
+ * 2026-06-12 per Peter:
+ *   - renamed scouts -> AGENTS, every "Peter" reference removed
+ *   - bios dense + technical so the system reads like it out-hunts every
+ *     other lead source
+ *   - SOURCE-AGNOSTIC: no public copy names the underlying data feeds
+ *     (no "violation records", "hearings dockets", "permits", "NOAA",
+ *     "Census", "MLS", "skip-trace provider", vendor names). Competitors
+ *     must not be able to reverse-engineer the pipeline from the homepage.
+ *     We describe the CAPABILITY (what the agent does), never the SOURCE.
  */
 
 type Agent = { name: string; bio: string }
 
 const AGENTS: Agent[] = [
   {
-    name: 'Code Enforcement Agent',
-    bio: 'Ingests your city’s building-violation feed every night through a direct data pipeline, runs NLP classification on each citation to tag the trade, geocodes it to your service rings, and surfaces only the OPEN cases within range — homes the city has ordered to repair, not yet resolved.',
+    name: 'Compliance Signal Agent',
+    bio: 'Continuously detects homeowners in your area who are under a municipal obligation to get work done — classifies each by trade with NLP, geocodes it to your service rings, and surfaces only the live, unresolved cases within range.',
   },
   {
-    name: 'Hearings Intelligence Agent',
-    bio: 'Monitors administrative-hearings dockets and entity-resolves respondents to property owners — pulling name, address, the cited code, and any fine on record. Flags the highest-pressure cases first so your top calls of the week are homeowners already on a deadline.',
+    name: 'Deadline Intelligence Agent',
+    bio: 'Resolves time-pressured property situations to the actual owner and ranks them by urgency, so the top of your weekly queue is always the homeowners already on the clock to act.',
   },
   {
-    name: 'Inspection-Failure Agent',
-    bio: 'Cross-references inspection-status records to detect properties that FAILED a city inspection and must be corrected and re-inspected. Scores each by recency and trade-fit so you reach the owner while the failure is still fresh and unbooked.',
+    name: 'High-Intent Detection Agent',
+    bio: 'Runs entity resolution across proprietary signal sets to identify homeowners who must correct an issue and re-verify it — the ones actively looking for a contractor, not browsing.',
   },
   {
-    name: 'Permit Stream Agent',
-    bio: 'Streams new building permits from city portals at 5am daily, parses the work description with keyword + semantic matching to your trade, and flags active projects in your zip before any competitor has even opened their inbox.',
+    name: 'Project Signal Agent',
+    bio: 'Streams fresh project activity in your zip every morning, parses each with semantic + keyword matching to your exact trade, and flags it before a competitor has opened their inbox.',
   },
   {
-    name: 'Storm & Insurance Agent',
-    bio: 'Polls NOAA hail and wind data in near-real-time, intersects verified storm polygons with your service area, and surfaces homes inside the insurance-claim window — the exact moment roofing and exterior demand spikes.',
+    name: 'Weather-Window Agent',
+    bio: 'Intersects verified severe-weather modeling with your service polygon in near-real-time to surface homes inside the high-demand repair window — the moment exterior work spikes.',
   },
   {
-    name: 'Skip-Trace Agent',
-    bio: 'Runs every flagged property through a multi-source skip-trace to attach a verified, line-typed phone number and owner identity — so you never burn a call on a dead number or the wrong person.',
+    name: 'Contact-Verification Agent',
+    bio: 'Runs every flagged property through multi-source identity resolution to attach a verified, line-typed phone and confirmed owner — so you never burn a call on a dead number or the wrong person.',
   },
   {
     name: 'Intent-Scoring Agent',
-    bio: 'Scores every lead 0–100 on a model weighing enforcement tier, deadline pressure, property value, equity, and signal recency — then ranks your queue so the homeowner most likely to close sits at the top.',
+    bio: 'Scores every lead 0–100 with a model weighing urgency, property value, owner equity, and signal recency, then ranks your queue so the homeowner most likely to close sits at the top.',
   },
   {
     name: 'Outreach-Writer Agent',
-    bio: 'Generates a tailored SMS, email, and call opener per lead with a large language model, signed as your shop — referencing the exact signal that surfaced them. Copy-paste, tweak, or fire it as-is in under a minute.',
+    bio: 'Generates a tailored SMS, email, and call opener per lead with a large language model, signed as your shop and referencing the exact reason they surfaced — ready to fire in under a minute.',
   },
   {
     name: 'Reply-Watcher Agent',
-    bio: 'Reads inbound replies in real time, classifies intent, and pushes a notification to your phone the instant a homeowner signals yes — so the hot ones never cool off waiting in an inbox.',
+    bio: 'Reads inbound replies in real time, classifies intent, and pushes a notification to your phone the instant a homeowner signals yes — so the hot ones never cool off in an inbox.',
   },
   {
     name: 'Exclusivity Agent',
-    bio: 'Locks every delivered lead to a single owner. The moment a homeowner drops into your dashboard, they’re claimed and provably removed from every competitor in your trade and territory — never resold like a shared lead network.',
+    bio: 'Locks every delivered lead to one owner. The instant a homeowner lands in your dashboard they’re claimed and provably removed from every competitor in your trade and territory — never resold like a shared lead network.',
   },
   {
     name: 'Property-Intel Agent',
-    bio: 'Enriches each lead with year built, square footage, beds/baths, estimated value, and owner equity from public records — so you can size the job and quote with confidence before you ever pick up the phone.',
+    bio: 'Enriches each lead with year built, square footage, beds/baths, estimated value, and owner equity — so you can size the job and quote with confidence before you ever pick up the phone.',
   },
   {
     name: 'Geospatial Routing Agent',
@@ -68,11 +71,11 @@ const AGENTS: Agent[] = [
   },
   {
     name: 'Deliverability Agent',
-    bio: 'Warms and rotates your sending infrastructure, monitors inbox-placement signals, and throttles volume per domain to keep your outreach landing in the primary inbox instead of spam.',
+    bio: 'Warms and rotates your sending infrastructure, monitors inbox-placement signals, and throttles volume to keep your outreach landing in the primary inbox instead of spam.',
   },
   {
     name: 'Freshness Agent',
-    bio: 'Re-checks enforcement status continuously and expires any lead whose violation gets resolved — so you never waste a call on a homeowner who already hired someone else.',
+    bio: 'Re-checks every lead’s status continuously and expires any whose situation gets resolved — so you never waste a call on a homeowner who already hired someone else.',
   },
   {
     name: 'Trade-Segmentation Agent',
@@ -80,22 +83,44 @@ const AGENTS: Agent[] = [
   },
   {
     name: 'Learning Agent',
-    bio: 'Runs a nightly feedback loop on real open, reply, and close outcomes — A/B testing message variants, killing losers, and reallocating tomorrow’s send toward whatever is actually converting. The system gets sharper every single day.',
+    bio: 'Runs a nightly feedback loop on real open, reply, and close outcomes — A/B testing message variants, killing losers, reallocating tomorrow’s send toward whatever is converting. Sharper every single day.',
   },
   {
-    name: 'Sourcing Agent',
-    bio: 'Mines mapping and business data sources every morning to expand coverage into new zips and trades, feeding the pipeline so your weekly drop never runs dry.',
+    name: 'Coverage Expansion Agent',
+    bio: 'Continuously widens the signal net into new zips and trades so your weekly drop never runs dry and your territory keeps filling.',
+  },
+  {
+    name: 'Dedup & Suppression Agent',
+    bio: 'Fingerprints every prospect across email, business, and domain so no homeowner is ever delivered twice and no contractor is ever contacted twice — the list stays clean at scale.',
+  },
+  {
+    name: 'Equity & Affordability Agent',
+    bio: 'Models each homeowner’s ability to pay from value and equity signals so you know, before the call, whether the job is a real ticket — quote with confidence, skip the tire-kickers.',
+  },
+  {
+    name: 'Job-Value Estimator Agent',
+    bio: 'Projects the likely job size at each property from a trade-tuned model, so every lead arrives with a dollar range and a clear reason it’s worth your time.',
+  },
+  {
+    name: 'Pitch-Angle Agent',
+    bio: 'Distills the single sharpest reason to call each homeowner into a one-line angle, so you open every conversation knowing exactly why this person needs you this week.',
+  },
+  {
+    name: 'Timing Optimizer Agent',
+    bio: 'Learns the hours and days your outreach gets opened and replied to per region, then schedules each send into the window most likely to land a response.',
+  },
+  {
+    name: 'Quality-Control Agent',
+    bio: 'Validates every lead before delivery — confirms it’s a real, in-range, deliverable property and quietly drops anything that doesn’t meet the bar, so your dashboard only holds leads worth working.',
   },
   {
     name: 'Uptime Sentinel',
-    bio: 'Monitors every cron, API call, and data feed around the clock and self-heals or alerts the moment anything stalls — so your leads land on schedule whether or not anyone is watching.',
+    bio: 'Monitors every pipeline and data process around the clock and self-heals or alerts the moment anything stalls — so your leads land on schedule whether or not anyone is watching.',
   },
 ]
 
 // Exported as ScoutTeam to keep page.tsx imports stable.
 export default function ScoutTeam() {
-  // Show the first 4 (enforcement agents lead); rest behind a toggle on
-  // BOTH mobile and desktop.
   const [open, setOpen] = useState(false)
   const visible = open ? AGENTS : AGENTS.slice(0, 4)
   return (
@@ -119,7 +144,7 @@ export default function ScoutTeam() {
             }}>One shop gets all of it.</span>
           </h2>
           <p style={{ fontSize: 16, color: '#3D5A66', maxWidth: 720, margin: '0 auto', lineHeight: 1.55 }}>
-            These aren&rsquo;t buzzwords. Every agent below is a real system running every night in your zip &mdash; ingesting city records, scoring intent, skip-tracing phones, writing the outreach. {LEADS_PER_WEEK} verified homeowner leads land in your dashboard every week, yours alone. You do the one part software can&rsquo;t: pick up the phone.
+            {AGENTS.length} agents run every night in your zip — finding the homeowners who actually need your work, scoring intent, verifying phones, and writing the outreach. {LEADS_PER_WEEK} verified leads land in your dashboard every week, yours alone. You do the one part software can&rsquo;t: pick up the phone.
           </p>
         </div>
 
@@ -145,7 +170,7 @@ export default function ScoutTeam() {
                   fontSize: 13, fontWeight: 900,
                   flexShrink: 0,
                 }}>
-                  {String((open ? i : i) + 1).padStart(2, '0')}
+                  {String(i + 1).padStart(2, '0')}
                 </div>
                 <div style={{ fontSize: 14.5, fontWeight: 900, color: '#0B1F3A', letterSpacing: '-0.01em', lineHeight: 1.15 }}>
                   {a.name}
@@ -166,7 +191,6 @@ export default function ScoutTeam() {
           ))}
         </div>
 
-        {/* Show-all toggle — mobile + desktop. */}
         <div style={{ textAlign: 'center', marginTop: 22 }}>
           <button
             onClick={() => setOpen((x) => !x)}
@@ -184,10 +208,9 @@ export default function ScoutTeam() {
         </div>
 
         <p style={{ textAlign: 'center', marginTop: 24, fontSize: 13, color: '#7AAAB2', maxWidth: 720, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.6 }}>
-          We don&rsquo;t hide behind &ldquo;AI does it.&rdquo; Every agent above runs on real,
-          verifiable public records &mdash; city violations, hearings dockets, permits,
-          NOAA, property data. Boring infrastructure, run relentlessly, so you only
-          ever do the part that closes the job.
+          Every agent above is real infrastructure running on our proprietary
+          signal pipeline &mdash; built, tuned, and run relentlessly so you only ever
+          do the part that closes the job: pick up the phone.
         </p>
       </div>
     </section>

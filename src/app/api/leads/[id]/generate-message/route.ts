@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { buildOutreachMessage, type OutreachLead, type OutreachProfile } from '@/lib/outreachMessage'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -10,78 +10,21 @@ export const maxDuration = 30
  * POST /api/leads/[id]/generate-message
  *
  * 2026-06-09 LEADS-ONLY PIVOT — the per-lead AI message generator.
+ * 2026-06-12 — message-building logic extracted to lib/outreachMessage.ts
+ * so /api/leads/list can PRE-generate the same messages at dashboard load
+ * (per Peter: scripts already loaded up). This route stays as the
+ * on-demand fallback/regenerate path; behavior + status codes unchanged.
  *
- * Returns a personalized email + SMS the contractor can send to a specific
- * lead. Pulls:
- *   - Contractor's outreach_prompt_template (Sonnet-written at onboarding
- *     end via /api/leads/generate-outreach-prompt). Stored as JSON in
- *     profiles.outreach_prompt_template.
- *   - Specific lead data (homeowner name, address, signal, etc).
- *
- * Strategy: if template has merge tags ({{lead_first_name}}, {{lead_address}},
- * {{lead_signal}}, {{lead_zip}}), do simple find-replace. If template is
- * missing or merge fails, fall back to live Sonnet generation per lead.
- *
- * Result NOT persisted — caller picks "Send SMS" or "Send Email" to
- * actually dispatch.
+ * The result is now ALSO persisted to lead_drops.ai_* so a regenerate
+ * survives refresh and the dashboard renders it instantly next load.
  */
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
-type Lead = {
-  id: string
-  street_address: string | null
-  zip: string | null
-  city: string | null
-  state: string | null
-  source: string | null
-  source_details: Record<string, unknown> | null
-  trade_match: string[] | null
-}
-
-type LeadDrop = {
-  id: string
-  lead_id: string
-  user_id: string
-  owner_name: string | null
-  owner_phone: string | null
-  owner_email: string | null
-}
-
-type Profile = {
-  business_name: string | null
-  owner_first_name: string | null
-  owner_last_name: string | null
-  owner_phone: string | null
-  years_in_business: number | null
-  value_props: string[] | null
-  outreach_tone: string | null
-  outreach_prompt_template: string | null
-}
-
-function homeownerFirstName(fullName: string | null | undefined): string {
-  if (!fullName) return 'there'
-  const parts = fullName.trim().split(/\s+/)
-  return parts[0] || 'there'
-}
-
-function describeSignal(source: string | null, details: Record<string, unknown> | null): string {
-  if (!source) return 'recent activity on the property'
-  const d = details || {}
-  if (source === 'permit') return `permit filed: ${String(d.work_description || d.permit_type || 'home improvement')}`
-  if (source === 'aging_hvac') return `your HVAC system flagged as past typical lifespan (16+ yrs)`
-  if (source === 'move_in') return `just purchased the property — most folks like an HVAC checkup before peak season`
-  if (source === 'storm') return `recent storm in your area — checking on roof/HVAC damage`
-  return 'recent property record event'
-}
-
-function mergeTemplate(tpl: string, vars: Record<string, string>): string {
-  return tpl.replace(/\{\{(\w+)\}\}/g, (_m, k) => vars[k] ?? '')
-}
+type LeadRow = OutreachLead & { id: string; city: string | null; state: string | null; owner_name: string | null }
 
 export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { userId } = await auth()
@@ -95,25 +38,15 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     .eq('user_id', userId)
     .eq('lead_id', leadId)
     .maybeSingle()
-  let drop = (dropRaw as LeadDrop | null) || null
-
-  // Fall back to direct leads row if no drop record (lead engine didn't assign it)
-  let owner_name: string | null = null
-  let owner_phone: string | null = null
-  let owner_email: string | null = null
-  if (drop) {
-    owner_name = drop.owner_name
-    owner_phone = drop.owner_phone
-    owner_email = drop.owner_email
-  }
+  const drop = (dropRaw as { id: string; owner_name: string | null } | null) || null
 
   const { data: leadRaw, error: leadErr } = await supabase
     .from('leads')
-    .select('id, street_address, zip, city, state, source, source_details, trade_match')
+    .select('id, street_address, zip, city, state, source, source_details, trade_match, owner_name')
     .eq('id', leadId)
     .maybeSingle()
   if (leadErr || !leadRaw) return NextResponse.json({ ok: false, error: 'lead not found' }, { status: 404 })
-  const lead = leadRaw as Lead
+  const lead = leadRaw as LeadRow
   // Refuse aging_hvac: synthetic zip-aggregate row, no underlying property.
   // describeSignal() would emit a false per-property claim ("your HVAC system
   // flagged as past typical lifespan"). Never deliver to a homeowner.
@@ -126,92 +59,35 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     .select('business_name, owner_first_name, owner_last_name, owner_phone, years_in_business, value_props, outreach_tone, outreach_prompt_template')
     .eq('user_id', userId)
     .maybeSingle()
-  const profile = (pRaw as Profile | null) || {} as Profile
-  // 2026-06-11 HYBRID ONBOARDING GATE (per Peter, replacing both the
-  // killed 7-step wall and the too-loose name-only check): leads are
-  // always visible the moment they land — but SENDING AI outreach
-  // requires the profile fields that make the message good. The gate
-  // returns a STRUCTURED missing-list so the dashboard renders a 45-
-  // second inline setup at the exact moment of intent (first send),
-  // not a wall before value.
-  const realBusinessName = (profile.business_name || '').trim()
-  const missing: string[] = []
-  if (!realBusinessName || realBusinessName.toLowerCase() === 'my business') missing.push('business_name')
-  if (!(profile.owner_first_name || '').trim()) missing.push('owner_first_name')
-  if (!(profile.outreach_tone || '').trim()) missing.push('outreach_tone')
-  if (!profile.value_props || profile.value_props.length === 0) missing.push('value_props')
-  if (missing.length > 0) {
-    return NextResponse.json({ ok: false, error: 'profile_incomplete', missing }, { status: 428 })
-  }
-  // Signer: real first name if set, else the business name itself.
-  const signer = (profile.owner_first_name || '').trim() || realBusinessName
+  const profile = (pRaw as OutreachProfile | null) || {} as OutreachProfile
 
-  const leadFirstName = homeownerFirstName(owner_name)
-  const leadAddress = lead.street_address || `your home in ${lead.zip || ''}`
-  const leadZip = lead.zip || ''
-  const leadSignal = describeSignal(lead.source, lead.source_details)
+  const ownerName = drop?.owner_name || lead.owner_name
+  const result = await buildOutreachMessage(lead, ownerName, profile)
 
-  // 1) Try merge from cached template
-  if (profile.outreach_prompt_template) {
-    try {
-      const tpl = JSON.parse(profile.outreach_prompt_template) as { email_subject?: string; email_body?: string; sms?: string }
-      if (tpl.email_subject && tpl.email_body && tpl.sms) {
-        const vars = {
-          lead_first_name: leadFirstName,
-          lead_address: leadAddress,
-          lead_zip: leadZip,
-          lead_signal: leadSignal,
-        }
-        return NextResponse.json({
-          ok: true,
-          email_subject: mergeTemplate(tpl.email_subject, vars),
-          email_body: mergeTemplate(tpl.email_body, vars),
-          sms: mergeTemplate(tpl.sms, vars),
-          source: 'cached_template',
-        })
-      }
-    } catch { /* fall through to Sonnet */ }
-  }
-
-  // 2) Fall back to live Sonnet generation per lead
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ ok: false, error: 'ANTHROPIC_API_KEY missing on Vercel + no cached template' }, { status: 500 })
-  }
-  const tone = (profile.outreach_tone || 'casual').toLowerCase()
-  const valueProps = (profile.value_props || []).join(', ') || '(none listed)'
-  const years = profile.years_in_business ? `${profile.years_in_business} years in business` : ''
-  const trade = (lead.trade_match || []).join(' / ') || 'home services'
-
-  try {
-    const msg = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 800,
-      system: `Write an outreach email + SMS to a homeowner on behalf of a home-service contractor. Tone: ${tone}. Sounds 1-to-1, signed by the contractor. Reference the signal that surfaced the lead. NEVER mention BellAveGo, AI, automation, or mass outreach. Output JSON: {"email_subject","email_body","sms"}`,
-      messages: [{
-        role: 'user',
-        content: `Contractor: ${realBusinessName}${profile.owner_first_name ? `, run by ${profile.owner_first_name} ${profile.owner_last_name || ''}` : ''}${years ? ` (${years})` : ''}. Value props: ${valueProps}. Trade: ${trade}.
-
-Homeowner: ${leadFirstName} at ${leadAddress}.
-
-Signal that surfaced this lead: ${leadSignal}.
-
-Write the email (subject + body, ≤180 words) and SMS (≤300 chars). Sign with "${signer}". Match tone "${tone}".`,
-      }],
-    })
-    const text = msg.content.find((c) => c.type === 'text')?.text || '{}'
-    const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim()
-    const parsed = JSON.parse(cleaned) as { email_subject?: string; email_body?: string; sms?: string }
-    if (!parsed.email_subject || !parsed.email_body || !parsed.sms) {
-      return NextResponse.json({ ok: false, error: 'Sonnet returned incomplete' }, { status: 500 })
+  if (!result.ok) {
+    if ('missing' in result) {
+      // Hybrid onboarding gate — dashboard renders the 45-second inline
+      // setup at the exact moment of intent (first send).
+      return NextResponse.json({ ok: false, error: 'profile_incomplete', missing: result.missing }, { status: 428 })
     }
-    return NextResponse.json({
-      ok: true,
-      email_subject: parsed.email_subject,
-      email_body: parsed.email_body,
-      sms: parsed.sms,
-      source: 'sonnet_live',
-    })
-  } catch (e) {
-    return NextResponse.json({ ok: false, error: `Sonnet failed: ${(e as Error).message}` }, { status: 500 })
+    return NextResponse.json({ ok: false, error: result.error }, { status: 500 })
   }
+
+  // Persist so refresh keeps the message and list pre-load skips this lead.
+  if (drop) {
+    await supabase.from('lead_drops').update({
+      ai_sms: result.sms,
+      ai_email_subject: result.email_subject,
+      ai_email_body: result.email_body,
+      ai_generated_at: new Date().toISOString(),
+    }).eq('id', drop.id)
+  }
+
+  return NextResponse.json({
+    ok: true,
+    email_subject: result.email_subject,
+    email_body: result.email_body,
+    sms: result.sms,
+    source: result.source,
+  })
 }
