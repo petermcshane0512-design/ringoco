@@ -252,9 +252,13 @@ export async function GET() {
   for (const r of ((clickersRes.data ?? []) as PflRow[])) {
     const email = (r.email || '').toLowerCase()
     if (!validEmail(email)) continue
-    // Drop rows whose only visit is inside my stress-test burst window.
+    // Exclude PURE stress-test pollution: a SINGLE visit stamped inside my
+    // test burst. Rows with 2+ visits are real humans who came back (even if
+    // my one test hit happens to be their latest touch — e.g. masonrysystem,
+    // 4 visits), so they stay.
     const t = r.last_visited_at ?? ''
-    if (t >= PFL_TEST_BURST_FROM && t <= PFL_TEST_BURST_TO) continue
+    const inBurst = t >= PFL_TEST_BURST_FROM && t <= PFL_TEST_BURST_TO
+    if (inBurst && (r.visit_count ?? 0) <= 1) continue
     pflByEmail.set(email, r)
   }
 
