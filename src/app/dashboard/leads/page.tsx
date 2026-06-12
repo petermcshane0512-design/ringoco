@@ -73,6 +73,12 @@ type LeadDrop = {
       permit_type?: string
       work_class?: string
       tag?: string
+      // Enforcement-tier triggers (2026-06-11): violations / hearings / 311
+      trigger_type?: string
+      urgency_tier?: 1 | 2 | 3 | 4
+      urgency_label?: string
+      fine_total?: number | null
+      history?: Array<{ type: string; date?: string | null; desc?: string; fine?: number | null }>
       property?: {
         beds?: number | null
         baths?: number | null
@@ -125,7 +131,22 @@ const PERMIT_KEYWORDS: Array<[RegExp, string]> = [
   [/renovation|alteration|remodel/i, 'Renovation permit filed'],
   [/demolition/i, 'Demolition permit filed'],
 ]
+/**
+ * Urgency tag styling by tier — colored plain-English chips for the
+ * enforcement-tier sources. Tier 1 (fines/hearings) reads as the legal
+ * emergency it is.
+ */
+function urgencyTagStyle(tier?: 1 | 2 | 3 | 4): { bg: string; color: string; border: string } {
+  if (tier === 1) return { bg: '#fef2f2', color: '#b91c1c', border: '#fecaca' }
+  if (tier === 2) return { bg: '#fef3ec', color: '#c2410c', border: '#fed7aa' }
+  if (tier === 3) return { bg: '#fffbeb', color: '#b45309', border: '#fde68a' }
+  return { bg: '#f3f4f6', color: '#4b5563', border: '#e5e7eb' }
+}
+
 function reasonTag(l: LeadDrop['lead']): string {
+  // Enforcement-tier leads carry a ready plain-English urgency label
+  // ("Fined $4,000 — hearing Oct 19" / "Cited: roofing repair required").
+  if (l.source_details?.urgency_label) return l.source_details.urgency_label
   if (l.source === 'permit') {
     const blob = `${l.source_details?.description ?? ''} ${l.source_details?.permit_type ?? ''} ${l.source_details?.work_class ?? ''}`
     for (const [re, label] of PERMIT_KEYWORDS) if (re.test(blob)) return label
@@ -1078,13 +1099,18 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
             <span style={{ fontSize: 15, fontWeight: 700, color: '#1f2937' }}>
               {l.owner_name ?? 'Owner unlisted'}
             </span>
-            {/* 2026-06-11 — plain-English reason replaces SCORE badge.
-                Score stays in the DB; contractors think in reasons. */}
-            <span style={{
-              padding: '3px 9px', borderRadius: 6,
-              background: '#fef3ec', color: '#c2410c', border: '1px solid #fed7aa',
-              fontSize: 11, fontWeight: 600,
-            }}>{reasonTag(l)}</span>
+            {/* 2026-06-11 — plain-English reason replaces SCORE badge;
+                enforcement-tier leads color by urgency (red = fines). */}
+            {(() => {
+              const u = urgencyTagStyle(l.source_details?.urgency_tier ?? (l.source === 'permit' && !l.source_details?.trigger_type ? 4 : 2))
+              return (
+                <span style={{
+                  padding: '3px 9px', borderRadius: 6,
+                  background: u.bg, color: u.color, border: `1px solid ${u.border}`,
+                  fontSize: 11, fontWeight: 600,
+                }}>{reasonTag(l)}</span>
+              )
+            })()}
             {drop.status !== 'new' && (
               <span style={pill('#f3f4f6', statusColor)}>
                 {drop.status}
@@ -1110,7 +1136,7 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
       <div style={{ padding: '0 18px 16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 240 }}>
-          <div style={{ fontSize: 12.5, fontWeight: 600, color: '#c2410c', marginBottom: 6 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 600, color: urgencyTagStyle(l.source_details?.urgency_tier).color, marginBottom: 6 }}>
             {reasonTag(l)}
           </div>
           {/* ── PROPERTY DOSSIER (2026-06-11 per Peter: "$497-worthy") ── */}
@@ -1199,6 +1225,21 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
                   </ul>
                 ) : (
                   <span>Permit on file: {cleanCallAngle(permitLine)}</span>
+                )}
+                {/* Full city-action history when one address carries multiple
+                    triggers (violation + hearings case merged by address). */}
+                {(sd?.history?.length ?? 0) > 1 && (
+                  <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #e5e7eb' }}>
+                    <span style={{ fontWeight: 700, fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 4 }}>City action history</span>
+                    {sd!.history!.slice(0, 5).map((h, i) => (
+                      <div key={i} style={{ fontSize: 12, color: '#4b5563', marginBottom: 2 }}>
+                        {h.date ? `${new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} — ` : ''}
+                        {h.type === 'hearings_case' ? 'Hearings case' : h.type === 'failed_inspection' ? 'Failed inspection' : h.type === '311' ? '311 complaint' : 'Violation'}
+                        {h.fine ? ` ($${Math.round(h.fine).toLocaleString()} fine)` : ''}
+                        {h.desc ? `: ${cleanCallAngle(h.desc)}` : ''}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )

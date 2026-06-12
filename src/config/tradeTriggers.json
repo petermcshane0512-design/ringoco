@@ -1,0 +1,57 @@
+{
+  "_doc": "Editable keyword → trade mapping applied across ALL enforcement-tier lead sources (violations, hearings, 311, permits) and the zip-stats email generator. `engineTrade` must be one of the lead engine's trades (hvac|plumbing|electrical|roofing|handyman); `key` is the granular trade used in copy/stats. Patterns are case-insensitive regex fragments.",
+  "trades": [
+    {
+      "key": "roofing",
+      "engineTrade": "roofing",
+      "label": "Roofing",
+      "patterns": ["roof", "shingle", "reroof", "skylight", "gutter", "downspout", "eaves", "fascia", "soffit", "flashing", "parapet", "coping"]
+    },
+    {
+      "key": "masonry",
+      "engineTrade": "handyman",
+      "label": "Masonry / tuckpointing",
+      "patterns": ["masonry", "tuckpoint", "brick", "mortar", "chimney", "lintel", "spall", "facade", "exterior wall", "foundation wall", "retaining wall"]
+    },
+    {
+      "key": "carpentry",
+      "engineTrade": "handyman",
+      "label": "Porch / deck / carpentry",
+      "patterns": ["porch", "deck", "stair", "handrail", "guardrail", "baluster", "joist", "carpentr", "rotted", "window frame", "door frame", "siding", "soffit board"]
+    },
+    {
+      "key": "fence",
+      "engineTrade": "handyman",
+      "label": "Fencing",
+      "patterns": ["fence", "fencing", "gate "]
+    },
+    {
+      "key": "electrical",
+      "engineTrade": "electrical",
+      "label": "Electrical",
+      "patterns": ["electric", "wiring", "panel", "service upgrade", "conduit", "outlet", "junction box", "exposed wire", "gfci", "light fixture"]
+    },
+    {
+      "key": "plumbing",
+      "engineTrade": "plumbing",
+      "label": "Plumbing",
+      "patterns": ["plumb", "water heater", "sewer", "drain", "leak", "pipe", "water service", "catch basin", "sump", "backflow"]
+    },
+    {
+      "key": "hvac",
+      "engineTrade": "hvac",
+      "label": "HVAC",
+      "patterns": ["hvac", "heating plant", "furnace", "boiler", "mechanical heating", "air condition", "a/c", "heat pump", "ventilat", "no heat", "chimney flue"]
+    }
+  ],
+  "sr311_building_types": [
+    "Building Violation",
+    "No Building Permit and Construction Violation",
+    "No Heat Complaint",
+    "Water Lead Test Kit Request",
+    "Sewer Cave-In Inspection Request",
+    "Porch Complaint",
+    "Roof Complaint",
+    "Low Water Pressure Complaint"
+  ]
+}

@@ -69,6 +69,10 @@
       "schedule": "0 5 * * *"
     },
     {
+      "path": "/api/crons/ingest-enforcement",
+      "schedule": "20 5 * * *"
+    },
+    {
       "path": "/api/crons/scrape-permits-austin",
       "schedule": "10 5 * * *"
     },
