@@ -61,6 +61,12 @@ const CITY = arg('city', '')
 const STATE = arg('state', '')
 const LIMIT = parseInt(arg('limit', '300'), 10)
 const DRY_RUN = hasFlag('dry-run')
+// 2026-06-12 — review bounds are now CLI-tunable. The hardcoded 3-50 cap
+// starved trades like roofing/masonry where legit small shops carry
+// 50-150 Google reviews. For enforcement-lead prospecting we still want
+// owner-operators, but the ceiling is higher.
+const MIN_REV = parseInt(arg('min-reviews', '3'), 10)
+const MAX_REV = parseInt(arg('max-reviews', '50'), 10)
 
 if (!TRADE || !CITY || !STATE) {
   console.error('Required: --trade <hvac|plumbing|electrical|roofing|handyman> --city <City> --state <ST>')
@@ -68,21 +74,22 @@ if (!TRADE || !CITY || !STATE) {
   process.exit(1)
 }
 
-const VALID_TRADES = new Set(['hvac', 'plumbing', 'electrical', 'roofing', 'handyman'])
+const VALID_TRADES = new Set(['hvac', 'plumbing', 'electrical', 'roofing', 'handyman', 'masonry'])
 if (!VALID_TRADES.has(TRADE)) {
   console.error(`Trade must be one of: ${[...VALID_TRADES].join(', ')}`)
   process.exit(1)
 }
 
 // ── ICP per CLAUDE.md ─────────────────────────────────────────────────
-const MAX_REVIEWS = 50   // shops >50 already have ops + receptionist + marketing
-const MIN_REVIEWS = 3    // <3 = inactive / sketchy / fake
+const MAX_REVIEWS = MAX_REV
+const MIN_REVIEWS = MIN_REV
 const TRADE_QUERY = {
   hvac:       'HVAC contractor',
   plumbing:   'plumbing contractor',
   electrical: 'electrical contractor',
   roofing:    'roofing contractor',
   handyman:   'handyman service',
+  masonry:    'masonry tuckpointing contractor',
 }[TRADE]
 
 const SEARCH = `${TRADE_QUERY} ${CITY} ${STATE}`
@@ -100,6 +107,10 @@ async function runApify(query) {
         maxCrawledPlacesPerSearch: LIMIT,
         language: 'en',
         searchMatching: 'all',
+        // 2026-06-12 — without this the actor returns NO emails field at
+        // all (first Chicago run: 250 places, 0 emails). Contact
+        // enrichment crawls each place's website for emails/socials.
+        scrapeContacts: true,
       }),
     },
   )
@@ -172,21 +183,44 @@ if (candidates.length === 0) {
   process.exit(0)
 }
 
-// Dedup against existing outreach_leads (by email AND business+city)
-const emails = candidates.map((c) => c.email)
-const { data: existingByEmail } = await supabase
+// ── NEVER-REPEAT GUARANTEE (2026-06-12 per Peter: "cannot happen, no
+// matter what") ───────────────────────────────────────────────────────
+// A home-service business that has EVER been sourced is never sourced
+// again. Three independent guards, any one trips → skip:
+//   1. exact email
+//   2. business_name + city composite
+//   3. EMAIL DOMAIN — catches the same shop under info@ vs office@ vs
+//      hello@ (one business, many inboxes). The strongest of the three.
+// We pull the WHOLE existing email column (domains can't be filtered
+// server-side cheaply) so the domain guard sees every prior contact.
+function emailDomain(e) { return (e.split('@')[1] || '').toLowerCase().trim() }
+// Free-mail domains are NOT business identities — never suppress on them,
+// or one gmail shop would block every other gmail shop.
+const FREEMAIL = new Set(['gmail.com', 'yahoo.com', 'aol.com', 'hotmail.com', 'outlook.com', 'icloud.com', 'comcast.net', 'sbcglobal.net', 'att.net', 'msn.com'])
+
+const { data: allPrior } = await supabase
   .from('outreach_leads')
   .select('email, business_name, city')
-  .in('email', emails)
-const seenEmails = new Set((existingByEmail || []).map((r) => r.email.toLowerCase()))
-const seenBizCity = new Set((existingByEmail || []).map((r) => `${(r.business_name || '').toLowerCase()}|${(r.city || '').toLowerCase()}`))
+const seenEmails = new Set((allPrior || []).map((r) => (r.email || '').toLowerCase()))
+const seenBizCity = new Set((allPrior || []).map((r) => `${(r.business_name || '').toLowerCase()}|${(r.city || '').toLowerCase()}`))
+const seenDomains = new Set((allPrior || []).map((r) => emailDomain(r.email || '')).filter((d) => d && !FREEMAIL.has(d)))
+
+// Also dedup WITHIN this batch (Apify can return a shop twice).
+const batchEmails = new Set()
+const batchDomains = new Set()
 
 const fresh = candidates.filter((c) => {
+  const dom = emailDomain(c.email)
   if (seenEmails.has(c.email)) return false
   if (seenBizCity.has(`${c.biz_name.toLowerCase()}|${c.city.toLowerCase()}`)) return false
+  if (dom && !FREEMAIL.has(dom) && seenDomains.has(dom)) return false
+  if (batchEmails.has(c.email)) return false
+  if (dom && !FREEMAIL.has(dom) && batchDomains.has(dom)) return false
+  batchEmails.add(c.email)
+  if (dom && !FREEMAIL.has(dom)) batchDomains.add(dom)
   return true
 })
-console.log(`  dedup vs outreach_leads: ${fresh.length} fresh, ${candidates.length - fresh.length} dupes`)
+console.log(`  never-repeat dedup (email + biz+city + domain): ${fresh.length} fresh, ${candidates.length - fresh.length} suppressed`)
 
 if (DRY_RUN) {
   console.log('\n*** DRY-RUN. No insert. Sample:')
