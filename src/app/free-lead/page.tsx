@@ -194,52 +194,54 @@ function FreeLeadInner() {
                 Leads #2–{LEADS_PER_WEEK} unlock the second you start.
               </p>
 
-              {/* ── DEMO DASHBOARD SHELL ── */}
+              {/* ── DEMO DASHBOARD SHELL — 2026-06-12 light theme to match the
+                  real /dashboard (now light). Same surface the prospect logs
+                  into, so the homepage promise === the product. ── */}
               <div style={{
-                borderRadius: 20, overflow: 'hidden', marginBottom: 24,
-                background: 'linear-gradient(165deg, #081427 0%, #0B1F3A 55%, #0A1830 100%)',
-                border: '1.5px solid rgba(255,157,90,0.28)',
-                boxShadow: '0 30px 80px rgba(11,31,58,0.45)',
-                color: '#FFF8F0',
+                borderRadius: 16, overflow: 'hidden', marginBottom: 24,
+                background: '#ffffff',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                color: '#1f2937',
               }}>
                 {/* Demo top bar */}
                 <div style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '12px 16px', borderBottom: '1px solid rgba(255,157,90,0.16)',
-                  background: 'rgba(8,20,39,0.92)',
+                  padding: '12px 16px', borderBottom: '1px solid #e5e7eb',
+                  background: '#ffffff',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 14, fontWeight: 900, letterSpacing: '-0.02em' }}>BellAveGo</span>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 9, fontWeight: 800, color: '#22C55E', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    <span style={{ fontSize: 14, fontWeight: 900, letterSpacing: '-0.02em', color: '#1f2937' }}>BellAveGo</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 9, fontWeight: 800, color: '#16a34a', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                       <i style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', display: 'inline-block' }} />
                       Live
                     </span>
                   </div>
                   <Link href={checkoutUrl} style={{
-                    padding: '6px 11px', borderRadius: 8, textDecoration: 'none',
-                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,157,90,0.22)',
-                    color: '#FFC58A', fontSize: 10.5, fontWeight: 800,
-                  }}>⚡ Buy more leads</Link>
+                    padding: '8px 12px', borderRadius: 8, textDecoration: 'none', minHeight: 44, display: 'inline-flex', alignItems: 'center',
+                    background: '#E8742B',
+                    color: '#fff', fontSize: 11, fontWeight: 700,
+                  }}>Buy more leads</Link>
                 </div>
 
                 <div style={{ padding: '14px 14px 16px' }}>
-                  {/* Demo banner — the offer, styled as the countdown */}
+                  {/* Demo banner — the offer */}
                   <Link href={checkoutUrl} style={{ textDecoration: 'none', display: 'block' }}>
                     <div style={{
-                      borderRadius: 13, padding: '13px 16px', marginBottom: 12,
-                      background: 'linear-gradient(135deg, rgba(232,116,43,0.16), rgba(232,116,43,0.05))',
-                      border: '1px solid rgba(255,157,90,0.38)',
+                      borderRadius: 12, padding: '14px 16px', marginBottom: 12,
+                      background: 'linear-gradient(135deg, #fef3ec, #ffffff)',
+                      border: '1px solid #fed7aa',
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap',
                     }}>
                       <div>
-                        <div style={{ fontSize: 9.5, fontWeight: 900, color: '#FF9D5A', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 3 }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: '#c2410c', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 3 }}>
                           Start your account
                         </div>
-                        <div style={{ fontSize: 'clamp(18px, 3vw, 24px)', fontWeight: 900, color: '#FFF8F0', lineHeight: 1.05 }}>
+                        <div style={{ fontSize: 'clamp(18px, 3vw, 23px)', fontWeight: 800, color: '#1f2937', lineHeight: 1.1 }}>
                           Get {LEADS_PER_MONTH} leads like this a month
                         </div>
                       </div>
-                      <div style={{ fontSize: 11.5, fontWeight: 800, color: '#FFC58A', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#c2410c', whiteSpace: 'nowrap' }}>
                         {LEADS_PER_WEEK}/week · $97 to start →
                       </div>
                     </div>
@@ -264,7 +266,7 @@ function FreeLeadInner() {
                           document.getElementById('free-lead-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
                         }}
                       />
-                      <p style={{ fontSize: 10.5, color: '#7AAAB2', margin: '6px 2px 0', fontWeight: 600 }}>
+                      <p style={{ fontSize: 11, color: '#6b7280', margin: '6px 2px 0', fontWeight: 500 }}>
                         📍 Pin 1 = your free lead. Your other {LEADS_PER_WEEK - 1} this week pin here the moment you start.
                       </p>
                     </div>
@@ -276,20 +278,20 @@ function FreeLeadInner() {
                       <Link key={n} href={checkoutUrl} style={{ textDecoration: 'none', display: 'block' }}>
                         <div style={{
                           display: 'flex', alignItems: 'center', gap: 10,
-                          padding: '10px 13px', borderRadius: 11,
-                          background: 'rgba(255,255,255,0.03)',
-                          border: '1px dashed rgba(255,157,90,0.25)',
+                          padding: '11px 13px', borderRadius: 10,
+                          background: '#f9fafb',
+                          border: '1px dashed #d1d5db',
                         }}>
                           <span style={{
                             width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,157,90,0.3)',
-                            color: '#7AAAB2', fontSize: 9.5, fontWeight: 900,
+                            background: '#fff', border: '1px solid #e5e7eb',
+                            color: '#9ca3af', fontSize: 9.5, fontWeight: 900,
                           }}>{n}</span>
-                          <span style={{ flex: 1, fontSize: 12, fontWeight: 700, color: 'rgba(255,248,240,0.45)' }}>
+                          <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: '#6b7280' }}>
                             🔒 Lead #{n} — verified homeowner near {lead.zip || 'you'}
                           </span>
-                          <span style={{ fontSize: 10.5, fontWeight: 900, color: '#FFC58A', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: '#c2410c', whiteSpace: 'nowrap' }}>
                             Unlock — $97 →
                           </span>
                         </div>
