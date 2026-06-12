@@ -55,50 +55,62 @@ function toHtml(text: string): string {
     .join('')
 }
 
+// 2026-06-12 — ENFORCEMENT SEQUENCE per Peter. The hook is no longer
+// "homeowners who need work" — it's "homeowners the CITY is forcing to do
+// the work." Personalized per recipient by {{firstName}} / {{city}} /
+// {{trade}} + a REAL flagged homeowner pulled for their exact area on the
+// /free-lead page (the deepest personalization there is). Never the word
+// "public" — we sell the work removed, not the data. Scarcity + risk
+// reversal per Hormozi. Vars used are the ones reliably populated on every
+// contact (firstName/companyName/city/trade/free_lead_url); the live stat
+// numbers render on the /free-lead landing, not in the body, so no merge
+// var can come back blank.
 const NEW_STEPS: NewStep[] = [
   {
-    subject: '{{firstName}} — found a {{city}} homeowner who needs work',
+    subject: '{{firstName}} — a {{city}} homeowner the city is forcing to hire a {{trade}}',
     body: toHtml(
 `Hey {{firstName}},
 
-My software watches building permits, storm reports, and home sales around {{city}} every night and flags homeowners about to need work.
+Quick one. My software reads {{city}}'s building-violation and code-enforcement records every night and flags homeowners the city has ORDERED to get work done — fix it or face fines.
 
-It caught one near you this week — a real {{city}} property, owner name, address, year built, and the signal that flagged them. Pulled it for you, free. No card, nothing to cancel:
+Caught one near you this week. Real {{city}} property, owner name, the exact violation the city cited, and what they're required to repair. These folks aren't "maybe interested" — they legally have to hire someone, and most haven't yet.
+
+Pulled it for you, free — no card, nothing to cancel:
 
 {{free_lead_url}}
 
-I make money selling these by the month. First one's free so you can judge the data yourself.
+I sell these by the month. First one's free so you can judge it yourself.
 
 Peter
 BellAveGo — (773) 710-9565`),
   },
   {
-    subject: 're: homeowner in {{city}}',
+    subject: 're: the {{city}} homeowner under a city order',
     body: toHtml(
-`{{firstName}} — that homeowner I flagged for {{companyName}} is still unclaimed:
+`{{firstName}} — that flagged homeowner for {{companyName}} is still sitting there:
 
 {{free_lead_url}}
 
-Why I give the first one away: shops that like it usually want the feed — ${LEADS_PER_WEEK} leads a week in your area, verified phone on every one, and my system sends the intro text + email AS you, so you only talk to homeowners who reply. Your leads are yours alone — never shared with 4 other shops like HomeAdvisor.
+Here's why this is different from HomeAdvisor. We don't sell you "leads." We find the homeowners your city has cited or fined — the ones who HAVE to do the work — match them to {{trade}}, verify the phone, and hand them to you exclusively. Never shared with 4 other shops. You call; they already have to say yes.
 
-The math: average ticket runs $2,000+. Close 2 of your ${LEADS_PER_MONTH} monthly leads and the $${PRICE_MONTHLY_USD} pays for itself eight times. First month is $${INTRO_PRICE_USD} with code ${INTRO_PROMO_CODE}.
+${LEADS_PER_WEEK} of these a week in your area. The math: close 2 of your ${LEADS_PER_MONTH} monthly leads at a normal ticket and the $${PRICE_MONTHLY_USD} pays for itself many times over. First month is $${INTRO_PRICE_USD} with code ${INTRO_PROMO_CODE}.
 
-Worst case you spend 30 seconds and keep a free lead.
+One shop per area. Worst case you spend 30 seconds and keep a free lead.
 
 Peter`),
   },
   {
-    subject: 'before I move on from {{city}}',
+    subject: 'before someone else takes your {{city}} area',
     body: toHtml(
 `{{firstName}} — last note from me.
 
-The homeowners my system flagged in {{city}} this month don't sit around. Door knockers, HomeAdvisor shops, and the franchise guys with marketing budgets find them eventually. Fresh data is the whole edge.
+The homeowners the city flagged in {{city}} this month are on a deadline. They WILL hire a {{trade}} shop soon — the only question is whether it's you or the guy who calls them first. Fresh enforcement data is the whole edge, and we only give one shop per area access.
 
 Your free one is still here: {{free_lead_url}}
 
-If you want the full feed — ${LEADS_PER_WEEK} a week, verified phones, outreach sent as you — first month is $${INTRO_PRICE_USD} with code ${INTRO_PROMO_CODE}. Book one paying job in 30 days or I refund you, give you the next month free, and you keep every lead.
+Want the full feed — ${LEADS_PER_WEEK} a week, city-cited homeowners, verified phones, yours alone? First month is $${INTRO_PRICE_USD} with code ${INTRO_PROMO_CODE}. Book one paying job in 30 days or I refund you, give you the next month free, and you keep every lead.
 
-Either way grab the free one. Cost you nothing, might be worth a few grand.
+Either way grab the free one. Costs nothing, could be worth a few grand.
 
 Peter
 BellAveGo — (773) 710-9565`),
