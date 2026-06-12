@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   const skipWash = req.nextUrl.searchParams.get('skip_wash') === '1'
 
   if (skipWash) {
-    const ar = await fetch(`${INSTANTLY_BASE}/campaigns/${CAMPAIGN_ID}/activate`, { method: 'POST', headers: iHeaders() })
+    const ar = await fetch(`${INSTANTLY_BASE}/campaigns/${CAMPAIGN_ID}/activate`, { method: 'POST', headers: iHeaders(), body: '{}' })
     const body = await ar.text().catch(() => '')
     return NextResponse.json({ ok: ar.ok, activated: ar.ok, activate_status: ar.status, activate_body: body.slice(0, 400) })
   }
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
   // 4. activate
   let activated: boolean | null = null
   if (activate) {
-    const ar = await fetch(`${INSTANTLY_BASE}/campaigns/${CAMPAIGN_ID}/activate`, { method: 'POST', headers: iHeaders() })
+    const ar = await fetch(`${INSTANTLY_BASE}/campaigns/${CAMPAIGN_ID}/activate`, { method: 'POST', headers: iHeaders(), body: '{}' })
     activated = ar.ok
     if (!ar.ok) errors.push(`activate: HTTP ${ar.status} ${(await ar.text().catch(() => '')).slice(0, 150)}`)
   }
