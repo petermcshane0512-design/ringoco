@@ -997,3 +997,36 @@ html { overflow-x: hidden; }
   0%   { transform: translate(0, 0) scale(1); }
   100% { transform: translate(-40px, -60px) scale(1.18); }
 }
+
+/* ── Homepage <Nav> mobile fix (2026-06-12, Peter: "top only shows
+   BellAveGo + Founder, no pricing/CTA"). The page.tsx rule used a 480px
+   breakpoint, but modern phones render 430-700px CSS-wide, so on those
+   the Founder link stayed visible and the wide logo pushed Pricing + the
+   $97 CTA off the right edge (clipped by overflow-x:hidden). This raises
+   the breakpoint to 720px, hides only Founder/Sign-in, shrinks the logo,
+   and compacts the CTA so Pricing AND the $97 button always fit the row.
+   Lives in globals (not page.tsx) so it survives concurrent homepage
+   edits. !important beats the inline page.tsx <style> block. */
+@media (max-width: 720px) {
+  nav .nav-secondary { display: none !important; }
+  nav a[href="/"] img { max-width: 30vw !important; }
+  nav .nav-links { gap: 8px !important; min-width: 0 !important; flex-shrink: 1 !important; }
+  nav .nav-links .nav-cta {
+    padding: 9px 13px !important;
+    font-size: 13px !important;
+    border-radius: 10px !important;
+    white-space: nowrap !important;
+    box-shadow: 0 4px 14px rgba(232,116,43,0.40) !important;
+  }
+  nav .nav-links a[href="/pricing"] {
+    font-size: 14px !important;
+    padding: 9px 4px !important;
+    white-space: nowrap !important;
+  }
+}
+/* Very small phones (≤380px): drop the logo a touch more so the CTA text
+   ("Claim my area · $97 →") never clips. */
+@media (max-width: 380px) {
+  nav a[href="/"] img { max-width: 26vw !important; }
+  nav .nav-links .nav-cta { padding: 8px 11px !important; font-size: 12px !important; }
+}
