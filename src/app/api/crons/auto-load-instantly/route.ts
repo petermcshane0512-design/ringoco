@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createHash } from 'crypto'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
+
+/**
+ * Deterministic biz_id for the /free-lead landing — MUST match the algo in
+ * /api/admin/instantly-sequence so the same email always maps to the same
+ * prospect_free_leads row. 2026-06-12 fix: auto-load used to put the raw
+ * outreach_leads UUID in {{free_lead_url}}, but the landing resolves by
+ * biz_id (inst_<hash>), so every emailed link 404'd — the entire reason
+ * click-through + conversions sat at zero despite a 40% open rate.
+ */
+function bizIdForEmail(email: string): string {
+  return `inst_${createHash('sha256').update(email.toLowerCase()).digest('hex').slice(0, 10)}`
+}
 
 /**
  * GET /api/crons/auto-load-instantly
@@ -120,6 +133,23 @@ function buildReportUrl(lead: Lead): string {
 
 async function pushLead(lead: Lead, leadsPreview: string): Promise<{ ok: boolean; error?: string }> {
   const reportUrl = buildReportUrl(lead)
+  // Build the correct free-lead biz_id from the email + guarantee a
+  // prospect_free_leads row exists so /free-lead?b={bizId} resolves to a
+  // real page (the landing's generate step needs the row's city/trade).
+  // Without this every {{free_lead_url}} click died on an error page.
+  const bizId = lead.email ? bizIdForEmail(lead.email) : lead.id
+  if (lead.email) {
+    const trade = (lead.trade || 'hvac').toLowerCase()
+    await supabase.from('prospect_free_leads').upsert({
+      biz_id: bizId,
+      email: lead.email.toLowerCase(),
+      trade: ['hvac', 'plumbing', 'electrical', 'roofing', 'handyman', 'other'].includes(trade) ? trade : 'other',
+      zip: '',
+      city: (lead.city || '').slice(0, 64),
+      state: (lead.state || '').slice(0, 32),
+      source_batch: 'auto_load_instantly',
+    }, { onConflict: 'biz_id' })
+  }
   const body = {
     campaign: CAMPAIGN_ID,
     email: lead.email,
@@ -143,7 +173,7 @@ async function pushLead(lead: Lead, leadsPreview: string): Promise<{ ok: boolean
       // 2026-06-10 — email-only + hot-call pivot. The free-lead landing is
       // the conversion surface AND the hot-lead trigger (2 visits → SMS to
       // Peter). Template should link {{free_lead_url}}, not report_url.
-      free_lead_url: `https://www.bellavego.com/free-lead?b=${lead.id}`,
+      free_lead_url: `https://www.bellavego.com/free-lead?b=${bizId}`,
       // Bold CTA line + promo code (Hormozi $100M Money Models — sub-$100
       // trip-wire entry point). Pre-rendered per lead so the template
       // stays consistent across variants.
