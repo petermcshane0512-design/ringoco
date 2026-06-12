@@ -64,6 +64,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           }}>Buy more leads</Link>
           <Link href="/dashboard/settings" className="bavg-dash-nav" style={navLink}>Settings</Link>
           <Link href="/dashboard/support" className="bavg-dash-nav" style={navLink}>Support</Link>
+          {/* Founder-only — gated by the same ADMIN_EMAILS check as the
+              /api/admin/* routes; renders for no customer. Stays visible
+              on mobile (not .bavg-dash-nav) — Peter checks from his phone. */}
+          {isAdmin && (
+            <Link href="/admin/master" style={{
+              ...navLink, background: '#1f2937', color: '#ffffff', border: '1px solid #1f2937',
+            }}>Admin</Link>
+          )}
           <UserButton />
         </div>
       </header>
