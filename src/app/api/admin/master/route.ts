@@ -8,18 +8,25 @@ export const runtime = 'nodejs'
 export const maxDuration = 60
 
 /**
- * GET /api/admin/master — data for /admin/master, the one-page founder
- * command view (2026-06-12 per Peter: replaces the ReactFlow "nucleus").
+ * GET /api/admin/master — data for /admin/master, the CEO Nucleus
+ * (2026-06-12 redesign per Peter: dense founder command center —
+ * "what do I do right now?").
  *
- * Truth sources, deliberately:
- *   - revenue: LIVE Stripe (subscriptions + the promo code each used) —
- *     what the bank sees, never derived from profiles.
- *   - opens/clicks/replies: LIVE Instantly campaign analytics + per-lead
- *     opens. NOT outreach_leads.open_count — that column is polluted
- *     (daily-200-leads importer writes Google review_count into it) and
- *     our own tracking pixel never fires on Instantly-sent mail.
- *   - sends + downstream funnel (report visit → trial → paid): our
- *     outreach_leads table, via head-count queries (row-cap-proof).
+ * Adds to the original metrics payload:
+ *   - call_queue: priority-scored prospects (REPLIED=100 pinned, click=80
+ *     decaying 5/day, 3+ opens=60 decaying, +20 if active in last 2h).
+ *     Joined to outreach_leads for PHONE + business + location, to
+ *     prospect_free_leads for real click/visit timestamps, and to
+ *     lead_dispositions (dispositioned rows drop out; no_answer
+ *     re-surfaces after 24h).
+ *   - ledger: every engaged prospect w/ counts + stage, for the
+ *     Today/Yesterday/All tabs (filtered client-side by last activity).
+ *
+ * Truth sources unchanged: Stripe for money, Instantly for opens/clicks/
+ *   replies (per-lead via leads/list), our DB for sends + funnel.
+ * KNOWN GAP: Instantly leads/list has no per-lead LAST-OPEN timestamp —
+ *   last_activity comes from real click/visit times (prospect_free_leads)
+ *   and our tracked opens where present; otherwise null, shown as "—".
  */
 
 const supabase = createClient(
@@ -35,28 +42,47 @@ async function countWhere(table: string, build: (q: any) => any): Promise<number
   return count ?? 0
 }
 
-type CampaignRow = {
-  name: string
-  status: string | number | null
-  sent: number
-  opens: number
-  replies: number
-  clicks: number
-  bounced: number
+// State → IANA timezone (good-enough founder map; default Chicago).
+const STATE_TZ: Record<string, string> = {
+  IL: 'America/Chicago', TX: 'America/Chicago', MO: 'America/Chicago', WI: 'America/Chicago',
+  MN: 'America/Chicago', LA: 'America/Chicago', OK: 'America/Chicago', KS: 'America/Chicago',
+  TN: 'America/Chicago', AL: 'America/Chicago', MS: 'America/Chicago', AR: 'America/Chicago',
+  IA: 'America/Chicago', NE: 'America/Chicago',
+  NY: 'America/New_York', NJ: 'America/New_York', PA: 'America/New_York', FL: 'America/New_York',
+  GA: 'America/New_York', NC: 'America/New_York', SC: 'America/New_York', VA: 'America/New_York',
+  MA: 'America/New_York', CT: 'America/New_York', MD: 'America/New_York', OH: 'America/New_York',
+  MI: 'America/New_York', IN: 'America/New_York', KY: 'America/New_York', DC: 'America/New_York',
+  AZ: 'America/Phoenix',
+  CO: 'America/Denver', UT: 'America/Denver', NM: 'America/Denver', MT: 'America/Denver',
+  WY: 'America/Denver', ID: 'America/Denver',
+  CA: 'America/Los_Angeles', NV: 'America/Los_Angeles', WA: 'America/Los_Angeles', OR: 'America/Los_Angeles',
+}
+const STATE_NAMES: Record<string, string> = {
+  illinois: 'IL', texas: 'TX', 'new york': 'NY', florida: 'FL', california: 'CA', nevada: 'NV',
+  arizona: 'AZ', georgia: 'GA', colorado: 'CO', washington: 'WA', oregon: 'OR', ohio: 'OH',
+}
+function tzForState(stateRaw: string | null): string {
+  const s = (stateRaw || '').trim()
+  const abbr = s.length === 2 ? s.toUpperCase() : STATE_NAMES[s.toLowerCase()] ?? ''
+  return STATE_TZ[abbr] ?? 'America/Chicago'
+}
+function localClock(tz: string, now: Date): { time: string; in_window: boolean } {
+  const fmt = new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: 'numeric', minute: '2-digit', hour12: true })
+  const hourFmt = new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: 'numeric', hour12: false })
+  const hour = parseInt(hourFmt.format(now), 10)
+  return { time: fmt.format(now), in_window: hour >= 8 && hour < 18 }
 }
 
-async function fetchInstantly(): Promise<{
-  campaigns: CampaignRow[]
-  topOpeners: Array<{ email: string; opens: number; clicks: number; replies: number }>
-  error: string | null
-}> {
+type EngagedLead = { email: string; opens: number; clicks: number; replies: number }
+type CampaignRow = { name: string; status: string | number | null; sent: number; opens: number; replies: number; clicks: number; bounced: number }
+
+async function fetchInstantly(): Promise<{ campaigns: CampaignRow[]; engaged: EngagedLead[]; error: string | null }> {
   const KEY = process.env.INSTANTLY_API_KEY
-  if (!KEY) return { campaigns: [], topOpeners: [], error: 'INSTANTLY_API_KEY not set' }
+  if (!KEY) return { campaigns: [], engaged: [], error: 'INSTANTLY_API_KEY not set' }
   const headers = { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' }
   try {
-    // All-campaign analytics in one call.
     const ar = await fetch(`${INSTANTLY_BASE}/campaigns/analytics`, { headers })
-    if (!ar.ok) return { campaigns: [], topOpeners: [], error: `instantly analytics HTTP ${ar.status}` }
+    if (!ar.ok) return { campaigns: [], engaged: [], error: `instantly analytics HTTP ${ar.status}` }
     const aj = await ar.json()
     const rows = (Array.isArray(aj) ? aj : aj.campaigns ?? []) as Array<Record<string, unknown>>
     const campaigns: CampaignRow[] = rows.map((c) => ({
@@ -69,10 +95,10 @@ async function fetchInstantly(): Promise<{
       bounced: Number(c.bounced_count ?? 0),
     }))
 
-    // Per-lead opens — paginate leads/list, keep anyone with ≥1 open.
-    const openers: Array<{ email: string; opens: number; clicks: number; replies: number }> = []
+    // Per-lead engagement — anyone with ≥1 open/click/reply.
+    const engaged: EngagedLead[] = []
     let cursor: string | undefined
-    for (let page = 0; page < 10; page++) {
+    for (let page = 0; page < 12; page++) {
       const body: Record<string, unknown> = { limit: 100 }
       if (cursor) body.starting_after = cursor
       const r = await fetch(`${INSTANTLY_BASE}/leads/list`, { method: 'POST', headers, body: JSON.stringify(body) })
@@ -81,17 +107,18 @@ async function fetchInstantly(): Promise<{
       const batch = (j.items || j.data || []) as Array<{ email?: string; email_open_count?: number; email_click_count?: number; email_reply_count?: number }>
       for (const l of batch) {
         const opens = l.email_open_count ?? 0
-        if (l.email && opens > 0) {
-          openers.push({ email: l.email.toLowerCase(), opens, clicks: l.email_click_count ?? 0, replies: l.email_reply_count ?? 0 })
+        const clicks = l.email_click_count ?? 0
+        const replies = l.email_reply_count ?? 0
+        if (l.email && (opens > 0 || clicks > 0 || replies > 0)) {
+          engaged.push({ email: l.email.toLowerCase(), opens, clicks, replies })
         }
       }
       cursor = j.next_starting_after as string | undefined
       if (!cursor) break
     }
-    openers.sort((a, b) => b.opens - a.opens)
-    return { campaigns, topOpeners: openers.slice(0, 20), error: null }
+    return { campaigns, engaged, error: null }
   } catch (e) {
-    return { campaigns: [], topOpeners: [], error: (e as Error).message }
+    return { campaigns: [], engaged: [], error: (e as Error).message }
   }
 }
 
@@ -107,17 +134,17 @@ export async function GET() {
     return d
   }
 
-  // ── REVENUE — live from Stripe ────────────────────────────────────────
+  // ── REVENUE — live Stripe, net of coupons, internal split ────────────
   type CustomerRow = {
     email: string | null
     name: string | null
-    list_monthly: number       // plan price
-    net_monthly: number        // after coupon — what actually bills
+    list_monthly: number
+    net_monthly: number
     interval: string
     status: string
     promo_code: string | null
     started: string | null
-    internal: boolean          // Peter's own/test subs — never revenue
+    internal: boolean
   }
   let customers: CustomerRow[] = []
   let stripeError: string | null = null
@@ -139,15 +166,10 @@ export async function GET() {
         const disc = (s.discounts?.[0] ?? null) as Stripe.Discount | null
         const promo = disc?.promotion_code
         const promoCode = typeof promo === 'object' && promo ? promo.code : null
-        // Net of coupon — a 100%-off forever code (PETER_FOREVER) bills $0;
-        // counting list price made 19 self-test subs read as $10K MRR.
-        // Stripe's dahlia typings drop `coupon` off Discount; runtime still
-        // carries it (expanded above). Narrow manually.
         const coupon = (disc as unknown as { coupon?: { percent_off?: number | null; amount_off?: number | null } | null })?.coupon ?? null
         let netMonthly = listMonthly
         if (coupon?.percent_off) netMonthly = listMonthly * (1 - coupon.percent_off / 100)
         else if (coupon?.amount_off) netMonthly = Math.max(0, listMonthly - coupon.amount_off / 100)
-        // Internal = founder's own accounts/test promos. Never revenue.
         const internal = (!!email && ADMIN_EMAIL_SET.has(email.toLowerCase()))
           || (promoCode ?? '').toUpperCase().startsWith('PETER')
         return {
@@ -170,15 +192,9 @@ export async function GET() {
   const paying = external.filter((c) => (c.status === 'active' || c.status === 'past_due') && c.net_monthly > 0)
   const mrr = paying.reduce((s, c) => s + c.net_monthly, 0)
   const internalSubs = customers.filter((c) => c.internal)
-  // What Peter's own card actually bleeds per month on test subs.
   const internalBurn = internalSubs.reduce((s, c) => s + c.net_monthly, 0)
 
-  // ── INSTANTLY (opens truth) + DB funnel, concurrently ─────────────────
-  // 2026-06-12 — REAL click-through is prospect_free_leads.visit_count > 0
-  // (the {{free_lead_url}} the email actually links to). The old
-  // report_visits metric read outreach_leads.report_visit_at, which is set
-  // by /api/track/report-visit?l=ID — a link the current template never
-  // uses — so it was structurally always 0 regardless of real clicks.
+  // ── INSTANTLY + DB funnel, concurrently ──────────────────────────────
   const [instantly, pushedTotal, pushedToday, freeLeadVisits, textOptIns, demos, trials, paid] = await Promise.all([
     fetchInstantly(),
     countWhere('outreach_leads', (q) => q.not('pushed_at', 'is', null)),
@@ -195,7 +211,7 @@ export async function GET() {
   const replyTotal = instantly.campaigns.reduce((s, c) => s + c.replies, 0)
   const clickTotal = instantly.campaigns.reduce((s, c) => s + c.clicks, 0)
 
-  // 14-day push series — exact head-counts per day, cap-proof.
+  // 14-day push series.
   const days = await Promise.all(
     Array.from({ length: 14 }, async (_, i) => {
       const offset = 13 - i
@@ -206,38 +222,91 @@ export async function GET() {
     }),
   )
 
-  // Join Instantly openers to our table for business/city display.
-  const openerEmails = instantly.topOpeners.map((t) => t.email)
-  const { data: openerRows } = openerEmails.length
-    ? await supabase
-        .from('outreach_leads')
-        .select('email, business_name, owner_first_name, city, state, trade, report_visit_at, trial_started_at, paid_at, status')
-        .in('email', openerEmails)
-    : { data: [] as never[] }
-  const byEmail = new Map((openerRows ?? []).map((r: { email: string }) => [r.email.toLowerCase(), r]))
-  const topOpeners = instantly.topOpeners.map((t) => {
-    const m = byEmail.get(t.email) as {
-      business_name?: string | null; owner_first_name?: string | null; city?: string | null; state?: string | null
-      trade?: string | null; report_visit_at?: string | null; trial_started_at?: string | null; paid_at?: string | null; status?: string | null
-    } | undefined
+  // ── CALL QUEUE + LEDGER joins ────────────────────────────────────────
+  const emails = instantly.engaged.map((e) => e.email)
+  const [olRes, pflRes, dispRes] = await Promise.all([
+    emails.length
+      ? supabase.from('outreach_leads')
+          .select('email, business_name, owner_first_name, owner_phone, city, state, trade, pushed_at, first_opened_at, last_opened_at, report_visit_at, trial_started_at, paid_at, status')
+          .in('email', emails)
+      : Promise.resolve({ data: [] as never[] }),
+    emails.length
+      ? supabase.from('prospect_free_leads')
+          .select('email, visit_count, last_visited_at, claimed_at')
+          .in('email', emails)
+      : Promise.resolve({ data: [] as never[] }),
+    // lead_dispositions may not exist pre-migration — tolerate.
+    supabase.from('lead_dispositions')
+      .select('email, action, created_at')
+      .order('created_at', { ascending: false })
+      .limit(2000)
+      .then((r) => r)
+      .then((r) => ('error' in r && r.error ? { data: [] as never[] } : r)),
+  ])
+  type OlRow = { email: string; business_name: string | null; owner_first_name: string | null; owner_phone: string | null; city: string | null; state: string | null; trade: string | null; pushed_at: string | null; first_opened_at: string | null; last_opened_at: string | null; report_visit_at: string | null; trial_started_at: string | null; paid_at: string | null; status: string | null }
+  const olByEmail = new Map(((olRes.data ?? []) as OlRow[]).map((r) => [r.email.toLowerCase(), r]))
+  type PflRow = { email: string; visit_count: number | null; last_visited_at: string | null; claimed_at: string | null }
+  const pflByEmail = new Map(((pflRes.data ?? []) as PflRow[]).map((r) => [r.email.toLowerCase(), r]))
+  type DispRow = { email: string; action: string; created_at: string }
+  const latestDisp = new Map<string, DispRow>()
+  for (const d of ((dispRes.data ?? []) as DispRow[])) {
+    if (!latestDisp.has(d.email.toLowerCase())) latestDisp.set(d.email.toLowerCase(), d)
+  }
+
+  const DAY_MS = 86_400_000
+  const rows = instantly.engaged.map((e) => {
+    const ol = olByEmail.get(e.email)
+    const pfl = pflByEmail.get(e.email)
+    const clicks = Math.max(e.clicks, pfl?.visit_count ?? 0)
+    const lastActivity = [pfl?.last_visited_at, ol?.last_opened_at, ol?.report_visit_at]
+      .filter(Boolean).sort().pop() ?? null
+    const daysSince = lastActivity ? (now.getTime() - new Date(lastActivity).getTime()) / DAY_MS : null
+
+    // Priority score
+    let score = 0
+    if (e.replies > 0) score = 100
+    else if (clicks > 0) score = Math.max(10, 80 - 5 * Math.floor(daysSince ?? 0))
+    else if (e.opens >= 3) score = Math.max(5, 60 - 5 * Math.floor(daysSince ?? 0))
+    else if (e.opens > 0) score = 20
+    if (lastActivity && now.getTime() - new Date(lastActivity).getTime() < 2 * 3_600_000) score += 20
+
+    const tz = tzForState(ol?.state ?? null)
+    const clock = localClock(tz, now)
+    const stage = ol?.paid_at ? 'PAID' : ol?.trial_started_at ? 'TRIAL' : e.replies > 0 ? 'REPLIED'
+      : clicks > 0 ? 'CLICKED' : 'OPENED'
+
+    const disp = latestDisp.get(e.email)
+    // Dispositioned rows leave the queue; no_answer re-surfaces after 24h.
+    const dispositioned = !!disp && !(disp.action === 'no_answer' && now.getTime() - new Date(disp.created_at).getTime() > DAY_MS)
+
     return {
-      email: t.email,
-      opens: t.opens,
-      clicks: t.clicks,
-      replies: t.replies,
-      business_name: m?.business_name ?? null,
-      owner_first_name: m?.owner_first_name ?? null,
-      city: m?.city ?? null,
-      state: m?.state ?? null,
-      trade: m?.trade ?? null,
-      report_visit_at: m?.report_visit_at ?? null,
-      trial_started_at: m?.trial_started_at ?? null,
-      paid_at: m?.paid_at ?? null,
-      status: m?.status ?? null,
+      email: e.email,
+      business: ol?.business_name ?? null,
+      contact: ol?.owner_first_name ?? null,   // stubbed where unknown
+      phone: ol?.owner_phone ?? null,
+      city: ol?.city ?? null,
+      state: ol?.state ?? null,
+      local_time: clock.time,
+      in_call_window: clock.in_window,
+      opens: e.opens,
+      clicks,
+      replies: e.replies,
+      last_activity: lastActivity,
+      first_contacted: ol?.pushed_at ?? null,
+      stage,
+      score,
+      dispositioned,
+      disposition: disp ? disp.action : null,
     }
   })
 
-  // ── LEADS PULSE ───────────────────────────────────────────────────────
+  const call_queue = rows
+    .filter((r) => !r.dispositioned && r.score >= 40 && r.stage !== 'PAID')
+    .sort((a, b) => b.score - a.score || (b.last_activity ?? '').localeCompare(a.last_activity ?? ''))
+    .slice(0, 50)
+  const ledger = rows.sort((a, b) => b.score - a.score)
+
+  // ── LEADS PULSE ──────────────────────────────────────────────────────
   const [inventoryTotal, inventoryEnforcement, dropsWeek] = await Promise.all([
     countWhere('leads', (q) => q.neq('source', 'aging_hvac')),
     countWhere('leads', (q) => q.eq('source_details->>provider', 'enforcement')),
@@ -246,6 +315,8 @@ export async function GET() {
 
   return NextResponse.json({
     asOf: now.toISOString(),
+    call_queue,
+    ledger,
     revenue: {
       paying_customers: paying.length,
       trialing: external.filter((c) => c.status === 'trialing').length,
@@ -272,7 +343,6 @@ export async function GET() {
       campaigns: instantly.campaigns,
       instantly_error: instantly.error,
       days,
-      top_openers: topOpeners,
     },
     leads: {
       inventory_total: inventoryTotal,
