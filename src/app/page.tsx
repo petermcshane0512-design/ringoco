@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth, SignOutButton } from '@clerk/nextjs'
 import LiveAIPipeline from '@/components/LiveAIPipeline'
 import { LEADS_PER_WEEK, LEADS_PER_MONTH } from '@/lib/offer'
 import HeroStatic from './HeroStatic'
@@ -435,27 +435,13 @@ function HomeContent() {
           .founder-bar > div:first-child { margin: 0 auto; }
           .sticky-cta { display: flex !important; }
         }
-        /* 2026-06-10 — mobile (<=480px) fit pass per Peter. Sticky CTA bar
-           at the bottom of the viewport already covers primary action, so
-           nav links + the verbose nav CTA are duplicates that crowd the
-           logo. Hide them. Tighten hero typography + side padding so
-           nothing overflows at 375px (iPhone SE width). */
+        /* 2026-06-10 — mobile (<=480px) fit pass per Peter. NAV rules moved
+           into the Nav component itself 2026-06-12: this block is styled-jsx
+           SCOPED to HomeContent, so rules targeting Nav's elements (a child
+           component) never applied — mobile nav rendered every link crammed
+           and pushed the auth buttons off-screen. Only HomeContent-owned
+           hero/typography rules belong here. */
         @media (max-width: 480px) {
-          /* 2026-06-12 — mobile nav fix per Peter ("can only see BellAveGo +
-             Founder, no pricing/CTA buttons"). Hide ONLY the low-priority
-             links (Founder, Sign in); keep Pricing AND the $97 CTA visible
-             and compact so the value + action are always on screen. */
-          .nav-secondary { display: none !important; }
-          .nav-cta {
-            padding: 9px 14px !important;
-            font-size: 13px !important;
-            border-radius: 10px !important;
-            box-shadow: 0 4px 14px rgba(232,116,43,0.40) !important;
-          }
-          .nav-links { gap: 8px !important; }
-          .nav-links a[href="/pricing"] { font-size: 14px !important; padding: 9px 4px !important; }
-          /* Logo smaller on phone so Pricing + CTA both fit the row. */
-          nav a[href="/"] img { max-width: 30vw !important; }
           .hero-grid { gap: 16px !important; }
           /* Hero h1 + paragraph copy: smaller floor so nothing overflows
              and the H1 fits in 2 lines instead of 4-5 at 375px. */
@@ -476,7 +462,7 @@ function HomeContent() {
 
 function Nav({ isSignedIn }: { isSignedIn: boolean }) {
   return (
-    <nav style={{
+    <nav className="bavg-nav" style={{
       // 2026-06-10 — vertical padding reduced 8px -> 5px (~37%) per Peter:
       // headline must start higher in the viewport. Horizontal padding +
       // nav links / CTA unchanged.
@@ -493,24 +479,56 @@ function Nav({ isSignedIn }: { isSignedIn: boolean }) {
             52% of 375 = 195px, now 39% = 146px, plenty of room for nav links. */}
         <Image src="/logo.png" alt="BellAveGo" width={285} height={89} style={{ objectFit: 'contain', maxWidth: 'min(39vw, 285px)', height: 'auto' }} priority />
       </Link>
-      {/* 2026-06-10 — mobile nav now keeps Pricing visible (Peter: 'the top
-          only shows bellavego and founder not pricing'). Founder + Sign in
-          hidden on mobile; the verbose nav CTA stays hidden because the
-          sticky bottom CTA bar handles it. */}
+      {/* 2026-06-12 mobile nav per Peter: auth actions MUST be visible at
+          the top — signed-out shows Sign in + Create account together;
+          signed-in shows Dashboard + Sign out. Founder collapses on phones;
+          the CTA label shortens via the full/short span swap. The CSS lives
+          HERE (plain <style>, global) because the page-level styled-jsx
+          block is scoped to HomeContent and never reached this component —
+          that scoping bug is what crammed the nav and shoved the auth
+          buttons off-screen on phones. */}
       <div style={{ display: 'flex', gap: 14, alignItems: 'center' }} className="nav-links">
         <Link href="/founder" style={navLinkBig} className="nav-secondary">Founder</Link>
-        <Link href="/pricing" style={navLinkBig}>Pricing</Link>
+        <Link href="/pricing" style={navLinkBig} className="nav-pricing">Pricing</Link>
         {isSignedIn ? (
-          <Link href="/dashboard" style={ctaNavPrimaryBig} className="nav-cta">Dashboard →</Link>
+          <>
+            <Link href="/dashboard" style={ctaNavPrimaryBig} className="nav-cta">Dashboard →</Link>
+            <SignOutButton>
+              <button type="button" style={{ ...navLinkBig, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }} className="nav-auth">
+                Sign out
+              </button>
+            </SignOutButton>
+          </>
         ) : (
           <>
-            <Link href="/sign-in" style={navLinkBig} className="nav-secondary">Sign in</Link>
-            <Link href="/start?promo=FIRST400" style={ctaNavPrimaryBig} className="nav-cta">Claim my area · $97 →</Link>
-            {/* compact label swaps in via CSS at mobile is overkill; the
-                nav-cta media rule shrinks padding/font so this fits. */}
+            <Link href="/sign-in" style={navLinkBig} className="nav-auth">Sign in</Link>
+            <Link href="/start?promo=FIRST400" style={ctaNavPrimaryBig} className="nav-cta">
+              <span className="nav-cta-full">Claim my area · $97 →</span>
+              <span className="nav-cta-short">Create account</span>
+            </Link>
           </>
         )}
       </div>
+      <style>{`
+        .nav-cta-short { display: none; }
+        @media (max-width: 560px) {
+          .bavg-nav { padding-left: 10px !important; padding-right: 10px !important; }
+          .nav-secondary { display: none !important; }
+          .nav-links { gap: 6px !important; }
+          .nav-pricing, .nav-auth { font-size: 14px !important; padding: 9px 3px !important; white-space: nowrap; }
+          .nav-cta {
+            padding: 9px 10px !important;
+            font-size: 13px !important;
+            border-radius: 10px !important;
+            box-shadow: 0 4px 14px rgba(232,116,43,0.40) !important;
+            white-space: nowrap;
+          }
+          .nav-cta-full { display: none !important; }
+          .nav-cta-short { display: inline !important; }
+          /* Logo smaller on phone so Pricing + auth + CTA all fit the row. */
+          nav a[href="/"] img { max-width: 22vw !important; }
+        }
+      `}</style>
     </nav>
   )
 }
