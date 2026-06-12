@@ -1,4 +1,4 @@
-﻿import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 import { isValidTier, type Tier } from '@/lib/pricing'
 import { LEADS_PER_WEEK } from '@/lib/offer'
 import { skipTraceAddress } from '@/lib/skipTrace'
@@ -231,16 +231,19 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
       // provider='batchdata') are intentionally anchored on the business
       // lat/lng — they accept the current ring up to TIGHT_CAP_MI.
       const provider = (c.source_details as { provider?: string } | null)?.provider
-      const isBatchData = provider === 'batchdata'
+      // 2026-06-12 per Peter — enforcement leads (violations/hearings/311) are
+      // address-anchored real homes, NOT tenant-agnostic pile-up. They ride
+      // the full 1->4mi ring ladder like BatchData, not the 1mi shared cap.
+      const isAnchored = provider === 'batchdata' || provider === 'enforcement'
       if (hasGeocode && typeof c.lat === 'number' && typeof c.lng === 'number') {
         const miles = haversineMiles(profile.business_lat!, profile.business_lng!, c.lat, c.lng)
-        if (isBatchData) {
+        if (isAnchored) {
           if (miles > r) continue
         } else {
           if (miles > SHARED_POOL_MAX_MI) continue
         }
         c._distMi = miles
-      } else if (!isBatchData) {
+      } else if (!isAnchored) {
         // Shared-pool row with no lat/lng on the lead. We can't measure the
         // distance — BUT if it sits in one of the contractor's OWN home
         // zips (exact match, not a radius-expanded neighbor), the zip itself
@@ -343,16 +346,19 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
           // Same source-aware filter as the ring loop above. Shared-pool
           // rows must be within 1mi; BatchData rows accept effectiveCap.
           const provider = (c.source_details as { provider?: string } | null)?.provider
-          const isBatchData = provider === 'batchdata'
+          // 2026-06-12 per Peter — enforcement leads (violations/hearings/311) are
+      // address-anchored real homes, NOT tenant-agnostic pile-up. They ride
+      // the full 1->4mi ring ladder like BatchData, not the 1mi shared cap.
+      const isAnchored = provider === 'batchdata' || provider === 'enforcement'
           if (hasGeocode && typeof c.lat === 'number' && typeof c.lng === 'number') {
             const miles = haversineMiles(profile.business_lat!, profile.business_lng!, c.lat, c.lng)
-            if (isBatchData) {
+            if (isAnchored) {
               if (miles > effectiveCap) continue
             } else {
               if (miles > SHARED_POOL_MAX_MI) continue
             }
             c._distMi = miles
-          } else if (!isBatchData) {
+          } else if (!isAnchored) {
             // Same home-zip allowance as the ring loop — keep latlng-less
             // shared leads that sit in the contractor's own home zips.
             if (!homeZips.includes(c.zip)) continue
