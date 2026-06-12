@@ -174,11 +174,16 @@ export async function GET() {
   const internalBurn = internalSubs.reduce((s, c) => s + c.net_monthly, 0)
 
   // ── INSTANTLY (opens truth) + DB funnel, concurrently ─────────────────
-  const [instantly, pushedTotal, pushedToday, reportVisits, textOptIns, demos, trials, paid] = await Promise.all([
+  // 2026-06-12 — REAL click-through is prospect_free_leads.visit_count > 0
+  // (the {{free_lead_url}} the email actually links to). The old
+  // report_visits metric read outreach_leads.report_visit_at, which is set
+  // by /api/track/report-visit?l=ID — a link the current template never
+  // uses — so it was structurally always 0 regardless of real clicks.
+  const [instantly, pushedTotal, pushedToday, freeLeadVisits, textOptIns, demos, trials, paid] = await Promise.all([
     fetchInstantly(),
     countWhere('outreach_leads', (q) => q.not('pushed_at', 'is', null)),
     countWhere('outreach_leads', (q) => q.gte('pushed_at', dayStart(0).toISOString())),
-    countWhere('outreach_leads', (q) => q.not('report_visit_at', 'is', null)),
+    countWhere('prospect_free_leads', (q) => q.gt('visit_count', 0)),
     countWhere('outreach_leads', (q) => q.not('text_opt_in_at', 'is', null)),
     countWhere('outreach_leads', (q) => q.not('demo_booked_at', 'is', null)),
     countWhere('outreach_leads', (q) => q.not('trial_started_at', 'is', null)),
@@ -259,7 +264,7 @@ export async function GET() {
       open_rate: sentTotal > 0 ? openTotal / sentTotal : 0,
       replies: replyTotal,
       clicks: clickTotal,
-      report_visits: reportVisits,
+      report_visits: freeLeadVisits,
       text_opt_ins: textOptIns,
       demos_booked: demos,
       trials: trials,
