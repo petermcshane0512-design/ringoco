@@ -7,7 +7,10 @@ import { useEffect, useState } from 'react'
 import ImpersonationBanner from '@/components/ImpersonationBanner'
 import SupportWidget from '@/components/SupportWidget'
 
-const ADMIN_EMAILS = new Set(['pmcshane@fordham.edu', 'peter@bellavego.com'])
+// Mirror of requireAdmin's DEFAULT_ADMIN_EMAILS — keep in sync. Client
+// code can't read process.env.ADMIN_EMAILS (server-only), so this gates
+// only button VISIBILITY; the API gate is requireAdmin server-side.
+const ADMIN_EMAILS = new Set(['pmcshane@fordham.edu', 'peter@bellavego.com', 'bellavegollc@gmail.com'])
 
 /**
  * Dashboard layout — 2026-06-09 ONE-PAGE PIVOT.
