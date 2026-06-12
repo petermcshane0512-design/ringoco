@@ -277,11 +277,24 @@ export async function POST(req: NextRequest) {
     if (!pool.length) pool = await runQ(ENF, 'any', true)     // cited, this trade, anywhere
     if (!pool.length) pool = await runQ(ENF, 'any', false)    // any cited homeowner, anywhere
     if (!pool.length) pool = await runQ(null, 'any', false)   // last resort: any real lead
-    const poolLead = pool[0] as {
+
+    // 2026-06-12 per Peter — 55% of enforcement parcels are owned by a
+    // trust/LLC/INC, and showing "CHICAGO TITLE LAND TRUST CO A/T/U/T
+    // #800..." as the "homeowner" reads like a database glitch and kills
+    // the "real person you can call today" promise. PREFER a real-person
+    // owner for the showcase (also a better lead — person-owned skews
+    // owner-occupied, not commercial). Entity names get redacted below.
+    type PoolLead = {
       owner_name: string | null; street_address: string | null; city: string | null; state: string | null; zip: string | null
       lat: number | null; lng: number | null; home_value_est: number | null; year_built: number | null
       owner_phone: string | null; source_details: { urgency_label?: string; description?: string; trigger_type?: string; fine_total?: number | string } | null
-    } | undefined
+    }
+    const ENTITY_OWNER = /\b(trust|llc|l\.l\.c|inc\b|incorporated|corp|company|\bco\b|bank|holdings|properties|associat|partners|\blp\b|trustee|a\/t\/u\/t|titleholder|cooperative|apartments)\b/i
+    const isEntity = (n: string | null) => !!n && ENTITY_OWNER.test(n)
+    const typed = pool as PoolLead[]
+    // First real-person-owned lead with an address; else first addressed lead.
+    const poolLead = (typed.find((l) => l.street_address && !isEntity(l.owner_name))
+      ?? typed.find((l) => l.street_address)) as PoolLead | undefined
 
     if (poolLead && poolLead.street_address) {
       const value = poolLead.home_value_est
@@ -301,7 +314,10 @@ export async function POST(req: NextRequest) {
       await supabase.from('prospect_free_leads').update({
         // Enforcement leads (HPD etc.) have no public owner name — the real
         // name is skip-traced and unlocked at signup, same as the phone.
-        lead_owner_name: poolLead.owner_name || 'Verified homeowner',
+        // Entity owners (trust/LLC) are redacted to "Verified homeowner" —
+        // never show "CHICAGO TITLE LAND TRUST CO A/T/U/T #800..." to a
+        // contractor; it reads like junk and tanks the pitch.
+        lead_owner_name: (poolLead.owner_name && !isEntity(poolLead.owner_name)) ? poolLead.owner_name : 'Verified homeowner',
         lead_street: poolLead.street_address,
         lead_year_built: poolLead.year_built,
         lead_value: value,
