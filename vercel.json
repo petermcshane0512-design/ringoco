@@ -129,6 +129,10 @@
       "schedule": "0 14-22 * * 1-6"
     },
     {
+      "path": "/api/admin/auto-reply?dry=0",
+      "schedule": "*/15 * * * *"
+    },
+    {
       "path": "/api/crons/personalize-queued-leads",
       "schedule": "0 7 * * *"
     },
