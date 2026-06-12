@@ -87,8 +87,14 @@ type MapsItem = {
   additionalInfo?: Record<string, unknown>
 }
 
+// vdrmota~contact-info-scraper output shape: the page URL lives in
+// `domain` / `originalStartUrl` / `scrapedUrls` — there is NO `url` field.
+// Reading `it.url` (the old code) was always undefined, so every result
+// got dropped and refill inserted 0 emails. Verified live 2026-06-12.
 type ContactItem = {
-  url?: string
+  domain?: string
+  originalStartUrl?: string
+  scrapedUrls?: string[]
   emails?: string[]
 }
 
@@ -169,8 +175,8 @@ async function enrichEmails(websites: string[]): Promise<Map<string, string>> {
   }, 180_000)
   const out = new Map<string, string>()
   for (const it of items) {
-    if (!it.url || !it.emails || it.emails.length === 0) continue
-    const host = hostOf(it.url)
+    if (!it.emails || it.emails.length === 0) continue
+    const host = hostOf(it.domain || it.originalStartUrl || it.scrapedUrls?.[0] || '')
     if (!host || out.has(host)) continue
     const valid = it.emails.find((e) => !/noreply|no-reply|abuse|postmaster/i.test(e))
     if (valid) out.set(host, valid.toLowerCase())

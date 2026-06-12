@@ -126,39 +126,14 @@ export async function GET() {
     .map((d) => d.lead as unknown as ContactPatch)
     .filter((l) => l && l.street_address && !l.owner_phone)
     .filter((l) => !l.skip_trace_attempted_at || (Date.now() - new Date(l.skip_trace_attempted_at).getTime()) > RETRACE_AFTER_MS)
-  const needContact = eligibleContact.slice(0, 3)
-
-  // 2026-06-11 per Peter ("update ALL the active leads already sent") —
-  // everything beyond the synchronous 3 is traced in the background after
-  // the response flushes (Next after()). One page load → whole batch
-  // filled; the next refresh renders the rest. Cap 12/load; spend stays
-  // centrally capped inside skipTraceAddress.
-  const deferredContact = eligibleContact.slice(3, 15)
-  if (deferredContact.length > 0) {
-    after(async () => {
-      for (const l of deferredContact) {
-        try {
-          const t = await skipTraceAddress({
-            street: l.street_address as string,
-            city: l.city ?? undefined,
-            state: l.state ?? undefined,
-            zip: l.zip ?? undefined,
-          })
-          if (!t.ok) continue  // infra failure ≠ attempt — stay eligible
-          await supabase.from('leads').update({
-            skip_trace_attempted_at: new Date().toISOString(),
-            skip_trace_hit: t.hit,
-            ...(t.hit ? {
-              ...(t.owner_phones?.[0] ? { owner_phone: t.owner_phones[0] } : {}),
-              ...(t.owner_emails?.[0] ? { owner_email: t.owner_emails[0] } : {}),
-              ...(t.owner_name ? { owner_name: t.owner_name } : {}),
-            } : {}),
-          }).eq('id', l.id)
-        } catch { /* background enhancement */ }
-      }
-      console.log(`[leads/list] background contact backfill done: ${deferredContact.length} leads for ${userId}`)
-    })
-  }
+  // 2026-06-12 per Peter ("don't spend BatchData before the leads even get
+  // touched"). The old background sweep skip-traced 12 EXTRA leads per page
+  // load — paying $0.10 each for phones on leads the customer might never
+  // scroll to, let alone call. DELETED. We now trace only the top 2 leads
+  // actually rendered at the top of the list; everything below the fold is
+  // click-gated by the "Find their phone" button (onReveal → reveal-phone),
+  // so a skip-trace fires only when the customer engages that specific lead.
+  const needContact = eligibleContact.slice(0, 2)
 
   // 2026-06-11 — DOSSIER backfill (per Peter: "$497-worthy detail"). One
   // address-level Property Search per lead missing facts fills built year,
@@ -168,19 +143,14 @@ export async function GET() {
     year_built?: number | null; home_value_est?: number | null; sqft?: number | null
     source_details?: Record<string, unknown> | null
   }
-  // Eligibility (2026-06-12): any address-bearing lead that was never
-  // enriched, OR was enriched under the old 7-field dossier (dossier_v < 2)
-  // — those re-run ONCE to pick up sale price / lot / stories / pool /
-  // garage / occupancy. The version stamp prevents an infinite respend on
-  // parcels BatchData simply has no data for.
+  // Eligibility (2026-06-12 per Peter — cost gate): ONLY leads never
+  // enriched. The earlier dossier_v<2 re-run paid $0.05 again on every lead
+  // already enriched once — pure waste, reverted. A lead pays for dossier
+  // exactly once, ever.
   const needDossier = drops
     .map((d) => d.lead as unknown as DossierPatch)
     .filter((l) => l && l.street_address)
-    .filter((l) => {
-      const sd = l.source_details as { dossier_attempted?: boolean; dossier_v?: number } | null
-      if (sd?.dossier_attempted) return (sd.dossier_v ?? 1) < 2
-      return true
-    })
+    .filter((l) => !(l.source_details as { dossier_attempted?: boolean } | null)?.dossier_attempted)
   const enrichDossier = async (l: DossierPatch, patchInPlace: boolean) => {
     try {
       const r = await batchdataPropertyDetail({
@@ -232,14 +202,11 @@ export async function GET() {
       }
     } catch { /* enhancement only */ }
   }
+  // Only the top 2 rendered leads — the ones the customer is actually
+  // looking at. The 12-lead background sweep (per-load $0.60 on leads below
+  // the fold) was DELETED 2026-06-12 per Peter's "don't spend before they
+  // touch it." Leads enrich lazily as they reach the top of future loads.
   for (const l of needDossier.slice(0, 2)) await enrichDossier(l, true)
-  const deferredDossier = needDossier.slice(2, 14)
-  if (deferredDossier.length > 0) {
-    after(async () => {
-      for (const l of deferredDossier) await enrichDossier(l, false)
-      console.log(`[leads/list] background dossier backfill done: ${deferredDossier.length} leads for ${userId}`)
-    })
-  }
 
   for (const l of needContact) {
     try {
