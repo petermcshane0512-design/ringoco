@@ -11,8 +11,11 @@ import AddressAutocomplete from '@/components/AddressAutocomplete'
  * /dashboard/leads — THE dashboard.
  *
  * 2026-06-11 LIGHT-MODE TRADE-SOFTWARE REDESIGN per Peter: looks like
- * Jobber/Housecall Pro, not an AI product. White cards (#ffffff) on
- * light gray (#f5f6f8), dark gray text (#1f2937 / #6b7280), ONE accent
+ * Jobber/Housecall Pro, not an AI product. 2026-06-12: canvas warmed from
+ * gray #f5f6f8 to TAN per Peter, matching the homepage SampleDashboard so
+ * the preview and the product are the same surface. White cards (#ffffff)
+ * on light tan (#F2EAD9), warm borders (#E3D8C2 / dashed #D3C5A9), warm
+ * panels (#F9F5EC / #F1EBDD), dark gray text (#1f2937 / #6b7280), ONE accent
  * (#E8742B orange) reserved for primary CTAs. No glows, no gradients,
  * no score badges on the list (plain-English reason tags instead), no
  * emoji in CTAs, 44px+ tap targets, system/Inter type at normal weights.
@@ -140,7 +143,7 @@ function urgencyTagStyle(tier?: 1 | 2 | 3 | 4): { bg: string; color: string; bor
   if (tier === 1) return { bg: '#fef2f2', color: '#b91c1c', border: '#fecaca' }
   if (tier === 2) return { bg: '#fef3ec', color: '#c2410c', border: '#fed7aa' }
   if (tier === 3) return { bg: '#fffbeb', color: '#b45309', border: '#fde68a' }
-  return { bg: '#f3f4f6', color: '#4b5563', border: '#e5e7eb' }
+  return { bg: '#F1EBDD', color: '#4b5563', border: '#E3D8C2' }
 }
 
 function reasonTag(l: LeadDrop['lead']): string {
@@ -451,7 +454,7 @@ export default function LeadsPage() {
   return (
     <main style={{
       minHeight: '100vh',
-      background: '#f5f6f8',
+      background: '#F2EAD9',
       fontFamily: "Inter, system-ui, -apple-system, sans-serif",
       color: '#1f2937',
       paddingBottom: 80,
@@ -523,7 +526,7 @@ export default function LeadsPage() {
               <div style={{
                 borderRadius: 12, padding: '18px 22px',
                 background: '#ffffff',
-                border: '1px solid #e5e7eb',
+                border: '1px solid #E3D8C2',
                 display: 'flex', flexDirection: 'column', justifyContent: 'center',
                 gap: 14,
               }}>
@@ -544,7 +547,7 @@ export default function LeadsPage() {
                     // No wins yet — a number 0 demoralizes; a next action sells.
                     <span style={{
                       fontSize: 12.5, fontWeight: 600, color: '#374151',
-                      background: '#f3f4f6', border: '1px solid #e5e7eb',
+                      background: '#F1EBDD', border: '1px solid #E3D8C2',
                       padding: '8px 12px', borderRadius: 8,
                     }}>
                       {thisWeek.length} leads waiting — call your top 3 today
@@ -580,12 +583,12 @@ export default function LeadsPage() {
                         display: 'flex', alignItems: 'center', gap: 10,
                         padding: '13px 16px', borderRadius: 10,
                         background: '#ffffff',
-                        border: '1px dashed #d1d5db',
+                        border: '1px dashed #D3C5A9',
                         color: '#6b7280', fontSize: 12.5, fontWeight: 600,
                       }}>
                         <span aria-hidden style={{
                           width: 14, height: 14, borderRadius: '50%', flexShrink: 0,
-                          border: '2px solid #e5e7eb', borderTopColor: '#E8742B',
+                          border: '2px solid #E3D8C2', borderTopColor: '#E8742B',
                           animation: 'bavgSpin 0.9s linear infinite',
                         }} />
                         Finding lead {Math.min(revealed + 1, thisWeek.length)} of {thisWeek.length}…
@@ -627,7 +630,7 @@ export default function LeadsPage() {
 
 const emptyNote: React.CSSProperties = {
   padding: '20px', borderRadius: 10, textAlign: 'center',
-  background: '#ffffff', border: '1px dashed #d1d5db',
+  background: '#ffffff', border: '1px dashed #D3C5A9',
   color: '#6b7280', fontSize: 12.5,
 }
 
@@ -663,7 +666,7 @@ function NameNudge({ onSaved }: { onSaved: () => void }) {
     <div style={{
       borderRadius: 10, padding: '12px 16px', marginBottom: 14,
       background: '#ffffff',
-      border: '1px solid #e5e7eb',
+      border: '1px solid #E3D8C2',
       display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
     }}>
       <span style={{ fontSize: 12.5, fontWeight: 600, color: '#374151', flex: 1, minWidth: 200 }}>
@@ -681,7 +684,7 @@ function NameNudge({ onSaved }: { onSaved: () => void }) {
             onKeyDown={(e) => { if (e.key === 'Enter') save() }}
             style={{
               padding: '10px 12px', borderRadius: 8, minWidth: 160, minHeight: 44, boxSizing: 'border-box',
-              border: '1px solid #d1d5db', background: '#ffffff',
+              border: '1px solid #D3C5A9', background: '#ffffff',
               color: '#1f2937', fontSize: 14, fontWeight: 500, fontFamily: 'inherit', outline: 'none',
             }}
           />
@@ -703,7 +706,7 @@ function nudgeBtn(primary: boolean): React.CSSProperties {
   return {
     padding: '10px 16px', borderRadius: 8, cursor: 'pointer', minHeight: 44,
     fontFamily: 'inherit', fontSize: 13, fontWeight: 700, flexShrink: 0,
-    border: primary ? 'none' : '1px solid #d1d5db',
+    border: primary ? 'none' : '1px solid #D3C5A9',
     background: primary ? '#E8742B' : '#ffffff',
     color: primary ? '#fff' : '#6b7280',
   }
@@ -719,7 +722,7 @@ function ActivateCard() {
     <div style={{
       borderRadius: 12, padding: 'clamp(22px, 4vw, 32px)',
       background: '#ffffff',
-      border: '1px solid #e5e7eb',
+      border: '1px solid #E3D8C2',
       boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
       maxWidth: 560, margin: '40px auto 0', textAlign: 'center',
     }}>
@@ -775,7 +778,7 @@ function PastLeads({ drops, onStatus, onReveal, expandedId, onToggle }: { drops:
         style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '12px 16px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', minHeight: 44,
-          background: '#ffffff', border: '1px solid #e5e7eb',
+          background: '#ffffff', border: '1px solid #E3D8C2',
           color: '#374151', fontSize: 13, fontWeight: 700,
         }}
       >
@@ -900,7 +903,7 @@ function ProfileGate({ onDone }: { onDone: () => void }) {
     <div style={{
       borderRadius: 12, padding: 'clamp(20px, 4vw, 30px)',
       background: '#ffffff',
-      border: '1px solid #e5e7eb',
+      border: '1px solid #E3D8C2',
       boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
       maxWidth: 560, margin: '0 auto',
     }}>
@@ -950,7 +953,7 @@ function ProfileGate({ onDone }: { onDone: () => void }) {
 
         <button type="submit" disabled={saving} style={{
           marginTop: 18, width: '100%', padding: '14px 18px', borderRadius: 10, minHeight: 48,
-          background: saving ? '#f3f4f6' : '#E8742B',
+          background: saving ? '#F1EBDD' : '#E8742B',
           color: saving ? '#9ca3af' : '#fff',
           fontWeight: 700, fontSize: 15, border: 'none',
           cursor: saving ? 'wait' : 'pointer', fontFamily: 'inherit',
@@ -968,7 +971,7 @@ const gateLabel: React.CSSProperties = {
 }
 const gateInput: React.CSSProperties = {
   width: '100%', padding: '12px 14px', borderRadius: 8, minHeight: 44,
-  border: '1px solid #d1d5db',
+  border: '1px solid #D3C5A9',
   background: '#ffffff',
   fontSize: 15, fontWeight: 500,
   fontFamily: 'inherit', color: '#1f2937',
@@ -1067,7 +1070,7 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
     <div id={`lead-${l.id}`} style={{
       borderRadius: 10,
       background: '#ffffff',
-      border: expanded ? '1px solid #E8742B' : '1px solid #e5e7eb',
+      border: expanded ? '1px solid #E8742B' : '1px solid #E3D8C2',
       boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
       transition: 'border-color 180ms ease',
       overflow: 'hidden',
@@ -1112,7 +1115,7 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
               )
             })()}
             {drop.status !== 'new' && (
-              <span style={pill('#f3f4f6', statusColor)}>
+              <span style={pill('#F1EBDD', statusColor)}>
                 {drop.status}
               </span>
             )}
@@ -1159,8 +1162,8 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
             if (chips.length === 0 && !l.owner_email && !jobs) return null
             return (
               <div style={{
-                background: '#f9fafb', padding: '12px 14px', borderRadius: 8,
-                border: '1px solid #e5e7eb', marginBottom: 10,
+                background: '#F9F5EC', padding: '12px 14px', borderRadius: 8,
+                border: '1px solid #E3D8C2', marginBottom: 10,
               }}>
                 <span style={{ color: '#374151', fontWeight: 700, fontSize: 11, display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Property details</span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -1168,7 +1171,7 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
                     <span key={c} style={{
                       padding: '5px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600,
                       background: c.startsWith('🏦') ? '#f0fdf4' : '#ffffff',
-                      border: c.startsWith('🏦') ? '1px solid #bbf7d0' : '1px solid #e5e7eb',
+                      border: c.startsWith('🏦') ? '1px solid #bbf7d0' : '1px solid #E3D8C2',
                       color: c.startsWith('🏦') ? '#15803d' : '#374151',
                     }}>{c}</span>
                   ))}
@@ -1214,8 +1217,8 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
             if (tags.length === 0 && !permitLine) return null
             return (
               <div style={{
-                background: '#f9fafb', padding: '12px 14px', borderRadius: 8,
-                border: '1px solid #e5e7eb',
+                background: '#F9F5EC', padding: '12px 14px', borderRadius: 8,
+                border: '1px solid #E3D8C2',
                 fontSize: 12.5, color: '#374151', lineHeight: 1.6, marginBottom: 10,
               }}>
                 <span style={{ color: '#374151', fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 5 }}>Why this lead</span>
@@ -1229,7 +1232,7 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
                 {/* Full city-action history when one address carries multiple
                     triggers (violation + hearings case merged by address). */}
                 {(sd?.history?.length ?? 0) > 1 && (
-                  <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #e5e7eb' }}>
+                  <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #E3D8C2' }}>
                     <span style={{ fontWeight: 700, fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 4 }}>City action history</span>
                     {sd!.history!.slice(0, 5).map((h, i) => (
                       <div key={i} style={{ fontSize: 12, color: '#4b5563', marginBottom: 2 }}>
@@ -1279,7 +1282,7 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
               </a>
               <a href={`sms:${l.owner_phone}`} style={{
                 padding: '12px 18px', borderRadius: 8, minHeight: 44, boxSizing: 'border-box',
-                background: '#ffffff', border: '1px solid #d1d5db',
+                background: '#ffffff', border: '1px solid #D3C5A9',
                 color: '#374151', textDecoration: 'none', textAlign: 'center',
                 fontSize: 13.5, fontWeight: 600,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1292,7 +1295,7 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
             // re-trace on miss). Dead-end box → action.
             <button onClick={() => onReveal(l.id)} style={{
               padding: '12px 18px', borderRadius: 8, minHeight: 48,
-              background: '#ffffff', border: '1px dashed #d1d5db',
+              background: '#ffffff', border: '1px dashed #D3C5A9',
               color: '#374151', cursor: 'pointer',
               fontSize: 13, fontWeight: 600, fontFamily: 'inherit', lineHeight: 1.4,
             }}>
@@ -1337,16 +1340,16 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
               disabled={aiLoading}
               style={{
                 width: '100%', padding: '13px 18px', borderRadius: 8, minHeight: 48,
-                background: aiLoading ? '#f3f4f6' : '#ffffff',
+                background: aiLoading ? '#F1EBDD' : '#ffffff',
                 color: aiLoading ? '#9ca3af' : '#374151',
-                border: '1px solid #d1d5db', cursor: aiLoading ? 'wait' : 'pointer',
+                border: '1px solid #D3C5A9', cursor: aiLoading ? 'wait' : 'pointer',
                 fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
               }}
             >
               {aiLoading ? 'Writing your message…' : 'Get a text to send them'}
             </button>
           ) : aiMsg && (
-            <div style={{ background: '#f9fafb', borderRadius: 8, padding: '14px 16px', border: '1px solid #e5e7eb' }}>
+            <div style={{ background: '#F9F5EC', borderRadius: 8, padding: '14px 16px', border: '1px solid #E3D8C2' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Ready to send as your shop
@@ -1354,7 +1357,7 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
                 <button onClick={() => setAiOpen(false)} style={{ background: 'transparent', border: 'none', color: '#9ca3af', fontSize: 14, cursor: 'pointer', minWidth: 44, minHeight: 44 }}>✕</button>
               </div>
               {l.owner_phone && (
-                <div style={{ marginBottom: 10, padding: '11px 13px', borderRadius: 8, background: '#ffffff', border: '1px solid #e5e7eb' }}>
+                <div style={{ marginBottom: 10, padding: '11px 13px', borderRadius: 8, background: '#ffffff', border: '1px solid #E3D8C2' }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 5 }}>Text to {l.owner_phone}</div>
                   <div style={{ fontSize: 13.5, lineHeight: 1.55, marginBottom: 8, color: '#1f2937' }}>{aiMsg.sms}</div>
                   <button
@@ -1362,7 +1365,7 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
                     disabled={sendingSms || smsSent}
                     style={{
                       padding: '11px 16px', borderRadius: 8, minHeight: 44,
-                      background: smsSent ? '#16a34a' : sendingSms ? '#e5e7eb' : '#E8742B',
+                      background: smsSent ? '#16a34a' : sendingSms ? '#E3D8C2' : '#E8742B',
                       color: '#fff', border: 'none', fontFamily: 'inherit',
                       fontSize: 13, fontWeight: 700, cursor: smsSent ? 'default' : 'pointer',
                     }}
@@ -1372,7 +1375,7 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
                 </div>
               )}
               {l.owner_email && (
-                <div style={{ padding: '11px 13px', borderRadius: 8, background: '#ffffff', border: '1px solid #e5e7eb' }}>
+                <div style={{ padding: '11px 13px', borderRadius: 8, background: '#ffffff', border: '1px solid #E3D8C2' }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 5 }}>Email to {l.owner_email}</div>
                   <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, color: '#1f2937' }}>{aiMsg.email_subject}</div>
                   <div style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 8, whiteSpace: 'pre-wrap', color: '#374151' }}>{aiMsg.email_body}</div>
@@ -1381,7 +1384,7 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
                     disabled={sendingEmail || emailSent}
                     style={{
                       padding: '11px 16px', borderRadius: 8, minHeight: 44,
-                      background: emailSent ? '#16a34a' : sendingEmail ? '#e5e7eb' : '#E8742B',
+                      background: emailSent ? '#16a34a' : sendingEmail ? '#E3D8C2' : '#E8742B',
                       color: '#fff', border: 'none', fontFamily: 'inherit',
                       fontSize: 13, fontWeight: 700, cursor: emailSent ? 'default' : 'pointer',
                     }}
@@ -1406,7 +1409,7 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
             onClick={() => onStatus(drop.id, s)}
             style={{
               padding: '10px 16px', borderRadius: 8, fontFamily: 'inherit', minHeight: 44,
-              border: drop.status === s ? '1px solid #E8742B' : '1px solid #e5e7eb',
+              border: drop.status === s ? '1px solid #E8742B' : '1px solid #E3D8C2',
               background: drop.status === s ? '#fef3ec' : '#ffffff',
               color: drop.status === s ? '#c2410c' : '#6b7280',
               fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
@@ -1476,7 +1479,7 @@ function OutreachSetup({ onDone, onCancel }: { onDone: () => void; onCancel: () 
   return (
     <div style={{
       marginTop: 14, padding: '16px 16px', borderRadius: 10,
-      background: '#f9fafb', border: '1px solid #e5e7eb',
+      background: '#F9F5EC', border: '1px solid #E3D8C2',
     }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
         45-second setup — then your message writes itself
@@ -1493,7 +1496,7 @@ function OutreachSetup({ onDone, onCancel }: { onDone: () => void; onCancel: () 
         {['casual', 'professional', 'direct'].map((t) => (
           <button key={t} type="button" onClick={() => setTone(t)} style={{
             padding: '10px 16px', borderRadius: 8, fontFamily: 'inherit', cursor: 'pointer', minHeight: 44,
-            border: tone === t ? '1px solid #E8742B' : '1px solid #d1d5db',
+            border: tone === t ? '1px solid #E8742B' : '1px solid #D3C5A9',
             background: tone === t ? '#fef3ec' : '#ffffff',
             color: tone === t ? '#c2410c' : '#6b7280',
             fontSize: 13, fontWeight: 600, textTransform: 'capitalize',
@@ -1506,14 +1509,14 @@ function OutreachSetup({ onDone, onCancel }: { onDone: () => void; onCancel: () 
       <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
         <button onClick={save} disabled={saving} style={{
           flex: 1, padding: '12px 16px', borderRadius: 8, border: 'none', cursor: saving ? 'wait' : 'pointer', minHeight: 48,
-          background: saving ? '#f3f4f6' : '#E8742B',
+          background: saving ? '#F1EBDD' : '#E8742B',
           color: saving ? '#9ca3af' : '#fff', fontSize: 14, fontWeight: 700, fontFamily: 'inherit',
         }}>
           {saving ? 'Saving…' : 'Save and write my message'}
         </button>
         <button onClick={onCancel} style={{
           padding: '12px 16px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', minHeight: 48,
-          background: '#ffffff', border: '1px solid #d1d5db',
+          background: '#ffffff', border: '1px solid #D3C5A9',
           color: '#6b7280', fontSize: 13, fontWeight: 600,
         }}>
           Later
@@ -1529,7 +1532,7 @@ const setupLabel: React.CSSProperties = {
 }
 const setupInput: React.CSSProperties = {
   width: '100%', padding: '11px 13px', borderRadius: 8, minHeight: 44,
-  border: '1px solid #d1d5db',
+  border: '1px solid #D3C5A9',
   background: '#ffffff',
   fontSize: 14, fontWeight: 500,
   fontFamily: 'inherit', color: '#1f2937',
@@ -1547,8 +1550,8 @@ function pill(bg: string, color: string): React.CSSProperties {
 
 const darkInfoBox: React.CSSProperties = {
   padding: '12px 14px', borderRadius: 8,
-  background: '#f9fafb',
-  border: '1px solid #e5e7eb',
+  background: '#F9F5EC',
+  border: '1px solid #E3D8C2',
   color: '#6b7280',
   fontSize: 12.5, fontWeight: 600, textAlign: 'center',
   lineHeight: 1.4,

@@ -41,14 +41,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // leads / Settings / Support / account right. Boring and trustworthy,
   // like Jobber — the buyer is a 45-65yo contractor on his phone outside.
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: "Inter, system-ui, -apple-system, sans-serif", background: '#f5f6f8' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: "Inter, system-ui, -apple-system, sans-serif", background: '#F2EAD9' }}>
       <ImpersonationBanner />
 
       <header className="bavg-dash-header" style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         padding: '10px clamp(14px, 4vw, 28px)',
         background: '#ffffff',
-        borderBottom: '1px solid #e5e7eb',
+        borderBottom: '1px solid #E3D8C2',
         position: 'sticky', top: 0, zIndex: 50,
         gap: 10,
       }}>
@@ -90,6 +90,6 @@ const navLink: React.CSSProperties = {
   fontSize: 13, fontWeight: 600, color: '#374151',
   textDecoration: 'none',
   padding: '10px 12px', borderRadius: 8, minHeight: 44, display: 'inline-flex', alignItems: 'center',
-  border: '1px solid #e5e7eb',
+  border: '1px solid #E3D8C2',
   background: '#ffffff',
 }

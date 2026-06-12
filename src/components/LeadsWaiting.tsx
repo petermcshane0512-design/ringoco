@@ -25,7 +25,7 @@ export default function LeadsWaiting({ firstName }: { firstName?: string | null 
       overflow: 'hidden',
       borderRadius: 20,
       background: '#ffffff',
-      border: '1px solid #e5e7eb',
+      border: '1px solid #E3D8C2',
       boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
       padding: 'clamp(24px, 5vw, 40px)',
       maxWidth: 620,
@@ -65,8 +65,8 @@ export default function LeadsWaiting({ firstName }: { firstName?: string | null 
         ].map((x) => (
           <div key={x.n} style={{
             padding: '14px 14px', borderRadius: 12,
-            background: '#f9fafb',
-            border: '1px solid #e5e7eb',
+            background: '#F9F5EC',
+            border: '1px solid #E3D8C2',
           }}>
             <div style={{
               width: 24, height: 24, borderRadius: 7, marginBottom: 8,

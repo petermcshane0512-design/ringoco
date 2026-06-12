@@ -8,10 +8,10 @@ import { useAuth } from '@clerk/nextjs'
 import LiveAIPipeline from '@/components/LiveAIPipeline'
 import { LEADS_PER_WEEK, LEADS_PER_MONTH } from '@/lib/offer'
 import HeroStatic from './HeroStatic'
+import SampleDashboard from '@/components/SampleDashboard'
 import OpportunityChecker from '@/components/OpportunityChecker'
 import ScoutTeam from '@/components/ScoutTeam'
 import LiveLeadFeed from '@/components/LiveLeadFeed'
-import LiveStatBar from '@/components/LiveStatBar'
 import Reveal from '@/components/Reveal'
 
 /**
@@ -60,199 +60,6 @@ import Reveal from '@/components/Reveal'
 const FOUNDER_PHONE = '(773) 710-9565'
 const FOUNDER_PHONE_HREF = 'tel:+17737109565'
 
-type SampleLead = {
-  name: string
-  addr: string
-  city: string
-  phoneRedacted: string
-  propertyValue: string
-  yearBuilt: number
-  signalType: string
-  signalDetail: string
-  hvacAge?: string
-  jobValue: string
-  score: number
-}
-
-type TeaserLead = { name: string; signal: string; value: string; isMore?: boolean }
-
-type TradeVariant = {
-  slug: string
-  label: string                  // e.g. "HVAC", "Roofing"
-  scarcityPill: string
-  h1Verb: string                 // "Book", "Land"
-  h1Highlight: string            // "4–8 install jobs this month"
-  h1Suffix: string               // "from N fresh homeowner leads in your zip." — N from LEADS_PER_WEEK
-  heroSubtext: string
-  heroLead: SampleLead
-  teaserLeads: TeaserLead[]
-  cardHeader: string             // "Sample · Plano TX 75024 · HVAC"
-  signalSourcesLine: string      // pulled overnight from X, Y, Z
-}
-
-const HVAC_VARIANT: TradeVariant = {
-  slug: 'hvac',
-  label: 'HVAC',
-  scarcityPill: '⚠ 47 zip codes locked · 953 still open',
-  h1Verb: 'Book',
-  h1Highlight: '1–3 install jobs this month',
-  h1Suffix: `from ${LEADS_PER_WEEK} fresh homeowner leads/week in your zip.`,
-  heroSubtext: 'Real names, addresses, phones — pulled overnight from permits, aging HVAC, storm strikes, new move-ins. AI sends the intro text + email for you. You only call back the YES’s.',
-  heroLead: {
-    name: 'Mike C.',
-    addr: '9999 Sample St',
-    city: 'Plano, TX 75024',
-    phoneRedacted: '(214) ●●●-●167',
-    propertyValue: '$485K',
-    yearBuilt: 1998,
-    signalType: 'PERMIT FILED',
-    signalDetail: 'AC condenser permit · filed 3 days ago',
-    hvacAge: '14 yrs',
-    jobValue: '$3,200 – $4,800',
-    score: 92,
-  },
-  teaserLeads: [
-    { name: 'Sarah W. · 75093',  signal: 'PROPERTY SOLD',    value: '$1.8K – $6.4K' },
-    { name: 'Carlos R. · 75035', signal: 'AGED SYSTEM FLAG', value: '$5.4K – $9.2K' },
-    { name: '+ 77 more this month in your zip', signal: '', value: '', isMore: true },
-  ],
-  cardHeader: 'Sample · Plano TX 75024 · HVAC',
-  signalSourcesLine: 'permits · aged HVAC · move-ins · storms',
-}
-
-const ROOFING_VARIANT: TradeVariant = {
-  slug: 'roofing',
-  label: 'Roofing',
-  scarcityPill: '⚠ Hail hit 47 metros this week · 17 zips still open',
-  h1Verb: 'Land',
-  h1Highlight: '3–5 storm-damaged roofs this month',
-  h1Suffix: `from ${LEADS_PER_WEEK} insurance-ready leads/week in your zip.`,
-  heroSubtext: 'NOAA-verified hail strikes + aging asphalt + insurance-claim windows — names, addresses, photos of damaged roofs. AI sends the intro for you. You only call back the YES’s.',
-  heroLead: {
-    name: 'Tom S.',
-    addr: '8888 Demo Ln',
-    city: 'Plano, TX 75093',
-    phoneRedacted: '(214) ●●●-●142',
-    propertyValue: '$612K',
-    yearBuilt: 2002,
-    signalType: 'HAIL STRIKE',
-    signalDetail: 'NOAA 1.75" hail · 5 days ago · roof flagged',
-    jobValue: '$11,500 – $18,200',
-    score: 96,
-  },
-  teaserLeads: [
-    { name: 'Sarah W. · 75093',  signal: 'HAIL DAMAGE',  value: '$8.4K – $14.2K' },
-    { name: 'Carlos R. · 75035', signal: 'AGING ROOF',   value: '$9.8K – $16.4K' },
-    { name: '+ 77 more this month in your zip', signal: '', value: '', isMore: true },
-  ],
-  cardHeader: 'Sample · Plano TX 75024 · ROOFING',
-  signalSourcesLine: 'NOAA hail · insurance permits · aging asphalt · move-ins',
-}
-
-const PLUMBING_VARIANT: TradeVariant = {
-  slug: 'plumbing',
-  label: 'Plumbing',
-  scarcityPill: '⚠ 47 zip codes locked · 953 still open',
-  h1Verb: 'Book',
-  h1Highlight: '1–3 install jobs this month',
-  h1Suffix: `from ${LEADS_PER_WEEK} verified homeowner leads/week in your zip.`,
-  heroSubtext: 'Water-heater age data + sewer-permit feeds + new homeowners — owner-occupied verified. AI sends the intro for you. You only call back the YES’s.',
-  heroLead: {
-    name: 'Lisa C.',
-    addr: '7777 Preview Way',
-    city: 'Allen, TX 75002',
-    phoneRedacted: '(214) ●●●-●119',
-    propertyValue: '$398K',
-    yearBuilt: 2008,
-    signalType: 'WATER HEATER AGE',
-    signalDetail: 'Tank age ~16 yrs · permit replacement window',
-    jobValue: '$1,400 – $3,800',
-    score: 90,
-  },
-  teaserLeads: [
-    { name: 'Sarah W. · 75093',  signal: 'NEW OWNER',   value: '$800 – $2,400' },
-    { name: 'Carlos R. · 75035', signal: 'SEWER PERMIT', value: '$4,200 – $8,600' },
-    { name: '+ 77 more this month in your zip', signal: '', value: '', isMore: true },
-  ],
-  cardHeader: 'Sample · Allen TX 75002 · PLUMBING',
-  signalSourcesLine: 'permits · water-heater age · move-ins',
-}
-
-const ELECTRICAL_VARIANT: TradeVariant = {
-  slug: 'electrical',
-  label: 'Electrical',
-  scarcityPill: '⚠ 47 zip codes locked · 953 still open',
-  h1Verb: 'Book',
-  h1Highlight: '1–3 panel upgrades this month',
-  h1Suffix: `from ${LEADS_PER_WEEK} fresh homeowner leads/week in your zip.`,
-  heroSubtext: 'Pre-1990 panel feeds + EV-charger permit data + solar adopters — owner-occupied verified. AI sends the intro for you. You only call back the YES’s.',
-  heroLead: {
-    name: 'David P.',
-    addr: '6666 Sample Dr',
-    city: 'McKinney, TX 75072',
-    phoneRedacted: '(972) ●●●-●133',
-    propertyValue: '$555K',
-    yearBuilt: 1985,
-    signalType: 'PANEL UPGRADE',
-    signalDetail: 'Pre-1990 build · 100A panel risk · EV adoption zone',
-    jobValue: '$2,400 – $6,800',
-    score: 91,
-  },
-  teaserLeads: [
-    { name: 'Sarah W. · 75093',  signal: 'EV CHARGER', value: '$1,200 – $3,400' },
-    { name: 'Carlos R. · 75035', signal: 'SOLAR REWIRE', value: '$4,800 – $9,200' },
-    { name: '+ 77 more this month in your zip', signal: '', value: '', isMore: true },
-  ],
-  cardHeader: 'Sample · McKinney TX 75072 · ELECTRICAL',
-  signalSourcesLine: 'panel permits · EV charger filings · solar adopters',
-}
-
-const HANDYMAN_VARIANT: TradeVariant = {
-  slug: 'handyman',
-  label: 'Handyman',
-  scarcityPill: '⚠ 47 zip codes locked · 953 still open',
-  h1Verb: 'Book',
-  h1Highlight: '4–8 jobs this month',
-  h1Suffix: `from ${LEADS_PER_WEEK} fresh homeowner leads/week in your zip.`,
-  heroSubtext: 'Fresh move-ins + aging-home flags + small-project permits — owner-occupied verified. AI sends the intro for you. You only call back the YES’s.',
-  heroLead: {
-    name: 'James P.',
-    addr: '5555 Demo Ave',
-    city: 'McKinney, TX 75072',
-    phoneRedacted: '(972) ●●●-●133',
-    propertyValue: '$555K',
-    yearBuilt: 2004,
-    signalType: 'NEW OWNER · 6 WK',
-    signalDetail: 'Sold 6 weeks ago · deferred-maintenance window',
-    jobValue: '$400 – $2,200',
-    score: 84,
-  },
-  teaserLeads: [
-    { name: 'Sarah W. · 75093',  signal: 'NEW OWNER',  value: '$280 – $1,400' },
-    { name: 'Carlos R. · 75035', signal: 'AGING HOME', value: '$600 – $1,800' },
-    { name: '+ 77 more this month in your zip', signal: '', value: '', isMore: true },
-  ],
-  cardHeader: 'Sample · McKinney TX 75072 · HANDYMAN',
-  signalSourcesLine: 'move-ins · small-job permits · aging homes',
-}
-
-const VARIANTS: Record<string, TradeVariant> = {
-  hvac: HVAC_VARIANT,
-  roofing: ROOFING_VARIANT,
-  plumbing: PLUMBING_VARIANT,
-  electrical: ELECTRICAL_VARIANT,
-  handyman: HANDYMAN_VARIANT,
-}
-
-function resolveVariant(raw: string | null | undefined): TradeVariant {
-  if (!raw) return HVAC_VARIANT
-  const k = raw.toLowerCase().trim()
-  if (k.startsWith('roof')) return ROOFING_VARIANT
-  if (k.startsWith('plumb')) return PLUMBING_VARIANT
-  if (k.startsWith('elect')) return ELECTRICAL_VARIANT
-  if (k.startsWith('handy') || k.startsWith('general')) return HANDYMAN_VARIANT
-  return VARIANTS[k] || HVAC_VARIANT
-}
 
 export default function Home() {
   // 2026-06-10 — T2 SSR fix. The previous empty <main /> fallback was what
@@ -270,10 +77,15 @@ export default function Home() {
 
 function HomeContent() {
   const { isSignedIn } = useAuth()
-  const sp = useSearchParams()
-  const variant = resolveVariant(sp?.get('trade'))
-  const HERO_LEAD = variant.heroLead
-  const TEASER_LEADS = variant.teaserLeads
+  // 2026-06-12 — trade-variant hero system DELETED per Peter. The dark
+  // command-center LeadsCard (and the 5 per-trade copy variants that only
+  // fed it) is replaced by SampleDashboard: a 1:1 replica of the real
+  // /dashboard/leads view with fictional Brooklyn-roofing demo data, so the
+  // homepage promise and the product a customer logs into are the SAME
+  // surface. useSearchParams() is still called so /?trade= cold-email links
+  // hydrate through the same Suspense path as before (HeroStatic stays the
+  // SEO fallback).
+  useSearchParams()
   return (
     <main style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#FFF8F0', color: '#0B1F3A', minHeight: '100vh', overflowX: 'hidden', paddingBottom: 70 }}>
       {/* 2026-06-10 — fake LiveActivityMarquee deleted same day (synthetic
@@ -384,7 +196,7 @@ function HomeContent() {
           </div>
 
           <div className="hero-stage">
-            <LeadsCard variant={variant} />
+            <SampleDashboard />
           </div>
         </div>
       </section>
@@ -395,11 +207,11 @@ function HomeContent() {
 
       <Reveal><LiveAIPipeline /></Reveal>
 
-      {/* LiveDashboardPreview DELETED 2026-06-10 per Peter. It was a second,
-          light-themed dashboard render that clashed with the dark command-
-          center LeadsCard in the hero — two different "dashboards" on one
-          page reads as two different products. The hero card (which matches
-          the real post-redesign dashboard aesthetic) is the single preview. */}
+      {/* LiveDashboardPreview DELETED 2026-06-10; dark command-center
+          LeadsCard DELETED 2026-06-12. SampleDashboard in the hero is now
+          the single preview, and it is a 1:1 replica of the real
+          /dashboard/leads view (same tan theme, same map, same countdown)
+          so what we show is exactly what a customer logs into. */}
 
       {/* SCOUT TEAM — 24 named specialist systems working the contractor's
           zip 24/7. Reframes the "AI agents" angle as a research team
@@ -591,16 +403,6 @@ function HomeContent() {
         .bavg-h1-shimmer {
           animation: bavgH1Shimmer 6s linear infinite;
         }
-        @keyframes bavgRadarSpin {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
-        @keyframes bavgScanY {
-          0%   { transform: translateY(-90px); opacity: 0; }
-          12%  { opacity: 1; }
-          88%  { opacity: 1; }
-          100% { transform: translateY(560px); opacity: 0; }
-        }
         @media (prefers-reduced-motion: reduce) {
           .bavg-h1-shimmer { animation: none; }
         }
@@ -620,21 +422,6 @@ function HomeContent() {
         }
       `}</style>
       <style jsx>{`
-        .leadscard-scroll::-webkit-scrollbar {
-          width: 6px;
-        }
-        .leadscard-scroll::-webkit-scrollbar-thumb {
-          background: rgba(232, 116, 43, 0.35);
-          border-radius: 6px;
-        }
-        .leadscard-scroll::-webkit-scrollbar-track {
-          background: rgba(232, 116, 43, 0.08);
-        }
-        .leadscard-row:hover {
-          transform: translateY(-1px);
-          background: rgba(94, 234, 212, 0.10) !important;
-          box-shadow: 0 8px 24px rgba(94, 234, 212, 0.18), 0 0 0 1px rgba(94, 234, 212, 0.25);
-        }
         @media (max-width: 880px) {
           .hero-grid { grid-template-columns: 1fr !important; }
           /* 2026-06-10 — was order:-1 so LeadsCard appeared ABOVE the
@@ -729,186 +516,6 @@ function Nav({ isSignedIn }: { isSignedIn: boolean }) {
   )
 }
 
-function LeadsCard({ variant }: { variant: TradeVariant }) {
-  const HERO_LEAD = variant.heroLead
-  const TEASER_LEADS = variant.teaserLeads
-  return (
-    <div style={{
-      position: 'relative',
-      overflow: 'hidden',
-      borderRadius: 20,
-      background: 'linear-gradient(165deg, #0B1F3A 0%, #0E2746 55%, #0B1F3A 100%)',
-      border: '1.5px solid rgba(94,234,212,0.28)',
-      padding: 22,
-      boxShadow: '0 30px 80px rgba(11,31,58,0.45), 0 0 60px -20px rgba(94,234,212,0.35), inset 0 1px 0 rgba(255,255,255,0.06)',
-      maxWidth: 580,
-      width: '100%',
-    }}>
-      {/* Command-center grid + scanline */}
-      <div aria-hidden style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
-        backgroundImage: 'linear-gradient(rgba(94,234,212,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(94,234,212,0.05) 1px, transparent 1px)',
-        backgroundSize: '28px 28px',
-      }} />
-      <div aria-hidden style={{
-        position: 'absolute', left: 0, right: 0, top: 0, height: 90,
-        pointerEvents: 'none', zIndex: 0,
-        background: 'linear-gradient(180deg, transparent, rgba(94,234,212,0.10), transparent)',
-        animation: 'bavgScanY 7s ease-in-out infinite',
-      }} />
-      <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 800, color: '#FF9D5A', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{variant.cardHeader}</div>
-          <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2, color: '#7AAAB2' }}>Your dashboard · scroll to see all 10</div>
-        </div>
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 7,
-          padding: '5px 11px', borderRadius: 99,
-          background: 'rgba(34,197,94,0.12)',
-          border: '1px solid rgba(34,197,94,0.40)',
-          fontSize: 10, fontWeight: 800, color: '#16803F', letterSpacing: '0.08em',
-        }}>
-          <span aria-hidden style={{ position: 'relative', width: 14, height: 14, borderRadius: '50%', border: '1px solid rgba(22,128,63,0.45)', overflow: 'hidden', flexShrink: 0 }}>
-            <span style={{
-              position: 'absolute', inset: 0,
-              background: 'conic-gradient(from 0deg, rgba(34,197,94,0.85), transparent 70deg, transparent 360deg)',
-              animation: 'bavgRadarSpin 2.4s linear infinite',
-            }} />
-          </span>
-          SAMPLE
-        </div>
-      </div>
-
-      {/* Scrollable dashboard preview — internal scroll so prospect can
-          interact w/ a real-feeling lead feed in the hero. Each row links
-          to /sign-up so a click pulls them into the funnel. */}
-      <div style={{
-        position: 'relative',
-        zIndex: 1,
-        maxHeight: 460,
-        overflowY: 'auto',
-        paddingRight: 4,
-        marginRight: -4,
-        scrollbarWidth: 'thin',
-      }} className="leadscard-scroll">
-        {/* Featured (hero) lead */}
-        <Link href="/start?promo=FIRST400" style={{ textDecoration: 'none', display: 'block' }}>
-          <div style={{
-            borderRadius: 13,
-            background: 'rgba(255,255,255,0.06)',
-            border: '1.5px solid rgba(232,116,43,0.55)',
-            padding: '14px 16px',
-            marginBottom: 10,
-            cursor: 'pointer',
-            transition: 'transform 180ms ease, box-shadow 180ms ease',
-            backdropFilter: 'blur(6px)',
-          }} className="leadscard-row">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-              <div style={{ fontSize: 15, fontWeight: 900, color: '#FFF8F0' }}>{HERO_LEAD.name}</div>
-              <span style={{
-                padding: '2px 7px', borderRadius: 6,
-                background: '#E8742B',
-                color: '#fff', fontSize: 9, fontWeight: 900, letterSpacing: '0.04em',
-              }}>{HERO_LEAD.signalType}</span>
-              <span style={{
-                padding: '2px 7px', borderRadius: 6,
-                background: '#FFD9A8', color: '#C84B26', fontSize: 9, fontWeight: 900,
-              }}>SCORE {HERO_LEAD.score}</span>
-            </div>
-            <div style={{ fontSize: 12.5, color: 'rgba(255,248,240,0.92)', fontWeight: 700, marginBottom: 4 }}>{HERO_LEAD.addr} · {HERO_LEAD.city}</div>
-            <div style={{ fontSize: 11.5, color: '#7AAAB2', lineHeight: 1.55 }}>
-              Built {HERO_LEAD.yearBuilt} · {HERO_LEAD.propertyValue} home{HERO_LEAD.hvacAge ? ` · HVAC ${HERO_LEAD.hvacAge}` : ''}
-            </div>
-            <div style={{ fontSize: 11.5, color: '#7AAAB2', lineHeight: 1.55, marginTop: 4 }}>
-              Phone:{' '}
-              <span style={{
-                background: 'rgba(94,234,212,0.10)',
-                border: '1px solid rgba(94,234,212,0.25)',
-                padding: '2px 6px', borderRadius: 5,
-                fontFamily: 'monospace', fontWeight: 700, color: '#5EEAD4',
-                letterSpacing: '0.05em',
-              }}>{HERO_LEAD.phoneRedacted}</span>{' '}
-              <span style={{ fontSize: 10, color: '#FF9D5A', fontWeight: 800 }}>← unlock w/ trial</span>
-            </div>
-            <div style={{ fontSize: 11, color: '#FF9D5A', marginTop: 8, fontWeight: 700 }}>📍 {HERO_LEAD.signalDetail}</div>
-            <div style={{
-              marginTop: 10, padding: '8px 10px',
-              borderRadius: 8,
-              background: 'rgba(232,116,43,0.18)',
-              border: '1px solid rgba(232,116,43,0.30)',
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,248,240,0.88)', fontWeight: 700 }}>Est. job value</div>
-              <div style={{ fontSize: 13, fontWeight: 900, color: '#FFC58A' }}>{HERO_LEAD.jobValue}</div>
-            </div>
-          </div>
-        </Link>
-
-        {/* Teaser rows + extras */}
-        <div style={{ display: 'grid', gap: 6 }}>
-          {[
-            ...TEASER_LEADS.filter((t) => !t.isMore),
-            { name: 'Jamal W. · 30329', signal: 'HAIL DAMAGE',  value: '$9.2K – $14.8K' },
-            { name: 'Susan O. · 32801', signal: 'AGED SYSTEM',  value: '$3.9K – $6.4K'  },
-            { name: 'Tyler B. · 37203', signal: 'PERMIT FILED', value: '$2.8K – $4.8K'  },
-            { name: 'Nina P. · 78704',  signal: 'AGED SYSTEM',  value: '$4.6K – $7.8K'  },
-            { name: 'Greg F. · 76137',  signal: 'STORM ZONE',   value: '$7.8K – $11.4K' },
-            { name: 'David K. · 85254', signal: 'NEW OWNER',    value: '$0.6K – $1.8K'  },
-            { name: 'Rachel B. · 30301',signal: 'PERMIT FILED', value: '$3.4K – $5.6K'  },
-          ].map((t, i) => (
-            <Link
-              key={i}
-              href="/start?promo=FIRST400"
-              style={{ textDecoration: 'none', display: 'block' }}
-            >
-              <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-                padding: '9px 12px',
-                borderRadius: 10,
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(94,234,212,0.12)',
-                fontSize: 12,
-                color: 'rgba(255,248,240,0.92)', fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'background 160ms ease, transform 160ms ease',
-              }} className="leadscard-row">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
-                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.name}</span>
-                  {t.signal && (
-                    <span style={{
-                      padding: '1px 6px', borderRadius: 5,
-                      background: t.signal === 'PROPERTY SOLD' || t.signal === 'NEW OWNER' ? 'rgba(20,184,166,0.85)' : 'rgba(232,116,43,0.85)',
-                      color: '#fff', fontSize: 8.5, fontWeight: 900, letterSpacing: '0.04em',
-                    }}>{t.signal}</span>
-                  )}
-                </div>
-                <div style={{ fontSize: 11.5, fontWeight: 900, color: '#FFC58A', whiteSpace: 'nowrap' }}>{t.value}</div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      <Link href="/start?promo=FIRST400" style={{ textDecoration: 'none', display: 'block', position: 'relative', zIndex: 1 }}>
-        <div style={{ marginTop: 14, padding: '11px 14px', borderRadius: 10, background: 'rgba(232,116,43,0.14)', border: '1px dashed rgba(255,157,90,0.50)', cursor: 'pointer' }}>
-          <div style={{ fontSize: 11, fontWeight: 800, color: '#FFC58A', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Pre-written script attached to every lead</div>
-          <div style={{ fontSize: 12, color: 'rgba(255,248,240,0.90)', marginTop: 4, lineHeight: 1.5 }}>
-            Each lead comes w/ a ready-to-send intro script (SMS + email + call opener). Copy-paste, tweak, or call. <strong style={{ color: '#FFF8F0' }}>Tap any lead above to claim your zip →</strong>
-          </div>
-        </div>
-      </Link>
-    </div>
-  )
-}
-
-const ctaNavPrimary: React.CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', gap: 6,
-  padding: '10px 18px', borderRadius: 10,
-  background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 100%)',
-  color: '#fff', textDecoration: 'none',
-  fontWeight: 900, fontSize: 13,
-  boxShadow: '0 6px 18px rgba(232,116,43,0.32)',
-}
 
 const navLinkBig: React.CSSProperties = {
   color: '#0B1F3A', textDecoration: 'none',

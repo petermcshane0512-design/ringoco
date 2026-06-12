@@ -101,10 +101,10 @@ export default function LeadMap({
       position: 'relative',
       borderRadius: 16,
       overflow: 'hidden',
-      border: '1px solid #e5e7eb',
+      border: '1px solid #E3D8C2',
       boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
       aspectRatio: `${MAP_W} / ${MAP_H}`,
-      background: '#e5e7eb',
+      background: '#EDE3CD',
     }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
