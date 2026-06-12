@@ -101,10 +101,10 @@ export default function LeadMap({
       position: 'relative',
       borderRadius: 16,
       overflow: 'hidden',
-      border: '1.5px solid rgba(255,157,90,0.28)',
-      boxShadow: '0 18px 50px rgba(11,31,58,0.35)',
+      border: '1px solid #e5e7eb',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
       aspectRatio: `${MAP_W} / ${MAP_H}`,
-      background: '#0B1F3A',
+      background: '#e5e7eb',
     }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -128,10 +128,10 @@ export default function LeadMap({
         }}
       >
         <div style={{
-          padding: '3px 8px', borderRadius: 7, marginBottom: 2,
-          background: '#0B1F3A', border: '1.5px solid #FF9D5A',
-          color: '#FFC58A', fontSize: 9.5, fontWeight: 900, whiteSpace: 'nowrap',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+          padding: '3px 8px', borderRadius: 6, marginBottom: 2,
+          background: '#ffffff', border: '1px solid #E8742B',
+          color: '#c2410c', fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
         }}>
           YOUR SHOP
         </div>

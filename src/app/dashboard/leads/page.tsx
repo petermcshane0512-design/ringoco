@@ -10,21 +10,21 @@ import AddressAutocomplete from '@/components/AddressAutocomplete'
 /**
  * /dashboard/leads — THE dashboard.
  *
- * 2026-06-11 restyle per Peter: "dashboard is too futuristic and too
- * UI-y — I like how the dashboard looks on the landing page." This now
- * matches the homepage LeadsCard design system exactly: warm navy
- * (#0B1F3A → #0E2746), orange accents (#E8742B / #FF9D5A / #FFC58A),
- * cream text (#FFF8F0), muted slate-teal secondary (#7AAAB2). No
- * monospace status text, no satellite/command-center jargon.
+ * 2026-06-11 LIGHT-MODE TRADE-SOFTWARE REDESIGN per Peter: looks like
+ * Jobber/Housecall Pro, not an AI product. White cards (#ffffff) on
+ * light gray (#f5f6f8), dark gray text (#1f2937 / #6b7280), ONE accent
+ * (#E8742B orange) reserved for primary CTAs. No glows, no gradients,
+ * no score badges on the list (plain-English reason tags instead), no
+ * emoji in CTAs, 44px+ tap targets, system/Inter type at normal weights.
+ * The dashboard layout owns the single header; this page renders content
+ * only.
  *
  * Structure:
- *   1. Top bar — wordmark, quick-nav (Buy leads / Settings / Support).
- *   2. Countdown banner — next drop, this week / month / won stats.
- *   3. Lead rows — LeadsCard-style rows: score chip, signal pill,
- *      address. Click to expand: property intel, phone reveal state
- *      machine, AI outreach generator with send-now buttons, map link,
- *      status pills.
- *   4. Empty state — LeadScanConsole (radar + agent log).
+ *   1. Top row — compact map (left) + countdown/stats card (right).
+ *   2. Lead rows — reason tag + address. Expand: property dossier,
+ *      why-this-lead, call angle (cleaned permit text), phone actions,
+ *      message generator ("Get a text to send them"), status pills.
+ *   3. Empty state — LeadsWaiting card.
  *
  * PROGRESSIVE FIRST DROP (2026-06-11 per Peter): when a fresh signup's
  * first batch lands, leads render ONE AT A TIME (~1.1s apart) with a
@@ -107,6 +107,60 @@ function estJobRange(trade: string, homeValue: number | null | undefined): [numb
   const key = Object.keys(JOB_VALUE_MULTIPLIERS).find((k) => trade.toLowerCase().includes(k)) || 'handy'
   const [lo, hi] = JOB_VALUE_MULTIPLIERS[key]
   return [Math.round((homeValue * lo) / 100) * 100, Math.round((homeValue * hi) / 100) * 100]
+}
+
+/**
+ * 2026-06-11 redesign — plain-English reason tag replaces "SCORE 86" on
+ * the list view (score stays in the DB; a 55-year-old roofer doesn't
+ * think in scores, he thinks "fence permit, this week").
+ */
+const PERMIT_KEYWORDS: Array<[RegExp, string]> = [
+  [/fence/i, 'Fence permit filed'],
+  [/roof/i, 'Roof permit filed'],
+  [/garage/i, 'Garage permit filed'],
+  [/deck|porch/i, 'Deck/porch permit filed'],
+  [/electric/i, 'Electrical permit filed'],
+  [/mechanical|hvac|heating|furnace|air condition/i, 'HVAC permit filed'],
+  [/plumb|water heater|sewer/i, 'Plumbing permit filed'],
+  [/renovation|alteration|remodel/i, 'Renovation permit filed'],
+  [/demolition/i, 'Demolition permit filed'],
+]
+function reasonTag(l: LeadDrop['lead']): string {
+  if (l.source === 'permit') {
+    const blob = `${l.source_details?.description ?? ''} ${l.source_details?.permit_type ?? ''} ${l.source_details?.work_class ?? ''}`
+    for (const [re, label] of PERMIT_KEYWORDS) if (re.test(blob)) return label
+    return 'Permit filed'
+  }
+  if (l.source === 'move_in') return 'Just bought this home'
+  if (l.source === 'storm') return 'Storm-hit area'
+  if (l.source === 'expired_listing') return 'Recently sold'
+  const tag = l.source_details?.tag || ''
+  if (/recent-buyer/.test(tag)) return 'Just bought this home'
+  if (/aging/.test(tag)) return 'Aging-home profile'
+  return 'New lead'
+}
+
+/**
+ * Call-angle cleanup — permit pitches arrive with raw municipal text
+ * (ALL CAPS, quote artifacts like 6'-0' ', code references). Normalize to
+ * 1-2 plain sentences at render time.
+ */
+function cleanCallAngle(text: string): string {
+  let t = text
+    .replace(/'\s*'+/g, '"')                  // 24'-0' ' -> 24'-0"
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+  // Sentence-case any ALL-CAPS run of 3+ words.
+  t = t.replace(/\b([A-Z][A-Z0-9'"\-.,/&: ]{12,})\b/g, (run) => {
+    const lower = run.toLowerCase()
+    return lower.charAt(0).toUpperCase() + lower.slice(1)
+  })
+  // Strip noisy municipal code prefixes ("Sc 2019 cbrc:" etc).
+  t = t.replace(/\b(?:sc|per)\s*\d{4}\s*[a-z]{2,5}:\s*/gi, '')
+  // Tidy double punctuation + ensure it ends like a sentence.
+  t = t.replace(/\.\s*\./g, '.').trim()
+  if (t && !/[.!?]$/.test(t)) t += '.'
+  return t
 }
 
 type QuotaInfo = {
@@ -369,50 +423,21 @@ export default function LeadsPage() {
     return `${mins}m ${secs}s`
   })()
 
+  // 2026-06-11 LIGHT-MODE TRADE-SOFTWARE REDESIGN per Peter ("Jobber, not
+  // an AI/crypto product — 45-65yo contractor on his phone in daylight").
+  // The page-level dark top bar was DELETED; the dashboard layout owns the
+  // single header. Presentational refactor only — zero logic changes.
   return (
     <main style={{
       minHeight: '100vh',
-      background: 'linear-gradient(165deg, #081427 0%, #0B1F3A 55%, #0A1830 100%)',
-      fontFamily: "'Inter', system-ui, sans-serif",
-      color: '#FFF8F0',
+      background: '#f5f6f8',
+      fontFamily: "Inter, system-ui, -apple-system, sans-serif",
+      color: '#1f2937',
       paddingBottom: 80,
     }}>
-      {/* ── TOP BAR ─────────────────────────────────────────────── */}
-      <div style={{
-        position: 'sticky', top: 0, zIndex: 50,
-        background: 'rgba(8,20,39,0.92)',
-        backdropFilter: 'blur(14px)',
-        borderBottom: '1px solid rgba(255,157,90,0.16)',
-        padding: '12px clamp(14px, 3vw, 28px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-          <span style={{
-            fontSize: 15, fontWeight: 900, letterSpacing: '-0.02em',
-            color: '#FFF8F0',
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-          }}>
-            BellAveGo
-          </span>
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            fontSize: 9.5, fontWeight: 800, color: '#22C55E', letterSpacing: '0.08em',
-            textTransform: 'uppercase', flexShrink: 0,
-          }}>
-            <i style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', display: 'inline-block', animation: 'cmdLive 1.6s ease-in-out infinite' }} />
-            Live
-          </span>
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          <Link href="/dashboard/buy-leads" style={navBtn}>⚡ Buy more leads</Link>
-          <Link href="/dashboard/settings" style={navBtn}>⚙ Settings</Link>
-          <Link href="/dashboard/support" style={navBtn}>💬 Support</Link>
-        </div>
-      </div>
-
-      <div style={{ maxWidth: 1060, margin: '0 auto', padding: '20px clamp(14px, 3vw, 28px) 0' }}>
+      <div style={{ maxWidth: 1024, margin: '0 auto', padding: '20px clamp(14px, 3vw, 28px) 0' }}>
         {loading || gate === 'loading' || subActive === null ? (
-          <div style={{ padding: 60, textAlign: 'center', color: '#7AAAB2', fontSize: 13, fontWeight: 600 }}>
+          <div style={{ padding: 60, textAlign: 'center', color: '#6b7280', fontSize: 13, fontWeight: 600 }}>
             Loading your leads…
           </div>
         ) : subActive === false ? (
@@ -433,11 +458,11 @@ export default function LeadsPage() {
             {/* Engine diagnostics — renders only when a kick returned 0 */}
             {engineNote && (
               <div style={{
-                borderRadius: 10, padding: '9px 13px', marginBottom: 12,
-                background: 'rgba(251,191,36,0.10)', border: '1px solid rgba(251,191,36,0.35)',
-                fontSize: 11.5, color: '#FBBF24', fontWeight: 700, lineHeight: 1.5,
+                borderRadius: 8, padding: '10px 14px', marginBottom: 12,
+                background: '#fffbeb', border: '1px solid #fcd34d',
+                fontSize: 12, color: '#92400e', fontWeight: 600, lineHeight: 1.5,
               }}>
-                ⚠ Lead engine: {engineNote}
+                Lead engine: {engineNote}
               </div>
             )}
             {drops.length === 0 ? (
@@ -473,26 +498,37 @@ export default function LeadsPage() {
                   }}
                 />
               )}
-              {/* Countdown banner */}
+              {/* Countdown card */}
               <div style={{
-                borderRadius: 16, padding: '18px 22px',
-                background: 'linear-gradient(135deg, rgba(232,116,43,0.16), rgba(232,116,43,0.05))',
-                border: '1px solid rgba(255,157,90,0.38)',
+                borderRadius: 12, padding: '18px 22px',
+                background: '#ffffff',
+                border: '1px solid #e5e7eb',
                 display: 'flex', flexDirection: 'column', justifyContent: 'center',
                 gap: 14,
               }}>
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 900, color: '#FF9D5A', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
                     Next {LEADS_PER_WEEK} leads drop in
                   </div>
-                  <div style={{ fontSize: 'clamp(24px, 4vw, 34px)', fontWeight: 900, color: '#FFF8F0', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em', lineHeight: 1 }}>
+                  <div style={{ fontSize: 'clamp(22px, 4vw, 30px)', fontWeight: 700, color: '#1f2937', fontVariantNumeric: 'tabular-nums', lineHeight: 1.1 }}>
                     {countdownLabel}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap', alignItems: 'center' }}>
                   <BannerStat n={thisWeek.length} label="this week" />
                   <BannerStat n={monthCount} label="this month" />
-                  <BannerStat n={counts.won} label="won" win />
+                  {counts.won >= 1 ? (
+                    <BannerStat n={counts.won} label="won" win />
+                  ) : (
+                    // No wins yet — a number 0 demoralizes; a next action sells.
+                    <span style={{
+                      fontSize: 12.5, fontWeight: 600, color: '#374151',
+                      background: '#f3f4f6', border: '1px solid #e5e7eb',
+                      padding: '8px 12px', borderRadius: 8,
+                    }}>
+                      {thisWeek.length} leads waiting — call your top 3 today
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -521,17 +557,17 @@ export default function LeadsPage() {
                     {stillRevealing && (
                       <div style={{
                         display: 'flex', alignItems: 'center', gap: 10,
-                        padding: '13px 16px', borderRadius: 14,
-                        background: 'rgba(255,255,255,0.03)',
-                        border: '1px dashed rgba(255,157,90,0.35)',
-                        color: '#FFC58A', fontSize: 12.5, fontWeight: 700,
+                        padding: '13px 16px', borderRadius: 10,
+                        background: '#ffffff',
+                        border: '1px dashed #d1d5db',
+                        color: '#6b7280', fontSize: 12.5, fontWeight: 600,
                       }}>
                         <span aria-hidden style={{
                           width: 14, height: 14, borderRadius: '50%', flexShrink: 0,
-                          border: '2px solid rgba(255,157,90,0.25)', borderTopColor: '#FF9D5A',
+                          border: '2px solid #e5e7eb', borderTopColor: '#E8742B',
                           animation: 'bavgSpin 0.9s linear infinite',
                         }} />
-                        Locking lead {Math.min(revealed + 1, thisWeek.length)} of {thisWeek.length}…
+                        Finding lead {Math.min(revealed + 1, thisWeek.length)} of {thisWeek.length}…
                       </div>
                     )}
                   </>
@@ -566,18 +602,12 @@ export default function LeadsPage() {
   )
 }
 
-const navBtn: React.CSSProperties = {
-  padding: '7px 12px', borderRadius: 9,
-  background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,157,90,0.22)',
-  color: '#FFC58A', textDecoration: 'none',
-  fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap',
-}
+
 
 const emptyNote: React.CSSProperties = {
-  padding: '20px', borderRadius: 12, textAlign: 'center',
-  background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,157,90,0.25)',
-  color: 'rgba(255,248,240,0.45)', fontSize: 12.5,
+  padding: '20px', borderRadius: 10, textAlign: 'center',
+  background: '#ffffff', border: '1px dashed #d1d5db',
+  color: '#6b7280', fontSize: 12.5,
 }
 
 /**
@@ -610,15 +640,15 @@ function NameNudge({ onSaved }: { onSaved: () => void }) {
 
   return (
     <div style={{
-      borderRadius: 12, padding: '12px 16px', marginBottom: 14,
-      background: 'rgba(232,116,43,0.10)',
-      border: '1px solid rgba(255,157,90,0.35)',
+      borderRadius: 10, padding: '12px 16px', marginBottom: 14,
+      background: '#ffffff',
+      border: '1px solid #e5e7eb',
       display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
     }}>
-      <span style={{ fontSize: 12.5, fontWeight: 700, color: '#FFC58A', flex: 1, minWidth: 200 }}>
+      <span style={{ fontSize: 12.5, fontWeight: 600, color: '#374151', flex: 1, minWidth: 200 }}>
         {open
-          ? 'What name should the AI sign your outreach as?'
-          : 'Add your business name so AI outreach signs as your shop (not required to view leads).'}
+          ? 'What name should your messages sign as?'
+          : 'Add your business name so outreach signs as your shop (not required to view leads).'}
       </span>
       {open ? (
         <>
@@ -629,9 +659,9 @@ function NameNudge({ onSaved }: { onSaved: () => void }) {
             autoFocus
             onKeyDown={(e) => { if (e.key === 'Enter') save() }}
             style={{
-              padding: '8px 12px', borderRadius: 8, minWidth: 160,
-              border: '1px solid rgba(255,157,90,0.4)', background: 'rgba(4,12,24,0.6)',
-              color: '#FFF8F0', fontSize: 13, fontWeight: 600, fontFamily: 'inherit', outline: 'none',
+              padding: '10px 12px', borderRadius: 8, minWidth: 160, minHeight: 44, boxSizing: 'border-box',
+              border: '1px solid #d1d5db', background: '#ffffff',
+              color: '#1f2937', fontSize: 14, fontWeight: 500, fontFamily: 'inherit', outline: 'none',
             }}
           />
           <button onClick={save} disabled={saving} style={nudgeBtn(true)}>
@@ -650,10 +680,11 @@ function NameNudge({ onSaved }: { onSaved: () => void }) {
 
 function nudgeBtn(primary: boolean): React.CSSProperties {
   return {
-    padding: '8px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
-    fontFamily: 'inherit', fontSize: 12, fontWeight: 800, flexShrink: 0,
-    background: primary ? 'linear-gradient(135deg, #FF9D5A, #E8742B)' : 'rgba(255,255,255,0.06)',
-    color: primary ? '#fff' : 'rgba(255,248,240,0.6)',
+    padding: '10px 16px', borderRadius: 8, cursor: 'pointer', minHeight: 44,
+    fontFamily: 'inherit', fontSize: 13, fontWeight: 700, flexShrink: 0,
+    border: primary ? 'none' : '1px solid #d1d5db',
+    background: primary ? '#E8742B' : '#ffffff',
+    color: primary ? '#fff' : '#6b7280',
   }
 }
 
@@ -665,31 +696,30 @@ function nudgeBtn(primary: boolean): React.CSSProperties {
 function ActivateCard() {
   return (
     <div style={{
-      borderRadius: 16, padding: 'clamp(22px, 4vw, 32px)',
-      background: 'rgba(255,255,255,0.035)',
-      border: '1.5px solid rgba(232,116,43,0.55)',
-      boxShadow: '0 24px 60px rgba(4,12,24,0.5), 0 0 40px rgba(232,116,43,0.10)',
+      borderRadius: 12, padding: 'clamp(22px, 4vw, 32px)',
+      background: '#ffffff',
+      border: '1px solid #e5e7eb',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
       maxWidth: 560, margin: '40px auto 0', textAlign: 'center',
     }}>
-      <div style={{ fontSize: 10, fontWeight: 900, color: '#FF9D5A', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10 }}>
         Account created — area not activated yet
       </div>
-      <h2 style={{ fontSize: 'clamp(20px, 2.8vw, 26px)', fontWeight: 900, letterSpacing: '-0.02em', margin: '0 0 10px', color: '#FFF8F0' }}>
+      <h2 style={{ fontSize: 'clamp(20px, 2.8vw, 26px)', fontWeight: 700, margin: '0 0 10px', color: '#1f2937' }}>
         Your leads start the moment you lock your area.
       </h2>
-      <p style={{ fontSize: 13.5, color: 'rgba(255,248,240,0.6)', lineHeight: 1.6, margin: '0 0 20px' }}>
+      <p style={{ fontSize: 13.5, color: '#6b7280', lineHeight: 1.6, margin: '0 0 20px' }}>
         Pick your business address and trade — your first {LEADS_PER_WEEK} homeowner
         leads pull from a 1-mile ring around your shop, usually within 30 minutes.
       </p>
       <Link href="/start/area" style={{
-        display: 'inline-block', padding: '15px 28px', borderRadius: 12,
-        background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 100%)',
-        color: '#fff', textDecoration: 'none', fontWeight: 900, fontSize: 15,
-        boxShadow: '0 12px 30px rgba(232,116,43,0.40)',
+        display: 'inline-block', padding: '14px 28px', borderRadius: 10, minHeight: 44, boxSizing: 'border-box',
+        background: '#E8742B',
+        color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 15,
       }}>
-        Lock my area →
+        Lock my area
       </Link>
-      <p style={{ fontSize: 11, color: 'rgba(255,248,240,0.4)', margin: '14px 0 0', lineHeight: 1.5 }}>
+      <p style={{ fontSize: 11.5, color: '#9ca3af', margin: '14px 0 0', lineHeight: 1.5 }}>
         Book a paying job in 30 days or full refund + your next month free + you keep every lead.
       </p>
     </div>
@@ -699,8 +729,8 @@ function ActivateCard() {
 function BannerStat({ n, label, win }: { n: number; label: string; win?: boolean }) {
   return (
     <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: 22, fontWeight: 900, color: win ? '#22C55E' : '#FFF8F0', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{n}</div>
-      <div style={{ fontSize: 9, fontWeight: 800, color: '#7AAAB2', letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 4 }}>{label}</div>
+      <div style={{ fontSize: 22, fontWeight: 700, color: win ? '#16a34a' : '#1f2937', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{n}</div>
+      <div style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em', marginTop: 4 }}>{label}</div>
     </div>
   )
 }
@@ -708,8 +738,8 @@ function BannerStat({ n, label, win }: { n: number; label: string; win?: boolean
 function SectionHead({ title, sub }: { title: string; sub: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', margin: '4px 2px 12px', flexWrap: 'wrap', gap: 8 }}>
-      <h2 style={{ fontSize: 'clamp(18px, 2.4vw, 24px)', fontWeight: 900, letterSpacing: '-0.03em', margin: 0, color: '#FFF8F0' }}>{title}</h2>
-      <span style={{ fontSize: 11, color: '#7AAAB2', fontWeight: 600 }}>{sub}</span>
+      <h2 style={{ fontSize: 'clamp(17px, 2.2vw, 21px)', fontWeight: 700, margin: 0, color: '#1f2937' }}>{title}</h2>
+      <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 500 }}>{sub}</span>
     </div>
   )
 }
@@ -723,13 +753,13 @@ function PastLeads({ drops, onStatus, onReveal, expandedId, onToggle }: { drops:
         onClick={() => setOpen((x) => !x)}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '12px 16px', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit',
-          background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,157,90,0.16)',
-          color: '#FFC58A', fontSize: 13, fontWeight: 800,
+          padding: '12px 16px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', minHeight: 44,
+          background: '#ffffff', border: '1px solid #e5e7eb',
+          color: '#374151', fontSize: 13, fontWeight: 700,
         }}
       >
-        <span>📁 Past leads ({drops.length})</span>
-        <span style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 180ms ease', color: '#7AAAB2' }}>▾</span>
+        <span>Past leads ({drops.length})</span>
+        <span style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 180ms ease', color: '#9ca3af' }}>▾</span>
       </button>
       {open && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
@@ -842,30 +872,28 @@ function ProfileGate({ onDone }: { onDone: () => void }) {
   }
 
   if (!loaded) {
-    return <div style={{ padding: 50, textAlign: 'center', color: '#7AAAB2', fontSize: 13, fontWeight: 600 }}>Loading…</div>
+    return <div style={{ padding: 50, textAlign: 'center', color: '#6b7280', fontSize: 13, fontWeight: 600 }}>Loading…</div>
   }
 
   return (
     <div style={{
-      borderRadius: 16, padding: 'clamp(20px, 4vw, 30px)',
-      background: 'rgba(255,255,255,0.035)',
-      border: '1px solid rgba(255,157,90,0.40)',
-      boxShadow: '0 24px 60px rgba(4,12,24,0.5), 0 0 40px rgba(232,116,43,0.08)',
+      borderRadius: 12, padding: 'clamp(20px, 4vw, 30px)',
+      background: '#ffffff',
+      border: '1px solid #e5e7eb',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
       maxWidth: 560, margin: '0 auto',
     }}>
       <div style={{
-        fontSize: 10, fontWeight: 900, color: '#FF9D5A', letterSpacing: '0.14em',
-        textTransform: 'uppercase', marginBottom: 10,
-        display: 'flex', alignItems: 'center', gap: 8,
+        fontSize: 11, fontWeight: 700, color: '#16a34a',
+        textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10,
       }}>
-        <i style={{ width: 7, height: 7, borderRadius: '50%', background: '#22C55E', display: 'inline-block', animation: 'cmdLive 1.6s ease-in-out infinite' }} />
         One last step — your leads are already being pulled
       </div>
-      <h2 style={{ fontSize: 'clamp(19px, 2.6vw, 24px)', fontWeight: 900, letterSpacing: '-0.02em', margin: '0 0 8px', color: '#FFF8F0' }}>
+      <h2 style={{ fontSize: 'clamp(19px, 2.6vw, 24px)', fontWeight: 700, margin: '0 0 8px', color: '#1f2937' }}>
         Who do we sign your outreach as?
       </h2>
-      <p style={{ fontSize: 13, color: 'rgba(255,248,240,0.6)', lineHeight: 1.6, margin: '0 0 18px' }}>
-        The AI writes a personalized intro to every homeowner and signs it as <strong style={{ color: '#FFC58A' }}>your shop</strong> — never BellAveGo, never &ldquo;AI.&rdquo; Set it once; change anytime in Settings.
+      <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6, margin: '0 0 18px' }}>
+        Every message to a homeowner is written and signed as <strong style={{ color: '#1f2937' }}>your shop</strong> — never BellAveGo. Set it once; change anytime in Settings.
       </p>
 
       <form onSubmit={save}>
@@ -877,7 +905,7 @@ function ProfileGate({ onDone }: { onDone: () => void }) {
           style={gateInput}
           autoFocus
         />
-        <label style={{ ...gateLabel, marginTop: 14 }}>Your first name <span style={{ color: 'rgba(255,248,240,0.35)', fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}>(optional — messages sign with it)</span></label>
+        <label style={{ ...gateLabel, marginTop: 14 }}>Your first name <span style={{ color: '#9ca3af', fontWeight: 500, textTransform: 'none', letterSpacing: 0 }}>(optional — messages sign with it)</span></label>
         <input
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
@@ -893,21 +921,20 @@ function ProfileGate({ onDone }: { onDone: () => void }) {
           placeholder="Start typing — pick your address from the list"
           inputStyle={gateInput}
         />
-        <p style={{ fontSize: 10.5, color: 'rgba(255,248,240,0.4)', margin: '6px 0 0', lineHeight: 1.5 }}>
+        <p style={{ fontSize: 11.5, color: '#9ca3af', margin: '6px 0 0', lineHeight: 1.5 }}>
           Pick from the dropdown so we lock the exact spot. Your leads start 1 mile from here and widen only when nearby supply runs low.
         </p>
 
-        {err && <p style={{ fontSize: 12.5, color: '#FCA5A5', margin: '12px 0 0', fontWeight: 700 }}>⚠ {err}</p>}
+        {err && <p style={{ fontSize: 12.5, color: '#dc2626', margin: '12px 0 0', fontWeight: 600 }}>{err}</p>}
 
         <button type="submit" disabled={saving} style={{
-          marginTop: 18, width: '100%', padding: '14px 18px', borderRadius: 12,
-          background: saving ? 'rgba(255,255,255,0.08)' : 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 100%)',
-          color: saving ? 'rgba(255,248,240,0.5)' : '#fff',
-          fontWeight: 900, fontSize: 14, border: 'none',
+          marginTop: 18, width: '100%', padding: '14px 18px', borderRadius: 10, minHeight: 48,
+          background: saving ? '#f3f4f6' : '#E8742B',
+          color: saving ? '#9ca3af' : '#fff',
+          fontWeight: 700, fontSize: 15, border: 'none',
           cursor: saving ? 'wait' : 'pointer', fontFamily: 'inherit',
-          boxShadow: saving ? 'none' : '0 10px 26px rgba(232,116,43,0.32)',
         }}>
-          {saving ? 'Saving…' : 'Save — show me my leads →'}
+          {saving ? 'Saving…' : 'Save — show me my leads'}
         </button>
       </form>
     </div>
@@ -915,16 +942,15 @@ function ProfileGate({ onDone }: { onDone: () => void }) {
 }
 
 const gateLabel: React.CSSProperties = {
-  display: 'block', fontSize: 11, fontWeight: 900,
-  color: 'rgba(255,248,240,0.6)', letterSpacing: '0.1em',
-  textTransform: 'uppercase', marginBottom: 7,
+  display: 'block', fontSize: 12, fontWeight: 600,
+  color: '#374151', marginBottom: 6,
 }
 const gateInput: React.CSSProperties = {
-  width: '100%', padding: '13px 15px', borderRadius: 10,
-  border: '1px solid rgba(255,157,90,0.25)',
-  background: 'rgba(4,12,24,0.6)',
-  fontSize: 15, fontWeight: 600,
-  fontFamily: 'inherit', color: '#FFF8F0',
+  width: '100%', padding: '12px 14px', borderRadius: 8, minHeight: 44,
+  border: '1px solid #d1d5db',
+  background: '#ffffff',
+  fontSize: 15, fontWeight: 500,
+  fontFamily: 'inherit', color: '#1f2937',
   boxSizing: 'border-box', outline: 'none',
 }
 
@@ -1004,35 +1030,25 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
     setSendingEmail(false)
   }
 
-  // Same signal language as the homepage LeadsCard — orange badge, plain
-  // words a contractor uses, no emoji soup.
-  const signalLabel = ({
-    move_in: 'NEW OWNER',
-    permit: 'PERMIT FILED',
-    storm: 'STORM ZONE',
-    aging_hvac: 'AGED SYSTEM',
-    expired_listing: 'RECENT SALE',
-    other: 'LEAD',
-  } as Record<string, string>)[l.source] || 'LEAD'
-
+  // 2026-06-11 — signalLabel + on-card score deleted; reasonTag() renders
+  // the plain-English reason instead. lead_score stays in the DB.
   const pitch = l.pitch_script || (l.source === 'aging_hvac'
     ? `Hi, calling neighbors in ${l.zip} where most homes are 20+ yrs old — AC units past their lifespan. Got a min to talk about a free tune-up to extend yours?`
     : null)
-
-  const score = l.lead_score ?? 0
   const statusColor =
-    drop.status === 'won' ? '#22C55E'
-    : drop.status === 'lost' || drop.status === 'dismissed' ? '#F87171'
-    : drop.status === 'quoted' ? '#FBBF24'
-    : drop.status === 'contacted' ? '#FFC58A'
-    : 'rgba(255,248,240,0.5)'
+    drop.status === 'won' ? '#16a34a'
+    : drop.status === 'lost' || drop.status === 'dismissed' ? '#dc2626'
+    : drop.status === 'quoted' ? '#b45309'
+    : drop.status === 'contacted' ? '#c2410c'
+    : '#6b7280'
 
   return (
     <div id={`lead-${l.id}`} style={{
-      borderRadius: 13,
-      background: expanded ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.04)',
-      border: expanded ? '1.5px solid rgba(232,116,43,0.55)' : '1px solid rgba(255,157,90,0.16)',
-      transition: 'border-color 180ms ease, background 180ms ease',
+      borderRadius: 10,
+      background: '#ffffff',
+      border: expanded ? '1px solid #E8742B' : '1px solid #e5e7eb',
+      boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+      transition: 'border-color 180ms ease',
       overflow: 'hidden',
     }}>
       {/* Compact summary row — same shape as the homepage LeadsCard rows */}
@@ -1041,7 +1057,7 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
         onClick={onToggle}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-          padding: '13px 16px', background: 'transparent', border: 'none',
+          padding: '14px 16px', minHeight: 56, background: 'transparent', border: 'none',
           cursor: 'pointer', textAlign: 'left', color: 'inherit',
           fontFamily: 'inherit',
         }}
@@ -1050,41 +1066,41 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
           <span aria-hidden style={{
             width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: l.owner_phone ? 'linear-gradient(135deg, #FF9D5A, #E8742B)' : 'linear-gradient(135deg, #64748B, #475569)',
-            border: '1.5px solid rgba(255,255,255,0.6)',
-            color: '#fff', fontSize: 10.5, fontWeight: 900,
+            background: l.owner_phone ? '#E8742B' : '#9ca3af',
+            border: 'none',
+            color: '#fff', fontSize: 11, fontWeight: 700,
           }}>
             {index}
           </span>
         )}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 14.5, fontWeight: 900, color: '#FFF8F0' }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: '#1f2937' }}>
               {l.owner_name ?? 'Owner unlisted'}
             </span>
+            {/* 2026-06-11 — plain-English reason replaces SCORE badge.
+                Score stays in the DB; contractors think in reasons. */}
             <span style={{
-              padding: '2px 7px', borderRadius: 6,
-              background: l.source === 'move_in' || l.source === 'expired_listing' ? 'rgba(20,184,166,0.85)' : '#E8742B',
-              color: '#fff', fontSize: 9, fontWeight: 900, letterSpacing: '0.04em',
-            }}>{signalLabel}</span>
-            <span style={{
-              padding: '2px 7px', borderRadius: 6,
-              background: '#FFD9A8', color: '#C84B26', fontSize: 9, fontWeight: 900,
-            }}>SCORE {score}</span>
-            <span style={pill('rgba(255,255,255,0.06)', statusColor)}>
-              {drop.status}
-            </span>
+              padding: '3px 9px', borderRadius: 6,
+              background: '#fef3ec', color: '#c2410c', border: '1px solid #fed7aa',
+              fontSize: 11, fontWeight: 600,
+            }}>{reasonTag(l)}</span>
+            {drop.status !== 'new' && (
+              <span style={pill('#f3f4f6', statusColor)}>
+                {drop.status}
+              </span>
+            )}
           </div>
-          <div style={{ fontSize: 12, color: '#7AAAB2', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600 }}>
+          <div style={{ fontSize: 12.5, color: '#6b7280', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>
             {fullAddr || l.zip}{l.year_built ? ` · built ${l.year_built}` : ''}{l.home_value_est ? ` · $${Math.round(l.home_value_est / 1000)}K home` : ''}
           </div>
         </div>
         {l.owner_phone && (
-          <span style={{ fontSize: 10, fontWeight: 800, color: '#22C55E', flexShrink: 0 }}>
-            ☎ verified
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#16a34a', flexShrink: 0 }}>
+            Phone verified
           </span>
         )}
-        <div style={{ fontSize: 13, color: '#7AAAB2', flexShrink: 0, transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 180ms ease' }}>
+        <div style={{ fontSize: 13, color: '#9ca3af', flexShrink: 0, transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 180ms ease' }}>
           ▾
         </div>
       </button>
@@ -1094,8 +1110,8 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
       <div style={{ padding: '0 18px 16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 240 }}>
-          <div style={{ fontSize: 10, fontWeight: 800, color: '#FF9D5A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
-            {signalLabel} · score {score}/100
+          <div style={{ fontSize: 12.5, fontWeight: 600, color: '#c2410c', marginBottom: 6 }}>
+            {reasonTag(l)}
           </div>
           {/* ── PROPERTY DOSSIER (2026-06-11 per Peter: "$497-worthy") ── */}
           {(() => {
@@ -1117,46 +1133,46 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
             if (chips.length === 0 && !l.owner_email && !jobs) return null
             return (
               <div style={{
-                background: 'rgba(255,255,255,0.04)', padding: '11px 13px', borderRadius: 10,
-                border: '1px solid rgba(255,157,90,0.18)', marginBottom: 10,
+                background: '#f9fafb', padding: '12px 14px', borderRadius: 8,
+                border: '1px solid #e5e7eb', marginBottom: 10,
               }}>
-                <span style={{ color: '#FFC58A', fontWeight: 800, fontSize: 10, letterSpacing: '0.08em', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Property dossier</span>
+                <span style={{ color: '#374151', fontWeight: 700, fontSize: 11, display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Property details</span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {chips.map((c) => (
                     <span key={c} style={{
-                      padding: '4px 9px', borderRadius: 7, fontSize: 11.5, fontWeight: 700,
-                      background: c.startsWith('🏦') ? 'rgba(34,197,94,0.14)' : 'rgba(255,255,255,0.05)',
-                      border: c.startsWith('🏦') ? '1px solid rgba(34,197,94,0.4)' : '1px solid rgba(255,255,255,0.08)',
-                      color: c.startsWith('🏦') ? '#4ADE80' : 'rgba(255,248,240,0.85)',
+                      padding: '5px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600,
+                      background: c.startsWith('🏦') ? '#f0fdf4' : '#ffffff',
+                      border: c.startsWith('🏦') ? '1px solid #bbf7d0' : '1px solid #e5e7eb',
+                      color: c.startsWith('🏦') ? '#15803d' : '#374151',
                     }}>{c}</span>
                   ))}
                 </div>
                 {prop?.equity && prop.equity > 50_000 && (
-                  <div style={{ fontSize: 11, color: '#4ADE80', fontWeight: 700, marginTop: 7 }}>
-                    ✓ Equity says they can afford the job — quote with confidence.
+                  <div style={{ fontSize: 12, color: '#15803d', fontWeight: 600, marginTop: 7 }}>
+                    Equity says they can afford the job — quote with confidence.
                   </div>
                 )}
                 {yearsOwned !== null && yearsOwned >= 10 && (
-                  <div style={{ fontSize: 11, color: 'rgba(255,248,240,0.6)', fontWeight: 600, marginTop: 4 }}>
+                  <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 500, marginTop: 4 }}>
                     {yearsOwned}+ years in the home — systems and surfaces aging on their watch, not a flipper.
                   </div>
                 )}
                 {jobs && (
                   <div style={{
-                    marginTop: 9, padding: '8px 11px', borderRadius: 8,
-                    background: 'rgba(232,116,43,0.14)', border: '1px solid rgba(232,116,43,0.3)',
+                    marginTop: 9, padding: '9px 12px', borderRadius: 6,
+                    background: '#fef3ec', border: '1px solid #fed7aa',
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap',
                   }}>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: 'rgba(255,248,240,0.85)' }}>Est. job value at this home</span>
-                    <span style={{ fontSize: 13.5, fontWeight: 900, color: '#FFC58A' }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>Est. job value at this home</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#c2410c' }}>
                       ${jobs[0].toLocaleString()} – ${jobs[1].toLocaleString()}
-                      {monthsCovered ? <span style={{ fontSize: 10.5, fontWeight: 700, color: 'rgba(255,248,240,0.55)' }}> · ≈ {monthsCovered} mo of membership</span> : null}
+                      {monthsCovered ? <span style={{ fontSize: 11, fontWeight: 500, color: '#92400e' }}> · ≈ {monthsCovered} mo of membership</span> : null}
                     </span>
                   </div>
                 )}
                 {l.owner_email && (
                   <div style={{ fontSize: 11.5, marginTop: 8 }}>
-                    ✉ <a href={`mailto:${l.owner_email}`} style={{ color: '#FFC58A', textDecoration: 'none', fontWeight: 700 }}>{l.owner_email}</a>
+                    Email: <a href={`mailto:${l.owner_email}`} style={{ color: '#1d4ed8', textDecoration: 'none', fontWeight: 600 }}>{l.owner_email}</a>
                   </div>
                 )}
               </div>
@@ -1172,37 +1188,37 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
             if (tags.length === 0 && !permitLine) return null
             return (
               <div style={{
-                background: 'rgba(255,255,255,0.04)', padding: '11px 13px', borderRadius: 10,
-                border: '1px solid rgba(255,157,90,0.18)',
-                fontSize: 12, color: 'rgba(255,248,240,0.85)', lineHeight: 1.6, marginBottom: 10,
+                background: '#f9fafb', padding: '12px 14px', borderRadius: 8,
+                border: '1px solid #e5e7eb',
+                fontSize: 12.5, color: '#374151', lineHeight: 1.6, marginBottom: 10,
               }}>
-                <span style={{ color: '#FFC58A', fontWeight: 800, fontSize: 10, letterSpacing: '0.08em', display: 'block', marginBottom: 5 }}>WHY THIS LEAD</span>
+                <span style={{ color: '#374151', fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 5 }}>Why this lead</span>
                 {tags.length > 0 ? (
                   <ul style={{ margin: 0, paddingLeft: 16 }}>
                     {tags.map((t, i) => <li key={i} style={{ marginBottom: 2 }}>{t}</li>)}
                   </ul>
                 ) : (
-                  <span>Permit on file: {permitLine}</span>
+                  <span>Permit on file: {cleanCallAngle(permitLine)}</span>
                 )}
               </div>
             )
           })()}
           {pitch && (
             <div style={{
-              background: 'rgba(232,116,43,0.12)', padding: '11px 13px', borderRadius: 10,
-              border: '1px solid rgba(232,116,43,0.28)',
-              fontSize: 12.5, color: 'rgba(255,248,240,0.92)', lineHeight: 1.55, marginBottom: 10,
+              background: '#fef3ec', padding: '12px 14px', borderRadius: 8,
+              border: '1px solid #fed7aa',
+              fontSize: 13, color: '#431407', lineHeight: 1.55, marginBottom: 10,
             }}>
-              <span style={{ color: '#FFC58A', fontWeight: 800, fontSize: 10, letterSpacing: '0.08em', display: 'block', marginBottom: 4 }}>YOUR CALL ANGLE</span>
-              {pitch}
+              <span style={{ color: '#c2410c', fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 4 }}>Your call angle</span>
+              {cleanCallAngle(pitch)}
             </div>
           )}
           {mapsHref && (
             <a href={mapsHref} target="_blank" rel="noopener noreferrer" style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
-              fontSize: 11.5, color: '#FFC58A', textDecoration: 'none', fontWeight: 700,
+              fontSize: 12.5, color: '#1d4ed8', textDecoration: 'none', fontWeight: 600, minHeight: 44,
             }}>
-              View property on Google Maps ↗
+              View property on Google Maps
             </a>
           )}
         </div>
@@ -1212,46 +1228,46 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
           {l.owner_phone ? (
             <>
               <a href={`tel:${l.owner_phone}`} style={{
-                padding: '11px 18px', borderRadius: 10,
-                background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 100%)',
+                padding: '13px 18px', borderRadius: 8, minHeight: 48, boxSizing: 'border-box',
+                background: '#E8742B',
                 color: '#fff', textDecoration: 'none', textAlign: 'center',
-                fontSize: 13, fontWeight: 900,
-                boxShadow: '0 6px 18px rgba(232,116,43,0.32)',
+                fontSize: 14, fontWeight: 700,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                📞 Call {l.owner_phone}
+                Call {l.owner_phone}
               </a>
               <a href={`sms:${l.owner_phone}`} style={{
-                padding: '10px 18px', borderRadius: 10,
-                background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,157,90,0.45)',
-                color: '#FFC58A', textDecoration: 'none', textAlign: 'center',
-                fontSize: 13, fontWeight: 800,
+                padding: '12px 18px', borderRadius: 8, minHeight: 44, boxSizing: 'border-box',
+                background: '#ffffff', border: '1px solid #d1d5db',
+                color: '#374151', textDecoration: 'none', textAlign: 'center',
+                fontSize: 13.5, fontWeight: 600,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                💬 Text
+                Text
               </a>
             </>
           ) : l.skip_trace_attempted_at && l.skip_trace_hit === false ? (
             // 2026-06-11 — a missed trace is retryable now (server allows
             // re-trace on miss). Dead-end box → action.
             <button onClick={() => onReveal(l.id)} style={{
-              padding: '11px 18px', borderRadius: 10,
-              background: 'rgba(255,255,255,0.04)', border: '1.5px dashed rgba(255,157,90,0.45)',
-              color: '#FFC58A', cursor: 'pointer',
-              fontSize: 12.5, fontWeight: 800, fontFamily: 'inherit', lineHeight: 1.4,
+              padding: '12px 18px', borderRadius: 8, minHeight: 48,
+              background: '#ffffff', border: '1px dashed #d1d5db',
+              color: '#374151', cursor: 'pointer',
+              fontSize: 13, fontWeight: 600, fontFamily: 'inherit', lineHeight: 1.4,
             }}>
               No phone found yet<br />
-              <span style={{ fontSize: 11, fontWeight: 700 }}>↻ Search again</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#1d4ed8' }}>Search again</span>
             </button>
           ) : l.skip_trace_attempted_at ? (
-            <div style={{ ...darkInfoBox, color: '#FFC58A' }}>Looking up…</div>
+            <div style={{ ...darkInfoBox, color: '#6b7280' }}>Looking up…</div>
           ) : l.street_address ? (
             <button onClick={() => onReveal(l.id)} style={{
-              padding: '11px 18px', borderRadius: 10,
-              background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+              padding: '13px 18px', borderRadius: 8, minHeight: 48,
+              background: '#E8742B',
               color: '#fff', border: 'none', cursor: 'pointer',
-              fontSize: 13, fontWeight: 900, fontFamily: 'inherit',
-              boxShadow: '0 6px 16px rgba(232,116,43,0.38)',
+              fontSize: 14, fontWeight: 700, fontFamily: 'inherit',
             }}>
-              🔓 Reveal phone
+              Find their phone
             </button>
           ) : (
             <div style={darkInfoBox}>
@@ -1279,64 +1295,64 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
               onClick={generateMessage}
               disabled={aiLoading}
               style={{
-                width: '100%', padding: '12px 18px', borderRadius: 10,
-                background: aiLoading ? 'rgba(255,255,255,0.08)' : 'rgba(232,116,43,0.16)',
-                color: aiLoading ? 'rgba(255,248,240,0.5)' : '#FFC58A',
-                border: '1.5px dashed rgba(255,157,90,0.5)', cursor: aiLoading ? 'wait' : 'pointer',
-                fontSize: 13, fontWeight: 900, fontFamily: 'inherit',
+                width: '100%', padding: '13px 18px', borderRadius: 8, minHeight: 48,
+                background: aiLoading ? '#f3f4f6' : '#ffffff',
+                color: aiLoading ? '#9ca3af' : '#374151',
+                border: '1px solid #d1d5db', cursor: aiLoading ? 'wait' : 'pointer',
+                fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
               }}
             >
-              {aiLoading ? '✨ Writing your message…' : `✨ Write my intro message${l.owner_phone ? ` → ${l.owner_phone}` : ''}`}
+              {aiLoading ? 'Writing your message…' : 'Get a text to send them'}
             </button>
           ) : aiMsg && (
-            <div style={{ background: 'rgba(4,12,24,0.6)', borderRadius: 12, padding: '14px 16px', border: '1px solid rgba(255,157,90,0.2)' }}>
+            <div style={{ background: '#f9fafb', borderRadius: 8, padding: '14px 16px', border: '1px solid #e5e7eb' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <div style={{ fontSize: 10, fontWeight: 800, color: '#FF9D5A', letterSpacing: '0.10em', textTransform: 'uppercase' }}>
-                  Pre-written for you · ready to send as your shop
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Ready to send as your shop
                 </div>
-                <button onClick={() => setAiOpen(false)} style={{ background: 'transparent', border: 'none', color: 'rgba(255,248,240,0.5)', fontSize: 12, cursor: 'pointer' }}>✕</button>
+                <button onClick={() => setAiOpen(false)} style={{ background: 'transparent', border: 'none', color: '#9ca3af', fontSize: 14, cursor: 'pointer', minWidth: 44, minHeight: 44 }}>✕</button>
               </div>
               {l.owner_phone && (
-                <div style={{ marginBottom: 10, padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,248,240,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>SMS to {l.owner_phone}</div>
-                  <div style={{ fontSize: 13, lineHeight: 1.55, marginBottom: 8, color: '#FFF8F0' }}>{aiMsg.sms}</div>
+                <div style={{ marginBottom: 10, padding: '11px 13px', borderRadius: 8, background: '#ffffff', border: '1px solid #e5e7eb' }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 5 }}>Text to {l.owner_phone}</div>
+                  <div style={{ fontSize: 13.5, lineHeight: 1.55, marginBottom: 8, color: '#1f2937' }}>{aiMsg.sms}</div>
                   <button
                     onClick={sendSms}
                     disabled={sendingSms || smsSent}
                     style={{
-                      padding: '8px 14px', borderRadius: 7,
-                      background: smsSent ? '#22C55E' : sendingSms ? 'rgba(255,255,255,0.14)' : 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+                      padding: '11px 16px', borderRadius: 8, minHeight: 44,
+                      background: smsSent ? '#16a34a' : sendingSms ? '#e5e7eb' : '#E8742B',
                       color: '#fff', border: 'none', fontFamily: 'inherit',
-                      fontSize: 11.5, fontWeight: 900, cursor: smsSent ? 'default' : 'pointer',
+                      fontSize: 13, fontWeight: 700, cursor: smsSent ? 'default' : 'pointer',
                     }}
                   >
-                    {smsSent ? '✓ Sent' : sendingSms ? 'Sending…' : '📱 Send SMS now'}
+                    {smsSent ? 'Sent' : sendingSms ? 'Sending…' : 'Send text now'}
                   </button>
                 </div>
               )}
               {l.owner_email && (
-                <div style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,248,240,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>Email to {l.owner_email}</div>
-                  <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 4, color: '#FFF8F0' }}>{aiMsg.email_subject}</div>
-                  <div style={{ fontSize: 12.5, lineHeight: 1.6, marginBottom: 8, whiteSpace: 'pre-wrap', color: 'rgba(255,248,240,0.85)' }}>{aiMsg.email_body}</div>
+                <div style={{ padding: '11px 13px', borderRadius: 8, background: '#ffffff', border: '1px solid #e5e7eb' }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 5 }}>Email to {l.owner_email}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, color: '#1f2937' }}>{aiMsg.email_subject}</div>
+                  <div style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 8, whiteSpace: 'pre-wrap', color: '#374151' }}>{aiMsg.email_body}</div>
                   <button
                     onClick={sendEmail}
                     disabled={sendingEmail || emailSent}
                     style={{
-                      padding: '8px 14px', borderRadius: 7,
-                      background: emailSent ? '#22C55E' : sendingEmail ? 'rgba(255,255,255,0.14)' : 'linear-gradient(135deg, #FF9D5A, #E8742B)',
+                      padding: '11px 16px', borderRadius: 8, minHeight: 44,
+                      background: emailSent ? '#16a34a' : sendingEmail ? '#e5e7eb' : '#E8742B',
                       color: '#fff', border: 'none', fontFamily: 'inherit',
-                      fontSize: 11.5, fontWeight: 900, cursor: emailSent ? 'default' : 'pointer',
+                      fontSize: 13, fontWeight: 700, cursor: emailSent ? 'default' : 'pointer',
                     }}
                   >
-                    {emailSent ? '✓ Sent' : sendingEmail ? 'Sending…' : '✉ Send Email now'}
+                    {emailSent ? 'Sent' : sendingEmail ? 'Sending…' : 'Send email now'}
                   </button>
                 </div>
               )}
             </div>
           )}
           {aiError && (
-            <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.35)', color: '#FCA5A5', fontSize: 12 }}>{aiError}</div>
+            <div style={{ marginTop: 8, padding: '9px 13px', borderRadius: 8, background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', fontSize: 12.5 }}>{aiError}</div>
           )}
         </div>
       )}
@@ -1348,11 +1364,11 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
             key={s}
             onClick={() => onStatus(drop.id, s)}
             style={{
-              padding: '6px 13px', borderRadius: 99, fontFamily: 'inherit',
-              border: drop.status === s ? '1.5px solid #FF9D5A' : '1px solid rgba(255,157,90,0.2)',
-              background: drop.status === s ? 'rgba(232,116,43,0.16)' : 'rgba(255,255,255,0.03)',
-              color: drop.status === s ? '#FFC58A' : 'rgba(255,248,240,0.5)',
-              fontSize: 11, fontWeight: 800, cursor: 'pointer',
+              padding: '10px 16px', borderRadius: 8, fontFamily: 'inherit', minHeight: 44,
+              border: drop.status === s ? '1px solid #E8742B' : '1px solid #e5e7eb',
+              background: drop.status === s ? '#fef3ec' : '#ffffff',
+              color: drop.status === s ? '#c2410c' : '#6b7280',
+              fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
               textTransform: 'capitalize',
             }}
           >
@@ -1418,14 +1434,14 @@ function OutreachSetup({ onDone, onCancel }: { onDone: () => void; onCancel: () 
 
   return (
     <div style={{
-      marginTop: 14, padding: '16px 16px', borderRadius: 12,
-      background: 'rgba(232,116,43,0.10)', border: '1.5px solid rgba(255,157,90,0.45)',
+      marginTop: 14, padding: '16px 16px', borderRadius: 10,
+      background: '#f9fafb', border: '1px solid #e5e7eb',
     }}>
-      <div style={{ fontSize: 10, fontWeight: 900, color: '#FF9D5A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
         45-second setup — then your message writes itself
       </div>
-      <p style={{ fontSize: 12, color: 'rgba(255,248,240,0.6)', margin: '0 0 12px', lineHeight: 1.5 }}>
-        The AI signs and personalizes every message as your shop. Set once.
+      <p style={{ fontSize: 12.5, color: '#6b7280', margin: '0 0 12px', lineHeight: 1.5 }}>
+        Messages are personalized and signed as your shop. Set once.
       </p>
       <label style={setupLabel}>Business name</label>
       <input value={bizName} onChange={(e) => setBizName(e.target.value)} placeholder="Mike's HVAC & Plumbing" style={setupInput} />
@@ -1435,29 +1451,29 @@ function OutreachSetup({ onDone, onCancel }: { onDone: () => void; onCancel: () 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {['casual', 'professional', 'direct'].map((t) => (
           <button key={t} type="button" onClick={() => setTone(t)} style={{
-            padding: '8px 14px', borderRadius: 9, fontFamily: 'inherit', cursor: 'pointer',
-            border: tone === t ? '1.5px solid #FF9D5A' : '1px solid rgba(255,157,90,0.25)',
-            background: tone === t ? 'rgba(232,116,43,0.18)' : 'rgba(255,255,255,0.03)',
-            color: tone === t ? '#FFC58A' : 'rgba(255,248,240,0.6)',
-            fontSize: 12, fontWeight: 800, textTransform: 'capitalize',
+            padding: '10px 16px', borderRadius: 8, fontFamily: 'inherit', cursor: 'pointer', minHeight: 44,
+            border: tone === t ? '1px solid #E8742B' : '1px solid #d1d5db',
+            background: tone === t ? '#fef3ec' : '#ffffff',
+            color: tone === t ? '#c2410c' : '#6b7280',
+            fontSize: 13, fontWeight: 600, textTransform: 'capitalize',
           }}>{t}</button>
         ))}
       </div>
-      <label style={{ ...setupLabel, marginTop: 10 }}>Why homeowners pick you <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 600, color: 'rgba(255,248,240,0.35)' }}>(comma-separated)</span></label>
+      <label style={{ ...setupLabel, marginTop: 10 }}>Why homeowners pick you <span style={{ fontWeight: 500, color: '#9ca3af' }}>(comma-separated)</span></label>
       <input value={props} onChange={(e) => setProps(e.target.value)} placeholder="family owned, same-day service, free estimates" style={setupInput} />
-      {err && <p style={{ fontSize: 12, color: '#FCA5A5', margin: '10px 0 0', fontWeight: 700 }}>⚠ {err}</p>}
+      {err && <p style={{ fontSize: 12.5, color: '#dc2626', margin: '10px 0 0', fontWeight: 600 }}>{err}</p>}
       <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
         <button onClick={save} disabled={saving} style={{
-          flex: 1, padding: '11px 16px', borderRadius: 10, border: 'none', cursor: saving ? 'wait' : 'pointer',
-          background: saving ? 'rgba(255,255,255,0.08)' : 'linear-gradient(135deg, #FF9D5A, #E8742B)',
-          color: '#fff', fontSize: 13, fontWeight: 900, fontFamily: 'inherit',
+          flex: 1, padding: '12px 16px', borderRadius: 8, border: 'none', cursor: saving ? 'wait' : 'pointer', minHeight: 48,
+          background: saving ? '#f3f4f6' : '#E8742B',
+          color: saving ? '#9ca3af' : '#fff', fontSize: 14, fontWeight: 700, fontFamily: 'inherit',
         }}>
-          {saving ? 'Saving…' : 'Save + write my message →'}
+          {saving ? 'Saving…' : 'Save and write my message'}
         </button>
         <button onClick={onCancel} style={{
-          padding: '11px 14px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
-          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,157,90,0.2)',
-          color: 'rgba(255,248,240,0.5)', fontSize: 12, fontWeight: 700,
+          padding: '12px 16px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', minHeight: 48,
+          background: '#ffffff', border: '1px solid #d1d5db',
+          color: '#6b7280', fontSize: 13, fontWeight: 600,
         }}>
           Later
         </button>
@@ -1467,33 +1483,32 @@ function OutreachSetup({ onDone, onCancel }: { onDone: () => void; onCancel: () 
 }
 
 const setupLabel: React.CSSProperties = {
-  display: 'block', fontSize: 10, fontWeight: 900,
-  color: 'rgba(255,248,240,0.6)', letterSpacing: '0.1em',
-  textTransform: 'uppercase', marginBottom: 5,
+  display: 'block', fontSize: 12, fontWeight: 600,
+  color: '#374151', marginBottom: 5,
 }
 const setupInput: React.CSSProperties = {
-  width: '100%', padding: '10px 12px', borderRadius: 9,
-  border: '1px solid rgba(255,157,90,0.25)',
-  background: 'rgba(4,12,24,0.6)',
-  fontSize: 13.5, fontWeight: 600,
-  fontFamily: 'inherit', color: '#FFF8F0',
+  width: '100%', padding: '11px 13px', borderRadius: 8, minHeight: 44,
+  border: '1px solid #d1d5db',
+  background: '#ffffff',
+  fontSize: 14, fontWeight: 500,
+  fontFamily: 'inherit', color: '#1f2937',
   boxSizing: 'border-box', outline: 'none',
 }
 
 function pill(bg: string, color: string): React.CSSProperties {
   return {
-    padding: '2px 8px', borderRadius: 6,
+    padding: '3px 9px', borderRadius: 6,
     background: bg, color,
-    fontSize: 9, fontWeight: 900, letterSpacing: '0.06em',
-    textTransform: 'uppercase',
+    fontSize: 10.5, fontWeight: 600,
+    textTransform: 'capitalize',
   }
 }
 
 const darkInfoBox: React.CSSProperties = {
-  padding: '10px 14px', borderRadius: 10,
-  background: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(255,157,90,0.16)',
-  color: 'rgba(255,248,240,0.5)',
-  fontSize: 12, fontWeight: 700, textAlign: 'center',
+  padding: '12px 14px', borderRadius: 8,
+  background: '#f9fafb',
+  border: '1px solid #e5e7eb',
+  color: '#6b7280',
+  fontSize: 12.5, fontWeight: 600, textAlign: 'center',
   lineHeight: 1.4,
 }

@@ -36,31 +36,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (isActiveSub === false && !isAdmin) router.replace('/pricing?subscribe=1')
   }, [isActiveSub, isAdmin, router])
 
+  // 2026-06-11 LIGHT-MODE TRADE-SOFTWARE REDESIGN per Peter. This is THE
+  // ONE header (the page-level dark bar was deleted) — logo left; Buy more
+  // leads / Settings / Support / account right. Boring and trustworthy,
+  // like Jobber — the buyer is a 45-65yo contractor on his phone outside.
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: "'Inter', system-ui, sans-serif", background: '#FFF8F0' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: "Inter, system-ui, -apple-system, sans-serif", background: '#f5f6f8' }}>
       <ImpersonationBanner />
 
-      {/* Top bar — logo left, account right. That's it. */}
       <header style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '12px clamp(16px, 4vw, 32px)',
-        background: 'rgba(255,248,240,0.92)',
-        backdropFilter: 'blur(14px)',
-        WebkitBackdropFilter: 'blur(14px)',
-        borderBottom: '1px solid rgba(232,116,43,0.16)',
+        padding: '10px clamp(14px, 4vw, 28px)',
+        background: '#ffffff',
+        borderBottom: '1px solid #e5e7eb',
         position: 'sticky', top: 0, zIndex: 50,
+        gap: 10,
       }}>
-        <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-          <Image src="/logo.png" alt="BellAveGo" width={220} height={68} style={{ objectFit: 'contain' }} priority />
+        <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', minWidth: 0 }}>
+          <Image src="/logo.png" alt="BellAveGo" width={170} height={52} style={{ objectFit: 'contain', maxWidth: 'min(40vw, 170px)', height: 'auto' }} priority />
         </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <Link href="/dashboard/setup" style={{
-            fontSize: 13, fontWeight: 700, color: '#4A6670',
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <Link href="/dashboard/buy-leads" style={{
+            fontSize: 13, fontWeight: 700, color: '#ffffff',
             textDecoration: 'none',
-            padding: '8px 14px', borderRadius: 9,
-            border: '1px solid rgba(232,116,43,0.20)',
-            background: '#FFF7EE',
-          }}>Settings</Link>
+            padding: '10px 14px', borderRadius: 8, minHeight: 44, display: 'inline-flex', alignItems: 'center',
+            background: '#E8742B',
+          }}>Buy more leads</Link>
+          <Link href="/dashboard/settings" style={navLink}>Settings</Link>
+          <Link href="/dashboard/support" style={navLink}>Support</Link>
           <UserButton />
         </div>
       </header>
@@ -70,4 +73,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <SupportWidget />
     </div>
   )
+}
+
+const navLink: React.CSSProperties = {
+  fontSize: 13, fontWeight: 600, color: '#374151',
+  textDecoration: 'none',
+  padding: '10px 12px', borderRadius: 8, minHeight: 44, display: 'inline-flex', alignItems: 'center',
+  border: '1px solid #e5e7eb',
+  background: '#ffffff',
 }
