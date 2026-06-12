@@ -78,6 +78,13 @@ type LeadDrop = {
     source_details?: {
       why_tags?: string[]
       description?: string
+      // Chicago Socrata permit rows (2026-06-12): the description lives in
+      // work_description, plus filing metadata worth showing.
+      work_description?: string
+      issue_date?: string
+      reported_cost?: number
+      permit_number?: string
+      permit_id?: string
       permit_type?: string
       work_class?: string
       tag?: string
@@ -1248,7 +1255,14 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
           {(() => {
             const sd = l.source_details
             const tags = (sd?.why_tags ?? []).filter(Boolean)
-            const permitLine = [sd?.permit_type, sd?.work_class, sd?.description].filter(Boolean).join(' · ')
+            const permitLine = [sd?.permit_type, sd?.work_class, sd?.description || sd?.work_description].filter(Boolean).join(' · ')
+            // Filing metadata — the city record itself is the dossier for
+            // permit leads BatchData can't enrich (no parcel coverage).
+            const permitMeta = [
+              sd?.issue_date ? `Filed ${new Date(sd.issue_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : null,
+              sd?.reported_cost ? `reported project cost $${sd.reported_cost >= 1_000_000 ? `${(sd.reported_cost / 1_000_000).toFixed(1)}M` : `${Math.round(sd.reported_cost / 1000)}K`}` : null,
+              (sd?.permit_number || sd?.permit_id) ? `permit #${sd.permit_number || sd.permit_id}` : null,
+            ].filter(Boolean).join(' · ')
             if (tags.length === 0 && !permitLine) return null
             return (
               <div style={{
@@ -1263,6 +1277,9 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi,
                   </ul>
                 ) : (
                   <span>Permit on file: {cleanCallAngle(permitLine)}</span>
+                )}
+                {permitMeta && (
+                  <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 600, marginTop: 6 }}>{permitMeta}</div>
                 )}
                 {/* Full city-action history when one address carries multiple
                     triggers (violation + hearings case merged by address). */}

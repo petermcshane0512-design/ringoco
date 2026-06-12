@@ -186,7 +186,20 @@ export async function GET() {
       const r = await batchdataPropertyDetail({
         street: l.street_address as string, city: l.city, state: l.state, zip: l.zip,
       })
-      if (!r.ok || !r.detail) return  // infra failure / no match — retry next load
+      // Infra failure (key/cap/network) — retry next load. A clean
+      // "no property match" is different: BatchData has no parcel for this
+      // address (verified live 2026-06-12 — 2350 W 110th Pl returns empty
+      // while sibling addresses in the same zip match). Stamp it attempted
+      // so the card stops re-querying a parcel that will never fill.
+      if (!r.ok) {
+        if (r.error === 'no property match') {
+          const sd = { ...(l.source_details || {}), dossier_attempted: true, dossier_v: 2 }
+          await supabase.from('leads').update({ source_details: sd }).eq('id', l.id)
+          if (patchInPlace) l.source_details = sd
+        }
+        return
+      }
+      if (!r.detail) return
       const d = r.detail
       // 2026-06-12 — widened dossier (per Peter: "really highly descriptive").
       // Same BatchData call now also carries sale price, lot, stories, pool,
