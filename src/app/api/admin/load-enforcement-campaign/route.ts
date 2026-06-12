@@ -59,19 +59,24 @@ function firstNameFrom(business: string | null): string {
 }
 
 async function pushToInstantly(lead: SourcedLead, freeLeadUrl: string, firstName: string): Promise<{ ok: boolean; error?: string }> {
+  // 2026-06-12 — Instantly v2 reads custom merge vars from `custom_variables`,
+  // NOT `payload` (the long-standing bug: free_lead_url never rendered). Send
+  // custom_variables; keep payload too as harmless belt-and-suspenders.
+  const vars = {
+    city: lead.city || 'your area',
+    trade: (lead.trade || 'home-service').toLowerCase(),
+    free_lead_url: freeLeadUrl,
+    promo_code: 'FIRST400',
+    promo_url: 'bellavego.com/start?promo=FIRST400',
+  }
   const body = {
     campaign: CAMPAIGN_ID,
     email: lead.email,
     first_name: firstName,
     last_name: '',
     company_name: lead.business_name || '',
-    payload: {
-      city: lead.city || 'your area',
-      trade: (lead.trade || 'home-service').toLowerCase(),
-      free_lead_url: freeLeadUrl,
-      promo_code: 'FIRST400',
-      promo_url: 'bellavego.com/start?promo=FIRST400',
-    },
+    custom_variables: vars,
+    payload: vars,
     skip_if_in_workspace: true,
     skip_if_in_campaign: true,
     verify_leads_for_lead_finder: false,

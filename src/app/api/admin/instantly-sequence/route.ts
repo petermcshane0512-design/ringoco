@@ -273,11 +273,12 @@ async function sampleLeadVarKeys(): Promise<{ keys: string[]; missing: string[];
     body: JSON.stringify({ campaign: CAMPAIGN_ID, limit: 3 }),
   })
   if (!r.ok) return { keys: [`leads/list HTTP ${r.status}`], missing: [...REQUIRED_VARS], checked: 0 }
-  const j = await r.json() as { items?: Array<{ payload?: Record<string, unknown> }> }
+  const j = await r.json() as { items?: Array<{ payload?: Record<string, unknown>; custom_variables?: Record<string, unknown> }> }
   const items = j.items || []
   const keys = new Set<string>()
   for (const it of items) {
     for (const k of Object.keys(it.payload || {})) keys.add(k)
+    for (const k of Object.keys(it.custom_variables || {})) keys.add(k)
   }
   const missing = REQUIRED_VARS.filter((v) => !keys.has(v))
   return { keys: [...keys].sort(), missing, checked: items.length }
@@ -365,23 +366,24 @@ async function backfillLeadVars(): Promise<{
         payload.promo_code === 'FIRST400'
       ) { alreadyOk++; continue }
 
+      // 2026-06-12 — write custom_variables (Instantly v2 merge-var field),
+      // not just payload. payload kept as belt-and-suspenders.
+      const vars = {
+        ...payload,
+        free_lead_url: wantUrl,
+        sample_lead_snippet: wantSnippet,
+        personalized_opener: outreachRow?.personalized_opener || (payload.personalized_opener as string) || '',
+        city: wantCity,
+        state: wantState,
+        trade: wantTrade,
+        biz_id: prospect.biz_id,
+        promo_code: 'FIRST400',
+        promo_url: 'bellavego.com/start?promo=FIRST400',
+      }
       toPatch.push({
         id: it.id,
         email,
-        body: JSON.stringify({
-          payload: {
-            ...payload,
-            free_lead_url: wantUrl,
-            sample_lead_snippet: wantSnippet,
-            personalized_opener: outreachRow?.personalized_opener || (payload.personalized_opener as string) || '',
-            city: wantCity,
-            state: wantState,
-            trade: wantTrade,
-            biz_id: prospect.biz_id,
-            promo_code: 'FIRST400',
-            promo_url: 'bellavego.com/start?promo=FIRST400',
-          },
-        }),
+        body: JSON.stringify({ custom_variables: vars, payload: vars }),
       })
     }
 
