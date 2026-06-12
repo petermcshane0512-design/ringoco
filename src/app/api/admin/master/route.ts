@@ -223,18 +223,23 @@ export async function GET() {
   )
 
   // ── CALL QUEUE + LEDGER joins ────────────────────────────────────────
-  const emails = instantly.engaged.map((e) => e.email)
-  const [olRes, pflRes, dispRes] = await Promise.all([
-    emails.length
-      ? supabase.from('outreach_leads')
-          .select('email, business_name, owner_first_name, owner_phone, city, state, trade, pushed_at, first_opened_at, last_opened_at, report_visit_at, trial_started_at, paid_at, status')
-          .in('email', emails)
-      : Promise.resolve({ data: [] as never[] }),
-    emails.length
-      ? supabase.from('prospect_free_leads')
-          .select('email, visit_count, last_visited_at, claimed_at')
-          .in('email', emails)
-      : Promise.resolve({ data: [] as never[] }),
+  // 2026-06-12 per Peter — the HOTTEST signal is a free-lead CLICK (they saw
+  // the cited homeowner and came back). Instantly reports link clicks as 0,
+  // so the queue used to be BLIND to clickers — a 4x-visit prospect never
+  // surfaced. We now source the queue from BOTH Instantly engagement AND
+  // prospect_free_leads visits, union the two, and score a free-lead click
+  // ABOVE any email open.
+  const PFL_TEST_BURST_FROM = '2026-06-12T21:33:25.000Z'  // one-off: exclude my 50-row stress test
+  const PFL_TEST_BURST_TO = '2026-06-12T21:34:40.000Z'
+  const validEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && !/@[\d.]+$/.test(e)
+
+  type PflRow = { email: string; visit_count: number | null; last_visited_at: string | null; claimed_at: string | null }
+  const [clickersRes, dispRes] = await Promise.all([
+    supabase.from('prospect_free_leads')
+      .select('email, visit_count, last_visited_at, claimed_at')
+      .gt('visit_count', 0)
+      .order('last_visited_at', { ascending: false })
+      .limit(500),
     // lead_dispositions may not exist pre-migration — tolerate.
     supabase.from('lead_dispositions')
       .select('email, action, created_at')
@@ -243,10 +248,30 @@ export async function GET() {
       .then((r) => r)
       .then((r) => ('error' in r && r.error ? { data: [] as never[] } : r)),
   ])
+  const pflByEmail = new Map<string, PflRow>()
+  for (const r of ((clickersRes.data ?? []) as PflRow[])) {
+    const email = (r.email || '').toLowerCase()
+    if (!validEmail(email)) continue
+    // Drop rows whose only visit is inside my stress-test burst window.
+    const t = r.last_visited_at ?? ''
+    if (t >= PFL_TEST_BURST_FROM && t <= PFL_TEST_BURST_TO) continue
+    pflByEmail.set(email, r)
+  }
+
+  // Union: everyone with Instantly engagement OR a real free-lead click.
+  const unionEmails = Array.from(new Set([
+    ...instantly.engaged.map((e) => e.email),
+    ...pflByEmail.keys(),
+  ])).filter(validEmail)
+  const engagedByEmail = new Map(instantly.engaged.map((e) => [e.email, e]))
+
   type OlRow = { email: string; business_name: string | null; owner_first_name: string | null; owner_phone: string | null; city: string | null; state: string | null; trade: string | null; pushed_at: string | null; first_opened_at: string | null; last_opened_at: string | null; report_visit_at: string | null; trial_started_at: string | null; paid_at: string | null; status: string | null }
+  const olRes = unionEmails.length
+    ? await supabase.from('outreach_leads')
+        .select('email, business_name, owner_first_name, owner_phone, city, state, trade, pushed_at, first_opened_at, last_opened_at, report_visit_at, trial_started_at, paid_at, status')
+        .in('email', unionEmails)
+    : { data: [] as never[] }
   const olByEmail = new Map(((olRes.data ?? []) as OlRow[]).map((r) => [r.email.toLowerCase(), r]))
-  type PflRow = { email: string; visit_count: number | null; last_visited_at: string | null; claimed_at: string | null }
-  const pflByEmail = new Map(((pflRes.data ?? []) as PflRow[]).map((r) => [r.email.toLowerCase(), r]))
   type DispRow = { email: string; action: string; created_at: string }
   const latestDisp = new Map<string, DispRow>()
   for (const d of ((dispRes.data ?? []) as DispRow[])) {
@@ -254,18 +279,24 @@ export async function GET() {
   }
 
   const DAY_MS = 86_400_000
-  const rows = instantly.engaged.map((e) => {
-    const ol = olByEmail.get(e.email)
-    const pfl = pflByEmail.get(e.email)
-    const clicks = Math.max(e.clicks, pfl?.visit_count ?? 0)
+  const rows = unionEmails.map((email) => {
+    const e = engagedByEmail.get(email) ?? { email, opens: 0, clicks: 0, replies: 0 }
+    const ol = olByEmail.get(email)
+    const pfl = pflByEmail.get(email)
+    const freeLeadVisits = pfl?.visit_count ?? 0   // real page clicks (the hot signal)
+    const clicks = Math.max(e.clicks, freeLeadVisits)
     const lastActivity = [pfl?.last_visited_at, ol?.last_opened_at, ol?.report_visit_at]
       .filter(Boolean).sort().pop() ?? null
     const daysSince = lastActivity ? (now.getTime() - new Date(lastActivity).getTime()) / DAY_MS : null
 
-    // Priority score
+    // Priority score — a free-lead CLICK outranks any email open.
     let score = 0
     if (e.replies > 0) score = 100
-    else if (clicks > 0) score = Math.max(10, 80 - 5 * Math.floor(daysSince ?? 0))
+    else if (freeLeadVisits > 0) {
+      // Saw their cited homeowner. 85 base + 8/extra visit (came back!),
+      // capped at 95 so a hard REPLY (100) still pins above. Decays daily.
+      score = Math.max(15, Math.min(95, 85 + 8 * Math.min(freeLeadVisits - 1, 4)) - 5 * Math.floor(daysSince ?? 0))
+    } else if (clicks > 0) score = Math.max(10, 80 - 5 * Math.floor(daysSince ?? 0))
     else if (e.opens >= 3) score = Math.max(5, 60 - 5 * Math.floor(daysSince ?? 0))
     else if (e.opens > 0) score = 20
     if (lastActivity && now.getTime() - new Date(lastActivity).getTime() < 2 * 3_600_000) score += 20
@@ -273,7 +304,7 @@ export async function GET() {
     const tz = tzForState(ol?.state ?? null)
     const clock = localClock(tz, now)
     const stage = ol?.paid_at ? 'PAID' : ol?.trial_started_at ? 'TRIAL' : e.replies > 0 ? 'REPLIED'
-      : clicks > 0 ? 'CLICKED' : 'OPENED'
+      : freeLeadVisits > 0 ? 'CLICKED LEAD' : clicks > 0 ? 'CLICKED' : 'OPENED'
 
     const disp = latestDisp.get(e.email)
     // Dispositioned rows leave the queue; no_answer re-surfaces after 24h.

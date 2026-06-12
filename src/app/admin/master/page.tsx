@@ -203,7 +203,7 @@ export default function MasterPage() {
                 {queue.map((r) => (
                   <tr key={r.email} style={{
                     borderLeft: r.replies > 0 ? `3px solid ${RED}` : r.clicks > 0 ? `3px solid ${AMBER}` : '3px solid transparent',
-                    background: r.replies > 0 ? '#fef2f2' : undefined,
+                    background: r.replies > 0 ? '#fef2f2' : r.stage === 'CLICKED LEAD' ? '#fffbeb' : undefined,
                   }}>
                     <Td strong>{r.score}</Td>
                     <Td strong>{r.business || '—'}{r.contact ? <span style={{ color: MUTED, fontWeight: 500 }}> · {r.contact}</span> : null}</Td>
@@ -223,7 +223,7 @@ export default function MasterPage() {
                     <Td>{r.opens}</Td>
                     <Td>{r.clicks}</Td>
                     <Td>{ago(r.last_activity)}</Td>
-                    <Td><Badge bg={r.stage === 'REPLIED' ? '#fef2f2' : r.stage === 'CLICKED' ? '#fffbeb' : '#F9F5EC'} color={r.stage === 'REPLIED' ? RED : r.stage === 'CLICKED' ? AMBER : MUTED}>{r.stage}</Badge></Td>
+                    <Td><Badge bg={r.stage === 'REPLIED' ? '#fef2f2' : r.stage.startsWith('CLICKED') ? '#fffbeb' : '#F9F5EC'} color={r.stage === 'REPLIED' ? RED : r.stage.startsWith('CLICKED') ? AMBER : MUTED}>{r.stage === 'CLICKED LEAD' ? '👀 CLICKED LEAD' : r.stage}</Badge></Td>
                     <Td>
                       <span style={{ display: 'inline-flex', gap: 3 }}>
                         {DISPOSITIONS.map((d) => (
