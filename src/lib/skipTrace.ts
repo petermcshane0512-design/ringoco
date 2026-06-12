@@ -209,6 +209,68 @@ export async function batchdataPropertySearch(input: PropertySearchInput): Promi
   }
 }
 
+/**
+ * 2026-06-11 — LEAD DOSSIER enrichment. One address-level Property Search
+ * (~$0.05) returns the intel that makes a lead worth calling: build year,
+ * size, beds/baths, value, EQUITY (budget proof), last sale (tenure).
+ * Verified live: query-by-full-address returns the exact parcel.
+ */
+export type PropertyDetail = {
+  year_built: number | null
+  sqft: number | null
+  beds: number | null
+  baths: number | null
+  value: number | null
+  equity: number | null
+  last_sale_date: string | null
+}
+
+export async function batchdataPropertyDetail(addr: { street: string; city?: string | null; state?: string | null; zip?: string | null }): Promise<{ ok: boolean; detail?: PropertyDetail; error?: string }> {
+  const key = batchdataKey()
+  if (!key) return { ok: false, error: 'BATCHDATA_API_KEY not configured' }
+  const gate = await canSpendBatchData(5)
+  if (!gate.ok) return { ok: false, error: `daily spend cap hit (${gate.spentTodayCents}/${gate.capCents}c)` }
+
+  const q = [addr.street, addr.city, addr.state, addr.zip].filter(Boolean).join(', ')
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  try {
+    const res = await fetch(BATCHDATA_SEARCH_API, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ searchCriteria: { query: q }, options: { take: 1 } }),
+      signal: controller.signal,
+    })
+    clearTimeout(timer)
+    if (!res.ok) return { ok: false, error: `batchdata detail HTTP ${res.status}` }
+    type DetailRow = {
+      building?: { yearBuilt?: number; totalBuildingAreaSquareFeet?: number; bedroomCount?: number; bathroomCount?: number }
+      valuation?: { estimatedValue?: number; equityCurrentEstimatedBalance?: number }
+      sale?: { lastSale?: { saleDate?: string } }
+      deedHistory?: { recordingDate?: string }[]
+    }
+    const json = await res.json() as { results?: { properties?: DetailRow[] } }
+    const p = json.results?.properties?.[0]
+    if (!p) return { ok: false, error: 'no property match' }
+    await logBatchDataSpend({ costCents: 5, caller: 'batchdataPropertyDetail', context: { q }, resultOk: true })
+    return {
+      ok: true,
+      detail: {
+        year_built: p.building?.yearBuilt ?? null,
+        sqft: p.building?.totalBuildingAreaSquareFeet ?? null,
+        beds: p.building?.bedroomCount ?? null,
+        baths: p.building?.bathroomCount ?? null,
+        value: p.valuation?.estimatedValue ?? null,
+        equity: p.valuation?.equityCurrentEstimatedBalance ?? null,
+        last_sale_date: p.sale?.lastSale?.saleDate ?? p.deedHistory?.[0]?.recordingDate ?? null,
+      },
+    }
+  } catch (e) {
+    clearTimeout(timer)
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
 export type SkipTraceInput = {
   street: string
   city?: string

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { LEADS_PER_WEEK } from '@/lib/offer'
+import { LEADS_PER_WEEK, PRICE_MONTHLY_USD } from '@/lib/offer'
 import LeadsWaiting from '@/components/LeadsWaiting'
 import LeadMap from '@/components/LeadMap'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
@@ -73,8 +73,40 @@ type LeadDrop = {
       permit_type?: string
       work_class?: string
       tag?: string
+      property?: {
+        beds?: number | null
+        baths?: number | null
+        equity?: number | null
+        last_sale_date?: string | null
+      }
     } | null
   }
+}
+
+/** Client-side haversine for the "X mi from your shop" dossier chip. */
+function distMiles(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 3958.8
+  const toRad = (d: number) => (d * Math.PI) / 180
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)))
+}
+
+// Honest per-trade job-value multipliers vs home value (same ranges the
+// free-lead page uses — single marketing-math language everywhere).
+const JOB_VALUE_MULTIPLIERS: Record<string, [number, number]> = {
+  roof: [0.020, 0.045],
+  hvac: [0.008, 0.018],
+  elect: [0.005, 0.015],
+  plumb: [0.004, 0.012],
+  handy: [0.002, 0.008],
+}
+function estJobRange(trade: string, homeValue: number | null | undefined): [number, number] | null {
+  if (!homeValue) return null
+  const key = Object.keys(JOB_VALUE_MULTIPLIERS).find((k) => trade.toLowerCase().includes(k)) || 'handy'
+  const [lo, hi] = JOB_VALUE_MULTIPLIERS[key]
+  return [Math.round((homeValue * lo) / 100) * 100, Math.round((homeValue * hi) / 100) * 100]
 }
 
 type QuotaInfo = {
@@ -127,6 +159,8 @@ export default function LeadsPage() {
   const [ownerFirstName, setOwnerFirstName] = useState<string | null>(null)
   // Business location — centers the lead map.
   const [bizLoc, setBizLoc] = useState<{ lat: number; lng: number } | null>(null)
+  // Trade — drives the est-job-value math on each dossier.
+  const [bizTrade, setBizTrade] = useState('')
   // 2026-06-11 — engine diagnostics surfaced to the UI. When a kick comes
   // back with 0 assigned, the reason renders in a small banner instead of
   // dying in server logs ("0 leads, no idea why" can never happen again).
@@ -163,6 +197,8 @@ export default function LeadsPage() {
         if (typeof p.business_lat === 'number' && typeof p.business_lng === 'number') {
           setBizLoc({ lat: p.business_lat, lng: p.business_lng })
         }
+        const pt = (p as { business_type?: string | null; services_offered?: string | null })
+        setBizTrade((pt.business_type || pt.services_offered || '').toLowerCase())
         const bn = (p.business_name ?? '').trim()
         const nameOk = !!bn && bn.toLowerCase() !== 'my business'
         // Geocoded address is the ONE hard requirement — without a lat/lng
@@ -472,6 +508,10 @@ export default function LeadsPage() {
                         key={d.id}
                         drop={d}
                         index={i + 1}
+                        trade={bizTrade}
+                        distMi={bizLoc && typeof d.lead.lat === 'number' && typeof d.lead.lng === 'number'
+                          ? distMiles(bizLoc.lat, bizLoc.lng, d.lead.lat, d.lead.lng)
+                          : undefined}
                         onStatus={updateStatus}
                         onReveal={revealPhone}
                         expanded={expandedId === d.lead.id}
@@ -890,7 +930,7 @@ const gateInput: React.CSSProperties = {
 
 type GeneratedMessage = { email_subject: string; email_body: string; sms: string }
 
-function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index }: {
+function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index, distMi, trade }: {
   drop: LeadDrop
   onStatus: (id: string, s: LeadDrop['status']) => void
   onReveal: (leadId: string) => void
@@ -900,6 +940,10 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index }: {
   onToggle: () => void
   // 1-based position in this week's list — matches the numbered map pin.
   index?: number
+  // Dossier extras: straight-line miles from the shop + tenant trade for
+  // the est-job-value math.
+  distMi?: number
+  trade?: string
 }) {
   const l = drop.lead
   const fullAddr = [l.street_address, l.city, l.state, l.zip].filter(Boolean).join(', ')
@@ -1053,14 +1097,71 @@ function LeadCard({ drop, onStatus, onReveal, expanded, onToggle, index }: {
           <div style={{ fontSize: 10, fontWeight: 800, color: '#FF9D5A', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
             {signalLabel} · score {score}/100
           </div>
-          {(l.home_value_est || l.year_built || l.sqft || l.owner_email) && (
-            <div style={{ fontSize: 12, color: 'rgba(255,248,240,0.6)', marginBottom: 10 }}>
-              {l.home_value_est ? `~$${l.home_value_est.toLocaleString()} home` : null}
-              {l.year_built ? ` · built ${l.year_built}` : null}
-              {l.sqft ? ` · ${l.sqft.toLocaleString()} sqft` : null}
-              {l.owner_email ? <span> · ✉ <a href={`mailto:${l.owner_email}`} style={{ color: '#FFC58A', textDecoration: 'none', fontWeight: 700 }}>{l.owner_email}</a></span> : null}
-            </div>
-          )}
+          {/* ── PROPERTY DOSSIER (2026-06-11 per Peter: "$497-worthy") ── */}
+          {(() => {
+            const prop = l.source_details?.property
+            const yearsOwned = prop?.last_sale_date
+              ? Math.max(0, Math.floor((Date.now() - new Date(prop.last_sale_date).getTime()) / (365.25 * 86400000)))
+              : null
+            const age = l.year_built ? new Date().getFullYear() - l.year_built : null
+            const jobs = estJobRange(trade || '', l.home_value_est)
+            const monthsCovered = jobs ? Math.max(1, Math.floor(jobs[0] / PRICE_MONTHLY_USD)) : null
+            const chips: string[] = []
+            if (typeof distMi === 'number') chips.push(`📍 ${distMi < 10 ? distMi.toFixed(1) : Math.round(distMi)} mi from your shop`)
+            if (l.year_built) chips.push(`🏠 built ${l.year_built}${age ? ` (${age} yrs old)` : ''}`)
+            if (l.sqft) chips.push(`📐 ${l.sqft.toLocaleString()} sqft`)
+            if (prop?.beds || prop?.baths) chips.push(`🛏 ${prop?.beds ?? '?'}bd/${prop?.baths ?? '?'}ba`)
+            if (l.home_value_est) chips.push(`💰 ~$${Math.round(l.home_value_est / 1000)}K value`)
+            if (prop?.equity) chips.push(`🏦 ~$${Math.round(prop.equity / 1000)}K equity`)
+            if (yearsOwned !== null && yearsOwned > 0) chips.push(`🗓 owned ${yearsOwned} yrs`)
+            if (chips.length === 0 && !l.owner_email && !jobs) return null
+            return (
+              <div style={{
+                background: 'rgba(255,255,255,0.04)', padding: '11px 13px', borderRadius: 10,
+                border: '1px solid rgba(255,157,90,0.18)', marginBottom: 10,
+              }}>
+                <span style={{ color: '#FFC58A', fontWeight: 800, fontSize: 10, letterSpacing: '0.08em', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Property dossier</span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {chips.map((c) => (
+                    <span key={c} style={{
+                      padding: '4px 9px', borderRadius: 7, fontSize: 11.5, fontWeight: 700,
+                      background: c.startsWith('🏦') ? 'rgba(34,197,94,0.14)' : 'rgba(255,255,255,0.05)',
+                      border: c.startsWith('🏦') ? '1px solid rgba(34,197,94,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                      color: c.startsWith('🏦') ? '#4ADE80' : 'rgba(255,248,240,0.85)',
+                    }}>{c}</span>
+                  ))}
+                </div>
+                {prop?.equity && prop.equity > 50_000 && (
+                  <div style={{ fontSize: 11, color: '#4ADE80', fontWeight: 700, marginTop: 7 }}>
+                    ✓ Equity says they can afford the job — quote with confidence.
+                  </div>
+                )}
+                {yearsOwned !== null && yearsOwned >= 10 && (
+                  <div style={{ fontSize: 11, color: 'rgba(255,248,240,0.6)', fontWeight: 600, marginTop: 4 }}>
+                    {yearsOwned}+ years in the home — systems and surfaces aging on their watch, not a flipper.
+                  </div>
+                )}
+                {jobs && (
+                  <div style={{
+                    marginTop: 9, padding: '8px 11px', borderRadius: 8,
+                    background: 'rgba(232,116,43,0.14)', border: '1px solid rgba(232,116,43,0.3)',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+                  }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: 'rgba(255,248,240,0.85)' }}>Est. job value at this home</span>
+                    <span style={{ fontSize: 13.5, fontWeight: 900, color: '#FFC58A' }}>
+                      ${jobs[0].toLocaleString()} – ${jobs[1].toLocaleString()}
+                      {monthsCovered ? <span style={{ fontSize: 10.5, fontWeight: 700, color: 'rgba(255,248,240,0.55)' }}> · ≈ {monthsCovered} mo of membership</span> : null}
+                    </span>
+                  </div>
+                )}
+                {l.owner_email && (
+                  <div style={{ fontSize: 11.5, marginTop: 8 }}>
+                    ✉ <a href={`mailto:${l.owner_email}`} style={{ color: '#FFC58A', textDecoration: 'none', fontWeight: 700 }}>{l.owner_email}</a>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
           {/* AI DEBRIEF — why this lead surfaced. why_tags come from the
               lead engine (sale recency, system age, permit/storm signal);
               permit rows fall back to the raw permit description. */}

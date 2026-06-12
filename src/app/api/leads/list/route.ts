@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
 import { TIER_FEATURES, isValidTier, type Tier } from '@/lib/pricing'
 import { geocodeBusinessAddress } from '@/lib/geocodeBusinessAddress'
-import { skipTraceAddress } from '@/lib/skipTrace'
+import { skipTraceAddress, batchdataPropertyDetail } from '@/lib/skipTrace'
 
 export const runtime = 'nodejs'
 
@@ -156,6 +156,49 @@ export async function GET() {
         } catch { /* background enhancement */ }
       }
       console.log(`[leads/list] background contact backfill done: ${deferredContact.length} leads for ${userId}`)
+    })
+  }
+
+  // 2026-06-11 — DOSSIER backfill (per Peter: "$497-worthy detail"). One
+  // address-level Property Search per lead missing facts fills built year,
+  // sqft, beds/baths, value, EQUITY, last sale. 5¢/lead, one-time (write-
+  // back), 2 sync for the open screen + the rest in background.
+  type DossierPatch = ContactPatch & {
+    year_built?: number | null; home_value_est?: number | null; sqft?: number | null
+    source_details?: Record<string, unknown> | null
+  }
+  const needDossier = drops
+    .map((d) => d.lead as unknown as DossierPatch)
+    .filter((l) => l && l.street_address && (!l.year_built || !l.home_value_est))
+    .filter((l) => !(l.source_details as { dossier_attempted?: boolean } | null)?.dossier_attempted)
+  const enrichDossier = async (l: DossierPatch, patchInPlace: boolean) => {
+    try {
+      const r = await batchdataPropertyDetail({
+        street: l.street_address as string, city: l.city, state: l.state, zip: l.zip,
+      })
+      if (!r.ok || !r.detail) return  // infra failure / no match — retry next load
+      const d = r.detail
+      const sd = { ...(l.source_details || {}), dossier_attempted: true, property: { beds: d.beds, baths: d.baths, equity: d.equity, last_sale_date: d.last_sale_date } }
+      await supabase.from('leads').update({
+        ...(d.year_built ? { year_built: d.year_built } : {}),
+        ...(d.value ? { home_value_est: d.value } : {}),
+        ...(d.sqft ? { sqft: d.sqft } : {}),
+        source_details: sd,
+      }).eq('id', l.id)
+      if (patchInPlace) {
+        if (d.year_built) l.year_built = d.year_built
+        if (d.value) l.home_value_est = d.value
+        if (d.sqft) l.sqft = d.sqft
+        l.source_details = sd
+      }
+    } catch { /* enhancement only */ }
+  }
+  for (const l of needDossier.slice(0, 2)) await enrichDossier(l, true)
+  const deferredDossier = needDossier.slice(2, 14)
+  if (deferredDossier.length > 0) {
+    after(async () => {
+      for (const l of deferredDossier) await enrichDossier(l, false)
+      console.log(`[leads/list] background dossier backfill done: ${deferredDossier.length} leads for ${userId}`)
     })
   }
 
