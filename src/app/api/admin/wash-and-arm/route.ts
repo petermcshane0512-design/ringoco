@@ -47,6 +47,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'INSTANTLY_API_KEY not set' }, { status: 503 })
   }
   const activate = req.nextUrl.searchParams.get('activate') === '1'
+  // skip_wash=1 → activation-only rerun (verification already paid for).
+  const skipWash = req.nextUrl.searchParams.get('skip_wash') === '1'
+
+  if (skipWash) {
+    const ar = await fetch(`${INSTANTLY_BASE}/campaigns/${CAMPAIGN_ID}/activate`, { method: 'POST', headers: iHeaders() })
+    const body = await ar.text().catch(() => '')
+    return NextResponse.json({ ok: ar.ok, activated: ar.ok, activate_status: ar.status, activate_body: body.slice(0, 400) })
+  }
 
   // 1. all campaign leads
   const leads: Array<{ id: string; email: string }> = []
@@ -79,14 +87,17 @@ export async function POST(req: NextRequest) {
         verified++
       } else if (INVALID_STATUSES.has(status)) {
         invalid++
+        // Mark our row invalid REGARDLESS of the Instantly delete outcome —
+        // re-push crons filter on status, so this stops the address from
+        // ever re-entering a campaign even if eviction fails.
+        await supabase.from('outreach_leads')
+          .update({ status: 'invalid_email', hunter_status: `instantly_${status}` })
+          .eq('email', l.email)
         const dr = await fetch(`${INSTANTLY_BASE}/leads/${l.id}`, { method: 'DELETE', headers: iHeaders() })
         if (dr.ok) {
           evicted++
-          await supabase.from('outreach_leads')
-            .update({ status: 'invalid_email', hunter_status: `instantly_${status}` })
-            .eq('email', l.email)
         } else {
-          errors.push(`delete ${l.email}: HTTP ${dr.status}`)
+          errors.push(`delete ${l.email}: HTTP ${dr.status} ${(await dr.text().catch(() => '')).slice(0, 120)}`)
         }
       } else {
         pendingOrRisky++
