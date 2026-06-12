@@ -187,7 +187,12 @@ export async function POST(req: NextRequest) {
   // 2026-06-10 — hot-lead-call pivot. Every legitimate human POST (i.e.
   // past isBot + row-exists gates) is a "visit." Bump the count + alert
   // Peter if the threshold is hit.
-  await bumpVisitAndMaybeAlertHot(bizId, row)
+  // 2026-06-12 — SKIP the bump for admin/test traffic (any request carrying
+  // x-admin-secret). A 50-row stress test inflated "site visits" to 52,
+  // overstating real interest. Real contractors never send that header, so
+  // gating on it keeps the metric meaning only genuine human clicks.
+  const isAdminTraffic = req.headers.get('x-admin-secret') === process.env.ADMIN_API_SECRET && !!process.env.ADMIN_API_SECRET
+  if (!isAdminTraffic) await bumpVisitAndMaybeAlertHot(bizId, row)
 
   if (row.generation_completed_at && row.lead_owner_name) {
     // Cached hit — return existing (+ geocoded pin for the demo map)
