@@ -145,6 +145,21 @@ async function scrapeCity(city: string, targetCount: number, tradeKeywords: stri
   return filtered
 }
 
+/**
+ * Normalize any URL to its bare hostname ("https://www.acme.com/contact"
+ * → "acme.com"). The contact actor reports the PAGE it found each email
+ * on (often /contact or /about), not the start URL — exact-URL matching
+ * therefore returned 0 emails for every place (2026-06-12: 23/23 places
+ * dropped). Keying both sides by domain fixes the join.
+ */
+function hostOf(u: string): string | null {
+  try {
+    return new URL(u.startsWith('http') ? u : `https://${u}`).hostname.replace(/^www\./, '').toLowerCase()
+  } catch {
+    return null
+  }
+}
+
 async function enrichEmails(websites: string[]): Promise<Map<string, string>> {
   if (websites.length === 0) return new Map()
   console.log(`[refill] enriching ${websites.length} websites for emails`)
@@ -155,8 +170,10 @@ async function enrichEmails(websites: string[]): Promise<Map<string, string>> {
   const out = new Map<string, string>()
   for (const it of items) {
     if (!it.url || !it.emails || it.emails.length === 0) continue
+    const host = hostOf(it.url)
+    if (!host || out.has(host)) continue
     const valid = it.emails.find((e) => !/noreply|no-reply|abuse|postmaster/i.test(e))
-    if (valid) out.set(it.url, valid.toLowerCase())
+    if (valid) out.set(host, valid.toLowerCase())
   }
   return out
 }
@@ -216,7 +233,8 @@ export async function GET(req: NextRequest) {
       let cityDropped = 0
       for (const p of places) {
         if (!p.website) continue
-        const email = emails.get(p.website)
+        const pHost = hostOf(p.website)
+        const email = pHost ? emails.get(pHost) : undefined
         const trade = classifyTrade(p.categoryName)
         if (!email || !trade) continue
         cityVerified++
