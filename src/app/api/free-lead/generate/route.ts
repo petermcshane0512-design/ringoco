@@ -69,7 +69,9 @@ function isBot(req: NextRequest): boolean {
 
 function redactPhone(full: string | null): string | null {
   if (!full) return null
-  const digits = full.replace(/\D/g, '')
+  let digits = full.replace(/\D/g, '')
+  // Drop the US country code so "+1 773…" redacts to (773), not (177).
+  if (digits.length === 11 && digits.startsWith('1')) digits = digits.slice(1)
   if (digits.length < 10) return null
   const area = digits.slice(0, 3)
   const last2 = digits.slice(-2)
@@ -231,6 +233,103 @@ export async function POST(req: NextRequest) {
       .update({ generation_failed_reason: 'no_location_data' })
       .eq('biz_id', bizId)
     return NextResponse.json({ ok: false, error: 'area_not_open', message: "We're opening your area now — be the first when we do." }, { status: 200 })
+  }
+
+  // 2026-06-12 — POOL-FIRST per Peter (Elon step 2: delete the flaky call).
+  // The BatchData city-only search returned WRONG-STATE properties for our
+  // no-zip contacts (a Chicago contact got a Dallas address). We already
+  // hold thousands of REAL, geocoded, in-city enforcement + permit leads —
+  // serve one of those as the free bait instead. Better lead (the actual
+  // cited-homeowner moat), guaranteed right city, $0, no wrong-city bug.
+  // BatchData stays as the fallback only when the pool has nothing local.
+  {
+    const tradeMap: Record<string, string> = {
+      masonry: 'handyman', painting: 'handyman', tuckpointing: 'handyman', carpentry: 'handyman', fence: 'handyman',
+      roofing: 'roofing', hvac: 'hvac', plumbing: 'plumbing', electrical: 'electrical', handyman: 'handyman',
+    }
+    const engineTrade = tradeMap[trade.toLowerCase()] || 'handyman'
+    const sel = 'owner_name, street_address, city, state, zip, lat, lng, home_value_est, year_built, owner_phone, lead_score, source_details'
+    // 2026-06-12 per Peter ("no air balls") — the demo MUST land a real
+    // fine-pressure homeowner, never a permit/311 guess. Pull the strongest
+    // enforcement triggers first (hearings w/ a city fine, then active
+    // violations, then failed inspections), ordered by urgency tier. Permit
+    // and 311 are last-resort fallback only, used solely when the city+trade
+    // has no genuine enforcement lead at all.
+    // 2026-06-12 per Peter ("free lead must generate EVERY single time —
+    // never show 'area opening soon'"). The old query hard-required an exact
+    // city-string match (ilike city), so a "New York" contact never matched
+    // leads stored as "Brooklyn"/"Manhattan", and a suburb contact missed
+    // "Chicago" — both fell straight to the dead "opening soon" screen. Now
+    // we WIDEN: exact city → state → anywhere, and enforcement → any trade,
+    // landing the first real geocoded cited-homeowner we can find. With
+    // thousands in the pool this effectively never comes up empty.
+    const runQ = async (triggers: string[] | null, geo: 'city' | 'state' | 'any', withTrade: boolean) => {
+      let q = supabase.from('leads').select(sel).not('lat', 'is', null).neq('source', 'aging_hvac')
+      if (withTrade) q = q.contains('trade_match', [engineTrade])
+      if (triggers) q = q.in('source_details->>trigger_type', triggers)
+      // Phone-present first (the demo's punch is "call this number now"), then
+      // most-urgent tier, then score.
+      q = q.order('owner_phone', { ascending: true, nullsFirst: false })
+           .order('source_details->>urgency_tier', { ascending: true })
+           .order('lead_score', { ascending: false })
+           .limit(25)
+      if (geo === 'city' && city) q = q.ilike('city', city)
+      else if (geo === 'state' && state) q = q.ilike('state', state)
+      const { data } = await q
+      return (data || [])
+    }
+    const ENF = ['hearings_case', 'violation', 'failed_inspection']
+    // Tiered widening — stop at the first tier that returns a real lead.
+    let pool = await runQ(ENF, 'city', true)
+    if (!pool.length) pool = await runQ(null, 'city', true)   // any trade, same city
+    if (!pool.length) pool = await runQ(ENF, 'state', true)   // cited, same state
+    if (!pool.length) pool = await runQ(null, 'state', true)  // any, same state
+    if (!pool.length) pool = await runQ(ENF, 'any', true)     // cited, this trade, anywhere
+    if (!pool.length) pool = await runQ(ENF, 'any', false)    // any cited homeowner, anywhere
+    if (!pool.length) pool = await runQ(null, 'any', false)   // last resort: any real lead
+    const poolLead = pool[0] as {
+      owner_name: string | null; street_address: string | null; city: string | null; state: string | null; zip: string | null
+      lat: number | null; lng: number | null; home_value_est: number | null; year_built: number | null
+      owner_phone: string | null; source_details: { urgency_label?: string; description?: string; trigger_type?: string; fine_total?: number | string } | null
+    } | undefined
+
+    if (poolLead && poolLead.street_address) {
+      const value = poolLead.home_value_est
+      const vm = trade.includes('roof') ? [0.020, 0.045] : trade.includes('hvac') ? [0.008, 0.018] : trade.includes('elect') ? [0.005, 0.015] : trade.includes('plumb') ? [0.004, 0.012] : [0.006, 0.020]
+      const estJobMin = value ? Math.round((value * vm[0]) / 100) * 100 : null
+      const estJobMax = value ? Math.round((value * vm[1]) / 100) * 100 : null
+      const sd = poolLead.source_details
+      const isEnf = sd?.trigger_type && sd.trigger_type !== 'permit' && sd.trigger_type !== '311'
+      const fine = Number(sd?.fine_total || 0)
+      const fineStr = fine > 0 ? `$${fine.toLocaleString('en-US')} city fine on file. ` : ''
+      const signalDetail = sd?.urgency_label
+        ? `${sd.urgency_label} — they have to get this done`
+        : sd?.description
+          ? `${fineStr}${sd.description.slice(0, 110)}`
+          : (poolLead.year_built ? `Built ${poolLead.year_built}` : 'Flagged property in your area')
+
+      await supabase.from('prospect_free_leads').update({
+        // Enforcement leads (HPD etc.) have no public owner name — the real
+        // name is skip-traced and unlocked at signup, same as the phone.
+        lead_owner_name: poolLead.owner_name || 'Verified homeowner',
+        lead_street: poolLead.street_address,
+        lead_year_built: poolLead.year_built,
+        lead_value: value,
+        lead_phone: redactPhone(poolLead.owner_phone),
+        lead_signal: isEnf ? 'violation' : 'permit',
+        lead_signal_detail: signalDetail,
+        lead_est_job_min: estJobMin,
+        lead_est_job_max: estJobMax,
+        generation_completed_at: new Date().toISOString(),
+        generation_failed_reason: null,
+      }).eq('biz_id', bizId)
+
+      const updated = await supabase.from('prospect_free_leads').select('*').eq('biz_id', bizId).maybeSingle()
+      return NextResponse.json({
+        ok: true, cached: false, source: 'pool',
+        lead: { ...pluckLead(updated.data as Record<string, unknown>), lat: poolLead.lat, lng: poolLead.lng, city: poolLead.city, state: poolLead.state, zip: poolLead.zip, fine_total: fine > 0 ? fine : null, trigger: sd?.trigger_type || null },
+      })
+    }
   }
 
   const { properties, ok } = await batchDataSearch({ zip, city, state }, trade)
