@@ -20,11 +20,19 @@
  * homepage claim stays mechanically honest.
  */
 
+'use client'
+
+import { useState } from 'react'
 import { LEADS_PER_WEEK } from '@/lib/offer'
 
 type Scout = { name: string; verb: string }
 
+// 2026-06-12 — enforcement scouts pulled to the TOP per Peter (the leads
+// that "legally need the work done" lead the story).
 const SCOUTS: Scout[] = [
+  { name: 'Violation Watcher',       verb: 'reads city building-violation records nightly — homes the city ORDERED to be repaired' },
+  { name: 'Hearings Tracker',        verb: 'pulls administrative-hearings dockets — homeowners with fines on the line, names attached' },
+  { name: 'Failed-Inspection Scout', verb: 'flags properties that failed a city inspection and must be corrected + re-inspected' },
   { name: 'Permit Watcher',          verb: "pulls building permits at city hall every night before you wake up" },
   { name: 'Storm Tracker',           verb: 'watches NOAA for hail strikes + insurance windows in your zip' },
   { name: 'Aging-System Scout',      verb: 'cross-references Census data to flag homes due for replacement' },
@@ -52,6 +60,10 @@ const SCOUTS: Scout[] = [
 ]
 
 export default function ScoutTeam() {
+  // 2026-06-12 per Peter — show the first 4 (enforcement-led) and tuck the
+  // rest behind a "show all" toggle on BOTH mobile and desktop.
+  const [open, setOpen] = useState(false)
+  const visible = open ? SCOUTS : SCOUTS.slice(0, 4)
   return (
     <section style={{
       padding: '72px clamp(16px, 5vw, 48px)',
@@ -60,20 +72,20 @@ export default function ScoutTeam() {
       <div style={{ maxWidth: 1180, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <div style={{ fontSize: 12, fontWeight: 900, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>
-            24 scouts working your zip — while you sleep
+            A research team working your zip — while you sleep
           </div>
           <h2 style={{
             fontSize: 'clamp(28px, 3.4vw, 42px)',
             fontWeight: 900, letterSpacing: '-0.03em',
             margin: '0 0 14px', lineHeight: 1.08, color: '#0B1F3A',
           }}>
-            We built a full research team for your service area. <span style={{
+            We read the city&rsquo;s records so you don&rsquo;t have to. <span style={{
               background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 60%, #C84B26 100%)',
               WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-            }}>One shop gets all 24.</span>
+            }}>You just make the call.</span>
           </h2>
           <p style={{ fontSize: 16, color: '#3D5A66', maxWidth: 700, margin: '0 auto', lineHeight: 1.55 }}>
-            Every scout below runs every day in your zip code. Permits at 5am. Storms in real time. Phone numbers verified before you call. {LEADS_PER_WEEK} fresh leads land in your dashboard every week — yours alone.
+            Every night we read city violation records, hearings dockets, and code orders in your zip — and find the homeowners who are <strong style={{ color: '#0B1F3A' }}>legally required to get the work done</strong>. {LEADS_PER_WEEK} land in your dashboard every week, yours alone, phones verified.
           </p>
         </div>
 
@@ -82,7 +94,7 @@ export default function ScoutTeam() {
           gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
           gap: 14,
         }}>
-          {SCOUTS.map((s, i) => (
+          {visible.map((s, i) => (
             <div key={s.name} style={{
               padding: '16px 18px',
               borderRadius: 14,
@@ -112,11 +124,28 @@ export default function ScoutTeam() {
           ))}
         </div>
 
-        <p style={{ textAlign: 'center', marginTop: 30, fontSize: 13, color: '#7AAAB2', maxWidth: 720, margin: '30px auto 0', lineHeight: 1.6 }}>
+        {/* Show-all toggle — mobile + desktop. */}
+        <div style={{ textAlign: 'center', marginTop: 22 }}>
+          <button
+            onClick={() => setOpen((x) => !x)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '12px 22px', borderRadius: 11, minHeight: 44,
+              background: '#FFFFFF', border: '1.5px solid rgba(232,116,43,0.30)',
+              color: '#C84B26', fontWeight: 800, fontSize: 14, cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            {open ? 'Show fewer' : `Show all ${SCOUTS.length} scouts`}
+            <span style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 180ms ease' }}>▾</span>
+          </button>
+        </div>
+
+        <p style={{ textAlign: 'center', marginTop: 24, fontSize: 13, color: '#7AAAB2', maxWidth: 720, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.6 }}>
           We don&rsquo;t hide behind &ldquo;AI does it.&rdquo; Every scout above is a real
-          system running on real data sources you can verify — city permits, NOAA,
-          Census ACS, MLS, public property records. Boring work, done relentlessly,
-          so you only do the part nobody else can: pick up the phone.
+          system running on real public records you can verify — city violations,
+          hearings dockets, permits, NOAA, property records. Boring work, done
+          relentlessly, so you only do the part nobody else can: pick up the phone.
         </p>
       </div>
     </section>

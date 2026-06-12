@@ -338,19 +338,19 @@ function HomeContent() {
               lineHeight: 1.04, margin: '0 0 14px',
               color: '#0B1F3A',
             }}>
-              Our AI scans{' '}
+              Homeowners near you who are{' '}
               <span className="bavg-h1-shimmer" style={{
                 background: 'linear-gradient(110deg, #FF9D5A 0%, #E8742B 30%, #C84B26 50%, #E8742B 70%, #FF9D5A 100%)',
                 backgroundSize: '220% 100%',
                 WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-              }}>everything in your neighborhood</span>
-              {' '}to find your next customer.
+              }}>legally required to hire you</span>
+              {' '}— handed to you weekly.
             </h1>
             <p style={{ fontSize: 'clamp(15px, 1.4vw, 17px)', color: '#3D5A66', lineHeight: 1.55, margin: '0 0 14px', maxWidth: 580 }}>
-              Every permit filed at city hall. Every storm strike. Every home sale. Every aging system. Our AI reads it all, every night, across your entire service area — then hands you <strong style={{ color: '#0B1F3A' }}>{LEADS_PER_WEEK} homeowners a week who need your work</strong> — names, addresses, verified phones, and a ready-to-send intro. Call, text, or email in 60 seconds.
+              Our AI reads city violation records, hearings dockets, and code orders every night across your area — and finds the homeowners the city is <strong style={{ color: '#0B1F3A' }}>forcing to fix their roof, masonry, or building</strong> or face fines. You get <strong style={{ color: '#0B1F3A' }}>{LEADS_PER_WEEK} a week</strong> — name, verified phone, the exact violation, and what the city ordered. You call; they already have to say yes.
             </p>
             <p style={{ fontSize: 'clamp(14px, 1.3vw, 16px)', color: '#0B1F3A', lineHeight: 1.5, margin: '0 0 18px', maxWidth: 580, fontWeight: 700 }}>
-              One shop per area. When yours is taken, it&rsquo;s taken.
+              Not &ldquo;maybe interested&rdquo; leads. Homeowners under a deadline. One shop per area — when yours is taken, it&rsquo;s taken.
             </p>
 
             {/* Guarantee block — Hormozi 1-Job framing. Replaces the prior
@@ -389,13 +389,9 @@ function HomeContent() {
         </div>
       </section>
 
-      {/* LIVE AI PIPELINE — 5-stage scraper + AI writer w/ phone mockup.
-          Replaces the wordy WITH/WITHOUT cards + 1st-gen scraper feed.
-          Shows: (1) we scrape signals, (2) AI scores, (3) skip-trace
-          verifies phone, (4) AI WRITES the outreach SMS character-by-
-          character to the homeowner, (5) delivered to shop. Right side
-          is a phone mockup typing the actual SMS in real time. */}
-      <LiveStatBar />
+      {/* 2026-06-12 — LiveStatBar removed per Peter ("571 signals in 24h" +
+          "24 metros scanned nightly" — fabricated-feeling counters, off
+          both displays). */}
 
       <Reveal><LiveAIPipeline /></Reveal>
 
@@ -659,8 +655,21 @@ function HomeContent() {
            logo. Hide them. Tighten hero typography + side padding so
            nothing overflows at 375px (iPhone SE width). */
         @media (max-width: 480px) {
+          /* 2026-06-12 — mobile nav fix per Peter ("can only see BellAveGo +
+             Founder, no pricing/CTA buttons"). Hide ONLY the low-priority
+             links (Founder, Sign in); keep Pricing AND the $97 CTA visible
+             and compact so the value + action are always on screen. */
           .nav-secondary { display: none !important; }
-          .nav-cta { display: none !important; }
+          .nav-cta {
+            padding: 9px 14px !important;
+            font-size: 13px !important;
+            border-radius: 10px !important;
+            box-shadow: 0 4px 14px rgba(232,116,43,0.40) !important;
+          }
+          .nav-links { gap: 8px !important; }
+          .nav-links a[href="/pricing"] { font-size: 14px !important; padding: 9px 4px !important; }
+          /* Logo smaller on phone so Pricing + CTA both fit the row. */
+          nav a[href="/"] img { max-width: 30vw !important; }
           .hero-grid { gap: 16px !important; }
           /* Hero h1 + paragraph copy: smaller floor so nothing overflows
              and the H1 fits in 2 lines instead of 4-5 at 375px. */
@@ -711,6 +720,8 @@ function Nav({ isSignedIn }: { isSignedIn: boolean }) {
           <>
             <Link href="/sign-in" style={navLinkBig} className="nav-secondary">Sign in</Link>
             <Link href="/start?promo=FIRST400" style={ctaNavPrimaryBig} className="nav-cta">Claim my area · $97 →</Link>
+            {/* compact label swaps in via CSS at mobile is overkill; the
+                nav-cta media rule shrinks padding/font so this fits. */}
           </>
         )}
       </div>
