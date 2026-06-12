@@ -195,24 +195,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, cached: true, lead: { ...pluckLead(row), lat: cachedLoc?.lat ?? null, lng: cachedLoc?.lng ?? null } })
   }
 
-  // Hardening #4 — daily spend cap
-  const gate = await canSpendBatchData(PROPERTY_SEARCH_COST_CENTS)
-  if (!gate.ok) {
-    await supabase
-      .from('prospect_free_leads')
-      .update({
-        generation_requested_at: new Date().toISOString(),
-        generation_failed_reason: `spend_cap:${gate.reason}`,
-      })
-      .eq('biz_id', bizId)
-    return NextResponse.json({
-      ok: false,
-      error: 'capacity reached — try later',
-      reason: gate.reason,
-      spent_today_cents: gate.spentTodayCents,
-      cap_cents: gate.capCents,
-    }, { status: 429 })
-  }
+  // 2026-06-12 — the BatchData daily-spend gate MOVED down to guard only the
+  // BatchData fallback (below). It used to sit here and 429 the whole
+  // endpoint when the cap was hit — blocking the FREE Supabase pool path
+  // that needs no BatchData at all. The pool serves the lead for $0, so a
+  // capped BatchData balance must never stop a click from getting a lead.
 
   // Stamp request start
   await supabase
@@ -225,15 +212,13 @@ export async function POST(req: NextRequest) {
   const state = (row.state as string) || ''
   const trade = (row.trade as string) || 'hvac'
 
-  // 2026-06-10 — accept zip OR city+state. Only refuse spend if BOTH paths
-  // are unavailable (no zip AND no city+state pair).
-  if (!zip && (!city || !state)) {
-    await supabase
-      .from('prospect_free_leads')
-      .update({ generation_failed_reason: 'no_location_data' })
-      .eq('biz_id', bizId)
-    return NextResponse.json({ ok: false, error: 'area_not_open', message: "We're opening your area now — be the first when we do." }, { status: 200 })
-  }
+  // 2026-06-12 per Peter ("generate EVERY time"). The old code returned
+  // "area opening soon" whenever location was incomplete (e.g. a contact
+  // with a city but blank state). That killed legitimate clicks. We no
+  // longer gate on location here — the pool query below widens all the way
+  // to "any real cited homeowner," so even a location-less contact still
+  // gets a real lead. Location only matters for the BatchData fallback,
+  // which is now a near-dead last resort.
 
   // 2026-06-12 — POOL-FIRST per Peter (Elon step 2: delete the flaky call).
   // The BatchData city-only search returned WRONG-STATE properties for our
@@ -330,6 +315,17 @@ export async function POST(req: NextRequest) {
         lead: { ...pluckLead(updated.data as Record<string, unknown>), lat: poolLead.lat, lng: poolLead.lng, city: poolLead.city, state: poolLead.state, zip: poolLead.zip, fine_total: fine > 0 ? fine : null, trigger: sd?.trigger_type || null },
       })
     }
+  }
+
+  // BatchData fallback — only reached if the pool returned nothing (rare).
+  // The daily-spend gate lives HERE now, guarding only the paid call.
+  const gate = await canSpendBatchData(PROPERTY_SEARCH_COST_CENTS)
+  if (!gate.ok) {
+    await supabase
+      .from('prospect_free_leads')
+      .update({ generation_failed_reason: `spend_cap:${gate.reason}` })
+      .eq('biz_id', bizId)
+    return NextResponse.json({ ok: false, error: 'area_not_open', message: "We're opening your area now — be the first when we do." }, { status: 200 })
   }
 
   const { properties, ok } = await batchDataSearch({ zip, city, state }, trade)
