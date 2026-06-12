@@ -104,6 +104,22 @@ export default function MasterPage() {
   const [sortDesc, setSortDesc] = useState(true)
   const [hidden, setHidden] = useState<Set<string>>(new Set())
   const [copied, setCopied] = useState<string | null>(null)
+  const [phones, setPhones] = useState<Record<string, string>>({})   // email → fetched phone
+  const [enriching, setEnriching] = useState<Set<string>>(new Set())
+
+  async function enrichPhone(email: string) {
+    setEnriching((s) => new Set(s).add(email))
+    try {
+      const r = await fetch('/api/admin/enrich-phone', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const j = await r.json()
+      if (j.ok && j.phone) setPhones((p) => ({ ...p, [email]: j.phone }))
+      else alert(`No phone found: ${j.error || 'Google listing had none'}`)
+    } catch (e) { alert(`Enrich failed: ${(e as Error).message}`) }
+    setEnriching((s) => { const n = new Set(s); n.delete(email); return n })
+  }
 
   const load = useCallback(async () => {
     try {
@@ -208,14 +224,22 @@ export default function MasterPage() {
                     <Td strong>{r.score}</Td>
                     <Td strong>{r.business || '—'}{r.contact ? <span style={{ color: MUTED, fontWeight: 500 }}> · {r.contact}</span> : null}</Td>
                     <Td>
-                      {r.phone ? (
-                        <span style={{ whiteSpace: 'nowrap' }}>
-                          <a href={`tel:${r.phone}`} style={{ color: ORANGE, fontWeight: 800, textDecoration: 'none' }}>{r.phone}</a>
-                          <button onClick={() => copyPhone(r.phone!)} title="copy" style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 11, padding: '0 4px' }}>
-                            {copied === r.phone ? '✓' : '⧉'}
-                          </button>
-                        </span>
-                      ) : <Badge bg="#fef3ec" color="#c2410c">enrich</Badge>}
+                      {(r.phone || phones[r.email]) ? (() => {
+                        const ph = r.phone || phones[r.email]
+                        return (
+                          <span style={{ whiteSpace: 'nowrap' }}>
+                            <a href={`tel:${ph}`} style={{ color: ORANGE, fontWeight: 800, textDecoration: 'none' }}>{ph}</a>
+                            <button onClick={() => copyPhone(ph)} title="copy" style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 11, padding: '0 4px' }}>
+                              {copied === ph ? '✓' : '⧉'}
+                            </button>
+                          </span>
+                        )
+                      })() : (
+                        <button onClick={() => enrichPhone(r.email)} disabled={enriching.has(r.email)} style={{
+                          padding: '2px 8px', borderRadius: 5, fontSize: 10, fontWeight: 800, cursor: enriching.has(r.email) ? 'wait' : 'pointer',
+                          border: '1px solid #fed7aa', background: '#fef3ec', color: '#c2410c',
+                        }}>{enriching.has(r.email) ? '…' : '📞 get #'}</button>
+                      )}
                     </Td>
                     <Td>{r.email}</Td>
                     <Td>{[r.city, r.state].filter(Boolean).join(', ') || '—'}</Td>
