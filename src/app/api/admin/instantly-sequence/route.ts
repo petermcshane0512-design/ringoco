@@ -67,7 +67,7 @@ function toHtml(text: string): string {
 // var can come back blank.
 const NEW_STEPS: NewStep[] = [
   {
-    subject: '{{city}} homeowner ordered to hire a {{trade}} contractor',
+    subject: 'a {{city}} homeowner the city just cited',
     body: toHtml(
 `Hey {{firstName}},
 
