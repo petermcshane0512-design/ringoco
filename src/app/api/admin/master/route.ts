@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { requireAdmin } from '@/lib/auth/requireAdmin'
+import { requireAdmin, ADMIN_EMAIL_SET } from '@/lib/auth/requireAdmin'
 import { stripe } from '@/lib/stripeClient'
 import type Stripe from 'stripe'
 
@@ -111,11 +111,13 @@ export async function GET() {
   type CustomerRow = {
     email: string | null
     name: string | null
-    amount_monthly: number
+    list_monthly: number       // plan price
+    net_monthly: number        // after coupon — what actually bills
     interval: string
     status: string
     promo_code: string | null
     started: string | null
+    internal: boolean          // Peter's own/test subs — never revenue
   }
   let customers: CustomerRow[] = []
   let stripeError: string | null = null
@@ -123,34 +125,53 @@ export async function GET() {
     const subs = await stripe.subscriptions.list({
       status: 'all',
       limit: 100,
-      expand: ['data.customer', 'data.discounts.promotion_code'],
+      expand: ['data.customer', 'data.discounts.promotion_code', 'data.discounts.coupon'],
     })
     customers = subs.data
       .filter((s) => ['active', 'trialing', 'past_due'].includes(s.status))
       .map((s) => {
         const cust = s.customer as Stripe.Customer | Stripe.DeletedCustomer
+        const email = 'deleted' in cust && cust.deleted ? null : (cust as Stripe.Customer).email ?? null
         const item = s.items.data[0]
         const unit = (item?.price?.unit_amount ?? 0) / 100
         const interval = item?.price?.recurring?.interval ?? 'month'
-        const monthly = interval === 'year' ? unit / 12 : unit
+        const listMonthly = interval === 'year' ? unit / 12 : unit
         const disc = (s.discounts?.[0] ?? null) as Stripe.Discount | null
         const promo = disc?.promotion_code
+        const promoCode = typeof promo === 'object' && promo ? promo.code : null
+        // Net of coupon — a 100%-off forever code (PETER_FOREVER) bills $0;
+        // counting list price made 19 self-test subs read as $10K MRR.
+        // Stripe's dahlia typings drop `coupon` off Discount; runtime still
+        // carries it (expanded above). Narrow manually.
+        const coupon = (disc as unknown as { coupon?: { percent_off?: number | null; amount_off?: number | null } | null })?.coupon ?? null
+        let netMonthly = listMonthly
+        if (coupon?.percent_off) netMonthly = listMonthly * (1 - coupon.percent_off / 100)
+        else if (coupon?.amount_off) netMonthly = Math.max(0, listMonthly - coupon.amount_off / 100)
+        // Internal = founder's own accounts/test promos. Never revenue.
+        const internal = (!!email && ADMIN_EMAIL_SET.has(email.toLowerCase()))
+          || (promoCode ?? '').toUpperCase().startsWith('PETER')
         return {
-          email: 'deleted' in cust && cust.deleted ? null : (cust as Stripe.Customer).email ?? null,
+          email,
           name: 'deleted' in cust && cust.deleted ? null : (cust as Stripe.Customer).name ?? null,
-          amount_monthly: Math.round(monthly),
+          list_monthly: Math.round(listMonthly),
+          net_monthly: Math.round(netMonthly),
           interval,
           status: s.status,
-          promo_code: typeof promo === 'object' && promo ? promo.code : null,
+          promo_code: promoCode,
           started: s.start_date ? new Date(s.start_date * 1000).toISOString() : null,
+          internal,
         }
       })
-      .sort((a, b) => b.amount_monthly - a.amount_monthly)
+      .sort((a, b) => Number(a.internal) - Number(b.internal) || b.net_monthly - a.net_monthly)
   } catch (e) {
     stripeError = (e as Error).message
   }
-  const paying = customers.filter((c) => c.status === 'active' || c.status === 'past_due')
-  const mrr = paying.reduce((s, c) => s + c.amount_monthly, 0)
+  const external = customers.filter((c) => !c.internal)
+  const paying = external.filter((c) => (c.status === 'active' || c.status === 'past_due') && c.net_monthly > 0)
+  const mrr = paying.reduce((s, c) => s + c.net_monthly, 0)
+  const internalSubs = customers.filter((c) => c.internal)
+  // What Peter's own card actually bleeds per month on test subs.
+  const internalBurn = internalSubs.reduce((s, c) => s + c.net_monthly, 0)
 
   // ── INSTANTLY (opens truth) + DB funnel, concurrently ─────────────────
   const [instantly, pushedTotal, pushedToday, reportVisits, textOptIns, demos, trials, paid] = await Promise.all([
@@ -222,10 +243,12 @@ export async function GET() {
     asOf: now.toISOString(),
     revenue: {
       paying_customers: paying.length,
-      trialing: customers.filter((c) => c.status === 'trialing').length,
+      trialing: external.filter((c) => c.status === 'trialing').length,
       mrr,
       arr: mrr * 12,
       customers,
+      internal_subs: internalSubs.length,
+      internal_burn_monthly: Math.round(internalBurn),
       stripe_error: stripeError,
     },
     outreach: {

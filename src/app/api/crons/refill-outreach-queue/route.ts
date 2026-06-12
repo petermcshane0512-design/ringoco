@@ -253,7 +253,7 @@ export async function GET(req: NextRequest) {
         if (!error) { inserted.push(email); cityCount++ }
         // UNIQUE(email) violations silently dropped (dedup behavior)
       }
-      cityResults.push({ city, raw: places.length, passed_icp: places.length, verified: cityVerified, inserted: cityCount })
+      cityResults.push({ city, raw: places.length, passed_icp: places.length, verified: cityVerified, inserted: cityCount, websites: websites.length, emails_found: emails.size } as never)
       console.log(`[refill] ${city}: raw=${places.length}, verified=${cityVerified}, inserted=${cityCount}, dropped=${cityDropped}`)
     } catch (e) {
       errors.push(`${city}: ${(e as Error).message}`)

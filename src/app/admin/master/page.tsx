@@ -29,7 +29,9 @@ type Master = {
     trialing: number
     mrr: number
     arr: number
-    customers: Array<{ email: string | null; name: string | null; amount_monthly: number; interval: string; status: string; promo_code: string | null; started: string | null }>
+    customers: Array<{ email: string | null; name: string | null; list_monthly: number; net_monthly: number; interval: string; status: string; promo_code: string | null; started: string | null; internal: boolean }>
+    internal_subs: number
+    internal_burn_monthly: number
     stripe_error: string | null
   }
   outreach: {
@@ -103,26 +105,28 @@ export default function MasterPage() {
 
       {/* ── TOP STATS ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 22 }}>
-        <Stat label="Paying customers" value={String(rev.paying_customers)} big />
-        <Stat label="MRR" value={`$${rev.mrr.toLocaleString()}`} big />
+        <Stat label="Paying customers (real)" value={String(rev.paying_customers)} big />
+        <Stat label="MRR (real, net of coupons)" value={`$${rev.mrr.toLocaleString()}`} big />
         <Stat label="ARR" value={`$${rev.arr.toLocaleString()}`} />
-        <Stat label="On trial" value={String(rev.trialing)} />
+        <Stat label="Your test subs (burn/mo)" value={`${rev.internal_subs} ($${rev.internal_burn_monthly})`} />
         <Stat label="Emails sent" value={o.emails_sent.toLocaleString()} />
         <Stat label="Open rate" value={`${(o.open_rate * 100).toFixed(1)}%`} big />
         <Stat label="Replies" value={String(o.replies)} />
       </div>
 
       {/* ── MONEY ── */}
-      <Section title={`Customers & what they pay${rev.stripe_error ? ' — STRIPE ERROR' : ' (live from Stripe)'}`}>
+      <Section title={`Real customers${rev.stripe_error ? ' — STRIPE ERROR' : ' (live from Stripe, net of coupons)'}`}>
         {rev.stripe_error && <p style={{ color: '#b91c1c', fontSize: 12.5, fontWeight: 600 }}>Stripe unreachable: {rev.stripe_error}</p>}
-        {rev.customers.length === 0 && !rev.stripe_error && <p style={{ color: MUTED, fontSize: 13 }}>No subscriptions yet. The cold email machine is loaded — first one lands here.</p>}
-        {rev.customers.length > 0 && (
-          <Table head={['Customer', 'Status', '$/mo', 'Promo used', 'Since']}>
-            {rev.customers.map((c, i) => (
+        {!rev.stripe_error && rev.customers.filter((c) => !c.internal).length === 0 && (
+          <p style={{ color: MUTED, fontSize: 13 }}>No real customers yet — campaign is live, first one lands here.</p>
+        )}
+        {rev.customers.filter((c) => !c.internal).length > 0 && (
+          <Table head={['Customer', 'Status', 'Bills $/mo', 'Promo used', 'Since']}>
+            {rev.customers.filter((c) => !c.internal).map((c, i) => (
               <tr key={i}>
                 <Td strong>{c.name || c.email || '—'}{c.name && c.email ? <span style={{ color: MUTED, fontWeight: 500 }}> · {c.email}</span> : null}</Td>
                 <Td><Badge bg={c.status === 'active' ? '#f0fdf4' : c.status === 'trialing' ? '#fef3ec' : '#fef2f2'} color={c.status === 'active' ? '#15803d' : c.status === 'trialing' ? '#c2410c' : '#b91c1c'}>{c.status}</Badge></Td>
-                <Td strong>${c.amount_monthly}{c.interval === 'year' ? ' (annual)' : ''}</Td>
+                <Td strong>${c.net_monthly}{c.net_monthly !== c.list_monthly ? <span style={{ color: MUTED, fontWeight: 500 }}> (list ${c.list_monthly})</span> : ''}{c.interval === 'year' ? ' (annual)' : ''}</Td>
                 <Td>{c.promo_code ? <code style={{ background: '#F9F5EC', padding: '2px 6px', borderRadius: 4, fontSize: 12 }}>{c.promo_code}</code> : '—'}</Td>
                 <Td>{c.started ? new Date(c.started).toLocaleDateString() : '—'}</Td>
               </tr>
@@ -130,6 +134,24 @@ export default function MasterPage() {
           </Table>
         )}
       </Section>
+
+      {rev.customers.some((c) => c.internal) && (
+        <Section title={`Your own test subs — NOT revenue (${rev.internal_subs} subs, $${rev.internal_burn_monthly}/mo actually billing your card)`}>
+          <p style={{ color: MUTED, fontSize: 12, margin: '0 0 10px', fontWeight: 600 }}>
+            Signup-flow test runs + your real account. Anything billing &gt;$0 here is money you pay yourself minus Stripe fees — cancel the dupes in Stripe → Subscriptions.
+          </p>
+          <Table head={['Account', 'Bills $/mo', 'Promo', 'Since']}>
+            {rev.customers.filter((c) => c.internal).map((c, i) => (
+              <tr key={i}>
+                <Td strong>{c.email || c.name || '—'}</Td>
+                <Td strong>{c.net_monthly > 0 ? `$${c.net_monthly}` : '$0'}<span style={{ color: MUTED, fontWeight: 500 }}> (list ${c.list_monthly})</span></Td>
+                <Td>{c.promo_code ? <code style={{ background: '#F9F5EC', padding: '2px 6px', borderRadius: 4, fontSize: 12 }}>{c.promo_code}</code> : '—'}</Td>
+                <Td>{c.started ? new Date(c.started).toLocaleDateString() : '—'}</Td>
+              </tr>
+            ))}
+          </Table>
+        </Section>
+      )}
 
       {/* ── CAMPAIGNS (Instantly truth) ── */}
       <Section title={`Email campaigns${o.instantly_error ? ' — INSTANTLY ERROR' : ' (live from Instantly)'}`}>
