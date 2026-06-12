@@ -196,24 +196,27 @@ export async function GET(req: NextRequest) {
   }
 
   const url = new URL(req.url)
-  const targetDate = url.searchParams.get('date') || todayIso()
-  const day = loadSchedule(targetDate)
-  if (!day) {
-    return NextResponse.json({ ok: false, error: `no schedule entry for ${targetDate}` })
-  }
 
-  // ?city=Phoenix, AZ → scrape ONE city (fits in 5-min Vercel timeout)
-  // No ?city → scrape ALL cities in schedule (only safe if total raw is small;
-  // cron sets this once-per-day at 1am UTC where 5-min limit is OK).
-  // 2026-06-09 — city param can OVERRIDE today's schedule. Falls through to
-  // schedule list only if the city name matches one already there.
+  // 2026-06-12 per Peter ("ONLY ever send emails with insider info on houses
+  // nearby that NEED the service"). The promise in every email is "the city
+  // just CITED a homeowner near you." That's only TRUE in metros where we
+  // actually run an enforcement scraper. The old 211-day Sun Belt rotation
+  // (Tampa/Vegas/Dallas/…) emailed contractors in cities where we have ZERO
+  // city-cited leads — an empty promise. Refill now targets ONLY the
+  // enforcement metros. EXPAND this list the moment a new
+  // ingest-enforcement-<city> scraper ships and has real volume.
+  const ENFORCEMENT_METROS = ['Chicago, IL', 'New York, NY']
+
+  // ?city= still works for ad-hoc runs, but only if it's an enforcement
+  // metro — we never scrape contractors we can't back with real data.
   const singleCity = url.searchParams.get('city')
-  let citiesToScrape: string[] = day.cities
+  let citiesToScrape: string[] = ENFORCEMENT_METROS
   if (singleCity) {
-    const matchInSchedule = day.cities.find((c) => c.toLowerCase().startsWith(singleCity.toLowerCase().slice(0, 6)))
-    citiesToScrape = matchInSchedule
-      ? [matchInSchedule]
-      : [singleCity.includes(',') ? singleCity : `${singleCity}, FL`]  // ad-hoc override; assumes FL if no state given
+    const match = ENFORCEMENT_METROS.find((c) => c.toLowerCase().startsWith(singleCity.toLowerCase().slice(0, 5)))
+    if (!match) {
+      return NextResponse.json({ ok: false, error: `${singleCity} has no enforcement data — refill only targets ${ENFORCEMENT_METROS.join(', ')}` }, { status: 400 })
+    }
+    citiesToScrape = [match]
   }
 
   // Optional ?trades=plumbing,roofing override (default = top 3 by yield)
@@ -223,7 +226,10 @@ export async function GET(req: NextRequest) {
     : DEFAULT_TRADE_KEYWORDS
 
   // Per-city scrape target capped at 180 raw places (fits in single-call budget)
-  const perCityScrapeTarget = Math.min(180, Math.ceil(day.scrape_target / day.cities.length))
+  // Fixed per-metro scrape depth (no longer schedule-driven). 120 places ×
+  // 2 metros fits the 5-min Apify+enrich budget; the cron can run again to
+  // go deeper. Bump once more inboxes need more daily supply.
+  const perCityScrapeTarget = 120
 
   const inserted: string[] = []
   const errors: string[] = []
@@ -268,15 +274,12 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     ok: true,
-    target_date: targetDate,
     trades: tradeKeywords,
     cities_scraped: citiesToScrape,
     inserted_count: inserted.length,
     per_city: cityResults,
     errors,
-    next_url_for_remaining: !singleCity
-      ? null
-      : `/api/crons/refill-outreach-queue?date=${targetDate}&city=<next-city-prefix>`,
+    next_url_for_remaining: null,
     checked_at: new Date().toISOString(),
   })
 }
