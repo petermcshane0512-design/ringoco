@@ -443,15 +443,22 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
     if (pool.length === 0) pool = candidates // floor too aggressive — fall back
   }
 
+  // 2026-06-12 — EXCLUSIVITY LOCK per Peter (the $497 justification).
+  // A lead is CLAIMED the moment it drops to ANY customer — never handed
+  // to a competitor. This is what separates us from HomeAdvisor (1 lead
+  // sold to 5 shops) and what makes the price defensible. Dropping the
+  // per-user filter means the `already` set now contains every globally-
+  // claimed lead in the candidate pool, so `fresh` excludes anything
+  // another customer already owns. (Per-customer re-delivery is covered
+  // too — a lead this user already has is also in lead_drops.)
   const { data: already } = await supabase
     .from('lead_drops')
     .select('lead_id')
-    .eq('user_id', profile.user_id)
     .in('lead_id', pool.map((c) => c.id))
-  const alreadySet = new Set((already || []).map((r) => r.lead_id))
-  const fresh = pool.filter((c) => !alreadySet.has(c.id)).slice(0, remaining)
+  const claimedSet = new Set((already || []).map((r) => r.lead_id))
+  const fresh = pool.filter((c) => !claimedSet.has(c.id)).slice(0, remaining)
 
-  if (fresh.length === 0) return { assigned: 0, skipped_reason: 'all_already_received', replenish: replenishInfo }
+  if (fresh.length === 0) return { assigned: 0, skipped_reason: 'all_claimed_by_others', replenish: replenishInfo }
 
   // 2026-06-11 per Peter: "all ten leads should have a phone number, even
   // if the name's not listed." Skip-trace every phoneless lead AT DROP
