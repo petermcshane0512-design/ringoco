@@ -240,7 +240,11 @@ export async function GET(req: NextRequest) {
   // buckets actually convert — adjust scoring weights iteratively.
   const { data: leads, error } = await supabase
     .from('outreach_leads')
-    .select('id, email, business_name, owner_first_name, city, state, trade, young_owner_score, personalized_opener, sample_lead_snippet')
+    // 2026-06-12 — `personalized_opener` REMOVED: the column doesn't exist
+    // on outreach_leads, so this SELECT errored and auto-load loaded ZERO
+    // leads (the queue piled to 385 unsent). The template var falls back to
+    // empty. sample_lead_snippet stays (it exists).
+    .select('id, email, business_name, owner_first_name, city, state, trade, young_owner_score, sample_lead_snippet')
     .eq('status', 'queued')
     .not('email', 'is', null)
     // 2026-06-09 — opened up to all home-service trades, not just HVAC,
