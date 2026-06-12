@@ -233,14 +233,14 @@ function FreeLeadInner() {
                     }}>
                       <div>
                         <div style={{ fontSize: 9.5, fontWeight: 900, color: '#FF9D5A', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 3 }}>
-                          Your first {LEADS_PER_WEEK} leads drop
+                          Start your account
                         </div>
-                        <div style={{ fontSize: 'clamp(18px, 3vw, 24px)', fontWeight: 900, color: '#FFF8F0', lineHeight: 1 }}>
-                          ~30 min after you start
+                        <div style={{ fontSize: 'clamp(18px, 3vw, 24px)', fontWeight: 900, color: '#FFF8F0', lineHeight: 1.05 }}>
+                          Get {LEADS_PER_MONTH} leads like this a month
                         </div>
                       </div>
-                      <div style={{ fontSize: 11.5, fontWeight: 800, color: '#FFC58A' }}>
-                        {LEADS_PER_WEEK}/week · {LEADS_PER_MONTH}/month · $97 →
+                      <div style={{ fontSize: 11.5, fontWeight: 800, color: '#FFC58A', whiteSpace: 'nowrap' }}>
+                        {LEADS_PER_WEEK}/week · $97 to start →
                       </div>
                     </div>
                   </Link>
