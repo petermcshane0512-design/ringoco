@@ -233,10 +233,10 @@ export default function FounderPage() {
             I started BellAveGo because my buddy &mdash; a solo handyman &mdash; was getting <strong>one job a day</strong>. Twenty hours a week scrolling Nextdoor, posting in Facebook groups, paying $80 for shared HomeAdvisor leads. Great at the work. Broke finding it.
           </p>
           <p>
-            Then I found the unfair advantage. The city writes down <strong>exactly which homeowners are in trouble</strong> &mdash; building violations, code orders, administrative-hearings dockets with fines on the record. All public. A homeowner the city has <strong>ordered to fix their roof</strong> &mdash; or get fined &mdash; isn&rsquo;t a &ldquo;maybe.&rdquo; They <em>have</em> to hire someone. Most of them haven&rsquo;t yet.
+            So we built an AI that scans his whole service area every night &mdash; and hands him <strong>{LEADS_PER_WEEK} real homeowners a week</strong> ({LEADS_PER_MONTH}/month) who actually need the work, with a verified phone and a ready-to-send intro. Exclusive to him, never shared like HomeAdvisor.
           </p>
           <p>
-            So we built an AI that reads those records every night across your area and hands you <strong>{LEADS_PER_WEEK} of those homeowners a week</strong> ({LEADS_PER_MONTH}/month), exclusive to you, never shared. We don&rsquo;t just &ldquo;find leads&rdquo; &mdash; we find the ones who are <strong>legally required to get the work done</strong> and we put them first. Each comes with a verified phone, the exact violation, and what the city ordered. You call; they already have to say yes. The franchise shops pay five-figure budgets for worse. You pay $497.
+            Here&rsquo;s the part that makes it work: we <strong>prioritize the homeowners who genuinely have to get the job done</strong> &mdash; the ones the city has flagged to repair their property. They&rsquo;re not &ldquo;maybe interested.&rdquo; They&rsquo;re already looking for someone like you. So your calls land on people who want to hear from you, not strangers you&rsquo;re bugging. The franchise shops pay five-figure budgets for worse leads. You pay $497.
           </p>
           <p>
             Behind the scenes &mdash; <strong>four software engineers</strong>. Small on purpose. My buddy went from one job a day to fully booked inside a month. That&rsquo;s the whole reason this exists.

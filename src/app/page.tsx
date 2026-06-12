@@ -150,19 +150,18 @@ function HomeContent() {
               lineHeight: 1.04, margin: '0 0 14px',
               color: '#0B1F3A',
             }}>
-              Homeowners near you who are{' '}
+              Real homeowner leads for your shop,{' '}
               <span className="bavg-h1-shimmer" style={{
                 background: 'linear-gradient(110deg, #FF9D5A 0%, #E8742B 30%, #C84B26 50%, #E8742B 70%, #FF9D5A 100%)',
                 backgroundSize: '220% 100%',
                 WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-              }}>legally required to hire you</span>
-              {' '}— handed to you weekly.
+              }}>found by AI every week.</span>
             </h1>
             <p style={{ fontSize: 'clamp(15px, 1.4vw, 17px)', color: '#3D5A66', lineHeight: 1.55, margin: '0 0 14px', maxWidth: 580 }}>
-              Our AI reads city violation records, hearings dockets, and code orders every night across your area — and finds the homeowners the city is <strong style={{ color: '#0B1F3A' }}>forcing to fix their roof, masonry, or building</strong> or face fines. You get <strong style={{ color: '#0B1F3A' }}>{LEADS_PER_WEEK} a week</strong> — name, verified phone, the exact violation, and what the city ordered. You call; they already have to say yes.
+              Our AI scans your service area every night and hands you <strong style={{ color: '#0B1F3A' }}>{LEADS_PER_WEEK} real homeowners a week</strong> who need your work — name, address, verified phone, and a ready-to-send intro. And we prioritize the ones who <strong style={{ color: '#0B1F3A' }}>actually have to get the work done</strong> — homeowners the city has flagged to repair their property — so the people you call are already looking for someone like you.
             </p>
             <p style={{ fontSize: 'clamp(14px, 1.3vw, 16px)', color: '#0B1F3A', lineHeight: 1.5, margin: '0 0 18px', maxWidth: 580, fontWeight: 700 }}>
-              Not &ldquo;maybe interested&rdquo; leads. Homeowners under a deadline. One shop per area — when yours is taken, it&rsquo;s taken.
+              Exclusive to you, never shared. One shop per area — when yours is taken, it&rsquo;s taken.
             </p>
 
             {/* Guarantee block — Hormozi 1-Job framing. Replaces the prior
