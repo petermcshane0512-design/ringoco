@@ -248,7 +248,7 @@ export async function POST(req: NextRequest) {
 
     // Read creator_code from checkout session metadata (set by /api/stripe/checkout
     // when prospect signed up via /ref/[code] flow). Two accepted formats:
-    //   PERSONALIZED  HVACMIKE, PLUMBERJON (current $200-off promotion_code path)
+    //   PERSONALIZED  HVACMIKE, PLUMBERJON (current $400-off promotion_code path)
     //   LEGACY        BAVG-XXXXXX          (old DMs still in the wild, attribution-only)
     // Stored both on profiles.creator_referral_code (legacy column) and
     // referred_by_promo_code (new 2026-06-06 schema) so old code paths keep working.

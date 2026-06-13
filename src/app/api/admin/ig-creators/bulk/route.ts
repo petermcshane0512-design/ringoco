@@ -31,7 +31,7 @@ const supabase = createClient(
  *
  * Each handle gets:
  *   - row in ig_creator_outreach (status='active_creator')
- *   - PUBLIC promo code  ($200 off first month, multi-use)
+ *   - PUBLIC promo code  ($400 off first month, multi-use)
  *   - PERSONAL promo code (3 months free, single-use)
  *   - paste-ready DM block
  *

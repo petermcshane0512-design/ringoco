@@ -173,7 +173,7 @@ export async function POST(req: NextRequest) {
   if (!created) return NextResponse.json({ error: 'no row produced' }, { status: 500 })
 
   // Auto-mint BOTH promo codes for this creator:
-  //   PUBLIC   ($200 off first month for fans, multi-use)        â†’ promo_code
+  //   PUBLIC   ($400 off first month for fans, multi-use)        â†’ promo_code
   //   PERSONAL (3 months free Pro for the creator, single-use)   â†’ personal_promo_code
   //
   // Each stage wrapped â€” if Stripe blips on one, the creator still

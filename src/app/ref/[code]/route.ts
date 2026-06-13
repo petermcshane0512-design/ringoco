@@ -7,7 +7,7 @@ export const runtime = 'nodejs'
  *
  * Creator-tagged landing entry. Sets the `bavg_creator_code` attribution
  * cookie (180-day) + redirects to /pricing?creator=<code>&discount=200.
- * Stripe checkout reads the cookie, applies the personalized $200-off
+ * Stripe checkout reads the cookie, applies the personalized $400-off
  * promotion_code, and stamps `creator_code` on the subscription metadata.
  *
  * Accepted formats (2026-06-06 pivot):

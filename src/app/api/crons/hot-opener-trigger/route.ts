@@ -13,7 +13,7 @@ export const maxDuration = 120
  * Hourly Mon-Sat 9-5 CST. Catches "hand-raisers" — prospects who opened
  * Step 0 ≥3 times OR clicked the link — and auto-fires a 1-to-1
  * follow-up from peter@bellavego.com referencing the open behavior +
- * $200-off code + direct call/text CTA.
+ * $400-off code + direct call/text CTA.
  *
  * Replaces the manual billyGO-style chase. Hormozi $100M Leads
  * ascension ladder pattern: detect intent signal, accelerate offer.

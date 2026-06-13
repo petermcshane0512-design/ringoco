@@ -10,7 +10,7 @@ type AnySupabase = any
  * Creator-referral promo code helpers.
  *
  * One shared Stripe coupon (`BAVG_200_OFF_FIRST_MONTH`) provides the actual
- * $200-off-first-month discount. Each creator gets their own Stripe
+ * $400-off-first-month discount. Each creator gets their own Stripe
  * promotion_code (vanity, derived from their IG handle) pointing at that
  * coupon — so attribution is automatic at checkout time.
  *
@@ -21,8 +21,8 @@ type AnySupabase = any
  *     object → looks up `ig_creator_outreach.promo_code` → knows who to pay
  */
 
-export const COUPON_ID = 'BAVG_200_OFF_FIRST_MONTH'
-export const COUPON_AMOUNT_OFF_CENTS = 20000   // $200.00
+export const COUPON_ID = 'BAVG_400_OFF_FIRST_MONTH'
+export const COUPON_AMOUNT_OFF_CENTS = 40000   // $400.00 ($97 first month on $497)
 export const COUPON_DURATION: Stripe.CouponCreateParams.Duration = 'once'
 
 // Personal creator coupon: 100% off × 3 months. Single Stripe coupon,
@@ -84,7 +84,7 @@ export function personalCodeFromHandle(handle: string): string {
 }
 
 /**
- * Creates the shared $200-off-first-month coupon in Stripe if it doesn't
+ * Creates the shared $400-off-first-month coupon in Stripe if it doesn't
  * already exist. Idempotent. Returns the coupon object either way.
  */
 export async function ensureSharedCoupon(stripe: Stripe): Promise<Stripe.Coupon> {
@@ -95,7 +95,7 @@ export async function ensureSharedCoupon(stripe: Stripe): Promise<Stripe.Coupon>
     if (err.code !== 'resource_missing') throw e
     return await stripe.coupons.create({
       id: COUPON_ID,
-      name: '$200 off first month — creator referral',
+      name: '$400 off first month — creator referral',
       amount_off: COUPON_AMOUNT_OFF_CENTS,
       currency: 'usd',
       duration: COUPON_DURATION,

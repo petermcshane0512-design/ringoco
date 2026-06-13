@@ -20,11 +20,8 @@ export const runtime = 'nodejs'
  * event, increments the customer's monthly lead quota, and fires
  * /api/agents/find-real-leads to immediately source the extra leads.
  *
- * Packs (Hormozi-style stacked deal â€” bigger pack = better unit price):
- *   - SINGLE: 1 lead @ $15  ($15/lead)
- *   - PACK_5: 5 leads @ $75  ($15/lead)
- *   - PACK_10: 10 leads @ $140  ($14/lead â€” small bulk discount)
- *   - PACK_25: 25 leads @ $300  ($12/lead â€” bigger bulk discount)
+ * Pricing: $25/lead flat (custom qty, min 1 max 200). Old preset packs
+ * (SINGLE/PACK_5/PACK_10/PACK_25) dropped 2026-06-09 — back-compat only.
  *
  * Auth: signed-in Clerk user must have active subscription. We don't
  * sell extras to non-customers â€” keeps the trip-wire intact.
@@ -46,7 +43,7 @@ const APP_URL =
 // $18.79 margin per add-on). Min 1, max 200.
 // Old preset packs (SINGLE/PACK_5/PACK_10/PACK_25 w/ bulk discounts) dropped
 // per Peter request â€” dashboard now uses a single qty input that multiplies
-// by $15.
+// by $25.
 const PRICE_PER_LEAD_CENTS = 2500
 const MAX_QTY_PER_PURCHASE = 200
 

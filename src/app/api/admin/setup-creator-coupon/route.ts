@@ -6,7 +6,7 @@ import { ensureSharedCoupon, ensurePersonalCoupon, COUPON_ID, PERSONAL_COUPON_ID
 
 /**
  * Idempotent setup of the TWO creator coupons:
- *   PUBLIC   "$200 off first month"  â†’ fans of creator get $97 first month
+ *   PUBLIC   "$400 off first month"  â†’ fans of creator get $97 first month
  *   PERSONAL "3 months free"         â†’ creator's own subscription
  *
  * POST creates whichever is missing; GET reports current state.

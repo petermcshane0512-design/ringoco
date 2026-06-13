@@ -520,7 +520,7 @@ Use these when a caller asks "how is this different from [competitor]" or "won't
 - **30-day money-back guarantee** — if it doesn't pay for itself in 30 days, click cancel in your dashboard and we refund every penny
 
 ### Annual plan
-Save ~17% if you pay annually — $2,970/yr (12 months for the price of 10).
+Save ~17% if you pay annually — $4,997/yr (save ~$968).
 
 ## How signup + onboarding actually works (memorize this — you'll get asked)
 

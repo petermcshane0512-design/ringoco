@@ -35,7 +35,7 @@ function normalizeCreatorCode(raw: string | undefined | null): string | null {
 /**
  * Resolve a creator code to a Stripe promotion_code so checkout can apply
  * the right discount. Two code lookups in order:
- *   1. PUBLIC  ($200 off first month, multi-use)  â€” code stored in promo_code
+ *   1. PUBLIC  ($400 off first month, multi-use)  â€” code stored in promo_code
  *   2. PERSONAL (3 months free, single-use)       â€” code stored in personal_promo_code
  *   3. LEGACY BAVG-XXXXXX                          â€” attribution-only, no Stripe discount
  *
@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
   ]
 
   // 2026-06-06 PIVOT â€” no public trial, no creator trial. Single 30-day
-  // money-back guarantee for everyone. Creator code attaches a $200-off
+  // money-back guarantee for everyone. Creator code attaches a $400-off
   // first-month promotion_code (Hormozi sub-$100 trip-wire â€” fan pays
   // $97 first month, $497 from month 2).
   //
