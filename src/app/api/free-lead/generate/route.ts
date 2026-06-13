@@ -504,6 +504,19 @@ async function bumpVisitAndMaybeAlertHot(
     const trade = (rowBefore.trade as string | null) || ''
     const url = `${SITE_URL}/free-lead?b=${encodeURIComponent(bizId)}`
 
+    // Pre-written 1-line opener Peter copy-pastes onto the call. Saves
+    // 30 sec of mental load + sounds prepared instead of generic. The
+    // opener references the SPECIFIC reason they're hot (multi-visit on
+    // their free-lead landing) so the call feels like personal attention
+    // not a robo-follow-up. Hormozi: specificity = trust.
+    const nameForOpener = ownerFirstName || 'there'
+    const shopForOpener = businessName || 'your shop'
+    const opener =
+      `"Hey ${nameForOpener}, this is Peter from BellAveGo. ` +
+      `I saw you checking out the free lead I sent for ${shopForOpener} — ` +
+      `wanted to grab 60 seconds to make sure it's actually a fit for you. ` +
+      `What's the one number you'd add this month if these leads landed every Monday?"`
+
     const founderPhone = process.env.FOUNDER_ALERT_PHONE ?? '+17737109565'
     const sms =
       `🔥 HOT LEAD — ${nextCount}× visit on free-lead landing\n\n` +
@@ -511,6 +524,7 @@ async function bumpVisitAndMaybeAlertHot(
       `${trade.toUpperCase()} · ${city}${state ? `, ${state}` : ''} ${zip}\n` +
       `Email: ${email || '—'}\n` +
       `Their landing: ${url}\n\n` +
+      `OPENER:\n${opener}\n\n` +
       `Call them NOW. Speed-to-lead = close.`
 
     await twilioClient.messages.create({

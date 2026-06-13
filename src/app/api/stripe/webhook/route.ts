@@ -425,32 +425,44 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    // â”€â”€ ðŸŽ‰ Peter's ALERT: SMS the founder on every new subscription â”€â”€
-    // Per Peter 5/28: he wants real-time notifications when a small dog
-    // signs up so he can text them personally within 60 sec. This converts
-    // way better than waiting for the automated trial nurture to do it.
+    // ── Founder paid-alert SMS — per Peter, fired the second a card swipes ──
+    // Hormozi speed-to-lead: customer who gets a personal text from the
+    // founder within 5min of signup converts to month-2 retention ~2x
+    // versus customer who gets only the automated welcome. THIS is the
+    // single highest-leverage action on the path to 100 by Sept 1.
+    //
+    // 2026-06-13: rewritten for the leads-only pivot. Old copy showed
+    // pre-pivot tier names (Starter $147 / Pro $297 / Elite $597) which
+    // are mothballed; new copy shows the actual paid amount, the city +
+    // trade + zip Peter needs to open the call, and the promo code so he
+    // knows the entry price was $97 not $497.
     try {
       const { data: prof } = await supabase
         .from('profiles')
-        .select('business_name, owner_first_name, owner_phone, email')
+        .select('business_name, owner_first_name, owner_phone, email, service_zips, plan_tier')
         .eq('user_id', userId)
         .maybeSingle()
 
       const founderPhone = process.env.FOUNDER_ALERT_PHONE ?? '+17737109565'
-      const tierName = planTier === 'concierge' ? 'Elite $597'
-        : planTier === 'officemgr' ? 'Pro $297'
-        : 'Starter $147'
       const businessName = prof?.business_name ?? 'unknown shop'
       const ownerName = prof?.owner_first_name ?? ''
       const ownerPhoneClean = prof?.owner_phone?.replace(/[^\d+]/g, '') ?? ''
+      const territoryZip = session.metadata?.territory_zip ?? (Array.isArray(prof?.service_zips) ? prof?.service_zips?.[0] : '') ?? ''
+      const territoryTrade = (session.metadata?.territory_trade ?? '').toString().toUpperCase()
+      const promoCode = (session.metadata?.promo_code ?? session.metadata?.creator_code ?? '').toString().toUpperCase()
+      const amountCents = (session.amount_total ?? 0)
+      const amountUsd = amountCents > 0 ? `$${(amountCents / 100).toFixed(0)}` : '—'
+      const bizIdAttribution = (session.metadata?.biz_id ?? '').toString()
 
       const sms =
-        `ðŸŽ‰ NEW BELLAVEGO SIGNUP\n\n` +
+        `🎉 NEW PAID CUSTOMER — ${amountUsd}\n\n` +
         `${businessName}${ownerName ? ` (${ownerName})` : ''}\n` +
-        `Tier: ${tierName}\n` +
-        `Email: ${prof?.email ?? 'â€”'}\n` +
-        `Phone: ${ownerPhoneClean || 'â€”'}\n\n` +
-        `Trial just started. Text them in next 5 min â€” closes 2x faster.`
+        `${territoryTrade || '—'} · ${territoryZip || '—'}\n` +
+        `Email: ${prof?.email ?? '—'}\n` +
+        `Phone: ${ownerPhoneClean || '—'}\n` +
+        (promoCode ? `Promo: ${promoCode}\n` : '') +
+        (bizIdAttribution ? `Source: cold email ${bizIdAttribution}\n` : '') +
+        `\nText them in next 5 min — 2x retention to month 2.`
 
       await twilioClient.messages.create({
         body: sms,
