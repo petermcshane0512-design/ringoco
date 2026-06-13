@@ -284,22 +284,39 @@ async function runOne(src: EnforcementSource, dry: boolean): Promise<{
         trade_match: n.trade_match,
         source_details: n.source_details,
       }))
-      // 2026-06-13 — switched from upsert(onConflict) to plain insert. The
-      // partial unique index leads_enforcement_unique (source, street_address,
-      // zip) WHERE source='enforcement' must exist for onConflict to work.
-      // If we hit dupe rows, log + continue — the partial index Peter runs
-      // separately enforces the dedup constraint. Inserting the same row
-      // twice = wasted storage but never a customer-visible bug.
-      const { error, count } = await supabase
-        .from('leads')
-        .insert(rows, { count: 'exact' })
-      if (error) {
-        // Treat unique-violation as benign — same row from yesterday.
-        if (!error.message.toLowerCase().includes('duplicate')) {
-          throw new Error(`leads insert: ${error.message}`)
+      // 2026-06-13 — insert + select so we know what actually landed.
+      // Prior version reported `count ?? rows.length` which lied when
+      // Supabase silently rolled back the batch (RLS, trigger, partial
+      // constraint violation). The select forces Postgres to return the
+      // IDs of rows actually persisted. inserted = data.length is now
+      // ground truth.
+      //
+      // We chunk to 500 because single batch of 1000+ JSONB-heavy rows
+      // sometimes hits Supabase's body size limit + we want partial
+      // success on a bad row (one bad row in a batch = whole batch
+      // rolled back).
+      const CHUNK = 500
+      for (let i = 0; i < rows.length; i += CHUNK) {
+        const slice = rows.slice(i, i + CHUNK)
+        const { data, error } = await supabase
+          .from('leads')
+          .insert(slice)
+          .select('id')
+        if (error) {
+          // Common: unique-violation on a re-run. Try row-by-row to
+          // salvage the rest of the batch instead of losing 500.
+          if (error.message.toLowerCase().includes('duplicate')) {
+            for (const single of slice) {
+              const { data: one } = await supabase.from('leads').insert(single).select('id')
+              if (one && one.length > 0) inserted += 1
+            }
+          } else {
+            throw new Error(`leads insert (chunk ${i}): ${error.message}`)
+          }
+        } else {
+          inserted += data?.length ?? 0
         }
       }
-      inserted = count ?? rows.length
     }
 
     await supabase.from('enforcement_sources').update({
