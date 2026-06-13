@@ -79,6 +79,46 @@ async function checkYesterdaySent(): Promise<Failure | null> {
   return null
 }
 
+/**
+ * 2026-06-13 — FUNCTIONAL end-to-end check. The whole reason this exists:
+ * on 2026-06-12 the free-lead funnel was broken six different ways (UUID vs
+ * biz_id links, "area opening soon" dead-ends, a dead loader column) and
+ * the campaign-status/queue checks above caught NONE of it. This one
+ * actually exercises the conversion surface: take a real pushed prospect's
+ * biz_id, hit the live generate endpoint, and confirm it returns a REAL
+ * lead with an address. If a contractor would hit a broken page, Peter
+ * gets a text. x-admin-secret means the visit isn't counted (free,
+ * side-effect-free). Pool-served = $0.
+ */
+async function checkFreeLeadGenerates(): Promise<Failure | null> {
+  const secret = process.env.ADMIN_API_SECRET
+  if (!secret) return null
+  const { data } = await supabase
+    .from('prospect_free_leads')
+    .select('biz_id')
+    .order('created_at', { ascending: false })
+    .limit(1)
+  const bizId = (data?.[0] as { biz_id?: string } | undefined)?.biz_id
+  if (!bizId) return null
+  const base = process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost')
+    ? process.env.NEXT_PUBLIC_APP_URL : 'https://www.bellavego.com'
+  try {
+    const r = await fetch(`${base}/api/free-lead/generate?b=${bizId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret, 'user-agent': 'BellAveGo-HealthCheck/1.0' },
+      body: JSON.stringify({ b: bizId }),
+    })
+    const j = await r.json().catch(() => ({}))
+    const street = j?.lead?.lead_street || j?.lead?.street
+    if (!j.ok || !street) {
+      return { check: 'free_lead_funnel', detail: `generate returned ${j.error || `ok=${j.ok}`} (no real lead) for ${bizId}`, fix: 'a contractor clicking their email hits a broken page — check /api/free-lead/generate' }
+    }
+    return null
+  } catch (e) {
+    return { check: 'free_lead_funnel', detail: `generate threw: ${(e as Error).message}`, fix: 'free-lead endpoint down' }
+  }
+}
+
 async function smsPeter(failures: Failure[]) {
   const client = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
   const lines = failures.map((f) => `❌ ${f.check}: ${f.detail}\n   fix: ${f.fix}`).join('\n')
@@ -99,7 +139,7 @@ export async function GET(req: NextRequest) {
   }
 
   const failures: Failure[] = []
-  for (const check of [checkCampaign(), checkQueue(), checkYesterdaySent()]) {
+  for (const check of [checkCampaign(), checkQueue(), checkYesterdaySent(), checkFreeLeadGenerates()]) {
     const f = await check.catch((e) => ({ check: 'exception', detail: (e as Error).message, fix: 'inspect logs' }))
     if (f) failures.push(f)
   }
