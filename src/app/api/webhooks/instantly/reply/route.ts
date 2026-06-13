@@ -119,17 +119,45 @@ export async function POST(req: NextRequest) {
           // INSTANTLY_API_KEY required. If not set, skip silently.
           const instantlyKey = process.env.INSTANTLY_API_KEY
           if (instantlyKey) {
-            await fetch('https://api.instantly.ai/api/v2/email/reply', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${instantlyKey}` },
-              body: JSON.stringify({
-                lead_email: email,
-                reply_subject: `Re: your free lead`,
-                reply_body: autoBody,
-                campaign_id: body.campaign_id,
-              }),
-            }).catch((e) => console.warn('[instantly-reply] auto-reply API error:', (e as Error).message))
-            console.log(`[free-lead-autoreply] sent free-lead link to ${email} (biz_id=${bizId})`)
+            // 2026-06-13 — proper Instantly v2 schema:
+            //   POST /emails/reply requires reply_to_uuid (the INBOUND
+            //   email's UUID) + body/html/subject. Our webhook doesn't
+            //   receive the UUID directly, so we look it up via
+            //   /emails?campaign_id&lead= first.
+            //
+            // Prior version posted {lead_email, reply_subject, reply_body,
+            // campaign_id} to /email/reply (singular path) — wrong route
+            // + wrong fields. Silently 4xx'd every positive-intent reply
+            // for weeks. SMS to Peter still fired; the cron at /api/admin/
+            // auto-reply (runs every 15min w/ correct schema) was the
+            // backstop. This fast-path closes the gap inside 30 seconds
+            // of the prospect's reply.
+            try {
+              const lookup = await fetch(
+                `https://api.instantly.ai/api/v2/emails?campaign_id=${body.campaign_id}&lead=${encodeURIComponent(email)}&limit=5`,
+                { headers: { Authorization: `Bearer ${instantlyKey}` } },
+              )
+              const emailsList = (await lookup.json().catch(() => ({}))) as { items?: Array<{ id?: string; uuid?: string; direction?: string; type?: string }> }
+              const inbound = (emailsList.items || []).find((e) => (e.direction || '').toLowerCase() === 'inbound' || (e.type || '').toLowerCase() === 'reply')
+              const replyToUuid = inbound?.uuid || inbound?.id
+              if (replyToUuid) {
+                await fetch('https://api.instantly.ai/api/v2/emails/reply', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${instantlyKey}` },
+                  body: JSON.stringify({
+                    reply_to_uuid: replyToUuid,
+                    subject: `Re: your free lead`,
+                    body: autoBody,
+                    html: autoBody.replace(/\n/g, '<br>'),
+                  }),
+                })
+                console.log(`[free-lead-autoreply] sent free-lead link to ${email} (biz_id=${bizId}, uuid=${replyToUuid})`)
+              } else {
+                console.warn(`[free-lead-autoreply] no inbound email UUID found for ${email} — cron will pick up`)
+              }
+            } catch (e) {
+              console.warn('[instantly-reply] auto-reply API error:', (e as Error).message)
+            }
           } else {
             console.log(`[free-lead-autoreply] would send to ${email} (biz_id=${bizId}) — INSTANTLY_API_KEY not set`)
           }
