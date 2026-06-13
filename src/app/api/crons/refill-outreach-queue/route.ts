@@ -198,23 +198,54 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url)
 
   // 2026-06-12 per Peter ("ONLY ever send emails with insider info on houses
-  // nearby that NEED the service"). The promise in every email is "the city
-  // just CITED a homeowner near you." That's only TRUE in metros where we
-  // actually run an enforcement scraper. The old 211-day Sun Belt rotation
-  // (Tampa/Vegas/Dallas/…) emailed contractors in cities where we have ZERO
-  // city-cited leads — an empty promise. Refill now targets ONLY the
-  // enforcement metros. EXPAND this list the moment a new
-  // ingest-enforcement-<city> scraper ships and has real volume.
+  // nearby that NEED the service"). The promise is "city-flagged homeowners
+  // near you." Only true in metros where enforcement scrapers run.
+  //
+  // 2026-06-13 — LOOP CLOSED. Replaced the static metro list with the
+  // daily_zip_targets table written by daily-zip-intelligence (5am UTC).
+  // Every morning the algorithm ranks the top-50 zips by violation density
+  // + trade diversity − customer saturation. Apify now scrapes contractors
+  // in THOSE EXACT zips so cold email targets contractors who live in the
+  // same zip where violations cluster = tightest pitch-supply match
+  // possible. If daily_zip_targets has no rows for today (algorithm not
+  // run yet), falls back to the static ENFORCEMENT_METROS list.
   const ENFORCEMENT_METROS = ['Chicago, IL', 'New York, NY', 'Philadelphia, PA']
 
-  // ?city= still works for ad-hoc runs, but only if it's an enforcement
-  // metro — we never scrape contractors we can't back with real data.
+  const today = new Date().toISOString().slice(0, 10)
+  const { data: zipTargets } = await supabase
+    .from('daily_zip_targets')
+    .select('zip, city, state')
+    .eq('run_date', today)
+    .order('rank', { ascending: true })
+    .limit(50)
+
+  // Build the list of search locations. Prefer "city, state" combined with
+  // their top zips so Apify Google Maps narrows in. If no targets today,
+  // fall back to the bare metro list.
+  let citiesToScrape: string[] = []
+  let usedSource: 'daily_zip_targets' | 'static_fallback' = 'static_fallback'
+  if (zipTargets && zipTargets.length > 0) {
+    usedSource = 'daily_zip_targets'
+    const byCity = new Map<string, string[]>()
+    for (const t of zipTargets as Array<{ zip: string; city: string | null; state: string | null }>) {
+      const key = t.city && t.state ? `${t.city}, ${t.state}` : null
+      if (!key) continue
+      if (!byCity.has(key)) byCity.set(key, [])
+      byCity.get(key)!.push(t.zip)
+    }
+    citiesToScrape = [...byCity.keys()]
+  }
+  if (citiesToScrape.length === 0) {
+    citiesToScrape = ENFORCEMENT_METROS
+  }
+
+  // ?city= still works for ad-hoc runs but only if it's a metro we have
+  // data for today or in the static fallback.
   const singleCity = url.searchParams.get('city')
-  let citiesToScrape: string[] = ENFORCEMENT_METROS
   if (singleCity) {
-    const match = ENFORCEMENT_METROS.find((c) => c.toLowerCase().startsWith(singleCity.toLowerCase().slice(0, 5)))
+    const match = citiesToScrape.find((c) => c.toLowerCase().startsWith(singleCity.toLowerCase().slice(0, 5)))
     if (!match) {
-      return NextResponse.json({ ok: false, error: `${singleCity} has no enforcement data — refill only targets ${ENFORCEMENT_METROS.join(', ')}` }, { status: 400 })
+      return NextResponse.json({ ok: false, error: `${singleCity} has no enforcement data — refill targets ${citiesToScrape.join(', ')}` }, { status: 400 })
     }
     citiesToScrape = [match]
   }
@@ -274,6 +305,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     ok: true,
+    source: usedSource,
     trades: tradeKeywords,
     cities_scraped: citiesToScrape,
     inserted_count: inserted.length,

@@ -199,25 +199,42 @@ export async function GET(req: NextRequest) {
   }
 
   // 6) Wake Peter with a one-liner
+  let smsResult: { sent: boolean; error?: string; from?: string; to?: string } = { sent: false }
   if (!dry && !noSms && top.length > 0) {
-    try {
-      const t1 = top[0]
-      const t2 = top[1]
-      const t3 = top[2]
-      const sms =
-        `🧠 Today's prospecting orders — ${top.length} zips scored\n\n` +
-        `1. ${t1.zip}${t1.city ? ` ${t1.city}` : ''} · ${t1.last_7d}/wk · trades: ${t1.trades.slice(0, 3).join('/') || '—'}\n` +
-        (t2 ? `2. ${t2.zip}${t2.city ? ` ${t2.city}` : ''} · ${t2.last_7d}/wk · ${t2.trades.slice(0, 3).join('/') || '—'}\n` : '') +
-        (t3 ? `3. ${t3.zip}${t3.city ? ` ${t3.city}` : ''} · ${t3.last_7d}/wk · ${t3.trades.slice(0, 3).join('/') || '—'}\n` : '') +
-        `\nApify pulls contractors from these zips at 6am. Cold email fires by noon.\nFull list: https://www.bellavego.com/admin/zip-targets`
+    const t1 = top[0]
+    const t2 = top[1]
+    const t3 = top[2]
+    // 2026-06-13 — stripped emoji + en-dashes after Peter reported no SMS
+    // arrived. Twilio occasionally drops messages with high-codepoint
+    // characters silently on certain carriers. ASCII-only body is bullet-
+    // proof. Errors now surface in the response JSON so we never debug
+    // blind again.
+    const sms =
+      `BellAveGo prospecting orders - ${top.length} zips scored\n\n` +
+      `1. ${t1.zip}${t1.city ? ` ${t1.city}` : ''}: ${t1.last_7d}/wk - ${t1.trades.slice(0, 3).join('/') || '-'}\n` +
+      (t2 ? `2. ${t2.zip}${t2.city ? ` ${t2.city}` : ''}: ${t2.last_7d}/wk - ${t2.trades.slice(0, 3).join('/') || '-'}\n` : '') +
+      (t3 ? `3. ${t3.zip}${t3.city ? ` ${t3.city}` : ''}: ${t3.last_7d}/wk - ${t3.trades.slice(0, 3).join('/') || '-'}\n` : '') +
+      `\nFull list: bellavego.com/admin/zip-targets`
 
-      await twilioClient.messages.create({
-        body: sms,
-        from: process.env.TWILIO_PHONE_NUMBER!,
-        to: process.env.FOUNDER_ALERT_PHONE ?? '+17737109565',
-      })
-    } catch (e) {
-      console.warn('[zip-intel] SMS failed (non-blocking):', (e as Error).message)
+    const fromNumber = process.env.TWILIO_PHONE_NUMBER || ''
+    const toNumber = process.env.FOUNDER_ALERT_PHONE ?? '+17737109565'
+    smsResult.from = fromNumber ? `${fromNumber.slice(0, 6)}...` : 'UNSET'
+    smsResult.to = toNumber
+
+    if (!fromNumber) {
+      smsResult.error = 'TWILIO_PHONE_NUMBER env var not set'
+    } else {
+      try {
+        const m = await twilioClient.messages.create({
+          body: sms,
+          from: fromNumber,
+          to: toNumber,
+        })
+        smsResult.sent = true
+        ;(smsResult as { sid?: string }).sid = m.sid
+      } catch (e) {
+        smsResult.error = (e as Error).message.slice(0, 300)
+      }
     }
   }
 
@@ -226,6 +243,7 @@ export async function GET(req: NextRequest) {
     dry,
     scored_count: scored.length,
     persisted_count: dry ? 0 : top.length,
+    sms: smsResult,
     top_10: top.slice(0, 10).map((s) => ({
       zip: s.zip,
       city: s.city,
@@ -238,3 +256,4 @@ export async function GET(req: NextRequest) {
     })),
   })
 }
+
