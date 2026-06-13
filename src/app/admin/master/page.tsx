@@ -51,6 +51,8 @@ type Master = {
   outreach: {
     pushed_total: number
     pushed_today: number
+    sent_today: number | null
+    opened_today: number | null
     emails_sent: number
     opened_total: number
     open_rate: number
@@ -134,7 +136,7 @@ export default function MasterPage() {
 
   useEffect(() => {
     load()
-    const id = setInterval(load, 60_000)
+    const id = setInterval(load, 20_000)   // live-ish; Peter wants it constantly updating
     return () => clearInterval(id)
   }, [load])
 
@@ -197,7 +199,7 @@ export default function MasterPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
         <h1 style={{ margin: 0, fontSize: 19, fontWeight: 900, color: INK, letterSpacing: '-0.02em' }}>Nucleus</h1>
         <span style={{ fontSize: 11, color: MUTED, fontWeight: 600 }}>
-          refreshed {new Date(data.asOf).toLocaleTimeString()} · auto 60s ·{' '}
+          refreshed {new Date(data.asOf).toLocaleTimeString()} · auto 20s ·{' '}
           <button onClick={load} style={{ border: 'none', background: 'transparent', color: ORANGE, fontWeight: 700, cursor: 'pointer', fontSize: 11, padding: 0 }}>refresh</button>
         </span>
       </div>
@@ -315,8 +317,9 @@ export default function MasterPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8, marginBottom: 12 }}>
         <Stat label="Paying (real)" value={String(rev.paying_customers)} big />
         <Stat label="MRR (net)" value={`$${rev.mrr.toLocaleString()}`} big />
-        <Stat label="Sent today (pushed)" value={String(o.pushed_today)} />
-        <Stat label="Emails sent" value={o.emails_sent.toLocaleString()} />
+        <Stat label="Emails sent today" value={o.sent_today != null ? String(o.sent_today) : '—'} big />
+        <Stat label="Opened today" value={o.opened_today != null ? String(o.opened_today) : '—'} />
+        <Stat label="Emails sent (all-time)" value={o.emails_sent.toLocaleString()} />
         <Stat label="Open rate" value={`${(o.open_rate * 100).toFixed(1)}%`} />
         <Stat label="Replies" value={String(o.replies)} />
         <Stat label="Site visits" value={String(o.report_visits)} />

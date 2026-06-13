@@ -76,13 +76,27 @@ function localClock(tz: string, now: Date): { time: string; in_window: boolean }
 type EngagedLead = { email: string; opens: number; clicks: number; replies: number }
 type CampaignRow = { name: string; status: string | number | null; sent: number; opens: number; replies: number; clicks: number; bounced: number }
 
-async function fetchInstantly(): Promise<{ campaigns: CampaignRow[]; engaged: EngagedLead[]; error: string | null }> {
+async function fetchInstantly(): Promise<{ campaigns: CampaignRow[]; engaged: EngagedLead[]; sentToday: number | null; openedToday: number | null; error: string | null }> {
   const KEY = process.env.INSTANTLY_API_KEY
-  if (!KEY) return { campaigns: [], engaged: [], error: 'INSTANTLY_API_KEY not set' }
+  if (!KEY) return { campaigns: [], engaged: [], sentToday: null, openedToday: null, error: 'INSTANTLY_API_KEY not set' }
   const headers = { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' }
+  // Today's ACTUAL emails sent (UTC) — the dashboard used to show "pushed"
+  // (contractors loaded), which read as a far lower number than real sends.
+  let sentToday: number | null = null
+  let openedToday: number | null = null
+  try {
+    const today = new Date().toISOString().slice(0, 10)
+    const dr = await fetch(`${INSTANTLY_BASE}/campaigns/analytics/daily?start_date=${today}&end_date=${today}`, { headers })
+    if (dr.ok) {
+      const dj = await dr.json()
+      const drows = (Array.isArray(dj) ? dj : dj.data ?? dj.days ?? []) as Array<Record<string, unknown>>
+      sentToday = drows.reduce((s, r) => s + Number(r.sent ?? r.emails_sent_count ?? r.sent_count ?? 0), 0)
+      openedToday = drows.reduce((s, r) => s + Number(r.opened ?? r.open_count ?? 0), 0)
+    }
+  } catch { /* non-fatal */ }
   try {
     const ar = await fetch(`${INSTANTLY_BASE}/campaigns/analytics`, { headers })
-    if (!ar.ok) return { campaigns: [], engaged: [], error: `instantly analytics HTTP ${ar.status}` }
+    if (!ar.ok) return { campaigns: [], engaged: [], sentToday, openedToday, error: `instantly analytics HTTP ${ar.status}` }
     const aj = await ar.json()
     const rows = (Array.isArray(aj) ? aj : aj.campaigns ?? []) as Array<Record<string, unknown>>
     const campaigns: CampaignRow[] = rows.map((c) => ({
@@ -116,9 +130,9 @@ async function fetchInstantly(): Promise<{ campaigns: CampaignRow[]; engaged: En
       cursor = j.next_starting_after as string | undefined
       if (!cursor) break
     }
-    return { campaigns, engaged, error: null }
+    return { campaigns, engaged, sentToday, openedToday, error: null }
   } catch (e) {
-    return { campaigns: [], engaged: [], error: (e as Error).message }
+    return { campaigns: [], engaged: [], sentToday, openedToday, error: (e as Error).message }
   }
 }
 
@@ -373,6 +387,8 @@ export async function GET() {
     outreach: {
       pushed_total: pushedTotal,
       pushed_today: pushedToday,
+      sent_today: instantly.sentToday,
+      opened_today: instantly.openedToday,
       emails_sent: sentTotal,
       opened_total: openTotal,
       open_rate: sentTotal > 0 ? openTotal / sentTotal : 0,
