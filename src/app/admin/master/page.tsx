@@ -35,12 +35,40 @@ type Master = {
   outreach: { sent_today: number | null; opened_today: number | null }
 }
 
+type Connectors = {
+  asOf: string
+  arr: number
+  clients: Array<{ email: string | null; name: string | null; monthly: number; status: string; since: string | null }>
+  stripe_error: string | null
+  connectors: {
+    apify: { used: number | null; cap: number | null; error?: string }
+    batchdata: { spent_today: number; spent_30d: number; daily_cap: number; error?: string }
+    instantly: { sent_today: number | null; daily_limit: number | null; status: number | string | null; error?: string }
+    supabase: { green: boolean }
+    vercel: { green: boolean }
+  }
+}
+
 const TAN = '#F2EAD9'
 const RED = '#dc2626'
 const AMBER = '#d97706'
 const INK = '#1f2937'
 const MUTED = '#6b7280'
 const ORANGE = '#E8742B'
+
+function ago(ts: string | null): string {
+  if (!ts) return '—'
+  const m = Math.floor((Date.now() - new Date(ts).getTime()) / 60000)
+  if (m < 1) return 'just now'
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  return `${Math.floor(h / 24)}d ago`
+}
+function clockTime(ts: string | null): string {
+  if (!ts) return ''
+  return new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+}
 
 const DISPOS: Array<{ key: string; label: string }> = [
   { key: 'called', label: 'Called' },
@@ -57,6 +85,14 @@ export default function MasterPage() {
   const [phones, setPhones] = useState<Record<string, string>>({})
   const [enriching, setEnriching] = useState<Set<string>>(new Set())
   const [copied, setCopied] = useState<string | null>(null)
+  const [conn, setConn] = useState<Connectors | null>(null)
+
+  const loadConn = useCallback(async () => {
+    try {
+      const r = await fetch('/api/admin/connectors', { cache: 'no-store' })
+      if (r.ok) setConn(await r.json())
+    } catch { /* non-fatal */ }
+  }, [])
 
   const load = useCallback(async () => {
     try {
@@ -70,10 +106,11 @@ export default function MasterPage() {
   }, [])
 
   useEffect(() => {
-    load()
+    load(); loadConn()
     const id = setInterval(load, 20_000)
-    return () => clearInterval(id)
-  }, [load])
+    const idC = setInterval(loadConn, 120_000)   // money/health changes slowly
+    return () => { clearInterval(id); clearInterval(idC) }
+  }, [load, loadConn])
 
   async function disposition(email: string, action: string) {
     setHidden((h) => new Set(h).add(email))
@@ -156,8 +193,10 @@ export default function MasterPage() {
                     padding: '5px 12px', borderRadius: 8, fontSize: 14, fontWeight: 900, letterSpacing: '0.02em',
                     background: replied ? RED : AMBER, color: '#fff', whiteSpace: 'nowrap',
                   }}>{replied ? '🔥 REPLIED' : `👀 ${r.clicks} CLICKS`}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: r.in_call_window ? '#15803d' : RED, whiteSpace: 'nowrap', textAlign: 'right' }}>
-                    {r.local_time}{!r.in_call_window && ' ⚠'}
+                  {/* LAST CLICK time — when they actually last engaged */}
+                  <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    <span style={{ display: 'block', fontSize: 14, fontWeight: 800, color: INK }}>{replied ? 'replied' : 'clicked'} {ago(r.last_activity)}</span>
+                    <span style={{ display: 'block', fontSize: 11, fontWeight: 600, color: MUTED }}>{clockTime(r.last_activity)}</span>
                   </span>
                 </div>
 
@@ -178,8 +217,11 @@ export default function MasterPage() {
                   }}>{enriching.has(r.email) ? 'getting…' : '📞 get #'}</button>
                 )}
 
-                {/* where + email */}
-                <div style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>{[r.city, r.state].filter(Boolean).join(', ') || 'location unknown'}</div>
+                {/* where + their local time (call-window flag) + email */}
+                <div style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>
+                  {[r.city, r.state].filter(Boolean).join(', ') || 'location unknown'}
+                  <span style={{ color: r.in_call_window ? '#15803d' : RED, fontWeight: 700 }}> · {r.local_time} their time{!r.in_call_window && ' ⚠'}</span>
+                </div>
                 <div style={{ fontSize: 12, color: MUTED }}>{r.email}</div>
 
                 {/* dispositions */}
@@ -199,6 +241,9 @@ export default function MasterPage() {
           })}
         </div>
       )}
+
+      {/* ── METRICS / CONNECTORS strip (below the board) ── */}
+      {conn && <MetricsStrip conn={conn} />}
     </Shell>
   )
 }
@@ -208,6 +253,70 @@ function Shell({ children }: { children: React.ReactNode }) {
     <main style={{ minHeight: '100vh', background: TAN, fontFamily: 'Inter, system-ui, -apple-system, sans-serif', color: INK, padding: '20px clamp(12px, 3vw, 36px) 60px' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>{children}</div>
     </main>
+  )
+}
+
+function MetricsStrip({ conn }: { conn: Connectors }) {
+  const c = conn.connectors
+  const apifyLeft = c.apify.used != null && c.apify.cap != null ? c.apify.cap - c.apify.used : null
+  const dot = (green: boolean) => (
+    <span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: '50%', background: green ? '#16a34a' : RED, marginRight: 5 }} />
+  )
+  return (
+    <div style={{ marginTop: 32, borderTop: `1px solid #E3D8C2`, paddingTop: 18 }}>
+      <h2 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 800, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Business & accounts</h2>
+
+      {/* money + ARR */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 14 }}>
+        <Card label="ARR (real)" value={`$${conn.arr.toLocaleString()}`} big accent={conn.arr === 0 ? MUTED : '#16a34a'} />
+        <Card label="Apify left (this mo)"
+          value={apifyLeft != null ? `$${apifyLeft.toFixed(0)}` : (c.apify.error ? 'err' : '—')}
+          sub={c.apify.used != null ? `$${c.apify.used.toFixed(0)} / $${c.apify.cap} used` : undefined}
+          accent={apifyLeft != null && apifyLeft < 15 ? AMBER : INK} />
+        <Card label="BatchData spend"
+          value={`$${c.batchdata.spent_today.toFixed(2)}`}
+          sub={`today · $${c.batchdata.spent_30d.toFixed(2)} 30d · $${c.batchdata.daily_cap}/day cap`} />
+        <Card label="Instantly sent today"
+          value={c.instantly.sent_today != null ? String(c.instantly.sent_today) : '—'}
+          sub={`${c.instantly.daily_limit ?? '?'}/day cap · status ${c.instantly.status ?? '?'}`} />
+      </div>
+
+      {/* green status row */}
+      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 16 }}>
+        <span>{dot(c.supabase.green)} Supabase {c.supabase.green ? 'green' : 'DOWN'}</span>
+        <span>{dot(c.vercel.green)} Vercel {c.vercel.green ? 'green' : 'DOWN'}</span>
+        <span>{dot(!c.apify.error)} Apify {c.apify.error ? 'error' : 'ok'}</span>
+        <span>{dot(!c.batchdata.error)} BatchData {c.batchdata.error ? 'error' : 'ok'}</span>
+        <span>{dot(!c.instantly.error && c.instantly.status === 1)} Instantly {c.instantly.status === 1 ? 'active' : 'paused/err'}</span>
+      </div>
+
+      {/* signed-up clients */}
+      <div style={{ background: '#fff', border: `1px solid #E3D8C2`, borderRadius: 12, padding: '12px 16px' }}>
+        <div style={{ fontSize: 12, fontWeight: 800, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+          Signed-up clients ({conn.clients.length})
+        </div>
+        {conn.stripe_error && <div style={{ color: RED, fontSize: 12.5, fontWeight: 600 }}>Stripe error: {conn.stripe_error}</div>}
+        {!conn.stripe_error && conn.clients.length === 0 && (
+          <div style={{ fontSize: 13.5, color: MUTED, fontWeight: 600 }}>No paying clients yet — the board above is how you get the first one.</div>
+        )}
+        {conn.clients.map((cl, i) => (
+          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '6px 0', borderBottom: i < conn.clients.length - 1 ? '1px solid #F1EBDD' : 'none', fontSize: 13.5 }}>
+            <span style={{ fontWeight: 700, color: INK }}>{cl.email || cl.name || '—'}</span>
+            <span style={{ fontWeight: 700, color: '#16a34a' }}>${cl.monthly}/mo</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function Card({ label, value, sub, big, accent }: { label: string; value: string; sub?: string; big?: boolean; accent?: string }) {
+  return (
+    <div style={{ background: '#fff', border: '1px solid #E3D8C2', borderRadius: 12, padding: '10px 14px' }}>
+      <div style={{ fontSize: big ? 24 : 19, fontWeight: 900, color: accent ?? INK, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, marginTop: 3 }}>{label}</div>
+      {sub && <div style={{ fontSize: 10.5, color: MUTED, fontWeight: 600, marginTop: 2 }}>{sub}</div>}
+    </div>
   )
 }
 
