@@ -98,10 +98,16 @@ type ContactItem = {
   emails?: string[]
 }
 
-// Top 3 highest-yield trades only — keeps Apify scrape under 300s timeout.
-// Use ?trades= query param to override (e.g. ?trades=plumbing,roofing for
-// dedicated trade-expansion runs).
-const DEFAULT_TRADE_KEYWORDS = ['hvac', 'plumbing', 'electrical']
+// 2026-06-13 — defaults realigned to the trades the enforcement algorithm
+// actually surfaces. Chicago South Side + Brooklyn HPD = MASONRY +
+// ROOFING + HANDYMAN heavy (old brick rowhouses + façade violations +
+// general deferred-maintenance). HVAC + plumbing + electrical were the
+// old default and produced 0 inserts on the first run because none of
+// the top zips are HVAC-density.
+//
+// Use ?trades= query param to override (e.g. ?trades=hvac,electrical for
+// a focused HVAC-only run).
+const DEFAULT_TRADE_KEYWORDS = ['masonry', 'roofing', 'handyman']
 
 function classifyTrade(category?: string): string | null {
   const c = (category || '').toLowerCase()
@@ -109,6 +115,11 @@ function classifyTrade(category?: string): string | null {
   if (/plumb/.test(c)) return 'Plumbing'
   if (/electric/.test(c)) return 'Electrical'
   if (/roof/.test(c)) return 'Roofing'
+  // 2026-06-13 — masonry + handyman support added per Peter's enforcement
+  // pivot. Brick/façade violation supply dwarfs HVAC in Brooklyn + Chicago.
+  if (/mason|brick|stone|tuck.?point|stucco|chimney/.test(c)) return 'Masonry'
+  if (/handyman|general contractor|repair|maintenance|renovat|remodel/.test(c)) return 'Handyman'
+  if (/paint/.test(c)) return 'Painting'
   return null
 }
 
