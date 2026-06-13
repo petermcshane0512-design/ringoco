@@ -24,6 +24,8 @@ type LeadShape = {
   email?: string
   status?: number | string | null
   lead_status?: string | null
+  interest_status?: number | string | null
+  interest_value?: number | null
   payload?: Record<string, unknown> | null
 }
 
@@ -58,7 +60,15 @@ export async function GET() {
       scanned++
       const payload = it.payload || {}
       const statusVal = it.status
-      const isOpp = statusVal === 'OPPORTUNITY' || statusVal === 3 || it.lead_status === 'OPPORTUNITY'
+      // 2026-06-13 — Instantly tracks "Opportunity" via the interest_status
+      // field (the badge in the UI). Earlier reset only cleared payload
+      // values + status, missing interest_status. Now nuke all 3 paths
+      // so the campaign Analytics column actually resets.
+      const isOpp =
+        statusVal === 'OPPORTUNITY' || statusVal === 3
+        || it.lead_status === 'OPPORTUNITY'
+        || it.interest_status === 3 || it.interest_status === 'OPPORTUNITY'
+        || (typeof it.interest_value === 'number' && it.interest_value > 0)
       const hasStaleAmount = typeof payload.opportunity_value === 'number'
         || typeof payload.conversion_value === 'number'
         || typeof payload.deal_value === 'number'
@@ -80,8 +90,10 @@ export async function GET() {
           method: 'PATCH',
           headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            status: 1,            // INTERESTED / default-active
+            status: 1,                // ACTIVE
             lead_status: 'ACTIVE',
+            interest_status: 0,       // unset opportunity badge
+            interest_value: 0,        // strip the dollar tag
             payload: cleared,
           }),
         })
