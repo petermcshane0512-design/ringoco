@@ -349,11 +349,33 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url)
   const dry = url.searchParams.get('dry') === '1'
   const onlyCity = url.searchParams.get('city')
+  const debug = url.searchParams.get('debug') === '1'
 
   let q = supabase.from('enforcement_sources').select('*').eq('status', 'active')
   if (onlyCity) q = q.eq('city', onlyCity)
   const { data: sources, error } = await q
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
+
+  // Debug mode: short-circuit — fetch each source, return the first raw
+  // record so we can see what field names the API actually returns.
+  // Used to diagnose field_map drift across city portals.
+  if (debug) {
+    const samples = []
+    for (const src of (sources || []) as EnforcementSource[]) {
+      try {
+        const raw = await fetchSource(src)
+        samples.push({
+          city: src.city,
+          fetched: raw.length,
+          first_record: raw[0] ? Object.fromEntries(Object.entries(raw[0]).slice(0, 30)) : null,
+          available_fields: raw[0] ? Object.keys(raw[0]) : [],
+        })
+      } catch (e) {
+        samples.push({ city: src.city, error: (e as Error).message.slice(0, 200) })
+      }
+    }
+    return NextResponse.json({ ok: true, debug: true, samples })
+  }
   if (!sources || sources.length === 0) {
     return NextResponse.json({ ok: true, scanned: 0, message: 'no active sources' })
   }
