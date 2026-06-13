@@ -843,15 +843,15 @@ export async function POST(req: NextRequest) {
       // â”€â”€ IG creator payout staging (pivot 2026-06-06, refined) â”€â”€
       // Two-stage flow tied to fan's first + second paid invoices:
       //
-      //   FIRST  paid charge (~$97 with $200-off code applied):
-      //     â€¢ stamp profiles.first_paid_charge_at
-      //     â€¢ add $200 to creator.pending_payout_cents (in 30-day MBG window)
+      //   FIRST  paid charge (~$97 with FIRST400 $400-off code applied):
+      //     • stamp profiles.first_paid_charge_at
+      //     • add creator commission to creator.pending_payout_cents (1-Job Guarantee window)
       //
-      //   SECOND paid charge (~$297, day ~30):
-      //     â€¢ stamp profiles.second_paid_charge_at
-      //     â€¢ move $200 from pending_payout_cents â†’ payable_friday_cents
-      //     â€¢ bump paid_referrals_count
-      //     â€¢ flip status to 'paid_bonus_hit' at 5 refs
+      //   SECOND paid charge (~$497, day ~30):
+      //     • stamp profiles.second_paid_charge_at
+      //     • move pending commission → payable_friday_cents
+      //     • bump paid_referrals_count
+      //     • flip status to 'paid_bonus_hit' at 5 refs
       //
       // The Friday cron (/api/crons/creator-payout-batch) drains
       // payable_friday_cents and ACHs the creator.
@@ -978,7 +978,7 @@ export async function POST(req: NextRequest) {
       // â”€â”€ Customer-to-customer referral credit (pivot 2026-06-06) â”€â”€
       // When this paying customer was REFERRED by another paying customer
       // (profiles.referred_by points to another profile's referral_code),
-      // credit the REFERRER's Stripe account w/ 1 month free ($297) on
+      // credit the REFERRER's Stripe account w/ 1 month free ($497) on
       // their next invoice. One-time per referred customer, gated by
       // creator_referral_credited_at flag (same column reused â€” when set,
       // either IG creator OR customer referrer has been credited).
