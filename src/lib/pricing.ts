@@ -5,8 +5,8 @@
  * BellAveGo pivoted from AI receptionist SaaS to pure homeowner lead-gen.
  * The PUBLIC product is now a SINGLE PLAN:
  *
- *   Pro (slug 'officemgr') — $297/mo regular, $97 first month via FIRST200 promo.
- *   Annual: $2,970/yr. 80 leads/mo. 30-day money-back. Cancel anytime.
+ *   Pro (slug 'officemgr') — $497/mo regular, $97 first month via FIRST400 promo.
+ *   Annual: $4,997/yr. 80 leads/mo. 30-day money-back. Cancel anytime.
  *
  * Receptionist + Concierge slugs are NO LONGER active new-signup tiers — they
  * remain in PRICE_TO_TIER + PRICE_IDS_V2/V1 ONLY so grandfathered subscribers
@@ -150,13 +150,13 @@ export const RECEPTIONIST_CALL_CAP: number =
 // so grandfathered customers don't get downgraded.
 //
 // PIVOT 2026-06-06 (Algorithm + Hormozi applied):
-//   - Single public tier = officemgr ($297). UNLIMITED calls (was 300 cap).
+//   - Single public tier = officemgr ($497). UNLIMITED calls (was 300 cap).
 //   - receptionist + concierge kept for grandfathered customers only.
 //   - Public pricing page now shows ONE offer.
 export const TIER_CALL_CAP: Record<string, number> = {
   // v2 active (May 23 2026 — pivoted 2026-06-06 to single tier)
   receptionist: CURRENT_PRICING_VERSION === 'v1_legacy' ? 250 : 60, // Starter $147 (legacy, hidden from public)
-  officemgr:    Number.POSITIVE_INFINITY,                            // Pro $297 (NOW UNLIMITED — main public tier)
+  officemgr:    Number.POSITIVE_INFINITY,                            // Pro $497 (NOW UNLIMITED — main public tier)
   concierge:    Number.POSITIVE_INFINITY,                            // Elite $597 (legacy, hidden from public)
   // Legacy plan_tier strings — keep generous for grandfathered customers.
   foundation:   Number.POSITIVE_INFINITY, // legacy $79 unlimited
@@ -340,8 +340,8 @@ export const TIER_FEATURES: Record<LegacyTier, TierFeatures> = {
 }
 
 // ── Helpers ─────────────────────────────────────────────────────
-// Post 2026-06-09 pivot: new signups always land on officemgr ($297 monthly /
-// $2,970 annual). `tier` arg is accepted for back-compat with legacy callers
+// Post 2026-06-09 pivot: new signups always land on officemgr ($497 monthly /
+// $4,997 annual). `tier` arg is accepted for back-compat with legacy callers
 // but ignored — the public surface returns the officemgr price unconditionally.
 export function priceFor(_tier: Tier | LegacyTier, interval: Interval): string {
   return PRICE_IDS.officemgr[interval]

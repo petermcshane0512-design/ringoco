@@ -12,7 +12,7 @@ export const maxDuration = 300
  * GET /api/admin/instantly-sequence?backfill=1   — stamp merge vars onto loaded contacts
  *
  * 2026-06-10 launch-eve tool. The HVAC Q3 campaign template carried the
- * dead offer (80/mo, FIRST200, $297, /start link). This route rewrites
+ * dead offer (80/mo, FIRST200, $497, /start link). This route rewrites
  * all 3 sequence steps to the free-lead-first copy in NEW_STEPS below,
  * and reports whether already-loaded contacts carry the merge variables
  * the new copy depends on (free_lead_url, sample_lead_snippet).

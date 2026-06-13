@@ -77,7 +77,7 @@ async function runSync(req: NextRequest) {
               type: 'string',
               description:
                 "ONE plain-language sentence describing what they want. Sales-mode examples: " +
-                "'Mike\\'s Plumbing — ready to sign up for Pro $297', 'Tom\\'s HVAC — asked about pricing, leaning Starter'.",
+                "'Mike\\'s Plumbing — ready to sign up for Pro $497', 'Tom\\'s HVAC — asked about pricing, leaning Starter'.",
             },
             urgency: { type: 'string', enum: ['emergency', 'soon', 'whenever'] },
             customer_phone: { type: 'string', description: 'OPTIONAL — only if caller volunteers a different callback number.' },

@@ -143,7 +143,7 @@ export const SUPPORT_FAQ: FaqEntry[] = [
     answer:
       `Caps by tier: Starter = 60 calls/mo, Pro = 300 calls/mo, Elite = unlimited. ` +
       `When you hit your cap, the AI plays a polite "we've reached this month's capacity" message until the 1st of the next month. ` +
-      `Upgrading takes one click in the Stripe billing portal and applies immediately — Pro is $297/mo for 300 calls, Elite is $597/mo unlimited.`,
+      `Upgrading takes one click in the Stripe billing portal and applies immediately — Pro is $497/mo for 300 calls, Elite is $597/mo unlimited.`,
   },
   {
     topic: 'export_data',

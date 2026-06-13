@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
   // 2026-06-06 PIVOT â€” no public trial, no creator trial. Single 30-day
   // money-back guarantee for everyone. Creator code attaches a $200-off
   // first-month promotion_code (Hormozi sub-$100 trip-wire â€” fan pays
-  // $97 first month, $297 from month 2).
+  // $97 first month, $497 from month 2).
   //
   // 2026-06-07 â€” discounts field shape changed in dahlia API. Pin checkout
   // to the older API version so promotion_code references work. Plus add
