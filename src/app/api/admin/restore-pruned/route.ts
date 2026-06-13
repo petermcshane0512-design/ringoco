@@ -68,7 +68,9 @@ export async function POST(req: NextRequest) {
   let removed = 0
   const errors: string[] = []
   for (const e of toRestore) {
-    const dr = await fetch(`${BASE}/block-lists-entries/${e.id}`, { method: 'DELETE', headers: H() })
+    // Instantly's Fastify rejects a DELETE with JSON content-type + empty
+    // body (FST_ERR_CTP_EMPTY_JSON_BODY). Send '{}' to satisfy it.
+    const dr = await fetch(`${BASE}/block-lists-entries/${e.id}`, { method: 'DELETE', headers: H(), body: '{}' })
     if (dr.ok) {
       removed++
       await supabase.from('outreach_leads').update({ status: 'in_instantly_queue' }).eq('email', e.bl_value)
