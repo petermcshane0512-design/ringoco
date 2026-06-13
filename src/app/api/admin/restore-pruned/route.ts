@@ -68,9 +68,13 @@ export async function POST(req: NextRequest) {
   let removed = 0
   const errors: string[] = []
   for (const e of toRestore) {
-    // Instantly's Fastify rejects a DELETE with JSON content-type + empty
-    // body (FST_ERR_CTP_EMPTY_JSON_BODY). Send '{}' to satisfy it.
-    const dr = await fetch(`${BASE}/block-lists-entries/${e.id}`, { method: 'DELETE', headers: H(), body: '{}' })
+    // Instantly's Fastify DELETE wants NO content-type + NO body (with JSON
+    // header it demands a body; with a body it demands null). Auth header
+    // only, no body.
+    const dr = await fetch(`${BASE}/block-lists-entries/${e.id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${process.env.INSTANTLY_API_KEY}` },
+    })
     if (dr.ok) {
       removed++
       await supabase.from('outreach_leads').update({ status: 'in_instantly_queue' }).eq('email', e.bl_value)
