@@ -59,7 +59,7 @@ const ACTIVE_STATUS = ['IN VIOLATION', 'UNDER INVESTIGATION', 'IN VIOLATION - CO
 
 type CartoRow = {
   address?: string; zip?: string
-  geocode_x?: number | string | null; geocode_y?: number | string | null
+  lat?: number | string | null; lng?: number | string | null
   violationcodetitle?: string; violationdate?: string; casestatus?: string; opa_owner?: string
 }
 
@@ -78,8 +78,12 @@ export async function GET(req: NextRequest) {
   const counts = { fetched: 0, trade_matched: 0, skipped_no_geo: 0, skipped_no_trade: 0, errors: [] as string[] }
 
   // Pull recent ACTIVE violations; classify by keyword in code below.
+  // geocode_x/geocode_y are PA State Plane (feet) and overflow lat/lng cols —
+  // use ST_Y/ST_X(the_geom) which returns proper WGS84 lat/lng (Philly's
+  // the_geom is EPSG:4326). NULL geom -> null coords (leads/list backfills).
   const statusList = ACTIVE_STATUS.map((s) => `'${s.replace(/'/g, "''")}'`).join(',')
-  const sql = `SELECT address, zip, geocode_x, geocode_y, violationcodetitle, violationdate, casestatus, opa_owner ` +
+  const sql = `SELECT address, zip, ST_X(the_geom) AS lng, ST_Y(the_geom) AS lat, ` +
+    `violationcodetitle, violationdate, casestatus, opa_owner ` +
     `FROM violations WHERE violationdate > '${since}' AND casestatus IN (${statusList}) ` +
     `ORDER BY violationdate DESC LIMIT ${limit}`
 
@@ -119,8 +123,11 @@ export async function GET(req: NextRequest) {
   const rowsOut: Record<string, unknown>[] = []
   for (const { row, trades, tier } of byAddr.values()) {
     const addr = (row.address || '').replace(/\s+/g, ' ').trim()
-    const lat = row.geocode_y != null && row.geocode_y !== '' ? Number(row.geocode_y) : null
-    const lng = row.geocode_x != null && row.geocode_x !== '' ? Number(row.geocode_x) : null
+    // Guard: only accept sane WGS84; anything else (null/state-plane leak) → null.
+    const latN = row.lat != null && row.lat !== '' ? Number(row.lat) : null
+    const lngN = row.lng != null && row.lng !== '' ? Number(row.lng) : null
+    const lat = latN != null && latN >= -90 && latN <= 90 ? latN : null
+    const lng = lngN != null && lngN >= -180 && lngN <= 180 ? lngN : null
     const title = row.violationcodetitle || 'Code violation'
     const desc = `${title} — ${row.casestatus || 'open'}`
 
