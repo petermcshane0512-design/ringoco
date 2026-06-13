@@ -42,6 +42,9 @@ const CARTO = 'https://phl.carto.com/api/v2/sql'
 // tier 1 = imminent/unsafe, 2 = active building-system defect, 3 = exterior.
 function classifyPhilly(titleRaw: string): { trades: string[]; tier: 1 | 2 | 3 } | null {
   const t = (titleRaw || '').toUpperCase()
+  // Nuisance/landscaping/admin citations are NOT building-trade work — drop
+  // before the (greedy) EXTERIOR catch grabs "EXTERIOR AREA WEEDS" etc.
+  if (/\b(WEED|RUBBISH|GARBAGE|SANITATION|TRASH|MOTOR VEHICLE|TREE|GRAFFITI|LICENSE|ZONING|POSTING|PERMIT|FEE|REGISTRATION|SIGN\b|INSURANCE)\b/.test(t)) return null
   const unsafe = /\b(UNSAFE|IMMINENT|DANGEROUS|HAZARD|COLLAPSE)\b/.test(t)
   // Order matters — most specific trade first.
   if (/\bROOF\b/.test(t))                                      return { trades: ['roofing'], tier: unsafe ? 1 : 2 }
