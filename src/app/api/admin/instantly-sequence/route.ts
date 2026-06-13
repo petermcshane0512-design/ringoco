@@ -55,43 +55,54 @@ function toHtml(text: string): string {
     .join('')
 }
 
-// 2026-06-12 — ENFORCEMENT SEQUENCE per Peter. The hook is no longer
-// "homeowners who need work" — it's "homeowners the CITY is forcing to do
-// the work." Personalized per recipient by {{firstName}} / {{city}} /
-// {{trade}} + a REAL flagged homeowner pulled for their exact area on the
-// /free-lead page (the deepest personalization there is). Never the word
-// "public" — we sell the work removed, not the data. Scarcity + risk
-// reversal per Hormozi. Vars used are the ones reliably populated on every
-// contact (firstName/companyName/city/trade/free_lead_url); the live stat
-// numbers render on the /free-lead landing, not in the body, so no merge
-// var can come back blank.
+// 2026-06-13 — UNIVERSAL SEQUENCE (Elon-delete + Hormozi-volume rewrite).
+// Prior "city just cited" hook was true only in Chicago/NYC/Philly; 350+
+// Sun Belt contacts on this list have no enforcement scraper coverage,
+// so the landing page returns BatchData property records, not violations.
+// Universal pitch removes the bait-and-switch + opens the full 481-row
+// addressable list. Where enforcement data exists (Chicago/NYC/Philly),
+// the /free-lead landing surfaces the violation automatically — copy
+// doesn't have to promise it, the landing proves it.
+//
+// Hormozi principles:
+//   - Dream outcome that's TRUE — "homeowner who needs your work" works
+//     in every US zip
+//   - Specificity (city-named, trade-named) = credibility
+//   - Risk reversal = free lead, no card
+//   - Single CTA — the URL
+//   - Volume negates luck — 481 emails > 50
+//
+// Elon Algorithm:
+//   - Deleted the enforcement-only claim (didn't apply to ~73% of list)
+//   - Simplified one pitch instead of two
+//   - Accelerated — ship now, not after building 3 new scrapers
 const NEW_STEPS: NewStep[] = [
   {
-    subject: 'a {{city}} homeowner the city just cited',
+    subject: '{{firstName}} - found a {{city}} homeowner who needs {{trade}} work',
     body: toHtml(
 `Hey {{firstName}},
 
-Quick one. My software reads {{city}}'s building-violation and code-enforcement records every night and flags homeowners the city has ordered to get work done. Fix it or face fines.
+My AI scans {{city}} every night - new building permits, recent home sales, aging systems, NOAA storm reports, public records of every kind - and flags homeowners about to need {{trade}} work.
 
-Caught one near you this week. Real {{city}} property, owner name, the exact violation the city cited, and what they're required to repair. These folks aren't "maybe interested." They legally have to hire someone, and most haven't yet.
+It caught one near you this week. Real {{city}} property, owner name, year built, estimated job value, and the signal that flagged them.
 
 Pulled it for you, free. No card, nothing to cancel:
 
 {{free_lead_url}}
 
-I sell these by the month. First one's free so you can judge it yourself.
+I sell these by the month. First one's free so you can judge the data yourself.
 
 Peter
 BellAveGo - (773) 710-9565`),
   },
   {
-    subject: 're: the {{city}} homeowner under a city order',
+    subject: 're: that {{city}} homeowner for {{companyName}}',
     body: toHtml(
-`{{firstName}}, that flagged homeowner for {{companyName}} is still sitting there:
+`{{firstName}}, that homeowner I flagged for {{companyName}} is still sitting there:
 
 {{free_lead_url}}
 
-Here's why this is different from HomeAdvisor. We don't sell you "leads." We find the homeowners your city has cited or fined, the ones who HAVE to do the work. We match them to {{trade}}, verify the phone, and hand them to you exclusively. Never shared with 4 other shops. You call; they already have to say yes.
+Here's why this is different from HomeAdvisor. We don't sell you generic "leads." We find homeowners with a specific reason to hire a {{trade}} contractor THIS month - permits filed, storm damage, aging systems past replacement window, fresh sales. We verify the phone, attach a pre-written intro, and hand them to you exclusively. Never shared with 4 other shops.
 
 ${LEADS_PER_WEEK} of these a week in your area. The math: one closed job covers months of the $${PRICE_MONTHLY_USD}. First month is $${INTRO_PRICE_USD} with code ${INTRO_PROMO_CODE}.
 
@@ -100,15 +111,15 @@ One shop per area. Worst case you spend 30 seconds and keep a free lead.
 Peter`),
   },
   {
-    subject: 'before another {{trade}} contractor takes {{city}}',
+    subject: 'before another {{trade}} shop takes {{city}}',
     body: toHtml(
 `{{firstName}}, last note from me.
 
-The homeowners the city flagged in {{city}} this month are on a deadline. They WILL hire a {{trade}} shop soon. The only question is whether it's you or the guy who calls them first. Fresh data is the whole edge, and we only give one shop per area access.
+The homeowners my AI flagged in {{city}} this month don't sit around. Fresh permits, recent sales, storm damage - that signal goes stale fast, and door-knockers + HomeAdvisor + the franchise shops with marketing budgets find them eventually. Speed is the whole edge, and we only give one shop per area access.
 
 Your free one is still here: {{free_lead_url}}
 
-Want the full feed? ${LEADS_PER_WEEK} a week, city-cited homeowners, verified phones, yours alone. First month is $${INTRO_PRICE_USD} with code ${INTRO_PROMO_CODE}. Book one paying job in 30 days or I refund you, give you the next month free, and you keep every lead.
+Want the full feed? ${LEADS_PER_WEEK} a week, verified phones, intro scripts attached, yours alone. First month is $${INTRO_PRICE_USD} with code ${INTRO_PROMO_CODE}. Book one paying job in 30 days or I refund you, give you the next month free, and you keep every lead.
 
 Either way grab the free one. Costs nothing, could be worth a few grand.
 
