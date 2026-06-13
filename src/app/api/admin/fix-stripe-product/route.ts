@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { stripe } from '@/lib/stripeClient'
 import { PRICE_IDS_V2 } from '@/lib/pricing'
-import { LEADS_PER_WEEK, LEADS_PER_MONTH } from '@/lib/offer'
+import { LEADS_PER_WEEK, LEADS_PER_MONTH, BRAND_NAME } from '@/lib/offer'
 
 /**
  * GET /api/admin/fix-stripe-product — 2026-06-12 per Peter.
@@ -21,24 +21,39 @@ export async function GET() {
   const gate = await requireAdmin()
   if (!gate.ok) return gate.res
 
+  // 2026-06-13 — enforcement-tier reframe + 1-Job Guarantee.
+  // Stripe truncates description visibly around ~140 chars on mobile
+  // checkout, so the first sentence is the load-bearing pitch.
+  const name = `${BRAND_NAME} — AI homeowner leads`
   const description =
-    `${LEADS_PER_WEEK} exclusive homeowner leads every week in your area — ` +
-    `real addresses from city records, verified contact info, delivered to your dashboard. ` +
-    `AI texts + emails every lead as your shop; you just call the YES's. ` +
-    `One contractor per trade per area — your leads are never shared. ` +
-    `${LEADS_PER_MONTH}/mo total. 30-day money-back guarantee: if it doesn't pay for itself, ` +
-    `cancel in your dashboard and we refund every penny.`
+    `${LEADS_PER_WEEK} homeowner leads a week in your service area, exclusive to you — ` +
+    `our AI scans city records nightly to find homeowners under municipal orders, fresh permits, storm damage, and recent sales. ` +
+    `${LEADS_PER_MONTH}/month total with verified phones + a ready-to-send intro per lead. ` +
+    `Book a paying job in 30 days or full refund + your next month free + you keep every lead.`
+  const statementDescriptor = 'BELLAVEGO LEADS'
 
   try {
     const price = await stripe.prices.retrieve(PRICE_IDS_V2.officemgr.monthly)
     const productId = typeof price.product === 'string' ? price.product : price.product.id
     const before = await stripe.products.retrieve(productId)
-    const updated = await stripe.products.update(productId, { description })
+    const updated = await stripe.products.update(productId, {
+      name,
+      description,
+      statement_descriptor: statementDescriptor,
+    })
     return NextResponse.json({
       ok: true,
       product_id: productId,
-      before: (before.description || '').slice(0, 140),
-      after: (updated.description || '').slice(0, 140),
+      before: {
+        name: before.name,
+        description: (before.description || '').slice(0, 200),
+        statement_descriptor: before.statement_descriptor || null,
+      },
+      after: {
+        name: updated.name,
+        description: (updated.description || '').slice(0, 200),
+        statement_descriptor: updated.statement_descriptor || null,
+      },
     })
   } catch (e) {
     return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 })
