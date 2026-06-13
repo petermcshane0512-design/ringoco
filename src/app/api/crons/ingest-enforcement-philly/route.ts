@@ -35,24 +35,27 @@ const supabase = createClient(
 
 const CARTO = 'https://phl.carto.com/api/v2/sql'
 
-// Philly L&I standardized titles → engine trade(s) + urgency tier.
-// tier 1 = imminent/unsafe, 2 = active structural defect, 3 = exterior/cosmetic.
-const TITLE_MAP: Record<string, { trades: string[]; tier: 1 | 2 | 3 }> = {
-  'Unsafe Structure':                          { trades: ['handyman', 'roofing'], tier: 1 },
-  'Imminently Dangerous':                      { trades: ['handyman', 'roofing'], tier: 1 },
-  'Roof Deficiencies':                         { trades: ['roofing'], tier: 2 },
-  'Exterior Roof Drainage':                    { trades: ['roofing'], tier: 3 },
-  'Exterior Walls':                            { trades: ['handyman'], tier: 2 },          // masonry/tuckpointing
-  'Exterior Structure Protective Treatment':   { trades: ['handyman'], tier: 3 },          // painting/sealing
-  'Exterior Windows, Skylights, Door Frames':  { trades: ['handyman'], tier: 3 },
-  'Interior Surfaces':                         { trades: ['handyman'], tier: 3 },          // painting/plaster
-  'Plumbing Systems - General':                { trades: ['plumbing'], tier: 2 },
-  'Electrical Systems - General':              { trades: ['electrical'], tier: 2 },
-  'Heating Facilities':                        { trades: ['hvac'], tier: 1 },              // no-heat = mandated
-  'Mechanical Systems':                        { trades: ['hvac'], tier: 2 },
-  'Vacant Structure & Land':                   { trades: ['handyman'], tier: 3 },
-  'Alter Interior Portion':                    { trades: ['handyman'], tier: 3 },
+// Philly L&I titles are UPPERCASE free-ish text with inconsistent spacing
+// ("PLUMBING SYSTEMS- GENERAL", "REPLACE ROOF COVERING", "UNSAFE
+// STRUCTURE") — so classify by KEYWORD, not exact match. Returns the
+// engine trade + urgency tier, or null to skip (weeds/rubbish/license/etc).
+// tier 1 = imminent/unsafe, 2 = active building-system defect, 3 = exterior.
+function classifyPhilly(titleRaw: string): { trades: string[]; tier: 1 | 2 | 3 } | null {
+  const t = (titleRaw || '').toUpperCase()
+  const unsafe = /\b(UNSAFE|IMMINENT|DANGEROUS|HAZARD|COLLAPSE)\b/.test(t)
+  // Order matters — most specific trade first.
+  if (/\bROOF\b/.test(t))                                      return { trades: ['roofing'], tier: unsafe ? 1 : 2 }
+  if (/\bPLUMB|SANITARY|WATER (HEAT|SUPPLY|GENERAL)|DRAIN/.test(t)) return { trades: ['plumbing'], tier: unsafe ? 1 : 2 }
+  if (/\bELECTRIC/.test(t))                                    return { trades: ['electrical'], tier: unsafe ? 1 : 2 }
+  if (/\b(HEAT|HVAC|MECHANIC|BOILER|FURNACE|FUEL)\b/.test(t))  return { trades: ['hvac'], tier: unsafe ? 1 : 2 }
+  // Structural / masonry / exterior → handyman (covers masonry, tuckpointing,
+  // facade, parapet, exterior walls, vacant-structure repair, paint, windows).
+  if (/\b(STRUCTUR|EXTERIOR|MASONRY|FACADE|PARAPET|FOUNDATION|WALL|VACANT|WINDOW|DOOR|STAIR|INTERIOR SURFACE|PROTECTIVE TREATMENT|ALTER)\b/.test(t)) {
+    return { trades: ['handyman'], tier: unsafe ? 1 : 3 }
+  }
+  return null
 }
+const ACTIVE_STATUS = ['IN VIOLATION', 'UNDER INVESTIGATION', 'IN VIOLATION - COURT', 'SVN ISSUED, BALANCE DUE']
 
 type CartoRow = {
   address?: string; zip?: string
@@ -74,11 +77,11 @@ export async function GET(req: NextRequest) {
 
   const counts = { fetched: 0, trade_matched: 0, skipped_no_geo: 0, skipped_no_trade: 0, errors: [] as string[] }
 
-  // Pull only the trade-relevant titles, open-ish cases, recent.
-  const titles = Object.keys(TITLE_MAP).map((t) => `'${t.replace(/'/g, "''")}'`).join(',')
+  // Pull recent ACTIVE violations; classify by keyword in code below.
+  const statusList = ACTIVE_STATUS.map((s) => `'${s.replace(/'/g, "''")}'`).join(',')
   const sql = `SELECT address, zip, geocode_x, geocode_y, violationcodetitle, violationdate, casestatus, opa_owner ` +
-    `FROM violations WHERE violationdate > '${since}' AND violationcodetitle IN (${titles}) ` +
-    `AND casestatus NOT IN ('CLOSED','COMPLIED') ORDER BY violationdate DESC LIMIT ${limit}`
+    `FROM violations WHERE violationdate > '${since}' AND casestatus IN (${statusList}) ` +
+    `ORDER BY violationdate DESC LIMIT ${limit}`
 
   let rows: CartoRow[] = []
   try {
@@ -102,7 +105,7 @@ export async function GET(req: NextRequest) {
   // One lead per address, highest-severity (lowest tier number) wins.
   const byAddr = new Map<string, { row: CartoRow; trades: string[]; tier: 1 | 2 | 3 }>()
   for (const r of rows) {
-    const map = TITLE_MAP[r.violationcodetitle ?? '']
+    const map = classifyPhilly(r.violationcodetitle ?? '')
     if (!map) { counts.skipped_no_trade++; continue }
     if (tradeFilter.length && !map.trades.some((t) => tradeFilter.includes(t))) continue
     const addr = (r.address || '').replace(/\s+/g, ' ').trim()
