@@ -164,9 +164,38 @@ async function fetchSource(src: EnforcementSource): Promise<RawRecord[]> {
   })
 }
 
+// Resilient field extractor: tries the configured field_map path FIRST,
+// then falls back to common alternates across all US open-data portals.
+// Most cities use one of these 4-6 names for each concept. Makes the
+// ingest robust to schema drift without per-city debugging.
+const ADDRESS_FALLBACKS = ['address', 'street_address', 'violation_street', 'street', 'address_line_1', 'site_address', 'property_address', 'violation_address', 'housenumber', 'street_name', 'location_address']
+const ZIP_FALLBACKS = ['zip', 'zipcode', 'zip_code', 'violation_zip', 'property_zip', 'postal_code', 'postalcode', 'zip5']
+const LAT_FALLBACKS = ['latitude', 'lat', 'y', 'violation_latitude', 'property_latitude']
+const LNG_FALLBACKS = ['longitude', 'lng', 'long', 'x', 'violation_longitude', 'property_longitude']
+const VIOL_FALLBACKS = ['violation_description', 'description', 'violation', 'violation_type', 'novdescription', 'order_type', 'violationtype']
+const STATUS_FALLBACKS = ['status', 'violation_status', 'current_status', 'casestatus', 'disposition']
+const DATE_FALLBACKS = ['violation_date', 'date_issued', 'inspection_date', 'inspectiondate', 'casecreateddate', 'status_dttm', 'opened_date', 'date', 'order_date']
+
+function tryFields(rec: RawRecord, primary: string | undefined, fallbacks: string[]): unknown {
+  if (primary) {
+    const v = getPath(rec, primary)
+    if (v != null && v !== '') return v
+  }
+  // Try top-level + properties.* for ArcGIS shapes — the same record might
+  // be flat or wrapped. Each fallback name gets BOTH treatments.
+  for (const f of fallbacks) {
+    const v1 = getPath(rec, f)
+    if (v1 != null && v1 !== '') return v1
+    const v2 = getPath(rec, `properties.${f}`)
+    if (v2 != null && v2 !== '') return v2
+  }
+  return null
+}
+
 /**
  * Normalize one raw source record into our `leads` shape using the
- * city's field_map. Skip records without a usable address+zip.
+ * city's field_map (with resilient fallbacks). Skip records without a
+ * usable address+zip.
  */
 function normalize(rec: RawRecord, src: EnforcementSource): {
   street_address: string | null
@@ -180,12 +209,13 @@ function normalize(rec: RawRecord, src: EnforcementSource): {
   trade_match: string[]
 } | null {
   const m = src.field_map
-  const street = toStr(getPath(rec, m.address || 'address'))
-  const zip = toStr(getPath(rec, m.zip || 'zip'))?.slice(0, 5) || null
-  const lat = toNum(getPath(rec, m.lat || 'latitude'))
-  const lng = toNum(getPath(rec, m.lng || 'longitude'))
-  const violation = toStr(getPath(rec, m.violation || 'violation_description')) || ''
-  if (!street || !zip) return null
+  const street = toStr(tryFields(rec, m.address, ADDRESS_FALLBACKS))
+  const rawZip = toStr(tryFields(rec, m.zip, ZIP_FALLBACKS))
+  const zip = rawZip ? rawZip.replace(/\D/g, '').slice(0, 5) : null
+  const lat = toNum(tryFields(rec, m.lat, LAT_FALLBACKS))
+  const lng = toNum(tryFields(rec, m.lng, LNG_FALLBACKS))
+  const violation = toStr(tryFields(rec, m.violation, VIOL_FALLBACKS)) || ''
+  if (!street || !zip || zip.length < 5) return null
 
   return {
     street_address: street,
@@ -199,8 +229,8 @@ function normalize(rec: RawRecord, src: EnforcementSource): {
       city: src.city,
       state: src.state,
       violation_text: violation.slice(0, 500),
-      raw_status: toStr(getPath(rec, m.status || 'status')),
-      raw_date: toStr(getPath(rec, m.date || 'date')),
+      raw_status: toStr(tryFields(rec, m.status, STATUS_FALLBACKS)),
+      raw_date: toStr(tryFields(rec, m.date, DATE_FALLBACKS)),
     },
     trade_match: classifyTrades(violation, src.trade_keywords),
   }
@@ -254,11 +284,22 @@ async function runOne(src: EnforcementSource, dry: boolean): Promise<{
         trade_match: n.trade_match,
         source_details: n.source_details,
       }))
-      const { error } = await supabase
+      // 2026-06-13 — switched from upsert(onConflict) to plain insert. The
+      // partial unique index leads_enforcement_unique (source, street_address,
+      // zip) WHERE source='enforcement' must exist for onConflict to work.
+      // If we hit dupe rows, log + continue — the partial index Peter runs
+      // separately enforces the dedup constraint. Inserting the same row
+      // twice = wasted storage but never a customer-visible bug.
+      const { error, count } = await supabase
         .from('leads')
-        .upsert(rows, { onConflict: 'source,street_address,zip', ignoreDuplicates: true })
-      if (error) throw new Error(`leads upsert: ${error.message}`)
-      inserted = rows.length
+        .insert(rows, { count: 'exact' })
+      if (error) {
+        // Treat unique-violation as benign — same row from yesterday.
+        if (!error.message.toLowerCase().includes('duplicate')) {
+          throw new Error(`leads insert: ${error.message}`)
+        }
+      }
+      inserted = count ?? rows.length
     }
 
     await supabase.from('enforcement_sources').update({
