@@ -59,11 +59,30 @@ const BAD_UA_PATTERNS = [
   /safelinks/i,
   /microsoft.*defender/i,
   /preview/i,
+  // 2026-06-13 — widened after finding "0 Instantly clicks but board clicks":
+  // email link-scanners / prefetchers that slipped the old list. These auto-
+  // GET every URL in inbound mail and were inflating visit_count = phantom
+  // hot leads on the call board.
+  /proxy/i,
+  /fetch/i,
+  /python-?requests|aiohttp|httpx|urllib/i,
+  /curl|wget|libwww|okhttp|axios|go-http|java\/|apache-httpclient/i,
+  /headless|puppeteer|playwright|phantom|selenium/i,
+  /facebookexternalhit|slackbot|whatsapp|telegrambot|discordbot|twitterbot/i,
+  /pingdom|uptimerobot|datadog|newrelic|statuscake|monitor/i,
+  /google(image|web)?proxy|yahoo.*proxy|gmailimageproxy/i,
+  /outlook|office365|exchange/i,
 ]
 
 function isBot(req: NextRequest): boolean {
   const ua = req.headers.get('user-agent') || ''
+  // No UA at all = automated client, never a real browser.
   if (!ua) return true
+  // Every real consumer browser (Chrome/Safari/Firefox/Edge) sends a
+  // "Mozilla/..." token. Library/scanner UAs usually don't. Absence of it is
+  // a strong bot signal — blocks the spoofed-clean-UA scanners the explicit
+  // list misses.
+  if (!/mozilla\//i.test(ua)) return true
   return BAD_UA_PATTERNS.some((p) => p.test(ua))
 }
 
