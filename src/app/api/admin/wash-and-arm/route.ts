@@ -93,12 +93,14 @@ export async function POST(req: NextRequest) {
         await supabase.from('outreach_leads')
           .update({ status: 'invalid_email', hunter_status: `instantly_${status}` })
           .eq('email', l.email)
-        const dr = await fetch(`${INSTANTLY_BASE}/leads/${l.id}`, { method: 'DELETE', headers: iHeaders() })
-        if (dr.ok) {
-          evicted++
-        } else {
-          errors.push(`delete ${l.email}: HTTP ${dr.status} ${(await dr.text().catch(() => '')).slice(0, 120)}`)
-        }
+        // 2026-06-13 — the lead DELETE 400s (Instantly empty-body quirk), so
+        // BLOCKLIST the invalid email instead. That stops sends to it (the
+        // bounce source) — same effect, and the POST add works reliably.
+        const br = await fetch(`${INSTANTLY_BASE}/block-lists-entries`, {
+          method: 'POST', headers: iHeaders(), body: JSON.stringify({ bl_value: l.email }),
+        })
+        if (br.ok) evicted++
+        else errors.push(`block ${l.email}: HTTP ${br.status} ${(await br.text().catch(() => '')).slice(0, 100)}`)
       } else {
         pendingOrRisky++
       }
