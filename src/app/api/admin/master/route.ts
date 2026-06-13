@@ -262,11 +262,19 @@ export async function GET() {
     pflByEmail.set(email, r)
   }
 
+  // 2026-06-12 per Peter — robots (Webador/Wix support desks, mailer-daemon,
+  // no-reply) auto-"reply" to cold mail and were scoring 100, outranking
+  // real humans in the call queue. Filter system/autoresponder addresses so
+  // only people you can actually call surface.
+  const isRobot = (email: string) =>
+    /^(mailer-daemon|postmaster|no-?reply|do-?not-?reply|bounce|notification|abuse|noc|hostmaster)\b/i.test(email)
+    || /@(webador|wix|squarespace|godaddy|wordpress|weebly|ueniweb)\b/i.test(email)
+
   // Union: everyone with Instantly engagement OR a real free-lead click.
   const unionEmails = Array.from(new Set([
     ...instantly.engaged.map((e) => e.email),
     ...pflByEmail.keys(),
-  ])).filter(validEmail)
+  ])).filter((e) => validEmail(e) && !isRobot(e))
   const engagedByEmail = new Map(instantly.engaged.map((e) => [e.email, e]))
 
   type OlRow = { email: string; business_name: string | null; owner_first_name: string | null; owner_phone: string | null; city: string | null; state: string | null; trade: string | null; pushed_at: string | null; first_opened_at: string | null; last_opened_at: string | null; report_visit_at: string | null; trial_started_at: string | null; paid_at: string | null; status: string | null }
