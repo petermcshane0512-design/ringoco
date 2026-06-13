@@ -304,9 +304,17 @@ export async function POST(req: NextRequest) {
     const ENTITY_OWNER = /\b(trust|llc|l\.l\.c|inc\b|incorporated|corp|company|\bco\b|bank|holdings|properties|associat|partners|\blp\b|trustee|a\/t\/u\/t|titleholder|cooperative|apartments)\b/i
     const isEntity = (n: string | null) => !!n && ENTITY_OWNER.test(n)
     const typed = pool as PoolLead[]
-    // First real-person-owned lead with an address; else first addressed lead.
-    const poolLead = (typed.find((l) => l.street_address && !isEntity(l.owner_name))
-      ?? typed.find((l) => l.street_address)) as PoolLead | undefined
+    // 2026-06-13 per Peter — EXCLUSIVITY. Picking pool[0] meant every
+    // contractor in a city saw the SAME top lead, breaking the "never shared
+    // with 4 other shops" promise. Spread the pool across contractors with a
+    // deterministic biz_id offset: same contractor always sees the same lead
+    // (stable), different contractors get different ones. Person-owned
+    // candidates first; fall back to any addressed lead.
+    const candidates = typed.filter((l) => l.street_address && !isEntity(l.owner_name))
+    const fallback = typed.filter((l) => l.street_address)
+    const offsetHash = parseInt(bizId.replace(/[^0-9a-f]/gi, '').slice(-6) || '0', 16) || 0
+    const pickFrom = candidates.length ? candidates : fallback
+    const poolLead = pickFrom.length ? pickFrom[offsetHash % pickFrom.length] as PoolLead : undefined
 
     if (poolLead && poolLead.street_address) {
       const value = poolLead.home_value_est
