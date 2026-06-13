@@ -45,6 +45,10 @@ const AREA_ZIP_COOKIE = 'bavg_area_zip'
 const AREA_TRADE_COOKIE = 'bavg_area_trade'
 const AREA_ADDR_COOKIE = 'bavg_area_addr'
 const AREA_PHONE_COOKIE = 'bavg_area_phone'
+// Referral cookie set by /ref/[code] route when a customer link is visited.
+// Same name as the legacy bavg_ref middleware cookie so existing referral
+// links keep crediting their original referrer.
+const AREA_REF_COOKIE = 'bavg_ref'
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 14 // 14 days
 
 function readCookie(name: string): string {
@@ -82,6 +86,12 @@ function StartAreaContent() {
   const [otherTradeText, setOtherTradeText] = useState('')
   const [address, setAddress] = useState('')
   const [phone, setPhone] = useState('')
+  // Buddy-referral code (BAVG-XXXXXX). Pre-filled when the visitor came
+  // through a /ref/{code} link (middleware writes the cookie); otherwise
+  // the visitor can paste it in by hand. When a code resolves to an
+  // active customer, that customer earns 1 month free on their next
+  // invoice the moment THIS buyer pays month 1 (webhook does the credit).
+  const [referralCode, setReferralCode] = useState('')
   const [checking, setChecking] = useState(false)
   const [err, setErr] = useState('')
   // Geocode pin-confirm gate — catches typos that would otherwise burn
@@ -92,16 +102,19 @@ function StartAreaContent() {
   useEffect(() => {
     const urlZip = (sp?.get('zip') || '').replace(/\D/g, '').slice(0, 5)
     const urlTrade = (sp?.get('trade') || '').toLowerCase().trim()
+    const urlRef = (sp?.get('ref') || '').toUpperCase().trim()
     setZip((prev) => prev || urlZip || readCookie(AREA_ZIP_COOKIE))
     setTrade((prev) => prev || urlTrade || decodeURIComponent(readCookie(AREA_TRADE_COOKIE)))
     setAddress((prev) => prev || decodeURIComponent(readCookie(AREA_ADDR_COOKIE)))
     setPhone((prev) => prev || decodeURIComponent(readCookie(AREA_PHONE_COOKIE)))
+    setReferralCode((prev) => prev || urlRef || decodeURIComponent(readCookie(AREA_REF_COOKIE)))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const fireCheckout = useCallback(async (z: string, t: string, a: string, p: string) => {
+  const fireCheckout = useCallback(async (z: string, t: string, a: string, p: string, refCode?: string) => {
     setChecking(true)
     try {
+      const cleanRef = (refCode ?? referralCode).toUpperCase().trim()
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -110,6 +123,7 @@ function StartAreaContent() {
           interval: 'monthly',
           creatorCode: promo,
           bizId: bizId || undefined,
+          buddyReferralCode: /^BAVG-[A-Z0-9]{6}$/.test(cleanRef) ? cleanRef : undefined,
           zip: z,
           trade: t,
           address: a,
@@ -127,7 +141,7 @@ function StartAreaContent() {
     } finally {
       setChecking(false)
     }
-  }, [promo, bizId])
+  }, [promo, bizId, referralCode])
 
   // Legacy ?autoco=1 resume (old sign-up bounce links still in the wild).
   useEffect(() => {
@@ -367,6 +381,37 @@ function StartAreaContent() {
             autoComplete="tel"
           />
           <Hint>We text this number the second a homeowner shows real interest. No other use.</Hint>
+
+          {/* Buddy referral code — collapsible by default so a cold visitor
+              who has no code is not slowed down by an extra field. Opens
+              automatically when the URL or cookie pre-filled a code (the
+              link landed via /ref/BAVG-XXXXXX). */}
+          <details
+            open={!!referralCode}
+            style={{ marginTop: 14 }}
+          >
+            <summary style={{
+              fontSize: 12, color: '#5EEAD4', fontWeight: 700, cursor: 'pointer',
+              listStyle: 'none', padding: '4px 0',
+              userSelect: 'none',
+            }}>
+              💰 Got a buddy code? <span style={{ color: 'rgba(255,248,240,0.6)', fontWeight: 500 }}>they get a free month when you sign up</span>
+            </summary>
+            <input
+              value={referralCode}
+              onChange={(e) => setReferralCode(e.target.value.toUpperCase().slice(0, 11))}
+              placeholder="BAVG-XXXXXX"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+              style={{ ...darkInput, marginTop: 8, fontFamily: 'ui-monospace, monospace', letterSpacing: '0.04em' }}
+            />
+            {referralCode && !/^BAVG-[A-Z0-9]{6}$/.test(referralCode) && (
+              <p style={{ fontSize: 11, color: '#FCA5A5', margin: '6px 2px 0', fontWeight: 600 }}>
+                Code should look like BAVG-AB12CD — check with your buddy.
+              </p>
+            )}
+          </details>
 
           {err && (
             <p style={{ fontSize: 13, color: '#FCA5A5', margin: '14px 0 0', fontWeight: 700 }}>

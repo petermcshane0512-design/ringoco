@@ -975,21 +975,31 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // â”€â”€ Customer-to-customer referral credit (pivot 2026-06-06) â”€â”€
-      // When this paying customer was REFERRED by another paying customer
-      // (profiles.referred_by points to another profile's referral_code),
-      // credit the REFERRER's Stripe account w/ 1 month free ($497) on
-      // their next invoice. One-time per referred customer, gated by
-      // creator_referral_credited_at flag (same column reused â€” when set,
-      // either IG creator OR customer referrer has been credited).
+      // ── Customer-to-customer referral credit ──
+      // 2026-06-06 pivot: when a paying customer was REFERRED by another
+      // paying customer (profiles.referred_by points to another profile's
+      // referral_code), credit the REFERRER's Stripe balance w/ 1 month
+      // free ($497) on their next invoice.
+      //
+      // 2026-06-13 update per Peter: ALSO credit the BUYER 1 month free.
+      // Both customers get a month of BellAveGo on the house — referrer
+      // for the introduction, buyer for the activation. Hormozi: make
+      // referral both-sided so the buyer has a reason to ENTER the code
+      // (otherwise the buyer benefit is zero and the referral flywheel
+      // depends on altruism, which doesn't scale).
+      //
+      // Both credits fire atomically on the SAME first paid invoice and
+      // are gated by creator_referral_credited_at — once stamped, neither
+      // side gets a second credit on renewals.
       const profileForReferrer = await supabase
         .from('profiles')
-        .select('user_id, referred_by, creator_referral_credited_at')
+        .select('user_id, referred_by, creator_referral_credited_at, stripe_customer_id')
         .eq('stripe_customer_id', customerId)
         .maybeSingle()
 
       const refByCode = (profileForReferrer.data as { referred_by?: string | null } | null)?.referred_by
       const alreadyCredited = (profileForReferrer.data as { creator_referral_credited_at?: string | null } | null)?.creator_referral_credited_at
+      const buyerStripeCustomerId = (profileForReferrer.data as { stripe_customer_id?: string | null } | null)?.stripe_customer_id
       if (
         refByCode &&
         !alreadyCredited &&
@@ -1005,19 +1015,33 @@ export async function POST(req: NextRequest) {
             .maybeSingle()
 
           if (referrer?.stripe_customer_id) {
-            // Credit referrer's Stripe balance with $497 (1 month off next invoice).
-            // 2026-06-09: bumped 297 -> 497 to match v9 leads-only pricing.
+            // 1) Credit REFERRER's Stripe balance — 1 month free on their next invoice.
             await stripe.customers.createBalanceTransaction(referrer.stripe_customer_id, {
               amount: -49700, // negative = credit (Stripe convention)
               currency: 'usd',
-              description: `BellAveGo referral credit â€” 1 month free for referring a paid customer`,
+              description: `BellAveGo referral credit — 1 month free for referring a paid customer`,
             })
-            // Stamp the credited flag so we don't double-credit on renewals
+            console.log(`[customer-referral] credited referrer ${referrer.user_id} $497 for new paid customer w/ code ${refByCode}`)
+
+            // 2) Credit BUYER's Stripe balance — 1 month free for entering the code (2026-06-13).
+            if (buyerStripeCustomerId) {
+              try {
+                await stripe.customers.createBalanceTransaction(buyerStripeCustomerId, {
+                  amount: -49700,
+                  currency: 'usd',
+                  description: `BellAveGo buddy bonus — 1 month free for using ${refByCode}`,
+                })
+                console.log(`[customer-referral] credited BUYER ${(profileForReferrer.data as { user_id: string }).user_id} $497 for using buddy code ${refByCode}`)
+              } catch (e) {
+                console.error('[customer-referral] buyer credit failed (referrer credit still applied):', e)
+              }
+            }
+
+            // Stamp the credited flag so neither side gets re-credited on renewals
             await supabase
               .from('profiles')
               .update({ creator_referral_credited_at: new Date().toISOString() })
               .eq('user_id', (profileForReferrer.data as { user_id: string }).user_id)
-            console.log(`[customer-referral] credited referrer ${referrer.user_id} $497 for new paid customer w/ code ${refByCode}`)
           } else {
             console.warn(`[customer-referral] no referrer found for code ${refByCode}`)
           }

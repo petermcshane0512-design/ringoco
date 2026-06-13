@@ -105,6 +105,7 @@ export async function POST(req: NextRequest) {
     interval?: Interval
     creatorCode?: string
     bizId?: string
+    buddyReferralCode?: string
     zip?: string
     trade?: string
     address?: string
@@ -156,8 +157,17 @@ export async function POST(req: NextRequest) {
   // friend NO discount, and must NOT pass through lookupPromoCode (it's an
   // attribution code, not a Stripe promo). Carried as its own metadata field
   // so the webhook can set profiles.referred_by → recordPendingReferral.
+  //
+  // 2026-06-13 — Peter: "every user should get their own referall code and on
+  // the pricing page there should be a referall process where they put in
+  // the referal code and the promo code and they get free month." Body now
+  // carries buddyReferralCode from the /start/area form input. Body takes
+  // precedence over cookie so a buyer who pastes a fresh code into the form
+  // beats a stale cookie from an earlier visit.
+  const refFromBody = (body.buddyReferralCode || '').toUpperCase().trim()
   const refCookie = (req.cookies.get('bavg_ref')?.value || '').toUpperCase().trim()
-  const validReferralCode = /^BAVG-[A-Z0-9]{6}$/.test(refCookie) ? refCookie : ''
+  const refCandidate = refFromBody || refCookie
+  const validReferralCode = /^BAVG-[A-Z0-9]{6}$/.test(refCandidate) ? refCandidate : ''
 
   const subPriceId = priceFor(tier, interval)
   const line_items: { price: string; quantity: number }[] = [
