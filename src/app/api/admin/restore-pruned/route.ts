@@ -6,14 +6,17 @@ export const runtime = 'nodejs'
 export const maxDuration = 300
 
 /**
- * POST /api/admin/restore-pruned — reverse the FL/TX prune (2026-06-13 per
- * Peter: "add them back, it's a volume game — they still get 10 real leads").
- * Removes the paused_geo contractors from the Instantly block list (so they
- * receive again) and resets their outreach_leads status. Dry-run default;
- * ?confirm=1 executes. Admin-gated.
+ * POST /api/admin/restore-pruned — reverse the FL/TX prune (per Peter:
+ * volume game). Drives off the Instantly BLOCK LIST directly (the
+ * paused_geo DB status was already reset, so we can't key off it): for each
+ * block-list entry whose email is a contractor OUTSIDE the enforcement
+ * states (IL/NY/PA), delete the entry so they receive again.
+ *
+ * ?confirm=1 executes. Captures full delete error bodies. Admin-gated.
  */
 
 const BASE = 'https://api.instantly.ai/api/v2'
+const KEEP_STATES = new Set(['il', 'illinois', 'ny', 'new york', 'pa', 'pennsylvania'])
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -26,54 +29,53 @@ export async function POST(req: NextRequest) {
   if (!process.env.INSTANTLY_API_KEY) return NextResponse.json({ ok: false, error: 'no key' }, { status: 503 })
   const confirm = req.nextUrl.searchParams.get('confirm') === '1'
 
-  // The paused_geo set = what the prune cut.
-  const { data: paused } = await supabase
-    .from('outreach_leads')
-    .select('email')
-    .eq('status', 'paused_geo')
-    .limit(2000)
-  const emails = new Set(((paused ?? []) as Array<{ email: string }>).map((r) => r.email.toLowerCase()))
-
-  if (!confirm) {
-    return NextResponse.json({ ok: true, dry_run: true, would_restore: emails.size, sample: [...emails].slice(0, 8) })
-  }
-
-  // 1. pull the block list, find entries matching our emails, delete them.
-  let unblocked = 0
-  const errors: string[] = []
+  // 1. pull the whole block list
+  const entries: Array<{ id: string; bl_value: string }> = []
   let cursor: string | undefined
-  for (let p = 0; p < 30; p++) {
+  for (let p = 0; p < 40; p++) {
     const url = new URL(`${BASE}/block-lists-entries`)
     url.searchParams.set('limit', '100')
     if (cursor) url.searchParams.set('starting_after', cursor)
     const r = await fetch(url.toString(), { headers: H() })
-    if (!r.ok) { errors.push(`list HTTP ${r.status}`); break }
+    if (!r.ok) return NextResponse.json({ ok: false, error: `list HTTP ${r.status}` }, { status: 502 })
     const j = await r.json()
-    const items = (j.items ?? j.data ?? []) as Array<{ id: string; bl_value?: string; value?: string }>
-    for (const it of items) {
-      const val = (it.bl_value ?? it.value ?? '').toLowerCase()
-      if (emails.has(val)) {
-        const dr = await fetch(`${BASE}/block-lists-entries/${it.id}`, { method: 'DELETE', headers: H() })
-        if (dr.ok) unblocked++
-        else if (errors.length < 8) errors.push(`del ${val}: HTTP ${dr.status}`)
-      }
-    }
+    const items = (j.items ?? j.data ?? []) as Array<{ id: string; bl_value?: string; is_domain?: boolean }>
+    for (const it of items) if (it.bl_value && !it.is_domain) entries.push({ id: it.id, bl_value: it.bl_value.toLowerCase() })
     cursor = j.next_starting_after
     if (!cursor || items.length === 0) break
   }
 
-  // 2. reset DB status so they're live again.
-  const { error: upErr } = await supabase
-    .from('outreach_leads')
-    .update({ status: 'in_instantly_queue' })
-    .eq('status', 'paused_geo')
-  if (upErr) errors.push(`status reset: ${upErr.message}`)
+  // 2. which of those emails are non-enforcement contractors (FL/TX/etc) we pruned
+  const emails = entries.map((e) => e.bl_value)
+  const stateByEmail = new Map<string, string>()
+  for (let i = 0; i < emails.length; i += 200) {
+    const { data } = await supabase.from('outreach_leads').select('email, state').in('email', emails.slice(i, i + 200))
+    for (const r of (data ?? []) as Array<{ email: string; state: string | null }>) {
+      stateByEmail.set(r.email.toLowerCase(), (r.state || '').toLowerCase().trim())
+    }
+  }
+  const toRestore = entries.filter((e) => stateByEmail.has(e.bl_value) && !KEEP_STATES.has(stateByEmail.get(e.bl_value)!))
 
-  return NextResponse.json({
-    ok: true,
-    restored_db: emails.size,
-    unblocked_in_instantly: unblocked,
-    errors,
-    note: unblocked < emails.size ? 'some block-list entries not found via API — they may need manual removal in Instantly UI, OR were already removed' : 'all matched entries removed',
-  })
+  if (!confirm) {
+    return NextResponse.json({
+      ok: true, dry_run: true,
+      blocklist_size: entries.length,
+      would_restore: toRestore.length,
+      sample: toRestore.slice(0, 6).map((e) => ({ email: e.bl_value, state: stateByEmail.get(e.bl_value) })),
+    })
+  }
+
+  let removed = 0
+  const errors: string[] = []
+  for (const e of toRestore) {
+    const dr = await fetch(`${BASE}/block-lists-entries/${e.id}`, { method: 'DELETE', headers: H() })
+    if (dr.ok) {
+      removed++
+      await supabase.from('outreach_leads').update({ status: 'in_instantly_queue' }).eq('email', e.bl_value)
+    } else if (errors.length < 6) {
+      errors.push(`${e.bl_value}: HTTP ${dr.status} ${(await dr.text().catch(() => '')).slice(0, 120)}`)
+    }
+  }
+
+  return NextResponse.json({ ok: true, blocklist_size: entries.length, candidates: toRestore.length, removed, errors })
 }
