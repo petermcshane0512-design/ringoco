@@ -73,7 +73,7 @@ function localClock(tz: string, now: Date): { time: string; in_window: boolean }
   return { time: fmt.format(now), in_window: hour >= 8 && hour < 18 }
 }
 
-type EngagedLead = { email: string; opens: number; clicks: number; replies: number }
+type EngagedLead = { email: string; opens: number; clicks: number; replies: number; lastOpen: string | null }
 type CampaignRow = { name: string; status: string | number | null; sent: number; opens: number; replies: number; clicks: number; bounced: number }
 
 async function fetchInstantly(): Promise<{ campaigns: CampaignRow[]; engaged: EngagedLead[]; sentToday: number | null; openedToday: number | null; error: string | null }> {
@@ -118,13 +118,13 @@ async function fetchInstantly(): Promise<{ campaigns: CampaignRow[]; engaged: En
       const r = await fetch(`${INSTANTLY_BASE}/leads/list`, { method: 'POST', headers, body: JSON.stringify(body) })
       if (!r.ok) break
       const j = await r.json()
-      const batch = (j.items || j.data || []) as Array<{ email?: string; email_open_count?: number; email_click_count?: number; email_reply_count?: number }>
+      const batch = (j.items || j.data || []) as Array<{ email?: string; email_open_count?: number; email_click_count?: number; email_reply_count?: number; timestamp_last_open?: string; timestamp_last_contact?: string }>
       for (const l of batch) {
         const opens = l.email_open_count ?? 0
         const clicks = l.email_click_count ?? 0
         const replies = l.email_reply_count ?? 0
         if (l.email && (opens > 0 || clicks > 0 || replies > 0)) {
-          engaged.push({ email: l.email.toLowerCase(), opens, clicks, replies })
+          engaged.push({ email: l.email.toLowerCase(), opens, clicks, replies, lastOpen: l.timestamp_last_open ?? null })
         }
       }
       cursor = j.next_starting_after as string | undefined
@@ -306,12 +306,14 @@ export async function GET() {
 
   const DAY_MS = 86_400_000
   const rows = unionEmails.map((email) => {
-    const e = engagedByEmail.get(email) ?? { email, opens: 0, clicks: 0, replies: 0 }
+    const e = engagedByEmail.get(email) ?? { email, opens: 0, clicks: 0, replies: 0, lastOpen: null }
     const ol = olByEmail.get(email)
     const pfl = pflByEmail.get(email)
     const freeLeadVisits = pfl?.visit_count ?? 0   // real page clicks (the hot signal)
     const clicks = Math.max(e.clicks, freeLeadVisits)
-    const lastActivity = [pfl?.last_visited_at, ol?.last_opened_at, ol?.report_visit_at]
+    // Instantly's per-lead timestamp_last_open (e.lastOpen) is the real
+    // "last opened" time for email-only openers — our DB doesn't sync it.
+    const lastActivity = [pfl?.last_visited_at, ol?.last_opened_at, ol?.report_visit_at, e.lastOpen]
       .filter(Boolean).sort().pop() ?? null
     const daysSince = lastActivity ? (now.getTime() - new Date(lastActivity).getTime()) / DAY_MS : null
 

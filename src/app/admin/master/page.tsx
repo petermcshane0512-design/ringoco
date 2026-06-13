@@ -305,6 +305,11 @@ function OpenersList({ rows, phones, enriching, copied, onEnrich, onCopy, onDisp
                     {r.local_time && <span style={{ color: r.in_call_window ? '#15803d' : RED, fontWeight: 700 }}> · {r.local_time}{!r.in_call_window && ' ⚠'}</span>}
                   </span>
                 </span>
+                {/* last opened — when they last looked */}
+                <span style={{ textAlign: 'right', whiteSpace: 'nowrap', minWidth: 96 }}>
+                  <span style={{ display: 'block', fontSize: 13, fontWeight: 800, color: INK }}>opened {ago(r.last_activity)}</span>
+                  <span style={{ display: 'block', fontSize: 11, fontWeight: 600, color: MUTED }}>{clockTime(r.last_activity)}</span>
+                </span>
                 {/* phone */}
                 {ph ? (
                   <span style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
