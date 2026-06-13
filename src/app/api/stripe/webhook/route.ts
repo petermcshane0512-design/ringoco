@@ -257,6 +257,14 @@ export async function POST(req: NextRequest) {
     const isPersonalizedCode = /^[A-Z0-9]{1,12}$/.test(creatorCode) && !isLegacyCode
     const validCreatorCode = isLegacyCode || isPersonalizedCode ? creatorCode : null
 
+    // 2026-06-12 — customer-to-customer referral attribution. Separate from
+    // creator codes: this is the BAVG-XXXXXX a paying customer shared via
+    // ?ref=. It must land on profiles.referred_by (NOT referred_by_promo_code)
+    // because recordPendingReferral() below reads referred_by. Without this
+    // the whole referral flywheel silently no-ops in the anon-checkout flow.
+    const referralCodeMeta = (session.metadata?.referral_code || '').toUpperCase().trim()
+    const validReferralCode = /^BAVG-[A-Z0-9]{6}$/.test(referralCodeMeta) ? referralCodeMeta : null
+
     // 2026-06-10 â€” T5 attribution. Read UTM fields off session metadata
     // (set by checkout from /start's cookies). All nullable for direct
     // and organic visitors.
@@ -309,6 +317,7 @@ export async function POST(req: NextRequest) {
         creator_referral_code: validCreatorCode,
         referred_by_promo_code: validCreatorCode,
       } : {}),
+      ...(validReferralCode ? { referred_by: validReferralCode } : {}),
       ...(metaBusinessAddress ? { business_address: metaBusinessAddress } : {}),
       ...(ownerPhoneE164 ? { owner_phone: ownerPhoneE164 } : {}),
       // 2026-06-10 — kill wizard. 4-field /start/area is the whole flow.

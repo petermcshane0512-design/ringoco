@@ -220,8 +220,8 @@ export async function recordPendingReferral(args: {
     try {
       await twilioClient.messages.create({
         body:
-          `ðŸŽ‰ ${newProfile.business_name ?? 'A new contractor'} just signed up using your BellAveGo referral link! ` +
-          `Once they finish their 7-day free trial AND complete their first paid month, your next bill ($${projectedAmount}) is on us.`,
+          `${newProfile.business_name ?? 'A new contractor'} just signed up using your BellAveGo referral link! ` +
+          `Once they complete their first paid month, your next bill ($${projectedAmount}) is on us.`,
         from: process.env.TWILIO_PHONE_NUMBER!,
         to: ref.owner_phone,
       })

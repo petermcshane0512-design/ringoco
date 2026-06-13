@@ -65,6 +65,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             padding: '10px 14px', borderRadius: 8, minHeight: 44, display: 'inline-flex', alignItems: 'center',
             background: '#E8742B', whiteSpace: 'nowrap',
           }}>Buy more leads</Link>
+          <Link href="/dashboard/refer" className="bavg-dash-nav" style={{ ...navLink, color: '#15803D', borderColor: '#BBF7D0', background: '#F0FDF4', fontWeight: 700 }}>💰 Refer</Link>
           <Link href="/dashboard/settings" className="bavg-dash-nav" style={navLink}>Settings</Link>
           <Link href="/dashboard/support" className="bavg-dash-nav" style={navLink}>Support</Link>
           {/* Founder-only — gated by the same ADMIN_EMAILS check as the

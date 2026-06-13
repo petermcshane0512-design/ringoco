@@ -6,6 +6,7 @@ import { LEADS_PER_WEEK, PRICE_MONTHLY_USD } from '@/lib/offer'
 import LeadsWaiting from '@/components/LeadsWaiting'
 import LeadMap from '@/components/LeadMap'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
+import ReferralBanner from '@/components/ReferralBanner'
 
 /**
  * /dashboard/leads — THE dashboard.
@@ -479,6 +480,10 @@ export default function LeadsPage() {
       paddingBottom: 80,
     }}>
       <div style={{ maxWidth: 1024, margin: '0 auto', padding: '20px clamp(14px, 3vw, 28px) 0' }}>
+        {/* Refer-a-shop banner — self-hides for non-active customers (no
+            /api/referrals/me data) and once dismissed. The referral flywheel
+            entry point; full page at /dashboard/refer. */}
+        <ReferralBanner />
         {loading || gate === 'loading' || subActive === null ? (
           <div style={{ padding: 60, textAlign: 'center', color: '#6b7280', fontSize: 13, fontWeight: 600 }}>
             Loading your leads…

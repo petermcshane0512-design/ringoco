@@ -223,10 +223,31 @@ function HomeContent() {
           Peter. Offer card already states $497/mo + book-1-job guarantee.
           Carlos quote was a fake testimonial — legal risk per earlier sweep. */}
 
+      {/* 2026-06-12 — promoted the killer footer line above the offer.
+          Highest-credibility line on the site was buried in footer; up
+          here it pre-frames the close as a competitive necessity, not a
+          purchase. */}
+      <section style={{ padding: '56px clamp(16px, 5vw, 48px) 16px', background: '#FFF8F0', textAlign: 'center' }}>
+        <Reveal>
+          <h2 style={{
+            fontSize: 'clamp(28px, 3.6vw, 44px)', fontWeight: 900,
+            letterSpacing: '-0.03em', lineHeight: 1.1,
+            maxWidth: 880, margin: '0 auto',
+            color: '#0B1F3A',
+          }}>
+            If you don&rsquo;t use AI to find your customers,{' '}
+            <span style={{
+              background: 'linear-gradient(135deg, #FF9D5A 0%, #E8742B 60%, #C84B26 100%)',
+              WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+            }}>your competitors will</span>.
+          </h2>
+        </Reveal>
+      </section>
+
       {/* OFFER STACK — Hormozi grand slam single offer card.
           One price. One guarantee. Risk reversal STACKED (refund + keep
           leads + no clawback). */}
-      <section style={{ padding: '72px clamp(16px, 5vw, 48px)', background: '#FFF8F0' }}>
+      <section style={{ padding: '32px clamp(16px, 5vw, 48px) 72px', background: '#FFF8F0' }}>
         <div style={{ maxWidth: 720, margin: '0 auto' }}>
           <Reveal>
           <h2 style={{ fontSize: 'clamp(26px, 3vw, 38px)', fontWeight: 900, letterSpacing: '-0.03em', margin: '0 0 14px', textAlign: 'center', color: '#0B1F3A' }}>
@@ -347,7 +368,6 @@ function HomeContent() {
       {/* FOOTER */}
       <footer style={{ padding: '32px 24px 70px', background: '#0B1F3A', textAlign: 'center' }}>
         <Image src="/logo.png" alt="BellAveGo" width={260} height={80} style={{ objectFit: 'contain', marginBottom: 12, filter: 'brightness(1.1)' }} />
-        <p style={{ margin: '0 0 6px', fontSize: 13, color: '#7AAAB2', fontStyle: 'italic' }}>If you don’t use AI to find your customers, your competitors will.</p>
         <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Exclusive homeowner lead-gen for HVAC, plumbing, electrical, roofing, and handyman pros · Cancel anytime</p>
         <p style={{ margin: '12px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
           <Link href="/founder" style={{ color: '#FF9D5A', textDecoration: 'none' }}>Founder</Link>

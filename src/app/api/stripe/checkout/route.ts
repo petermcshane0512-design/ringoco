@@ -150,6 +150,15 @@ export async function POST(req: NextRequest) {
   const bizIdFromCookie = (req.cookies.get('bavg_biz_id')?.value || '').slice(0, 64)
   const effectiveBizId = bizIdFromBody || bizIdFromCookie
 
+  // 2026-06-12 — customer-to-customer referral attribution. The `bavg_ref`
+  // cookie (set by middleware on ?ref=BAVG-XXXXXX) is a SEPARATE channel from
+  // creator promo codes: it rewards the REFERRER a free month, gives the
+  // friend NO discount, and must NOT pass through lookupPromoCode (it's an
+  // attribution code, not a Stripe promo). Carried as its own metadata field
+  // so the webhook can set profiles.referred_by → recordPendingReferral.
+  const refCookie = (req.cookies.get('bavg_ref')?.value || '').toUpperCase().trim()
+  const validReferralCode = /^BAVG-[A-Z0-9]{6}$/.test(refCookie) ? refCookie : ''
+
   const subPriceId = priceFor(tier, interval)
   const line_items: { price: string; quantity: number }[] = [
     { price: subPriceId, quantity: 1 },
@@ -175,6 +184,7 @@ export async function POST(req: NextRequest) {
       tier,
       interval,
       creator_code: promoLookup?.attributionCode || '',
+      referral_code: validReferralCode,
       biz_id: effectiveBizId || '',
       territory_zip: zip,
       territory_trade: trade,
@@ -195,6 +205,7 @@ export async function POST(req: NextRequest) {
       tier,
       interval,
       creator_code: promoLookup?.attributionCode || '',
+      referral_code: validReferralCode,
       biz_id: effectiveBizId || '',
       territory_zip: zip,
       territory_trade: trade,

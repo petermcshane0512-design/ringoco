@@ -378,12 +378,21 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
     return { assigned: 0, skipped_reason: 'no_candidates', replenish: replenishInfo }
   }
 
-  // 2026-06-10 — DISTANCE-ASC PRIMARY SORT. Per Peter: "prioritizing all
-  // the leads closer to 0 miles as possible." Compute haversine distance
-  // from the geocoded business address, then sort ascending so the closest
-  // candidates land at the top before any score/sub_trade re-ranking
-  // applies. Leads with no lat/lng (legacy rows) get a sentinel max so they
-  // fall to the bottom but aren't dropped.
+  // 2026-06-12 — ENFORCEMENT-FIRST, then distance. Per Peter ("no air
+  // balls — people who NEED to do jobs or get fined is how we close"),
+  // superseding the 2026-06-10 distance-primary sort: a homeowner under a
+  // city order / fine 3 miles out beats a permit-filed guess next door.
+  // Rank = urgency_tier (1-3) for real enforcement triggers, 9 for
+  // permit/311/aged inference. Distance breaks ties WITHIN a rank, so
+  // delivery is still closest-first among equally-forced homeowners.
+  const enforcementRank = (c: (typeof candidates)[number]): number => {
+    const sd = c.source_details as { trigger_type?: string; urgency_tier?: number | string } | null
+    const t = sd?.trigger_type
+    if (t === 'hearings_case' || t === 'violation' || t === 'failed_inspection') {
+      return Number(sd?.urgency_tier ?? 3)
+    }
+    return 9
+  }
   if (typeof profile.business_lat === 'number' && typeof profile.business_lng === 'number') {
     const bLat = profile.business_lat
     const bLng = profile.business_lng
@@ -394,9 +403,21 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
           : Number.POSITIVE_INFINITY
     }
     candidates.sort((a, b) => {
+      const ra = enforcementRank(a)
+      const rb = enforcementRank(b)
+      if (ra !== rb) return ra - rb
       const da = a._distMi ?? Number.POSITIVE_INFINITY
       const db = b._distMi ?? Number.POSITIVE_INFINITY
       if (da !== db) return da - db
+      return (b.lead_score ?? 0) - (a.lead_score ?? 0)
+    })
+  } else {
+    // No geocoded shop — still enforce tier-first so air-balls never
+    // outrank cited homeowners.
+    candidates.sort((a, b) => {
+      const ra = enforcementRank(a)
+      const rb = enforcementRank(b)
+      if (ra !== rb) return ra - rb
       return (b.lead_score ?? 0) - (a.lead_score ?? 0)
     })
   }
@@ -413,6 +434,11 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
       .filter((s) => s.length >= 3)
     if (subKeywords.length > 0) {
       candidates.sort((a, b) => {
+        // Enforcement rank dominates even the sub-trade boost — a cited
+        // homeowner outranks a keyword-matched permit guess.
+        const ra = enforcementRank(a)
+        const rb = enforcementRank(b)
+        if (ra !== rb) return ra - rb
         const aDetails = (a as CandidateWithDetails).source_details
         const bDetails = (b as CandidateWithDetails).source_details
         const aBlob = `${aDetails?.description ?? ''} ${aDetails?.work_class ?? ''} ${aDetails?.permit_type ?? ''}`.toLowerCase()
@@ -421,6 +447,9 @@ export async function assignLeadsForTenant(profile: ProfileRow): Promise<AssignR
         const bMatch = subKeywords.some((k) => bBlob.includes(k))
         if (aMatch && !bMatch) return -1
         if (bMatch && !aMatch) return 1
+        const da = a._distMi ?? Number.POSITIVE_INFINITY
+        const db = b._distMi ?? Number.POSITIVE_INFINITY
+        if (da !== db) return da - db
         return (b.lead_score ?? 0) - (a.lead_score ?? 0)
       })
     }

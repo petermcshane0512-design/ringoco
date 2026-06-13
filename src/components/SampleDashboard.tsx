@@ -167,24 +167,11 @@ export default function SampleDashboard() {
         </div>
       </div>
 
-      {/* Map — shop pin + 10 numbered lead pins, exactly like the product */}
-      <LeadMap
-        businessLat={SHOP.lat}
-        businessLng={SHOP.lng}
-        leads={leads.map((l, i) => ({
-          id: l.id,
-          lat: l.lat,
-          lng: l.lng,
-          label: String(i + 1),
-          title: `${l.addr}, ${l.area}`,
-          hasPhone: !!l.phone,
-        }))}
-        onPinClick={focusLead}
-      />
-
+      {/* 2026-06-12 per Peter — countdown FIRST, then a bigger map stacked
+          below it (single-column, like the mobile layout). */}
       {/* Countdown card — same copy + format as the real dashboard */}
       <div style={{
-        borderRadius: 12, padding: '13px 16px', margin: '10px 0',
+        borderRadius: 12, padding: '13px 16px', margin: '0 0 12px',
         background: '#ffffff',
         border: '1px solid #E3D8C2',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
@@ -207,6 +194,26 @@ export default function SampleDashboard() {
             <div style={{ fontSize: 10.5, fontWeight: 600, color: '#6b7280' }}>this month</div>
           </div>
         </div>
+      </div>
+
+      {/* Map — shop pin + 10 numbered lead pins, exactly like the product.
+          Taller frame (640x480) than the dashboard's 16:9 so the pinpoint
+          map reads bigger on the homepage hero. */}
+      <div style={{ marginBottom: 12 }}>
+        <LeadMap
+          businessLat={SHOP.lat}
+          businessLng={SHOP.lng}
+          mapH={480}
+          leads={leads.map((l, i) => ({
+            id: l.id,
+            lat: l.lat,
+            lng: l.lng,
+            label: String(i + 1),
+            title: `${l.addr}, ${l.area}`,
+            hasPhone: !!l.phone,
+          }))}
+          onPinClick={focusLead}
+        />
       </div>
 
       {/* This week's leads — same section head + row anatomy as the product */}

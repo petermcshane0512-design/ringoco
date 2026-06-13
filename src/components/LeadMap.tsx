@@ -51,6 +51,8 @@ export default function LeadMap({
   leads,
   onPinClick,
   hideShopPin,
+  mapW = MAP_W,
+  mapH = MAP_H,
 }: {
   businessLat: number
   businessLng: number
@@ -59,8 +61,14 @@ export default function LeadMap({
   // Demo/free-lead mode — center coords come from the lead itself, so the
   // "YOUR SHOP" pin would be a lie. Hide it.
   hideShopPin?: boolean
+  // 2026-06-12 — per-instance frame size. Defaults to the dashboard's 16:9.
+  // The homepage hero passes a taller frame for a bigger map; projection
+  // math uses these same dims so pins stay aligned.
+  mapW?: number
+  mapH?: number
 }) {
   const [hovered, setHovered] = useState<string | null>(null)
+  const W = mapW, H = mapH
 
   const view = useMemo(() => {
     const xs = [mercX(businessLng), ...leads.map((l) => mercX(l.lng))]
@@ -76,13 +84,13 @@ export default function LeadMap({
     let zoom = 16
     for (; zoom > 11; zoom--) {
       const world = 256 * Math.pow(2, zoom)
-      if ((maxX - minX) * world <= MAP_W * FIT && (maxY - minY) * world <= MAP_H * FIT) break
+      if ((maxX - minX) * world <= W * FIT && (maxY - minY) * world <= H * FIT) break
     }
     const world = 256 * Math.pow(2, zoom)
 
     const toPct = (lat: number, lng: number) => ({
-      left: ((mercX(lng) - cx) * world + MAP_W / 2) / MAP_W * 100,
-      top: ((mercY(lat) - cy) * world + MAP_H / 2) / MAP_H * 100,
+      left: ((mercX(lng) - cx) * world + W / 2) / W * 100,
+      top: ((mercY(lat) - cy) * world + H / 2) / H * 100,
     })
 
     return {
@@ -91,9 +99,9 @@ export default function LeadMap({
       centerLng: cx * 360 - 180,
       toPct,
     }
-  }, [businessLat, businessLng, leads])
+  }, [businessLat, businessLng, leads, W, H])
 
-  const src = `/api/google-static-map?center=${view.centerLat.toFixed(6)},${view.centerLng.toFixed(6)}&zoom=${view.zoom}&size=${MAP_W}x${MAP_H}&scale=2`
+  const src = `/api/google-static-map?center=${view.centerLat.toFixed(6)},${view.centerLng.toFixed(6)}&zoom=${view.zoom}&size=${W}x${H}&scale=2`
   const biz = view.toPct(businessLat, businessLng)
 
   return (
@@ -103,7 +111,7 @@ export default function LeadMap({
       overflow: 'hidden',
       border: '1px solid #E3D8C2',
       boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-      aspectRatio: `${MAP_W} / ${MAP_H}`,
+      aspectRatio: `${W} / ${H}`,
       background: '#EDE3CD',
     }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
