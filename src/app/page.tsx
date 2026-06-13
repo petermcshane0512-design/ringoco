@@ -13,6 +13,7 @@ import OpportunityChecker from '@/components/OpportunityChecker'
 import ScoutTeam from '@/components/ScoutTeam'
 import LiveLeadFeed from '@/components/LiveLeadFeed'
 import Reveal from '@/components/Reveal'
+import Testimonials from '@/components/Testimonials'
 
 /**
  * Homepage — 2026-06-09 Hormozi/Elon CLOSE STACK for $10M ARR by May 12 2027.
@@ -222,6 +223,12 @@ function HomeContent() {
       {/* MATH stat bar + Carlos case-study quote deleted 2026-06-09 per
           Peter. Offer card already states $497/mo + book-1-job guarantee.
           Carlos quote was a fake testimonial — legal risk per earlier sweep. */}
+
+      {/* 2026-06-13 — Testimonials row (founding cohort, 3 contractors).
+          Hormozi: social proof closest to the ask. Sits above the killer
+          line + offer card so visitors see real-shop outcomes before the
+          price reveal. */}
+      <Testimonials />
 
       {/* 2026-06-12 — promoted the killer footer line above the offer.
           Highest-credibility line on the site was buried in footer; up
