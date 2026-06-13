@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -292,11 +293,16 @@ async function runOne(src: EnforcementSource, dry: boolean): Promise<{
 }
 
 export async function GET(req: NextRequest) {
+  // Triple auth: Vercel cron header (scheduled runs) OR x-admin-secret (curl
+  // / CI / manual trigger from a script) OR Clerk admin session (Peter hits
+  // the URL in browser to trigger the first ingest before the 4am cron).
   const isCron = req.headers.get('x-vercel-cron') === '1'
   const adminSecret = req.headers.get('x-admin-secret')
   const expected = process.env.ADMIN_API_SECRET
-  if (!isCron && (!expected || adminSecret !== expected)) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  const hasSecret = !!expected && adminSecret === expected
+  if (!isCron && !hasSecret) {
+    const gate = await requireAdmin()
+    if (!gate.ok) return gate.res
   }
 
   const url = new URL(req.url)
