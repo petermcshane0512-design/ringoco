@@ -363,6 +363,16 @@ export async function GET() {
     .slice(0, 50)
   const ledger = rows.sort((a, b) => b.score - a.score)
 
+  // 2026-06-13 per Peter — a straight call-down list of EVERY contractor who
+  // opened, ranked by open count, so he can dial top-to-bottom. Includes the
+  // low-score openers the call_queue (score>=40) hides. Each carries phone +
+  // disposition so a dialed row drops off. NOTE: open_count is cumulative
+  // (all-time, not today) and bot/proxy-inflated — a 40+-open row is usually a
+  // corporate mail gateway, not a hot human. Real interest still = CLICKERS.
+  const openers = rows
+    .filter((r) => r.opens > 0 && !r.dispositioned && r.stage !== 'PAID')
+    .sort((a, b) => b.opens - a.opens || (b.last_activity ?? '').localeCompare(a.last_activity ?? ''))
+
   // ── LEADS PULSE ──────────────────────────────────────────────────────
   const [inventoryTotal, inventoryEnforcement, dropsWeek] = await Promise.all([
     countWhere('leads', (q) => q.neq('source', 'aging_hvac')),
@@ -373,6 +383,7 @@ export async function GET() {
   return NextResponse.json({
     asOf: now.toISOString(),
     call_queue,
+    openers,
     ledger,
     revenue: {
       paying_customers: paying.length,

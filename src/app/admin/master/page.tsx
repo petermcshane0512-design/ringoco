@@ -32,6 +32,7 @@ type Row = {
 type Master = {
   asOf: string
   ledger: Row[]
+  openers: Row[]
   outreach: { sent_today: number | null; opened_today: number | null }
 }
 
@@ -242,10 +243,100 @@ export default function MasterPage() {
         </div>
       )}
 
+      {/* ── ALL OPENERS — straight call-down list ── */}
+      <OpenersList
+        rows={(data.openers ?? []).filter((r) => !hidden.has(r.email))}
+        phones={phones} enriching={enriching} copied={copied}
+        onEnrich={enrichPhone} onCopy={copyPhone} onDisposition={disposition}
+      />
+
       {/* ── METRICS / CONNECTORS strip (below the board) ── */}
       {conn && <MetricsStrip conn={conn} />}
     </Shell>
   )
+}
+
+function OpenersList({ rows, phones, enriching, copied, onEnrich, onCopy, onDisposition }: {
+  rows: Row[]
+  phones: Record<string, string>
+  enriching: Set<string>
+  copied: string | null
+  onEnrich: (email: string) => void
+  onCopy: (p: string) => void
+  onDisposition: (email: string, action: string) => void
+}) {
+  return (
+    <div style={{ marginTop: 32, borderTop: '1px solid #E3D8C2', paddingTop: 18 }}>
+      <h2 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 900, color: INK, letterSpacing: '-0.02em' }}>
+        Everyone who opened — call down the list ({rows.length})
+      </h2>
+      <div style={{ fontSize: 12, color: MUTED, fontWeight: 600, marginBottom: 12 }}>
+        Ranked by # of opens (all-time). ⚠ High open counts (40+) are usually mail-gateway bots, not hot humans — real intent = CLICKERS up top. Dial top-to-bottom, hit Called/No&nbsp;Answer to clear a row.
+      </div>
+      {rows.length === 0 ? (
+        <div style={{ fontSize: 13.5, color: MUTED, fontWeight: 600 }}>No opens recorded yet.</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {rows.map((r, i) => {
+            const ph = r.phone || phones[r.email]
+            const botish = r.opens >= 40
+            return (
+              <div key={r.email} style={{
+                display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+                background: '#fff', border: '1px solid #E3D8C2', borderRadius: 10, padding: '10px 14px',
+              }}>
+                <span style={{ fontSize: 13, fontWeight: 800, color: MUTED, width: 22, textAlign: 'right' }}>{i + 1}</span>
+                {/* opens badge */}
+                <span style={{
+                  padding: '3px 9px', borderRadius: 7, fontSize: 12.5, fontWeight: 900, whiteSpace: 'nowrap',
+                  background: botish ? '#f3f4f6' : '#ecfdf5', color: botish ? MUTED : '#15803d',
+                }} title={botish ? 'likely bot/gateway' : ''}>{r.opens}× open{r.opens === 1 ? '' : 's'}{botish ? ' 🤖' : ''}</span>
+                {r.clicks > 0 && (
+                  <span style={{ padding: '3px 9px', borderRadius: 7, fontSize: 12.5, fontWeight: 900, background: '#fffbeb', color: AMBER, whiteSpace: 'nowrap' }}>👀 {r.clicks} click{r.clicks === 1 ? '' : 's'}</span>
+                )}
+                {r.replies > 0 && (
+                  <span style={{ padding: '3px 9px', borderRadius: 7, fontSize: 12.5, fontWeight: 900, background: '#fef2f2', color: RED, whiteSpace: 'nowrap' }}>🔥 replied</span>
+                )}
+                {/* business + email */}
+                <span style={{ flex: '1 1 200px', minWidth: 160 }}>
+                  <span style={{ display: 'block', fontSize: 15, fontWeight: 800, color: INK, lineHeight: 1.15 }}>{r.business || r.email.split('@')[0]}</span>
+                  <span style={{ display: 'block', fontSize: 11.5, color: MUTED }}>
+                    {[r.city, r.state].filter(Boolean).join(', ') || 'location unknown'}
+                    {r.local_time && <span style={{ color: r.in_call_window ? '#15803d' : RED, fontWeight: 700 }}> · {r.local_time}{!r.in_call_window && ' ⚠'}</span>}
+                  </span>
+                </span>
+                {/* phone */}
+                {ph ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+                    <a href={`tel:${ph}`} style={{ fontSize: 17, fontWeight: 900, color: ORANGE, textDecoration: 'none' }}>{ph}</a>
+                    <button onClick={() => onCopy(ph)} title="copy" style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, padding: 2 }}>{copied === ph ? '✓' : '⧉'}</button>
+                  </span>
+                ) : (
+                  <button onClick={() => onEnrich(r.email)} disabled={enriching.has(r.email)} style={{
+                    padding: '6px 12px', borderRadius: 7, fontSize: 12.5, fontWeight: 800, whiteSpace: 'nowrap',
+                    cursor: enriching.has(r.email) ? 'wait' : 'pointer', border: `2px solid ${ORANGE}`, background: '#fff', color: ORANGE,
+                  }}>{enriching.has(r.email) ? 'getting…' : '📞 get #'}</button>
+                )}
+                {/* clear buttons */}
+                <span style={{ display: 'flex', gap: 5 }}>
+                  <button onClick={() => onDisposition(r.email, 'called')} style={clearBtn('#fff', '#374151')}>Called</button>
+                  <button onClick={() => onDisposition(r.email, 'no_answer')} style={clearBtn('#fff', '#374151')}>No&nbsp;Ans</button>
+                  <button onClick={() => onDisposition(r.email, 'booked_call')} style={clearBtn('#15803d', '#fff')}>BOOKED</button>
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function clearBtn(bg: string, color: string): React.CSSProperties {
+  return {
+    padding: '7px 10px', borderRadius: 7, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+    border: `1px solid ${bg === '#15803d' ? '#15803d' : '#D3C5A9'}`, background: bg, color, whiteSpace: 'nowrap',
+  }
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
