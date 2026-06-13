@@ -179,9 +179,21 @@ export async function POST(req: NextRequest) {
   if (existing.error) {
     return NextResponse.json({ ok: false, error: 'lookup failed' }, { status: 500 })
   }
-  const row = existing.data as Record<string, unknown> | null
+  let row = existing.data as Record<string, unknown> | null
   if (!row) {
-    return NextResponse.json({ ok: false, error: 'prospect not found' }, { status: 404 })
+    // 2026-06-13 per Peter — a link must NEVER 404. If the biz_id has no
+    // prospect_free_leads row (loaded by a path that didn't pre-create one,
+    // or a stale link), create a minimal row ON THE FLY and proceed. The
+    // pool query below widens to a real cited homeowner even without a
+    // city/trade hint, so the click still reveals a real lead instead of a
+    // dead "prospect not found." City-matched rows are pre-seeded elsewhere;
+    // this is the safety net that kills the broken-link class of bug.
+    const { data: created } = await supabase
+      .from('prospect_free_leads')
+      .upsert({ biz_id: bizId, trade: 'hvac', source_batch: 'autocreate_on_click' }, { onConflict: 'biz_id' })
+      .select('*')
+      .maybeSingle()
+    row = (created as Record<string, unknown> | null) ?? { biz_id: bizId, trade: 'hvac' }
   }
 
   // 2026-06-10 — hot-lead-call pivot. Every legitimate human POST (i.e.
