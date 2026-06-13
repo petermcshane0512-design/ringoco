@@ -163,6 +163,37 @@ async function scrapeCity(city: string, targetCount: number, tradeKeywords: stri
 }
 
 /**
+ * 2026-06-13 — per-zip targeting (path-to-450/day). Instead of searching
+ * "masonry Chicago, IL" (which returns the same 25 popular Chicago shops
+ * every time and the dedup against existing outreach_leads kills 90%+),
+ * we search "masonry 60619" / "masonry 60617" / ... — each zip returns a
+ * different 15-25 small shops. 10 zips × 3 trades × 15 = 450 raw per call,
+ * post-dedup yield = ~150-200 NEW contractors per run. Twice-daily cron
+ * = 300-450 new contractors / day. Hits the 450 target.
+ *
+ * Apify Google Maps actor accepts up to 50 search strings per call.
+ * 10 zips × 3 trades = 30 strings — fits with headroom.
+ */
+async function scrapeZips(zips: Array<{ zip: string; city: string; state: string }>, tradeKeywords: string[]): Promise<MapsItem[]> {
+  const searchStrings = zips.flatMap((z) =>
+    tradeKeywords.map((kw) => `${kw} contractor ${z.zip}`)
+  )
+  console.log(`[refill] scraping ${zips.length} zips × ${tradeKeywords.length} trades = ${searchStrings.length} Apify searches`)
+  const items = await apifyRunSync<MapsItem>(APIFY_MAPS_ACTOR, {
+    searchStringsArray: searchStrings,
+    maxCrawledPlacesPerSearch: 15,
+    language: 'en',
+    countryCode: 'us',
+    skipClosedPlaces: true,
+    onlyDataFromSearchPage: true,
+    includeWebResults: false,
+  }, 270_000)
+  const filtered = items.filter(passesSoloOrSmallCrewFilter)
+  console.log(`[refill] zip-scrape: ${items.length} raw → ${filtered.length} pass 1-3 person crew filter`)
+  return filtered
+}
+
+/**
  * Normalize any URL to its bare hostname ("https://www.acme.com/contact"
  * → "acme.com"). The contact actor reports the PAGE it found each email
  * on (often /contact or /about), not the start URL — exact-URL matching
@@ -228,37 +259,30 @@ export async function GET(req: NextRequest) {
     .select('zip, city, state')
     .eq('run_date', today)
     .order('rank', { ascending: true })
-    .limit(50)
+    .limit(10)  // Apify cap = 30 searches per call (10 zips × 3 trades)
 
-  // Build the list of search locations. Prefer "city, state" combined with
-  // their top zips so Apify Google Maps narrows in. If no targets today,
-  // fall back to the bare metro list.
+  // Decide path. If algorithm wrote zip targets today, do per-zip search
+  // (fine-grained, high NET-new yield). Otherwise fall back to broad
+  // city-level search (legacy behavior).
+  let usedSource: 'daily_zip_targets_zips' | 'daily_zip_targets_cities' | 'static_fallback' = 'static_fallback'
+  let zipMode: Array<{ zip: string; city: string; state: string }> = []
   let citiesToScrape: string[] = []
-  let usedSource: 'daily_zip_targets' | 'static_fallback' = 'static_fallback'
   if (zipTargets && zipTargets.length > 0) {
-    usedSource = 'daily_zip_targets'
-    const byCity = new Map<string, string[]>()
-    for (const t of zipTargets as Array<{ zip: string; city: string | null; state: string | null }>) {
-      const key = t.city && t.state ? `${t.city}, ${t.state}` : null
-      if (!key) continue
-      if (!byCity.has(key)) byCity.set(key, [])
-      byCity.get(key)!.push(t.zip)
-    }
-    citiesToScrape = [...byCity.keys()]
+    usedSource = 'daily_zip_targets_zips'
+    zipMode = (zipTargets as Array<{ zip: string; city: string | null; state: string | null }>)
+      .filter((t) => t.zip && t.city && t.state)
+      .map((t) => ({ zip: t.zip, city: t.city!, state: t.state! }))
   }
-  if (citiesToScrape.length === 0) {
+  if (zipMode.length === 0) {
     citiesToScrape = ENFORCEMENT_METROS
   }
 
-  // ?city= still works for ad-hoc runs but only if it's a metro we have
-  // data for today or in the static fallback.
+  // ?city= forces legacy city-level path even when zip targets exist.
   const singleCity = url.searchParams.get('city')
   if (singleCity) {
-    const match = citiesToScrape.find((c) => c.toLowerCase().startsWith(singleCity.toLowerCase().slice(0, 5)))
-    if (!match) {
-      return NextResponse.json({ ok: false, error: `${singleCity} has no enforcement data — refill targets ${citiesToScrape.join(', ')}` }, { status: 400 })
-    }
-    citiesToScrape = [match]
+    zipMode = []  // override per-zip path
+    citiesToScrape = [singleCity]
+    usedSource = 'static_fallback'
   }
 
   // Optional ?trades=plumbing,roofing override (default = top 3 by yield)
@@ -277,10 +301,20 @@ export async function GET(req: NextRequest) {
   const errors: string[] = []
   const cityResults: Array<{ city: string; raw: number; passed_icp: number; verified: number; inserted: number }> = []
 
-  for (const city of citiesToScrape) {
+  // Build the work list — per-zip mode gives 10 entries (the 10 hottest
+  // zips today), legacy city mode gives 1-3 metro entries.
+  type ScrapeBatch = { label: string; places: Promise<MapsItem[]> }
+  const batches: ScrapeBatch[] = zipMode.length > 0
+    ? [{
+        label: `zip-targets (${zipMode.length} zips × ${tradeKeywords.length} trades)`,
+        places: scrapeZips(zipMode, tradeKeywords),
+      }]
+    : citiesToScrape.map((c) => ({ label: c, places: scrapeCity(c, perCityScrapeTarget, tradeKeywords) }))
+
+  for (const batch of batches) {
     try {
-      const places = await scrapeCity(city, perCityScrapeTarget, tradeKeywords)
-      const websites = [...new Set(places.map((p) => p.website!).filter(Boolean))].slice(0, 120)
+      const places = await batch.places
+      const websites = [...new Set(places.map((p) => p.website!).filter(Boolean))].slice(0, 450)
       const emails = await enrichEmails(websites)
       let cityCount = 0
       let cityVerified = 0
@@ -297,8 +331,8 @@ export async function GET(req: NextRequest) {
         const row = {
           email,
           business_name: p.title?.slice(0, 200) || null,
-          city: p.city || city.split(',')[0]?.trim() || null,
-          state: p.state || city.split(',')[1]?.trim() || null,
+          city: p.city || null,
+          state: p.state || null,
           trade,
           status: 'queued' as const,
           owner_phone: p.phone || null,
@@ -307,10 +341,10 @@ export async function GET(req: NextRequest) {
         if (!error) { inserted.push(email); cityCount++ }
         // UNIQUE(email) violations silently dropped (dedup behavior)
       }
-      cityResults.push({ city, raw: places.length, passed_icp: places.length, verified: cityVerified, inserted: cityCount, websites: websites.length, emails_found: emails.size } as never)
-      console.log(`[refill] ${city}: raw=${places.length}, verified=${cityVerified}, inserted=${cityCount}, dropped=${cityDropped}`)
+      cityResults.push({ city: batch.label, raw: places.length, passed_icp: places.length, verified: cityVerified, inserted: cityCount, websites: websites.length, emails_found: emails.size } as never)
+      console.log(`[refill] ${batch.label}: raw=${places.length}, verified=${cityVerified}, inserted=${cityCount}, dropped=${cityDropped}`)
     } catch (e) {
-      errors.push(`${city}: ${(e as Error).message}`)
+      errors.push(`${batch.label}: ${(e as Error).message}`)
     }
   }
 
@@ -318,7 +352,9 @@ export async function GET(req: NextRequest) {
     ok: true,
     source: usedSource,
     trades: tradeKeywords,
-    cities_scraped: citiesToScrape,
+    cities_scraped: zipMode.length > 0
+      ? zipMode.map((z) => `${z.zip} (${z.city}, ${z.state})`)
+      : citiesToScrape,
     inserted_count: inserted.length,
     per_city: cityResults,
     errors,
