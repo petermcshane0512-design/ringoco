@@ -807,7 +807,7 @@ export async function POST(req: NextRequest) {
     if (customerId) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('user_id, is_active, plan_tier, creator_referral_code, referred_by_promo_code, first_paid_charge_at, second_paid_charge_at')
+        .select('user_id, email, is_active, plan_tier, creator_referral_code, referred_by_promo_code, first_paid_charge_at, second_paid_charge_at')
         .eq('stripe_customer_id', customerId)
         .maybeSingle()
 
@@ -837,6 +837,34 @@ export async function POST(req: NextRequest) {
           }
         } catch (e) {
           console.error('[retention] first/second_paid stamp failed:', e)
+        }
+
+        // 2026-06-13 — wire real revenue into Instantly conversion analytics
+        // so the campaign dashboard shows only the actual amounts paid
+        // ($97 first month, $497 monthly thereafter) and never the stale
+        // pre-pivot $147 opportunity placeholder. Best-effort — never
+        // blocks the webhook on Instantly API failure.
+        try {
+          const { markInstantlyConversion } = await import('@/lib/instantlyConversion')
+          const profileEmail = (profile as { email?: string | null } | null)?.email || ''
+          const customerEmail = (profileEmail || invoice.customer_email || '').toLowerCase()
+          if (customerEmail) {
+            const referredPromo = (profile as { referred_by_promo_code?: string | null } | null)?.referred_by_promo_code || ''
+            const creatorRefCode = (profile as { creator_referral_code?: string | null } | null)?.creator_referral_code || ''
+            const result = await markInstantlyConversion({
+              email: customerEmail,
+              amountCents: invoice.amount_paid,
+              promoCode: referredPromo || creatorRefCode,
+              isFirstPaid: !hadFirstPaidBefore,
+            })
+            if (result.ok) {
+              console.log(`[instantly-conv] marked ${customerEmail} as customer ($${invoice.amount_paid / 100})`)
+            } else {
+              console.warn(`[instantly-conv] skipped ${customerEmail}: ${result.reason}`)
+            }
+          }
+        } catch (e) {
+          console.error('[instantly-conv] threw (non-blocking):', e)
         }
       }
 

@@ -222,6 +222,17 @@ export async function GET(req: NextRequest) {
   // Override with ?limit=N for manual loads.
   const limit = parseInt(url.searchParams.get('limit') ?? '240', 10)
   const dryRun = url.searchParams.get('dry') === '1'
+  // 2026-06-13 — VOLUME PUSH. The nightly cron pulls only status='queued',
+  // but valid-email leads sit stranded in 'sourced'/'loaded_enforcement' too.
+  // ?statuses=queued,sourced,loaded_enforcement pulls them all. Junk-email
+  // rows (the scraper wrote GPS coords like "/@32.88" into email) are
+  // hard-filtered below so they never load / bounce.
+  const statusList = (url.searchParams.get('statuses') ?? 'queued')
+    .split(',').map((s) => s.trim()).filter(Boolean)
+  // Real email: local@domain.tld where tld is 2+ LETTERS (rejects coord junk
+  // that ends in digits, and bare-IP domains).
+  const isRealEmail = (e: string | null): boolean =>
+    !!e && /^[^\s@/+][^\s@]*@[^\s@]+\.[a-z]{2,}$/i.test(e.trim()) && /[a-z]/i.test(e.split('@')[0] ?? '')
 
   // Pull ICP-qualified leads ready for Instantly. Filter:
   //   - status='queued' (not yet sent OR loaded into Instantly)
@@ -238,33 +249,38 @@ export async function GET(req: NextRequest) {
   // Always order by young_owner_score DESC so the freshest young leads
   // go out first every day. Algorithm learns from conversion data which
   // buckets actually convert — adjust scoring weights iteratively.
-  const { data: leads, error } = await supabase
+  const { data: rawLeads, error } = await supabase
     .from('outreach_leads')
     // 2026-06-12 — `personalized_opener` REMOVED: the column doesn't exist
     // on outreach_leads, so this SELECT errored and auto-load loaded ZERO
     // leads (the queue piled to 385 unsent). The template var falls back to
     // empty. sample_lead_snippet stays (it exists).
     .select('id, email, business_name, owner_first_name, city, state, trade, young_owner_score, sample_lead_snippet')
-    .eq('status', 'queued')
+    .in('status', statusList)
     .not('email', 'is', null)
     // 2026-06-09 — opened up to all home-service trades, not just HVAC,
     // per trade-expansion plan + FL batch loaded today
     .not('trade', 'is', null)
     .order('young_owner_score', { ascending: false, nullsFirst: false })
     .order('pushed_at', { ascending: true })
-    .limit(limit)
+    .limit(Math.max(limit * 6, 1200))   // over-fetch; junk gets filtered out below
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  // Drop GPS-coord / malformed "emails" the scraper wrote, then cap at limit.
+  const leads = (rawLeads ?? []).filter((l) => isRealEmail(l.email as string | null)).slice(0, limit)
+  const junkSkipped = (rawLeads ?? []).length - (rawLeads ?? []).filter((l) => isRealEmail(l.email as string | null)).length
   if (!leads || leads.length === 0) {
-    return NextResponse.json({ ok: true, loaded: 0, message: 'queue empty' })
+    return NextResponse.json({ ok: true, loaded: 0, message: 'queue empty (after junk filter)', junk_skipped: junkSkipped, statuses: statusList })
   }
 
   if (dryRun) {
     return NextResponse.json({
       ok: true,
       dry: true,
+      statuses: statusList,
       would_push: leads.length,
-      sample: leads.slice(0, 5),
+      junk_skipped: junkSkipped,
+      sample: leads.slice(0, 8).map((l) => ({ business_name: l.business_name, email: l.email, state: l.state, trade: l.trade })),
     })
   }
 
@@ -306,7 +322,9 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     ok: true,
+    statuses: statusList,
     pulled: leads.length,
+    junk_skipped: junkSkipped,
     loaded: ok,
     failed,
     campaign_id: CAMPAIGN_ID,
