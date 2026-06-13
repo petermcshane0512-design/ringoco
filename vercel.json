@@ -187,6 +187,9 @@
     },
     "src/app/api/crons/refill-outreach-queue/route.ts": {
       "maxDuration": 300
+    },
+    "src/app/api/crons/auto-load-instantly/route.ts": {
+      "maxDuration": 300
     }
   }
 }

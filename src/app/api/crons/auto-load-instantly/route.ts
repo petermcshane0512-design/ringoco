@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { createHash } from 'crypto'
 
 export const runtime = 'nodejs'
-export const maxDuration = 60
+export const maxDuration = 300
 
 /**
  * Deterministic biz_id for the /free-lead landing — MUST match the algo in
@@ -227,7 +227,10 @@ export async function GET(req: NextRequest) {
   // ?statuses=queued,sourced,loaded_enforcement pulls them all. Junk-email
   // rows (the scraper wrote GPS coords like "/@32.88" into email) are
   // hard-filtered below so they never load / bounce.
-  const statusList = (url.searchParams.get('statuses') ?? 'queued')
+  // Default now pulls ALL not-yet-loaded statuses (was 'queued' only, which
+  // stranded valid leads sitting in sourced/loaded_enforcement). Override with
+  // ?statuses=... for a narrower load.
+  const statusList = (url.searchParams.get('statuses') ?? 'queued,sourced,loaded_enforcement')
     .split(',').map((s) => s.trim()).filter(Boolean)
   // Real email: local@domain.tld where tld is 2+ LETTERS (rejects coord junk
   // that ends in digits, and bare-IP domains).
@@ -299,25 +302,29 @@ export async function GET(req: NextRequest) {
     return preview
   }
 
-  // Sequential with light pause — Instantly API throttle floor is ~10/sec.
-  // 240 leads at 200ms = ~50 sec total, within maxDuration.
-  for (const lead of leads as Lead[]) {
-    const leadsPreview = await getPreview(lead.state, lead.trade)
-    const res = await pushLead(lead, leadsPreview)
-    if (res.ok) {
-      ok++
-      await supabase
-        .from('outreach_leads')
-        .update({
-          status: 'in_instantly_queue',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', lead.id)
-    } else {
-      failed++
-      if (errors.length < 10) errors.push({ email: lead.email, error: res.error || '?' })
-    }
-    await new Promise((r) => setTimeout(r, 200))
+  // 2026-06-13 — BATCHED parallel push (was sequential @200ms = ~50 leads in
+  // the old 60s cap, which STRANDED big drops). Instantly's throttle floor is
+  // ~10/sec; 5 concurrent + a 250ms inter-batch pause stays under it while
+  // pushing ~300-500 leads inside the now-300s window. This is what lets a
+  // full overnight agent drop load in ONE run instead of leaking across days.
+  const CONCURRENCY = 5
+  for (let i = 0; i < leads.length; i += CONCURRENCY) {
+    const slice = (leads as Lead[]).slice(i, i + CONCURRENCY)
+    await Promise.all(slice.map(async (lead) => {
+      const leadsPreview = await getPreview(lead.state, lead.trade)
+      const res = await pushLead(lead, leadsPreview)
+      if (res.ok) {
+        ok++
+        await supabase
+          .from('outreach_leads')
+          .update({ status: 'in_instantly_queue', updated_at: new Date().toISOString() })
+          .eq('id', lead.id)
+      } else {
+        failed++
+        if (errors.length < 10) errors.push({ email: lead.email, error: res.error || '?' })
+      }
+    }))
+    await new Promise((r) => setTimeout(r, 250))
   }
 
   return NextResponse.json({
