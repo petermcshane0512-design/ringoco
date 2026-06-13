@@ -211,11 +211,13 @@ function normalize(rec: RawRecord, src: EnforcementSource): {
   const m = src.field_map
   const street = toStr(tryFields(rec, m.address, ADDRESS_FALLBACKS))
   const rawZip = toStr(tryFields(rec, m.zip, ZIP_FALLBACKS))
-  const zip = rawZip ? rawZip.replace(/\D/g, '').slice(0, 5) : null
+  const zip = rawZip && rawZip.length >= 5 ? rawZip.replace(/\D/g, '').slice(0, 5) : null
   const lat = toNum(tryFields(rec, m.lat, LAT_FALLBACKS))
   const lng = toNum(tryFields(rec, m.lng, LNG_FALLBACKS))
   const violation = toStr(tryFields(rec, m.violation, VIOL_FALLBACKS)) || ''
-  if (!street || !zip || zip.length < 5) return null
+  // Require address. zip is allowed null — runOne will backfill from
+  // lat/lng for cities like Chicago that don't return zip in the API.
+  if (!street) return null
 
   return {
     street_address: street,
@@ -236,6 +238,51 @@ function normalize(rec: RawRecord, src: EnforcementSource): {
   }
 }
 
+/**
+ * Cache for lat/lng → zip lookups. Each registry run reuses the cache so
+ * the 1000 Chicago records with similar coordinates don't trigger 1000
+ * separate DB queries. Key = "lat3.lng3" (3-decimal precision = ~111m
+ * grid). Reset per cron invocation.
+ */
+type LatLng = { lat: number; lng: number; zip: string }
+const ZIP_CACHE = new Map<string, string>()
+
+async function nearestZip(lat: number, lng: number): Promise<string | null> {
+  const key = `${lat.toFixed(3)}_${lng.toFixed(3)}`
+  const cached = ZIP_CACHE.get(key)
+  if (cached !== undefined) return cached || null
+
+  // PostGIS would be ideal but zip_centroids is a plain table. We pull a
+  // bounding-box subset (1° lat × 1° lng ≈ 110km × ~78km at mid-latitudes
+  // = covers any nearby zip with margin) then haversine in JS to pick the
+  // nearest. ~30-100 candidates per query — fast.
+  const latMin = lat - 1, latMax = lat + 1
+  const lngMin = lng - 1, lngMax = lng + 1
+  const { data } = await supabase
+    .from('zip_centroids')
+    .select('zip, lat, lng')
+    .gte('lat', latMin).lte('lat', latMax)
+    .gte('lng', lngMin).lte('lng', lngMax)
+    .limit(500)
+
+  if (!data || data.length === 0) {
+    ZIP_CACHE.set(key, '')
+    return null
+  }
+
+  let bestZip = ''
+  let bestDist = Infinity
+  for (const row of data as LatLng[]) {
+    const dLat = (row.lat - lat) * (Math.PI / 180)
+    const dLng = (row.lng - lng) * (Math.PI / 180)
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat * Math.PI / 180) * Math.cos(row.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2
+    const dist = Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    if (dist < bestDist) { bestDist = dist; bestZip = row.zip }
+  }
+  ZIP_CACHE.set(key, bestZip)
+  return bestZip || null
+}
+
 async function runOne(src: EnforcementSource, dry: boolean): Promise<{
   source_id: number
   city: string
@@ -250,6 +297,19 @@ async function runOne(src: EnforcementSource, dry: boolean): Promise<{
       .map((r) => normalize(r, src))
       .filter((x): x is NonNullable<typeof x> => x !== null)
       .slice(0, src.max_per_run)
+
+    // Backfill zip from lat/lng for records that have coordinates but no
+    // zip in the response (Chicago, Baltimore, Detroit, Cleveland,
+    // Minneapolis all return lat/lng without an explicit zip field).
+    for (const n of normalized) {
+      if (!n.zip && n.lat != null && n.lng != null) {
+        const z = await nearestZip(n.lat, n.lng)
+        if (z) n.zip = z
+      }
+    }
+    // Re-filter — drop any whose zip still null after the lat/lng lookup.
+    const withZip = normalized.filter((n) => n.zip)
+    const droppedNoZip = normalized.length - withZip.length
 
     const skippedNoAddress = raw.length - normalized.length
 
@@ -268,12 +328,12 @@ async function runOne(src: EnforcementSource, dry: boolean): Promise<{
     }
 
     let inserted = 0
-    if (normalized.length > 0) {
-      // Upsert into leads. Unique key (source, street_address, zip) prevents
-      // re-inserting the same violation on tomorrow's run. Onlu set source =
-      // 'enforcement' so existing per-city crons that use different source
-      // strings (e.g. 'permit') don't conflict.
-      const rows = normalized.map((n) => ({
+    if (withZip.length > 0) {
+      // Insert only rows that have a usable zip (either from API or backfilled
+      // from lat/lng → zip_centroids). source='enforcement' so this universal
+      // ingest doesn't conflict with existing per-city crons that use
+      // city-specific source strings (e.g. 'chicago_enforcement').
+      const rows = withZip.map((n) => ({
         source: 'enforcement',
         zip: n.zip,
         street_address: n.street_address,
@@ -335,17 +395,24 @@ async function runOne(src: EnforcementSource, dry: boolean): Promise<{
     }
   } catch (e) {
     const msg = (e as Error).message
-    await supabase.from('enforcement_sources').update({
+    // Self-pause endpoints that 4xx — the URL is dead, no point retrying
+    // every night. Peter manually flips back to 'active' once the URL is
+    // updated. Keeps the nightly run from burning HTTP requests on dead
+    // sources + cleans up the by_city output.
+    const is4xx = /HTTP 4\d\d/.test(msg)
+    const update: Record<string, unknown> = {
       last_run_at: new Date().toISOString(),
       last_error: msg.slice(0, 1000),
-    }).eq('id', src.id)
+    }
+    if (is4xx) update.status = 'broken'
+    await supabase.from('enforcement_sources').update(update).eq('id', src.id)
     return {
       source_id: src.id,
       city: src.city,
       fetched: 0,
       inserted: 0,
       skipped_no_address: 0,
-      error: msg,
+      error: is4xx ? `${msg.slice(0, 100)} — auto-paused as 'broken'` : msg,
     }
   }
 }
