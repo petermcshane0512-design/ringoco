@@ -46,6 +46,32 @@ export async function GET() {
     out.daily_rows = rows
   } catch (e) { out.daily_error = (e as Error).message }
 
+  // 2b. sending accounts (inboxes) — warmup + daily limit per inbox is the
+  // usual reason daily sends plateau below the campaign cap.
+  try {
+    const r = await fetch(`${BASE}/accounts?limit=100`, { headers })
+    const j = await r.json() as { items?: Array<Record<string, unknown>> }
+    const items = j.items ?? []
+    out.accounts_status = r.status
+    out.accounts_total = items.length
+    let warming = 0, active = 0, paused = 0, dailySum = 0
+    const sample: Array<Record<string, unknown>> = []
+    for (const a of items) {
+      const st = a.status
+      const warmupStatus = a.warmup_status
+      const dl = Number(a.daily_limit ?? 0)
+      dailySum += dl
+      if (st === 1) active++; else paused++
+      if (warmupStatus === 1) warming++
+      if (sample.length < 30) sample.push({ email: a.email, status: st, warmup_status: warmupStatus, daily_limit: dl })
+    }
+    out.accounts_active = active
+    out.accounts_paused = paused
+    out.accounts_warming = warming
+    out.accounts_daily_limit_sum = dailySum
+    out.accounts_sample = sample
+  } catch (e) { out.accounts_error = (e as Error).message }
+
   // 3. per-lead engagement sample — anyone with click/open counts
   try {
     const r = await fetch(`${BASE}/leads/list`, {
