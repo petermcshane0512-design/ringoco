@@ -205,7 +205,7 @@ export async function GET(req: NextRequest) {
   // city-cited leads — an empty promise. Refill now targets ONLY the
   // enforcement metros. EXPAND this list the moment a new
   // ingest-enforcement-<city> scraper ships and has real volume.
-  const ENFORCEMENT_METROS = ['Chicago, IL', 'New York, NY']
+  const ENFORCEMENT_METROS = ['Chicago, IL', 'New York, NY', 'Philadelphia, PA']
 
   // ?city= still works for ad-hoc runs, but only if it's an enforcement
   // metro — we never scrape contractors we can't back with real data.
