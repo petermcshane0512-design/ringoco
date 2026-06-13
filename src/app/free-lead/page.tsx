@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -49,15 +49,46 @@ type LeadDTO = {
   lng?: number | null
 }
 
+type ProspectCtx = {
+  city: string
+  state: string
+  trade: string
+  business_name: string
+  visit_count: number
+  last_visited_at: string | null
+}
+
 function FreeLeadInner() {
   const params = useSearchParams()
   const bizId = params.get('b') || ''
   const [lead, setLead] = useState<LeadDTO | null>(null)
+  // 2026-06-13 — prospect-side context for the idle-state personalization
+  // (city / trade / business_name) + return-visit detection. Pulled via
+  // /api/free-lead/claim on mount. Visit-count bump only happens on
+  // POST /generate (human-gated button), so this read-only GET is safe
+  // against email scanners that auto-fetch every URL.
+  const [prospect, setProspect] = useState<ProspectCtx | null>(null)
   // 2026-06-10 — Fable 5 architectural fix: no auto-fire on page load.
   // Email scanners (SafeLinks/Barracuda/Mimecast) auto-GET every URL.
   // Generation only fires when the human presses the button below.
   const [phase, setPhase] = useState<'idle' | 'generating' | 'revealed' | 'area_not_open' | 'error'>('idle')
   const [progressLabel, setProgressLabel] = useState('Searching permits…')
+
+  // Prefetch the prospect record so the idle copy can be personalized
+  // before they press Generate. Fire-and-forget — the idle state still
+  // renders if this call fails or 404s.
+  useEffect(() => {
+    if (!bizId) return
+    let active = true
+    fetch(`/api/free-lead/claim?b=${encodeURIComponent(bizId)}`)
+      .then((r) => r.json().catch(() => null))
+      .then((j: { ok?: boolean; prospect?: ProspectCtx } | null) => {
+        if (!active) return
+        if (j?.ok && j.prospect) setProspect(j.prospect)
+      })
+      .catch(() => {})
+    return () => { active = false }
+  }, [bizId])
 
   async function onGenerate() {
     if (!bizId) {
@@ -124,15 +155,44 @@ function FreeLeadInner() {
           {/* PHASE 1 — IDLE (human-gated button) */}
           {phase === 'idle' && (
             <div style={cardPulling}>
-              <div style={{ fontSize: 11, fontWeight: 900, color: '#16803F', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>
-                🎁 Your free homeowner lead is waiting
-              </div>
-              <h1 style={pullingH1}>One real homeowner in your service area. On me.</h1>
-              <p style={{ fontSize: 14.5, color: '#4A6670', margin: '0 0 24px', lineHeight: 1.55 }}>
-                Name, address, year built, est. job value, signal that surfaced them.
-                Phone number redacted on free lead — full unlock on the $97 trial.
-                Yours regardless. No catch.
-              </p>
+              {/* 2026-06-13 — return-visit variant. If they've been here
+                  before (visit_count >= 1), pivot the eyebrow + headline
+                  to a "welcome back" urgency frame. Most shops grab the
+                  lead within the first hour; sitting on it cools it. */}
+              {prospect && prospect.visit_count >= 1 ? (
+                <>
+                  <div style={{ fontSize: 11, fontWeight: 900, color: '#C84B26', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>
+                    👋 Welcome back — your lead's still here
+                  </div>
+                  <h1 style={pullingH1}>
+                    {prospect.city
+                      ? <>Your <span style={{ background: 'linear-gradient(135deg, #FF9D5A, #C84B26)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>{prospect.city}</span> homeowner is still unclaimed.</>
+                      : <>Your homeowner lead is still unclaimed.</>}
+                  </h1>
+                  <p style={{ fontSize: 14.5, color: '#4A6670', margin: '0 0 24px', lineHeight: 1.55 }}>
+                    Most shops grab theirs within the first hour. Yours has been waiting{prospect.last_visited_at ? ` since you last looked` : ''}.
+                    {' '}Tap below — same lead, fresh details. Phone unlocked on the $97 trial.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: 11, fontWeight: 900, color: '#16803F', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>
+                    🎁 Your free homeowner lead is waiting
+                  </div>
+                  <h1 style={pullingH1}>
+                    {prospect && (prospect.city || prospect.trade) ? (
+                      <>One real <span style={{ background: 'linear-gradient(135deg, #FF9D5A, #C84B26)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>{prospect.city || 'local'}</span> homeowner who needs <span style={{ textTransform: 'capitalize' }}>{prospect.trade || 'your'}</span> work. On me.</>
+                    ) : (
+                      <>One real homeowner in your service area. On me.</>
+                    )}
+                  </h1>
+                  <p style={{ fontSize: 14.5, color: '#4A6670', margin: '0 0 24px', lineHeight: 1.55 }}>
+                    Name, address, year built, est. job value, signal that surfaced them.
+                    Phone number redacted on free lead — full unlock on the $97 trial.
+                    Yours regardless. No catch.
+                  </p>
+                </>
+              )}
 
               <button
                 type="button"

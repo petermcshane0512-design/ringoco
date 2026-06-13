@@ -58,8 +58,22 @@ export async function GET(req: NextRequest) {
     } catch { /* non-fatal */ }
   }
 
+  // 2026-06-13 — expose prospect-side context (city / trade / visit_count /
+  // last_visited_at) so the /free-lead idle state can render personalized
+  // copy ("a Dallas homeowner who needs HVAC work") instead of the generic
+  // "one homeowner in your service area" + a return-visit variant when the
+  // prospect has clicked before. Higher curiosity gap = more Generate
+  // presses = more conversions on the cold-email send hitting right now.
   return NextResponse.json({
     ok: true,
+    prospect: {
+      city: data.city || '',
+      state: data.state || '',
+      trade: data.trade || '',
+      business_name: data.business_name || '',
+      visit_count: Number(data.visit_count ?? 0),
+      last_visited_at: data.last_visited_at || null,
+    },
     lead: {
       owner: data.lead_owner_name,
       street: data.lead_street,
