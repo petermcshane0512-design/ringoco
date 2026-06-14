@@ -23,6 +23,9 @@ export async function POST(req: NextRequest) {
 
   const from = req.nextUrl.searchParams.get('from') || '09:00'
   const to = req.nextUrl.searchParams.get('to') || '21:00'
+  // 2026-06-14 — ?days=all turns on all 7 days (Instantly day keys: 0=Sun..6=Sat).
+  // Per Peter: send Sundays too ("might as well shoot"). Omit to preserve days.
+  const daysParam = req.nextUrl.searchParams.get('days')
 
   // Read current schedule to preserve days + timezone + name.
   const cr = await fetch(`${BASE}/campaigns/${CAMPAIGN}`, { headers })
@@ -31,9 +34,14 @@ export async function POST(req: NextRequest) {
   const sched = c.campaign_schedule?.schedules?.[0]
   if (!sched) return NextResponse.json({ ok: false, error: 'no schedule found' }, { status: 422 })
 
+  const days = daysParam === 'all'
+    ? { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true, 6: true }
+    : sched.days
+
   const newSchedule = {
     schedules: [{
       ...sched,
+      days,
       timing: { from, to },
     }],
   }
@@ -48,6 +56,8 @@ export async function POST(req: NextRequest) {
     ok: true,
     old_window: sched.timing,
     new_window: { from, to },
+    old_days: sched.days,
+    new_days: days,
     timezone: sched.timezone,
   })
 }
