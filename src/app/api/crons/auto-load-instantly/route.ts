@@ -227,10 +227,13 @@ export async function GET(req: NextRequest) {
   // ?statuses=queued,sourced,loaded_enforcement pulls them all. Junk-email
   // rows (the scraper wrote GPS coords like "/@32.88" into email) are
   // hard-filtered below so they never load / bounce.
-  // Default now pulls ALL not-yet-loaded statuses (was 'queued' only, which
-  // stranded valid leads sitting in sourced/loaded_enforcement). Override with
-  // ?statuses=... for a narrower load.
-  const statusList = (url.searchParams.get('statuses') ?? 'queued,sourced,loaded_enforcement')
+  // 2026-06-14 — REVERTED default to 'queued' only. Bulk-loading the old
+  // sourced/loaded_enforcement statuses for volume reintroduced ~40% dead
+  // emails (verify-on-import missed them) → a wash had to blocklist 264
+  // bouncers. 'queued' = freshly scraped + ICP-filtered = cleanest. The wider
+  // statuses are still reachable via ?statuses= for a MANUAL load that's
+  // immediately followed by a wash-and-arm. Don't auto-load stale lists.
+  const statusList = (url.searchParams.get('statuses') ?? 'queued')
     .split(',').map((s) => s.trim()).filter(Boolean)
   // Real email: local@domain.tld where tld is 2+ LETTERS (rejects coord junk
   // that ends in digits, and bare-IP domains).
