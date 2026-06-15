@@ -294,20 +294,31 @@ export async function POST(req: NextRequest) {
            .order('source_details->>urgency_tier', { ascending: true })
            .order('lead_score', { ascending: false })
            .limit(25)
-      if (geo === 'city' && city) q = q.ilike('city', city)
-      else if (geo === 'state' && state) q = q.ilike('state', state)
+      // 2026-06-15 — a missing geo field returns EMPTY (not "anywhere"). Without
+      // this, a blank-state contact skipped the filter and pulled a wrong-state
+      // lead — the exact Dallas→Chicago bug. No location → fall to BatchData /
+      // honest "opening your area", never a confident wrong-state lead.
+      if (geo === 'city') { if (!city) return []; q = q.ilike('city', city) }
+      else if (geo === 'state') { if (!state) return []; q = q.ilike('state', state) }
       const { data } = await q
       return (data || [])
     }
     const ENF = ['hearings_case', 'violation', 'failed_inspection']
     // Tiered widening — stop at the first tier that returns a real lead.
+    // 2026-06-15 — NEVER CROSS STATES. The old cascade had 'any' geo tiers, so
+    // a Dallas contractor (no TX enforcement leads exist — enforcement is
+    // Chicago/NYC/Philly only) fell through to "cited anywhere" and got handed
+    // a CHICAGO homeowner. A wrong-state lead reads as fake and destroys the
+    // "homeowner NEAR YOU" promise (Aire Serv Dallas got a Chicago lead, 6/15).
+    // Cap at same-STATE. No same-state pool lead → fall through to the
+    // BatchData fallback below, which pulls a REAL lead for the contractor's
+    // own zip/city. Better a real local lead (or honest "opening your area")
+    // than a confident wrong-state one.
     let pool = await runQ(ENF, 'city', true)
     if (!pool.length) pool = await runQ(null, 'city', true)   // any trade, same city
     if (!pool.length) pool = await runQ(ENF, 'state', true)   // cited, same state
     if (!pool.length) pool = await runQ(null, 'state', true)  // any, same state
-    if (!pool.length) pool = await runQ(ENF, 'any', true)     // cited, this trade, anywhere
-    if (!pool.length) pool = await runQ(ENF, 'any', false)    // any cited homeowner, anywhere
-    if (!pool.length) pool = await runQ(null, 'any', false)   // last resort: any real lead
+    // (intentionally NO geo:'any' tier — see note above)
 
     // 2026-06-12 per Peter — 55% of enforcement parcels are owned by a
     // trust/LLC/INC, and showing "CHICAGO TITLE LAND TRUST CO A/T/U/T
