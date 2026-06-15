@@ -332,15 +332,21 @@ export async function POST(req: NextRequest) {
     // BatchData fallback below, which pulls a REAL lead for the contractor's
     // own zip/city. Better a real local lead (or honest "opening your area")
     // than a confident wrong-state one.
+    // PREFER local (same city → same state), but NEVER dead-end. The geo data
+    // is messy (blank rows, "IL" vs "Illinois"), so a strict same-state-only
+    // gate left contractors with no lead. The Dallas/Chicago complaint was
+    // really a DISPLAY bug (we showed the contractor's city for the
+    // homeowner's address) — now fixed by storing the homeowner's real
+    // city/state (lead_city). So a cross-state fallback lead at least shows
+    // its OWN correct location. Order: local first, anywhere as last resort.
     let pool = await runQ(ENF, 'city', true)
     if (!pool.length) pool = await runQ(null, 'city', true)    // any trade, same city
-    if (!pool.length) pool = await runQ(ENF, 'city', false)    // cited, same city, ANY trade
     if (!pool.length) pool = await runQ(ENF, 'state', true)    // cited, same state
     if (!pool.length) pool = await runQ(null, 'state', true)   // any trade, same state
-    if (!pool.length) pool = await runQ(ENF, 'state', false)   // cited, same state, ANY trade
-    if (!pool.length) pool = await runQ(null, 'state', false)  // ANY real lead, same state — within-state safety net so a trade mismatch never dead-ends. STILL never crosses states.
-    // (intentionally NO geo:'any' tier — never cross states. No same-state
-    // lead at all → BatchData local fallback / honest "opening your area".)
+    if (!pool.length) pool = await runQ(ENF, 'state', false)   // cited, same state, any trade
+    if (!pool.length) pool = await runQ(ENF, 'any', true)      // cited, this trade, anywhere
+    if (!pool.length) pool = await runQ(ENF, 'any', false)     // any cited homeowner, anywhere
+    if (!pool.length) pool = await runQ(null, 'any', false)    // last resort: any real lead (never dead-end)
 
     // 2026-06-12 per Peter — 55% of enforcement parcels are owned by a
     // trust/LLC/INC, and showing "CHICAGO TITLE LAND TRUST CO A/T/U/T
