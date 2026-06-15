@@ -340,7 +340,7 @@ export async function POST(req: NextRequest) {
     // radius. No same-state lead (e.g. Dallas — zero TX enforcement data) →
     // fall through to BatchData local / honest "opening your area", NEVER a
     // far cross-metro cited lead.
-    const MAX_RADIUS_MI = 60   // metro cap — never hand out a different-city lead
+    const MAX_RADIUS_MI = 20   // matches the PAID system's RADIUS_HARD_CAP_MI (find-real-leads) — free lead is as local as the paid product. Closest-first within this ring.
     const haversineMi = (aLat: number, aLng: number, bLat: number, bLng: number) => {
       const toRad = (d: number) => (d * Math.PI) / 180
       const R = 3958.8
