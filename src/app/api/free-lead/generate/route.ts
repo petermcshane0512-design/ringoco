@@ -226,10 +226,16 @@ export async function POST(req: NextRequest) {
   const isAdminTraffic = req.headers.get('x-admin-secret') === process.env.ADMIN_API_SECRET && !!process.env.ADMIN_API_SECRET
   if (!isAdminTraffic) await bumpVisitAndMaybeAlertHot(bizId, row)
 
-  if (row.generation_completed_at && row.lead_owner_name) {
-    // Cached hit — return existing (+ geocoded pin for the demo map)
+  // 2026-06-15 per Peter — HARD LOCK. Once a contractor has been shown a real
+  // lead (owner + address on file), that's THEIR lead forever — every future
+  // visit returns the SAME one, until they sign up. Keying on lead_owner_name
+  // (not generation_completed_at) makes the lock survive cache-clears: a
+  // revealed lead can never silently change. To intentionally rebuild a lead
+  // (e.g. after a matcher upgrade), null out lead_owner_name, not just the
+  // generation timestamp.
+  if (row.lead_owner_name && row.lead_street) {
     const cachedLoc = await leadLatLngFromAddress(row)
-    return NextResponse.json({ ok: true, cached: true, lead: { ...pluckLead(row), lat: cachedLoc?.lat ?? null, lng: cachedLoc?.lng ?? null } })
+    return NextResponse.json({ ok: true, cached: true, locked: true, lead: { ...pluckLead(row), lat: cachedLoc?.lat ?? null, lng: cachedLoc?.lng ?? null } })
   }
 
   // 2026-06-12 — the BatchData daily-spend gate MOVED down to guard only the
