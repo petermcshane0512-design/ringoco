@@ -30,6 +30,14 @@ export const dynamic = 'force-dynamic'
 const FOUNDER_PHONE = '(773) 710-9565'
 const FOUNDER_PHONE_HREF = 'tel:+17737109565'
 
+type AiIntel = {
+  job_summary: string
+  est_value_line: string
+  outreach_script: string
+  why_you: string
+  property_note: string
+}
+
 type LeadDTO = {
   owner: string | null
   street: string | null
@@ -37,6 +45,7 @@ type LeadDTO = {
   state: string | null
   zip: string | null
   phone: string | null
+  phone_redacted?: boolean
   email: string | null
   year_built: number | null
   value: number | null
@@ -45,6 +54,7 @@ type LeadDTO = {
   est_job_min: number | null
   est_job_max: number | null
   trade: string | null
+  ai_intel?: AiIntel | null
   lat?: number | null
   lng?: number | null
 }
@@ -73,6 +83,8 @@ function FreeLeadInner() {
   // Generation only fires when the human presses the button below.
   const [phase, setPhase] = useState<'idle' | 'generating' | 'revealed' | 'area_not_open' | 'error'>('idle')
   const [progressLabel, setProgressLabel] = useState('Searching permits…')
+  // 2026-06-15 — one-tap copy for the AI outreach script. Resets after 2s.
+  const [scriptCopied, setScriptCopied] = useState(false)
 
   // Prefetch the prospect record so the idle copy can be personalized
   // before they press Generate. Fire-and-forget — the idle state still
@@ -375,16 +387,31 @@ function FreeLeadInner() {
                   )}
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 18 }}>
-                  {lead.phone && (
+                {/* 2026-06-15 — phone is now un-redacted on the free lead.
+                    Big tap-to-call so the prospect can call the homeowner
+                    immediately from their phone. Prominent, above the fold
+                    of the card. */}
+                {lead.phone && (
+                  <a
+                    href={`tel:${lead.phone}`}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                      textDecoration: 'none',
+                      padding: '14px 16px', borderRadius: 12, marginBottom: 16,
+                      background: 'linear-gradient(135deg, #22C55E 0%, #16803F 100%)',
+                      color: '#fff',
+                      boxShadow: '0 12px 30px rgba(34,197,94,0.34)',
+                    }}
+                  >
                     <div>
-                      <div style={{ fontSize: 10, fontWeight: 900, color: '#7AAAB2', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Verified phone</div>
-                      <div style={{ fontSize: 14.5, fontWeight: 800, color: '#0B1F3A', marginTop: 2, fontFamily: 'ui-monospace, monospace' }}>{lead.phone}</div>
-                      <div style={{ fontSize: 10.5, color: '#C84B26', fontWeight: 700, marginTop: 3, letterSpacing: '0.04em' }}>
-                        🔒 Full number unlocks w/ $97 trial
-                      </div>
+                      <div style={{ fontSize: 10, fontWeight: 900, color: 'rgba(255,255,255,0.78)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Homeowner phone — tap to call</div>
+                      <div style={{ fontSize: 22, fontWeight: 900, marginTop: 2, fontFamily: 'ui-monospace, monospace', letterSpacing: '-0.01em' }}>{lead.phone}</div>
                     </div>
-                  )}
+                    <span style={{ fontSize: 26, flexShrink: 0 }}>📞</span>
+                  </a>
+                )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 18 }}>
                   {lead.signal && (
                     <KV label="Signal" value={`${signalEmoji(lead.signal)} ${lead.signal.replace('_', '-')}`} />
                   )}
@@ -408,6 +435,88 @@ function FreeLeadInner() {
                     <div style={{ fontSize: 18, fontWeight: 900, color: '#C84B26' }}>
                       ${(Number(lead.est_job_min) || 0).toLocaleString()} – ${(Number(lead.est_job_max) || 0).toLocaleString()}
                     </div>
+                  </div>
+                )}
+
+                {/* 2026-06-15 — AI lead packet (ai_intel). Rich, organized
+                    brief so the prospect can work the lead the second they
+                    see it: what the job is, the word-for-word script, and
+                    why their shop is the fit. Guarded — older cached leads
+                    have ai_intel === null. */}
+                {lead.ai_intel && (
+                  <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+                    {/* 📋 The job */}
+                    <div style={aiSection}>
+                      <div style={aiSectionLabel}>📋 The job</div>
+                      {lead.ai_intel.job_summary && (
+                        <p style={{ fontSize: 14, color: '#0B1F3A', lineHeight: 1.55, margin: '0 0 10px' }}>
+                          {lead.ai_intel.job_summary}
+                        </p>
+                      )}
+                      {lead.ai_intel.est_value_line && (
+                        <div style={{ fontSize: 13.5, fontWeight: 800, color: '#16803F', lineHeight: 1.5, margin: '0 0 8px' }}>
+                          💰 {lead.ai_intel.est_value_line}
+                        </div>
+                      )}
+                      {lead.ai_intel.property_note && (
+                        <div style={{ fontSize: 13, color: '#4A6670', lineHeight: 1.5, margin: 0 }}>
+                          🏠 {lead.ai_intel.property_note}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 📞 What to say when you call */}
+                    {lead.ai_intel.outreach_script && (
+                      <div style={aiSection}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
+                          <div style={{ ...aiSectionLabel, marginBottom: 0 }}>📞 What to say when you call</div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const text = lead.ai_intel?.outreach_script || ''
+                              navigator.clipboard?.writeText(text).then(
+                                () => {
+                                  setScriptCopied(true)
+                                  setTimeout(() => setScriptCopied(false), 2000)
+                                },
+                                () => {},
+                              )
+                            }}
+                            style={{
+                              flexShrink: 0,
+                              padding: '7px 12px', borderRadius: 8, minHeight: 36,
+                              background: scriptCopied ? 'rgba(34,197,94,0.16)' : 'rgba(11,31,58,0.06)',
+                              color: scriptCopied ? '#16803F' : '#0B1F3A',
+                              border: 'none', cursor: 'pointer',
+                              fontSize: 12, fontWeight: 800, fontFamily: 'inherit',
+                              letterSpacing: '0.02em',
+                            }}
+                          >{scriptCopied ? '✓ Copied' : '📋 Copy'}</button>
+                        </div>
+                        <div style={{
+                          padding: '14px 16px', borderRadius: 10,
+                          background: '#0B1F3A',
+                          borderLeft: '4px solid #E8742B',
+                          color: '#E8F0F2',
+                          fontSize: 14, lineHeight: 1.6,
+                          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                          whiteSpace: 'pre-wrap',
+                        }}>
+                          {lead.ai_intel.outreach_script}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ✅ Why your shop */}
+                    {lead.ai_intel.why_you && (
+                      <div style={aiSection}>
+                        <div style={aiSectionLabel}>✅ Why your shop</div>
+                        <p style={{ fontSize: 14, color: '#0B1F3A', lineHeight: 1.55, margin: 0 }}>
+                          {lead.ai_intel.why_you}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -652,6 +761,25 @@ const leadCard: React.CSSProperties = {
   border: '2px solid rgba(34,197,94,0.40)',
   boxShadow: '0 22px 56px rgba(11,31,58,0.10)',
   marginBottom: 24,
+}
+
+// 2026-06-15 — AI lead-packet sub-section card. Subtle tinted panel that
+// sits inside the green-bordered leadCard, matching the page's soft-shadow
+// rounded-card language.
+const aiSection: React.CSSProperties = {
+  padding: '14px 16px',
+  borderRadius: 12,
+  background: '#FBFCFD',
+  border: '1px solid rgba(11,31,58,0.08)',
+}
+
+const aiSectionLabel: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 900,
+  color: '#7AAAB2',
+  letterSpacing: '0.10em',
+  textTransform: 'uppercase',
+  marginBottom: 8,
 }
 
 const tradePill: React.CSSProperties = {
