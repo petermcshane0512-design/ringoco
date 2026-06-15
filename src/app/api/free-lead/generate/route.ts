@@ -369,9 +369,20 @@ export async function POST(req: NextRequest) {
         // contractor; it reads like junk and tanks the pitch.
         lead_owner_name: (poolLead.owner_name && !isEntity(poolLead.owner_name)) ? poolLead.owner_name : 'Verified homeowner',
         lead_street: poolLead.street_address,
+        // 2026-06-15 per Peter — store the HOMEOWNER's real city/state/zip so
+        // cached reads show the right location (was falling back to the
+        // CONTRACTOR's city = the Dallas/Chicago mislabel). Needs the
+        // lead_city/lead_state/lead_zip columns (see migration).
+        lead_city: poolLead.city,
+        lead_state: poolLead.state,
+        lead_zip: poolLead.zip,
         lead_year_built: poolLead.year_built,
         lead_value: value,
-        lead_phone: redactPhone(poolLead.owner_phone),
+        // 2026-06-15 per Peter — FULL phone on the free showcase lead (was
+        // redacted). The free lead is now a complete, callable lead so the
+        // contractor can actually work it; leads #2-10 + the weekly feed are
+        // the paywall, not the phone.
+        lead_phone: poolLead.owner_phone || null,
         lead_signal: isEnf ? 'violation' : 'permit',
         lead_signal_detail: signalDetail,
         lead_est_job_min: estJobMin,
@@ -433,12 +444,12 @@ export async function POST(req: NextRequest) {
   // Pick's address city/state are looked up but currently not written
   // back to prospect_free_leads — keep as void-marked locals so the
   // shadow w/ the outer prospect city/state doesn't trip the compiler.
-  void (pick.address?.city || '')
-  void (pick.address?.state || '')
+  const pickCity = pick.address?.city || null
+  const pickState = pick.address?.state || null
+  const pickZip = pick.address?.zip || null
   const yearBuilt = pick.building?.yearBuilt || null
   const value = pick.valuation?.estimatedValue || null
   const phoneFull = pick.phoneNumbers?.[0]?.number || null
-  const phoneRedacted = redactPhone(phoneFull)
 
   // Trade-specific signal_detail
   const signal = trade.includes('elect') ? 'aged' : trade.includes('roof') ? 'aged' : trade.includes('handy') ? 'move_in' : 'aged'
@@ -456,9 +467,12 @@ export async function POST(req: NextRequest) {
     .update({
       lead_owner_name: owner,
       lead_street: street,
+      lead_city: pickCity,
+      lead_state: pickState,
+      lead_zip: pickZip,
       lead_year_built: yearBuilt,
       lead_value: value,
-      lead_phone: phoneRedacted,  // REDACTED only — full unlocks at payment_succeeded
+      lead_phone: phoneFull,  // 2026-06-15 — FULL phone (free lead is complete)
       lead_signal: signal,
       lead_signal_detail: signalDetail,
       lead_est_job_min: estJobMin,
@@ -576,10 +590,12 @@ function pluckLead(row: Record<string, unknown>) {
   return {
     owner: row.lead_owner_name,
     street: row.lead_street,
-    city: row.city,
-    state: row.state,
-    zip: row.zip,
-    phone: row.lead_phone,  // REDACTED — full at payment
+    // Prefer the HOMEOWNER's stored location; fall back to the prospect row's
+    // city/state only for legacy cached rows generated before lead_city existed.
+    city: row.lead_city ?? row.city,
+    state: row.lead_state ?? row.state,
+    zip: row.lead_zip ?? row.zip,
+    phone: row.lead_phone,  // FULL phone now (2026-06-15) — the free lead is complete
     email: row.lead_email,
     year_built: row.lead_year_built,
     value: row.lead_value,
@@ -588,7 +604,7 @@ function pluckLead(row: Record<string, unknown>) {
     est_job_min: row.lead_est_job_min,
     est_job_max: row.lead_est_job_max,
     trade: row.trade,
-    phone_redacted: true,  // signals UI to render unlock-on-checkout state
+    phone_redacted: false,  // free lead shows the real phone; paywall = leads #2-10 + feed
   }
 }
 
