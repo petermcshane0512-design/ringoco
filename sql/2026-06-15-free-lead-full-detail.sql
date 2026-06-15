@@ -6,6 +6,9 @@
 ALTER TABLE prospect_free_leads ADD COLUMN IF NOT EXISTS lead_city  text;
 ALTER TABLE prospect_free_leads ADD COLUMN IF NOT EXISTS lead_state text;
 ALTER TABLE prospect_free_leads ADD COLUMN IF NOT EXISTS lead_zip   text;
+-- 2026-06-15 — AI lead packet (job breakdown + outreach script + why-you pitch
+-- + property note), generated once at free-lead time, cached on the row.
+ALTER TABLE prospect_free_leads ADD COLUMN IF NOT EXISTS lead_ai_intel jsonb;
 
 -- Force every already-cached free lead to REGENERATE on next view, so the
 -- 50-odd leads stored with a redacted phone + wrong city get rebuilt with the

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
 import { canSpendBatchData, logBatchDataSpend } from '@/lib/batchdataSpend'
-import { batchdataKey } from '@/lib/skipTrace'
+import { batchdataKey, skipTraceAddress } from '@/lib/skipTrace'
+import { generateLeadIntel } from '@/lib/freeLeadIntel'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -248,20 +249,20 @@ export async function POST(req: NextRequest) {
   let state = (row.state as string) || ''
   const trade = (row.trade as string) || 'hvac'
 
-  // 2026-06-15 — many free-lead rows have no location (contacts loaded without
-  // city/state). Since matching is now same-state-ONLY (never cross-state),
-  // a blank location = no pool lead = dead "opening your area". Recover the
-  // contractor's real location from outreach_leads so same-state matching
-  // works (Tuckpointing's row is blank but outreach_leads knows it's Chicago).
-  if (!city || !state) {
+  // 2026-06-15 — pull the CONTRACTOR's context from outreach_leads (business
+  // name + location). Used for (a) recovering blank geo so same-state matching
+  // works, and (b) the AI lead packet ("why YOUR shop"). One lookup, both jobs.
+  let contractorBiz: string | null = null
+  {
     const olEmail = (row.email as string | null) || null
     if (olEmail) {
       const { data: ol } = await supabase
-        .from('outreach_leads').select('city, state, zip').eq('email', olEmail).maybeSingle()
+        .from('outreach_leads').select('city, state, zip, business_name').eq('email', olEmail).maybeSingle()
       if (ol) {
         city = city || (ol.city as string | null) || ''
         state = state || (ol.state as string | null) || ''
         zip = zip || (ol.zip as string | null) || ''
+        contractorBiz = (ol.business_name as string | null) || null
       }
     }
   }
@@ -395,6 +396,29 @@ export async function POST(req: NextRequest) {
         ? `Cited for: ${violText.slice(0, 180)}${violText.length > 180 ? '…' : ''} — ${urgencyPart}. They have to get this done.`
         : `${urgencyPart} — they have to get this done`
 
+      // 2026-06-15 per Peter ("yes all of them") — make the free lead a COMPLETE
+      // lead: skip-trace the phone (enforcement records have none) + AI lead
+      // packet. Both are best-effort and never block the lead.
+      const ownerNameClean = (poolLead.owner_name && !isEntity(poolLead.owner_name)) ? poolLead.owner_name : null
+      let enrichedPhone = poolLead.owner_phone || null
+      if (!enrichedPhone && poolLead.street_address) {
+        const st = await skipTraceAddress({ street: poolLead.street_address, city: poolLead.city ?? undefined, state: poolLead.state ?? undefined, zip: poolLead.zip ?? undefined })
+        if (st.hit && st.owner_phones && st.owner_phones.length) enrichedPhone = st.owner_phones[0]
+        await logBatchDataSpend({ costCents: st.cost_cents, caller: 'free-lead-skiptrace', context: { biz_id: bizId, hit: st.hit }, resultOk: st.ok }).catch(() => {})
+      }
+      const aiIntel = await generateLeadIntel({
+        ownerName: ownerNameClean,
+        address: [poolLead.street_address, poolLead.city, poolLead.state, poolLead.zip].filter(Boolean).join(', '),
+        trade,
+        violationText: violText,
+        fineUsd: fine,
+        hearingNote: sd?.urgency_label ? String(sd.urgency_label) : null,
+        homeValue: value,
+        yearBuilt: poolLead.year_built,
+        contractorBiz,
+        contractorCity: city,
+      })
+
       await supabase.from('prospect_free_leads').update({
         // Enforcement leads (HPD etc.) have no public owner name — the real
         // name is skip-traced and unlocked at signup, same as the phone.
@@ -416,11 +440,12 @@ export async function POST(req: NextRequest) {
         // redacted). The free lead is now a complete, callable lead so the
         // contractor can actually work it; leads #2-10 + the weekly feed are
         // the paywall, not the phone.
-        lead_phone: poolLead.owner_phone || null,
+        lead_phone: enrichedPhone,
         lead_signal: isEnf ? 'violation' : 'permit',
         lead_signal_detail: signalDetail,
         lead_est_job_min: estJobMin,
         lead_est_job_max: estJobMax,
+        lead_ai_intel: aiIntel,   // {job_summary, est_value_line, outreach_script, why_you, property_note}
         generation_completed_at: new Date().toISOString(),
         generation_failed_reason: null,
       }).eq('biz_id', bizId)
@@ -638,6 +663,7 @@ function pluckLead(row: Record<string, unknown>) {
     est_job_min: row.lead_est_job_min,
     est_job_max: row.lead_est_job_max,
     trade: row.trade,
+    ai_intel: row.lead_ai_intel ?? null,  // job breakdown + outreach script + why-you pitch + property note
     phone_redacted: false,  // free lead shows the real phone; paywall = leads #2-10 + feed
   }
 }
