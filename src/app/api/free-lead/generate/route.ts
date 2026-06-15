@@ -542,6 +542,22 @@ export async function POST(req: NextRequest) {
   const estJobMin = value ? Math.round((value * valueMultiplier[0]) / 100) * 100 : null
   const estJobMax = value ? Math.round((value * valueMultiplier[1]) / 100) * 100 : null
 
+  // 2026-06-15 — AI-enrich BatchData leads too (Dallas etc, where there's no
+  // city-citation data). No government fine, so the AI works from the property
+  // signal (aging system / recent move-in) instead of a violation.
+  const bdIntel = await generateLeadIntel({
+    ownerName: owner !== 'Homeowner' ? owner : null,
+    address: [street, pickCity, pickState, pickZip].filter(Boolean).join(', '),
+    trade,
+    violationText: signalDetail,
+    fineUsd: 0,
+    hearingNote: null,
+    homeValue: value,
+    yearBuilt,
+    contractorBiz,
+    contractorCity: city,
+  })
+
   await supabase
     .from('prospect_free_leads')
     .update({
@@ -561,6 +577,12 @@ export async function POST(req: NextRequest) {
       generation_failed_reason: null,
     })
     .eq('biz_id', bizId)
+
+  // AI packet written separately + failure-tolerant (column may predate migration).
+  if (bdIntel) {
+    await supabase.from('prospect_free_leads').update({ lead_ai_intel: bdIntel }).eq('biz_id', bizId)
+      .then((r) => { if (r.error) console.warn('[free-lead] lead_ai_intel write skipped:', r.error.message) })
+  }
 
   const updated = await supabase
     .from('prospect_free_leads')
