@@ -236,7 +236,7 @@ function FreeLeadInner() {
               </div>
               <h1 style={pullingH1}>{progressLabel}</h1>
               <p style={{ fontSize: 13.5, color: '#7AAAB2', margin: '4px 0 0', fontFamily: 'ui-monospace, monospace' }}>
-                Live BatchData + permit feed query
+                Scanning live city records in your area…
               </p>
               <div style={{ marginTop: 22, display: 'flex', gap: 8, justifyContent: 'center' }}>
                 <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#E8742B', animation: 'fl-pulse 1.2s infinite 0s' }} />

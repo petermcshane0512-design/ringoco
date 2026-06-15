@@ -247,25 +247,31 @@ export async function POST(req: NextRequest) {
   let zip = (row.zip as string) || ''
   let city = (row.city as string) || ''
   let state = (row.state as string) || ''
-  const trade = (row.trade as string) || 'hvac'
+  let trade = (row.trade as string) || ''
 
   // 2026-06-15 — pull the CONTRACTOR's context from outreach_leads (business
-  // name + location). Used for (a) recovering blank geo so same-state matching
-  // works, and (b) the AI lead packet ("why YOUR shop"). One lookup, both jobs.
+  // name + location + TRADE). Used for (a) recovering blank geo so same-state
+  // matching works, (b) matching the lead to the contractor's REAL trade (a
+  // masonry shop must get a masonry violation, not a porch routed to "HVAC"),
+  // and (c) the AI lead packet ("why YOUR shop"). One lookup, all jobs.
   let contractorBiz: string | null = null
   {
     const olEmail = (row.email as string | null) || null
     if (olEmail) {
       const { data: ol } = await supabase
-        .from('outreach_leads').select('city, state, zip, business_name').eq('email', olEmail).maybeSingle()
+        .from('outreach_leads').select('city, state, zip, business_name, trade').eq('email', olEmail).maybeSingle()
       if (ol) {
         city = city || (ol.city as string | null) || ''
         state = state || (ol.state as string | null) || ''
         zip = zip || (ol.zip as string | null) || ''
+        trade = trade || (ol.trade as string | null) || ''
         contractorBiz = (ol.business_name as string | null) || null
       }
     }
   }
+  // Only fall back to 'hvac' if we truly never found a trade. A real trade
+  // (masonry/roofing/etc) drives both the lead match AND the AI pitch.
+  if (!trade) trade = 'hvac'
 
   // 2026-06-12 per Peter ("generate EVERY time"). The old code returned
   // "area opening soon" whenever location was incomplete (e.g. a contact
@@ -303,25 +309,6 @@ export async function POST(req: NextRequest) {
     // we WIDEN: exact city → state → anywhere, and enforcement → any trade,
     // landing the first real geocoded cited-homeowner we can find. With
     // thousands in the pool this effectively never comes up empty.
-    const runQ = async (triggers: string[] | null, geo: 'city' | 'state' | 'any', withTrade: boolean) => {
-      let q = supabase.from('leads').select(sel).not('lat', 'is', null).neq('source', 'aging_hvac')
-      if (withTrade) q = q.contains('trade_match', [engineTrade])
-      if (triggers) q = q.in('source_details->>trigger_type', triggers)
-      // Phone-present first (the demo's punch is "call this number now"), then
-      // most-urgent tier, then score.
-      q = q.order('owner_phone', { ascending: true, nullsFirst: false })
-           .order('source_details->>urgency_tier', { ascending: true })
-           .order('lead_score', { ascending: false })
-           .limit(25)
-      // 2026-06-15 — a missing geo field returns EMPTY (not "anywhere"). Without
-      // this, a blank-state contact skipped the filter and pulled a wrong-state
-      // lead — the exact Dallas→Chicago bug. No location → fall to BatchData /
-      // honest "opening your area", never a confident wrong-state lead.
-      if (geo === 'city') { if (!city) return []; q = q.ilike('city', city) }
-      else if (geo === 'state') { if (!state) return []; q = q.ilike('state', state) }
-      const { data } = await q
-      return (data || [])
-    }
     const ENF = ['hearings_case', 'violation', 'failed_inspection']
     // Tiered widening — stop at the first tier that returns a real lead.
     // 2026-06-15 — NEVER CROSS STATES. The old cascade had 'any' geo tiers, so
@@ -340,40 +327,67 @@ export async function POST(req: NextRequest) {
     // homeowner's address) — now fixed by storing the homeowner's real
     // city/state (lead_city). So a cross-state fallback lead at least shows
     // its OWN correct location. Order: local first, anywhere as last resort.
-    let pool = await runQ(ENF, 'city', true)
-    if (!pool.length) pool = await runQ(null, 'city', true)    // any trade, same city
-    if (!pool.length) pool = await runQ(ENF, 'state', true)    // cited, same state
-    if (!pool.length) pool = await runQ(null, 'state', true)   // any trade, same state
-    if (!pool.length) pool = await runQ(ENF, 'state', false)   // cited, same state, any trade
-    if (!pool.length) pool = await runQ(ENF, 'any', true)      // cited, this trade, anywhere
-    if (!pool.length) pool = await runQ(ENF, 'any', false)     // any cited homeowner, anywhere
-    if (!pool.length) pool = await runQ(null, 'any', false)    // last resort: any real lead (never dead-end)
-
-    // 2026-06-12 per Peter — 55% of enforcement parcels are owned by a
-    // trust/LLC/INC, and showing "CHICAGO TITLE LAND TRUST CO A/T/U/T
-    // #800..." as the "homeowner" reads like a database glitch and kills
-    // the "real person you can call today" promise. PREFER a real-person
-    // owner for the showcase (also a better lead — person-owned skews
-    // owner-occupied, not commercial). Entity names get redacted below.
     type PoolLead = {
       owner_name: string | null; street_address: string | null; city: string | null; state: string | null; zip: string | null
       lat: number | null; lng: number | null; home_value_est: number | null; year_built: number | null
       owner_phone: string | null; source_details: { urgency_label?: string; description?: string; violation_text?: string; trigger_type?: string; fine_total?: number | string } | null
     }
+
+    // 2026-06-15 per Peter — the free lead MUST be as close to the contractor
+    // as possible (ideally <1mi), and NEVER cross-state/metro (a Dallas shop
+    // got a Chicago lead). Strategy: pull SAME-STATE candidates only, then rank
+    // by real distance from the contractor and keep only those inside a metro
+    // radius. No same-state lead (e.g. Dallas — zero TX enforcement data) →
+    // fall through to BatchData local / honest "opening your area", NEVER a
+    // far cross-metro cited lead.
+    const MAX_RADIUS_MI = 60   // metro cap — never hand out a different-city lead
+    const haversineMi = (aLat: number, aLng: number, bLat: number, bLng: number) => {
+      const toRad = (d: number) => (d * Math.PI) / 180
+      const R = 3958.8
+      const dLat = toRad(bLat - aLat), dLng = toRad(bLng - aLng)
+      const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * Math.sin(dLng / 2) ** 2
+      return 2 * R * Math.asin(Math.sqrt(s))
+    }
+    // Contractor coordinates (for distance ranking) from their zip.
+    let cLat: number | null = null, cLng: number | null = null
+    if (zip) {
+      const { data: zc } = await supabase.from('zip_centroids').select('lat, lng').eq('zip', zip).maybeSingle()
+      if (zc && zc.lat != null && zc.lng != null) { cLat = Number(zc.lat); cLng = Number(zc.lng) }
+    }
+    // SAME-STATE fetch only (hard cap — never cross-state). Enforcement+trade →
+    // enforcement any-trade → any lead. Larger limit so distance ranking has
+    // real choice.
+    const fetchState = async (triggers: string[] | null, withTrade: boolean): Promise<PoolLead[]> => {
+      if (!state) return []
+      let q = supabase.from('leads').select(sel).not('lat', 'is', null).neq('source', 'aging_hvac').ilike('state', state)
+      if (withTrade) q = q.contains('trade_match', [engineTrade])
+      if (triggers) q = q.in('source_details->>trigger_type', triggers)
+      q = q.order('source_details->>urgency_tier', { ascending: true }).order('lead_score', { ascending: false }).limit(400)
+      const { data } = await q
+      return (data || []) as PoolLead[]
+    }
+    let pool = await fetchState(ENF, true)
+    if (!pool.length) pool = await fetchState(ENF, false)
+    if (!pool.length) pool = await fetchState(null, false)
+
     const ENTITY_OWNER = /\b(trust|llc|l\.l\.c|inc\b|incorporated|corp|company|\bco\b|bank|holdings|properties|associat|partners|\blp\b|trustee|a\/t\/u\/t|titleholder|cooperative|apartments)\b/i
     const isEntity = (n: string | null) => !!n && ENTITY_OWNER.test(n)
-    const typed = pool as PoolLead[]
-    // 2026-06-13 per Peter — EXCLUSIVITY. Picking pool[0] meant every
-    // contractor in a city saw the SAME top lead, breaking the "never shared
-    // with 4 other shops" promise. Spread the pool across contractors with a
-    // deterministic biz_id offset: same contractor always sees the same lead
-    // (stable), different contractors get different ones. Person-owned
-    // candidates first; fall back to any addressed lead.
-    const candidates = typed.filter((l) => l.street_address && !isEntity(l.owner_name))
-    const fallback = typed.filter((l) => l.street_address)
+    // Prefer real-person owners (entities get redacted + read like junk).
+    let ranked: PoolLead[] = pool.filter((l) => l.street_address && !isEntity(l.owner_name))
+    if (!ranked.length) ranked = pool.filter((l) => l.street_address)
+    // Distance rank + metro cap (only when we have contractor coords).
+    if (cLat != null && cLng != null) {
+      ranked = ranked
+        .map((l) => ({ l, d: l.lat != null && l.lng != null ? haversineMi(cLat as number, cLng as number, Number(l.lat), Number(l.lng)) : Infinity }))
+        .filter((x) => x.d <= MAX_RADIUS_MI)
+        .sort((a, b) => a.d - b.d)
+        .map((x) => x.l)
+    }
+    // EXCLUSIVITY among the CLOSEST few — neighbors don't all get the same lead,
+    // but everyone still gets a NEARBY one. Spread by biz_id over the nearest N.
+    const nearest = ranked.slice(0, 20)
     const offsetHash = parseInt(bizId.replace(/[^0-9a-f]/gi, '').slice(-6) || '0', 16) || 0
-    const pickFrom = candidates.length ? candidates : fallback
-    const poolLead = pickFrom.length ? pickFrom[offsetHash % pickFrom.length] as PoolLead : undefined
+    const poolLead = nearest.length ? nearest[offsetHash % nearest.length] : undefined
 
     if (poolLead && poolLead.street_address) {
       const value = poolLead.home_value_est
