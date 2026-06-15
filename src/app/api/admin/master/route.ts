@@ -76,27 +76,43 @@ function localClock(tz: string, now: Date): { time: string; in_window: boolean }
 type EngagedLead = { email: string; opens: number; clicks: number; replies: number; lastOpen: string | null }
 type CampaignRow = { name: string; status: string | number | null; sent: number; opens: number; replies: number; clicks: number; bounced: number }
 
-async function fetchInstantly(): Promise<{ campaigns: CampaignRow[]; engaged: EngagedLead[]; sentToday: number | null; openedToday: number | null; error: string | null }> {
+type DayStat = { date: string; sent: number; opened: number; unique_opened: number; clicks: number; replies: number }
+async function fetchInstantly(): Promise<{ campaigns: CampaignRow[]; engaged: EngagedLead[]; sentToday: number | null; openedToday: number | null; daily: DayStat[]; error: string | null }> {
   const KEY = process.env.INSTANTLY_API_KEY
-  if (!KEY) return { campaigns: [], engaged: [], sentToday: null, openedToday: null, error: 'INSTANTLY_API_KEY not set' }
+  if (!KEY) return { campaigns: [], engaged: [], sentToday: null, openedToday: null, daily: [], error: 'INSTANTLY_API_KEY not set' }
   const headers = { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' }
-  // Today's ACTUAL emails sent (UTC) — the dashboard used to show "pushed"
-  // (contractors loaded), which read as a far lower number than real sends.
+  // Pull a 3-day daily window (today + yesterday + day-before) so the
+  // dashboard can show today AND yesterday. NOTE: Instantly buckets by UTC,
+  // which rolls at 7pm CST — the page labels accordingly.
   let sentToday: number | null = null
   let openedToday: number | null = null
+  const daily: DayStat[] = []
   try {
-    const today = new Date().toISOString().slice(0, 10)
-    const dr = await fetch(`${INSTANTLY_BASE}/campaigns/analytics/daily?start_date=${today}&end_date=${today}`, { headers })
+    const end = new Date()
+    const start = new Date(Date.now() - 3 * 86400000)
+    const fmt = (d: Date) => d.toISOString().slice(0, 10)
+    const dr = await fetch(`${INSTANTLY_BASE}/campaigns/analytics/daily?start_date=${fmt(start)}&end_date=${fmt(end)}`, { headers })
     if (dr.ok) {
       const dj = await dr.json()
       const drows = (Array.isArray(dj) ? dj : dj.data ?? dj.days ?? []) as Array<Record<string, unknown>>
-      sentToday = drows.reduce((s, r) => s + Number(r.sent ?? r.emails_sent_count ?? r.sent_count ?? 0), 0)
-      openedToday = drows.reduce((s, r) => s + Number(r.opened ?? r.open_count ?? 0), 0)
+      for (const r of drows) {
+        daily.push({
+          date: String(r.date ?? ''),
+          sent: Number(r.sent ?? r.emails_sent_count ?? r.sent_count ?? 0),
+          opened: Number(r.opened ?? r.open_count ?? 0),
+          unique_opened: Number(r.unique_opened ?? 0),
+          clicks: Number(r.clicks ?? r.link_click_count ?? 0),
+          replies: Number(r.replies ?? r.reply_count ?? 0),
+        })
+      }
+      daily.sort((a, b) => a.date.localeCompare(b.date))
+      const last = daily[daily.length - 1]
+      if (last) { sentToday = last.sent; openedToday = last.opened }
     }
   } catch { /* non-fatal */ }
   try {
     const ar = await fetch(`${INSTANTLY_BASE}/campaigns/analytics`, { headers })
-    if (!ar.ok) return { campaigns: [], engaged: [], sentToday, openedToday, error: `instantly analytics HTTP ${ar.status}` }
+    if (!ar.ok) return { campaigns: [], engaged: [], sentToday, openedToday, daily, error: `instantly analytics HTTP ${ar.status}` }
     const aj = await ar.json()
     const rows = (Array.isArray(aj) ? aj : aj.campaigns ?? []) as Array<Record<string, unknown>>
     const campaigns: CampaignRow[] = rows.map((c) => ({
@@ -130,9 +146,9 @@ async function fetchInstantly(): Promise<{ campaigns: CampaignRow[]; engaged: En
       cursor = j.next_starting_after as string | undefined
       if (!cursor) break
     }
-    return { campaigns, engaged, sentToday, openedToday, error: null }
+    return { campaigns, engaged, sentToday, openedToday, daily, error: null }
   } catch (e) {
-    return { campaigns: [], engaged: [], sentToday, openedToday, error: (e as Error).message }
+    return { campaigns: [], engaged: [], sentToday, openedToday, daily, error: (e as Error).message }
   }
 }
 
@@ -224,6 +240,7 @@ export async function GET() {
   const openTotal = instantly.campaigns.reduce((s, c) => s + c.opens, 0)
   const replyTotal = instantly.campaigns.reduce((s, c) => s + c.replies, 0)
   const clickTotal = instantly.campaigns.reduce((s, c) => s + c.clicks, 0)
+  const bounceTotal = instantly.campaigns.reduce((s, c) => s + c.bounced, 0)
 
   // 14-day push series.
   const days = await Promise.all(
@@ -405,6 +422,8 @@ export async function GET() {
       emails_sent: sentTotal,
       opened_total: openTotal,
       open_rate: sentTotal > 0 ? openTotal / sentTotal : 0,
+      bounce_rate: sentTotal > 0 ? bounceTotal / sentTotal : 0,
+      bounced_total: bounceTotal,
       replies: replyTotal,
       clicks: clickTotal,
       report_visits: freeLeadVisits,
@@ -414,6 +433,7 @@ export async function GET() {
       paid_conversions: paid,
       campaigns: instantly.campaigns,
       instantly_error: instantly.error,
+      daily: instantly.daily,
       days,
     },
     leads: {

@@ -3,12 +3,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 /**
- * /admin/master — CEO Nucleus, "WHO TO CALL RIGHT NOW" (2026-06-13 redesign
- * per Peter: strip to one job). Shows ONLY leads with 2+ clicks OR a reply,
- * as big urgent cards. Two stats (sent/opened today). Everything else —
- * revenue, funnel, campaigns, push chart, supply, test subs — removed.
- * Reuses /api/admin/master (engagement + sent/opened + disposition logic).
- * Auto-refresh 20s.
+ * /admin/master — CEO COMMAND CENTER (2026-06-15 full rebuild per Peter:
+ * "every important metric, organized so I can read it in 5 seconds").
+ * Sections, top to bottom:
+ *   1. TODAY vs YESTERDAY email scoreboard (sent/opened/clicked/replied/bounce)
+ *   2. MONEY (ARR/MRR/customers) + software account balances + health dots
+ *   3. WHO TO CALL NOW (hot leads — replies/clicks)
+ *   4. ENGAGEMENT lists: opened today · opened yesterday · clicked
+ *   5. LEAD INVENTORY (cited-homeowner supply)
+ * Data: /api/admin/master (20s) + /api/admin/connectors (120s).
  */
 
 type Row = {
@@ -29,11 +32,37 @@ type Row = {
   dispositioned: boolean
 }
 
+type DayStat = { date: string; sent: number; opened: number; unique_opened: number; clicks: number; replies: number }
+
 type Master = {
   asOf: string
-  ledger: Row[]
+  call_queue: Row[]
   openers: Row[]
-  outreach: { sent_today: number | null; opened_today: number | null }
+  ledger: Row[]
+  revenue: {
+    paying_customers: number
+    trialing: number
+    mrr: number
+    arr: number
+    customers: Array<{ email: string | null; name: string | null; net_monthly: number; status: string; internal: boolean; promo_code: string | null }>
+    internal_subs: number
+  }
+  outreach: {
+    sent_today: number | null
+    opened_today: number | null
+    emails_sent: number
+    opened_total: number
+    open_rate: number
+    bounce_rate: number
+    bounced_total: number
+    replies: number
+    clicks: number
+    report_visits: number
+    trials: number
+    paid_conversions: number
+    daily: DayStat[]
+  }
+  leads: { inventory_total: number; inventory_enforcement: number; drops_last_7d: number }
 }
 
 type Connectors = {
@@ -53,9 +82,12 @@ type Connectors = {
 const TAN = '#F2EAD9'
 const RED = '#dc2626'
 const AMBER = '#d97706'
+const GREEN = '#16a34a'
 const INK = '#1f2937'
 const MUTED = '#6b7280'
 const ORANGE = '#E8742B'
+const CARDBG = '#fff'
+const BORDER = '#E3D8C2'
 
 function ago(ts: string | null): string {
   if (!ts) return '—'
@@ -69,6 +101,10 @@ function ago(ts: string | null): string {
 function clockTime(ts: string | null): string {
   if (!ts) return ''
   return new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+}
+// CST calendar-day key for bucketing opened-today vs opened-yesterday.
+function cstDayKey(d: Date): string {
+  return d.toLocaleDateString('en-CA', { timeZone: 'America/Chicago' })
 }
 
 const DISPOS: Array<{ key: string; label: string }> = [
@@ -109,7 +145,7 @@ export default function MasterPage() {
   useEffect(() => {
     load(); loadConn()
     const id = setInterval(load, 20_000)
-    const idC = setInterval(loadConn, 120_000)   // money/health changes slowly
+    const idC = setInterval(loadConn, 120_000)
     return () => { clearInterval(id); clearInterval(idC) }
   }, [load, loadConn])
 
@@ -139,7 +175,7 @@ export default function MasterPage() {
     navigator.clipboard?.writeText(p).then(() => { setCopied(p); setTimeout(() => setCopied(null), 1200) })
   }
 
-  // THE board: replies OR 2+ clicks only. Replies first, then click count.
+  // hot board: replies OR 2+ clicks
   const board = useMemo(() => {
     if (!data) return []
     return data.ledger
@@ -147,94 +183,124 @@ export default function MasterPage() {
       .sort((a, b) => (b.replies > 0 ? 1 : 0) - (a.replies > 0 ? 1 : 0) || b.clicks - a.clicks || b.score - a.score)
   }, [data])
 
+  // engagement buckets by CST day
+  const { openedToday, openedYesterday, clickers } = useMemo(() => {
+    const todayKey = cstDayKey(new Date())
+    const yKey = cstDayKey(new Date(Date.now() - 86400000))
+    const op = data?.openers ?? []
+    return {
+      openedToday: op.filter((r) => r.last_activity && cstDayKey(new Date(r.last_activity)) === todayKey),
+      openedYesterday: op.filter((r) => r.last_activity && cstDayKey(new Date(r.last_activity)) === yKey),
+      clickers: op.filter((r) => r.clicks > 0).sort((a, b) => b.clicks - a.clicks),
+    }
+  }, [data])
+
   if (loading) return <Shell><p style={{ color: MUTED, fontWeight: 700, fontSize: 18 }}>Loading…</p></Shell>
   if (err || !data) return <Shell><p style={{ color: RED, fontWeight: 800, fontSize: 18 }}>{err || 'No data'}</p></Shell>
 
   const o = data.outreach
+  const rev = data.revenue
   const visible = board.filter((r) => !hidden.has(r.email))
+  const daily = o.daily ?? []
+  const todayStat = daily[daily.length - 1]
+  const ydayStat = daily[daily.length - 2]
 
   return (
     <Shell>
-      {/* header + 2 stats */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 18 }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, color: INK, letterSpacing: '-0.03em' }}>Who to call right now</h1>
-          <div style={{ fontSize: 12, color: MUTED, fontWeight: 600, marginTop: 2 }}>
-            refreshed {new Date(data.asOf).toLocaleTimeString()} · auto 20s ·{' '}
-            <button onClick={load} style={{ border: 'none', background: 'transparent', color: ORANGE, fontWeight: 800, cursor: 'pointer', fontSize: 12, padding: 0 }}>refresh</button>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <MiniStat label="Sent today" value={o.sent_today != null ? String(o.sent_today) : '—'} />
-          <MiniStat label="Opened today" value={o.opened_today != null ? String(o.opened_today) : '—'} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
+        <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, color: INK, letterSpacing: '-0.03em' }}>Command Center</h1>
+        <div style={{ fontSize: 12, color: MUTED, fontWeight: 600 }}>
+          updated {new Date(data.asOf).toLocaleTimeString()} · auto 20s ·{' '}
+          <button onClick={load} style={{ border: 'none', background: 'transparent', color: ORANGE, fontWeight: 800, cursor: 'pointer', fontSize: 12, padding: 0 }}>refresh</button>
         </div>
       </div>
 
+      {/* ===== 1. EMAIL SCOREBOARD — today vs yesterday ===== */}
+      <SectionTitle>📧 Outreach — today vs yesterday</SectionTitle>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10, marginBottom: 10 }}>
+        <Compare label="Sent" today={todayStat?.sent} yday={ydayStat?.sent} />
+        <Compare label="Opened" today={todayStat?.opened} yday={ydayStat?.opened} />
+        <Compare label="Unique opens" today={todayStat?.unique_opened} yday={ydayStat?.unique_opened} />
+        <Compare label="Clicked" today={todayStat?.clicks} yday={ydayStat?.clicks} highlightZero />
+        <Compare label="Replied" today={todayStat?.replies} yday={ydayStat?.replies} />
+      </div>
+      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 12.5, fontWeight: 700, color: '#374151', marginBottom: 8 }}>
+        <Pill label="Open rate" value={`${(o.open_rate * 100).toFixed(0)}%`} good={o.open_rate >= 0.25} />
+        <Pill label="Bounce rate" value={`${(o.bounce_rate * 100).toFixed(1)}%`} good={o.bounce_rate < 0.05} warn={o.bounce_rate >= 0.05} />
+        <Pill label="Total sent (all-time)" value={String(o.emails_sent)} />
+        <Pill label="Free-lead visits" value={String(o.report_visits)} />
+      </div>
+      <div style={{ fontSize: 11, color: MUTED, marginBottom: 22 }}>Note: Instantly buckets days in UTC (rolls 7pm CST), so "today" mixes last night's tail + this morning. Clicks come from our free-lead pageview counter; Instantly's own click tracking reads 0.</div>
+
+      {/* ===== 2. MONEY + ACCOUNTS + HEALTH ===== */}
+      <SectionTitle>💰 Money &amp; accounts</SectionTitle>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 12 }}>
+        <Stat label="ARR (real)" value={`$${(rev.arr || 0).toLocaleString()}`} accent={rev.arr > 0 ? GREEN : MUTED} big />
+        <Stat label="MRR" value={`$${(rev.mrr || 0).toLocaleString()}`} accent={rev.mrr > 0 ? GREEN : MUTED} />
+        <Stat label="Paying customers" value={String(rev.paying_customers)} accent={rev.paying_customers > 0 ? GREEN : MUTED} />
+        <Stat label="Trialing" value={String(rev.trialing)} />
+        {conn && <Stat label="Apify left / mo" value={conn.connectors.apify.used != null && conn.connectors.apify.cap != null ? `$${(conn.connectors.apify.cap - conn.connectors.apify.used).toFixed(0)}` : '—'} sub={conn.connectors.apify.used != null ? `$${conn.connectors.apify.used.toFixed(0)}/$${conn.connectors.apify.cap}` : undefined} accent={conn.connectors.apify.used != null && conn.connectors.apify.cap != null && (conn.connectors.apify.cap - conn.connectors.apify.used) < 15 ? AMBER : INK} />}
+        {conn && <Stat label="BatchData today" value={`$${conn.connectors.batchdata.spent_today.toFixed(2)}`} sub={`$${conn.connectors.batchdata.spent_30d.toFixed(2)}/30d`} />}
+        {conn && <Stat label="Instantly sent today" value={conn.connectors.instantly.sent_today != null ? String(conn.connectors.instantly.sent_today) : '—'} sub={`cap ${conn.connectors.instantly.daily_limit ?? '?'}`} />}
+      </div>
+      {/* health dots */}
+      {conn && (
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 12.5, fontWeight: 700, color: '#374151', marginBottom: 12 }}>
+          <Dot on={conn.connectors.supabase.green} label="Supabase" />
+          <Dot on={conn.connectors.vercel.green} label="Vercel" />
+          <Dot on={!conn.connectors.apify.error} label="Apify" />
+          <Dot on={!conn.connectors.batchdata.error} label="BatchData" />
+          <Dot on={!conn.connectors.instantly.error && conn.connectors.instantly.status === 1} label="Instantly" />
+          <Dot on={!conn.stripe_error} label="Stripe" />
+        </div>
+      )}
+      {/* clients */}
+      <div style={{ background: CARDBG, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '10px 16px', marginBottom: 24 }}>
+        <div style={{ fontSize: 11, fontWeight: 800, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Signed-up customers ({rev.customers.filter((c) => !c.internal).length})</div>
+        {rev.customers.filter((c) => !c.internal).length === 0 && <div style={{ fontSize: 13.5, color: MUTED, fontWeight: 600 }}>No paying customers yet — the call board below is how you land #1.</div>}
+        {rev.customers.filter((c) => !c.internal).map((c, i) => (
+          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '5px 0', fontSize: 13.5, borderBottom: '1px solid #F1EBDD' }}>
+            <span style={{ fontWeight: 700, color: INK }}>{c.email || c.name || '—'} <span style={{ color: MUTED, fontWeight: 600 }}>· {c.status}{c.promo_code ? ` · ${c.promo_code}` : ''}</span></span>
+            <span style={{ fontWeight: 800, color: GREEN }}>${c.net_monthly}/mo</span>
+          </div>
+        ))}
+      </div>
+
+      {/* ===== 3. WHO TO CALL NOW ===== */}
+      <SectionTitle>🔥 Who to call now ({visible.length})</SectionTitle>
       {visible.length === 0 ? (
-        <div style={{ padding: 60, textAlign: 'center', background: '#fff', border: `1px solid #E3D8C2`, borderRadius: 16 }}>
-          <div style={{ fontSize: 22, fontWeight: 800, color: INK }}>Nobody hot yet.</div>
-          <div style={{ fontSize: 14, color: MUTED, marginTop: 6, fontWeight: 600 }}>This board fills the moment a contractor clicks twice or replies. Refreshing every 20s.</div>
+        <div style={{ padding: 28, textAlign: 'center', background: CARDBG, border: `1px solid ${BORDER}`, borderRadius: 14, marginBottom: 24 }}>
+          <div style={{ fontSize: 18, fontWeight: 800, color: INK }}>Nobody at 2+ clicks / replied right now.</div>
+          <div style={{ fontSize: 13, color: MUTED, marginTop: 4, fontWeight: 600 }}>Work the &ldquo;clicked&rdquo; + &ldquo;opened today&rdquo; lists below.</div>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12, marginBottom: 24 }}>
           {visible.map((r) => {
             const replied = r.replies > 0
             const ph = r.phone || phones[r.email]
             return (
-              <div key={r.email} style={{
-                background: replied ? '#fef2f2' : '#fffbeb',
-                border: `2px solid ${replied ? RED : AMBER}`,
-                borderRadius: 16, padding: 18,
-                boxShadow: '0 6px 20px rgba(0,0,0,0.08)',
-                display: 'flex', flexDirection: 'column', gap: 8,
-              }}>
-                {/* badge */}
+              <div key={r.email} style={{ background: replied ? '#fef2f2' : '#fffbeb', border: `2px solid ${replied ? RED : AMBER}`, borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                  <span style={{
-                    padding: '5px 12px', borderRadius: 8, fontSize: 14, fontWeight: 900, letterSpacing: '0.02em',
-                    background: replied ? RED : AMBER, color: '#fff', whiteSpace: 'nowrap',
-                  }}>{replied ? '🔥 REPLIED' : `👀 ${r.clicks} CLICKS`}</span>
-                  {/* LAST CLICK time — when they actually last engaged */}
+                  <span style={{ padding: '4px 10px', borderRadius: 8, fontSize: 13, fontWeight: 900, background: replied ? RED : AMBER, color: '#fff', whiteSpace: 'nowrap' }}>{replied ? '🔥 REPLIED' : `👀 ${r.clicks} CLICKS`}</span>
                   <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                    <span style={{ display: 'block', fontSize: 14, fontWeight: 800, color: INK }}>{replied ? 'replied' : 'clicked'} {ago(r.last_activity)}</span>
+                    <span style={{ display: 'block', fontSize: 13, fontWeight: 800, color: INK }}>{replied ? 'replied' : 'clicked'} {ago(r.last_activity)}</span>
                     <span style={{ display: 'block', fontSize: 11, fontWeight: 600, color: MUTED }}>{clockTime(r.last_activity)}</span>
                   </span>
                 </div>
-
-                {/* business name — largest */}
-                <div style={{ fontSize: 22, fontWeight: 900, color: INK, lineHeight: 1.1, marginTop: 2 }}>{r.business || r.email.split('@')[0]}</div>
-                {r.contact && <div style={{ fontSize: 14, fontWeight: 700, color: '#374151', marginTop: -2 }}>{r.contact}</div>}
-
-                {/* phone — second largest */}
+                <div style={{ fontSize: 21, fontWeight: 900, color: INK, lineHeight: 1.1 }}>{r.business || r.email.split('@')[0]}</div>
                 {ph ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                    <a href={`tel:${ph}`} style={{ fontSize: 24, fontWeight: 900, color: ORANGE, textDecoration: 'none', letterSpacing: '-0.01em' }}>{ph}</a>
-                    <button onClick={() => copyPhone(ph)} title="copy" style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 16, padding: 2 }}>{copied === ph ? '✓' : '⧉'}</button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <a href={`tel:${ph}`} style={{ fontSize: 23, fontWeight: 900, color: ORANGE, textDecoration: 'none' }}>{ph}</a>
+                    <button onClick={() => copyPhone(ph)} title="copy" style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 15 }}>{copied === ph ? '✓' : '⧉'}</button>
                   </div>
                 ) : (
-                  <button onClick={() => enrichPhone(r.email)} disabled={enriching.has(r.email)} style={{
-                    marginTop: 4, alignSelf: 'flex-start', padding: '8px 16px', borderRadius: 8, fontSize: 14, fontWeight: 800,
-                    cursor: enriching.has(r.email) ? 'wait' : 'pointer', border: `2px solid ${ORANGE}`, background: '#fff', color: ORANGE,
-                  }}>{enriching.has(r.email) ? 'getting…' : '📞 get #'}</button>
+                  <button onClick={() => enrichPhone(r.email)} disabled={enriching.has(r.email)} style={{ alignSelf: 'flex-start', padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: 'pointer', border: `2px solid ${ORANGE}`, background: '#fff', color: ORANGE }}>{enriching.has(r.email) ? 'getting…' : '📞 get #'}</button>
                 )}
-
-                {/* where + their local time (call-window flag) + email */}
-                <div style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>
-                  {[r.city, r.state].filter(Boolean).join(', ') || 'location unknown'}
-                  <span style={{ color: r.in_call_window ? '#15803d' : RED, fontWeight: 700 }}> · {r.local_time} their time{!r.in_call_window && ' ⚠'}</span>
-                </div>
-                <div style={{ fontSize: 12, color: MUTED }}>{r.email}</div>
-
-                {/* dispositions */}
-                <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+                <div style={{ fontSize: 12.5, color: '#374151', fontWeight: 600 }}>{[r.city, r.state].filter(Boolean).join(', ') || 'location unknown'}<span style={{ color: r.in_call_window ? GREEN : RED, fontWeight: 700 }}> · {r.local_time}{!r.in_call_window && ' ⚠'}</span></div>
+                <div style={{ fontSize: 11.5, color: MUTED }}>{r.email}</div>
+                <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
                   {DISPOS.map((d) => (
-                    <button key={d.key} onClick={() => disposition(r.email, d.key)} style={{
-                      flex: d.key === 'booked_call' ? '1 1 100%' : '1 1 auto',
-                      padding: '9px 10px', borderRadius: 8, fontSize: 12.5, fontWeight: 800, cursor: 'pointer',
-                      border: `1px solid ${d.key === 'booked_call' ? '#15803d' : '#D3C5A9'}`,
-                      background: d.key === 'booked_call' ? '#15803d' : '#fff',
-                      color: d.key === 'booked_call' ? '#fff' : '#374151',
-                    }}>{d.label}</button>
+                    <button key={d.key} onClick={() => disposition(r.email, d.key)} style={{ flex: d.key === 'booked_call' ? '1 1 100%' : '1 1 auto', padding: '8px 10px', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer', border: `1px solid ${d.key === 'booked_call' ? GREEN : '#D3C5A9'}`, background: d.key === 'booked_call' ? GREEN : '#fff', color: d.key === 'booked_call' ? '#fff' : '#374151' }}>{d.label}</button>
                   ))}
                 </div>
               </div>
@@ -243,105 +309,25 @@ export default function MasterPage() {
         </div>
       )}
 
-      {/* ── ALL OPENERS — straight call-down list ── */}
-      <OpenersList
-        rows={(data.openers ?? []).filter((r) => !hidden.has(r.email))}
-        phones={phones} enriching={enriching} copied={copied}
-        onEnrich={enrichPhone} onCopy={copyPhone} onDisposition={disposition}
-      />
+      {/* ===== 4. ENGAGEMENT LISTS ===== */}
+      <SectionTitle>👥 Engagement</SectionTitle>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14, marginBottom: 24 }}>
+        <EngList title={`Clicked their lead (${clickers.length})`} rows={clickers} accent={AMBER} phones={phones} enriching={enriching} onEnrich={enrichPhone} showMetric="clicks" />
+        <EngList title={`Opened today (${openedToday.length})`} rows={openedToday} accent={GREEN} phones={phones} enriching={enriching} onEnrich={enrichPhone} showMetric="opens" />
+        <EngList title={`Opened yesterday (${openedYesterday.length})`} rows={openedYesterday} accent={MUTED} phones={phones} enriching={enriching} onEnrich={enrichPhone} showMetric="opens" />
+      </div>
 
-      {/* ── METRICS / CONNECTORS strip (below the board) ── */}
-      {conn && <MetricsStrip conn={conn} />}
+      {/* ===== 5. LEAD INVENTORY ===== */}
+      <SectionTitle>🏚️ Lead inventory (the product)</SectionTitle>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 40 }}>
+        <Stat label="Total leads banked" value={data.leads.inventory_total.toLocaleString()} />
+        <Stat label="Cited homeowners (enforcement)" value={data.leads.inventory_enforcement.toLocaleString()} accent={ORANGE} />
+        <Stat label="Leads dropped (last 7d)" value={String(data.leads.drops_last_7d)} />
+        <Stat label="Trials started" value={String(o.trials)} />
+        <Stat label="Paid conversions" value={String(o.paid_conversions)} accent={o.paid_conversions > 0 ? GREEN : MUTED} />
+      </div>
     </Shell>
   )
-}
-
-function OpenersList({ rows, phones, enriching, copied, onEnrich, onCopy, onDisposition }: {
-  rows: Row[]
-  phones: Record<string, string>
-  enriching: Set<string>
-  copied: string | null
-  onEnrich: (email: string) => void
-  onCopy: (p: string) => void
-  onDisposition: (email: string, action: string) => void
-}) {
-  return (
-    <div style={{ marginTop: 32, borderTop: '1px solid #E3D8C2', paddingTop: 18 }}>
-      <h2 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 900, color: INK, letterSpacing: '-0.02em' }}>
-        Everyone who opened — call down the list ({rows.length})
-      </h2>
-      <div style={{ fontSize: 12, color: MUTED, fontWeight: 600, marginBottom: 12 }}>
-        Ranked by # of opens (all-time). ⚠ High open counts (40+) are usually mail-gateway bots, not hot humans — real intent = CLICKERS up top. Dial top-to-bottom, hit Called/No&nbsp;Answer to clear a row.
-      </div>
-      {rows.length === 0 ? (
-        <div style={{ fontSize: 13.5, color: MUTED, fontWeight: 600 }}>No opens recorded yet.</div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {rows.map((r, i) => {
-            const ph = r.phone || phones[r.email]
-            const botish = r.opens >= 40
-            return (
-              <div key={r.email} style={{
-                display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-                background: '#fff', border: '1px solid #E3D8C2', borderRadius: 10, padding: '10px 14px',
-              }}>
-                <span style={{ fontSize: 13, fontWeight: 800, color: MUTED, width: 22, textAlign: 'right' }}>{i + 1}</span>
-                {/* opens badge */}
-                <span style={{
-                  padding: '3px 9px', borderRadius: 7, fontSize: 12.5, fontWeight: 900, whiteSpace: 'nowrap',
-                  background: botish ? '#f3f4f6' : '#ecfdf5', color: botish ? MUTED : '#15803d',
-                }} title={botish ? 'likely bot/gateway' : ''}>{r.opens}× open{r.opens === 1 ? '' : 's'}{botish ? ' 🤖' : ''}</span>
-                {r.clicks > 0 && (
-                  <span style={{ padding: '3px 9px', borderRadius: 7, fontSize: 12.5, fontWeight: 900, background: '#fffbeb', color: AMBER, whiteSpace: 'nowrap' }}>👀 {r.clicks} click{r.clicks === 1 ? '' : 's'}</span>
-                )}
-                {r.replies > 0 && (
-                  <span style={{ padding: '3px 9px', borderRadius: 7, fontSize: 12.5, fontWeight: 900, background: '#fef2f2', color: RED, whiteSpace: 'nowrap' }}>🔥 replied</span>
-                )}
-                {/* business + email */}
-                <span style={{ flex: '1 1 200px', minWidth: 160 }}>
-                  <span style={{ display: 'block', fontSize: 15, fontWeight: 800, color: INK, lineHeight: 1.15 }}>{r.business || r.email.split('@')[0]}</span>
-                  <span style={{ display: 'block', fontSize: 11.5, color: MUTED }}>
-                    {[r.city, r.state].filter(Boolean).join(', ') || 'location unknown'}
-                    {r.local_time && <span style={{ color: r.in_call_window ? '#15803d' : RED, fontWeight: 700 }}> · {r.local_time}{!r.in_call_window && ' ⚠'}</span>}
-                  </span>
-                </span>
-                {/* last opened — when they last looked */}
-                <span style={{ textAlign: 'right', whiteSpace: 'nowrap', minWidth: 96 }}>
-                  <span style={{ display: 'block', fontSize: 13, fontWeight: 800, color: INK }}>opened {ago(r.last_activity)}</span>
-                  <span style={{ display: 'block', fontSize: 11, fontWeight: 600, color: MUTED }}>{clockTime(r.last_activity)}</span>
-                </span>
-                {/* phone */}
-                {ph ? (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
-                    <a href={`tel:${ph}`} style={{ fontSize: 17, fontWeight: 900, color: ORANGE, textDecoration: 'none' }}>{ph}</a>
-                    <button onClick={() => onCopy(ph)} title="copy" style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, padding: 2 }}>{copied === ph ? '✓' : '⧉'}</button>
-                  </span>
-                ) : (
-                  <button onClick={() => onEnrich(r.email)} disabled={enriching.has(r.email)} style={{
-                    padding: '6px 12px', borderRadius: 7, fontSize: 12.5, fontWeight: 800, whiteSpace: 'nowrap',
-                    cursor: enriching.has(r.email) ? 'wait' : 'pointer', border: `2px solid ${ORANGE}`, background: '#fff', color: ORANGE,
-                  }}>{enriching.has(r.email) ? 'getting…' : '📞 get #'}</button>
-                )}
-                {/* clear buttons */}
-                <span style={{ display: 'flex', gap: 5 }}>
-                  <button onClick={() => onDisposition(r.email, 'called')} style={clearBtn('#fff', '#374151')}>Called</button>
-                  <button onClick={() => onDisposition(r.email, 'no_answer')} style={clearBtn('#fff', '#374151')}>No&nbsp;Ans</button>
-                  <button onClick={() => onDisposition(r.email, 'booked_call')} style={clearBtn('#15803d', '#fff')}>BOOKED</button>
-                </span>
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function clearBtn(bg: string, color: string): React.CSSProperties {
-  return {
-    padding: '7px 10px', borderRadius: 7, fontSize: 12, fontWeight: 800, cursor: 'pointer',
-    border: `1px solid ${bg === '#15803d' ? '#15803d' : '#D3C5A9'}`, background: bg, color, whiteSpace: 'nowrap',
-  }
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -352,75 +338,74 @@ function Shell({ children }: { children: React.ReactNode }) {
   )
 }
 
-function MetricsStrip({ conn }: { conn: Connectors }) {
-  const c = conn.connectors
-  const apifyLeft = c.apify.used != null && c.apify.cap != null ? c.apify.cap - c.apify.used : null
-  const dot = (green: boolean) => (
-    <span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: '50%', background: green ? '#16a34a' : RED, marginRight: 5 }} />
-  )
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return <h2 style={{ margin: '0 0 10px', fontSize: 14, fontWeight: 900, color: INK, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{children}</h2>
+}
+
+function Compare({ label, today, yday, highlightZero }: { label: string; today?: number; yday?: number; highlightZero?: boolean }) {
+  const t = today ?? 0
+  const zeroBad = highlightZero && t === 0
   return (
-    <div style={{ marginTop: 32, borderTop: `1px solid #E3D8C2`, paddingTop: 18 }}>
-      <h2 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 800, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Business & accounts</h2>
-
-      {/* money + ARR */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 14 }}>
-        <Card label="ARR (real)" value={`$${conn.arr.toLocaleString()}`} big accent={conn.arr === 0 ? MUTED : '#16a34a'} />
-        <Card label="Apify left (this mo)"
-          value={apifyLeft != null ? `$${apifyLeft.toFixed(0)}` : (c.apify.error ? 'err' : '—')}
-          sub={c.apify.used != null ? `$${c.apify.used.toFixed(0)} / $${c.apify.cap} used` : undefined}
-          accent={apifyLeft != null && apifyLeft < 15 ? AMBER : INK} />
-        <Card label="BatchData spend"
-          value={`$${c.batchdata.spent_today.toFixed(2)}`}
-          sub={`today · $${c.batchdata.spent_30d.toFixed(2)} 30d · $${c.batchdata.daily_cap}/day cap`} />
-        <Card label="Instantly sent today"
-          value={c.instantly.sent_today != null ? String(c.instantly.sent_today) : '—'}
-          sub={`${c.instantly.daily_limit ?? '?'}/day cap · status ${c.instantly.status ?? '?'}`} />
-      </div>
-
-      {/* green status row */}
-      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 16 }}>
-        <span>{dot(c.supabase.green)} Supabase {c.supabase.green ? 'green' : 'DOWN'}</span>
-        <span>{dot(c.vercel.green)} Vercel {c.vercel.green ? 'green' : 'DOWN'}</span>
-        <span>{dot(!c.apify.error)} Apify {c.apify.error ? 'error' : 'ok'}</span>
-        <span>{dot(!c.batchdata.error)} BatchData {c.batchdata.error ? 'error' : 'ok'}</span>
-        <span>{dot(!c.instantly.error && c.instantly.status === 1)} Instantly {c.instantly.status === 1 ? 'active' : 'paused/err'}</span>
-      </div>
-
-      {/* signed-up clients */}
-      <div style={{ background: '#fff', border: `1px solid #E3D8C2`, borderRadius: 12, padding: '12px 16px' }}>
-        <div style={{ fontSize: 12, fontWeight: 800, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
-          Signed-up clients ({conn.clients.length})
-        </div>
-        {conn.stripe_error && <div style={{ color: RED, fontSize: 12.5, fontWeight: 600 }}>Stripe error: {conn.stripe_error}</div>}
-        {!conn.stripe_error && conn.clients.length === 0 && (
-          <div style={{ fontSize: 13.5, color: MUTED, fontWeight: 600 }}>No paying clients yet — the board above is how you get the first one.</div>
-        )}
-        {conn.clients.map((cl, i) => (
-          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '6px 0', borderBottom: i < conn.clients.length - 1 ? '1px solid #F1EBDD' : 'none', fontSize: 13.5 }}>
-            <span style={{ fontWeight: 700, color: INK }}>{cl.email || cl.name || '—'}</span>
-            <span style={{ fontWeight: 700, color: '#16a34a' }}>${cl.monthly}/mo</span>
-          </div>
-        ))}
-      </div>
+    <div style={{ background: CARDBG, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '10px 14px' }}>
+      <div style={{ fontSize: 26, fontWeight: 900, color: zeroBad ? RED : INK, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{t}</div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, marginTop: 3 }}>{label} today</div>
+      <div style={{ fontSize: 11, fontWeight: 600, color: MUTED, marginTop: 2 }}>yest: {yday ?? '—'}</div>
     </div>
   )
 }
 
-function Card({ label, value, sub, big, accent }: { label: string; value: string; sub?: string; big?: boolean; accent?: string }) {
+function Stat({ label, value, sub, accent, big }: { label: string; value: string; sub?: string; accent?: string; big?: boolean }) {
   return (
-    <div style={{ background: '#fff', border: '1px solid #E3D8C2', borderRadius: 12, padding: '10px 14px' }}>
-      <div style={{ fontSize: big ? 24 : 19, fontWeight: 900, color: accent ?? INK, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+    <div style={{ background: CARDBG, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '10px 14px' }}>
+      <div style={{ fontSize: big ? 26 : 21, fontWeight: 900, color: accent ?? INK, lineHeight: 1.05, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
       <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, marginTop: 3 }}>{label}</div>
       {sub && <div style={{ fontSize: 10.5, color: MUTED, fontWeight: 600, marginTop: 2 }}>{sub}</div>}
     </div>
   )
 }
 
-function MiniStat({ label, value }: { label: string; value: string }) {
+function Pill({ label, value, good, warn }: { label: string; value: string; good?: boolean; warn?: boolean }) {
+  const color = warn ? RED : good ? GREEN : INK
+  return <span><span style={{ color, fontWeight: 900 }}>{value}</span> <span style={{ color: MUTED, fontWeight: 600 }}>{label}</span></span>
+}
+
+function Dot({ on, label }: { on: boolean; label: string }) {
+  return <span><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: '50%', background: on ? GREEN : RED, marginRight: 5 }} />{label} {on ? 'ok' : 'DOWN'}</span>
+}
+
+function EngList({ title, rows, accent, phones, enriching, onEnrich, showMetric }: {
+  title: string
+  rows: Row[]
+  accent: string
+  phones: Record<string, string>
+  enriching: Set<string>
+  onEnrich: (email: string) => void
+  showMetric: 'clicks' | 'opens'
+}) {
   return (
-    <div style={{ background: '#fff', border: '1px solid #E3D8C2', borderRadius: 12, padding: '8px 16px', textAlign: 'center', minWidth: 92 }}>
-      <div style={{ fontSize: 24, fontWeight: 900, color: INK, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
-      <div style={{ fontSize: 10.5, fontWeight: 700, color: MUTED, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+    <div style={{ background: CARDBG, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '12px 14px' }}>
+      <div style={{ fontSize: 12.5, fontWeight: 900, color: accent, marginBottom: 8 }}>{title}</div>
+      {rows.length === 0 && <div style={{ fontSize: 12.5, color: MUTED, fontWeight: 600 }}>None.</div>}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 5, maxHeight: 320, overflowY: 'auto' }}>
+        {rows.slice(0, 40).map((r) => {
+          const ph = r.phone || phones[r.email]
+          const metric = showMetric === 'clicks' ? `${r.clicks}clk` : `${r.opens}op`
+          return (
+            <div key={r.email} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, borderBottom: '1px solid #F4EFE3', paddingBottom: 4 }}>
+              <span style={{ fontWeight: 800, color: accent, minWidth: 38 }}>{metric}</span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: 'block', fontWeight: 700, color: INK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.business || r.email.split('@')[0]}</span>
+                <span style={{ display: 'block', fontSize: 10.5, color: MUTED }}>{clockTime(r.last_activity)} · {[r.city, r.state].filter(Boolean).join(',') || '?'}</span>
+              </span>
+              {ph ? (
+                <a href={`tel:${ph}`} style={{ fontWeight: 800, color: ORANGE, textDecoration: 'none', whiteSpace: 'nowrap', fontSize: 12.5 }}>{ph}</a>
+              ) : (
+                <button onClick={() => onEnrich(r.email)} disabled={enriching.has(r.email)} style={{ padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: 'pointer', border: `1px solid ${ORANGE}`, background: '#fff', color: ORANGE, whiteSpace: 'nowrap' }}>{enriching.has(r.email) ? '…' : '📞'}</button>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
