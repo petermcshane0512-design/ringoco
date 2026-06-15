@@ -133,14 +133,21 @@ function classifyTrade(category?: string): string | null {
 function passesSoloOrSmallCrewFilter(m: MapsItem): boolean {
   if (!m.website || m.permanentlyClosed) return false
   const reviews = m.reviewsCount ?? 0
-  if (reviews > 40) return false  // too established for 1-3 person crew
+  // 2026-06-15 per Peter — TIGHTER. Target the guy who answers his OWN phone:
+  // no receptionist, no marketing team, won't get from a 40-review multi-truck
+  // shop. Dropped 40→25. A 1-3 person owner-operated crew rarely clears 25
+  // Google reviews; 25+ signals years of staffed operation = has a front desk.
+  if (reviews > 25) return false
   const title = (m.title || '').toLowerCase()
-  if (/&\s+sons|brothers|family/.test(title)) return false  // multi-tech signals
-  if (/\b(company|co\.|inc\.?|corp\.?|group|services llc)\b/.test(title)) {
-    // could go either way — keep only if reviews ≤20 (newer/smaller)
-    if (reviews > 20) return false
+  // Multi-tech / staffed signals — these shops have someone answering phones.
+  if (/&\s+sons|brothers|family|and sons|& associates/.test(title)) return false
+  if (/\b(company|co\.|inc\.?|corp\.?|group|services llc|enterprises|industries)\b/.test(title)) {
+    if (reviews > 12) return false  // incorporated + 12+ reviews = established w/ staff
   }
-  if ((m.imageUrls?.length ?? 0) > 12) return false  // marketing-heavy
+  if ((m.imageUrls?.length ?? 0) > 10) return false  // marketing-heavy = not solo
+  // 24/7 dispatch = a staffed team answering around the clock — never solo.
+  const hours = JSON.stringify(m.openingHours ?? '').toLowerCase()
+  if (/24 hours|open 24|24\/7/.test(hours)) return false
   return true
 }
 
