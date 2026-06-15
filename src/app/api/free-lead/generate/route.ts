@@ -357,7 +357,7 @@ export async function POST(req: NextRequest) {
     type PoolLead = {
       owner_name: string | null; street_address: string | null; city: string | null; state: string | null; zip: string | null
       lat: number | null; lng: number | null; home_value_est: number | null; year_built: number | null
-      owner_phone: string | null; source_details: { urgency_label?: string; description?: string; trigger_type?: string; fine_total?: number | string } | null
+      owner_phone: string | null; source_details: { urgency_label?: string; description?: string; violation_text?: string; trigger_type?: string; fine_total?: number | string } | null
     }
     const ENTITY_OWNER = /\b(trust|llc|l\.l\.c|inc\b|incorporated|corp|company|\bco\b|bank|holdings|properties|associat|partners|\blp\b|trustee|a\/t\/u\/t|titleholder|cooperative|apartments)\b/i
     const isEntity = (n: string | null) => !!n && ENTITY_OWNER.test(n)
@@ -382,12 +382,18 @@ export async function POST(req: NextRequest) {
       const sd = poolLead.source_details
       const isEnf = sd?.trigger_type && sd.trigger_type !== 'permit' && sd.trigger_type !== '311'
       const fine = Number(sd?.fine_total || 0)
-      const fineStr = fine > 0 ? `$${fine.toLocaleString('en-US')} city fine on file. ` : ''
-      const signalDetail = sd?.urgency_label
-        ? `${sd.urgency_label} — they have to get this done`
-        : sd?.description
-          ? `${fineStr}${sd.description.slice(0, 110)}`
-          : (poolLead.year_built ? `Built ${poolLead.year_built}` : 'Flagged property in your area')
+      // 2026-06-15 per call feedback ("leads aren't detailed enough") — surface
+      // the ACTUAL city violation text (what work the homeowner is ordered to
+      // do), not a generic "violation". This is already stored, just was hidden
+      // behind the urgency_label. Format: "<what the city cited> — $X fine,
+      // <deadline>". Gives the contractor the actual job.
+      const violText = (sd?.violation_text || sd?.description || '').toString().replace(/\s+/g, ' ').trim()
+      const urgencyPart = sd?.urgency_label
+        ? String(sd.urgency_label)
+        : fine > 0 ? `$${fine.toLocaleString('en-US')} city fine — hearing set` : 'City-flagged — work ordered'
+      const signalDetail = violText
+        ? `Cited for: ${violText.slice(0, 180)}${violText.length > 180 ? '…' : ''} — ${urgencyPart}. They have to get this done.`
+        : `${urgencyPart} — they have to get this done`
 
       await supabase.from('prospect_free_leads').update({
         // Enforcement leads (HPD etc.) have no public owner name — the real
