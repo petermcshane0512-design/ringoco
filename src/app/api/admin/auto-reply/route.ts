@@ -158,8 +158,14 @@ async function run(dry: boolean) {
           status: intent === 'UNSUBSCRIBE' ? 'unsubscribed' : 'not_interested',
           dnc_until: '2099-01-01',
         }).eq('email', rl.email)
+        // 2026-06-15 — COMPLIANCE: DB status only stops RE-LOADING. The active
+        // Instantly sequence keeps firing steps 2/3 at someone who said stop
+        // until the address is blocklisted. Blocklist halts it for real.
+        await fetch(`${BASE}/block-lists-entries`, {
+          method: 'POST', headers: H(), body: JSON.stringify({ bl_value: rl.email }),
+        }).catch(() => { /* non-fatal — DB DNC still set */ })
       }
-      actions.push({ email: rl.email, intent, action: willSend ? 'marked_dnc_no_reply' : 'would_mark_dnc', reply: last.body.slice(0, 120) })
+      actions.push({ email: rl.email, intent, action: willSend ? 'marked_dnc_blocklisted' : 'would_mark_dnc', reply: last.body.slice(0, 120) })
       continue
     }
     if (intent === 'AUTO_REPLY') { actions.push({ email: rl.email, intent, action: 'skip_ooo' }); continue }

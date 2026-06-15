@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { requireAdmin, ADMIN_EMAIL_SET } from '@/lib/auth/requireAdmin'
 import { stripe } from '@/lib/stripeClient'
 import type Stripe from 'stripe'
+import { classifyReply, isHotReply, type ReplySentiment } from '@/lib/classifyReply'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -77,9 +78,10 @@ type EngagedLead = { email: string; opens: number; clicks: number; replies: numb
 type CampaignRow = { name: string; status: string | number | null; sent: number; opens: number; replies: number; clicks: number; bounced: number }
 
 type DayStat = { date: string; sent: number; opened: number; unique_opened: number; clicks: number; replies: number }
-async function fetchInstantly(): Promise<{ campaigns: CampaignRow[]; engaged: EngagedLead[]; sentToday: number | null; openedToday: number | null; daily: DayStat[]; error: string | null }> {
+type ClassifiedReply = { email: string; company: string | null; subject: string | null; body: string; at: string | null; sentiment: ReplySentiment }
+async function fetchInstantly(): Promise<{ campaigns: CampaignRow[]; engaged: EngagedLead[]; sentToday: number | null; openedToday: number | null; daily: DayStat[]; replies: ClassifiedReply[]; error: string | null }> {
   const KEY = process.env.INSTANTLY_API_KEY
-  if (!KEY) return { campaigns: [], engaged: [], sentToday: null, openedToday: null, daily: [], error: 'INSTANTLY_API_KEY not set' }
+  if (!KEY) return { campaigns: [], engaged: [], sentToday: null, openedToday: null, daily: [], replies: [], error: 'INSTANTLY_API_KEY not set' }
   const headers = { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' }
   // Pull a 3-day daily window (today + yesterday + day-before) so the
   // dashboard can show today AND yesterday. NOTE: Instantly buckets by UTC,
@@ -112,7 +114,7 @@ async function fetchInstantly(): Promise<{ campaigns: CampaignRow[]; engaged: En
   } catch { /* non-fatal */ }
   try {
     const ar = await fetch(`${INSTANTLY_BASE}/campaigns/analytics`, { headers })
-    if (!ar.ok) return { campaigns: [], engaged: [], sentToday, openedToday, daily, error: `instantly analytics HTTP ${ar.status}` }
+    if (!ar.ok) return { campaigns: [], engaged: [], sentToday, openedToday, daily, replies: [], error: `instantly analytics HTTP ${ar.status}` }
     const aj = await ar.json()
     const rows = (Array.isArray(aj) ? aj : aj.campaigns ?? []) as Array<Record<string, unknown>>
     const campaigns: CampaignRow[] = rows.map((c) => ({
@@ -146,9 +148,31 @@ async function fetchInstantly(): Promise<{ campaigns: CampaignRow[]; engaged: En
       cursor = j.next_starting_after as string | undefined
       if (!cursor) break
     }
-    return { campaigns, engaged, sentToday, openedToday, daily, error: null }
+    // Pull + CLASSIFY the actual reply text for everyone who replied, so the
+    // call board can tell a real lead from a "not interested" / "stop".
+    const replies: ClassifiedReply[] = []
+    const repliers = engaged.filter((e) => e.replies > 0).slice(0, 25)
+    await Promise.all(repliers.map(async (rl) => {
+      try {
+        const er = await fetch(`${INSTANTLY_BASE}/emails?lead=${encodeURIComponent(rl.email)}&email_type=received&limit=3`, { headers })
+        if (!er.ok) return
+        const ej = await er.json()
+        const items = (ej.items ?? ej.data ?? []) as Array<Record<string, unknown>>
+        // newest received message is the freshest sentiment
+        let best: { subject: string | null; body: string; at: string | null } | null = null
+        for (const m of items) {
+          const bodyObj = (m.body ?? {}) as Record<string, unknown>
+          const text = String(bodyObj.text ?? m.body_text ?? m.content_preview ?? m.snippet ?? '').replace(/\s+/g, ' ').trim()
+          const at = (m.timestamp_created as string) ?? (m.created_at as string) ?? null
+          if (!best || (at && best.at && at > best.at)) best = { subject: (m.subject as string) ?? null, body: text.slice(0, 800), at }
+        }
+        if (best) replies.push({ email: rl.email.toLowerCase(), company: null, ...best, sentiment: classifyReply(best.body) })
+      } catch { /* per-replier non-fatal */ }
+    }))
+
+    return { campaigns, engaged, sentToday, openedToday, daily, replies, error: null }
   } catch (e) {
-    return { campaigns: [], engaged: [], sentToday, openedToday, daily, error: (e as Error).message }
+    return { campaigns: [], engaged: [], sentToday, openedToday, daily, replies: [], error: (e as Error).message }
   }
 }
 
@@ -307,6 +331,8 @@ export async function GET() {
     ...pflByEmail.keys(),
   ])).filter((e) => validEmail(e) && !isRobot(e))
   const engagedByEmail = new Map(instantly.engaged.map((e) => [e.email, e]))
+  // email → reply sentiment, so a "not interested"/"stop" reply never scores hot.
+  const replySentiment = new Map(instantly.replies.map((r) => [r.email, r.sentiment]))
 
   type OlRow = { email: string; business_name: string | null; owner_first_name: string | null; owner_phone: string | null; city: string | null; state: string | null; trade: string | null; pushed_at: string | null; first_opened_at: string | null; last_opened_at: string | null; report_visit_at: string | null; trial_started_at: string | null; paid_at: string | null; status: string | null }
   const olRes = unionEmails.length
@@ -334,9 +360,16 @@ export async function GET() {
       .filter(Boolean).sort().pop() ?? null
     const daysSince = lastActivity ? (now.getTime() - new Date(lastActivity).getTime()) / DAY_MS : null
 
+    // Reply sentiment gates the score: only a GENUINE reply (interested /
+    // neutral) is hot. "not interested" / "stop" / auto-reply score 0 so the
+    // call board never sends Peter at a rejection (Alvizo, Aire Serv).
+    const replySent = e.replies > 0 ? (replySentiment.get(email) ?? 'neutral') : null
+    const hotReply = replySent != null && isHotReply(replySent)
+
     // Priority score — a free-lead CLICK outranks any email open.
     let score = 0
-    if (e.replies > 0) score = 100
+    if (e.replies > 0 && hotReply) score = 100
+    else if (e.replies > 0) score = 0   // rejected / opted-out / auto — never hot
     else if (freeLeadVisits > 0) {
       // Saw their cited homeowner. 85 base + 8/extra visit (came back!),
       // capped at 95 so a hard REPLY (100) still pins above. Decays daily.
@@ -348,7 +381,11 @@ export async function GET() {
 
     const tz = tzForState(ol?.state ?? null)
     const clock = localClock(tz, now)
-    const stage = ol?.paid_at ? 'PAID' : ol?.trial_started_at ? 'TRIAL' : e.replies > 0 ? 'REPLIED'
+    const stage = ol?.paid_at ? 'PAID' : ol?.trial_started_at ? 'TRIAL'
+      : replySent === 'stop' ? 'OPTED OUT'
+      : replySent === 'not_interested' ? 'NOT INTERESTED'
+      : replySent === 'auto' ? 'AUTO-REPLY'
+      : e.replies > 0 ? 'REPLIED'
       : freeLeadVisits > 0 ? 'CLICKED LEAD' : clicks > 0 ? 'CLICKED' : 'OPENED'
 
     const disp = latestDisp.get(e.email)
@@ -367,6 +404,7 @@ export async function GET() {
       opens: e.opens,
       clicks,
       replies: e.replies,
+      reply_sentiment: replySent,
       last_activity: lastActivity,
       first_contacted: ol?.pushed_at ?? null,
       stage,
@@ -403,6 +441,7 @@ export async function GET() {
     asOf: now.toISOString(),
     call_queue,
     openers,
+    replies: instantly.replies,
     ledger,
     revenue: {
       paying_customers: paying.length,

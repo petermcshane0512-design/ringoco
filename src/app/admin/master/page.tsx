@@ -26,11 +26,14 @@ type Row = {
   opens: number
   clicks: number
   replies: number
+  reply_sentiment: 'interested' | 'not_interested' | 'stop' | 'auto' | 'neutral' | null
   last_activity: string | null
   stage: string
   score: number
   dispositioned: boolean
 }
+
+type ReplyMsg = { email: string; company: string | null; subject: string | null; body: string; at: string | null; sentiment: 'interested' | 'not_interested' | 'stop' | 'auto' | 'neutral' }
 
 type DayStat = { date: string; sent: number; opened: number; unique_opened: number; clicks: number; replies: number }
 
@@ -38,6 +41,7 @@ type Master = {
   asOf: string
   call_queue: Row[]
   openers: Row[]
+  replies: ReplyMsg[]
   ledger: Row[]
   revenue: {
     paying_customers: number
@@ -175,12 +179,13 @@ export default function MasterPage() {
     navigator.clipboard?.writeText(p).then(() => { setCopied(p); setTimeout(() => setCopied(null), 1200) })
   }
 
-  // hot board: replies OR 2+ clicks
+  // hot board: a GENUINE reply (not rejected/stop/auto) OR 2+ clicks.
   const board = useMemo(() => {
     if (!data) return []
+    const goodReply = (r: Row) => r.replies > 0 && (r.reply_sentiment === 'interested' || r.reply_sentiment === 'neutral' || r.reply_sentiment == null)
     return data.ledger
-      .filter((r) => !r.dispositioned && (r.replies > 0 || r.clicks >= 2))
-      .sort((a, b) => (b.replies > 0 ? 1 : 0) - (a.replies > 0 ? 1 : 0) || b.clicks - a.clicks || b.score - a.score)
+      .filter((r) => !r.dispositioned && (goodReply(r) || r.clicks >= 2))
+      .sort((a, b) => (goodReply(b) ? 1 : 0) - (goodReply(a) ? 1 : 0) || b.clicks - a.clicks || b.score - a.score)
   }, [data])
 
   // engagement buckets by CST day
@@ -309,6 +314,10 @@ export default function MasterPage() {
         </div>
       )}
 
+      {/* ===== 3b. REPLIES — classified real vs not ===== */}
+      <SectionTitle>💬 Replies — what they actually said ({data.replies?.length ?? 0})</SectionTitle>
+      <RepliesBlock replies={data.replies ?? []} />
+
       {/* ===== 4. ENGAGEMENT LISTS ===== */}
       <SectionTitle>👥 Engagement</SectionTitle>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14, marginBottom: 24 }}>
@@ -340,6 +349,41 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 style={{ margin: '0 0 10px', fontSize: 14, fontWeight: 900, color: INK, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{children}</h2>
+}
+
+const SENT_BADGE: Record<string, { label: string; bg: string; fg: string }> = {
+  interested:     { label: '🔥 INTERESTED', bg: '#dcfce7', fg: '#15803d' },
+  neutral:        { label: '🤔 unclear',     bg: '#fef9c3', fg: '#a16207' },
+  not_interested: { label: '✋ not interested', bg: '#f3f4f6', fg: MUTED },
+  stop:           { label: '🛑 STOP — opted out', bg: '#fee2e2', fg: RED },
+  auto:           { label: '🤖 auto-reply',  bg: '#f3f4f6', fg: MUTED },
+}
+
+function RepliesBlock({ replies }: { replies: ReplyMsg[] }) {
+  if (!replies.length) return <div style={{ fontSize: 13, color: MUTED, fontWeight: 600, marginBottom: 24 }}>No replies yet.</div>
+  // sort: interested first, then neutral, rest after
+  const rank = (s: string) => (s === 'interested' ? 0 : s === 'neutral' ? 1 : s === 'not_interested' ? 2 : s === 'stop' ? 3 : 4)
+  const sorted = [...replies].sort((a, b) => rank(a.sentiment) - rank(b.sentiment) || (b.at ?? '').localeCompare(a.at ?? ''))
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
+      {sorted.map((r, i) => {
+        const b = SENT_BADGE[r.sentiment] ?? SENT_BADGE.neutral
+        return (
+          <div key={i} style={{ background: CARDBG, border: `1px solid ${r.sentiment === 'interested' ? '#15803d' : BORDER}`, borderRadius: 10, padding: '10px 14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ padding: '3px 9px', borderRadius: 7, fontSize: 11.5, fontWeight: 900, background: b.bg, color: b.fg, whiteSpace: 'nowrap' }}>{b.label}</span>
+                <span style={{ fontSize: 13, fontWeight: 800, color: INK }}>{r.email}</span>
+              </span>
+              <span style={{ fontSize: 11, color: MUTED, fontWeight: 600 }}>{r.at ? new Date(r.at).toLocaleString() : ''}</span>
+            </div>
+            {r.subject && <div style={{ fontSize: 12, fontWeight: 700, color: '#374151' }}>{r.subject}</div>}
+            <div style={{ fontSize: 12.5, color: '#374151', marginTop: 2, lineHeight: 1.4 }}>{r.body || '(no text)'}</div>
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 function Compare({ label, today, yday, highlightZero }: { label: string; today?: number; yday?: number; highlightZero?: boolean }) {
