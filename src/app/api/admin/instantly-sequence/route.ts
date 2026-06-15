@@ -70,47 +70,63 @@ function toHtml(text: string): string {
 // Mandatory variables (must be populated on the contact for the copy to
 // render correctly):
 //   - firstName, city, trade, companyName, free_lead_url
+// 2026-06-15 — CTA rewrite to crack open→click (74 opens, 0 clicks). Levers:
+// (1) curiosity gap — "I can't put their address in an email" forces the click
+// to resolve it; (2) zero-risk reassurance AT the link; (3) a P.S. repeating
+// the link (cold email's highest-read line); (4) clear 👉 action vs a bare URL.
 const NEW_STEPS: NewStep[] = [
   {
-    subject: '{{firstName}}, your zip just had a few new flags',
+    subject: '{{firstName}}, the city just fined a homeowner near you',
     body: toHtml(
-`{{firstName}} — I run software that flags homeowners {{city}} is forcing to do {{trade}} work or face fines.
+`{{firstName}} — my software reads {{city}}'s code-enforcement records every night and flags homeowners the city is forcing to do {{trade}} work: fix it or face fines.
 
-Caught one near {{companyName}} this week. Pulled the full record for you - owner, address, what the city cited, est. job value. No card, no signup:
+One popped up near {{companyName}} this week. I've got the full record — owner name, the exact address, what the city cited, what they're ordered to fix.
 
-{{free_lead_url}}
+I can't put their address in an email. But it's yours, free — no card, no signup, 10 seconds:
 
-If the data's good, the feed runs $${INTRO_PRICE_USD} first month.
+👉 See exactly who: {{free_lead_url}}
+
+They've got a deadline and a fine on the table, and most haven't hired anyone yet. If the data's good, the feed runs $${INTRO_PRICE_USD} the first month.
 
 Peter
-BellAveGo - (773) 710-9565`),
+BellAveGo — (773) 710-9565
+
+P.S. Their name + address is right on that page. One tap, no catch: {{free_lead_url}}`),
   },
   {
-    subject: 'another {{city}} lead came in overnight',
+    subject: 're: the homeowner near {{companyName}} the city cited',
     body: toHtml(
-`{{firstName}} — another flagged homeowner came in for {{companyName}} overnight. Same area, different signal:
+`{{firstName}} — that flagged homeowner is still sitting there, and another just came in for {{companyName}} overnight. Same area.
 
-{{free_lead_url}}
+I won't spell out the address here — but the city cited them and there's a fine on the table. See exactly who, free, no signup:
 
-To be specific: {{city}} files dozens of new {{trade}}-related violations and permits every week. Each one is a homeowner with a deadline and a fine on the table. We hand them to one contractor per trade per area, exclusive.
+👉 {{free_lead_url}}
 
-$${INTRO_PRICE_USD} first month with code ${INTRO_PROMO_CODE}. Book a paying job in 30 days or I refund you + give you next month free + you keep every lead.
+{{city}} files dozens of new {{trade}} violations a week. Each one is a homeowner who legally HAS to hire someone soon. We hand them to ONE shop per area — never shared with 4 others like HomeAdvisor.
 
-Peter`),
-  },
-  {
-    subject: 'closing the loop on {{city}}',
-    body: toHtml(
-`{{firstName}} — closing the loop.
-
-The leads I pulled for {{companyName}} are still here: {{free_lead_url}}
-
-The first {{trade}} shop in your area who signs up gets the priority queue. After that, my system stops emailing the second shop entirely - I never want one customer competing with their neighbor on the same lead.
-
-Either grab the free one, or I move on. Both fine.
+$${INTRO_PRICE_USD} first month with code ${INTRO_PROMO_CODE}. Book a paying job in 30 days or full refund + next month free + you keep every lead.
 
 Peter
-(773) 710-9565`),
+
+P.S. The free one takes 10 seconds to look at, no card: {{free_lead_url}}`),
+  },
+  {
+    subject: 'whoever clicks first gets {{city}}',
+    body: toHtml(
+`{{firstName}} — last note.
+
+The cited homeowner I pulled for {{companyName}} is still here, free:
+
+👉 {{free_lead_url}}
+
+Here's the deal: the FIRST {{trade}} shop in your area to grab this gets the priority queue — after that my system stops emailing your competitors on the same lead. Whoever opens it first wins the area.
+
+Grab the free one or I move on. Both fine.
+
+Peter
+(773) 710-9565
+
+P.S. No card, no signup — just the lead, 10 seconds: {{free_lead_url}}`),
   },
 ]
 
