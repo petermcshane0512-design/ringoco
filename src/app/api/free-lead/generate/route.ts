@@ -445,10 +445,17 @@ export async function POST(req: NextRequest) {
         lead_signal_detail: signalDetail,
         lead_est_job_min: estJobMin,
         lead_est_job_max: estJobMax,
-        lead_ai_intel: aiIntel,   // {job_summary, est_value_line, outreach_script, why_you, property_note}
         generation_completed_at: new Date().toISOString(),
         generation_failed_reason: null,
       }).eq('biz_id', bizId)
+
+      // AI packet written SEPARATELY + failure-tolerant: if the lead_ai_intel
+      // column doesn't exist yet (migration not run), this errors silently and
+      // the lead still works. Once the column exists, it populates.
+      if (aiIntel) {
+        await supabase.from('prospect_free_leads').update({ lead_ai_intel: aiIntel }).eq('biz_id', bizId)
+          .then((r) => { if (r.error) console.warn('[free-lead] lead_ai_intel write skipped:', r.error.message) })
+      }
 
       const updated = await supabase.from('prospect_free_leads').select('*').eq('biz_id', bizId).maybeSingle()
       return NextResponse.json({
