@@ -333,10 +333,14 @@ export async function POST(req: NextRequest) {
     // own zip/city. Better a real local lead (or honest "opening your area")
     // than a confident wrong-state one.
     let pool = await runQ(ENF, 'city', true)
-    if (!pool.length) pool = await runQ(null, 'city', true)   // any trade, same city
-    if (!pool.length) pool = await runQ(ENF, 'state', true)   // cited, same state
-    if (!pool.length) pool = await runQ(null, 'state', true)  // any, same state
-    // (intentionally NO geo:'any' tier — see note above)
+    if (!pool.length) pool = await runQ(null, 'city', true)    // any trade, same city
+    if (!pool.length) pool = await runQ(ENF, 'city', false)    // cited, same city, ANY trade
+    if (!pool.length) pool = await runQ(ENF, 'state', true)    // cited, same state
+    if (!pool.length) pool = await runQ(null, 'state', true)   // any trade, same state
+    if (!pool.length) pool = await runQ(ENF, 'state', false)   // cited, same state, ANY trade
+    if (!pool.length) pool = await runQ(null, 'state', false)  // ANY real lead, same state — within-state safety net so a trade mismatch never dead-ends. STILL never crosses states.
+    // (intentionally NO geo:'any' tier — never cross states. No same-state
+    // lead at all → BatchData local fallback / honest "opening your area".)
 
     // 2026-06-12 per Peter — 55% of enforcement parcels are owned by a
     // trust/LLC/INC, and showing "CHICAGO TITLE LAND TRUST CO A/T/U/T
