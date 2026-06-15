@@ -243,10 +243,28 @@ export async function POST(req: NextRequest) {
     .update({ generation_requested_at: new Date().toISOString() })
     .eq('biz_id', bizId)
 
-  const zip = (row.zip as string) || ''
-  const city = (row.city as string) || ''
-  const state = (row.state as string) || ''
+  let zip = (row.zip as string) || ''
+  let city = (row.city as string) || ''
+  let state = (row.state as string) || ''
   const trade = (row.trade as string) || 'hvac'
+
+  // 2026-06-15 — many free-lead rows have no location (contacts loaded without
+  // city/state). Since matching is now same-state-ONLY (never cross-state),
+  // a blank location = no pool lead = dead "opening your area". Recover the
+  // contractor's real location from outreach_leads so same-state matching
+  // works (Tuckpointing's row is blank but outreach_leads knows it's Chicago).
+  if (!city || !state) {
+    const olEmail = (row.email as string | null) || null
+    if (olEmail) {
+      const { data: ol } = await supabase
+        .from('outreach_leads').select('city, state, zip').eq('email', olEmail).maybeSingle()
+      if (ol) {
+        city = city || (ol.city as string | null) || ''
+        state = state || (ol.state as string | null) || ''
+        zip = zip || (ol.zip as string | null) || ''
+      }
+    }
+  }
 
   // 2026-06-12 per Peter ("generate EVERY time"). The old code returned
   // "area opening soon" whenever location was incomplete (e.g. a contact
