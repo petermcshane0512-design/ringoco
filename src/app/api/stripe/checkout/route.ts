@@ -233,7 +233,7 @@ export async function POST(req: NextRequest) {
     ...(isAnon && body.email ? { customer_email: body.email.trim().slice(0, 200) } : {}),
     custom_text: {
       submit: {
-        message: '30-day money-back guarantee. If BellAveGo does not earn you back your subscription cost in 30 days, click cancel in your dashboard and we refund every penny â€” no questions, no calls, no hoops.',
+        message: 'Your first 2 weeks are free, $0 today. Cancel anytime in your dashboard before the trial ends and you are never charged. Your zip is locked to you, never shared.',
       },
     },
     // 2026-06-10 — per Peter: kill the 7-step wizard. Sign up -> first 10
