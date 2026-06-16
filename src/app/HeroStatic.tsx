@@ -2,8 +2,6 @@ import Link from 'next/link'
 import {
   LEADS_PER_WEEK,
   PRICE_MONTHLY_USD,
-  INTRO_PRICE_USD,
-  INTRO_PROMO_CODE,
 } from '@/lib/offer'
 
 /**
@@ -56,7 +54,7 @@ export default function HeroStatic() {
           BellAveGo
         </Link>
         <Link
-          href="/start?promo=FIRST400"
+          href="/start"
           style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
             padding: '10px 18px', borderRadius: 10,
@@ -65,7 +63,7 @@ export default function HeroStatic() {
             fontWeight: 900, fontSize: 14,
           }}
         >
-          Get my first month — ${INTRO_PRICE_USD} →
+          Get my first month free →
         </Link>
       </nav>
 
@@ -110,7 +108,7 @@ export default function HeroStatic() {
           </div>
 
           <Link
-            href={`/start?promo=${INTRO_PROMO_CODE}`}
+            href="/start"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               padding: '16px 28px', borderRadius: 12,
@@ -120,11 +118,11 @@ export default function HeroStatic() {
               maxWidth: 580,
             }}
           >
-            Claim my area — ${INTRO_PRICE_USD} first month →
+            Claim my area — first month free →
           </Link>
 
           <p style={{ fontSize: 13, color: '#4A6670', margin: '14px 0 18px', maxWidth: 580 }}>
-            <strong style={{ color: '#16803F', fontSize: 16 }}>${INTRO_PRICE_USD}</strong> first month with code <strong>{INTRO_PROMO_CODE}</strong> · ${PRICE_MONTHLY_USD}/mo starting month 2 · Didn&rsquo;t book a job in your first 30 days? Full refund and month 2 free. · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
+            <strong style={{ color: '#16803F', fontSize: 16 }}>First month FREE</strong> · ${PRICE_MONTHLY_USD}/mo after · Didn&rsquo;t book a job in your first 30 days? Full refund and month 2 free. · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
           </p>
         </div>
       </section>

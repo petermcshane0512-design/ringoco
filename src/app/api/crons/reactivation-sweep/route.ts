@@ -9,12 +9,12 @@ export const maxDuration = 120
  * GET /api/crons/reactivation-sweep
  *
  * Weekly Tuesday 17:00 UTC. Finds profiles that cancelled in the last
- * 7-60 days and haven't been re-engaged yet, sends them a "come back
- * for $97" win-back SMS + email. Stamps reactivation_attempted_at +
+ * 7-60 days and haven't been re-engaged yet, sends them a "come back,
+ * first month free" win-back SMS + email. Stamps reactivation_attempted_at +
  * bumps reactivation_count so we don't spam.
  *
  * Graduated reactivation:
- *   attempt 1 (7-14 days after cancel):   "we miss you, $97 first month back"
+ *   attempt 1 (7-14 days after cancel):   "we miss you, first month free back"
  *   attempt 2 (30-45 days):                "your dashboard still has your number, one click to reactivate"
  *   attempt 3 (90 days):                   "last call — your AI number gets released next week"
  *
@@ -38,12 +38,12 @@ function authorized(req: NextRequest): boolean {
 
 function buildWinback(attempt: number, name: string): string {
   if (attempt === 1) {
-    return `Hey ${name || 'partner'} — saw you cancelled BellAveGo. Quick offer: come back this week, your first month is back to $97 (save $200). 30-day money-back still applies. https://www.bellavego.com/dashboard/upgrade — Peter`
+    return `Hey ${name || 'partner'} — saw you cancelled BellAveGo. Quick offer: come back this week and your first month is FREE. 30-day money-back still applies. https://www.bellavego.com/dashboard/upgrade — Peter`
   }
   if (attempt === 2) {
-    return `${name || 'Hey'} — your AI number is still parked at BellAveGo for ~30 more days. Reactivate in one click and don't lose it. $97 month 1 if you re-up: https://www.bellavego.com/dashboard/upgrade — Peter`
+    return `${name || 'Hey'} — your AI number is still parked at BellAveGo for ~30 more days. Reactivate in one click and don't lose it. First month FREE if you re-up: https://www.bellavego.com/dashboard/upgrade — Peter`
   }
-  return `${name || 'Hey'} — last call. Your BellAveGo number gets released to the pool next week. If you want it back, $97 first month re-up: https://www.bellavego.com/dashboard/upgrade — Peter`
+  return `${name || 'Hey'} — last call. Your BellAveGo number gets released to the pool next week. If you want it back, first month FREE re-up: https://www.bellavego.com/dashboard/upgrade — Peter`
 }
 
 async function handler(req: NextRequest) {

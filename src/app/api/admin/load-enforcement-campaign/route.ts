@@ -67,7 +67,7 @@ async function pushToInstantly(lead: SourcedLead, freeLeadUrl: string, firstName
     trade: (lead.trade || 'home-service').toLowerCase(),
     free_lead_url: freeLeadUrl,
     promo_code: 'FIRST400',
-    promo_url: 'bellavego.com/start?promo=FIRST400',
+    promo_url: 'bellavego.com/start',
   }
   const body = {
     campaign: CAMPAIGN_ID,

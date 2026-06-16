@@ -59,7 +59,7 @@ export default function GoodbyePage() {
         </div>
 
         <a
-          href="/start?promo=FIRST400"
+          href="/start"
           style={{
             display: 'inline-block',
             padding: '14px 30px',

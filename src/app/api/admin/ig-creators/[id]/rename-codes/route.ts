@@ -237,7 +237,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
           `1) Your personal 3-months-free code: ${finalPersonal}\n` +
           `   Sign up at https://www.bellavego.com/pricing, apply ${finalPersonal} at checkout.\n\n` +
           `2) Your fan code: ${finalPublic}\n` +
-          `   They click https://www.bellavego.com/ref/${finalPublic} → $97 first month.\n` +
+          `   They click https://www.bellavego.com/ref/${finalPublic} → free first month.\n` +
           `   You earn $200/paid ref (Friday after their month 2 charge clears) + $1K @ 5 refs + $3K @ 15.`
         : null,
     })

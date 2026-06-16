@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
-import { LEADS_PER_WEEK, LEADS_PER_MONTH, PRICE_MONTHLY_USD, INTRO_PRICE_USD, INTRO_PROMO_CODE } from '@/lib/offer'
+import { PRICE_MONTHLY_USD } from '@/lib/offer'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -80,46 +80,46 @@ const NEW_STEPS: NewStep[] = [
     body: toHtml(
 `{{firstName}} — my software reads {{city}}'s code-enforcement records every night and flags homeowners the city is forcing to do {{trade}} work: fix it or face fines.
 
-One popped up near {{companyName}} this week. I've got the full record — owner name, the exact address, what the city cited, what they're ordered to fix.
+One popped up near {{companyName}} this week — owner name, the exact address, what the city cited, what they're ordered to fix.
 
-I can't put their address in an email. But it's yours, free — no card, no signup, 10 seconds:
+Here's the deal: your FIRST MONTH is FREE. 40 of these cited-homeowner leads, free, this month. See the first one right now — no card:
 
-👉 See exactly who: {{free_lead_url}}
+👉 See your free lead: {{free_lead_url}}
 
-They've got a deadline and a fine on the table, and most haven't hired anyone yet. If the data's good, the feed runs $${INTRO_PRICE_USD} the first month.
+The other 39 unlock the second you start — still free this month. After that it's $${PRICE_MONTHLY_USD}/mo, cancel anytime.
 
 Peter
 BellAveGo — (773) 710-9565
 
-P.S. Their name + address is right on that page. One tap, no catch: {{free_lead_url}}`),
+P.S. First month is $0 — 40 leads free. Start with the first one: {{free_lead_url}}`),
   },
   {
     subject: 're: the homeowner near {{companyName}} the city cited',
     body: toHtml(
 `{{firstName}} — that flagged homeowner is still sitting there, and another just came in for {{companyName}} overnight. Same area.
 
-I won't spell out the address here — but the city cited them and there's a fine on the table. See exactly who, free, no signup:
+See exactly who, free — no card:
 
 👉 {{free_lead_url}}
 
-{{city}} files dozens of new {{trade}} violations a week. Each one is a homeowner who legally HAS to hire someone soon. We hand them to ONE shop per area — never shared with 4 others like HomeAdvisor.
+{{city}} files dozens of new {{trade}} violations a week — homeowners who legally HAVE to hire someone soon. One shop per area, never shared with 4 others like HomeAdvisor.
 
-$${INTRO_PRICE_USD} first month with code ${INTRO_PROMO_CODE}. Book a paying job in 30 days or full refund + next month free + you keep every lead.
+Your first month is FREE: all 40 leads, $0. Start off your free lead, unlock the other 39 this month, then $${PRICE_MONTHLY_USD}/mo. Cancel anytime, keep every lead.
 
 Peter
 
-P.S. The free one takes 10 seconds to look at, no card: {{free_lead_url}}`),
+P.S. The free one's still sitting there, no card: {{free_lead_url}}`),
   },
   {
-    subject: 'whoever clicks first gets {{city}}',
+    subject: 'whoever starts first gets {{city}}',
     body: toHtml(
 `{{firstName}} — last note.
 
-The cited homeowner I pulled for {{companyName}} is still here, free:
+Your free cited homeowner is still here:
 
 👉 {{free_lead_url}}
 
-Here's the deal: the FIRST {{trade}} shop in your area to grab this gets the priority queue — after that my system stops emailing your competitors on the same lead. Whoever opens it first wins the area.
+The FIRST {{trade}} shop in your area to start gets the priority queue — after that my system stops emailing your competitors on the same leads. First month's free (40 leads, $0), then $${PRICE_MONTHLY_USD}/mo.
 
 Grab the free one or I move on. Both fine.
 
@@ -391,7 +391,7 @@ async function backfillLeadVars(): Promise<{
         trade: wantTrade,
         biz_id: prospect.biz_id,
         promo_code: 'FIRST400',
-        promo_url: 'bellavego.com/start?promo=FIRST400',
+        promo_url: 'bellavego.com/start',
       }
       toPatch.push({
         id: it.id,

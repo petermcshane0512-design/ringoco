@@ -159,7 +159,7 @@ async function provisionOne(handle: string, trade?: string): Promise<CreatorResu
       `1) YOUR personal 3-months-free code: ${personal_promo_code}\n` +
       `   Sign up at https://www.bellavego.com/pricing, apply ${personal_promo_code} at checkout.\n\n` +
       `2) YOUR fan code (give to followers): ${promo_code}\n` +
-      `   They click https://www.bellavego.com/ref/${promo_code} and get $97 first month.\n` +
+      `   They click https://www.bellavego.com/ref/${promo_code} and get a free first month.\n` +
       `   You earn $200/paid ref (Friday after their month 2 charge clears) + $1K bonus at 5 refs + $3K at 15.`
     : null
 

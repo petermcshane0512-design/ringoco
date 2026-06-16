@@ -58,9 +58,13 @@ export const LEADS_PER_MONTH_HEADLINE = `${LEADS_PER_MONTH} fresh leads`
  * Legacy tier slugs (receptionist/concierge) preserved internally for
  * grandfathered subscribers ONLY. Customer-facing surfaces use Pro.
  */
-export const PRICE_MONTHLY_USD = 497
-export const PRICE_ANNUAL_USD = 4_997
-export const PRICE_ANNUAL_SAVINGS_USD = 968
+// 2026-06-16 PIVOT — "first month FREE, then $197/mo." Goal: 500 customers ×
+// $197 = $1.18M ARR by May 12 2027. Free first month kills the "$497 for
+// software I'm not sure works" wall. Month 1 = 40 leads free (30-day trial),
+// then $197/mo.
+export const PRICE_MONTHLY_USD = 197
+export const PRICE_ANNUAL_USD = 1_970          // pay 10 months, get 12
+export const PRICE_ANNUAL_SAVINGS_USD = 394    // 2 months free
 
 /**
  * Per-lead price math — used in comparison tables ($X.XX/lead vs HomeAdvisor).
@@ -70,21 +74,23 @@ export const PRICE_PER_LEAD_USD = Number((PRICE_MONTHLY_USD / LEADS_PER_MONTH).t
 export const PRICE_PER_LEAD_LABEL = `$${PRICE_PER_LEAD_USD.toFixed(2)}/lead`
 
 /**
- * Intro discount mechanic — REAL.
- * FIRST400 is a Stripe promotion_code that applies $400 off the first
- * month, taking $497 → $97 on month 1.
+ * Intro mechanic — FIRST MONTH FREE (30-day trial, card on file, auto-bills
+ * $197 on day 31). No promo code needed; the trial IS the offer.
  */
-export const INTRO_PRICE_USD = 97
-export const INTRO_PROMO_CODE = 'FIRST400'
-export const INTRO_DISCOUNT_USD = 400
-export const PRICE_PER_LEAD_INTRO_USD = Number((INTRO_PRICE_USD / LEADS_PER_MONTH).toFixed(2))
+export const FIRST_MONTH_FREE = true
+export const INTRO_PRICE_USD = 0
+export const INTRO_PROMO_CODE = ''             // no code — free trial, not a discount
+export const INTRO_DISCOUNT_USD = 0
+export const PRICE_PER_LEAD_INTRO_USD = 0      // month 1 is free — $0/lead
 
 /**
- * Stripe price IDs — v9 leads-only.
- * Mirror of lib/pricing.ts PRICE_IDS_V2.officemgr. Re-exported here so
- * marketing components don't need to import the legacy tier-keyed object.
+ * Stripe price IDs.
+ * ⚠️ 2026-06-16 — STRIPE_PRICE_ID_MONTHLY MUST be swapped to the new $197/mo
+ * price (Peter creates it in Stripe). Until then this still points at the $497
+ * price — but month 1 is a FREE trial so nobody is charged during the window.
+ * Update this ID the moment the $197 Stripe price exists.
  */
-export const STRIPE_PRICE_ID_MONTHLY = 'price_1TgUZFGrkP7VQmUjw9c5gEXv'
+export const STRIPE_PRICE_ID_MONTHLY = process.env.STRIPE_PRICE_197_MONTHLY || 'price_1TgUZFGrkP7VQmUjw9c5gEXv'
 export const STRIPE_PRICE_ID_ANNUAL = 'price_1TgUanGrkP7VQmUjujaifNI0'
 
 /**

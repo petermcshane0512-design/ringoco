@@ -122,7 +122,7 @@ const softwareJsonLd = {
   operatingSystem: "Web",
   description: META_DESCRIPTION,
   offers: [
-    { "@type": "Offer", name: "BellAveGo Leads", price: "497", priceCurrency: "USD" },
+    { "@type": "Offer", name: "BellAveGo Leads", price: "197", priceCurrency: "USD" },
   ],
   aggregateRating: undefined,  // add once we have published reviews
 };

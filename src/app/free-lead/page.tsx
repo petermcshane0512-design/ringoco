@@ -12,7 +12,7 @@ import LeadMap from '@/components/LeadMap'
  * /free-lead?b={biz_id} — cold-email landing page.
  *
  * Reveals the pre-pulled homeowner lead in 8 seconds (anticipation theater)
- * then asks for the $97 trial. Designed to convert at 25-30% open → click,
+ * then asks for the free trial. Designed to convert at 25-30% open → click,
  * 30% click → checkout per the 2.7% Hormozi/Elon system target.
  *
  * SINGLE CTA. NO NAV. NO FOOTER. No competing eye paths. Hormozi:
@@ -22,7 +22,7 @@ import LeadMap from '@/components/LeadMap'
  *   1. Page load → fetch /api/free-lead/claim?b={biz_id}
  *   2. Show "PULLING YOUR LEAD..." spinner for 8 sec (real fetch < 1s)
  *   3. Reveal full lead (name, address, phone, signal, est value, AI script preview)
- *   4. Single ORANGE CTA: "Lock this zip — $97" → Stripe via /start?promo=FIRST400&b={biz_id}
+ *   4. Single ORANGE CTA: "Lock this zip — first month free" → Stripe via /start?b={biz_id}
  */
 
 export const dynamic = 'force-dynamic'
@@ -143,8 +143,8 @@ function FreeLeadInner() {
   }
 
   const checkoutUrl = bizId
-    ? `/start?promo=FIRST400&b=${encodeURIComponent(bizId)}`
-    : `/start?promo=FIRST400`
+    ? `/start?b=${encodeURIComponent(bizId)}`
+    : `/start`
 
   return (
     <main style={shellStyle}>
@@ -183,7 +183,7 @@ function FreeLeadInner() {
                   </h1>
                   <p style={{ fontSize: 14.5, color: '#4A6670', margin: '0 0 24px', lineHeight: 1.55 }}>
                     Most shops grab theirs within the first hour. Yours has been waiting{prospect.last_visited_at ? ` since you last looked` : ''}.
-                    {' '}Tap below — same lead, fresh details. Phone unlocked on the $97 trial.
+                    {' '}Tap below — same lead, fresh details. Phone unlocked on the free trial.
                   </p>
                 </>
               ) : (
@@ -200,7 +200,7 @@ function FreeLeadInner() {
                   </h1>
                   <p style={{ fontSize: 14.5, color: '#4A6670', margin: '0 0 24px', lineHeight: 1.55 }}>
                     Name, address, year built, est. job value, signal that surfaced them.
-                    Phone number redacted on free lead — full unlock on the $97 trial.
+                    Phone number redacted on free lead — full unlock on the free trial.
                     Yours regardless. No catch.
                   </p>
                 </>
@@ -314,7 +314,7 @@ function FreeLeadInner() {
                         </div>
                       </div>
                       <div style={{ fontSize: 12, fontWeight: 700, color: '#c2410c', whiteSpace: 'nowrap' }}>
-                        {LEADS_PER_WEEK}/week · $97 to start →
+                        {LEADS_PER_WEEK}/week · first month free →
                       </div>
                     </div>
                   </Link>
@@ -364,7 +364,7 @@ function FreeLeadInner() {
                             🔒 Lead #{n} — verified homeowner near {lead.zip || 'you'}
                           </span>
                           <span style={{ fontSize: 11, fontWeight: 800, color: '#c2410c', whiteSpace: 'nowrap' }}>
-                            Unlock — $97 →
+                            Unlock FREE this month →
                           </span>
                         </div>
                       </Link>
@@ -538,7 +538,7 @@ function FreeLeadInner() {
                 const standardJobs = Math.max(1, Math.round(monthlyLeads * STANDARD_CLOSE_RATE))
                 const conservativeGross = conservativeJobs * avgJob
                 const standardGross = standardJobs * avgJob
-                const cost = 497
+                const cost = 197
                 const conservativeNet = conservativeGross - cost
                 const standardNet = standardGross - cost
                 return (
@@ -566,7 +566,7 @@ function FreeLeadInner() {
                           <br />
                           <strong style={{ fontSize: 18, color: '#5EEAD4' }}>${conservativeGross.toLocaleString()}/mo gross</strong>
                           <br />
-                          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>Net after $497: <strong style={{ color: '#5EEAD4' }}>${conservativeNet.toLocaleString()}</strong></span>
+                          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>Net after $197: <strong style={{ color: '#5EEAD4' }}>${conservativeNet.toLocaleString()}</strong></span>
                         </div>
                       </div>
                       <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(94,234,212,0.16)', border: '1.5px solid rgba(94,234,212,0.40)' }}>
@@ -578,7 +578,7 @@ function FreeLeadInner() {
                           <br />
                           <strong style={{ fontSize: 18, color: '#5EEAD4' }}>${standardGross.toLocaleString()}/mo gross</strong>
                           <br />
-                          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>Net after $497: <strong style={{ color: '#5EEAD4' }}>${standardNet.toLocaleString()}</strong></span>
+                          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>Net after $197: <strong style={{ color: '#5EEAD4' }}>${standardNet.toLocaleString()}</strong></span>
                         </div>
                       </div>
                     </div>
@@ -595,10 +595,10 @@ function FreeLeadInner() {
                   Your offer
                 </div>
                 <h2 style={offerH1}>
-                  <span style={{ background: 'linear-gradient(135deg, #22C55E, #16803F)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>{LEADS_PER_MONTH} leads</span> like this for <span style={{ background: 'linear-gradient(135deg, #22C55E, #16803F)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>$97</span>.
+                  First month <span style={{ background: 'linear-gradient(135deg, #22C55E, #16803F)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>FREE</span> — {LEADS_PER_MONTH} leads, <span style={{ background: 'linear-gradient(135deg, #22C55E, #16803F)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>$0</span>.
                 </h2>
                 <p style={{ fontSize: 15, color: '#4A6670', lineHeight: 1.55, margin: '0 0 18px' }}>
-                  {LEADS_PER_WEEK} fresh homeowner leads in {lead.zip || 'your zip'} every week for 4 weeks. Verified phones. Pre-written outreach script per lead. <strong style={{ color: '#0B1F3A' }}>${PRICE_PER_LEAD_INTRO_USD.toFixed(2)} per lead first month</strong> — vs HomeAdvisor at $40-300 shared with 4 other shops.
+                  {LEADS_PER_WEEK} fresh homeowner leads in {lead.zip || 'your zip'} every week for 4 weeks. Verified phones. Pre-written outreach script per lead. <strong style={{ color: '#0B1F3A' }}>${PRICE_PER_LEAD_INTRO_USD.toFixed(2)} per lead this month</strong> — then $197/mo after, cancel anytime. vs HomeAdvisor at $40-300 shared with 4 other shops.
                 </p>
 
                 <ul style={offerBullets}>
@@ -622,10 +622,10 @@ function FreeLeadInner() {
 
                 {/* CTA */}
                 <Link href={checkoutUrl} className="bavg-cta-sheen" style={{ ...ctaPrimary, position: 'relative', overflow: 'hidden' }}>
-                  Lock my zip — $97 →
+                  Lock my zip — first month free →
                 </Link>
                 <p style={{ fontSize: 12, color: '#7AAAB2', textAlign: 'center', margin: '12px 0 0' }}>
-                  90-second checkout · $497/mo starting month 2 · Cancel anytime
+                  90-second signup · first month free · $197/mo after · cancel anytime
                 </p>
               </div>
 
@@ -645,10 +645,10 @@ function FreeLeadInner() {
               </div>
               <h1 style={pullingH1}>We&rsquo;re still building inventory for your zip.</h1>
               <p style={{ fontSize: 14.5, color: '#4A6670', margin: '0 0 22px', lineHeight: 1.55 }}>
-                Be the first shop in your zip code. <strong style={{ color: '#0B1F3A' }}>Lock your territory for $97</strong> and the moment leads land, you get them — exclusive, no sharing, fresh batch every 7 days.
+                Be the first shop in your zip code. <strong style={{ color: '#0B1F3A' }}>Lock your territory — first month free</strong> and the moment leads land, you get them — exclusive, no sharing, fresh batch every 7 days.
               </p>
               <Link href={checkoutUrl} style={ctaPrimary}>
-                Lock my zip — $97 →
+                Lock my zip — first month free →
               </Link>
               <p style={{ fontSize: 11.5, color: '#7AAAB2', textAlign: 'center', margin: '12px 0 0' }}>
                 The 1-Job Guarantee: 1 paying job in 30 days or full refund + next month free.
@@ -667,7 +667,7 @@ function FreeLeadInner() {
                 Or text me directly: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a> and I&rsquo;ll pull one by hand.
               </p>
               <Link href={checkoutUrl} style={ctaPrimary}>
-                Or lock my zip — $97 →
+                Or lock my zip — first month free →
               </Link>
             </div>
           )}

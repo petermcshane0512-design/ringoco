@@ -179,7 +179,7 @@ async function pushLead(lead: Lead, leadsPreview: string): Promise<{ ok: boolean
       // stays consistent across variants.
       // 2026-06-10 — FIRST200 superseded by FIRST400 ($497 → $97 month 1).
       promo_code: 'FIRST400',
-      promo_url: 'bellavego.com/start?promo=FIRST400',
+      promo_url: 'bellavego.com/start',
     },
     skip_if_in_workspace: true,
     skip_if_in_campaign: true,

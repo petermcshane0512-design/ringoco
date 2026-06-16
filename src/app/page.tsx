@@ -55,7 +55,7 @@ import Testimonials from '@/components/Testimonials'
  *     8th-grade reading level, mobile-first sticky CTA
  *
  * Pricing tier-name slugs owned by src/lib/pricing.ts (other terminal).
- * Display copy here uses $497/mo + $97 FIRST400 only.
+ * Display copy here uses $197/mo + first month free (30-day trial) only.
  */
 
 const FOUNDER_PHONE = '(773) 710-9565'
@@ -191,7 +191,7 @@ function HomeContent() {
                 check logged to opportunity_checks (warm-lead funnel). */}
             <OpportunityChecker />
             <p style={{ fontSize: 13, color: '#4A6670', margin: '14px 0 18px', maxWidth: 580 }}>
-              <strong style={{ color: '#16803F', fontSize: 16 }}>$97</strong> first month with code <strong>FIRST400</strong> · $497/mo starting month 2 · Didn&rsquo;t book a job in your first 30 days? Full refund and month 2 free. · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
+              <strong style={{ color: '#16803F', fontSize: 16 }}>First month FREE</strong> · $197/mo after · Didn&rsquo;t book a job in your first 30 days? Full refund and month 2 free. · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
             </p>
           </div>
 
@@ -221,7 +221,7 @@ function HomeContent() {
       <Reveal><ScoutTeam /></Reveal>
 
       {/* MATH stat bar + Carlos case-study quote deleted 2026-06-09 per
-          Peter. Offer card already states $497/mo + book-1-job guarantee.
+          Peter. Offer card already states $197/mo + book-1-job guarantee.
           Carlos quote was a fake testimonial — legal risk per earlier sweep. */}
 
       {/* 2026-06-13 — Testimonials row (founding cohort, 3 contractors).
@@ -273,22 +273,22 @@ function HomeContent() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 10, marginBottom: 18 }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 800, color: '#16803F', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 2 }}>
-                  First month w/ code FIRST400
+                  First month free
                 </div>
                 <div style={{
                   fontSize: 'clamp(56px, 8vw, 84px)', fontWeight: 900,
                   letterSpacing: '-0.05em', lineHeight: 0.95,
                   background: 'linear-gradient(135deg, #22C55E 0%, #16803F 100%)',
                   WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-                }}>$97</div>
+                }}>$0</div>
                 <div style={{ fontSize: 11.5, color: '#4A6670', marginTop: 4 }}>
-                  &mdash; $497/mo starting month 2
+                  &mdash; $197/mo after
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: 10.5, fontWeight: 800, color: '#7AAAB2', letterSpacing: '0.12em', textTransform: 'uppercase' }}>BellAveGo Pro</div>
-                <div style={{ fontSize: 14, color: '#0B1F3A', fontWeight: 800, marginTop: 2 }}>$497<span style={{ color: '#7AAAB2', fontWeight: 600 }}>/mo after trial</span></div>
-                <div style={{ fontSize: 11, color: '#4A6670', marginTop: 2 }}>or $4,997/yr · save $968</div>
+                <div style={{ fontSize: 14, color: '#0B1F3A', fontWeight: 800, marginTop: 2 }}>$197<span style={{ color: '#7AAAB2', fontWeight: 600 }}>/mo after trial</span></div>
+                <div style={{ fontSize: 11, color: '#4A6670', marginTop: 2 }}>or $1,970/yr · save $394</div>
               </div>
             </div>
             <ul style={{ margin: '0 0 22px', padding: 0, listStyle: 'none', display: 'grid', gap: 10 }}>
@@ -320,8 +320,8 @@ function HomeContent() {
                 Book a paying job in <strong>30 days</strong> or full refund + <strong>your next month free</strong> + you keep every lead. No clawback. No questions.
               </div>
             </div>
-            <Link href="/start?promo=FIRST400" className="bavg-cta-sheen" style={{ ...ctaHeroPrimary, width: '100%', justifyContent: 'center', padding: '17px 28px', fontSize: 16, position: 'relative', overflow: 'hidden' }}>
-              Start $97 trial — lock your zip →
+            <Link href="/start" className="bavg-cta-sheen" style={{ ...ctaHeroPrimary, width: '100%', justifyContent: 'center', padding: '17px 28px', fontSize: 16, position: 'relative', overflow: 'hidden' }}>
+              Start free — lock your zip →
             </Link>
             <p style={{ fontSize: 12, color: '#4A6670', textAlign: 'center', margin: '14px 0 0' }}>
               90-second checkout · No setup fees · Cancel any time · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
@@ -348,7 +348,7 @@ function HomeContent() {
           fontSize: 16, color: '#0B1F3A', fontWeight: 700, lineHeight: 1.6,
         }}>
           HomeAdvisor: <strong style={{ color: '#A33C18' }}>$40–300/lead</strong>, shared w/ 4 other shops.<br />
-          BellAveGo: <strong style={{ color: '#C84B26' }}>$12.43/lead</strong>, exclusive to YOU, AI-written intro script attached.
+          BellAveGo: <strong style={{ color: '#C84B26' }}>$4.93/lead</strong>, exclusive to YOU, AI-written intro script attached.
         </p>
         </Reveal>
       </section>
@@ -362,10 +362,10 @@ function HomeContent() {
           Your zip is still open.<br />Lock it before your competitor does.
         </h2>
         <p style={{ color: 'rgba(255,255,255,0.94)', fontSize: 16, maxWidth: 560, margin: '0 auto 28px', lineHeight: 1.6 }}>
-          <strong>$97</strong> first month w/ <strong>FIRST400</strong>. Book a paying job in 30 days OR full refund + <strong>your next month free</strong> + keep every lead. One shop per area. $497/mo starting month 2.
+          <strong>First month FREE</strong>. Book a paying job in 30 days OR full refund + <strong>your next month free</strong> + keep every lead. One shop per area. $197/mo after.
         </p>
-        <Link href="/start?promo=FIRST400" className="bavg-cta-sheen" style={{ ...ctaFinal, position: 'relative', overflow: 'hidden' }}>
-          Start $97 trial — lock your zip →
+        <Link href="/start" className="bavg-cta-sheen" style={{ ...ctaFinal, position: 'relative', overflow: 'hidden' }}>
+          Start free — lock your zip →
         </Link>
         <p style={{ marginTop: 18, fontSize: 13, color: 'rgba(255,255,255,0.92)' }}>
           Or talk to the team direct: <a href={FOUNDER_PHONE_HREF} style={{ color: '#FFF8F0', fontWeight: 800, textDecoration: 'underline' }}>{FOUNDER_PHONE}</a>
@@ -408,9 +408,9 @@ function HomeContent() {
       }}>
         <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.2 }}>
           🔒 Lock your zip<br />
-          <span style={{ fontSize: 11, color: '#7AAAB2', fontWeight: 600 }}>$97 first month · FIRST400</span>
+          <span style={{ fontSize: 11, color: '#7AAAB2', fontWeight: 600 }}>First month free · $197/mo after</span>
         </div>
-        <Link href="/start?promo=FIRST400" style={{
+        <Link href="/start" style={{
           padding: '10px 18px', borderRadius: 10,
           background: 'linear-gradient(135deg, #FF9D5A, #E8742B)',
           color: '#fff', textDecoration: 'none',
@@ -529,8 +529,8 @@ function Nav({ isSignedIn }: { isSignedIn: boolean }) {
         ) : (
           <>
             <Link href="/sign-in" style={navLinkBig} className="nav-auth">Sign in</Link>
-            <Link href="/start?promo=FIRST400" style={ctaNavPrimaryBig} className="nav-cta">
-              <span className="nav-cta-full">Claim my area · $97 →</span>
+            <Link href="/start" style={ctaNavPrimaryBig} className="nav-cta">
+              <span className="nav-cta-full">Claim my area · free →</span>
               <span className="nav-cta-short">Create account</span>
             </Link>
           </>
@@ -866,9 +866,9 @@ function ExitIntentPopup() {
           Wait — your zip is still open.
         </h3>
         <p style={{ fontSize: 14.5, color: '#4A6670', margin: '0 0 22px', lineHeight: 1.55 }}>
-          One shop per area — when yours is taken, it&rsquo;s taken. Lock yours for <strong style={{ color: '#0B1F3A' }}>$97 (FIRST400)</strong> before your competitor finds us first.
+          One shop per area — when yours is taken, it&rsquo;s taken. Lock yours <strong style={{ color: '#0B1F3A' }}>free this month</strong> before your competitor finds us first.
         </p>
-        <Link href="/start?promo=FIRST400" onClick={close} style={{
+        <Link href="/start" onClick={close} style={{
           display: 'block', textAlign: 'center',
           padding: '15px 22px', borderRadius: 12,
           background: 'linear-gradient(135deg, #FF9D5A, #E8742B, #C84B26)',
@@ -877,7 +877,7 @@ function ExitIntentPopup() {
           boxShadow: '0 12px 32px rgba(232,116,43,0.42)',
           marginBottom: 10,
         }}>
-          🔒 Lock my zip for $97 →
+          🔒 Lock my zip — first month free →
         </Link>
         <a href={FOUNDER_PHONE_HREF} onClick={close} style={{
           display: 'block', textAlign: 'center',

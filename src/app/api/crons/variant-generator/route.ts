@@ -33,7 +33,7 @@ OFFER:
 - ${LEADS_PER_MONTH} fresh exclusive homeowner leads per month delivered Monday morning (${LEADS_PER_WEEK}/wk), in the contractor's zip+trade. Real names + addresses + phone. Sourced from public-record events (permits, aged HVAC units, property turnover, code-violation listings).
 - AUTO-OUTREACH: one-click button — AI sends personalized email + SMS to each delivered lead as if from the contractor. Contractor gets phone notification when homeowner replies. Saves them 1-2 hrs/day of cold-reachout.
 - EXCLUSIVE territory — leads never shared like HomeAdvisor/Angie/Networx.
-- **First month $97 w/ code FIRST400** (saves $400). Then $497/mo flat.
+- **First month FREE (30-day trial)**. Then $197/mo flat.
 - Need more mid-month? Extra leads $25 each (any amount).
 - **Performance guarantee**: 1 paying job booked in 30 days or full refund.
 - 30-day money-back guarantee. Cancel anytime. No setup. No phone numbers required. No integration.
@@ -48,7 +48,7 @@ TRUST / ANTI-"SCAM-LOOK" (CRITICAL — likely why nobody clicks): a cold "the ci
 - Sound like a local human, not a lead broker. No hype, no fake urgency, no ALL CAPS, no "ACT NOW".
 - Use a CURIOSITY GAP, honestly: "I can't put their address in an email — see exactly who: {{free_lead_url}}".
 
-THE CLICK LINK in body copy must be {{free_lead_url}} (the free lead) — NOT bellavego.com/start. The signup/$97 is the SECOND step, mentioned briefly AFTER the free-lead CTA.
+THE CLICK LINK in body copy must be {{free_lead_url}} (the free lead) — NOT bellavego.com/start. The signup (first month free) is the SECOND step, mentioned briefly AFTER the free-lead CTA.
 
 NEVER USE THESE PHRASES — they reference the deprecated receptionist product:
 "AI receptionist", "Emma", "answers your calls", "voice AI", "books the job", "phone AI", "24/7 answering", demo line phone number, anything about phones answering or call routing.
@@ -59,7 +59,7 @@ RULES:
 - Body ≤ 180 words
 - Direct, plain language. No jargon. No marketing-speak.
 - Talk to a guy under a truck, not a CFO.
-- ALWAYS include: the {{free_lead_url}} CTA as the PRIMARY action (a clear standalone line + repeated in a P.S.), a trust/credibility marker (public record / "call me, real person"), and a brief mention of $97-first-month + the 1-job-or-refund guarantee AFTER the free-lead CTA.
+- ALWAYS include: the {{free_lead_url}} CTA as the PRIMARY action (a clear standalone line + repeated in a P.S.), a trust/credibility marker (public record / "call me, real person"), and a brief mention of free-first-month + the 1-job-or-refund guarantee AFTER the free-lead CTA.
 - Hormozi $100M Offers principles: dream outcome + perceived likelihood + low time-delay + low effort
 - Each variant must be MEANINGFULLY DIFFERENT in angle, but EVERY variant's job is the same: get the click on {{free_lead_url}}. Vary the trust-building + curiosity approach (don't just reshuffle words).
 - ABSOLUTELY NEVER: "consulting report", "review count", "market intel", "ranked vs competitors", "competitor analysis"

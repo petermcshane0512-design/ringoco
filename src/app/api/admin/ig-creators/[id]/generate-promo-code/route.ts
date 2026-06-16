@@ -227,7 +227,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       personal_stripe_promotion_code_id: personalPromoId,
       public_ref_url: `https://www.bellavego.com/ref/${finalPublicCode}`,
       dm_block: personalCode
-        ? `🔥 You're in. Two codes:\n\n1) Personal 3-months-free: ${personalCode}\n   Sign up at https://www.bellavego.com/pricing, apply ${personalCode} at checkout.\n\n2) Fan code: ${finalPublicCode}\n   They use https://www.bellavego.com/ref/${finalPublicCode} → $97 first month.\n   You earn $200/paid ref (paid Friday after their month 2) + $1K @ 5 refs + $3K @ 15.`
+        ? `🔥 You're in. Two codes:\n\n1) Personal 3-months-free: ${personalCode}\n   Sign up at https://www.bellavego.com/pricing, apply ${personalCode} at checkout.\n\n2) Fan code: ${finalPublicCode}\n   They use https://www.bellavego.com/ref/${finalPublicCode} → free first month.\n   You earn $200/paid ref (paid Friday after their month 2) + $1K @ 5 refs + $3K @ 15.`
         : null,
     })
   } catch (e) {

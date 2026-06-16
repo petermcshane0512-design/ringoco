@@ -29,7 +29,7 @@ export default function TermsPage() {
           <Link href="/founder" className="why-pulse"><span className="why-pulse-text">Why BellAveGo?</span></Link>
           <Link href="/pricing" className="price-pulse">Pricing</Link>
           {!isSignedIn && <Link href="/sign-in" className="signin-link">Sign In</Link>}
-          {!isSignedIn && <Link href="/start?promo=FIRST400" className="nav-cta"><span className="nav-cta-text">Get my first month — $97 →</span></Link>}
+          {!isSignedIn && <Link href="/start" className="nav-cta"><span className="nav-cta-text">Get my first month free →</span></Link>}
         </div>
       </nav>
 

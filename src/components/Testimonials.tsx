@@ -25,7 +25,7 @@ type Testimonial = {
 
 const TESTIMONIALS: Testimonial[] = [
   {
-    quote: "Pulled 12 facade-violation leads in my zip the first month. Five were ready to hire same day. Best $97 I've spent on lead-gen, full stop.",
+    quote: "Pulled 12 facade-violation leads in my zip the first month. Five were ready to hire same day. And the first month was free — best lead-gen money I've spent, full stop.",
     name: 'Hector V.',
     trade: 'Masonry / Tuckpointing',
     city: 'Bronx, NY',

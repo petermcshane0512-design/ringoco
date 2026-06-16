@@ -282,7 +282,7 @@ export async function POST(req: NextRequest) {
     personal_signup_code: personal_promo_code,
     // Convenience block â€” paste-ready for Peter's DM follow-up.
     dm_block: promo_code && personal_promo_code
-      ? `Your personal 3-months-free code: ${personal_promo_code}\nSignup: https://www.bellavego.com/pricing\nApply ${personal_promo_code} at checkout.\n\nYour fan code (give to your followers): ${promo_code}\nThey use https://www.bellavego.com/ref/${promo_code} and get $97 first month.`
+      ? `Your personal 3-months-free code: ${personal_promo_code}\nSignup: https://www.bellavego.com/pricing\nApply ${personal_promo_code} at checkout.\n\nYour fan code (give to your followers): ${promo_code}\nThey use https://www.bellavego.com/ref/${promo_code} and get a free first month.`
       : null,
   })
 }

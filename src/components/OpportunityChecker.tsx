@@ -11,7 +11,7 @@ import { LEADS_PER_WEEK } from '@/lib/offer'
  *   1. Trade pick (6 buttons + "Other" w/ free-text)
  *   2. Zip entry
  *   3. Result — REAL count from the leads table via /api/opportunity-check,
- *      plus territory status (OPEN / TAKEN) and either the $97 claim CTA
+ *      plus territory status (OPEN / TAKEN) and either the free-trial claim CTA
  *      or the waitlist email capture.
  *
  * Honesty contract:
@@ -329,13 +329,13 @@ function TerritoryBlock({
     // their zip looked "taken" (often false positives from old test rows in
     // territories table). Now: every prospect always gets the claim CTA.
     // /start/area also has its own territory check disabled (commit 757d7a8).
-    const claimHref = `/start/area?promo=FIRST400&zip=${encodeURIComponent(zip)}&trade=${encodeURIComponent(trade)}`
+    const claimHref = `/start/area?zip=${encodeURIComponent(zip)}&trade=${encodeURIComponent(trade)}`
     void claimed
     void status
     return (
       <div style={{ marginTop: 14 }}>
         <Link href={claimHref} style={ctaPrimary}>
-          Claim my area — $97 →
+          Claim my area — first month free →
         </Link>
       </div>
     )

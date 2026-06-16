@@ -136,9 +136,9 @@ export default async function AffiliateKitPage({ params }: { params: Params }) {
               '[3-10s] Cut to phone showing dashboard w/ list of leads.',
               `"My buddy Peter built BellAveGo. ${LEADS_PER_WEEK} fresh homeowner leads every Monday, exclusive to your zip, delivered to your dashboard. They even auto-email + SMS them as YOU."`,
               '[10-15s] Camera back on you.',
-              `"Code ${code} in my bio. $97 first month, 30-day money-back."`,
+              `"Code ${code} in my bio. First month FREE, 30-day money-back."`,
             ]}
-            caption={`If you\'re not using AI to find customers your competitors are. My boy built BellAveGo — ${LEADS_PER_MONTH} exclusive homeowner leads/mo in your zip + auto outreach as YOU. $97 first mo w/ ${code} → ${refLink}\n\n#hvaclife #plumberlife #electricianlife #contractorlife #smallbusinessowner`}
+            caption={`If you\'re not using AI to find customers your competitors are. My boy built BellAveGo — ${LEADS_PER_MONTH} exclusive homeowner leads/mo in your zip + auto outreach as YOU. First month FREE w/ ${code} → ${refLink}\n\n#hvaclife #plumberlife #electricianlife #contractorlife #smallbusinessowner`}
           />
 
           <ReelScript
@@ -151,9 +151,9 @@ export default async function AffiliateKitPage({ params }: { params: Params }) {
               '[15-25s] Cut to text: "Mike from 7842 Oak St — yes please send a quote for AC".',
               '"The crazy part — BellAveGo emails + texts each one as ME. I only respond when they say yes."',
               '[25-30s] Camera close, smile.',
-              `"$97 first month, code ${code}. 30-day money-back."`,
+              `"First month FREE, code ${code}. 30-day money-back."`,
             ]}
-            caption={`Wake up Monday, ${LEADS_PER_WEEK} fresh homeowner leads in my zip — names, addresses, phones, pre-written scripts. AI emails them as me, I only respond when they say yes. Code ${code} for $97 first month → ${refLink}\n\n#hvactech #plumber #1099life #smallbusinessowner`}
+            caption={`Wake up Monday, ${LEADS_PER_WEEK} fresh homeowner leads in my zip — names, addresses, phones, pre-written scripts. AI emails them as me, I only respond when they say yes. Code ${code} for first month FREE → ${refLink}\n\n#hvactech #plumber #1099life #smallbusinessowner`}
           />
 
           <ReelScript
@@ -167,11 +167,11 @@ export default async function AffiliateKitPage({ params }: { params: Params }) {
               `"This is BellAveGo. ${LEADS_PER_WEEK} homeowner leads/week (${LEADS_PER_MONTH}/mo) in my zip, EXCLUSIVE — never shared. Sourced from permits, aged units, property changes. Real intent."`,
               '"And it auto-emails + SMS\'s each lead as ME. Personalized. Sounds human. I just respond to the ones who say yes."',
               '[40-55s] Back to you, walking to next truck.',
-              '"$97 first month w/ FIRST400. Then $497 flat. Extra leads $25 each if I want more. 30-day money-back if it doesn\'t pay for itself."',
+              '"First month FREE. Then $197 flat. Extra leads $25 each if I want more. 30-day money-back if it doesn\'t pay for itself."',
               '[55-60s] Close-up.',
               `"Code ${code} in bio. Go look."`,
             ]}
-            caption={`Stopped paying HomeAdvisor $80/lead for shared bait. BellAveGo gives me ${LEADS_PER_WEEK} EXCLUSIVE homeowner leads/wk (${LEADS_PER_MONTH}/mo) + auto-emails them as me. Code ${code} for $97 first month → ${refLink}\n\n30-day money-back. $497/mo flat after. For solo + 1-3 person crews.`}
+            caption={`Stopped paying HomeAdvisor $80/lead for shared bait. BellAveGo gives me ${LEADS_PER_WEEK} EXCLUSIVE homeowner leads/wk (${LEADS_PER_MONTH}/mo) + auto-emails them as me. Code ${code} for first month FREE → ${refLink}\n\n30-day money-back. $197/mo flat after. For solo + 1-3 person crews.`}
           />
 
           <ReelScript
@@ -182,7 +182,7 @@ export default async function AffiliateKitPage({ params }: { params: Params }) {
               '[3-9s] Cut to inbox: notification "Bill from 4421 Maple St replied — wants a quote".',
               '"All emailed automatically as me. I only respond when they\'re a yes."',
               '[9-15s] Camera on you.',
-              `"$97 first month w/ ${code} in bio."`,
+              `"First month FREE w/ ${code} in bio."`,
             ]}
             caption={`${LEADS_PER_MONTH} exclusive homeowner leads this month + the AI emails them as me. Code ${code} → ${refLink}\n\n#hvac #plumber #electrician`}
           />
@@ -193,11 +193,11 @@ export default async function AffiliateKitPage({ params }: { params: Params }) {
               '[0-5s] You holding phone, showing competitor pricing.',
               '"HomeAdvisor: $80/lead, shared 5 ways. Yelp leads: $60, shared. Networx: $45, shared."',
               '[5-15s] Cut to BellAveGo dashboard pricing.',
-              `"BellAveGo: ${LEADS_PER_MONTH} leads/mo (${LEADS_PER_WEEK}/wk) for $497 = $${PRICE_PER_LEAD_USD.toFixed(2)}/lead. Exclusive. Never shared. They even reach out to em for you."`,
+              `"BellAveGo: ${LEADS_PER_MONTH} leads/mo (${LEADS_PER_WEEK}/wk) for $197 = $${PRICE_PER_LEAD_USD.toFixed(2)}/lead. Exclusive. Never shared. They even reach out to em for you."`,
               '[15-25s] Show side-by-side math.',
               '"And $25/lead extra when I need more mid-week. Stupid cheap compared to anything else."',
               '[25-30s] Camera back on you.',
-              `"$97 first month. Code ${code} for 30-day money-back."`,
+              `"First month FREE. Code ${code} for 30-day money-back."`,
             ]}
             caption={`Did the math on every lead-gen platform. BellAveGo destroys all of them — $${PRICE_PER_LEAD_USD.toFixed(2)}/lead exclusive vs $40-300/lead shared elsewhere. Code ${code} → ${refLink}`}
           />

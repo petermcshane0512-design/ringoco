@@ -38,7 +38,7 @@ export default function FounderPage() {
           {!isSignedIn && (
             <>
               <Link href="/sign-in" style={navLink}>Sign in</Link>
-              <Link href="/start?promo=FIRST400" style={navCTA}>$97 first month →</Link>
+              <Link href="/start" style={navCTA}>First month free →</Link>
             </>
           )}
         </div>
@@ -236,15 +236,15 @@ export default function FounderPage() {
             So we built an AI that scans his whole service area every night &mdash; and hands him <strong>{LEADS_PER_WEEK} real homeowners a week</strong> ({LEADS_PER_MONTH}/month) who actually need the work, with a verified phone and a ready-to-send intro. Exclusive to him, never shared like HomeAdvisor.
           </p>
           <p>
-            Here&rsquo;s the part that makes it work: we <strong>prioritize the homeowners who genuinely have to get the job done</strong> &mdash; the ones the city has flagged to repair their property. They&rsquo;re not &ldquo;maybe interested.&rdquo; They&rsquo;re already looking for someone like you. So your calls land on people who want to hear from you, not strangers you&rsquo;re bugging. The franchise shops pay five-figure budgets for worse leads. You pay $497.
+            Here&rsquo;s the part that makes it work: we <strong>prioritize the homeowners who genuinely have to get the job done</strong> &mdash; the ones the city has flagged to repair their property. They&rsquo;re not &ldquo;maybe interested.&rdquo; They&rsquo;re already looking for someone like you. So your calls land on people who want to hear from you, not strangers you&rsquo;re bugging. The franchise shops pay five-figure budgets for worse leads. You pay $197 — and your first month is free.
           </p>
           <p>
             Behind the scenes &mdash; <strong>four software engineers</strong>. Small on purpose. My buddy went from one job a day to fully booked inside a month. That&rsquo;s the whole reason this exists.
           </p>
 
           <div className="fv4-end">
-            <Link href="/start?promo=FIRST400" className="try">
-              Try BellAveGo &mdash; $97 first month
+            <Link href="/start" className="try">
+              Try BellAveGo &mdash; first month free
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </Link>
             <a className="call" href="tel:+17737109565">or text us: (773) 710-9565</a>
