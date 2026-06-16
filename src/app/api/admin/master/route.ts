@@ -266,6 +266,20 @@ export async function GET() {
   const clickTotal = instantly.campaigns.reduce((s, c) => s + c.clicks, 0)
   const bounceTotal = instantly.campaigns.reduce((s, c) => s + c.bounced, 0)
 
+  // 2026-06-15 per Peter — TRUE CST-day totals. Instantly buckets by UTC, which
+  // rolls at 7pm CST, so its "today" splits one CST day across two UTC buckets
+  // (the 9am-7pm sends in UTC date D, the 7-9pm tail in UTC date D+1). A CST
+  // calendar day = UTC bucket [cstDate] + UTC bucket [cstDate+1]. Summing both
+  // is correct all day: before 7pm CST the D+1 bucket is 0; after, it holds the
+  // tail. Kills the "why does it say 86, it's still Monday" confusion.
+  const cstToday = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' })
+  const cstNext = new Date(Date.now() + 86400000).toLocaleDateString('en-CA', { timeZone: 'America/Chicago' })
+  const cstRows = (instantly.daily ?? []).filter((r) => r.date === cstToday || r.date === cstNext)
+  const sentCstToday = cstRows.reduce((s, r) => s + r.sent, 0)
+  const openedCstToday = cstRows.reduce((s, r) => s + r.opened, 0)
+  const clicksCstToday = cstRows.reduce((s, r) => s + r.clicks, 0)
+  const repliesCstToday = cstRows.reduce((s, r) => s + r.replies, 0)
+
   // 14-day push series.
   const days = await Promise.all(
     Array.from({ length: 14 }, async (_, i) => {
@@ -456,8 +470,13 @@ export async function GET() {
     outreach: {
       pushed_total: pushedTotal,
       pushed_today: pushedToday,
-      sent_today: instantly.sentToday,
-      opened_today: instantly.openedToday,
+      // sent_today is now the TRUE CST-day total (UTC buckets recombined), not
+      // the raw UTC bucket that resets at 7pm CST.
+      sent_today: sentCstToday,
+      opened_today: openedCstToday,
+      clicks_today: clicksCstToday,
+      replies_today: repliesCstToday,
+      sent_today_utc_bucket: instantly.sentToday,   // raw, for debugging
       emails_sent: sentTotal,
       opened_total: openTotal,
       open_rate: sentTotal > 0 ? openTotal / sentTotal : 0,

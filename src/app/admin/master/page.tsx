@@ -54,6 +54,8 @@ type Master = {
   outreach: {
     sent_today: number | null
     opened_today: number | null
+    clicks_today?: number
+    replies_today?: number
     emails_sent: number
     opened_total: number
     open_rate: number
@@ -223,11 +225,12 @@ export default function MasterPage() {
       {/* ===== 1. EMAIL SCOREBOARD — today vs yesterday ===== */}
       <SectionTitle>📧 Outreach — today vs yesterday</SectionTitle>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10, marginBottom: 10 }}>
-        <Compare label="Sent" today={todayStat?.sent} yday={ydayStat?.sent} />
-        <Compare label="Opened" today={todayStat?.opened} yday={ydayStat?.opened} />
+        {/* "today" = TRUE CST-day total (o.sent_today etc, UTC buckets recombined) so it doesn't reset at 7pm CST. yesterday = prior UTC bucket (approx). */}
+        <Compare label="Sent" today={o.sent_today ?? undefined} yday={ydayStat?.sent} />
+        <Compare label="Opened" today={o.opened_today ?? undefined} yday={ydayStat?.opened} />
         <Compare label="Unique opens" today={todayStat?.unique_opened} yday={ydayStat?.unique_opened} />
-        <Compare label="Clicked" today={todayStat?.clicks} yday={ydayStat?.clicks} highlightZero />
-        <Compare label="Replied" today={todayStat?.replies} yday={ydayStat?.replies} />
+        <Compare label="Clicked" today={o.clicks_today} yday={ydayStat?.clicks} highlightZero />
+        <Compare label="Replied" today={o.replies_today} yday={ydayStat?.replies} />
       </div>
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 12.5, fontWeight: 700, color: '#374151', marginBottom: 8 }}>
         <Pill label="Open rate" value={`${(o.open_rate * 100).toFixed(0)}%`} good={o.open_rate >= 0.25} />
