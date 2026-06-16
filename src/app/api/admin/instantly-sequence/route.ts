@@ -86,7 +86,9 @@ Here's the deal: try it FREE for 2 weeks. Fresh cited-homeowner leads, free for 
 
 👉 See your free lead: {{free_lead_url}}
 
-More unlock the second you start — free for your whole 2-week trial. After that it's $${PRICE_MONTHLY_USD}/mo, cancel anytime.
+I know — free leads from a stranger sounds too good to be true. That's exactly why the first one's free and there's no card. It's public record — pull it up with the city yourself, or just call me, I'm a real guy: (773) 710-9565.
+
+More unlock the second you start — free for your whole 2-week trial. Then $${PRICE_MONTHLY_USD}/mo, cancel anytime.
 
 Peter
 BellAveGo — (773) 710-9565
