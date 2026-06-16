@@ -277,8 +277,26 @@ export async function GET() {
   const cstRows = (instantly.daily ?? []).filter((r) => r.date === cstToday || r.date === cstNext)
   const sentCstToday = cstRows.reduce((s, r) => s + r.sent, 0)
   const openedCstToday = cstRows.reduce((s, r) => s + r.opened, 0)
-  const clicksCstToday = cstRows.reduce((s, r) => s + r.clicks, 0)
   const repliesCstToday = cstRows.reduce((s, r) => s + r.replies, 0)
+
+  // 2026-06-16 per Peter — REAL clicks, not Instantly's. Instantly's own click
+  // counter is permanently 0 (it doesn't wrap the {{free_lead_url}} merge link).
+  // The TRUTH is our /free-lead pageview counter (prospect_free_leads.visit_count).
+  // Count distinct real-email clickers whose last visit was TODAY (CST),
+  // excluding bot-hammered URLs (a scraper hit one 99×).
+  const validClickEmail = (e: string | null | undefined) => !!e && /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(e)
+  let clicksCstToday = 0
+  try {
+    const { data: rv } = await supabase
+      .from('prospect_free_leads')
+      .select('email, last_visited_at, visit_count')
+      .gte('last_visited_at', new Date(Date.now() - 36 * 3600000).toISOString())
+      .limit(500)
+    clicksCstToday = ((rv ?? []) as Array<{ email: string | null; last_visited_at: string | null; visit_count: number | null }>)
+      .filter((v) => validClickEmail(v.email) && (v.visit_count ?? 0) < 50 && v.last_visited_at
+        && new Date(v.last_visited_at).toLocaleDateString('en-CA', { timeZone: 'America/Chicago' }) === cstToday)
+      .length
+  } catch { /* non-fatal */ }
 
   // 14-day push series.
   const days = await Promise.all(
