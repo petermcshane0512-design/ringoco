@@ -58,10 +58,10 @@ export const LEADS_PER_MONTH_HEADLINE = `${LEADS_PER_MONTH} fresh leads`
  * Legacy tier slugs (receptionist/concierge) preserved internally for
  * grandfathered subscribers ONLY. Customer-facing surfaces use Pro.
  */
-// 2026-06-16 PIVOT — "first month FREE, then $197/mo." Goal: 500 customers ×
-// $197 = $1.18M ARR by May 12 2027. Free first month kills the "$497 for
-// software I'm not sure works" wall. Month 1 = 40 leads free (30-day trial),
-// then $197/mo.
+// 2026-06-16 PIVOT — "2 WEEKS FREE, then $197/mo." Goal: 500 customers ×
+// $197 = $1.18M ARR by May 12 2027. A free trial kills the "$497 for software
+// I'm not sure works" wall — they get free leads for 14 days, then $197/mo.
+export const TRIAL_DAYS = 14
 export const PRICE_MONTHLY_USD = 197
 export const PRICE_ANNUAL_USD = 1_970          // pay 10 months, get 12
 export const PRICE_ANNUAL_SAVINGS_USD = 394    // 2 months free
@@ -74,14 +74,15 @@ export const PRICE_PER_LEAD_USD = Number((PRICE_MONTHLY_USD / LEADS_PER_MONTH).t
 export const PRICE_PER_LEAD_LABEL = `$${PRICE_PER_LEAD_USD.toFixed(2)}/lead`
 
 /**
- * Intro mechanic — FIRST MONTH FREE (30-day trial, card on file, auto-bills
- * $197 on day 31). No promo code needed; the trial IS the offer.
+ * Intro mechanic — 2 WEEKS FREE (14-day trial, card on file, auto-bills
+ * $197 on day 15). No promo code needed; the trial IS the offer.
  */
-export const FIRST_MONTH_FREE = true
+export const FREE_TRIAL = true
+export const FIRST_MONTH_FREE = true            // kept for back-compat imports
 export const INTRO_PRICE_USD = 0
 export const INTRO_PROMO_CODE = ''             // no code — free trial, not a discount
 export const INTRO_DISCOUNT_USD = 0
-export const PRICE_PER_LEAD_INTRO_USD = 0      // month 1 is free — $0/lead
+export const PRICE_PER_LEAD_INTRO_USD = 0      // trial is free — $0/lead
 
 /**
  * Stripe price IDs.

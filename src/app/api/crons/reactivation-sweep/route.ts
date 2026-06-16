@@ -38,12 +38,12 @@ function authorized(req: NextRequest): boolean {
 
 function buildWinback(attempt: number, name: string): string {
   if (attempt === 1) {
-    return `Hey ${name || 'partner'} — saw you cancelled BellAveGo. Quick offer: come back this week and your first month is FREE. 30-day money-back still applies. https://www.bellavego.com/dashboard/upgrade — Peter`
+    return `Hey ${name || 'partner'} — saw you cancelled BellAveGo. Quick offer: come back this week and your first 2 weeks are FREE. Cancel anytime. https://www.bellavego.com/dashboard/upgrade — Peter`
   }
   if (attempt === 2) {
-    return `${name || 'Hey'} — your AI number is still parked at BellAveGo for ~30 more days. Reactivate in one click and don't lose it. First month FREE if you re-up: https://www.bellavego.com/dashboard/upgrade — Peter`
+    return `${name || 'Hey'} — your AI number is still parked at BellAveGo for ~30 more days. Reactivate in one click and don't lose it. 2 weeks FREE if you re-up: https://www.bellavego.com/dashboard/upgrade — Peter`
   }
-  return `${name || 'Hey'} — last call. Your BellAveGo number gets released to the pool next week. If you want it back, first month FREE re-up: https://www.bellavego.com/dashboard/upgrade — Peter`
+  return `${name || 'Hey'} — last call. Your BellAveGo number gets released to the pool next week. If you want it back, 2 weeks FREE re-up: https://www.bellavego.com/dashboard/upgrade — Peter`
 }
 
 async function handler(req: NextRequest) {

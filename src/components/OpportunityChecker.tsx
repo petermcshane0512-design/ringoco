@@ -335,7 +335,7 @@ function TerritoryBlock({
     return (
       <div style={{ marginTop: 14 }}>
         <Link href={claimHref} style={ctaPrimary}>
-          Claim my area — first month free →
+          Claim my area — 2 weeks free →
         </Link>
       </div>
     )

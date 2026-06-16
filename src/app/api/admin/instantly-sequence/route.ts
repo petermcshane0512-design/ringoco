@@ -82,16 +82,16 @@ const NEW_STEPS: NewStep[] = [
 
 One popped up near {{companyName}} this week — owner name, the exact address, what the city cited, what they're ordered to fix.
 
-Here's the deal: your FIRST MONTH is FREE. 40 of these cited-homeowner leads, free, this month. See the first one right now — no card:
+Here's the deal: try it FREE for 2 weeks. Fresh cited-homeowner leads, free for 14 days. See the first one right now — no card:
 
 👉 See your free lead: {{free_lead_url}}
 
-The other 39 unlock the second you start — still free this month. After that it's $${PRICE_MONTHLY_USD}/mo, cancel anytime.
+More unlock the second you start — free for your whole 2-week trial. After that it's $${PRICE_MONTHLY_USD}/mo, cancel anytime.
 
 Peter
 BellAveGo — (773) 710-9565
 
-P.S. First month is $0 — 40 leads free. Start with the first one: {{free_lead_url}}`),
+P.S. 2 weeks free, $0 to start. See the first one: {{free_lead_url}}`),
   },
   {
     subject: 're: the homeowner near {{companyName}} the city cited',
@@ -104,7 +104,7 @@ See exactly who, free — no card:
 
 {{city}} files dozens of new {{trade}} violations a week — homeowners who legally HAVE to hire someone soon. One shop per area, never shared with 4 others like HomeAdvisor.
 
-Your first month is FREE: all 40 leads, $0. Start off your free lead, unlock the other 39 this month, then $${PRICE_MONTHLY_USD}/mo. Cancel anytime, keep every lead.
+Try it FREE for 2 weeks: real cited homeowners, $0. Start off your free lead, then $${PRICE_MONTHLY_USD}/mo. Cancel anytime, keep every lead.
 
 Peter
 
@@ -119,7 +119,7 @@ Your free cited homeowner is still here:
 
 👉 {{free_lead_url}}
 
-The FIRST {{trade}} shop in your area to start gets the priority queue — after that my system stops emailing your competitors on the same leads. First month's free (40 leads, $0), then $${PRICE_MONTHLY_USD}/mo.
+The FIRST {{trade}} shop in your area to start gets the zip locked — after that my system stops emailing your competitors on the same leads. 2 weeks free, then $${PRICE_MONTHLY_USD}/mo.
 
 Grab the free one or I move on. Both fine.
 

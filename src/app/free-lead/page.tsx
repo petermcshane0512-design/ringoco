@@ -314,7 +314,7 @@ function FreeLeadInner() {
                         </div>
                       </div>
                       <div style={{ fontSize: 12, fontWeight: 700, color: '#c2410c', whiteSpace: 'nowrap' }}>
-                        {LEADS_PER_WEEK}/week · first month free →
+                        {LEADS_PER_WEEK}/week · 2 weeks free →
                       </div>
                     </div>
                   </Link>
@@ -364,7 +364,7 @@ function FreeLeadInner() {
                             🔒 Lead #{n} — verified homeowner near {lead.zip || 'you'}
                           </span>
                           <span style={{ fontSize: 11, fontWeight: 800, color: '#c2410c', whiteSpace: 'nowrap' }}>
-                            Unlock FREE this month →
+                            Unlock — 2 weeks free →
                           </span>
                         </div>
                       </Link>
@@ -583,7 +583,7 @@ function FreeLeadInner() {
                       </div>
                     </div>
                     <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.70)', lineHeight: 1.55 }}>
-                      Even at {Math.round(CONSERVATIVE_CLOSE_RATE * 100)}% close rate the lead pays for the whole month in 1 job. The 1-Job Guarantee covers you if it doesn&rsquo;t.
+                      Even at {Math.round(CONSERVATIVE_CLOSE_RATE * 100)}% close rate the lead pays for the whole month in 1 job. Your first 2 weeks are free, so you can see it before you pay.
                     </div>
                   </div>
                 )
@@ -595,10 +595,10 @@ function FreeLeadInner() {
                   Your offer
                 </div>
                 <h2 style={offerH1}>
-                  First month <span style={{ background: 'linear-gradient(135deg, #22C55E, #16803F)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>FREE</span> — {LEADS_PER_MONTH} leads, <span style={{ background: 'linear-gradient(135deg, #22C55E, #16803F)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>$0</span>.
+                  <span style={{ background: 'linear-gradient(135deg, #22C55E, #16803F)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>2 weeks free</span> — real leads in your zip, <span style={{ background: 'linear-gradient(135deg, #22C55E, #16803F)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>$0</span>.
                 </h2>
                 <p style={{ fontSize: 15, color: '#4A6670', lineHeight: 1.55, margin: '0 0 18px' }}>
-                  {LEADS_PER_WEEK} fresh homeowner leads in {lead.zip || 'your zip'} every week for 4 weeks. Verified phones. Pre-written outreach script per lead. <strong style={{ color: '#0B1F3A' }}>${PRICE_PER_LEAD_INTRO_USD.toFixed(2)} per lead this month</strong> — then $197/mo after, cancel anytime. vs HomeAdvisor at $40-300 shared with 4 other shops.
+                  {LEADS_PER_WEEK} fresh homeowner leads in {lead.zip || 'your zip'} every week. Verified phones. Pre-written outreach script per lead. <strong style={{ color: '#0B1F3A' }}>Free for your first 2 weeks</strong> — then $197/mo after, cancel anytime. vs HomeAdvisor at $40-300 shared with 4 other shops.
                 </p>
 
                 <ul style={offerBullets}>
@@ -607,7 +607,7 @@ function FreeLeadInner() {
                     'Verified phone on every lead (skip-traced)',
                     'Ready-to-send outreach script per lead',
                     'AI-scored 0-100 by intent + ticket size',
-                    'The 1-Job Guarantee: book a paying job in 30 days or refund + next month free',
+                    'Free for 2 weeks — see real leads before you pay a cent',
                   ].map((line) => (
                     <li key={line} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
                       <span style={{ flexShrink: 0, marginTop: 4, width: 14, height: 14, borderRadius: 4, background: 'linear-gradient(135deg, #22C55E, #14B8A6)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -622,10 +622,10 @@ function FreeLeadInner() {
 
                 {/* CTA */}
                 <Link href={checkoutUrl} className="bavg-cta-sheen" style={{ ...ctaPrimary, position: 'relative', overflow: 'hidden' }}>
-                  Lock my zip — first month free →
+                  Lock my zip — 2 weeks free →
                 </Link>
                 <p style={{ fontSize: 12, color: '#7AAAB2', textAlign: 'center', margin: '12px 0 0' }}>
-                  90-second signup · first month free · $197/mo after · cancel anytime
+                  90-second signup · 2 weeks free · $197/mo after · cancel anytime
                 </p>
               </div>
 
@@ -645,13 +645,13 @@ function FreeLeadInner() {
               </div>
               <h1 style={pullingH1}>We&rsquo;re still building inventory for your zip.</h1>
               <p style={{ fontSize: 14.5, color: '#4A6670', margin: '0 0 22px', lineHeight: 1.55 }}>
-                Be the first shop in your zip code. <strong style={{ color: '#0B1F3A' }}>Lock your territory — first month free</strong> and the moment leads land, you get them — exclusive, no sharing, fresh batch every 7 days.
+                Be the first shop in your zip code. <strong style={{ color: '#0B1F3A' }}>Lock your territory — 2 weeks free</strong> and the moment leads land, you get them — exclusive, no sharing, fresh batch every 7 days.
               </p>
               <Link href={checkoutUrl} style={ctaPrimary}>
-                Lock my zip — first month free →
+                Lock my zip — 2 weeks free →
               </Link>
               <p style={{ fontSize: 11.5, color: '#7AAAB2', textAlign: 'center', margin: '12px 0 0' }}>
-                The 1-Job Guarantee: 1 paying job in 30 days or full refund + next month free.
+                2 weeks free, then $197/mo. Cancel anytime.
               </p>
             </div>
           )}
@@ -667,7 +667,7 @@ function FreeLeadInner() {
                 Or text me directly: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a> and I&rsquo;ll pull one by hand.
               </p>
               <Link href={checkoutUrl} style={ctaPrimary}>
-                Or lock my zip — first month free →
+                Or lock my zip — 2 weeks free →
               </Link>
             </div>
           )}

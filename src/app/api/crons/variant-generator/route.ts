@@ -33,10 +33,9 @@ OFFER:
 - ${LEADS_PER_MONTH} fresh exclusive homeowner leads per month delivered Monday morning (${LEADS_PER_WEEK}/wk), in the contractor's zip+trade. Real names + addresses + phone. Sourced from public-record events (permits, aged HVAC units, property turnover, code-violation listings).
 - AUTO-OUTREACH: one-click button — AI sends personalized email + SMS to each delivered lead as if from the contractor. Contractor gets phone notification when homeowner replies. Saves them 1-2 hrs/day of cold-reachout.
 - EXCLUSIVE territory — leads never shared like HomeAdvisor/Angie/Networx.
-- **First month FREE (30-day trial)**. Then $197/mo flat.
+- **2 WEEKS FREE (14-day trial)**. Then $197/mo flat.
 - Need more mid-month? Extra leads $25 each (any amount).
-- **Performance guarantee**: 1 paying job booked in 30 days or full refund.
-- 30-day money-back guarantee. Cancel anytime. No setup. No phone numbers required. No integration.
+- Cancel anytime. No setup. No phone numbers required. No integration.
 
 #1 GOAL — MAXIMIZE CLICKS ON THE FREE-LEAD LINK. The campaign opens at ~30% (good) but click-through is ~0% (the whole problem). Your ONE job is to write copy that makes the contractor CLICK {{free_lead_url}}. The link goes to ONE real, free, specific cited-homeowner lead near their shop — name, address, the city violation, no card, no signup. That free lead IS the hook. Do NOT send them to a signup page first.
 
@@ -48,7 +47,7 @@ TRUST / ANTI-"SCAM-LOOK" (CRITICAL — likely why nobody clicks): a cold "the ci
 - Sound like a local human, not a lead broker. No hype, no fake urgency, no ALL CAPS, no "ACT NOW".
 - Use a CURIOSITY GAP, honestly: "I can't put their address in an email — see exactly who: {{free_lead_url}}".
 
-THE CLICK LINK in body copy must be {{free_lead_url}} (the free lead) — NOT bellavego.com/start. The signup (first month free) is the SECOND step, mentioned briefly AFTER the free-lead CTA.
+THE CLICK LINK in body copy must be {{free_lead_url}} (the free lead) — NOT bellavego.com/start. The signup (2 weeks free) is the SECOND step, mentioned briefly AFTER the free-lead CTA.
 
 NEVER USE THESE PHRASES — they reference the deprecated receptionist product:
 "AI receptionist", "Emma", "answers your calls", "voice AI", "books the job", "phone AI", "24/7 answering", demo line phone number, anything about phones answering or call routing.

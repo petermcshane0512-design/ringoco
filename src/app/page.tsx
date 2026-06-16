@@ -176,10 +176,10 @@ function HomeContent() {
               maxWidth: 580,
             }}>
               <div style={{ fontSize: 11, fontWeight: 900, color: '#16803F', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>
-                The 1-Job Guarantee
+                2 weeks free
               </div>
               <p style={{ margin: 0, fontSize: 13.5, color: '#0B1F3A', lineHeight: 1.55 }}>
-                Book at least one job in 30 days, or you get a <strong>full refund</strong>, <strong>30 more days free</strong>, and you <strong>keep every lead</strong>. One average install covers more than a year of membership.
+                Try BellAveGo <strong>free for 2 weeks</strong> — real leads in your zip, no card friction. <strong>$197/mo after, cancel anytime.</strong> One average install covers more than a year of membership.
               </p>
             </div>
 
@@ -191,7 +191,7 @@ function HomeContent() {
                 check logged to opportunity_checks (warm-lead funnel). */}
             <OpportunityChecker />
             <p style={{ fontSize: 13, color: '#4A6670', margin: '14px 0 18px', maxWidth: 580 }}>
-              <strong style={{ color: '#16803F', fontSize: 16 }}>First month FREE</strong> · $197/mo after · Didn&rsquo;t book a job in your first 30 days? Full refund and month 2 free. · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
+              <strong style={{ color: '#16803F', fontSize: 16 }}>2 weeks free</strong> · $197/mo after · cancel anytime · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
             </p>
           </div>
 
@@ -273,7 +273,7 @@ function HomeContent() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 10, marginBottom: 18 }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 800, color: '#16803F', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 2 }}>
-                  First month free
+                  2 weeks free
                 </div>
                 <div style={{
                   fontSize: 'clamp(56px, 8vw, 84px)', fontWeight: 900,
@@ -315,9 +315,9 @@ function HomeContent() {
               border: '1.5px solid rgba(20,184,166,0.40)',
               marginBottom: 20,
             }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: '#0B7B70', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>The 1-Job Guarantee</div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: '#0B7B70', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>2 weeks free</div>
               <div style={{ fontSize: 14, color: '#0B1F3A', lineHeight: 1.6 }}>
-                Book a paying job in <strong>30 days</strong> or full refund + <strong>your next month free</strong> + you keep every lead. No clawback. No questions.
+                Try every feature <strong>free for 2 weeks</strong>. $197/mo after, you keep every lead, cancel anytime. No clawback. No questions.
               </div>
             </div>
             <Link href="/start" className="bavg-cta-sheen" style={{ ...ctaHeroPrimary, width: '100%', justifyContent: 'center', padding: '17px 28px', fontSize: 16, position: 'relative', overflow: 'hidden' }}>
@@ -362,7 +362,7 @@ function HomeContent() {
           Your zip is still open.<br />Lock it before your competitor does.
         </h2>
         <p style={{ color: 'rgba(255,255,255,0.94)', fontSize: 16, maxWidth: 560, margin: '0 auto 28px', lineHeight: 1.6 }}>
-          <strong>First month FREE</strong>. Book a paying job in 30 days OR full refund + <strong>your next month free</strong> + keep every lead. One shop per area. $197/mo after.
+          <strong>2 weeks free</strong>. Keep every lead. One shop per area. $197/mo after, cancel anytime.
         </p>
         <Link href="/start" className="bavg-cta-sheen" style={{ ...ctaFinal, position: 'relative', overflow: 'hidden' }}>
           Start free — lock your zip →
@@ -408,7 +408,7 @@ function HomeContent() {
       }}>
         <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.2 }}>
           🔒 Lock your zip<br />
-          <span style={{ fontSize: 11, color: '#7AAAB2', fontWeight: 600 }}>First month free · $197/mo after</span>
+          <span style={{ fontSize: 11, color: '#7AAAB2', fontWeight: 600 }}>2 weeks free · $197/mo after</span>
         </div>
         <Link href="/start" style={{
           padding: '10px 18px', borderRadius: 10,
@@ -606,8 +606,7 @@ const ctaFinal: React.CSSProperties = {
  */
 function TripleGuaranteeBadge() {
   const stamps = [
-    { top: '1-JOB', bot: 'or Refund' },
-    { top: '+30 DAYS', bot: 'free until booked' },
+    { top: '2 WEEKS', bot: 'Free Trial' },
     { top: 'KEEP', bot: 'All Leads' },
     { top: 'CANCEL', bot: 'Anytime' },
   ]
@@ -877,7 +876,7 @@ function ExitIntentPopup() {
           boxShadow: '0 12px 32px rgba(232,116,43,0.42)',
           marginBottom: 10,
         }}>
-          🔒 Lock my zip — first month free →
+          🔒 Lock my zip — 2 weeks free →
         </Link>
         <a href={FOUNDER_PHONE_HREF} onClick={close} style={{
           display: 'block', textAlign: 'center',

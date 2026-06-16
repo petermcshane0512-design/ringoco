@@ -63,7 +63,7 @@ export default function HeroStatic() {
             fontWeight: 900, fontSize: 14,
           }}
         >
-          Get my first month free →
+          Get 2 weeks free →
         </Link>
       </nav>
 
@@ -100,10 +100,10 @@ export default function HeroStatic() {
             maxWidth: 580,
           }}>
             <div style={{ fontSize: 11, fontWeight: 900, color: '#16803F', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>
-              The 1-Job Guarantee
+              2 weeks free
             </div>
             <p style={{ margin: 0, fontSize: 13.5, color: '#0B1F3A', lineHeight: 1.55 }}>
-              Book at least one job in 30 days, or you get a <strong>full refund</strong>, <strong>30 more days free</strong>, and you <strong>keep every lead</strong>. One average install covers more than a year of membership.
+              Try BellAveGo <strong>free for 2 weeks</strong> — real leads in your zip, and you <strong>keep every lead</strong>. $197/mo after, cancel anytime. One average install covers more than a year of membership.
             </p>
           </div>
 
@@ -118,11 +118,11 @@ export default function HeroStatic() {
               maxWidth: 580,
             }}
           >
-            Claim my area — first month free →
+            Claim my area — 2 weeks free →
           </Link>
 
           <p style={{ fontSize: 13, color: '#4A6670', margin: '14px 0 18px', maxWidth: 580 }}>
-            <strong style={{ color: '#16803F', fontSize: 16 }}>First month FREE</strong> · ${PRICE_MONTHLY_USD}/mo after · Didn&rsquo;t book a job in your first 30 days? Full refund and month 2 free. · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
+            <strong style={{ color: '#16803F', fontSize: 16 }}>2 weeks free</strong> · ${PRICE_MONTHLY_USD}/mo after · cancel anytime · or call us: <a href={FOUNDER_PHONE_HREF} style={{ color: '#C84B26', fontWeight: 800, textDecoration: 'none' }}>{FOUNDER_PHONE}</a>
           </p>
         </div>
       </section>

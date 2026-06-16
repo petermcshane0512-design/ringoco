@@ -358,7 +358,7 @@ export default function RoiCalculator() {
                   <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
               </Link>
-              <span className="roi-risk-note">30-day money-back · No contract</span>
+              <span className="roi-risk-note">2 weeks free · No contract</span>
             </div>
           </div>
         </div>

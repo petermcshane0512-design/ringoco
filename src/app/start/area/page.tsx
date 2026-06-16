@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { LEADS_PER_WEEK, INTRO_PRICE_USD, INTRO_PROMO_CODE } from '@/lib/offer'
+import { LEADS_PER_WEEK, INTRO_PROMO_CODE } from '@/lib/offer'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
 
 /**
@@ -431,16 +431,16 @@ function StartAreaContent() {
               letterSpacing: '-0.01em',
             }}
           >
-            {checking ? 'Checking your address…' : `Lock my area — $${INTRO_PRICE_USD} →`}
+            {checking ? 'Checking your address…' : `Lock my area — 2 weeks free →`}
           </button>
 
-          {/* Hormozi risk reversal AT the commitment point — same
-              guarantee as the homepage, word for word. */}
+          {/* Risk reversal AT the commitment point — 2-week free trial,
+              same offer as the homepage. */}
           <p style={{ fontSize: 12, color: 'rgba(255,248,240,0.7)', textAlign: 'center', margin: '12px 0 0', lineHeight: 1.55, fontWeight: 600 }}>
-            Book a paying job in <strong style={{ color: '#FFC58A' }}>30 days</strong> or full refund + <strong style={{ color: '#FFC58A' }}>your next month free</strong> + you keep every lead.
+            <strong style={{ color: '#FFC58A' }}>2 weeks free</strong>, then $197/mo · cancel anytime · you keep every lead.
           </p>
           <p style={{ fontSize: 11, color: 'rgba(255,248,240,0.4)', textAlign: 'center', margin: '8px 0 0', lineHeight: 1.5 }}>
-            ${INTRO_PRICE_USD} first month with code {promo} · First {LEADS_PER_WEEK} leads land ~30 min after checkout · Cancel anytime
+            First {LEADS_PER_WEEK} leads land ~30 min after checkout · Cancel anytime
           </p>
         </form>
         ) : (

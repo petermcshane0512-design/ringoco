@@ -27,7 +27,7 @@ export default function PrivacyPage() {
           <Link href="/founder" className="why-pulse"><span className="why-pulse-text">Why BellAveGo?</span></Link>
           <Link href="/pricing" className="price-pulse">Pricing</Link>
           {!isSignedIn && <Link href="/sign-in" className="signin-link">Sign In</Link>}
-          {!isSignedIn && <Link href="/start" className="nav-cta"><span className="nav-cta-text">Get my first month free →</span></Link>}
+          {!isSignedIn && <Link href="/start" className="nav-cta"><span className="nav-cta-text">Get 2 weeks free →</span></Link>}
         </div>
       </nav>
 
@@ -104,7 +104,7 @@ export default function PrivacyPage() {
         <Section title="7. Data retention">
           <ul style={listStyle}>
             <li>Active account data — kept while your subscription is active</li>
-            <li>Lead and outreach history — kept while your subscription is active; you keep delivered leads after cancellation per the 1-Job Guarantee</li>
+            <li>Lead and outreach history — kept while your subscription is active; you keep every lead we delivered after cancellation</li>
             <li>Legacy call recordings + transcripts — 12 months, then auto-purged</li>
             <li>Billing records — 7 years (required for tax compliance)</li>
             <li>Cancelled accounts — data deleted within 30 days of cancellation request, except billing records (above)</li>

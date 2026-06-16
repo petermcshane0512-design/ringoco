@@ -29,7 +29,7 @@ export default function TermsPage() {
           <Link href="/founder" className="why-pulse"><span className="why-pulse-text">Why BellAveGo?</span></Link>
           <Link href="/pricing" className="price-pulse">Pricing</Link>
           {!isSignedIn && <Link href="/sign-in" className="signin-link">Sign In</Link>}
-          {!isSignedIn && <Link href="/start" className="nav-cta"><span className="nav-cta-text">Get my first month free →</span></Link>}
+          {!isSignedIn && <Link href="/start" className="nav-cta"><span className="nav-cta-text">Get 2 weeks free →</span></Link>}
         </div>
       </nav>
 
@@ -58,12 +58,11 @@ export default function TermsPage() {
           <p>Some grandfathered accounts retain legacy call-answering and reporting features; those features are governed by these same Terms.</p>
         </Section>
 
-        <Section title="3. Subscription, billing, and guarantee">
+        <Section title="3. Subscription, billing, and free trial">
           <p><strong>Tiers + pricing:</strong> current pricing is published at <Link href="/pricing" style={{ color: '#0AA89F', fontWeight: 700 }}>bellavego.com/pricing</Link>. We may change pricing for new subscriptions at any time; existing subscriptions are grandfathered until renewal.</p>
           <p><strong>Billing cycle:</strong> month-to-month or annual, billed in advance via Stripe. Annual plans receive the discount shown on the pricing page.</p>
-          <p><strong>30-day money-back guarantee:</strong> if you cancel within 30 days of your first paid charge — for any reason — we refund every penny of that first charge to your original payment method. Request the refund by clicking cancel in your dashboard or by contacting us. Refunds typically post back to your card in 5-10 business days.</p>
-          <p><strong>The 1-Job Guarantee:</strong> if you do not book a paying job within 30 days of your first paid charge, we refund that charge in full, your next month of service is free, and you keep every lead we delivered. The free-month comp is capped at one additional month.</p>
-          <p><strong>Cancellation after 30 days:</strong> you may cancel anytime from your dashboard or by contacting us. Service continues through the end of the paid period; no further charges apply. <strong>No refunds are issued for any already-billed period after the 30-day window</strong> — including partial months. Cancel before the next renewal to avoid the next charge.</p>
+          <p><strong>14-day free trial:</strong> every new subscription starts with a 14-day free trial. We collect a payment method at signup but do not charge it during the trial. If you cancel before the trial ends — for any reason — you are never charged. Your first charge occurs on day 15 unless you cancel first.</p>
+          <p><strong>Cancellation:</strong> you may cancel anytime from your dashboard or by contacting us. If you cancel during the trial, you are not charged. After your first paid charge, service continues through the end of the paid period and no further charges apply. <strong>No refunds are issued for any already-billed period</strong> — including partial months. Cancel before the next renewal to avoid the next charge.</p>
           <p><strong>Failed payments:</strong> if a payment fails, we will retry for 7 days and notify you. After 7 days the service will be suspended (lead delivery and outreach pause). After 30 days of non-payment, the account may be cancelled and data subject to the deletion schedule in our <Link href="/privacy" style={{ color: '#0AA89F', fontWeight: 700 }}>Privacy Policy</Link>.</p>
         </Section>
 

@@ -55,7 +55,7 @@ export default function ReferPage() {
 
   function shareSMS() {
     if (!data) return
-    const text = `Yo — using BellAveGo: ${LEADS_PER_WEEK} fresh homeowner leads in my zip every week, AI texts each one as me, I only call the YES's. First month FREE w/ my link: ${data.referral_link}`
+    const text = `Yo — using BellAveGo: ${LEADS_PER_WEEK} fresh homeowner leads in my zip every week, AI texts each one as me, I only call the YES's. 2 weeks FREE w/ my link: ${data.referral_link}`
     window.location.href = `sms:?body=${encodeURIComponent(text)}`
   }
 
@@ -136,7 +136,7 @@ export default function ReferPage() {
         <h2 style={h2}>How it works</h2>
         <ol style={{ margin: 0, paddingLeft: 20, fontSize: 14, color: '#0B1F3A', lineHeight: 1.7 }}>
           <li>Share your link w/ HVAC, plumbing, electrical, roofing, or handyman buddies</li>
-          <li>They sign up via your link → first month free (same trial as anyone)</li>
+          <li>They sign up via your link → 2 weeks free (same trial as anyone)</li>
           <li>The moment they pay → <strong style={{ color: '#22C55E' }}>you get 1 full month free</strong>, auto-applied to your next Stripe invoice. No code to redeem. No email to send.</li>
           <li>No cap. Refer 12 buddies = full year of BellAveGo free.</li>
           <li>You stay subscribed for the credit to apply. Cancel and the credits expire.</li>

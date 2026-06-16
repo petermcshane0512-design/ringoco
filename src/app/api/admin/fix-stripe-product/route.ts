@@ -29,7 +29,7 @@ export async function GET() {
     `${LEADS_PER_WEEK} homeowner leads a week in your service area, exclusive to you — ` +
     `our AI scans city records nightly to find homeowners under municipal orders, fresh permits, storm damage, and recent sales. ` +
     `${LEADS_PER_MONTH}/month total with verified phones + a ready-to-send intro per lead. ` +
-    `Book a paying job in 30 days or full refund + your next month free + you keep every lead.`
+    `2 weeks free, then $197/mo. Cancel anytime and you keep every lead.`
   const statementDescriptor = 'BELLAVEGO LEADS'
 
   try {

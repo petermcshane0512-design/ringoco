@@ -768,7 +768,7 @@ function ActivateCard() {
         Lock my area
       </Link>
       <p style={{ fontSize: 11.5, color: '#9ca3af', margin: '14px 0 0', lineHeight: 1.5 }}>
-        Book a paying job in 30 days or full refund + your next month free + you keep every lead.
+        2 weeks free, then $197/mo. Cancel anytime, and you keep every lead.
       </p>
     </div>
   )

@@ -41,7 +41,7 @@ const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_
 
 const SYSTEM = `Write a 1-to-1 follow-up email from Peter (founder of BellAveGo) to a home-service contractor (HVAC, plumbing, electrical, roofing, or handyman) who opened Peter's cold email multiple times but hasn't replied.
 
-CONTEXT: Peter sent them a cold email earlier this week pitching BellAveGo (AI scans every permit, home sale, and property record in their area every night; ${LEADS_PER_WEEK} fresh homeowner leads/week pulled from a 1-mile ring around their shop, first batch ~30 min after signup; AI writes + sends the intro outreach as the contractor; first month FREE + 30-day money-back). They opened it {{open_count}} times. That's a hand-raise signal.
+CONTEXT: Peter sent them a cold email earlier this week pitching BellAveGo (AI scans every permit, home sale, and property record in their area every night; ${LEADS_PER_WEEK} fresh homeowner leads/week pulled from a 1-mile ring around their shop, first batch ~30 min after signup; AI writes + sends the intro outreach as the contractor; 2 weeks FREE, cancel anytime). They opened it {{open_count}} times. That's a hand-raise signal.
 
 GOAL: Write a short personal follow-up acknowledging the opens (without being creepy), restating the offer, and asking for a 10-min call OR a hit-the-URL.
 
@@ -50,7 +50,7 @@ RULES:
 - Subject ≤ 55 chars, starts lowercase, no emoji
 - Acknowledge the multiple opens softly: "saw {{companyName}} took a few looks" / "noticed you came back to my note a couple times" — NEVER "you opened my email 3 times" (creepy)
 - Reference ONE specific fact about their business (city, trade) — don't fake what you don't know
-- Drop these in order: hand-raise acknowledgment → specific business fact → offer recap (first month FREE, then $197/mo, 30-day MBG) → 2-line CTA (URL + text/call Peter direct 773-710-9565)
+- Drop these in order: hand-raise acknowledgment → specific business fact → offer recap (2 weeks FREE, then $197/mo, cancel anytime) → 2-line CTA (URL + text/call Peter direct 773-710-9565)
 - Tone: confident peer, not salesperson. Direct.
 - DO NOT: open w/ "Hi", "Hope this finds you well", "I wanted to reach out", "I noticed you" (robotic)
 

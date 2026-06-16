@@ -91,11 +91,29 @@ export async function checkTerritory(
   const zip = normalizeZip(zipRaw)
   const trade = normalizeTrade(tradeRaw)
   if (!zip || !trade) return { status: 'unserved', row: null }
-  // We can deliver to any valid US zip via per-tenant BatchData. Anything
-  // that isn't a valid 5-digit US zip is still 'unserved'.
   if (!isZipServed(zip)) return { status: 'unserved', row: null }
-  // Always open. Existing row state is informational; do not gate on it.
-  return { status: 'open', row: null }
+  // 2026-06-16 per Peter — EXCLUSIVITY RE-ENABLED (reverses the 2026-06-10
+  // always-open). One shop per (zip, trade). The email/landing copy promises
+  // "one shop per area, never shared" — so the lock MUST be real or the
+  // promise is a lie. Look up the active claim; held + not expired-grace = taken.
+  const { data } = await supabase
+    .from('territories')
+    .select('*')
+    .eq('zip', zip)
+    .eq('trade', trade)
+    .maybeSingle()
+  if (!data) return { status: 'open', row: null }
+  const row = data as TerritoryRow
+  if (row.status === 'claimed') return { status: 'claimed', row }
+  if (row.status === 'grace') {
+    // A recently-cancelled territory stays LOCKED through its grace window
+    // (so the old owner can win it back) — only opens once grace expires.
+    if (row.grace_expires_at && new Date(row.grace_expires_at) > new Date()) {
+      return { status: 'grace', row }
+    }
+    return { status: 'open', row }
+  }
+  return { status: 'open', row }
 }
 
 /**

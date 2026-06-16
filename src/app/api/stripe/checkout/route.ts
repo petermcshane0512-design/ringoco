@@ -188,9 +188,9 @@ export async function POST(req: NextRequest) {
   const CHECKOUT_API_VERSION = '2024-11-20.acacia'
 
   const subscriptionData: Record<string, unknown> = {
-    // 2026-06-16 — FIRST MONTH FREE. 30-day trial: card on file, $0 for 30 days,
-    // auto-bills $197 on day 31. This IS the offer (no promo code needed).
-    trial_period_days: 30,
+    // 2026-06-16 — 2-WEEK FREE TRIAL. Card on file, $0 for 14 days, auto-bills
+    // $197 on day 15. This IS the offer (no promo code needed).
+    trial_period_days: 14,
     metadata: {
       userId,
       anon: isAnon ? '1' : '',

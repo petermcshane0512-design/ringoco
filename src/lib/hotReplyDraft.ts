@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
-import { LEADS_PER_WEEK, PRICE_MONTHLY_USD, INTRO_PRICE_USD, INTRO_PROMO_CODE } from '@/lib/offer'
+import { LEADS_PER_WEEK, PRICE_MONTHLY_USD } from '@/lib/offer'
 
 const anthropic = new Anthropic()
 const supabase = createClient(
@@ -59,7 +59,7 @@ Rules:
 - One specific ask at the end. Either: "want the signup link?", "what's your trade?", "free for a 5-min call?", or a Calendly link request.
 - NEVER use: leverage, synergy, robust, solution, transform, em-dashes longer than one. No emojis. No markdown.
 - NEVER mention: AI receptionist, phone-answering AI, voice AI, Emma, demo line phone number — that product was DROPPED 2026-06-09.
-- If they ask price: $${INTRO_PRICE_USD} first month with code ${INTRO_PROMO_CODE}, $${PRICE_MONTHLY_USD}/mo flat after. ${LEADS_PER_WEEK} fresh homeowner leads delivered every week, pulled from a 1-mile ring around their shop, AI auto-outreach as the contractor. 30-day money-back guarantee.
+- If they ask price: 2 weeks free, then $${PRICE_MONTHLY_USD}/mo flat. ${LEADS_PER_WEEK} fresh homeowner leads delivered every week, pulled from a 1-mile ring around their shop, AI auto-outreach as the contractor. Cancel anytime.
 - If they ask demo: send them the sample report at bellavego.com/sample-report.
 - If they sound skeptical: address the specific objection in one line, then ask.
 - If they ask "who is this": say BellAveGo, homeowner lead-gen for home-service shops, built by Peter (solo founder).
@@ -103,7 +103,7 @@ Draft the reply now.`
 function fallbackDraft(lead: LeadContext, replyBody: string): string {
   const name = lead.ownerFirstName ? `${lead.ownerFirstName}, ` : ''
   if (/price|cost|how much/i.test(replyBody)) {
-    return `${name}$${INTRO_PRICE_USD} first month with code ${INTRO_PROMO_CODE}, then $${PRICE_MONTHLY_USD}/mo flat. ${LEADS_PER_WEEK} fresh homeowner leads every week, pulled from a 1-mile ring around your shop + AI auto-outreach as your shop. 30-day money-back, cancel anytime. Want the signup link?`
+    return `${name}2 weeks free, then $${PRICE_MONTHLY_USD}/mo flat. ${LEADS_PER_WEEK} fresh homeowner leads every week, pulled from a 1-mile ring around your shop + AI auto-outreach as your shop. Cancel anytime. Want the signup link?`
   }
   if (/demo|show|see/i.test(replyBody)) {
     return `${name}see a sample lead drop here: bellavego.com/sample-report. Real format, redacted names. Want the signup link after?`
