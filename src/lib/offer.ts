@@ -91,7 +91,7 @@ export const PRICE_PER_LEAD_INTRO_USD = 0      // trial is free — $0/lead
  * price — but month 1 is a FREE trial so nobody is charged during the window.
  * Update this ID the moment the $197 Stripe price exists.
  */
-export const STRIPE_PRICE_ID_MONTHLY = process.env.STRIPE_PRICE_197_MONTHLY || 'price_1TgUZFGrkP7VQmUjw9c5gEXv'
+export const STRIPE_PRICE_ID_MONTHLY = process.env.STRIPE_PRICE_197_MONTHLY || 'price_1Tj47rGrkP7VQmUjPsKTfJdK' // $197/mo (2026-06-16)
 export const STRIPE_PRICE_ID_ANNUAL = 'price_1TgUanGrkP7VQmUjujaifNI0'
 
 /**

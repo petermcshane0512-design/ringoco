@@ -81,11 +81,11 @@ export const PRICE_IDS_V2: Record<LegacyTier, { monthly: string; annual: string;
     setup:   '', // no setup fee in v2 — empty string sentinel; checkout skips line if empty
   },
   officemgr: {
-    // 2026-06-09 HORMOZI BUMP — v9 prices for $497/mo + $4,997/yr.
-    // Old v8 prices ($297/$2,970) preserved in PRICE_TO_TIER below for
-    // grandfathered subscribers — webhook resolves their tier the same way.
-    monthly: 'price_1TgUZFGrkP7VQmUjw9c5gEXv', // $497/mo Pro (v9 leads-only)
-    annual:  'price_1TgUanGrkP7VQmUjujaifNI0', // $4,997/yr Pro (v9 leads-only, save $968)
+    // 2026-06-16 — NEW SIGNUPS bill $197/mo (2-week free trial applied at
+    // checkout). The old $497 (price_1TgUZF…) + $297 prices stay in
+    // PRICE_TO_TIER below so grandfathered subs resolve to officemgr fine.
+    monthly: 'price_1Tj47rGrkP7VQmUjPsKTfJdK', // $197/mo Pro (2026-06-16, 2-week-trial offer)
+    annual:  'price_1TgUanGrkP7VQmUjujaifNI0', // $4,997/yr Pro (annual unchanged for now)
     setup:   '',
   },
   concierge: {
@@ -104,7 +104,9 @@ export const PRICE_IDS: Record<LegacyTier, { monthly: string; annual: string; se
 // customer (legacy or new) to the right tier. Existing customers on v1 prices
 // stay on v1 calls cap (250 for receptionist). New v2 customers get unlimited.
 export const PRICE_TO_TIER: Record<string, { tier: LegacyTier; calls: number }> = {
-  // v9 ACTIVE (2026-06-09 Hormozi bump — $497/mo + $4,997/yr leads-only)
+  // v10 ACTIVE (2026-06-16 — $197/mo, 2-week free trial). New signups.
+  'price_1Tj47rGrkP7VQmUjPsKTfJdK': { tier: 'officemgr', calls: 99999 }, // Pro monthly $197 — leads-only
+  // v9 grandfathered ($497/mo + $4,997/yr)
   'price_1TgUZFGrkP7VQmUjw9c5gEXv': { tier: 'officemgr', calls: 99999 }, // Pro monthly $497 — leads-only, calls cap unused but kept for back-compat schema
   'price_1TgUanGrkP7VQmUjujaifNI0': { tier: 'officemgr', calls: 99999 }, // Pro annual $4,997
   // v2 grandfathered (May 23 2026 — Starter $147 / Pro $297 / Elite $597)
