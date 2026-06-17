@@ -82,7 +82,11 @@ export async function GET(req: NextRequest) {
 
   const url = new URL(req.url)
   const dry = url.searchParams.get('dry') === '1'
-  const topN = Math.min(200, Math.max(10, parseInt(url.searchParams.get('top') ?? '50', 10)))
+  // 2026-06-17 — 50→120. The top ~7 were all the same dense Chicago zips, which
+  // the scraper had already tapped out (0 fresh inserts). A wider target list
+  // pulls in more NYC + other-metro zips below them, so each day's scrape hits
+  // FRESH areas instead of re-deduping the same Chicago South Side.
+  const topN = Math.min(200, Math.max(10, parseInt(url.searchParams.get('top') ?? '120', 10)))
   const noSms = url.searchParams.get('sms') === '0'
 
   // 1) Pull current violation density

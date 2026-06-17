@@ -133,11 +133,13 @@ function classifyTrade(category?: string): string | null {
 function passesSoloOrSmallCrewFilter(m: MapsItem): boolean {
   if (!m.website || m.permanentlyClosed) return false
   const reviews = m.reviewsCount ?? 0
-  // 2026-06-15 per Peter — TIGHTER. Target the guy who answers his OWN phone:
-  // no receptionist, no marketing team, won't get from a 40-review multi-truck
-  // shop. Dropped 40→25. A 1-3 person owner-operated crew rarely clears 25
-  // Google reviews; 25+ signals years of staffed operation = has a front desk.
-  if (reviews > 25) return false
+  // 2026-06-17 — ≤25 was too tight (0 fresh inserts — it rejected legit 1-3
+  // person shops that have 30-40 reviews from years of good work, not just
+  // receptionist shops). Loosened to ≤45 to restore supply while still
+  // excluding the big multi-truck operations (50+ reviews = staffed/front-desk).
+  // Small-dog intent is better signalled by the &Sons/24-7/marketing checks
+  // below than by an aggressive review cap that starves the pipeline.
+  if (reviews > 45) return false
   const title = (m.title || '').toLowerCase()
   // Multi-tech / staffed signals — these shops have someone answering phones.
   if (/&\s+sons|brothers|family|and sons|& associates/.test(title)) return false
