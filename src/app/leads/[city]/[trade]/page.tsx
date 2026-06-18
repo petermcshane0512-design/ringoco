@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
 import { CITIES, getCity } from '@/lib/seo/cities'
 import { TRADES, getTrade } from '@/lib/seo/trades'
 import {
@@ -29,13 +28,11 @@ import {
  * Compounds for free — no ad spend, no A2P, no Meta.
  */
 
-export const revalidate = 86400 // refresh enforcement counts + ISR daily
 export const dynamicParams = false // only the 312 known combos
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
+// 2026-06-18 — pure static, NO build-time DB. A per-page Supabase count
+// across 312 pages was the prime suspect for the Vercel build dropping the
+// /leads segment (per-page generation timeout / rate-limit on the builder,
+// invisible to a fast local build). Credibility copy is now evergreen.
 
 type Params = Promise<{ city: string; trade: string }>
 
@@ -61,36 +58,12 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   }
 }
 
-/**
- * Best-effort count of fresh enforcement/permit leads for this city in the
- * last 30 days. Powers the credibility number. Failure-tolerant: returns
- * null and the page renders the evergreen copy instead.
- */
-async function freshLeadCount(cityLabel: string, state: string): Promise<number | null> {
-  try {
-    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-    const { count, error } = await supabase
-      .from('leads')
-      .select('id', { count: 'exact', head: true })
-      .eq('source', 'enforcement')
-      .ilike('city', `${cityLabel}%`)
-      .eq('state', state)
-      .gte('created_at', since)
-    if (error) return null
-    return typeof count === 'number' ? count : null
-  } catch {
-    return null
-  }
-}
-
 export default async function LeadsCityTradePage({ params }: { params: Params }) {
   const { city: citySlug, trade: tradeSlug } = await params
   const city = getCity(citySlug)
   const trade = getTrade(tradeSlug)
   if (!city || !trade) notFound()
 
-  const count = await freshLeadCount(city.label, city.state)
-  const hasCount = count !== null && count >= 5
   const leadHook = trade.leadHook.replace(/\{city\}/g, `${city.label}, ${city.state}`)
   const startHref = `/start?city=${encodeURIComponent(city.label)}&trade=${trade.slug}`
 
@@ -127,11 +100,9 @@ export default async function LeadsCityTradePage({ params }: { params: Params })
         </h1>
         <p className="mx-auto mt-5 max-w-2xl text-lg text-gray-300">{leadHook}</p>
 
-        {hasCount && (
-          <p className="mx-auto mt-5 inline-block rounded-full border border-orange-500/40 bg-orange-500/10 px-4 py-2 text-sm font-semibold text-orange-300">
-            {count}+ fresh {city.label} homeowner leads pulled in the last 30 days
-          </p>
-        )}
+        <p className="mx-auto mt-5 inline-block rounded-full border border-orange-500/40 bg-orange-500/10 px-4 py-2 text-sm font-semibold text-orange-300">
+          Fresh {city.label} homeowner leads from public records every Monday
+        </p>
 
         <div className="mt-8 flex flex-col items-center gap-3">
           <Link
