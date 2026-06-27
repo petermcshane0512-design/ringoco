@@ -58,7 +58,7 @@ export async function GET() {
       .select('zip, source, trade_match, source_details, created_at')
       .neq('source', 'aging_hvac')
       .order('created_at', { ascending: false })
-      .limit(24),
+      .limit(60),
     supabase
       .from('leads')
       .select('id', { count: 'exact', head: true })
@@ -76,12 +76,26 @@ export async function GET() {
     })
   }
 
-  const events = (feed.data as FeedRow[]).map((row) => ({
-    zip: row.zip,
-    label: labelFor(row),
-    trade: (row.trade_match && row.trade_match[0]) || null,
-    at: row.created_at,
-  }))
+  // Dedupe identical-looking ticker items. The scrapers write many permit
+  // rows with no work_description, all of which collapse to the generic
+  // "Building permit filed" label — rendering a wall of repeats. Keep the
+  // newest occurrence of each distinct zip+label signal. Rows are already
+  // sorted newest-first, so first-seen wins.
+  const seen = new Set<string>()
+  const events: { zip: string; label: string; trade: string | null; at: string }[] = []
+  for (const row of feed.data as FeedRow[]) {
+    const label = labelFor(row)
+    const key = `${row.zip}|${label}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    events.push({
+      zip: row.zip,
+      label,
+      trade: (row.trade_match && row.trade_match[0]) || null,
+      at: row.created_at,
+    })
+    if (events.length >= 24) break
+  }
 
   // Real counts only — UI hides any stat that comes back null/0.
   const stats = {
