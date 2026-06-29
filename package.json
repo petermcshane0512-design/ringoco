@@ -10,8 +10,8 @@
     "check-lead-counts": "node scripts/check-lead-count-hardcoding.mjs"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.90.0",
-    "@clerk/nextjs": "^7.2.3",
+    "@anthropic-ai/sdk": "^0.107.0",
+    "@clerk/nextjs": "^7.5.10",
     "@fullcalendar/core": "^6.1.20",
     "@fullcalendar/daygrid": "^6.1.20",
     "@fullcalendar/interaction": "^6.1.20",
@@ -26,7 +26,7 @@
     "exceljs": "^4.4.0",
     "framer-motion": "^12.38.0",
     "googleapis": "^172.0.0",
-    "next": "16.2.4",
+    "next": "^16.2.9",
     "open": "^11.0.0",
     "p-limit": "^7.3.0",
     "pg": "^8.21.0",
@@ -41,6 +41,9 @@
     "web-push": "^3.6.7",
     "zipcodes": "^8.0.0"
   },
+  "overrides": {
+    "uuid": "^11.1.1"
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
@@ -48,7 +51,7 @@
     "@types/react-dom": "^19",
     "@types/web-push": "^3.6.4",
     "eslint": "^9",
-    "eslint-config-next": "16.2.4",
+    "eslint-config-next": "^16.2.9",
     "playwright": "^1.60.0",
     "shadcn": "^4.11.0",
     "tailwindcss": "^4",
